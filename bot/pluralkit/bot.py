@@ -12,23 +12,28 @@ logger.setLevel(logging.DEBUG)
 
 client = discord.Client()
 
+
 @client.event
 async def on_error(evt, *args, **kwargs):
-    logger.exception("Error while handling event {} with arguments {}:".format(evt, args))
+    logger.exception(
+        "Error while handling event {} with arguments {}:".format(evt, args))
+
 
 @client.event
 async def on_ready():
     # Print status info
     logger.info("Connected to Discord.")
-    logger.info("Account: {}#{}".format(client.user.name, client.user.discriminator))
+    logger.info("Account: {}#{}".format(
+        client.user.name, client.user.discriminator))
     logger.info("User ID: {}".format(client.user.id))
+
 
 @client.event
 async def on_message(message):
     # Ignore bot messages
     if message.author.bot:
         return
-    
+
     # Split into args. shlex sucks so we don't bother with quotes
     args = message.content.split(" ")
 
@@ -54,6 +59,7 @@ async def on_message(message):
         async with client.pool.acquire() as conn:
             await proxy.handle_proxying(conn, message)
 
+
 @client.event
 async def on_reaction_add(reaction, user):
     from pluralkit import proxy
@@ -61,6 +67,7 @@ async def on_reaction_add(reaction, user):
     # Pass reactions to proxy system
     async with client.pool.acquire() as conn:
         await proxy.handle_reaction(conn, reaction, user)
+
 
 async def run():
     from pluralkit import db

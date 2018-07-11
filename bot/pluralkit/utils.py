@@ -9,8 +9,10 @@ import discord
 from pluralkit import db
 from pluralkit.bot import client, logger
 
+
 def generate_hid() -> str:
     return "".join(random.choices(string.ascii_lowercase, k=5))
+
 
 async def parse_mention(mention: str) -> discord.User:
     # First try matching mention format
@@ -27,10 +29,11 @@ async def parse_mention(mention: str) -> discord.User:
     except (ValueError, discord.NotFound):
         return None
 
+
 async def get_system_fuzzy(conn, key) -> asyncpg.Record:
     if isinstance(key, discord.User):
         return await db.get_system_by_account(conn, account_id=key.id)
-    
+
     if isinstance(key, str) and len(key) == 5:
         return await db.get_system_by_hid(conn, system_hid=key)
 
@@ -39,7 +42,8 @@ async def get_system_fuzzy(conn, key) -> asyncpg.Record:
     if system:
         return system
     return None
-    
+
+
 async def get_member_fuzzy(conn, system_id: int, key: str, system_only=True) -> asyncpg.Record:
     # First search by hid
     if system_only:
@@ -60,6 +64,8 @@ command_map = {}
 # Command wrapper
 # Return True for success, return False for failure
 # Second parameter is the message it'll send. If just False, will print usage
+
+
 def command(cmd, subcommand, usage=None, description=None):
     def wrap(func):
         async def wrapper(conn, message, args):
@@ -70,12 +76,13 @@ def command(cmd, subcommand, usage=None, description=None):
                     success, msg = res, None
                 else:
                     success, msg = res
-                    
+
                 if not success and not msg:
                     # Failure, no message, print usage
                     usage_embed = discord.Embed()
                     usage_embed.colour = discord.Colour.blue()
-                    usage_embed.add_field(name="Usage", value=usage, inline=False)
+                    usage_embed.add_field(
+                        name="Usage", value=usage, inline=False)
 
                     await client.send_message(message.channel, embed=usage_embed)
                 elif not success:
@@ -103,6 +110,8 @@ def command(cmd, subcommand, usage=None, description=None):
 # Member command wrapper
 # Tries to find member by first argument
 # If system_only=False, allows members from other systems by hid
+
+
 def member_command(cmd, subcommand, usage=None, description=None, system_only=True):
     def wrap(func):
         async def wrapper(conn, message, args):
@@ -122,10 +131,11 @@ def member_command(cmd, subcommand, usage=None, description=None, system_only=Tr
 
             if member is None:
                 return False, "Can't find member \"{}\".".format(args[0])
-            
+
             return await func(conn, message, member, args[1:])
         return command(cmd=cmd, subcommand=subcommand, usage=usage, description=description)(wrapper)
     return wrap
+
 
 async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Embed:
     card = discord.Embed()
@@ -134,7 +144,8 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
         card.title = system["name"]
 
     if system["description"]:
-        card.add_field(name="Description", value=system["description"], inline=False)
+        card.add_field(name="Description",
+                       value=system["description"], inline=False)
 
     if system["tag"]:
         card.add_field(name="Tag", value=system["tag"])
@@ -158,10 +169,12 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
         member_texts.append("`{}`: {}".format(member["hid"], member["name"]))
 
     if len(member_texts) > 0:
-        card.add_field(name="Members", value="\n".join(member_texts), inline=False)
+        card.add_field(name="Members", value="\n".join(
+            member_texts), inline=False)
 
     card.set_footer(text="System ID: {}".format(system["hid"]))
     return card
+
 
 async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Embed:
     card = discord.Embed()
@@ -171,18 +184,21 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
         card.colour = int(member["color"], 16)
 
     if member["birthday"]:
-        card.add_field(name="Birthdate", value=member["birthday"].strftime("%b %d, %Y"))
-    
+        card.add_field(name="Birthdate",
+                       value=member["birthday"].strftime("%b %d, %Y"))
+
     if member["pronouns"]:
         card.add_field(name="Pronouns", value=member["pronouns"])
 
     if member["prefix"] or member["suffix"]:
         prefix = member["prefix"] or ""
         suffix = member["suffix"] or ""
-        card.add_field(name="Proxy Tags", value="{}text{}".format(prefix, suffix))
+        card.add_field(name="Proxy Tags",
+                       value="{}text{}".format(prefix, suffix))
 
     if member["description"]:
-        card.add_field(name="Description", value=member["description"], inline=False)
+        card.add_field(name="Description",
+                       value=member["description"], inline=False)
 
     # Get system name and hid
     system = await db.get_system(conn, system_id=member["system"])
@@ -192,8 +208,10 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
         system_value = "`{}`".format(system["hid"])
     card.add_field(name="System", value=system_value, inline=False)
 
-    card.set_footer(text="System ID: {} | Member ID: {}".format(system["hid"], member["hid"]))
+    card.set_footer(text="System ID: {} | Member ID: {}".format(
+        system["hid"], member["hid"]))
     return card
+
 
 async def text_input(message, subject):
     await client.send_message(message.channel, "Reply in this channel with the new description you want to set for {}.".format(subject))
