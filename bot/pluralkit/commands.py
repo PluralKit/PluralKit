@@ -6,8 +6,7 @@ import discord
 
 from pluralkit import db
 from pluralkit.bot import client, logger
-from pluralkit.utils import command, generate_hid, generate_member_info_card, generate_system_info_card, member_command, parse_mention, text_input, get_system_fuzzy, get_member_fuzzy, command_map
-
+from pluralkit.utils import command, generate_hid, generate_member_info_card, generate_system_info_card, member_command, parse_mention, text_input, get_system_fuzzy, get_member_fuzzy, command_map, make_default_embed
 
 @command(cmd="pk;system", subcommand=None, description="Shows information about your system.")
 async def this_system_info(conn, message, args):
@@ -316,7 +315,12 @@ async def member_avatar(conn, message, member, args):
 
     async with conn.transaction():
         await db.update_member_field(conn, member_id=member["id"], field="avatar_url", value=avatar_url)
-        return True, "Avatar set." if avatar_url else "Avatar cleared."
+        
+        # Add the avatar you just set into the success embed
+        if not avatar_url:
+            return True, "Avatar cleared."
+        else:
+            return True, make_default_embed("Avatar set.").set_image(url=avatar_url)
 
 
 @member_command(cmd="pk;member", subcommand="proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).")
@@ -394,23 +398,25 @@ async def message_info(conn, message, args):
     return True
 
 
-@command(cmd="pk;help", subcommand=None, usage="[system|member|message]", description="Shows this help message.")
-async def show_help(conn, message, args):
+def make_help(cmds):
     embed = discord.Embed()
     embed.colour = discord.Colour.blue()
     embed.title = "PluralKit Help"
     embed.set_footer(
         text="<> denotes mandatory arguments, [] denotes optional arguments")
 
+    for cmd, subcommands in cmds:
+        for subcmd, (_, usage, description) in subcommands.items():
+            embed.add_field(name="{} {} {}".format(
+                cmd, subcmd or "", usage or ""), value=description, inline=False)
+    return embed
+
+@command(cmd="pk;help", subcommand=None, usage="[system|member|message]", description="Shows this help message.")
+async def show_help(conn, message, args):
     if len(args) > 0 and ("pk;" + args[0]) in command_map:
         cmds = ["", ("pk;" + args[0], command_map["pk;" + args[0]])]
     else:
         cmds = command_map.items()
 
-    for cmd, subcommands in cmds:
-        for subcmd, (_, usage, description) in subcommands.items():
-            embed.add_field(name="{} {} {}".format(
-                cmd, subcmd or "", usage or ""), value=description, inline=False)
-
-    await client.send_message(message.channel, embed=embed)
+    await client.send_message(message.channel, embed=make_help(cmds))
     return True

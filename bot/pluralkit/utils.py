@@ -1,6 +1,7 @@
 import random
 import re
 import string
+import time
 
 import asyncio
 import asyncpg
@@ -59,6 +60,18 @@ async def get_member_fuzzy(conn, system_id: int, key: str, system_only=True) -> 
         if member is not None:
             return member
 
+def make_default_embed(message):
+    embed = discord.Embed()
+    embed.colour = discord.Colour.blue()
+    embed.description = message
+    return embed
+
+def make_error_embed(message):
+    embed = discord.Embed()
+    embed.colour = discord.Colour.dark_red()
+    embed.description = message
+    return embed
+
 command_map = {}
 
 # Command wrapper
@@ -69,7 +82,10 @@ command_map = {}
 def command(cmd, subcommand, usage=None, description=None):
     def wrap(func):
         async def wrapper(conn, message, args):
+            before = time.perf_counter()
             res = await func(conn, message, args)
+            after = time.perf_counter()
+            time_ms = (after - before) * 1000
 
             if res is not None:
                 if not isinstance(res, tuple):
@@ -79,25 +95,21 @@ def command(cmd, subcommand, usage=None, description=None):
 
                 if not success and not msg:
                     # Failure, no message, print usage
-                    usage_embed = discord.Embed()
-                    usage_embed.colour = discord.Colour.blue()
-                    usage_embed.add_field(
-                        name="Usage", value=usage, inline=False)
-
-                    await client.send_message(message.channel, embed=usage_embed)
+                    usage_str = "**Usage:** {} {} {}".format(cmd, subcommand or "", usage or "")
+                    await client.send_message(message.channel, embed=make_default_embed(usage_str))
                 elif not success:
                     # Failure, print message
-                    error_embed = discord.Embed()
-                    error_embed.colour = discord.Colour.dark_red()
-                    error_embed.description = msg
-                    await client.send_message(message.channel, embed=error_embed)
+                    embed = msg if isinstance(msg, discord.Embed) else make_error_embed(msg)
+                    # embed.set_footer(text="{:.02f} ms".format(time_ms))
+                    await client.send_message(message.channel, embed=embed)
                 elif msg:
                     # Success, print message
-                    success_embed = discord.Embed()
-                    success_embed.colour = discord.Colour.blue()
-                    success_embed.description = msg
-                    await client.send_message(message.channel, embed=success_embed)
+                    embed = msg if isinstance(msg, discord.Embed) else make_default_embed(msg)
+                    # embed.set_footer(text="{:.02f} ms".format(time_ms))
+                    await client.send_message(message.channel, embed=embed)
                 # Success, don't print anything
+
+        # Put command in map
         if cmd not in command_map:
             command_map[cmd] = {}
         if subcommand not in command_map[cmd]:
@@ -133,7 +145,7 @@ def member_command(cmd, subcommand, usage=None, description=None, system_only=Tr
                 return False, "Can't find member \"{}\".".format(args[0])
 
             return await func(conn, message, member, args[1:])
-        return command(cmd=cmd, subcommand=subcommand, usage=usage, description=description)(wrapper)
+        return command(cmd=cmd, subcommand=subcommand, usage="<name|id> {}".format(usage or ""), description=description)(wrapper)
     return wrap
 
 
