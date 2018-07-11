@@ -1,0 +1,27 @@
+version: '3'
+services:
+  bot:
+    build: bot
+    depends_on:
+    - db
+    environment:
+    - TOKEN
+  db:
+    image: postgres:alpine
+    volumes:
+    - db_data:/var/lib/postgres
+    restart: always
+  influx:
+    image: influxdb:alpine
+    volumes:
+    - /var/lib/influxdb
+    environment:
+    - INFLUXDB_GRAPHITE_ENABLED=true
+    restart: always
+  grafana:
+    image: grafana/grafana
+    ports:
+    - "3000:3000"
+    restart: always
+volumes:
+  db_data:

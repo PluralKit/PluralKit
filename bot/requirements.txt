@@ -1,0 +1,4 @@
+discord.py
+asyncpg
+aiohttp
+aioinflux
