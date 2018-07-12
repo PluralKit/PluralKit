@@ -39,25 +39,29 @@ async def on_message(message):
 
     from pluralkit import proxy, utils
 
-    # Find and execute command in map
-    if len(args) > 0 and args[0] in utils.command_map:
-        subcommand_map = utils.command_map[args[0]]
+    cmd = None
+    # Look up commands with subcommands
+    if len(args) >= 2:
+        lookup = utils.command_map.get((args[0], args[1]), None)
+        if lookup:
+            # Curry with arg slice
+            cmd = lambda c, m, a: lookup[0](conn, message, args[2:])
+    # Look up root commands
+    if not cmd and len(args) >= 1:
+        lookup = utils.command_map.get((args[0], None), None)
+        if lookup:
+            # Curry with arg slice
+            cmd = lambda c, m, a: lookup[0](conn, message, args[1:])
 
-        if len(args) >= 2 and args[1] in subcommand_map:
-            async with client.pool.acquire() as conn:
-                await subcommand_map[args[1]][0](conn, message, args[2:])
-        elif None in subcommand_map:
-            async with client.pool.acquire() as conn:
-                await subcommand_map[None][0](conn, message, args[1:])
-        elif len(args) >= 2:
-            embed = discord.Embed()
-            embed.colour = discord.Colour.dark_red()
-            embed.description = "Subcommand \"{}\" not found.".format(args[1])
-            await client.send_message(message.channel, embed=embed)
-    else:
-        # Try doing proxy parsing
+    # Found anything? run it
+    if cmd:
         async with client.pool.acquire() as conn:
-            await proxy.handle_proxying(conn, message)
+            await cmd(conn, message, args)
+            return
+
+    # Try doing proxy parsing
+    async with client.pool.acquire() as conn:
+        await proxy.handle_proxying(conn, message)
 
 
 @client.event

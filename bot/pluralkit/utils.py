@@ -38,10 +38,11 @@ async def get_system_fuzzy(conn, key) -> asyncpg.Record:
     if isinstance(key, str) and len(key) == 5:
         return await db.get_system_by_hid(conn, system_hid=key)
 
-    system = parse_mention(key)
-
-    if system:
-        return system
+    account = await parse_mention(key)
+    if account:
+        system = await db.get_system_by_account(conn, account_id=account.id)
+        if system:
+            return system
     return None
 
 
@@ -79,7 +80,7 @@ command_map = {}
 # Second parameter is the message it'll send. If just False, will print usage
 
 
-def command(cmd, subcommand, usage=None, description=None):
+def command(cmd, subcommand, usage=None, description=None, basic=False):
     def wrap(func):
         async def wrapper(conn, message, args):
             res = await func(conn, message, args)
@@ -107,12 +108,7 @@ def command(cmd, subcommand, usage=None, description=None):
                 # Success, don't print anything
 
         # Put command in map
-        if cmd not in command_map:
-            command_map[cmd] = {}
-        if subcommand not in command_map[cmd]:
-            command_map[cmd][subcommand] = {}
-
-        command_map[cmd][subcommand] = (wrapper, usage, description)
+        command_map[(cmd, subcommand)] = (wrapper, usage, description, basic)
         return wrapper
     return wrap
 
@@ -121,7 +117,7 @@ def command(cmd, subcommand, usage=None, description=None):
 # If system_only=False, allows members from other systems by hid
 
 
-def member_command(cmd, subcommand, usage=None, description=None, system_only=True):
+def member_command(cmd, subcommand, usage=None, description=None, system_only=True, basic=False):
     def wrap(func):
         async def wrapper(conn, message, args):
             # Return if no member param
@@ -142,19 +138,16 @@ def member_command(cmd, subcommand, usage=None, description=None, system_only=Tr
                 return False, "Can't find member \"{}\".".format(args[0])
 
             return await func(conn, message, member, args[1:])
-        return command(cmd=cmd, subcommand=subcommand, usage="<name|id> {}".format(usage or ""), description=description)(wrapper)
+        return command(cmd=cmd, subcommand=subcommand, usage="<name|id> {}".format(usage or ""), description=description, basic=basic)(wrapper)
     return wrap
 
 
 async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Embed:
     card = discord.Embed()
+    card.colour = discord.Colour.blue()
 
     if system["name"]:
         card.title = system["name"]
-
-    if system["description"]:
-        card.add_field(name="Description",
-                       value=system["description"], inline=False)
 
     if system["tag"]:
         card.add_field(name="Tag", value=system["tag"])
@@ -164,23 +157,20 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
         fronter_val = "{} (for {})".format(current_fronter["name"], humanize.naturaldelta(current_fronter["timestamp"]))
         card.add_field(name="Current fronter", value=fronter_val)
 
-    # Get names of all linked accounts
-    async def get_name(account_id):
-        account = await client.get_user_info(account_id)
-        return "{}#{}".format(account.name, account.discriminator)
-
-    account_name_futures = []
+    account_names = []
     for account_id in await db.get_linked_accounts(conn, system_id=system["id"]):
-        account_name_futures.append(get_name(account_id))
-    # Run in parallel
-    account_names = await asyncio.gather(*account_name_futures)
-
-    card.add_field(name="Linked accounts", value=", ".join(account_names))
+        account = await client.get_user_info(account_id)
+        account_names.append("{}#{}".format(account.name, account.discriminator))
+    card.add_field(name="Linked accounts", value="\n".join(account_names))
+    
+    if system["description"]:
+        card.add_field(name="Description",
+                       value=system["description"], inline=False)
 
     # Get names of all members
     member_texts = []
     for member in await db.get_all_members(conn, system_id=system["id"]):
-        member_texts.append("`{}`: {}".format(member["hid"], member["name"]))
+        member_texts.append("{} (`{}`)".format(member["name"], member["hid"]))
 
     if len(member_texts) > 0:
         card.add_field(name="Members", value="\n".join(
@@ -191,8 +181,18 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
 
 
 async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Embed:
+    system = await db.get_system(conn, system_id=member["system"])
+
     card = discord.Embed()
-    card.set_author(name=member["name"], icon_url=member["avatar_url"])
+    card.colour = discord.Colour.blue()
+
+    name_and_system = member["name"]
+    if system["name"]:
+        name_and_system += " ({})".format(system["name"])
+
+    card.set_author(name=name_and_system, icon_url=member["avatar_url"] or discord.Embed.Empty)
+    if member["avatar_url"]:
+        card.set_thumbnail(url=member["avatar_url"])
 
     if member["color"]:
         card.colour = int(member["color"], 16)
@@ -217,7 +217,7 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
     # Get system name and hid
     system = await db.get_system(conn, system_id=member["system"])
     if system["name"]:
-        system_value = "`{}`: {}".format(system["hid"], system["name"])
+        system_value = "{} (`{}`)".format(system["name"], system["hid"])
     else:
         system_value = "`{}`".format(system["hid"])
     card.add_field(name="System", value=system_value, inline=False)

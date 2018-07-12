@@ -20,7 +20,7 @@ async def this_system_info(conn, message, args):
     return True
 
 
-@command(cmd="pk;system", subcommand="new", usage="[name]", description="Registers a new system to this account.")
+@command(cmd="pk;system", subcommand="new", usage="[name]", description="Registers a new system to this account.", basic=True)
 async def new_system(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -28,8 +28,8 @@ async def new_system(conn, message, args):
         return False, "You already have a system registered. To remove your system, use `pk;system remove`, or to unlink your system from this account, use `pk;system unlink`."
 
     system_name = None
-    if len(args) > 2:
-        system_name = " ".join(args[2:])
+    if len(args) > 0:
+        system_name = " ".join(args)
 
     async with conn.transaction():
         # TODO: figure out what to do if this errors out on collision on generate_hid
@@ -42,7 +42,7 @@ async def new_system(conn, message, args):
         return True, "System registered! To begin adding members, use `pk;member new <name>`."
 
 
-@command(cmd="pk;system", subcommand="info", usage="[system]", description="Shows information about a system.")
+@command(cmd="pk;system", subcommand="info", usage="[system]", description="Shows information about a system.", basic=True)
 async def system_info(conn, message, args):
     if len(args) == 0:
         # Use sender's system
@@ -256,7 +256,7 @@ async def system_fronthistory(conn, message, args):
     embed.title = "Past switches"
     return True, embed
 
-@command(cmd="pk;member", subcommand="new", usage="<name>", description="Adds a new member to your system.")
+@command(cmd="pk;member", subcommand="new", usage="<name>", description="Adds a new member to your system.", basic=True)
 async def new_member(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -276,7 +276,7 @@ async def new_member(conn, message, args):
         return True, "Member \"{}\" (`{}`) registered!".format(name, hid)
 
 
-@member_command(cmd="pk;member", subcommand="info", description="Shows information about a system member.", system_only=False)
+@member_command(cmd="pk;member", subcommand="info", description="Shows information about a system member.", system_only=False, basic=True)
 async def member_info(conn, message, member, args):
     await client.send_message(message.channel, embed=await generate_member_info_card(conn, member))
     return True
@@ -353,7 +353,7 @@ async def member_remove(conn, message, member, args):
         return True, "Member removal cancelled."
 
 
-@member_command(cmd="pk;member", subcommand="avatar", usage="[user|url]", description="Updates a member's avatar. Can be an account mention (which will use that account's avatar), or a link to an image. Leave blank to clear.")
+@member_command(cmd="pk;member", subcommand="avatar", usage="[user|url]", description="Updates a member's avatar. Can be an account mention (which will use that account's avatar), or a link to an image. Leave blank to clear.", basic=True)
 async def member_avatar(conn, message, member, args):
     if len(args) == 0:
         avatar_url = None
@@ -381,7 +381,7 @@ async def member_avatar(conn, message, member, args):
             return True, make_default_embed("Avatar set.").set_image(url=avatar_url)
 
 
-@member_command(cmd="pk;member", subcommand="proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).")
+@member_command(cmd="pk;member", subcommand="proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).", basic=True)
 async def member_proxy(conn, message, member, args):
     if len(args) == 0:
         prefix, suffix = None, None
@@ -455,7 +455,7 @@ async def message_info(conn, message, args):
     await client.send_message(message.channel, embed=embed)
     return True
 
-@command(cmd="pk;switch", subcommand=None, usage="<name|id>", description="Registers a switch and changes the current fronter.")
+@command(cmd="pk;switch", subcommand=None, usage="<name|id>", description="Registers a switch and changes the current fronter.", basic=True)
 async def switch_member(conn, message, args):
     if len(args) == 0:
         return False
@@ -508,12 +508,29 @@ def make_help(cmds):
                 cmd, subcmd or "", usage or ""), value=description, inline=False)
     return embed
 
-@command(cmd="pk;help", subcommand=None, usage="[system|member|message]", description="Shows this help message.")
+@command(cmd="pk;help", subcommand=None, usage="[category]", description="Shows this help message.")
 async def show_help(conn, message, args):
-    if len(args) > 0 and ("pk;" + args[0]) in command_map:
-        cmds = ["", ("pk;" + args[0], command_map["pk;" + args[0]])]
-    else:
-        cmds = command_map.items()
+    embed = make_default_embed(None)
+    embed.title = "PluralKit Help"
 
-    await client.send_message(message.channel, embed=make_help(cmds))
-    return True
+    if len(args) == 0:
+        basics = []
+        for (cmd, sub), (_, usage, description, basic) in command_map.items():
+            if basic:
+                basics.append("**{} {} {}** - {}".format(cmd, sub or "", usage or "", description or ""))
+        embed.add_field(name="Basic commands", value="\n".join(basics))
+        
+        categories = [("system", "System commands"), ("member", "Member commands"), ("switch", "Switching commands")]
+        categories_lines = ["**pk;help {}** - {}".format(key, desc) for key, desc in categories]
+        embed.add_field(name="More commands", value="\n".join(categories_lines))
+    else:
+        if args[0] not in ["system", "member", "switch"]:
+            return False, "Unknown help category."
+
+        cmds = [(k, v) for k, v in command_map.items() if k[0] == "pk;" + args[0]]
+        lines = []
+        for (cmd, sub), (_, usage, description, _) in cmds:
+            lines.append("**{} {} {}** - {}".format(cmd, sub or "", usage or "", description or ""))
+        embed.add_field(name="Commands", value="\n".join(lines))
+
+    return True, embed
