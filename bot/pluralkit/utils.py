@@ -194,6 +194,11 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
     if member["avatar_url"]:
         card.set_thumbnail(url=member["avatar_url"])
 
+    # Get system name and hid
+    system = await db.get_system(conn, system_id=member["system"])
+    if system["name"]:
+        system_value = "{}".format(system["name"])
+
     if member["color"]:
         card.colour = int(member["color"], 16)
 
@@ -213,14 +218,6 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
     if member["description"]:
         card.add_field(name="Description",
                        value=member["description"], inline=False)
-
-    # Get system name and hid
-    system = await db.get_system(conn, system_id=member["system"])
-    if system["name"]:
-        system_value = "{} (`{}`)".format(system["name"], system["hid"])
-    else:
-        system_value = "`{}`".format(system["hid"])
-    card.add_field(name="System", value=system_value, inline=False)
 
     card.set_footer(text="System ID: {} | Member ID: {}".format(
         system["hid"], member["hid"]))
