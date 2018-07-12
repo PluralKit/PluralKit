@@ -1,11 +1,11 @@
 import random
 import re
 import string
-import time
 
 import asyncio
 import asyncpg
 import discord
+import humanize
 
 from pluralkit import db
 from pluralkit.bot import client, logger
@@ -82,10 +82,7 @@ command_map = {}
 def command(cmd, subcommand, usage=None, description=None):
     def wrap(func):
         async def wrapper(conn, message, args):
-            before = time.perf_counter()
             res = await func(conn, message, args)
-            after = time.perf_counter()
-            time_ms = (after - before) * 1000
 
             if res is not None:
                 if not isinstance(res, tuple):
@@ -161,6 +158,11 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
 
     if system["tag"]:
         card.add_field(name="Tag", value=system["tag"])
+
+    current_fronter = await db.current_fronter(conn, system_id=system["id"])
+    if current_fronter and current_fronter["member"]:
+        fronter_val = "{} (for {})".format(current_fronter["name"], humanize.naturaldelta(current_fronter["timestamp"]))
+        card.add_field(name="Current fronter", value=fronter_val)
 
     # Get names of all linked accounts
     async def get_name(account_id):

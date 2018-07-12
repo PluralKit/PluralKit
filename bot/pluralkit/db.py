@@ -20,7 +20,7 @@ def db_wrap(func):
         res = await func(*args, **kwargs)
         after = time.perf_counter()
 
-        logger.debug(" - DB took {:.2f} ms".format((after - before) * 1000))
+        logger.debug(" - DB call {} took {:.2f} ms".format(func.__name__, (after - before) * 1000))
         return res
     return inner
 
@@ -177,6 +177,18 @@ async def delete_message(conn, message_id: str):
     logger.debug("Deleting message (id={})".format(message_id))
     await conn.execute("delete from messages where mid = $1", int(message_id))
 
+@db_wrap
+async def current_fronter(conn, system_id: int):
+    return await conn.fetchrow("select *, members.name from switches left outer join members on (members.id = switches.member) where switches.system = $1 order by timestamp desc", system_id)
+
+@db_wrap
+async def past_fronters(conn, system_id: int, amount: int):
+    return await conn.fetch("select *, members.name from switches left outer join members on (members.id = switches.member) where switches.system = $1 order by timestamp desc limit $2", system_id, amount)
+
+@db_wrap
+async def add_switch(conn, system_id: int, member_id: int):
+    logger.debug("Adding switch (system={}, member={})".format(system_id, member_id))
+    return await conn.execute("insert into switches (system, member) values ($1, $2)", system_id, member_id)
 
 async def create_tables(conn):
     await conn.execute("""create table if not exists systems (
@@ -216,7 +228,7 @@ async def create_tables(conn):
         system      serial not null references systems(id) on delete cascade,
         member      serial references members(id) on delete restrict,
         timestamp   timestamp not null default current_timestamp,
-        member_del  bool default false
+        member_del  bool not null default false
     )""")
     await conn.execute("""create table if not exists webhooks (
         channel     bigint primary key,

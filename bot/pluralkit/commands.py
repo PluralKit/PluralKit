@@ -3,6 +3,7 @@ import re
 from urllib.parse import urlparse
 
 import discord
+import humanize
 
 from pluralkit import db
 from pluralkit.bot import client, logger
@@ -197,6 +198,63 @@ async def system_unlink(conn, message, args):
         await db.unlink_account(conn, system_id=system["id"], account_id=message.author.id)
         return True, "Account unlinked."
 
+@command(cmd="pk;system", subcommand="fronter", usage="[system]", description="Gets the current fronter in the system.")
+async def system_fronter(conn, message, args):
+    if len(args) == 0:
+        system = await db.get_system_by_account(conn, message.author.id)
+
+        if system is None:
+            return False, "No system is registered to this account."
+    else:
+        system = await get_system_fuzzy(conn, args[0])
+        
+        if system is None:
+            return False, "Can't find system \"{}\".".format(args[0])
+    
+    current_fronter = await db.current_fronter(conn, system_id=system["id"])
+    if not current_fronter:
+        return True, make_default_embed(None).add_field(name="Current fronter", value="*(nobody)*")
+
+    fronter_name = "*(nobody)*"
+    if current_fronter["member"]:
+        member = await db.get_member(conn, member_id=current_fronter["member"])
+        fronter_name = member["name"]
+    if current_fronter["member_del"]:
+        fronter_name = "*(deleted member)*"
+
+    since = current_fronter["timestamp"]
+
+    embed = make_default_embed(None)
+    embed.add_field(name="Current fronter", value=fronter_name)
+    embed.add_field(name="Since", value="{} ({})".format(since.isoformat(sep=" ", timespec="seconds"), humanize.naturaltime(since)))
+    return True, embed
+
+@command(cmd="pk;system", subcommand="fronthistory", usage="[system]", description="Shows the past 10 switches in the system.")
+async def system_fronthistory(conn, message, args):
+    if len(args) == 0:
+        system = await db.get_system_by_account(conn, message.author.id)
+
+        if system is None:
+            return False, "No system is registered to this account."
+    else:
+        system = await get_system_fuzzy(conn, args[0])
+        
+        if system is None:
+            return False, "Can't find system \"{}\".".format(args[0])
+    
+    switches = await db.past_fronters(conn, system_id=system["id"], amount=10)
+    
+    lines = []
+    for switch in switches:
+        since = switch["timestamp"]
+        time_text = since.isoformat(sep=" ", timespec="seconds")
+        rel_text = humanize.naturaltime(since)
+
+        lines.append("**{}** ({}, at {})".format(switch["name"], time_text, rel_text))
+
+    embed = make_default_embed("\n".join(lines))
+    embed.title = "Past switches"
+    return True, embed
 
 @command(cmd="pk;member", subcommand="new", usage="<name>", description="Adds a new member to your system.")
 async def new_member(conn, message, args):
@@ -397,6 +455,45 @@ async def message_info(conn, message, args):
     await client.send_message(message.channel, embed=embed)
     return True
 
+@command(cmd="pk;switch", subcommand=None, usage="<name|id>", description="Registers a switch and changes the current fronter.")
+async def switch_member(conn, message, args):
+    if len(args) == 0:
+        return False
+
+    system = await db.get_system_by_account(conn, message.author.id)
+
+    if system is None:
+        return False, "No system is registered to this account."
+
+    # Find the member
+    member = await get_member_fuzzy(conn, system["id"], " ".join(args))
+    if not member:
+        return False, "Couldn't find member \"{}\".".format(args[0])
+
+    # Get current fronter
+    current_fronter = await db.current_fronter(conn, system_id=system["id"])
+    if current_fronter and current_fronter["member"] == member["id"]:
+        return False, "Member \"{}\" is already fronting.".format(member["name"])
+    
+    # Log the switch
+    await db.add_switch(conn, system_id=system["id"], member_id=member["id"])
+    return True, "Switch registered. Current fronter is now {}.".format(member["name"])
+
+@command(cmd="pk;switch", subcommand="out", description="Registers a switch out, and leaves current fronter blank.")
+async def switch_out(conn, message, args):
+    system = await db.get_system_by_account(conn, message.author.id)
+
+    if system is None:
+        return False, "No system is registered to this account."
+
+    # Get current fronter
+    current_fronter = await db.current_fronter(conn, system_id=system["id"])
+    if not current_fronter or not current_fronter["member"]:
+        return False, "There's already no one in front."
+
+    # Log it
+    await db.add_switch(conn, system_id=system["id"], member_id=None)
+    return True, "Switch-out registered."
 
 def make_help(cmds):
     embed = discord.Embed()

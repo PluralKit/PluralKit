@@ -1,4 +1,5 @@
-discord.py
-asyncpg
 aiohttp
 aioinflux
+asyncpg
+discord.py
+humanize
