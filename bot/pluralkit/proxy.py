@@ -8,24 +8,17 @@ from pluralkit import db
 from pluralkit.bot import client, logger
 
 async def log_message(original_message, hook_message, member, log_channel):
-    author_name = member["name"]
+    author_name = "#{}: {}".format(original_message.channel.name, member["name"])
     if member["system_name"]:
         author_name += " ({})".format(member["system_name"])
 
     embed = discord.Embed()
     embed.colour = discord.Colour.blue()
-    embed.set_author(name=author_name, icon_url=member["avatar_url"] or discord.Embed.Empty)
-    embed.add_field(name="Member", value=member["name"])
-    embed.add_field(name="Sender", value="{}#{}".format(original_message.author.name, original_message.author.discriminator))
-    if member["system_name"]:
-        embed.add_field(name="System", value=member["system_name"])
-    embed.add_field(name="Content", value=hook_message.clean_content)
+    embed.description = hook_message.clean_content
     embed.timestamp = hook_message.timestamp
-    embed.set_footer(text="System ID: {} | Member ID: {} | Sender ID: {} | Message ID: {}".format(member["system_hid"], member["hid"], original_message.author.id, hook_message.id))
+    embed.set_author(name=author_name, icon_url=member["avatar_url"] or discord.Embed.Empty)
+    embed.set_footer(text="System ID: {} | Member ID: {} | Sender: {}#{} | Message ID: {}".format(member["system_hid"], member["hid"], original_message.author.name, original_message.author.discriminator, hook_message.id))
 
-    if member["avatar_url"]:
-        embed.set_thumbnail(url=member["avatar_url"])
-    
     await client.send_message(log_channel, embed=embed)
 
 async def get_webhook(conn, channel):
