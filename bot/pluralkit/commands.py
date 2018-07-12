@@ -7,7 +7,7 @@ import humanize
 
 from pluralkit import db
 from pluralkit.bot import client, logger
-from pluralkit.utils import command, generate_hid, generate_member_info_card, generate_system_info_card, member_command, parse_mention, text_input, get_system_fuzzy, get_member_fuzzy, command_map, make_default_embed
+from pluralkit.utils import command, generate_hid, generate_member_info_card, generate_system_info_card, member_command, parse_mention, text_input, get_system_fuzzy, get_member_fuzzy, command_map, make_default_embed, parse_channel_mention
 
 @command(cmd="pk;system", subcommand=None, description="Shows information about your system.")
 async def this_system_info(conn, message, args):
@@ -494,6 +494,23 @@ async def switch_out(conn, message, args):
     # Log it
     await db.add_switch(conn, system_id=system["id"], member_id=None)
     return True, "Switch-out registered."
+
+@command(cmd="pk;mod", subcommand="log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.")
+async def set_log(conn, message, args):
+    if not message.author.server_permissions.administrator:
+        return False, "You must be a server administrator to use this command."
+    
+    server = message.server
+    if len(args) == 0:
+        channel_id = None
+    else:
+        channel = parse_channel_mention(args[0], server=server)
+        if not channel:
+            return False, "Channel not found."
+        channel_id = channel.id
+
+    await db.update_server(conn, server.id, logging_channel_id=channel_id)
+    return True, "Updated logging channel." if channel_id else "Cleared logging channel."
 
 def make_help(cmds):
     embed = discord.Embed()

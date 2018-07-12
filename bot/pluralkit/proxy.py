@@ -2,10 +2,31 @@ import os
 import time
 
 import aiohttp
+import discord
 
 from pluralkit import db
 from pluralkit.bot import client, logger
 
+async def log_message(original_message, hook_message, member, log_channel):
+    author_name = member["name"]
+    if member["system_name"]:
+        author_name += " ({})".format(member["system_name"])
+
+    embed = discord.Embed()
+    embed.colour = discord.Colour.blue()
+    embed.set_author(name=author_name, icon_url=member["avatar_url"] or discord.Embed.Empty)
+    embed.add_field(name="Member", value=member["name"])
+    embed.add_field(name="Sender", value="{}#{}".format(original_message.author.name, original_message.author.discriminator))
+    if member["system_name"]:
+        embed.add_field(name="System", value=member["system_name"])
+    embed.add_field(name="Content", value=hook_message.clean_content)
+    embed.timestamp = hook_message.timestamp
+    embed.set_footer(text="System ID: {} | Member ID: {} | Sender ID: {} | Message ID: {}".format(member["system_hid"], member["hid"], original_message.author.id, hook_message.id))
+
+    if member["avatar_url"]:
+        embed.set_thumbnail(url=member["avatar_url"])
+    
+    await client.send_message(log_channel, embed=embed)
 
 async def get_webhook(conn, channel):
     async with conn.transaction():
@@ -29,29 +50,48 @@ async def get_webhook(conn, channel):
 
         return hook_row["webhook"], hook_row["token"]
 
-
-async def proxy_message(conn, member, message, inner):
-    logger.debug("Proxying message '{}' for member {}".format(
-        inner, member["hid"]))
-    # Delete the original message
-    await client.delete_message(message)
-
-    # Get the webhook details
-    hook_id, hook_token = await get_webhook(conn, message.channel)
+async def send_hook_message(member, text, hook_id, hook_token):
     async with aiohttp.ClientSession() as session:
+        # Set up parameters
         req_data = {
             "username": "{} {}".format(member["name"], member["tag"] or "").strip(),
             "avatar_url": member["avatar_url"],
-            "content": inner
+            "content": text
         }
         req_headers = {"Authorization": "Bot {}".format(os.environ["TOKEN"])}
-        # And send the message
-        async with session.post("https://discordapp.com/api/v6/webhooks/{}/{}?wait=true".format(hook_id, hook_token), json=req_data, headers=req_headers) as resp:
-            resp_data = await resp.json()
-            logger.debug("Discord webhook response: {}".format(resp_data))
 
-            # Insert new message details into the DB
-            await db.add_message(conn, message_id=resp_data["id"], channel_id=message.channel.id, member_id=member["id"], sender_id=message.author.id)
+        # Send request
+        async with session.post("https://discordapp.com/api/v6/webhooks/{}/{}?wait=true".format(hook_id, hook_token), json=req_data, headers=req_headers) as resp:
+            if resp.status == 200:
+                resp_data = await resp.json()
+                return discord.Message(reactions=[], **resp_data)
+            else:
+                # Fake a Discord exception, also because #yolo
+                raise discord.HTTPException(resp, await resp.text())
+
+
+async def proxy_message(conn, member, trigger_message, inner):
+    logger.debug("Proxying message '{}' for member {}".format(
+        inner, member["hid"]))
+    # Delete the original message
+    await client.delete_message(trigger_message)
+
+    # Get the webhook details
+    hook_id, hook_token = await get_webhook(conn, trigger_message.channel)
+
+    # And send the message
+    hook_message = await send_hook_message(member, inner, hook_id, hook_token)
+
+    # Insert new message details into the DB
+    await db.add_message(conn, message_id=hook_message.id, channel_id=trigger_message.channel.id, member_id=member["id"], sender_id=trigger_message.author.id)
+
+    # Check server info for a log channel
+    server_info = await db.get_server_info(conn, trigger_message.server.id)
+    if server_info and server_info["log_channel"]:
+        channel = trigger_message.server.get_channel(str(server_info["log_channel"]))
+        if channel:
+            # Log the message
+            await log_message(trigger_message, hook_message, member, channel)
 
 
 async def handle_proxying(conn, message):

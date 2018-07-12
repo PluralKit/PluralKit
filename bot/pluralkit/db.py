@@ -24,10 +24,6 @@ def db_wrap(func):
         return res
     return inner
 
-
-webhook_cache = {}
-
-
 @db_wrap
 async def create_system(conn, system_name: str, system_hid: str):
     logger.debug("Creating system (name={}, hid={})".format(
@@ -140,11 +136,7 @@ async def get_members_exceeding(conn, system_id: int, length: int):
 
 @db_wrap
 async def get_webhook(conn, channel_id: str):
-    if channel_id in webhook_cache:
-        return webhook_cache[channel_id]
-    res = await conn.fetchrow("select webhook, token from webhooks where channel = $1", int(channel_id))
-    webhook_cache[channel_id] = res
-    return res
+    return await conn.fetchrow("select webhook, token from webhooks where channel = $1", int(channel_id))
 
 
 @db_wrap
@@ -164,7 +156,7 @@ async def add_message(conn, message_id: str, channel_id: str, member_id: int, se
 @db_wrap
 async def get_members_by_account(conn, account_id: str):
     # Returns a "chimera" object
-    return await conn.fetch("select members.id, members.hid, members.prefix, members.suffix, members.name, members.avatar_url, systems.tag from systems, members, accounts where accounts.uid = $1 and systems.id = accounts.system and members.system = systems.id", int(account_id))
+    return await conn.fetch("select members.id, members.hid, members.prefix, members.suffix, members.name, members.avatar_url, systems.tag, systems.name as system_name, systems.hid as system_hid from systems, members, accounts where accounts.uid = $1 and systems.id = accounts.system and members.system = systems.id", int(account_id))
 
 
 @db_wrap
@@ -189,6 +181,16 @@ async def past_fronters(conn, system_id: int, amount: int):
 async def add_switch(conn, system_id: int, member_id: int):
     logger.debug("Adding switch (system={}, member={})".format(system_id, member_id))
     return await conn.execute("insert into switches (system, member) values ($1, $2)", system_id, member_id)
+
+@db_wrap
+async def get_server_info(conn, server_id: str):
+    return await conn.fetchrow("select * from servers where id = $1", int(server_id))
+
+@db_wrap
+async def update_server(conn, server_id: str, logging_channel_id: str):
+    logging_channel_id = int(logging_channel_id) if logging_channel_id else None
+    logger.debug("Updating server settings (id={}, log_channel={})".format(server_id, logging_channel_id))
+    await conn.execute("insert into servers (id, log_channel) values ($1, $2) on conflict (id) do update set log_channel = $2", int(server_id), logging_channel_id)
 
 async def create_tables(conn):
     await conn.execute("""create table if not exists systems (
@@ -237,6 +239,5 @@ async def create_tables(conn):
     )""")
     await conn.execute("""create table if not exists servers (
         id          bigint primary key,
-        cmd_chans   bigint[],
-        proxy_chans bigint[]
+        log_channel bigint
     )""")

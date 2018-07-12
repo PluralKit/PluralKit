@@ -30,6 +30,17 @@ async def parse_mention(mention: str) -> discord.User:
     except (ValueError, discord.NotFound):
         return None
 
+def parse_channel_mention(mention: str, server: discord.Server) -> discord.Channel:
+    match = re.fullmatch("<#(\\d+)>", mention)
+    if match:
+        return server.get_channel(match.group(1))
+    
+    try:
+        return server.get_channel(str(int(mention)))
+    except ValueError:
+        return None
+
+
 
 async def get_system_fuzzy(conn, key) -> asyncpg.Record:
     if isinstance(key, discord.User):
@@ -196,8 +207,6 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
 
     # Get system name and hid
     system = await db.get_system(conn, system_id=member["system"])
-    if system["name"]:
-        system_value = "{}".format(system["name"])
 
     if member["color"]:
         card.colour = int(member["color"], 16)
