@@ -245,7 +245,7 @@ async def new_member(conn, message, args):
         return True, "Member \"{}\" (`{}`) registered!".format(name, hid)
 
 
-@member_command(cmd="member info", description="Shows information about a system member.", system_only=False, category="Member commands")
+@member_command(cmd="member", description="Shows information about a system member.", system_only=False, category="Member commands")
 async def member_info(conn, message, member, args):
     await client.send_message(message.channel, embed=await generate_member_info_card(conn, member))
     return True
