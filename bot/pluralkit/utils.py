@@ -91,7 +91,7 @@ command_map = {}
 # Second parameter is the message it'll send. If just False, will print usage
 
 
-def command(cmd, subcommand, usage=None, description=None, basic=False):
+def command(cmd, usage=None, description=None):
     def wrap(func):
         async def wrapper(conn, message, args):
             res = await func(conn, message, args)
@@ -104,7 +104,7 @@ def command(cmd, subcommand, usage=None, description=None, basic=False):
 
                 if not success and not msg:
                     # Failure, no message, print usage
-                    usage_str = "**Usage:** {} {} {}".format(cmd, subcommand or "", usage or "")
+                    usage_str = "**Usage:** {} {}".format(cmd, usage or "")
                     await client.send_message(message.channel, embed=make_default_embed(usage_str))
                 elif not success:
                     # Failure, print message
@@ -119,7 +119,7 @@ def command(cmd, subcommand, usage=None, description=None, basic=False):
                 # Success, don't print anything
 
         # Put command in map
-        command_map[(cmd, subcommand)] = (wrapper, usage, description, basic)
+        command_map[cmd] = (wrapper, usage, description)
         return wrapper
     return wrap
 
@@ -128,7 +128,7 @@ def command(cmd, subcommand, usage=None, description=None, basic=False):
 # If system_only=False, allows members from other systems by hid
 
 
-def member_command(cmd, subcommand, usage=None, description=None, system_only=True, basic=False):
+def member_command(cmd, usage=None, description=None, system_only=True):
     def wrap(func):
         async def wrapper(conn, message, args):
             # Return if no member param
@@ -149,7 +149,7 @@ def member_command(cmd, subcommand, usage=None, description=None, system_only=Tr
                 return False, "Can't find member \"{}\".".format(args[0])
 
             return await func(conn, message, member, args[1:])
-        return command(cmd=cmd, subcommand=subcommand, usage="<name|id> {}".format(usage or ""), description=description, basic=basic)(wrapper)
+        return command(cmd=cmd, usage="<name|id> {}".format(usage or ""), description=description)(wrapper)
     return wrap
 
 

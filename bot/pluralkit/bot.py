@@ -39,26 +39,23 @@ async def on_message(message):
     args = message.content.split(" ")
 
     from pluralkit import proxy, utils
+    
+    command_items = utils.command_map.items()
+    command_items = sorted(command_items, key=lambda x: len(x[0]), reverse=True)
 
-    cmd = None
-    # Look up commands with subcommands
-    if len(args) >= 2:
-        lookup = utils.command_map.get((args[0], args[1]), None)
-        if lookup:
-            # Curry with arg slice
-            cmd = lambda c, m, a: lookup[0](conn, message, args[2:])
-    # Look up root commands
-    if not cmd and len(args) >= 1:
-        lookup = utils.command_map.get((args[0], None), None)
-        if lookup:
-            # Curry with arg slice
-            cmd = lambda c, m, a: lookup[0](conn, message, args[1:])
+    prefix = "pk;"
+    for command, (func, _, _) in command_items:
+        if message.content.startswith(prefix + command):
+            args_str = message.content[len(prefix + command):].strip()
+            args = args_str.split(" ")
+            
+            # Splitting on empty string yields one-element array, remove that
+            if len(args) == 1 and not args[0]:
+                args = []
 
-    # Found anything? run it
-    if cmd:
-        async with client.pool.acquire() as conn:
-            await cmd(conn, message, args)
-            return
+            async with client.pool.acquire() as conn:
+                await func(conn, message, args)
+                return
 
     # Try doing proxy parsing
     async with client.pool.acquire() as conn:
