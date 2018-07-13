@@ -156,12 +156,29 @@ async def add_message(conn, message_id: str, channel_id: str, member_id: int, se
 @db_wrap
 async def get_members_by_account(conn, account_id: str):
     # Returns a "chimera" object
-    return await conn.fetch("select members.id, members.hid, members.prefix, members.suffix, members.color, members.name, members.avatar_url, systems.tag, systems.name as system_name, systems.hid as system_hid from systems, members, accounts where accounts.uid = $1 and systems.id = accounts.system and members.system = systems.id", int(account_id))
+    return await conn.fetch("""select
+            members.id, members.hid, members.prefix, members.suffix, members.color, members.name, members.avatar_url,
+            systems.tag, systems.name as system_name, systems.hid as system_hid
+        from
+            systems, members, accounts
+        where
+            accounts.uid = $1
+            and systems.id = accounts.system
+            and members.system = systems.id""", int(account_id))
 
 
 @db_wrap
 async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str):
-    return await conn.fetchrow("select messages.*, members.name, members.hid, members.avatar_url, systems.name as system_name, systems.hid as system_hid from messages, members, systems where messages.member = members.id and members.system = systems.id and mid = $1 and sender = $2", int(message_id), int(sender_id))
+    return await conn.fetchrow("""select
+        messages.*,
+        members.name, members.hid, members.avatar_url,
+        systems.name as system_name, systems.hid as system_hid
+    from
+        messages, members, systems
+    where
+        messages.member = members.id
+        and members.system = systems.id
+        and mid = $1 and sender = $2""", int(message_id), int(sender_id))
 
 
 @db_wrap
@@ -171,11 +188,20 @@ async def delete_message(conn, message_id: str):
 
 @db_wrap
 async def current_fronter(conn, system_id: int):
-    return await conn.fetchrow("select *, members.name from switches left outer join members on (members.id = switches.member) where switches.system = $1 order by timestamp desc", system_id)
+    return await conn.fetchrow("""select *, members.name
+    from switches
+    left outer join members on (members.id = switches.member) -- Left outer join instead of normal join - makes name = null instead of just ignoring the row
+    where switches.system = $1
+    order by timestamp desc""", system_id)
 
 @db_wrap
 async def past_fronters(conn, system_id: int, amount: int):
-    return await conn.fetch("select *, members.name from switches left outer join members on (members.id = switches.member) where switches.system = $1 order by timestamp desc limit $2", system_id, amount)
+    return await conn.fetch("""select *, members.name
+    from switches
+    left outer join members on (members.id = switches.member) -- (see above)
+    where switches.system = $1
+    order by timestamp
+    desc limit $2""", system_id, amount)
 
 @db_wrap
 async def add_switch(conn, system_id: int, member_id: int):
