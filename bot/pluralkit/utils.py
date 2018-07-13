@@ -234,16 +234,21 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
 
 
 async def text_input(message, subject):
-    await client.send_message(message.channel, "Reply in this channel with the new description you want to set for {}.".format(subject))
-    msg = await client.wait_for_message(author=message.author, channel=message.channel)
+    embed = make_default_embed("")
+    embed.description = "Reply in this channel with the new description you want to set for {}.".format(subject)
 
-    await client.send_message(message.channel, "Alright. When you're happy with the new description, click the ✅ reaction. To cancel, click the ❌ reaction.")
-    await client.add_reaction(msg, "✅")
-    await client.add_reaction(msg, "❌")
+    status_msg = await client.send_message(message.channel, embed=embed)
+    reply_msg = await client.wait_for_message(author=message.author, channel=message.channel)
 
-    reaction = await client.wait_for_reaction(emoji=["✅", "❌"], message=msg, user=message.author)
+    embed.description = "Alright. When you're happy with the new description, click the ✅ reaction. To cancel, click the ❌ reaction."
+    await client.edit_message(status_msg, embed=embed)
+    await client.add_reaction(reply_msg, "✅")
+    await client.add_reaction(reply_msg, "❌")
+
+    reaction = await client.wait_for_reaction(emoji=["✅", "❌"], message=reply_msg, user=message.author)
     if reaction.reaction.emoji == "✅":
-        return msg.content
+        await client.clear_reactions(reply_msg)
+        return reply_msg.content
     else:
-        await client.clear_reactions(msg)
+        await client.clear_reactions(reply_msg)
         return None
