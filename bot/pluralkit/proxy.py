@@ -8,27 +8,45 @@ import discord
 from pluralkit import db
 from pluralkit.bot import client, logger
 
-async def log_message(original_message, hook_message, member, log_channel):
-    # hook_message is kinda broken, and doesn't include details from server or channel
-    # We rely on the fact that original_message must be in the same channel, this'll break if that changes
-
-    author_name = "#{}: {}".format(original_message.channel.name, member["name"])
+def make_log_embed(hook_message, member, channel_name):
+    author_name = "#{}: {}".format(channel_name, member["name"])
     if member["system_name"]:
         author_name += " ({})".format(member["system_name"])
-
-    message_link = "https://discordapp.com/channels/{}/{}/{}".format(original_message.server.id, original_message.channel.id, hook_message.id)
 
     embed = discord.Embed()
     embed.colour = discord.Colour.blue()
     embed.description = hook_message.clean_content
     embed.timestamp = hook_message.timestamp
-    embed.set_author(name=author_name, url=message_link, icon_url=member["avatar_url"] or discord.Embed.Empty)
-    embed.set_footer(text="System ID: {} | Member ID: {} | Sender: {}#{} | Message ID: {}".format(member["system_hid"], member["hid"], original_message.author.name, original_message.author.discriminator, hook_message.id))
+    embed.set_author(name=author_name, icon_url=member["avatar_url"] or discord.Embed.Empty)
     
     if len(hook_message.attachments) > 0:
         embed.set_image(url=hook_message.attachments[0]["url"])
+    return embed
+
+async def log_message(original_message, hook_message, member, log_channel):
+    # hook_message is kinda broken, and doesn't include details from server or channel
+    # We rely on the fact that original_message must be in the same channel, this'll break if that changes
+    embed = make_log_embed(hook_message, member, channel_name=original_message.channel.name)
+    embed.set_footer(text="System ID: {} | Member ID: {} | Sender: {}#{} | Message ID: {}".format(member["system_hid"], member["hid"], original_message.author.name, original_message.author.discriminator, hook_message.id))
+
+    message_link = "https://discordapp.com/channels/{}/{}/{}".format(original_message.server.id, original_message.channel.id, hook_message.id)
+    embed.author.url = message_link
 
     await client.send_message(log_channel, embed=embed)
+
+async def log_delete(hook_message, member, log_channel):
+    embed = make_log_embed(hook_message, member, channel_name=hook_message.channel.name)
+    embed.set_footer(text="System ID: {} | Member ID: {} | Message ID: {}".format(member["system_hid"], member["hid"], hook_message.id))
+    embed.colour = discord.Colour.dark_red()
+
+    await client.send_message(log_channel, embed=embed)
+
+async def get_log_channel(conn, server):
+    # Check server info for a log channel
+    server_info = await db.get_server_info(conn, server.id)
+    if server_info and server_info["log_channel"]:
+        channel = server.get_channel(str(server_info["log_channel"]))
+        return channel
 
 async def get_webhook(conn, channel):
     async with conn.transaction():
@@ -107,13 +125,10 @@ async def proxy_message(conn, member, trigger_message, inner):
     # Insert new message details into the DB
     await db.add_message(conn, message_id=hook_message.id, channel_id=trigger_message.channel.id, member_id=member["id"], sender_id=trigger_message.author.id)
 
-    # Check server info for a log channel
-    server_info = await db.get_server_info(conn, trigger_message.server.id)
-    if server_info and server_info["log_channel"]:
-        channel = trigger_message.server.get_channel(str(server_info["log_channel"]))
-        if channel:
-            # Log the message to the log channel if present
-            await log_message(trigger_message, hook_message, member, channel)
+    # Log message to logging channel if necessary
+    log_channel = await get_log_channel(conn, trigger_message.server)
+    if log_channel:
+        await log_message(trigger_message, hook_message, member, log_channel)
 
     # Delete the original message
     await client.delete_message(trigger_message)
@@ -167,3 +182,9 @@ async def handle_reaction(conn, user_id, message_id, emoji):
                 channel = client.get_channel(str(db_message["channel"]))
                 message = await client.get_message(channel, message_id)
                 await client.delete_message(message)
+
+                # Log deletion to logging channel if necessary
+                log_channel = await get_log_channel(conn, message.server)
+                if log_channel:
+                    # db_message contains enough member data for the things to work
+                    await log_delete(message, db_message, log_channel)
