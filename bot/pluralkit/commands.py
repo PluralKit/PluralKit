@@ -214,7 +214,7 @@ async def system_delete(conn, message, args):
     await client.send_message(message.channel, "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(system["hid"]))
 
     msg = await client.wait_for_message(author=message.author, channel=message.channel, timeout=60.0)
-    if msg.content == system["hid"]:
+    if msg and msg.content == system["hid"]:
         await db.remove_system(conn, system_id=system["id"])
         return True, "System deleted."
     else:
@@ -356,7 +356,7 @@ async def member_delete(conn, message, member, args):
     await client.send_message(message.channel, "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(member["name"], member["hid"]))
 
     msg = await client.wait_for_message(author=message.author, channel=message.channel, timeout=60.0)
-    if msg.content == member["hid"]:
+    if msg and msg.content == member["hid"]:
         await db.delete_member(conn, member_id=member["id"])
         return True, "Member deleted."
     else:
