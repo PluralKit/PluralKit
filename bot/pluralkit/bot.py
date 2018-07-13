@@ -1,4 +1,5 @@
 import logging
+import json
 import os
 
 import discord
@@ -63,15 +64,25 @@ async def on_message(message):
     async with client.pool.acquire() as conn:
         await proxy.handle_proxying(conn, message)
 
-
 @client.event
-async def on_reaction_add(reaction, user):
-    from pluralkit import proxy
+async def on_socket_raw_receive(msg):
+    # Since on_reaction_add is buggy (only works for messages the bot's already cached, ie. no old messages)
+    # we parse socket data manually for the reaction add event
+    if isinstance(msg, str):
+        try:
+            msg_data = json.loads(msg)
+            if msg_data.get("t") == "MESSAGE_REACTION_ADD":
+                evt_data = msg_data.get("d")
+                if evt_data:
+                    user_id = evt_data["user_id"]
+                    message_id = evt_data["message_id"]
+                    emoji = evt_data["emoji"]["name"]
 
-    # Pass reactions to proxy system
-    async with client.pool.acquire() as conn:
-        await proxy.handle_reaction(conn, reaction, user)
-
+                    async with client.pool.acquire() as conn:
+                        from pluralkit import proxy
+                        await proxy.handle_reaction(conn, user_id, message_id, emoji)
+        except ValueError:
+            pass
 
 async def run():
     from pluralkit import db

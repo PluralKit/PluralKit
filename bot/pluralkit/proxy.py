@@ -75,7 +75,11 @@ async def send_hook_message(member, hook_id, hook_token, text=None, image_url=No
             if resp.status == 200:
                 resp_data = await resp.json()
                 # Make a fake message object for passing on - this is slightly broken but works for most things
-                return discord.Message(reactions=[], **resp_data)
+                msg = discord.Message(reactions=[], **resp_data)
+
+                # Make sure it's added to the client's message cache - otherwise events r
+                #client.messages.append(msg)
+                return msg
             else:
                 # Fake a Discord exception, also because #yolo
                 raise discord.HTTPException(resp, await resp.text())
@@ -142,13 +146,18 @@ async def handle_proxying(conn, message):
             break
 
 
-async def handle_reaction(conn, reaction, user):
-    if reaction.emoji == "❌":
+async def handle_reaction(conn, user_id, message_id, emoji):
+    if emoji == "❌":
         async with conn.transaction():
             # Find the message in the DB, and make sure it's sent by the user who reacted
-            message = await db.get_message_by_sender_and_id(conn, message_id=reaction.message.id, sender_id=user.id)
+            db_message = await db.get_message_by_sender_and_id(conn, message_id=message_id, sender_id=user_id)
+            if db_message:
+                logger.debug("Deleting message {} by reaction from {}".format(message_id, user_id))
+                
+                # If so, remove it from the DB
+                await db.delete_message(conn, message_id)
 
-            if message:
-                # If so, delete the message and remove it from the DB
-                await db.delete_message(conn, message["mid"])
-                await client.delete_message(reaction.message)
+                # And look up the message and then delete it
+                channel = client.get_channel(str(db_message["channel"]))
+                message = await client.get_message(channel, message_id)
+                await client.delete_message(message)

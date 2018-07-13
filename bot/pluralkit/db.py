@@ -161,7 +161,7 @@ async def get_members_by_account(conn, account_id: str):
 
 @db_wrap
 async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str):
-    await conn.fetchrow("select * from messages where mid = $1 and sender = $2", int(message_id), int(sender_id))
+    return await conn.fetchrow("select * from messages where mid = $1 and sender = $2", int(message_id), int(sender_id))
 
 
 @db_wrap
