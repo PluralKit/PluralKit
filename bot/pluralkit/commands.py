@@ -9,6 +9,25 @@ from pluralkit import db
 from pluralkit.bot import client, logger
 from pluralkit.utils import command, generate_hid, generate_member_info_card, generate_system_info_card, member_command, parse_mention, text_input, get_system_fuzzy, get_member_fuzzy, command_map, make_default_embed, parse_channel_mention, bounds_check_member_name
 
+@command(cmd="system", usage="[system]", description="Shows information about a system.", category="System commands")
+async def system_info(conn, message, args):
+    if len(args) == 0:
+        # Use sender's system
+        system = await db.get_system_by_account(conn, message.author.id)
+
+        if system is None:
+            return False, "No system is registered to this account."
+    else:
+        # Look one up
+        system = await get_system_fuzzy(conn, args[0])
+
+        if system is None:
+            return False, "Unable to find system \"{}\".".format(args[0])
+
+    await client.send_message(message.channel, embed=await generate_system_info_card(conn, system))
+    return True
+
+
 @command(cmd="system new", usage="[name]", description="Registers a new system to this account.", category="System commands")
 async def new_system(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
@@ -30,41 +49,48 @@ async def new_system(conn, message, args):
         await db.link_account(conn, system_id=system["id"], account_id=message.author.id)
         return True, "System registered! To begin adding members, use `pk;member new <name>`."
 
+@command(cmd="system set", usage="<name|description|tag> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
+async def system_set(conn, message, args):
+    if len(args) == 0: 
+        return False
 
-@command(cmd="system", usage="[system]", description="Shows information about a system.", category="System commands")
-async def system_info(conn, message, args):
-    if len(args) == 0:
-        # Use sender's system
-        system = await db.get_system_by_account(conn, message.author.id)
-
-        if system is None:
-            return False, "No system is registered to this account."
-    else:
-        # Look one up
-        system = await get_system_fuzzy(conn, args[0])
-
-        if system is None:
-            return False, "Unable to find system \"{}\".".format(args[0])
-
-    await client.send_message(message.channel, embed=await generate_system_info_card(conn, system))
-    return True
-
-@command(cmd="system delete", description="Deletes your system from the database ***permanently***.", category="System commands")
-async def system_delete(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
     if system is None:
         return False, "No system is registered to this account."
 
-    await client.send_message(message.channel, "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(system["hid"]))
+    allowed_properties = ["name", "description", "tag"]
+    db_properties = {
+        "name": "name",
+        "description": "description",
+        "tag": "tag"
+    }
 
-    msg = await client.wait_for_message(author=message.author, channel=message.channel)
-    if msg.content == system["hid"]:
-        await db.remove_system(conn, system_id=system["id"])
-        return True, "System deleted."
+    prop = args[0]
+    if prop not in allowed_properties:
+        return False, "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties))
+
+    if len(args) >= 2:
+        value = " ".join(args[1:])
+
+        # Sanity checking
+        if prop == "tag":
+            # Make sure there are no members which would make the combined length exceed 32
+            members_exceeding = await db.get_members_exceeding(conn, system_id=system["id"], length=32 - len(value))
+            if len(members_exceeding) > 0:
+                # If so, error out and warn
+                member_names = ", ".join([member["name"]
+                                        for member in members_exceeding])
+                logger.debug("Members exceeding combined length with tag '{}': {}".format(value, member_names))
+                return False, "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names)
     else:
-        return True, "System deletion cancelled."
+        # Clear from DB
+        value = None
 
+    db_prop = db_properties[prop]
+    await db.update_system_field(conn, system_id=system["id"], field=db_prop, value=value)
+    
+    return True, "{} system {}.".format("Updated" if value else "Cleared", prop)
 
 @command(cmd="system link", usage="<account>", description="Links another account to your system.", category="System commands")
 async def system_link(conn, message, args):
@@ -177,49 +203,27 @@ async def system_fronthistory(conn, message, args):
     embed.title = "Past switches"
     return True, embed
 
-@command(cmd="system set", usage="<name|description|tag> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
-async def system_set(conn, message, args):
-    if len(args) == 0: 
-        return False
 
+@command(cmd="system delete", description="Deletes your system from the database ***permanently***.", category="System commands")
+async def system_delete(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
     if system is None:
         return False, "No system is registered to this account."
 
-    allowed_properties = ["name", "description", "tag"]
-    db_properties = {
-        "name": "name",
-        "description": "description",
-        "tag": "tag"
-    }
+    await client.send_message(message.channel, "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(system["hid"]))
 
-    prop = args[0]
-    if prop not in allowed_properties:
-        return False, "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties))
-
-    if len(args) >= 2:
-        value = " ".join(args[1:])
-
-        # Sanity checking
-        if prop == "tag":
-            # Make sure there are no members which would make the combined length exceed 32
-            members_exceeding = await db.get_members_exceeding(conn, system_id=system["id"], length=32 - len(value))
-            if len(members_exceeding) > 0:
-                # If so, error out and warn
-                member_names = ", ".join([member["name"]
-                                        for member in members_exceeding])
-                logger.debug("Members exceeding combined length with tag '{}': {}".format(value, member_names))
-                return False, "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names)
+    msg = await client.wait_for_message(author=message.author, channel=message.channel)
+    if msg.content == system["hid"]:
+        await db.remove_system(conn, system_id=system["id"])
+        return True, "System deleted."
     else:
-        # Clear from DB
-        value = None
+        return True, "System deletion cancelled."
 
-    db_prop = db_properties[prop]
-    await db.update_system_field(conn, system_id=system["id"], field=db_prop, value=value)
-    
-    return True, "{} system {}.".format("Updated" if value else "Cleared", prop)
-
+@member_command(cmd="member", description="Shows information about a system member.", system_only=False, category="Member commands")
+async def member_info(conn, message, member, args):
+    await client.send_message(message.channel, embed=await generate_member_info_card(conn, member))
+    return True
 
 @command(cmd="member new", usage="<name>", description="Adds a new member to your system.", category="Member commands")
 async def new_member(conn, message, args):
@@ -244,42 +248,6 @@ async def new_member(conn, message, args):
         await db.create_member(conn, system_id=system["id"], member_name=name, member_hid=hid)
         return True, "Member \"{}\" (`{}`) registered!".format(name, hid)
 
-
-@member_command(cmd="member", description="Shows information about a system member.", system_only=False, category="Member commands")
-async def member_info(conn, message, member, args):
-    await client.send_message(message.channel, embed=await generate_member_info_card(conn, member))
-    return True
-
-
-@member_command(cmd="member proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).", category="Member commands")
-async def member_proxy(conn, message, member, args):
-    if len(args) == 0:
-        prefix, suffix = None, None
-    else:
-        # Sanity checking
-        example = " ".join(args)
-        if "text" not in example:
-            return False, "Example proxy message must contain the string 'text'."
-
-        if example.count("text") != 1:
-            return False, "Example proxy message must contain the string 'text' exactly once."
-
-        # Extract prefix and suffix
-        prefix = example[:example.index("text")].strip()
-        suffix = example[example.index("text")+4:].strip()
-        logger.debug(
-            "Matched prefix '{}' and suffix '{}'".format(prefix, suffix))
-
-        # DB stores empty strings as None, make that work
-        if not prefix:
-            prefix = None
-        if not suffix:
-            suffix = None
-
-    async with conn.transaction():
-        await db.update_member_field(conn, member_id=member["id"], field="prefix", value=prefix)
-        await db.update_member_field(conn, member_id=member["id"], field="suffix", value=suffix)
-        return True, "Proxy settings updated." if prefix or suffix else "Proxy settings cleared."
 
 @member_command(cmd="member set", usage="<name|description|color|pronouns|birthdate|avatar> [value]", description="Edits a member property. Leave [value] blank to clear.", category="Member commands")
 async def member_set(conn, message, member, args):
@@ -353,6 +321,35 @@ async def member_set(conn, message, member, args):
         response = "{} {}'s {}.".format("Updated" if value else "Cleared", member["name"], prop)
     return True, response
 
+@member_command(cmd="member proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).", category="Member commands")
+async def member_proxy(conn, message, member, args):
+    if len(args) == 0:
+        prefix, suffix = None, None
+    else:
+        # Sanity checking
+        example = " ".join(args)
+        if "text" not in example:
+            return False, "Example proxy message must contain the string 'text'."
+
+        if example.count("text") != 1:
+            return False, "Example proxy message must contain the string 'text' exactly once."
+
+        # Extract prefix and suffix
+        prefix = example[:example.index("text")].strip()
+        suffix = example[example.index("text")+4:].strip()
+        logger.debug(
+            "Matched prefix '{}' and suffix '{}'".format(prefix, suffix))
+
+        # DB stores empty strings as None, make that work
+        if not prefix:
+            prefix = None
+        if not suffix:
+            suffix = None
+
+    async with conn.transaction():
+        await db.update_member_field(conn, member_id=member["id"], field="prefix", value=prefix)
+        await db.update_member_field(conn, member_id=member["id"], field="suffix", value=suffix)
+        return True, "Proxy settings updated." if prefix or suffix else "Proxy settings cleared."
 
 @command(cmd="message", usage="<id>", description="Shows information about a proxied message. Requires the message ID.", category="Message commands")
 async def message_info(conn, message, args):
