@@ -63,7 +63,8 @@ async def send_hook_message(member, hook_id, hook_token, text=None, image_url=No
         # Use FormData because the API doesn't like JSON requests with file data
         fd = aiohttp.FormData()
         fd.add_field("username", "{} {}".format(member["name"], member["tag"] or "").strip())
-        fd.add_field("avatar_url", member["avatar_url"])
+        if member["avatar_url"]:
+            fd.add_field("avatar_url", member["avatar_url"])
 
         if text:
             fd.add_field("content", text)
