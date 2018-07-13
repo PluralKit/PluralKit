@@ -156,7 +156,7 @@ async def add_message(conn, message_id: str, channel_id: str, member_id: int, se
 @db_wrap
 async def get_members_by_account(conn, account_id: str):
     # Returns a "chimera" object
-    return await conn.fetch("select members.id, members.hid, members.prefix, members.suffix, members.name, members.avatar_url, systems.tag, systems.name as system_name, systems.hid as system_hid from systems, members, accounts where accounts.uid = $1 and systems.id = accounts.system and members.system = systems.id", int(account_id))
+    return await conn.fetch("select members.id, members.hid, members.prefix, members.suffix, members.color, members.name, members.avatar_url, systems.tag, systems.name as system_name, systems.hid as system_hid from systems, members, accounts where accounts.uid = $1 and systems.id = accounts.system and members.system = systems.id", int(account_id))
 
 
 @db_wrap
