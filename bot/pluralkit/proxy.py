@@ -9,15 +9,20 @@ from pluralkit import db
 from pluralkit.bot import client, logger
 
 async def log_message(original_message, hook_message, member, log_channel):
+    # hook_message is kinda broken, and doesn't include details from server or channel
+    # We rely on the fact that original_message must be in the same channel, this'll break if that changes
+
     author_name = "#{}: {}".format(original_message.channel.name, member["name"])
     if member["system_name"]:
         author_name += " ({})".format(member["system_name"])
+
+    message_link = "https://discordapp.com/channels/{}/{}/{}".format(original_message.server.id, original_message.channel.id, hook_message.id)
 
     embed = discord.Embed()
     embed.colour = discord.Colour.blue()
     embed.description = hook_message.clean_content
     embed.timestamp = hook_message.timestamp
-    embed.set_author(name=author_name, icon_url=member["avatar_url"] or discord.Embed.Empty)
+    embed.set_author(name=author_name, url=message_link, icon_url=member["avatar_url"] or discord.Embed.Empty)
     embed.set_footer(text="System ID: {} | Member ID: {} | Sender: {}#{} | Message ID: {}".format(member["system_hid"], member["hid"], original_message.author.name, original_message.author.discriminator, hook_message.id))
     
     if len(hook_message.attachments) > 0:
