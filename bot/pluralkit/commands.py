@@ -7,9 +7,9 @@ import humanize
 
 from pluralkit import db
 from pluralkit.bot import client, logger
-from pluralkit.utils import command, generate_hid, generate_member_info_card, generate_system_info_card, member_command, parse_mention, text_input, get_system_fuzzy, get_member_fuzzy, command_map, make_default_embed, parse_channel_mention
+from pluralkit.utils import command, generate_hid, generate_member_info_card, generate_system_info_card, member_command, parse_mention, text_input, get_system_fuzzy, get_member_fuzzy, command_map, make_default_embed, parse_channel_mention, bounds_check_member_name
 
-@command(cmd="system new", usage="[name]", description="Registers a new system to this account.")
+@command(cmd="system new", usage="[name]", description="Registers a new system to this account.", category="System commands")
 async def new_system(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -31,7 +31,7 @@ async def new_system(conn, message, args):
         return True, "System registered! To begin adding members, use `pk;member new <name>`."
 
 
-@command(cmd="system", usage="[system]", description="Shows information about a system.")
+@command(cmd="system", usage="[system]", description="Shows information about a system.", category="System commands")
 async def system_info(conn, message, args):
     if len(args) == 0:
         # Use sender's system
@@ -49,75 +49,7 @@ async def system_info(conn, message, args):
     await client.send_message(message.channel, embed=await generate_system_info_card(conn, system))
     return True
 
-
-@command(cmd="system name", usage="[name]", description="Renames your system. Leave blank to clear.")
-async def system_name(conn, message, args):
-    system = await db.get_system_by_account(conn, message.author.id)
-
-    if system is None:
-        return False, "No system is registered to this account."
-
-    if len(args) == 0:
-        new_name = None
-    else:
-        new_name = " ".join(args)
-
-    async with conn.transaction():
-        await db.update_system_field(conn, system_id=system["id"], field="name", value=new_name)
-        return True, "Name updated to {}.".format(new_name) if new_name else "Name cleared."
-
-
-@command(cmd="system description", usage="[clear]", description="Updates your system description. Add \"clear\" to clear.")
-async def system_description(conn, message, args):
-    system = await db.get_system_by_account(conn, message.author.id)
-
-    if system is None:
-        return False, "No system is registered to this account."
-
-    # If "clear" in args, clear
-    if len(args) > 0 and args[0] == "clear":
-        new_description = None
-    else:
-        new_description = await text_input(message, "your system")
-
-        if not new_description:
-            return True, "Description update cancelled."
-
-    async with conn.transaction():
-        await db.update_system_field(conn, system_id=system["id"], field="description", value=new_description)
-        return True, "Description set." if new_description else "Description cleared."
-
-
-@command(cmd="system tag", usage="[tag]", description="Updates your system tag. Leave blank to clear.")
-async def system_tag(conn, message, args):
-    system = await db.get_system_by_account(conn, message.author.id)
-
-    if system is None:
-        return False, "No system is registered to this account."
-
-    if len(args) == 0:
-        tag = None
-    else:
-        tag = " ".join(args)
-        max_length = 32
-
-        # Make sure there are no members which would make the combined length exceed 32
-        members_exceeding = await db.get_members_exceeding(conn, system_id=system["id"], length=max_length - len(tag))
-        if len(members_exceeding) > 0:
-            # If so, error out and warn
-            member_names = ", ".join([member["name"]
-                                      for member in members_exceeding])
-            logger.debug("Members exceeding combined length with tag '{}': {}".format(
-                tag, member_names))
-            return False, "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names)
-
-    async with conn.transaction():
-        await db.update_system_field(conn, system_id=system["id"], field="tag", value=tag)
-
-    return True, "Tag updated to {}.".format(tag) if tag else "Tag cleared."
-
-
-@command(cmd="system delete", description="Deletes your system from the database ***permanently***.")
+@command(cmd="system delete", description="Deletes your system from the database ***permanently***.", category="System commands")
 async def system_delete(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -134,7 +66,7 @@ async def system_delete(conn, message, args):
         return True, "System deletion cancelled."
 
 
-@command(cmd="system link", usage="<account>", description="Links another account to your system.")
+@command(cmd="system link", usage="<account>", description="Links another account to your system.", category="System commands")
 async def system_link(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -171,7 +103,7 @@ async def system_link(conn, message, args):
         return False, "Account link cancelled."
 
 
-@command(cmd="system unlink", description="Unlinks your system from this account. There must be at least one other account linked.")
+@command(cmd="system unlink", description="Unlinks your system from this account. There must be at least one other account linked.", category="System commands")
 async def system_unlink(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -187,7 +119,7 @@ async def system_unlink(conn, message, args):
         await db.unlink_account(conn, system_id=system["id"], account_id=message.author.id)
         return True, "Account unlinked."
 
-@command(cmd="system fronter", usage="[system]", description="Gets the current fronter in the system.")
+@command(cmd="system fronter", usage="[system]", description="Gets the current fronter in the system.", category="Switching commands")
 async def system_fronter(conn, message, args):
     if len(args) == 0:
         system = await db.get_system_by_account(conn, message.author.id)
@@ -218,7 +150,7 @@ async def system_fronter(conn, message, args):
     embed.add_field(name="Since", value="{} ({})".format(since.isoformat(sep=" ", timespec="seconds"), humanize.naturaltime(since)))
     return True, embed
 
-@command(cmd="system fronthistory", usage="[system]", description="Shows the past 10 switches in the system.")
+@command(cmd="system fronthistory", usage="[system]", description="Shows the past 10 switches in the system.", category="Switching commands")
 async def system_fronthistory(conn, message, args):
     if len(args) == 0:
         system = await db.get_system_by_account(conn, message.author.id)
@@ -245,7 +177,51 @@ async def system_fronthistory(conn, message, args):
     embed.title = "Past switches"
     return True, embed
 
-@command(cmd="member new", usage="<name>", description="Adds a new member to your system.")
+@command(cmd="system set", usage="<name|description|tag> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
+async def system_set(conn, message, args):
+    if len(args) == 0: 
+        return False
+
+    system = await db.get_system_by_account(conn, message.author.id)
+
+    if system is None:
+        return False, "No system is registered to this account."
+
+    allowed_properties = ["name", "description", "tag"]
+    db_properties = {
+        "name": "name",
+        "description": "description",
+        "tag": "tag"
+    }
+
+    prop = args[0]
+    if prop not in allowed_properties:
+        return False, "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties))
+
+    if len(args) >= 2:
+        value = " ".join(args[1:])
+
+        # Sanity checking
+        if prop == "tag":
+            # Make sure there are no members which would make the combined length exceed 32
+            members_exceeding = await db.get_members_exceeding(conn, system_id=system["id"], length=32 - len(value))
+            if len(members_exceeding) > 0:
+                # If so, error out and warn
+                member_names = ", ".join([member["name"]
+                                        for member in members_exceeding])
+                logger.debug("Members exceeding combined length with tag '{}': {}".format(value, member_names))
+                return False, "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names)
+    else:
+        # Clear from DB
+        value = None
+
+    db_prop = db_properties[prop]
+    await db.update_system_field(conn, system_id=system["id"], field=db_prop, value=value)
+    
+    return True, "{} system {}.".format("Updated" if value else "Cleared", prop)
+
+
+@command(cmd="member new", usage="<name>", description="Adds a new member to your system.", category="Member commands")
 async def new_member(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -256,6 +232,10 @@ async def new_member(conn, message, args):
         return False
 
     name = " ".join(args)
+    bounds_error = bounds_check_member_name(name, system["tag"])
+    if bounds_error:
+        return False, bounds_error
+
     async with conn.transaction():
         # TODO: figure out what to do if this errors out on collision on generate_hid
         hid = generate_hid()
@@ -265,112 +245,13 @@ async def new_member(conn, message, args):
         return True, "Member \"{}\" (`{}`) registered!".format(name, hid)
 
 
-@member_command(cmd="member info", description="Shows information about a system member.", system_only=False)
+@member_command(cmd="member info", description="Shows information about a system member.", system_only=False, category="Member commands")
 async def member_info(conn, message, member, args):
     await client.send_message(message.channel, embed=await generate_member_info_card(conn, member))
     return True
 
 
-@member_command(cmd="member color", usage="[color]", description="Updates a member's associated color. Leave blank to clear.")
-async def member_color(conn, message, member, args):
-    if len(args) == 0:
-        color = None
-    else:
-        match = re.fullmatch("#?([0-9a-f]{6})", args[0])
-        if not match:
-            return False, "Color must be a valid hex color (eg. #ff0000)"
-
-        color = match.group(1)
-
-    async with conn.transaction():
-        await db.update_member_field(conn, member_id=member["id"], field="color", value=color)
-        return True, "Color updated to #{}.".format(color) if color else "Color cleared."
-
-
-@member_command(cmd="member pronouns", usage="[pronouns]", description="Updates a member's pronouns. Leave blank to clear.")
-async def member_pronouns(conn, message, member, args):
-    if len(args) == 0:
-        pronouns = None
-    else:
-        pronouns = " ".join(args)
-
-    async with conn.transaction():
-        await db.update_member_field(conn, member_id=member["id"], field="pronouns", value=pronouns)
-        return True, "Pronouns set to {}".format(pronouns) if pronouns else "Pronouns cleared."
-
-
-@member_command(cmd="member birthdate", usage="[birthdate]", description="Updates a member's birthdate. Must be in ISO-8601 format (eg. 1999-07-25). Leave blank to clear.")
-async def member_birthday(conn, message, member, args):
-    if len(args) == 0:
-        new_date = None
-    else:
-        # Parse date
-        try:
-            new_date = datetime.strptime(args[0], "%Y-%m-%d").date()
-        except ValueError:
-            return False, "Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25)."
-
-    async with conn.transaction():
-        await db.update_member_field(conn, member_id=member["id"], field="birthday", value=new_date)
-        return True, "Birthdate set to {}".format(new_date) if new_date else "Birthdate cleared."
-
-
-@member_command(cmd="member description", description="Updates a member's description. Add \"clear\" to clear.")
-async def member_description(conn, message, member, args):
-    if len(args) > 0 and args[0] == "clear":
-        new_description = None
-    else:
-        new_description = await text_input(message, member["name"])
-
-        if not new_description:
-            return True, "Description update cancelled."
-
-    async with conn.transaction():
-        await db.update_member_field(conn, member_id=member["id"], field="description", value=new_description)
-        return True, "Description set." if new_description else "Description cleared."
-
-
-@member_command(cmd="member remove", description="Removes a member from your system.")
-async def member_remove(conn, message, member, args):
-    await client.send_message(message.channel, "Are you sure you want to remove {}? If so, reply to this message with the member's name.".format(member["name"]))
-
-    msg = await client.wait_for_message(author=message.author, channel=message.channel)
-    if msg.content == member["name"]:
-        await db.delete_member(conn, member_id=member["id"])
-        return True, "Member removed."
-    else:
-        return True, "Member removal cancelled."
-
-
-@member_command(cmd="member avatar", usage="[user|url]", description="Updates a member's avatar. Can be an account mention (which will use that account's avatar), or a link to an image. Leave blank to clear.")
-async def member_avatar(conn, message, member, args):
-    if len(args) == 0:
-        avatar_url = None
-    else:
-        user = await parse_mention(args[0])
-        if user:
-            # Set the avatar to the mentioned user's avatar
-            # Discord doesn't like webp, but also hosts png alternatives
-            avatar_url = user.avatar_url.replace(".webp", ".png")
-        else:
-            # Validate URL
-            u = urlparse(args[0])
-            if u.scheme in ["http", "https"] and u.netloc and u.path:
-                avatar_url = args[0]
-            else:
-                return False, "Invalid URL."
-
-    async with conn.transaction():
-        await db.update_member_field(conn, member_id=member["id"], field="avatar_url", value=avatar_url)
-        
-        # Add the avatar you just set into the success embed
-        if not avatar_url:
-            return True, "Avatar cleared."
-        else:
-            return True, make_default_embed("Avatar set.").set_image(url=avatar_url)
-
-
-@member_command(cmd="member proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).")
+@member_command(cmd="member proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).", category="Member commands")
 async def member_proxy(conn, message, member, args):
     if len(args) == 0:
         prefix, suffix = None, None
@@ -400,8 +281,80 @@ async def member_proxy(conn, message, member, args):
         await db.update_member_field(conn, member_id=member["id"], field="suffix", value=suffix)
         return True, "Proxy settings updated." if prefix or suffix else "Proxy settings cleared."
 
+@member_command(cmd="member set", usage="<name|description|color|pronouns|birthdate|avatar> [value]", description="Edits a member property. Leave [value] blank to clear.", category="Member commands")
+async def member_set(conn, message, member, args):
+    if len(args) == 0: 
+        return False
 
-@command(cmd="message", usage="<id>", description="Shows information about a proxied message. Requires the message ID.")
+    allowed_properties = ["name", "description", "color", "pronouns", "birthdate", "avatar"]
+    db_properties = {
+        "name": "name",
+        "description": "description",
+        "color": "color",
+        "pronouns": "pronouns",
+        "birthdate": "birthday",
+        "avatar": "avatar_url"
+    }
+
+    prop = args[0]
+    if prop not in allowed_properties:
+        return False, "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties))
+
+    if len(args) >= 2:
+        value = " ".join(args[1:])
+
+        # Sanity/validity checks and type conversions
+        if prop == "name":
+            system = await db.get_system(conn, member["system"])
+            bounds_error = bounds_check_member_name(value, system["tag"])
+            if bounds_error:
+                return False, bounds_error
+
+        if prop == "color":
+            match = re.fullmatch("#?([0-9A-Fa-f]{6})", value)
+            if not match:
+                return False, "Color must be a valid hex color (eg. #ff0000)"
+
+            value = match.group(1).lower()
+        
+        if prop == "birthdate":
+            try:
+                value = datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                return False, "Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25)."
+
+        if prop == "avatar":
+            user = await parse_mention(args[0])
+            if user:
+                # Set the avatar to the mentioned user's avatar
+                # Discord doesn't like webp, but also hosts png alternatives
+                value = user.avatar_url.replace(".webp", ".png")
+            else:
+                # Validate URL
+                u = urlparse(args[0])
+                if u.scheme in ["http", "https"] and u.netloc and u.path:
+                    value = args[0]
+                else:
+                    return False, "Invalid URL."
+    else:
+        # Can't clear member name
+        if prop == "name":
+            return False, "Can't clear member name."        
+
+        # Clear from DB
+        value = None
+
+    db_prop = db_properties[prop]
+    await db.update_member_field(conn, member_id=member["id"], field=db_prop, value=value)
+    
+    if prop == "avatar":
+        response = make_default_embed("Updated {}'s avatar.".format(member["name"])).set_image(url=value)
+    else:
+        response = "{} {}'s {}.".format("Updated" if value else "Cleared", member["name"], prop)
+    return True, response
+
+
+@command(cmd="message", usage="<id>", description="Shows information about a proxied message. Requires the message ID.", category="Message commands")
 async def message_info(conn, message, args):
     try:
         mid = int(args[0])
@@ -444,7 +397,7 @@ async def message_info(conn, message, args):
     await client.send_message(message.channel, embed=embed)
     return True
 
-@command(cmd="switch", usage="<name|id>", description="Registers a switch and changes the current fronter.")
+@command(cmd="switch", usage="<name|id>", description="Registers a switch and changes the current fronter.", category="Switching commands")
 async def switch_member(conn, message, args):
     if len(args) == 0:
         return False
@@ -468,7 +421,7 @@ async def switch_member(conn, message, args):
     await db.add_switch(conn, system_id=system["id"], member_id=member["id"])
     return True, "Switch registered. Current fronter is now {}.".format(member["name"])
 
-@command(cmd="switch out", description="Registers a switch out, and leaves current fronter blank.")
+@command(cmd="switch out", description="Registers a switch out, and leaves current fronter blank.", category="Switching commands")
 async def switch_out(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -484,7 +437,7 @@ async def switch_out(conn, message, args):
     await db.add_switch(conn, system_id=system["id"], member_id=None)
     return True, "Switch-out registered."
 
-@command(cmd="mod log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.")
+@command(cmd="mod log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.", category="Moderation commands")
 async def set_log(conn, message, args):
     if not message.author.server_permissions.administrator:
         return False, "You must be a server administrator to use this command."
@@ -516,27 +469,21 @@ def make_help(cmds):
 
 @command(cmd="help", usage="[category]", description="Shows this help message.")
 async def show_help(conn, message, args):
-    embed = make_default_embed(None)
+    embed = make_default_embed("")
     embed.title = "PluralKit Help"
 
-    if len(args) == 0:
-        basics = []
-        for (cmd, sub), (_, usage, description, basic) in command_map.items():
-            if basic:
-                basics.append("**{} {} {}** - {}".format(cmd, sub or "", usage or "", description or ""))
-        embed.add_field(name="Basic commands", value="\n".join(basics))
-        
-        categories = [("system", "System commands"), ("member", "Member commands"), ("switch", "Switching commands")]
-        categories_lines = ["**pk;help {}** - {}".format(key, desc) for key, desc in categories]
-        embed.add_field(name="More commands", value="\n".join(categories_lines))
-    else:
-        if args[0] not in ["system", "member", "switch"]:
-            return False, "Unknown help category."
+    categories = {}
+    prefix = "pk;"
+    for cmd, (_, usage, description, category) in command_map.items():
+        if category is None:
+            continue
 
-        cmds = [(k, v) for k, v in command_map.items() if k[0] == "pk;" + args[0]]
-        lines = []
-        for (cmd, sub), (_, usage, description, _) in cmds:
-            lines.append("**{} {} {}** - {}".format(cmd, sub or "", usage or "", description or ""))
-        embed.add_field(name="Commands", value="\n".join(lines))
+        if category not in categories:
+            categories[category] = []
+        
+        categories[category].append("**{}{} {}** - {}".format(prefix, cmd, usage or "", description or ""))
+
+    for category, lines in categories.items():
+        embed.add_field(name=category, value="\n".join(lines), inline=False)
 
     return True, embed

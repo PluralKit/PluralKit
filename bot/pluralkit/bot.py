@@ -44,11 +44,11 @@ async def on_message(message):
     command_items = sorted(command_items, key=lambda x: len(x[0]), reverse=True)
 
     prefix = "pk;"
-    for command, (func, _, _) in command_items:
+    for command, (func, _, _, _) in command_items:
         if message.content.startswith(prefix + command):
             args_str = message.content[len(prefix + command):].strip()
             args = args_str.split(" ")
-            
+
             # Splitting on empty string yields one-element array, remove that
             if len(args) == 1 and not args[0]:
                 args = []

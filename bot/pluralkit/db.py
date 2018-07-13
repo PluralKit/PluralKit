@@ -131,7 +131,7 @@ async def get_all_members(conn, system_id: int):
 
 @db_wrap
 async def get_members_exceeding(conn, system_id: int, length: int):
-    return await conn.fetch("select * from members where system = $1 and length(name) >= $2", system_id, length)
+    return await conn.fetch("select * from members where system = $1 and length(name) > $2", system_id, length)
 
 
 @db_wrap

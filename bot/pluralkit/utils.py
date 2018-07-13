@@ -14,6 +14,13 @@ from pluralkit.bot import client, logger
 def generate_hid() -> str:
     return "".join(random.choices(string.ascii_lowercase, k=5))
 
+def bounds_check_member_name(new_name, system_tag):
+    if len(new_name) > 32:
+        return "Name cannot be longer than 32 characters."
+
+    if system_tag:
+        if len("{} {}".format(new_name, system_tag)) > 32:
+            return "This name, combined with the system tag ({}), would exceed the maximum length of 32 characters. Please reduce the length of the tag, or use a shorter name.".format(system_tag)
 
 async def parse_mention(mention: str) -> discord.User:
     # First try matching mention format
@@ -91,7 +98,7 @@ command_map = {}
 # Second parameter is the message it'll send. If just False, will print usage
 
 
-def command(cmd, usage=None, description=None):
+def command(cmd, usage=None, description=None, category=None):
     def wrap(func):
         async def wrapper(conn, message, args):
             res = await func(conn, message, args)
@@ -119,7 +126,7 @@ def command(cmd, usage=None, description=None):
                 # Success, don't print anything
 
         # Put command in map
-        command_map[cmd] = (wrapper, usage, description)
+        command_map[cmd] = (wrapper, usage, description, category)
         return wrapper
     return wrap
 
@@ -128,7 +135,7 @@ def command(cmd, usage=None, description=None):
 # If system_only=False, allows members from other systems by hid
 
 
-def member_command(cmd, usage=None, description=None, system_only=True):
+def member_command(cmd, usage=None, description=None, category=None, system_only=True):
     def wrap(func):
         async def wrapper(conn, message, args):
             # Return if no member param
@@ -149,7 +156,7 @@ def member_command(cmd, usage=None, description=None, system_only=True):
                 return False, "Can't find member \"{}\".".format(args[0])
 
             return await func(conn, message, member, args[1:])
-        return command(cmd=cmd, usage="<name|id> {}".format(usage or ""), description=description)(wrapper)
+        return command(cmd=cmd, usage="<name|id> {}".format(usage or ""), description=description, category=category)(wrapper)
     return wrap
 
 
