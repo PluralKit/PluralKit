@@ -87,7 +87,7 @@ async def get_system(conn, system_id: int):
 
 @db_wrap
 async def get_member_by_name(conn, system_id: int, member_name: str):
-    return await conn.fetchrow("select * from members where system = $1 and name = $2", system_id, member_name)
+    return await conn.fetchrow("select * from members where system = $1 and lower(name) = lower($2)", system_id, member_name)
 
 
 @db_wrap
