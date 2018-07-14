@@ -11,7 +11,7 @@ from pluralkit import db
 from pluralkit.bot import client, logger
 
 def escape(s):
-    return s.replace("`", "\`")
+    return s.replace("`", "\\`")
 
 def generate_hid() -> str:
     return "".join(random.choices(string.ascii_lowercase, k=5))
@@ -257,8 +257,10 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
         card.colour = int(member["color"], 16)
 
     if member["birthday"]:
-        card.add_field(name="Birthdate",
-                       value=member["birthday"].strftime("%b %d, %Y"))
+        bday_val = member["birthday"].strftime("%b %d, %Y")
+        if member["birthday"].year < 1000:
+            bday_val = member["birthday"].strftime("%b %d")
+        card.add_field(name="Birthdate", value=bday_val)
 
     if member["pronouns"]:
         card.add_field(name="Pronouns", value=member["pronouns"])
