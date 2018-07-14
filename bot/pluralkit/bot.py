@@ -42,10 +42,10 @@ async def on_message(message):
     
     command_items = utils.command_map.items()
     command_items = sorted(command_items, key=lambda x: len(x[0]), reverse=True)
-
+    
     prefix = "pk;"
     for command, (func, _, _, _) in command_items:
-        if message.content.startswith(prefix + command):
+        if message.content.lower().startswith(prefix + command):
             args_str = message.content[len(prefix + command):].strip()
             args = args_str.split(" ")
 
