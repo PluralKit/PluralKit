@@ -47,7 +47,40 @@ def parse_channel_mention(mention: str, server: discord.Server) -> discord.Chann
     except ValueError:
         return None
 
+async def get_fronter_ids(conn, system_id):
+    switches = await db.front_history(conn, system_id=system_id, count=1)
+    if not switches:
+        return [], None
+    
+    if not switches[0]["members"]:
+        return [], switches[0]["timestamp"]
+    
+    return switches[0]["members"], switches[0]["timestamp"]
 
+async def get_fronters(conn, system_id):
+    member_ids, timestamp = await get_fronter_ids(conn, system_id)
+    members = await db.get_members(conn, member_ids)
+    return members, timestamp
+
+async def get_front_history(conn, system_id, count):
+    # Get history from DB
+    switches = await db.front_history(conn, system_id=system_id, count=count)
+    if not switches:
+        return []
+    
+    # Get all unique IDs referenced
+    all_member_ids = {id for switch in switches for id in switch["members"]}
+    
+    # And look them up in the database into a dict
+    all_members = {member["id"]: member for member in await db.get_members(conn, list(all_member_ids))}
+
+    # Collect in array and return
+    out = []
+    for switch in switches:
+        timestamp = switch["timestamp"]
+        members = [all_members[id] for id in switch["members"]]
+        out.append((timestamp, members))
+    return out
 
 async def get_system_fuzzy(conn, key) -> asyncpg.Record:
     if isinstance(key, discord.User):
@@ -169,14 +202,12 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
 
     if system["tag"]:
         card.add_field(name="Tag", value=system["tag"])
-
-    switches = await db.front_history(conn, system_id=system["id"], count=1)
-    if switches and switches[0]["members"]:
-        members = await db.get_members(conn, switches[0]["members"])
-        names = ", ".join([member["name"] for member in members])
-        
-        fronter_val = "{} (for {})".format(names, humanize.naturaldelta(switches[0]["timestamp"]))
-        card.add_field(name="Current fronter" if len(members) == 1 else "Current fronters", value=fronter_val)
+    
+    fronters, switch_time = await get_fronters(conn, system["id"])
+    if fronters:
+        names = ", ".join([member["name"] for member in fronters])
+        fronter_val = "{} (for {})".format(names, humanize.naturaldelta(switch_time))
+        card.add_field(name="Current fronter" if len(fronters) == 1 else "Current fronters", value=fronter_val)
 
     account_names = []
     for account_id in await db.get_linked_accounts(conn, system_id=system["id"]):
