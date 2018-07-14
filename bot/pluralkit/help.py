@@ -9,7 +9,8 @@ help_pages = {
 `pk;help member` - Details on member configuration.
 `pk;help proxy` - Details on message proxying.
 `pk;help switch` - Details on switch logging.
-`pk;help mod` - Details on moderator operations.""")
+`pk;help mod` - Details on moderator operations.
+`pk;help import` - Details on data import from other services.""")
     ],
     "system": [
         ("Registering a new system",
@@ -125,5 +126,11 @@ For example:
         
 For example:
 `pk;mod log #message-log` - Configures the bot to log to #message-log.""")
+    ],
+    "import": [
+        ("Importing from Tupperware",
+        """If you already have a registered system on Tupperware, you can use the `pk;import tupperware` command to import it into PluralKit.
+        
+Note the command only works on a server and channel where the Tupperware bot is already present.""")
     ]
 }

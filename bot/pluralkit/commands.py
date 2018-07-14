@@ -510,3 +510,72 @@ async def show_help(conn, message, args):
         return False
 
     return True, embed
+
+@command(cmd="import tupperware", description="Import data from Tupperware.")
+async def import_tupperware(conn, message, args):
+    tupperware_member = message.server.get_member("431544605209788416") or message.server.get_member("433916057053560832")
+
+    if not tupperware_member:
+        return False, "This command only works in a server where the Tupperware bot is also present."
+
+    channel_permissions = message.channel.permissions_for(tupperware_member)
+    if not (channel_permissions.read_messages and channel_permissions.send_messages):
+        return False, "This command only works in a channel where the Tupperware bot has read/send access."
+
+    await client.send_message(message.channel, embed=make_default_embed("Please reply to this message with `tul!list` (or the server equivalent)."))
+    
+    tw_msg = await client.wait_for_message(author=tupperware_member, channel=message.channel, timeout=60.0)
+    if not tw_msg:
+        return False, "Tupperware import timed out."
+
+    logger.debug("Importing from Tupperware...")
+
+    # Create new (nameless) system if there isn't any registered
+    system = await db.get_system_by_account(conn, message.author.id)
+    if system is None:
+        hid = generate_hid()
+        logger.debug("Creating new system (hid={})...".format(hid))
+        system = await db.create_system(conn, system_name=None, system_hid=hid)
+        await db.link_account(conn, system_id=system["id"], account_id=message.author.id)
+
+    embed = tw_msg.embeds[0]
+    for field in embed["fields"]:
+        name = field["name"]
+        lines = field["value"].split("\n")
+
+        member_prefix = None
+        member_suffix = None
+        member_avatar = None
+        member_birthdate = None
+        member_description = None
+
+        for line in lines:
+            if line.startswith("Brackets:"):
+                brackets = line[len("Brackets: "):]
+                member_prefix = brackets[:brackets.index("text")].strip() or None
+                member_suffix = brackets[brackets.index("text")+4:].strip() or None
+            elif line.startswith("Avatar URL: "):
+                url = line[len("Avatar URL: "):]
+                member_avatar = url
+            elif line.startswith("Birthday: "):
+                bday_str = line[len("Birthday: "):]
+                bday = datetime.strptime(bday_str, "%a %b %d %Y")
+                if bday:
+                    member_birthdate = bday.date()
+            else:
+                member_description = line
+
+        existing_member = await db.get_member_by_name(conn, system_id=system["id"], member_name=name)
+        if not existing_member:
+            hid = generate_hid()
+            logger.debug("Creating new member {} (hid={})...".format(name, hid))
+            existing_member = await db.create_member(conn, system_id=system["id"], member_name=name, member_hid=hid)
+        
+        logger.debug("Updating fields...")
+        await db.update_member_field(conn, member_id=existing_member["id"], field="prefix", value=member_prefix)
+        await db.update_member_field(conn, member_id=existing_member["id"], field="suffix", value=member_suffix)
+        await db.update_member_field(conn, member_id=existing_member["id"], field="avatar_url", value=member_avatar)
+        await db.update_member_field(conn, member_id=existing_member["id"], field="birthday", value=member_birthdate)
+        await db.update_member_field(conn, member_id=existing_member["id"], field="description", value=member_description)
+    
+    return True, "System information imported. Try using `pk;system` now."
