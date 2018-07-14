@@ -62,6 +62,7 @@ For example:
 `pk;member set John color #ff0000` - Changes John's color to red.
 `pk;member set John pronouns he/him` - Changes John's pronouns.
 `pk;member set John birthdate 1996-02-27` - Changes John's birthdate to Feb 27, 1996. (Must be YYYY-MM-DD format).
+`pk;member set John birthdate 02-27` - Changes John's birthdate to February 27th, with no year.
 `pk;member set John avatar https://placekitten.com/400/400` - Changes John's avatar to a linked image.
 `pk;member set John avatar @JohnsAccount` - Changes John's avatar to the avatar of the mentioned account."""),
         ("Removing a member",

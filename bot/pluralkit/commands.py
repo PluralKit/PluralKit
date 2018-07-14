@@ -294,7 +294,13 @@ async def member_set(conn, message, member, args):
             try:
                 value = datetime.strptime(value, "%Y-%m-%d").date()
             except ValueError:
-                return False, "Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25)."
+                try:
+                    # Try again, adding 0001 as a placeholder year
+                    # This is considered a "null year" and will be omitted from the info card
+                    # Useful if you want your birthday to be displayed yearless.
+                    value = value = datetime.strptime("0001-" + value, "%Y-%m-%d").date()
+                except ValueError:
+                    return False, "Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25)."
 
         if prop == "avatar":
             user = await parse_mention(value)
