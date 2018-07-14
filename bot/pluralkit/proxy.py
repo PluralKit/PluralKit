@@ -144,6 +144,7 @@ async def handle_proxying(conn, message):
         bool(x["prefix"])) + int(bool(x["suffix"])), reverse=True)
 
     msg = message.content
+    msg_clean = message.clean_content
     for member in members:
         # If no proxy details are configured, skip
         if not member["prefix"] and not member["suffix"]:
@@ -154,14 +155,14 @@ async def handle_proxying(conn, message):
         suffix = member["suffix"] or ""
 
         # If we have a match, proxy the message
-        if msg.startswith(prefix) and msg.endswith(suffix):
+        # Match on the cleaned message to prevent a prefix of "<" catching on a mention
+        if msg_clean.startswith(prefix) and msg_clean.endswith(suffix):
             # Extract the actual message contents sans tags
             if suffix:
-                inner_message = message.content[len(
-                    prefix):-len(suffix)].strip()
+                inner_message = msg[len(prefix):-len(suffix)].strip()
             else:
                 # Slicing to -0 breaks, don't do that
-                inner_message = message.content[len(prefix):].strip()
+                inner_message = msg[len(prefix):].strip()
 
             await proxy_message(conn, member, message, inner_message)
             break
