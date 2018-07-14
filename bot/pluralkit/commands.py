@@ -581,4 +581,4 @@ async def import_tupperware(conn, message, args):
         await db.update_member_field(conn, member_id=existing_member["id"], field="birthday", value=member_birthdate)
         await db.update_member_field(conn, member_id=existing_member["id"], field="description", value=member_description)
     
-    return True, "System information imported. Try using `pk;system` now."
+    return True, "System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting."
