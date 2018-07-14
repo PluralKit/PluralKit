@@ -526,7 +526,17 @@ async def import_tupperware(conn, message, args):
 
     await client.send_message(message.channel, embed=make_default_embed("Please reply to this message with `tul!list` (or the server equivalent)."))
     
-    tw_msg = await client.wait_for_message(author=tupperware_member, channel=message.channel, timeout=60.0)
+    # Check to make sure the Tupperware response actually belongs to the correct user
+    def ensure_account(tw_msg):
+        if not tw_msg.embeds:
+            return False
+
+        if not tw_msg.embeds[0]["title"]:
+            return False
+        
+        return tw_msg.embeds[0]["title"].startswith("{}#{}".format(message.author.name, message.author.discriminator))
+
+    tw_msg = await client.wait_for_message(author=tupperware_member, channel=message.channel, timeout=60.0, check=ensure_account)
     if not tw_msg:
         return False, "Tupperware import timed out."
 
