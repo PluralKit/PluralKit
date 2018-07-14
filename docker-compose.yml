@@ -5,6 +5,7 @@ services:
     depends_on:
     - db
     environment:
+    - CLIENT_ID
     - TOKEN
   db:
     image: postgres:alpine

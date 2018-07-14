@@ -1,9 +1,11 @@
 from datetime import datetime
 import itertools
+import os
 import re
 from urllib.parse import urlparse
 
 import discord
+from discord.utils import oauth_url
 import humanize
 
 from pluralkit import db
@@ -582,3 +584,20 @@ async def import_tupperware(conn, message, args):
         await db.update_member_field(conn, member_id=existing_member["id"], field="description", value=member_description)
     
     return True, "System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting."
+
+@command(cmd="invite", description="Generates an invite link for this bot.")
+async def invite_link(conn, message, args):
+    client_id = os.environ["CLIENT_ID"]
+
+    permissions = discord.Permissions()
+    permissions.manage_webhooks = True
+    permissions.send_messages = True
+    permissions.manage_messages = True
+    permissions.embed_links = True
+    permissions.attach_files = True
+    permissions.read_message_history = True
+    permissions.add_reactions = True
+
+    url = oauth_url(client_id, permissions)
+    logger.debug("Sending invite URL: {}".format(url))
+    return True, url
