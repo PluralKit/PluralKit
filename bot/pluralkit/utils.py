@@ -10,6 +10,8 @@ import humanize
 from pluralkit import db
 from pluralkit.bot import client, logger
 
+def escape(s):
+    return s.replace("`", "\`")
 
 def generate_hid() -> str:
     return "".join(random.choices(string.ascii_lowercase, k=5))
@@ -224,7 +226,7 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
     # Get names of all members
     member_texts = []
     for member in await db.get_all_members(conn, system_id=system["id"]):
-        member_texts.append("{} (`{}`)".format(member["name"], member["hid"]))
+        member_texts.append("{} (`{}`)".format(escape(member["name"]), member["hid"]))
 
     if len(member_texts) > 0:
         card.add_field(name="Members", value="\n".join(
