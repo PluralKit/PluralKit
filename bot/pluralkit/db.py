@@ -104,6 +104,9 @@ async def get_member_by_hid(conn, member_hid: str):
 async def get_member(conn, member_id: int):
     return await conn.fetchrow("select * from members where id = $1", member_id)
 
+@db_wrap
+async def get_members(conn, members: list):
+    return await conn.fetch("select * from members where id = any($1)", members)
 
 @db_wrap
 async def get_message(conn, message_id: str):
@@ -186,27 +189,43 @@ async def delete_message(conn, message_id: str):
     logger.debug("Deleting message (id={})".format(message_id))
     await conn.execute("delete from messages where mid = $1", int(message_id))
 
-@db_wrap
-async def current_fronter(conn, system_id: int):
-    return await conn.fetchrow("""select *, members.name
-    from switches
-    left outer join members on (members.id = switches.member) -- Left outer join instead of normal join - makes name = null instead of just ignoring the row
-    where switches.system = $1
-    order by timestamp desc""", system_id)
+# @db_wrap
+# async def front_history(conn, system_id: int, count: int):
+#     return await conn.fetch("""select
+#         switches.timestamp, members.name, members.id, switches.id as switch_id
+#     from
+#         (
+#             select * from switches where system = $1 order by timestamp desc limit $2
+#         ) as switches
+#     left outer join switch_members
+#         on switch_members.switch = switches.id
+#     left outer join members
+#         on switch_members.member = members.id
+#     order by switches.timestamp desc""", system_id, count)
 
 @db_wrap
-async def past_fronters(conn, system_id: int, amount: int):
-    return await conn.fetch("""select *, members.name
+async def front_history(conn, system_id: int, count: int):
+    return await conn.fetch("""select
+        switches.*,
+        array(
+            select member from switch_members
+            where switch_members.switch = switches.id
+        ) as members
     from switches
-    left outer join members on (members.id = switches.member) -- (see above)
     where switches.system = $1
-    order by timestamp
-    desc limit $2""", system_id, amount)
+    order by switches.timestamp desc
+    limit $2""", system_id, count)
 
 @db_wrap
-async def add_switch(conn, system_id: int, member_id: int):
-    logger.debug("Adding switch (system={}, member={})".format(system_id, member_id))
-    return await conn.execute("insert into switches (system, member) values ($1, $2)", system_id, member_id)
+async def add_switch(conn, system_id: int):
+    logger.debug("Adding switch (system={})".format(system_id))
+    res = await conn.fetchrow("insert into switches (system) values ($1) returning *", system_id)
+    return res["id"]
+
+@db_wrap
+async def add_switch_member(conn, switch_id: int, member_id: int):
+    logger.debug("Adding switch member (switch={}, member={})".format(switch_id, member_id))
+    await conn.execute("insert into switch_members (switch, member) values ($1, $2)", switch_id, member_id)
 
 @db_wrap
 async def get_server_info(conn, server_id: str):
@@ -254,9 +273,12 @@ async def create_tables(conn):
     await conn.execute("""create table if not exists switches (
         id          serial primary key,
         system      serial not null references systems(id) on delete cascade,
-        member      serial references members(id) on delete restrict,
-        timestamp   timestamp not null default current_timestamp,
-        member_del  bool not null default false
+        timestamp   timestamp not null default current_timestamp
+    )""")
+    await conn.execute("""create table if not exists switch_members (
+        id          serial primary key,
+        switch      serial not null references switches(id) on delete cascade,
+        member      serial not null references members(id) on delete cascade
     )""")
     await conn.execute("""create table if not exists webhooks (
         channel     bigint primary key,

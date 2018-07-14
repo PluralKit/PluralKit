@@ -1,4 +1,5 @@
 from datetime import datetime
+import itertools
 import re
 from urllib.parse import urlparse
 
@@ -145,7 +146,7 @@ async def system_unlink(conn, message, args):
         await db.unlink_account(conn, system_id=system["id"], account_id=message.author.id)
         return True, "Account unlinked."
 
-@command(cmd="system fronter", usage="[system]", description="Gets the current fronter in the system.", category="Switching commands")
+@command(cmd="system fronter", usage="[system]", description="Gets the current fronter(s) in the system.", category="Switching commands")
 async def system_fronter(conn, message, args):
     if len(args) == 0:
         system = await db.get_system_by_account(conn, message.author.id)
@@ -158,21 +159,30 @@ async def system_fronter(conn, message, args):
         if system is None:
             return False, "Can't find system \"{}\".".format(args[0])
     
-    current_fronter = await db.current_fronter(conn, system_id=system["id"])
-    if not current_fronter:
+    # Get latest switch from DB
+    switches = await db.front_history(conn, system_id=system["id"], count=1)
+    if len(switches) == 0:
+        # Special case if empty
         return True, make_default_embed(None).add_field(name="Current fronter", value="*(nobody)*")
 
-    fronter_name = "*(nobody)*"
-    if current_fronter["member"]:
-        member = await db.get_member(conn, member_id=current_fronter["member"])
-        fronter_name = member["name"]
-    if current_fronter["member_del"]:
-        fronter_name = "*(deleted member)*"
+    switch = switches[0]
 
-    since = current_fronter["timestamp"]
+    fronter_names = []
+    if len(switch["members"]) > 0:
+        # Fetch member data from DB
+        members = await db.get_members(conn, switch["members"])
+        fronter_names = [member["name"] for member in members]
 
     embed = make_default_embed(None)
-    embed.add_field(name="Current fronter", value=fronter_name)
+
+    if len(fronter_names) == 0:
+        embed.add_field(name="Current fronter", value="*nobody*")
+    elif len(fronter_names) == 1:
+        embed.add_field(name="Current fronters", value=fronter_names[0])
+    else:
+        embed.add_field(name="Current fronter", value=", ".join(fronter_names))
+
+    since = switch["timestamp"]
     embed.add_field(name="Since", value="{} ({})".format(since.isoformat(sep=" ", timespec="seconds"), humanize.naturaltime(since)))
     return True, embed
 
@@ -189,15 +199,29 @@ async def system_fronthistory(conn, message, args):
         if system is None:
             return False, "Can't find system \"{}\".".format(args[0])
     
-    switches = await db.past_fronters(conn, system_id=system["id"], amount=10)
+    # Get list of past switches from DB
+    switches = await db.front_history(conn, system_id=system["id"], count=10)
     
+    # Get all unique IDs referenced
+    all_member_ids = {id for switch in switches for id in switch["members"]}
+    
+    # And look them up in the database into a dict
+    all_members = {member["id"]: member for member in await db.get_members(conn, list(all_member_ids))}
+
     lines = []
     for switch in switches:
+        # Special case when no one's fronting
+        if len(switch["members"]) == 0:
+            name = "*nobody*"
+        else:
+            name = ", ".join([all_members[id]["name"] for id in switch["members"]])
+
+        # Make proper date string
         since = switch["timestamp"]
         time_text = since.isoformat(sep=" ", timespec="seconds")
         rel_text = humanize.naturaltime(since)
 
-        lines.append("**{}** ({}, at {})".format(switch["name"], time_text, rel_text))
+        lines.append("**{}** ({}, {})".format(name, time_text, rel_text))
 
     embed = make_default_embed("\n".join(lines))
     embed.title = "Past switches"
@@ -292,16 +316,16 @@ async def member_set(conn, message, member, args):
                 return False, "Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25)."
 
         if prop == "avatar":
-            user = await parse_mention(args[0])
+            user = await parse_mention(value)
             if user:
                 # Set the avatar to the mentioned user's avatar
                 # Discord doesn't like webp, but also hosts png alternatives
                 value = user.avatar_url.replace(".webp", ".png")
             else:
                 # Validate URL
-                u = urlparse(args[0])
+                u = urlparse(value)
                 if u.scheme in ["http", "https"] and u.netloc and u.path:
-                    value = args[0]
+                    value = value
                 else:
                     return False, "Invalid URL."
     else:
@@ -405,7 +429,7 @@ async def message_info(conn, message, args):
     await client.send_message(message.channel, embed=embed)
     return True
 
-@command(cmd="switch", usage="<name|id>", description="Registers a switch and changes the current fronter.", category="Switching commands")
+@command(cmd="switch", usage="<name|id> [name|id]...", description="Registers a switch and changes the current fronter.", category="Switching commands")
 async def switch_member(conn, message, args):
     if len(args) == 0:
         return False
@@ -415,19 +439,36 @@ async def switch_member(conn, message, args):
     if system is None:
         return False, "No system is registered to this account."
 
-    # Find the member
-    member = await get_member_fuzzy(conn, system["id"], " ".join(args))
-    if not member:
-        return False, "Couldn't find member \"{}\".".format(args[0])
+    members = []
+    for member_name in args:
+        # Find the member
+        member = await get_member_fuzzy(conn, system["id"], member_name)
+        if not member:
+            return False, "Couldn't find member \"{}\".".format(member_name)
+        members.append(member)
+    
+    member_ids = {member["id"] for member in members}
 
-    # Get current fronter
-    current_fronter = await db.current_fronter(conn, system_id=system["id"])
-    if current_fronter and current_fronter["member"] == member["id"]:
-        return False, "Member \"{}\" is already fronting.".format(member["name"])
+    switches = await db.front_history(conn, system_id=system["id"], count=1)
+    fronter_ids = {}
+    if switches:
+        fronter_ids = set(switches[0]["members"])
+
+    if member_ids == fronter_ids:
+        if len(members) == 1:
+            return False, "{} is already fronting.".format(members[0]["name"])
+        return False, "Members {} are already fronting.".format(", ".join([m["name"] for m in members]))
     
     # Log the switch
-    await db.add_switch(conn, system_id=system["id"], member_id=member["id"])
-    return True, "Switch registered. Current fronter is now {}.".format(member["name"])
+    async with conn.transaction():
+        switch_id = await db.add_switch(conn, system_id=system["id"])
+        for member in members:
+            await db.add_switch_member(conn, switch_id=switch_id, member_id=member["id"])
+
+    if len(members) == 1:
+        return True, "Switch registered. Current fronter is now {}.".format(member["name"])
+    else:
+        return True, "Switch registered. Current fronters are now {}.".format(", ".join([m["name"] for m in members]))
 
 @command(cmd="switch out", description="Registers a switch out, and leaves current fronter blank.", category="Switching commands")
 async def switch_out(conn, message, args):
@@ -436,13 +477,13 @@ async def switch_out(conn, message, args):
     if system is None:
         return False, "No system is registered to this account."
 
-    # Get current fronter
-    current_fronter = await db.current_fronter(conn, system_id=system["id"])
-    if not current_fronter or not current_fronter["member"]:
+    # Get current fronters
+    switches = await db.front_history(conn, system_id=system["id"], count=1)
+    if not switches or not switches[0]["members"]:
         return False, "There's already no one in front."
 
-    # Log it
-    await db.add_switch(conn, system_id=system["id"], member_id=None)
+    # Log it, and don't log any members
+    await db.add_switch(conn, system_id=system["id"])
     return True, "Switch-out registered."
 
 @command(cmd="mod log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.", category="Moderation commands")

@@ -170,10 +170,13 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
     if system["tag"]:
         card.add_field(name="Tag", value=system["tag"])
 
-    current_fronter = await db.current_fronter(conn, system_id=system["id"])
-    if current_fronter and current_fronter["member"]:
-        fronter_val = "{} (for {})".format(current_fronter["name"], humanize.naturaldelta(current_fronter["timestamp"]))
-        card.add_field(name="Current fronter", value=fronter_val)
+    switches = await db.front_history(conn, system_id=system["id"], count=1)
+    if switches and switches[0]["members"]:
+        members = await db.get_members(conn, switches[0]["members"])
+        names = ", ".join([member["name"] for member in members])
+        
+        fronter_val = "{} (for {})".format(names, humanize.naturaldelta(switches[0]["timestamp"]))
+        card.add_field(name="Current fronter" if len(members) == 1 else "Current fronters", value=fronter_val)
 
     account_names = []
     for account_id in await db.get_linked_accounts(conn, system_id=system["id"]):
