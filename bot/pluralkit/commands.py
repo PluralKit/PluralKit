@@ -395,12 +395,12 @@ async def message_info(conn, message, args):
     embed.colour = discord.Colour.blue()
 
     if system["name"]:
-        system_value = "`{}`: {}".format(system["hid"], system["name"])
+        system_value = "{}: (`{}`)".format(system["name"], system["hid"])
     else:
         system_value = "`{}`".format(system["hid"])
     embed.add_field(name="System", value=system_value)
-    embed.add_field(name="Member", value="`{}`: {}".format(
-        member["hid"], member["name"]))
+    embed.add_field(name="Member", value="{}: (`{}`)".format(
+        member["name"], member["hid"]))
     embed.add_field(name="Sent by", value="{}#{}".format(
         original_sender.name, original_sender.discriminator))
     embed.add_field(name="Content", value=message.clean_content, inline=False)
