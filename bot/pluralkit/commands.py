@@ -426,6 +426,7 @@ async def switch_member(conn, message, args):
             return False, "Couldn't find member \"{}\".".format(member_name)
         members.append(member)
     
+    # Compare requested switch IDs and existing fronter IDs to check for existing switches
     # Lists, because order matters, it makes sense to just swap fronters
     member_ids = [member["id"] for member in members]
     fronter_ids = (await get_fronter_ids(conn, system["id"]))[0]
@@ -491,23 +492,21 @@ def make_help(cmds):
                 cmd, subcmd or "", usage or ""), value=description, inline=False)
     return embed
 
-@command(cmd="help", usage="[category]", description="Shows this help message.")
+@command(cmd="help", usage="[system|member|proxy|switch|mod]", description="Shows help messages.")
 async def show_help(conn, message, args):
     embed = make_default_embed("")
     embed.title = "PluralKit Help"
 
-    categories = {}
-    prefix = "pk;"
-    for cmd, (_, usage, description, category) in command_map.items():
-        if category is None:
-            continue
+    category = args[0] if len(args) > 0 else None
 
-        if category not in categories:
-            categories[category] = []
-        
-        categories[category].append("**{}{} {}** - {}".format(prefix, cmd, usage or "", description or ""))
-
-    for category, lines in categories.items():
-        embed.add_field(name=category, value="\n".join(lines), inline=False)
+    from pluralkit.help import help_pages
+    if category in help_pages:
+        for name, text in help_pages[category]:
+            if name:
+                embed.add_field(name=name, value=text)
+            else:
+                embed.description = text
+    else:
+        return False
 
     return True, embed
