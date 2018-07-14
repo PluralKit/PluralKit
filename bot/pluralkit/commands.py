@@ -564,7 +564,7 @@ async def import_tupperware(conn, message, args):
                 bday = datetime.strptime(bday_str, "%a %b %d %Y")
                 if bday:
                     member_birthdate = bday.date()
-            elif line.startswith("Total messages sent: "):
+            elif line.startswith("Total messages sent: ") or line.startswith("Tag: "):
                 # Ignore this, just so it doesn't catch as the description
                 pass
             else:
