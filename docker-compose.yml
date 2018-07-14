@@ -9,7 +9,7 @@ services:
   db:
     image: postgres:alpine
     volumes:
-    - db_data:/var/lib/postgres
+    - "db_data:/var/lib/postgresql/data"
     restart: always
 volumes:
   db_data:
