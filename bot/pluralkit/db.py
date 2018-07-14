@@ -189,20 +189,6 @@ async def delete_message(conn, message_id: str):
     logger.debug("Deleting message (id={})".format(message_id))
     await conn.execute("delete from messages where mid = $1", int(message_id))
 
-# @db_wrap
-# async def front_history(conn, system_id: int, count: int):
-#     return await conn.fetch("""select
-#         switches.timestamp, members.name, members.id, switches.id as switch_id
-#     from
-#         (
-#             select * from switches where system = $1 order by timestamp desc limit $2
-#         ) as switches
-#     left outer join switch_members
-#         on switch_members.switch = switches.id
-#     left outer join members
-#         on switch_members.member = members.id
-#     order by switches.timestamp desc""", system_id, count)
-
 @db_wrap
 async def front_history(conn, system_id: int, count: int):
     return await conn.fetch("""select
@@ -210,6 +196,7 @@ async def front_history(conn, system_id: int, count: int):
         array(
             select member from switch_members
             where switch_members.switch = switches.id
+            order by switch_members.id asc
         ) as members
     from switches
     where switches.system = $1

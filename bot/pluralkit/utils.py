@@ -59,8 +59,10 @@ async def get_fronter_ids(conn, system_id):
 
 async def get_fronters(conn, system_id):
     member_ids, timestamp = await get_fronter_ids(conn, system_id)
-    members = await db.get_members(conn, member_ids)
-    return members, timestamp
+
+    # Collect in dict and then look up as list, to preserve return order
+    members = {member["id"]: member for member in await db.get_members(conn, member_ids)}
+    return [members[member_id] for member_id in member_ids], timestamp
 
 async def get_front_history(conn, system_id, count):
     # Get history from DB

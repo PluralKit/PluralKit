@@ -426,9 +426,9 @@ async def switch_member(conn, message, args):
             return False, "Couldn't find member \"{}\".".format(member_name)
         members.append(member)
     
-    member_ids = {member["id"] for member in members}
-
-    fronter_ids = set((await get_fronter_ids(conn, system["id"]))[0])
+    # Lists, because order matters, it makes sense to just swap fronters
+    member_ids = [member["id"] for member in members]
+    fronter_ids = (await get_fronter_ids(conn, system["id"]))[0]
     if member_ids == fronter_ids:
         if len(members) == 1:
             return False, "{} is already fronting.".format(members[0]["name"])
