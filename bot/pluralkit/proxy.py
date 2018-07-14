@@ -123,7 +123,7 @@ async def proxy_message(conn, member, trigger_message, inner):
     hook_message = await send_hook_message(member, hook_id, hook_token, text=inner, image_url=image_url)
 
     # Insert new message details into the DB
-    await db.add_message(conn, message_id=hook_message.id, channel_id=trigger_message.channel.id, member_id=member["id"], sender_id=trigger_message.author.id)
+    await db.add_message(conn, message_id=hook_message.id, channel_id=trigger_message.channel.id, member_id=member["id"], sender_id=trigger_message.author.id, content=inner)
 
     # Log message to logging channel if necessary
     log_channel = await get_log_channel(conn, trigger_message.server)

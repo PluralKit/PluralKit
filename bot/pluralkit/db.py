@@ -150,10 +150,10 @@ async def add_webhook(conn, channel_id: str, webhook_id: str, webhook_token: str
 
 
 @db_wrap
-async def add_message(conn, message_id: str, channel_id: str, member_id: int, sender_id: str):
+async def add_message(conn, message_id: str, channel_id: str, member_id: int, sender_id: str, content: str):
     logger.debug("Adding new message (id={}, channel={}, member={}, sender={})".format(
         message_id, channel_id, member_id, sender_id))
-    await conn.execute("insert into messages (mid, channel, member, sender) values ($1, $2, $3, $4)", int(message_id), int(channel_id), member_id, int(sender_id))
+    await conn.execute("insert into messages (mid, channel, member, sender, content) values ($1, $2, $3, $4, $5)", int(message_id), int(channel_id), member_id, int(sender_id), content)
 
 
 @db_wrap
@@ -255,6 +255,7 @@ async def create_tables(conn):
         mid         bigint primary key,
         channel     bigint not null,
         member      serial not null references members(id) on delete cascade,
+        content     text not null,
         sender      bigint not null references accounts(uid)
     )""")
     await conn.execute("""create table if not exists switches (
