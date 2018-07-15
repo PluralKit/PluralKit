@@ -4,12 +4,12 @@ import os
 
 import discord
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logging.getLogger("discord").setLevel(logging.INFO)
 logging.getLogger("websockets").setLevel(logging.INFO)
 
 logger = logging.getLogger("pluralkit.bot")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 client = discord.Client()
 

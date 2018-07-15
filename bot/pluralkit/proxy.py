@@ -112,6 +112,7 @@ async def send_hook_message(member, hook_id, hook_token, text=None, image_url=No
 
 async def proxy_message(conn, member, trigger_message, inner):
     logger.debug("Proxying message '{}' for member {}".format(inner, member["hid"]))
+    logger.info("[{}#{}] {}".format(member["system_hid"], member["hid"], inner))
 
     # Get the webhook details
     hook_id, hook_token = await get_webhook(conn, trigger_message.channel)
