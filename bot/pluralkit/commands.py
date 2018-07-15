@@ -1,5 +1,7 @@
 from datetime import datetime
+import io
 import itertools
+import json
 import os
 import re
 from urllib.parse import urlparse
@@ -628,3 +630,47 @@ async def invite_link(conn, message, args):
     url = oauth_url(client_id, permissions)
     logger.debug("Sending invite URL: {}".format(url))
     return True, url
+
+@command(cmd="export", description="Exports system data to a machine-readable format.")
+async def export(conn, message, args):
+    system = await db.get_system_by_account(conn, message.author.id)
+
+    if system is None:
+        return False, "No system is registered to this account."
+
+    members = await db.get_all_members(conn, system["id"])
+    accounts = await db.get_linked_accounts(conn, system["id"])
+    switches = await get_front_history(conn, system["id"], 999999)
+
+    data = {
+        "name": system["name"],
+        "hid": system["hid"],
+        "description": system["description"],
+        "tag": system["tag"],
+        "avatar_url": system["avatar_url"],
+        "created": system["created"].isoformat(),
+        "members": [
+            {
+                "name": member["name"],
+                "hid": member["hid"],
+                "color": member["color"],
+                "avatar_url": member["avatar_url"],
+                "birthday": member["birthday"].isoformat() if member["birthday"] else None,
+                "pronouns": member["pronouns"],
+                "description": member["description"],
+                "prefix": member["prefix"],
+                "suffix": member["suffix"],
+                "created": member["created"].isoformat()
+            } for member in members
+        ],
+        "accounts": [str(uid) for uid in accounts],
+        "switches": [
+            {
+                "timestamp": timestamp.isoformat(),
+                "members": [member["hid"] for member in members]
+            } for timestamp, members in switches
+        ]
+    }
+
+    f = io.BytesIO(json.dumps(data).encode("utf-8"))
+    await client.send_file(message.channel, f, filename="system.json")
