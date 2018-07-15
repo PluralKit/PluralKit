@@ -186,7 +186,7 @@ async def system_fronter(conn, message, args):
     embed = make_default_embed(None)
 
     if len(fronter_names) == 0:
-        embed.add_field(name="Current fronter", value="*nobody*")
+        embed.add_field(name="Current fronter", value="(no fronter)")
     elif len(fronter_names) == 1:
         embed.add_field(name="Current fronter", value=fronter_names[0])
     else:
@@ -214,7 +214,7 @@ async def system_fronthistory(conn, message, args):
     for i, (timestamp, members) in enumerate(front_history):
         # Special case when no one's fronting
         if len(members) == 0:
-            name = "*nobody*"
+            name = "(no fronter)"
         else:
             name = ", ".join([member["name"] for member in members])
 
@@ -478,7 +478,7 @@ async def switch_member(conn, message, args):
     else:
         return True, "Switch registered. Current fronters are now {}.".format(", ".join([m["name"] for m in members]))
 
-@command(cmd="switch out", description="Registers a switch out, and leaves current fronter blank.", category="Switching commands")
+@command(cmd="switch out", description="Registers a switch with no one in front.", category="Switching commands")
 async def switch_out(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
@@ -510,19 +510,6 @@ async def set_log(conn, message, args):
 
     await db.update_server(conn, server.id, logging_channel_id=channel_id)
     return True, "Updated logging channel." if channel_id else "Cleared logging channel."
-
-def make_help(cmds):
-    embed = discord.Embed()
-    embed.colour = discord.Colour.blue()
-    embed.title = "PluralKit Help"
-    embed.set_footer(
-        text="<> denotes mandatory arguments, [] denotes optional arguments")
-
-    for cmd, subcommands in cmds:
-        for subcmd, (_, usage, description) in subcommands.items():
-            embed.add_field(name="{} {} {}".format(
-                cmd, subcmd or "", usage or ""), value=description, inline=False)
-    return embed
 
 @command(cmd="help", usage="[system|member|proxy|switch|mod]", description="Shows help messages.")
 async def show_help(conn, message, args):

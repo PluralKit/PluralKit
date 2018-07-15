@@ -115,7 +115,7 @@ For example:
 `pk;switch John` - Registers a switch with John as fronter.
 `pk;switch John Jill` - Registers a switch John and Jill as co-fronters."""),
         ("Switching out",
-        """You can use the `pk;switch out` command to register a switch-out."""),
+        """You can use the `pk;switch out` command to register a switch with no one in front."""),
         ("Viewing fronting history",
         """To view front history, you can use the `pk;system fronter` and `pk;system fronthistory` commands.
         
