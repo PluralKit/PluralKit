@@ -1,5 +1,6 @@
-import os
 import json
+import os
+import re
 import time
 
 import aiohttp
@@ -133,7 +134,6 @@ async def proxy_message(conn, member, trigger_message, inner):
     # Delete the original message
     await client.delete_message(trigger_message)
 
-
 async def handle_proxying(conn, message):
     # Can't proxy in DMs, webhook creation will explode
     if message.channel.is_private:
@@ -148,7 +148,6 @@ async def handle_proxying(conn, message):
         bool(x["prefix"])) + int(bool(x["suffix"])), reverse=True)
 
     msg = message.content
-    msg_clean = message.clean_content
     for member in members:
         # If no proxy details are configured, skip
         if not member["prefix"] and not member["suffix"]:
@@ -158,9 +157,13 @@ async def handle_proxying(conn, message):
         prefix = member["prefix"] or ""
         suffix = member["suffix"] or ""
 
+        # Avoid matching a prefix of "<" on a mention
+        if prefix == "<":
+            if re.match(r"^<(?:@|@!|#|@&|:\w+:|a:\w+:)\d+>", msg):
+                continue
+
         # If we have a match, proxy the message
-        # Match on the cleaned message to prevent a prefix of "<" catching on a mention
-        if msg_clean.startswith(prefix) and msg_clean.endswith(suffix):
+        if msg.startswith(prefix) and msg.endswith(suffix):
             # Extract the actual message contents sans tags
             if suffix:
                 inner_message = msg[len(prefix):-len(suffix)].strip()
