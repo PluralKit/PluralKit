@@ -47,7 +47,6 @@ async def create_member(conn, system_id: int, member_name: str, member_hid: str)
 @db_wrap
 async def delete_member(conn, member_id: int):
     logger.debug("Deleting member (id={})".format(member_id))
-    await conn.execute("update switches set member = null, member_del = true where member = $1", member_id)
     await conn.execute("delete from members where id = $1", member_id)
 
 
