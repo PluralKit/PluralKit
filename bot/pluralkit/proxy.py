@@ -135,6 +135,10 @@ async def proxy_message(conn, member, trigger_message, inner):
 
 
 async def handle_proxying(conn, message):
+    # Can't proxy in DMs, webhook creation will explode
+    if message.channel.is_private:
+        return False
+
     # Big fat query to find every member associated with this account
     # Returned member object has a few more keys (system tag, for example)
     members = await db.get_members_by_account(conn, account_id=message.author.id)
