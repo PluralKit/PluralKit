@@ -33,7 +33,11 @@ async def log_message(original_message, hook_message, member, log_channel):
     message_link = "https://discordapp.com/channels/{}/{}/{}".format(original_message.server.id, original_message.channel.id, hook_message.id)
     embed.author.url = message_link
 
-    await client.send_message(log_channel, embed=embed)
+    try:
+        await client.send_message(log_channel, embed=embed)
+    except discord.errors.Forbidden:
+        # Ignore logging permission errors, perhaps make it spam a big nasty error instead
+        pass
 
 async def log_delete(hook_message, member, log_channel):
     embed = make_log_embed(hook_message, member, channel_name=hook_message.channel.name)
