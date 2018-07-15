@@ -210,7 +210,8 @@ async def system_fronthistory(conn, message, args):
             return False, "Can't find system \"{}\".".format(args[0])
     
     lines = []
-    for timestamp, members in await get_front_history(conn, system["id"], count=10):
+    front_history = await get_front_history(conn, system["id"], count=10)
+    for i, (timestamp, members) in enumerate(front_history):
         # Special case when no one's fronting
         if len(members) == 0:
             name = "*nobody*"
@@ -221,7 +222,11 @@ async def system_fronthistory(conn, message, args):
         time_text = timestamp.isoformat(sep=" ", timespec="seconds")
         rel_text = humanize.naturaltime(timestamp)
 
-        lines.append("**{}** ({}, {})".format(name, time_text, rel_text))
+        delta_text = ""
+        if i > 0:
+            last_switch_time = front_history[i-1][0]
+            delta_text = ", for {}".format(humanize.naturaldelta(timestamp - last_switch_time))
+        lines.append("**{}** ({}, {}{})".format(name, time_text, rel_text, delta_text))
 
     embed = make_default_embed("\n".join(lines) or "(none)")
     embed.title = "Past switches"
