@@ -231,6 +231,7 @@ async def create_tables(conn):
         name        text,
         description text,
         tag         text,
+        avatar_url  text,
         created     timestamp not null default current_timestamp
     )""")
     await conn.execute("""create table if not exists members (

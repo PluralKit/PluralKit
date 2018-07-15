@@ -28,7 +28,10 @@ For example:
 For example:
 `pk;system set name My System` - sets your system name to "My System".
 `pk;system set description A really cool system.` - sets your system description.
-`pk;system set tag [MS]` - Sets the tag (which will be displayed after member names in messages) to "[MS]"."""),
+`pk;system set tag [MS]` - Sets the tag (which will be displayed after member names in messages) to "[MS]".
+`pk;system set avatar https://placekitten.com/400/400` - Changes your system's avatar to a linked image.
+
+If you don't specify any value, the property will be cleared."""),
         ("Linking accounts",
         """If your system has multiple accounts, you can link all of them to your system, and you can use the bot from all of those accounts.
         
@@ -64,7 +67,9 @@ For example:
 `pk;member set John birthdate 1996-02-27` - Changes John's birthdate to Feb 27, 1996. (Must be YYYY-MM-DD format).
 `pk;member set John birthdate 02-27` - Changes John's birthdate to February 27th, with no year.
 `pk;member set John avatar https://placekitten.com/400/400` - Changes John's avatar to a linked image.
-`pk;member set John avatar @JohnsAccount` - Changes John's avatar to the avatar of the mentioned account."""),
+`pk;member set John avatar @JohnsAccount` - Changes John's avatar to the avatar of the mentioned account.
+
+If you don't specify any value, the property will be cleared."""),
         ("Removing a member",
         """If you want to delete a member, you can use the `pk;member delete` command.
         

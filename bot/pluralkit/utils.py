@@ -204,6 +204,9 @@ async def generate_system_info_card(conn, system: asyncpg.Record) -> discord.Emb
     if system["name"]:
         card.title = system["name"]
 
+    if system["avatar_url"]:
+        card.set_thumbnail(url=system["avatar_url"])
+
     if system["tag"]:
         card.add_field(name="Tag", value=system["tag"])
     

@@ -62,11 +62,12 @@ async def system_set(conn, message, args):
     if system is None:
         return False, "No system is registered to this account."
 
-    allowed_properties = ["name", "description", "tag"]
+    allowed_properties = ["name", "description", "tag", "avatar"]
     db_properties = {
         "name": "name",
         "description": "description",
-        "tag": "tag"
+        "tag": "tag",
+        "avatar": "avatar_url"
     }
 
     prop = args[0]
@@ -86,6 +87,20 @@ async def system_set(conn, message, args):
                                         for member in members_exceeding])
                 logger.debug("Members exceeding combined length with tag '{}': {}".format(value, member_names))
                 return False, "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names)
+
+        if prop == "avatar":
+            user = await parse_mention(value)
+            if user:
+                # Set the avatar to the mentioned user's avatar
+                # Discord doesn't like webp, but also hosts png alternatives
+                value = user.avatar_url.replace(".webp", ".png")
+            else:
+                # Validate URL
+                u = urlparse(value)
+                if u.scheme in ["http", "https"] and u.netloc and u.path:
+                    value = value
+                else:
+                    return False, "Invalid URL."
     else:
         # Clear from DB
         value = None
@@ -93,7 +108,11 @@ async def system_set(conn, message, args):
     db_prop = db_properties[prop]
     await db.update_system_field(conn, system_id=system["id"], field=db_prop, value=value)
     
-    return True, "{} system {}.".format("Updated" if value else "Cleared", prop)
+    if prop == "avatar" and value:
+        response = make_default_embed("Updated system avatar.").set_image(url=value)
+    else:
+        response = "{} system {}.".format("Updated" if value else "Cleared", prop)
+    return True, response
 
 @command(cmd="system link", usage="<account>", description="Links another account to your system.", category="System commands")
 async def system_link(conn, message, args):
@@ -326,7 +345,7 @@ async def member_set(conn, message, member, args):
     db_prop = db_properties[prop]
     await db.update_member_field(conn, member_id=member["id"], field=db_prop, value=value)
     
-    if prop == "avatar":
+    if prop == "avatar" and value:
         response = make_default_embed("Updated {}'s avatar.".format(member["name"])).set_image(url=value)
     else:
         response = "{} {}'s {}.".format("Updated" if value else "Cleared", member["name"], prop)
