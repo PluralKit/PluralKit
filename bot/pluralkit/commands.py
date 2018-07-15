@@ -644,7 +644,7 @@ async def export(conn, message, args):
 
     data = {
         "name": system["name"],
-        "hid": system["hid"],
+        "id": system["hid"],
         "description": system["description"],
         "tag": system["tag"],
         "avatar_url": system["avatar_url"],
@@ -652,7 +652,7 @@ async def export(conn, message, args):
         "members": [
             {
                 "name": member["name"],
-                "hid": member["hid"],
+                "id": member["hid"],
                 "color": member["color"],
                 "avatar_url": member["avatar_url"],
                 "birthday": member["birthday"].isoformat() if member["birthday"] else None,
