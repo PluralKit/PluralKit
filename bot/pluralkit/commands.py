@@ -541,6 +541,7 @@ async def import_tupperware(conn, message, args):
 
     await client.send_message(message.channel, embed=make_default_embed("Please reply to this message with `tul!list` (or the server equivalent)."))
     
+    
     # Check to make sure the Tupperware response actually belongs to the correct user
     def ensure_account(tw_msg):
         if not tw_msg.embeds:
@@ -551,9 +552,23 @@ async def import_tupperware(conn, message, args):
         
         return tw_msg.embeds[0]["title"].startswith("{}#{}".format(message.author.name, message.author.discriminator))
 
+    embeds = []
+    
     tw_msg = await client.wait_for_message(author=tupperware_member, channel=message.channel, timeout=60.0, check=ensure_account)
     if not tw_msg:
         return False, "Tupperware import timed out."
+    embeds.append(tw_msg.embeds[0])
+
+    # Handle Tupperware pagination
+    if tw_msg.embeds[0]["title"].endswith("(page 1)"):
+        while True:
+            # Wait for a new message (within 1 second)
+            tw_msg = await client.wait_for_message(author=tupperware_member, channel=message.channel, timeout=1.0, check=ensure_account)
+            if not tw_msg:
+                # If no message, then it's probably done, so we break
+                break
+            # Otherwise add this next message to the list
+            embeds.append(tw_msg.embeds[0])
 
     logger.debug("Importing from Tupperware...")
 
@@ -565,48 +580,48 @@ async def import_tupperware(conn, message, args):
         system = await db.create_system(conn, system_name=None, system_hid=hid)
         await db.link_account(conn, system_id=system["id"], account_id=message.author.id)
 
-    embed = tw_msg.embeds[0]
-    for field in embed["fields"]:
-        name = field["name"]
-        lines = field["value"].split("\n")
+    for embed in embeds:
+        for field in embed["fields"]:
+            name = field["name"]
+            lines = field["value"].split("\n")
 
-        member_prefix = None
-        member_suffix = None
-        member_avatar = None
-        member_birthdate = None
-        member_description = None
+            member_prefix = None
+            member_suffix = None
+            member_avatar = None
+            member_birthdate = None
+            member_description = None
 
-        for line in lines:
-            if line.startswith("Brackets:"):
-                brackets = line[len("Brackets: "):]
-                member_prefix = brackets[:brackets.index("text")].strip() or None
-                member_suffix = brackets[brackets.index("text")+4:].strip() or None
-            elif line.startswith("Avatar URL: "):
-                url = line[len("Avatar URL: "):]
-                member_avatar = url
-            elif line.startswith("Birthday: "):
-                bday_str = line[len("Birthday: "):]
-                bday = datetime.strptime(bday_str, "%a %b %d %Y")
-                if bday:
-                    member_birthdate = bday.date()
-            elif line.startswith("Total messages sent: ") or line.startswith("Tag: "):
-                # Ignore this, just so it doesn't catch as the description
-                pass
-            else:
-                member_description = line
+            for line in lines:
+                if line.startswith("Brackets:"):
+                    brackets = line[len("Brackets: "):]
+                    member_prefix = brackets[:brackets.index("text")].strip() or None
+                    member_suffix = brackets[brackets.index("text")+4:].strip() or None
+                elif line.startswith("Avatar URL: "):
+                    url = line[len("Avatar URL: "):]
+                    member_avatar = url
+                elif line.startswith("Birthday: "):
+                    bday_str = line[len("Birthday: "):]
+                    bday = datetime.strptime(bday_str, "%a %b %d %Y")
+                    if bday:
+                        member_birthdate = bday.date()
+                elif line.startswith("Total messages sent: ") or line.startswith("Tag: "):
+                    # Ignore this, just so it doesn't catch as the description
+                    pass
+                else:
+                    member_description = line
 
-        existing_member = await db.get_member_by_name(conn, system_id=system["id"], member_name=name)
-        if not existing_member:
-            hid = generate_hid()
-            logger.debug("Creating new member {} (hid={})...".format(name, hid))
-            existing_member = await db.create_member(conn, system_id=system["id"], member_name=name, member_hid=hid)
-        
-        logger.debug("Updating fields...")
-        await db.update_member_field(conn, member_id=existing_member["id"], field="prefix", value=member_prefix)
-        await db.update_member_field(conn, member_id=existing_member["id"], field="suffix", value=member_suffix)
-        await db.update_member_field(conn, member_id=existing_member["id"], field="avatar_url", value=member_avatar)
-        await db.update_member_field(conn, member_id=existing_member["id"], field="birthday", value=member_birthdate)
-        await db.update_member_field(conn, member_id=existing_member["id"], field="description", value=member_description)
+            existing_member = await db.get_member_by_name(conn, system_id=system["id"], member_name=name)
+            if not existing_member:
+                hid = generate_hid()
+                logger.debug("Creating new member {} (hid={})...".format(name, hid))
+                existing_member = await db.create_member(conn, system_id=system["id"], member_name=name, member_hid=hid)
+            
+            logger.debug("Updating fields...")
+            await db.update_member_field(conn, member_id=existing_member["id"], field="prefix", value=member_prefix)
+            await db.update_member_field(conn, member_id=existing_member["id"], field="suffix", value=member_suffix)
+            await db.update_member_field(conn, member_id=existing_member["id"], field="avatar_url", value=member_avatar)
+            await db.update_member_field(conn, member_id=existing_member["id"], field="birthday", value=member_birthdate)
+            await db.update_member_field(conn, member_id=existing_member["id"], field="description", value=member_description)
     
     return True, "System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting."
 
