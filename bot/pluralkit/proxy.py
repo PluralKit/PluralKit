@@ -176,8 +176,8 @@ async def handle_proxying(conn, message):
                 # Slicing to -0 breaks, don't do that
                 inner_message = msg[len(prefix):].strip()
 
-            # Make sure the message isn't blank
-            if inner_message:
+            # Make sure the message isn't blank (but only if it has no attachments)
+            if inner_message or message.attachments:
                 await proxy_message(conn, member, message, inner_message)
             break
 
