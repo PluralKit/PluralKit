@@ -95,7 +95,7 @@ async def send_hook_message(member, hook_id, hook_token, text=None, image_url=No
         if image_url:
             # Fetch the image URL and proxy it directly into the file data (async streaming!)
             image_resp = await session.get(image_url)
-            fd.add_field("file", image_resp.data, content_type=image_resp.content_type, filename=image_resp.url.name)
+            fd.add_field("file", image_resp.content, content_type=image_resp.content_type, filename=image_resp.url.name)
 
         # Send the actual webhook request, and wait for a response
         async with session.post("https://discordapp.com/api/v6/webhooks/{}/{}?wait=true".format(hook_id, hook_token),
