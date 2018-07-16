@@ -411,9 +411,6 @@ async def message_info(conn, message, args):
     if not message_row:
         return False, "Message not found."
 
-    # Find the actual message object
-    channel = client.get_channel(str(message_row["channel"]))
-
     # Get the original sender of the message
     original_sender = await client.get_user_info(str(message_row["sender"]))
 
@@ -422,11 +419,11 @@ async def message_info(conn, message, args):
     system = await db.get_system(conn, member["system"])
 
     embed = discord.Embed()
-    embed.timestamp = message.timestamp
+    embed.timestamp = discord.utils.snowflake_time(str(mid))
     embed.colour = discord.Colour.blue()
 
     if system["name"]:
-        system_value = "{}: (`{}`)".format(system["name"], system["hid"])
+        system_value = "{} (`{}`)".format(system["name"], system["hid"])
     else:
         system_value = "`{}`".format(system["hid"])
     embed.add_field(name="System", value=system_value)
