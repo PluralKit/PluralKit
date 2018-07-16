@@ -54,7 +54,7 @@ async def new_system(conn, message, args):
         await db.link_account(conn, system_id=system["id"], account_id=message.author.id)
         return True, "System registered! To begin adding members, use `pk;member new <name>`."
 
-@command(cmd="system set", usage="<name|description|tag> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
+@command(cmd="system set", usage="<name|description|tag|avatar> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
 async def system_set(conn, message, args):
     if len(args) == 0: 
         return False
