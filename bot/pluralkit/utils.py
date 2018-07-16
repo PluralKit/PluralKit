@@ -148,7 +148,7 @@ def command(cmd, usage=None, description=None, category=None):
 
                 if not success and not msg:
                     # Failure, no message, print usage
-                    usage_str = "**Usage:** {} {}".format(cmd, usage or "")
+                    usage_str = "**Usage:** pk;{} {}".format(cmd, usage or "")
                     await client.send_message(message.channel, embed=make_default_embed(usage_str))
                 elif not success:
                     # Failure, print message
