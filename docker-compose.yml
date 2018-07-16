@@ -4,6 +4,7 @@ services:
     build: bot
     depends_on:
     - db
+    - influx
     environment:
     - CLIENT_ID
     - TOKEN
@@ -12,5 +13,19 @@ services:
     volumes:
     - "db_data:/var/lib/postgresql/data"
     restart: always
+  influx:
+    image: influxdb:alpine
+    volumes:
+    - "influx_data:/var/lib/influxdb:Z"
+    restart: always
+  grafana:
+    build: grafana
+    depends_on:
+    - influx
+    ports:
+    - "3000:3000"
+    restart: always
+
 volumes:
   db_data:
+  influx_data:

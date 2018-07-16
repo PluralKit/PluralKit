@@ -1,1 +1,1 @@
-from . import commands, db, proxy
+from . import commands, db, proxy, stats

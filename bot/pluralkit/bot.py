@@ -1,6 +1,8 @@
+from datetime import datetime
 import logging
 import json
 import os
+import time
 
 import discord
 
@@ -38,7 +40,7 @@ async def on_message(message):
     # Split into args. shlex sucks so we don't bother with quotes
     args = message.content.split(" ")
 
-    from pluralkit import proxy, utils
+    from pluralkit import proxy, utils, stats
     
     command_items = utils.command_map.items()
     command_items = sorted(command_items, key=lambda x: len(x[0]), reverse=True)
@@ -54,7 +56,14 @@ async def on_message(message):
                 args = []
 
             async with client.pool.acquire() as conn:
+                time_before = time.perf_counter()
                 await func(conn, message, args)
+                time_after = time.perf_counter()
+
+                # Report command time stats
+                execution_time = time_after - time_before
+                response_time = (datetime.now() - message.timestamp).total_seconds()
+                await stats.report_command(command, execution_time, response_time)
                 return
 
     # Try doing proxy parsing
@@ -82,7 +91,7 @@ async def on_socket_raw_receive(msg):
             pass
 
 async def run():
-    from pluralkit import db
+    from pluralkit import db, stats
     try:
         logger.info("Connecting to database...")
         pool = await db.connect()
@@ -92,6 +101,7 @@ async def run():
             await db.create_tables(conn)
 
         logger.info("Connecting to InfluxDB...")
+        await stats.connect()
 
         client.pool = pool
         logger.info("Connecting to Discord...")

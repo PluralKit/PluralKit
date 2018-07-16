@@ -6,7 +6,7 @@ import time
 import aiohttp
 import discord
 
-from pluralkit import db
+from pluralkit import db, stats
 from pluralkit.bot import client, logger
 
 def make_log_embed(hook_message, member, channel_name):
@@ -98,20 +98,28 @@ async def send_hook_message(member, hook_id, hook_token, text=None, image_url=No
             fd.add_field("file", image_resp.content, content_type=image_resp.content_type, filename=image_resp.url.name)
 
         # Send the actual webhook request, and wait for a response
-        async with session.post("https://discordapp.com/api/v6/webhooks/{}/{}?wait=true".format(hook_id, hook_token),
-            data=fd,
-            headers=req_headers) as resp:
-            if resp.status == 200:
-                resp_data = await resp.json()
-                # Make a fake message object for passing on - this is slightly broken but works for most things
-                msg = discord.Message(reactions=[], **resp_data)
+        time_before = time.perf_counter()
+        try:
+            async with session.post("https://discordapp.com/api/v6/webhooks/{}/{}?wait=true".format(hook_id, hook_token),
+                data=fd,
+                headers=req_headers) as resp:
+                if resp.status == 200:
+                    resp_data = await resp.json()
 
-                # Make sure it's added to the client's message cache - otherwise events r
-                #client.messages.append(msg)
-                return msg
-            else:
-                # Fake a Discord exception, also because #yolo
-                raise discord.HTTPException(resp, await resp.text())
+                    # Make a fake message object for passing on - this is slightly broken but works for most things
+                    msg = discord.Message(reactions=[], **resp_data)
+
+                    # Report to stats
+                    await stats.report_webhook(time.perf_counter() - time_before, True)
+                    return msg
+                else:
+                    await stats.report_webhook(time.perf_counter() - time_before, False)
+
+                    # Fake a Discord exception, also because #yolo
+                    raise discord.HTTPException(resp, await resp.text())
+        except aiohttp.ClientResponseError:
+            await stats.report_webhook(time.perf_counter() - time_before, False)
+            logger.exception("Error while sending webhook message")
 
 
 async def proxy_message(conn, member, trigger_message, inner):

@@ -3,8 +3,8 @@ import time
 import asyncpg
 import asyncpg.exceptions
 
+from pluralkit import stats
 from pluralkit.bot import logger
-
 
 async def connect():
     while True:
@@ -17,11 +17,17 @@ async def connect():
 def db_wrap(func):
     async def inner(*args, **kwargs):
         before = time.perf_counter()
-        res = await func(*args, **kwargs)
-        after = time.perf_counter()
+        try:
+            res = await func(*args, **kwargs)
+            after = time.perf_counter()
 
-        logger.debug(" - DB call {} took {:.2f} ms".format(func.__name__, (after - before) * 1000))
-        return res
+            logger.debug(" - DB call {} took {:.2f} ms".format(func.__name__, (after - before) * 1000))
+            await stats.report_db_query(func.__name__, after - before, True)
+
+            return res
+        except asyncpg.exceptions.PostgresError:
+            await stats.report_db_query(func.__name__, time.perf_counter() - before, False)
+            logger.exception("Error from database query {}".format(func.__name__))
     return inner
 
 @db_wrap
@@ -222,6 +228,14 @@ async def update_server(conn, server_id: str, logging_channel_id: str):
     logging_channel_id = int(logging_channel_id) if logging_channel_id else None
     logger.debug("Updating server settings (id={}, log_channel={})".format(server_id, logging_channel_id))
     await conn.execute("insert into servers (id, log_channel) values ($1, $2) on conflict (id) do update set log_channel = $2", int(server_id), logging_channel_id)
+
+@db_wrap
+async def member_count(conn):
+    return await conn.fetchval("select count(*) from members")
+
+@db_wrap
+async def system_count(conn):
+    return await conn.fetchval("select count(*) from systems")
 
 async def create_tables(conn):
     await conn.execute("""create table if not exists systems (
