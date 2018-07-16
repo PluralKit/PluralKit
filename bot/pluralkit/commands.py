@@ -110,7 +110,7 @@ async def system_set(conn, message, args):
     db_prop = db_properties[prop]
     await db.update_system_field(conn, system_id=system["id"], field=db_prop, value=value)
     
-    response = "{} system {}.".format("Updated" if value else "Cleared", prop)
+    response = make_default_embed("{} system {}.".format("Updated" if value else "Cleared", prop))
     if prop == "avatar" and value:
         response.set_image(url=value)
     return True, response
