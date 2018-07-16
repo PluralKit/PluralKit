@@ -110,10 +110,9 @@ async def system_set(conn, message, args):
     db_prop = db_properties[prop]
     await db.update_system_field(conn, system_id=system["id"], field=db_prop, value=value)
     
+    response = "{} system {}.".format("Updated" if value else "Cleared", prop)
     if prop == "avatar" and value:
-        response = make_default_embed("Updated system avatar.").set_image(url=value)
-    else:
-        response = "{} system {}.".format("Updated" if value else "Cleared", prop)
+        response.set_image(url=value)
     return True, response
 
 @command(cmd="system link", usage="<account>", description="Links another account to your system.", category="System commands")
@@ -352,10 +351,11 @@ async def member_set(conn, message, member, args):
     db_prop = db_properties[prop]
     await db.update_member_field(conn, member_id=member["id"], field=db_prop, value=value)
     
+    response = make_default_embed("{} {}'s {}.".format("Updated" if value else "Cleared", member["name"], prop))
     if prop == "avatar" and value:
-        response = make_default_embed("Updated {}'s avatar.".format(member["name"])).set_image(url=value)
-    else:
-        response = "{} {}'s {}.".format("Updated" if value else "Cleared", member["name"], prop)
+        response.set_image(url=value)
+    if prop == "color" and value:
+        response.colour = int(value, 16)
     return True, response
 
 @member_command(cmd="member proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).", category="Member commands")
