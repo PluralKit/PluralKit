@@ -413,7 +413,6 @@ async def message_info(conn, message, args):
 
     # Find the actual message object
     channel = client.get_channel(str(message_row["channel"]))
-    message = await client.get_message(channel, str(message_row["mid"]))
 
     # Get the original sender of the message
     original_sender = await client.get_user_info(str(message_row["sender"]))
@@ -435,7 +434,7 @@ async def message_info(conn, message, args):
         member["name"], member["hid"]))
     embed.add_field(name="Sent by", value="{}#{}".format(
         original_sender.name, original_sender.discriminator))
-    embed.add_field(name="Content", value=message.clean_content, inline=False)
+    embed.add_field(name="Content", value=message_row["content"], inline=False)
 
     embed.set_author(name=member["name"], url=member["avatar_url"])
 
