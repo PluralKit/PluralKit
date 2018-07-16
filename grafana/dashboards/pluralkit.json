@@ -214,7 +214,7 @@
         "repeat": null,
         "seriesOverrides": [
           {
-            "alias": "Database Success Rate (%)",
+            "alias": "Database success rate (%)",
             "yaxis": 2
           }
         ],
