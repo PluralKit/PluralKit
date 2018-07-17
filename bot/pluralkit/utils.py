@@ -261,7 +261,7 @@ async def generate_member_info_card(conn, member: asyncpg.Record) -> discord.Emb
 
     if member["birthday"]:
         bday_val = member["birthday"].strftime("%b %d, %Y")
-        if member["birthday"].year < 1000:
+        if member["birthday"].year == 1:
             bday_val = member["birthday"].strftime("%b %d")
         card.add_field(name="Birthdate", value=bday_val)
 
