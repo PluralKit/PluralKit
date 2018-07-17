@@ -8,6 +8,7 @@ services:
     environment:
     - CLIENT_ID
     - TOKEN
+    restart: always
   db:
     image: postgres:alpine
     volumes:
