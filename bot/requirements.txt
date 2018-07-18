@@ -3,3 +3,4 @@ aioinflux
 asyncpg
 discord.py
 humanize
+uvloop
