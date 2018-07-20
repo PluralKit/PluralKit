@@ -554,7 +554,7 @@ async def switch_move(conn, message, args):
         switch_id = (await db.front_history(conn, system["id"], count=1))[0]["id"]
 
         # Change the switch in the DB
-        await db.move_last_switch(conn, system["id"], switch_id, naive_new_time)
+        await db.move_last_switch(conn, system["id"], switch_id, new_time)
         return True, "Switch moved."
 
 @command(cmd="mod log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.", category="Moderation commands")
