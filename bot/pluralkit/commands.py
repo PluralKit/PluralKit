@@ -38,7 +38,7 @@ async def new_system(conn, message, args):
     system = await db.get_system_by_account(conn, message.author.id)
 
     if system is not None:
-        return False, "You already have a system registered. To remove your system, use `pk;system remove`, or to unlink your system from this account, use `pk;system unlink`."
+        return False, "You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`."
 
     system_name = None
     if len(args) > 0:
