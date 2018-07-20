@@ -25,6 +25,9 @@ services:
     - influx
     ports:
     - "2938:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_USERNAME}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD}"
     restart: always
 
 volumes:
