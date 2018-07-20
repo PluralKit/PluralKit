@@ -27,3 +27,21 @@ async def report_webhook(time, success):
         "measurement": "webhook",
         "fields": {"response_time": time, "success": int(success)}
     })
+
+async def report_periodical_stats(conn):
+    from pluralkit import db
+
+    systems = await db.system_count(conn)
+    members = await db.member_count(conn)
+    messages = await db.message_count(conn)
+    accounts = await db.account_count(conn)
+
+    await client.write({
+        "measurement": "stats",
+        "fields": {
+            "systems": systems,
+            "members": members,
+            "messages": messages,
+            "accounts": accounts
+        }
+    })

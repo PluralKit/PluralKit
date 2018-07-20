@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 import logging
 import json
@@ -90,6 +91,13 @@ async def on_socket_raw_receive(msg):
         except ValueError:
             pass
 
+async def periodical_stat_timer(pool):
+    async with pool.acquire() as conn:
+        while True:
+            from pluralkit import stats
+            await stats.report_periodical_stats(conn)
+            await asyncio.sleep(30)
+
 async def run():
     from pluralkit import db, stats
     try:
@@ -102,6 +110,9 @@ async def run():
 
         logger.info("Connecting to InfluxDB...")
         await stats.connect()
+        
+        logger.info("Starting periodical stat reporting...")
+        asyncio.get_event_loop().create_task(periodical_stat_timer(pool))
 
         client.pool = pool
         logger.info("Connecting to Discord...")

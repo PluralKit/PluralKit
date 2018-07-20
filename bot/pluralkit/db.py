@@ -242,6 +242,14 @@ async def member_count(conn):
 async def system_count(conn):
     return await conn.fetchval("select count(*) from systems")
 
+@db_wrap
+async def message_count(conn):
+    return await conn.fetchval("select count(*) from messages")
+
+@db_wrap
+async def account_count(conn):
+    return await conn.fetchval("select count(*) from accounts")
+
 async def create_tables(conn):
     await conn.execute("""create table if not exists systems (
         id          serial primary key,
