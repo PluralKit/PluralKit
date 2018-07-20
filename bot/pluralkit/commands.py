@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import io
 import itertools
 import json
@@ -6,6 +6,7 @@ import os
 import re
 from urllib.parse import urlparse
 
+import dateparser
 import discord
 from discord.utils import oauth_url
 import humanize
@@ -464,7 +465,7 @@ async def switch_member(conn, message, args):
         if len(members) == 1:
             return False, "{} is already fronting.".format(members[0]["name"])
         return False, "Members {} are already fronting.".format(", ".join([m["name"] for m in members]))
-    
+
     # Log the switch
     async with conn.transaction():
         switch_id = await db.add_switch(conn, system_id=system["id"])
@@ -491,6 +492,70 @@ async def switch_out(conn, message, args):
     # Log it, and don't log any members
     await db.add_switch(conn, system_id=system["id"])
     return True, "Switch-out registered."
+
+@command(cmd="switch move", usage="<time>", description="Moves the most recent switch to a different point in time.", category="Switching commands")
+async def switch_move(conn, message, args):
+    system = await db.get_system_by_account(conn, message.author.id)
+
+    if system is None:
+        return False, "No system is registered to this account."
+
+    if len(args) == 0:
+        return False
+
+    # Parse the time to move to
+    new_time = dateparser.parse(" ".join(args), languages=["en"], settings={
+        "TO_TIMEZONE": "UTC",
+        "RETURN_AS_TIMEZONE_AWARE": False
+    })
+    if not new_time:
+        return False, "{} can't be parsed as a valid time.".format(" ".join(args))
+
+    # Make sure the time isn't in the future
+    if new_time > datetime.now():
+        return False, "Can't move switch to a time in the future."
+
+    # Make sure it all runs in a big transaction for atomicity
+    async with conn.transaction():
+        # Get the last two switches to make sure the switch to move isn't before the second-last switch
+        last_two_switches = await get_front_history(conn, system["id"], count=2)
+        if len(last_two_switches) == 0:
+            return False, "There are no registered switches for this system."
+
+        last_timestamp, last_fronters = last_two_switches[0]
+        if len(last_two_switches) > 1:
+            second_last_timestamp, _ = last_two_switches[1]
+
+            if new_time < second_last_timestamp:
+                time_str = humanize.naturaltime(second_last_timestamp)
+                return False, "Can't move switch to before last switch time ({}), as it would cause conflicts.".format(time_str)
+        
+        # Display the confirmation message w/ humanized times
+        members = ", ".join([member["name"] for member in last_fronters])
+        last_absolute = last_timestamp.isoformat(sep=" ", timespec="seconds")
+        last_relative = humanize.naturaltime(last_timestamp)
+        new_absolute = new_time.isoformat(sep=" ", timespec="seconds")
+        new_relative = humanize.naturaltime(new_time)
+        embed = make_default_embed("This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute, last_relative, new_absolute, new_relative))
+        
+        # Await and handle confirmation reactions
+        confirm_msg = await client.send_message(message.channel, embed=embed)
+        await client.add_reaction(confirm_msg, "✅")
+        await client.add_reaction(confirm_msg, "❌")
+
+        reaction = await client.wait_for_reaction(emoji=["✅", "❌"], message=confirm_msg, user=message.author, timeout=60.0)
+        if not reaction:
+            return False, "Switch move timed out."
+
+        if reaction.reaction.emoji == "❌":
+            return False, "Switch move cancelled."
+
+        # DB requires the actual switch ID which our utility method above doesn't return, do this manually
+        switch_id = (await db.front_history(conn, system["id"], count=1))[0]["id"]
+
+        # Change the switch in the DB
+        await db.move_last_switch(conn, system["id"], switch_id, naive_new_time)
+        return True, "Switch moved."
 
 @command(cmd="mod log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.", category="Moderation commands")
 async def set_log(conn, message, args):

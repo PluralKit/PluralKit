@@ -215,6 +215,11 @@ async def add_switch(conn, system_id: int):
     return res["id"]
 
 @db_wrap
+async def move_last_switch(conn, system_id: int, switch_id: int, new_time):
+    logger.debug("Moving latest switch (system={}, id={}, new_time={})".format(system_id, switch_id, new_time))
+    await conn.execute("update switches set timestamp = $1 where system = $2 and id = $3", new_time, system_id, switch_id)
+
+@db_wrap
 async def add_switch_member(conn, switch_id: int, member_id: int):
     logger.debug("Adding switch member (switch={}, member={})".format(switch_id, member_id))
     await conn.execute("insert into switch_members (switch, member) values ($1, $2)", switch_id, member_id)

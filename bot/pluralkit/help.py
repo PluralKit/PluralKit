@@ -116,6 +116,18 @@ For example:
 `pk;switch John Jill` - Registers a switch John and Jill as co-fronters."""),
         ("Switching out",
         """You can use the `pk;switch out` command to register a switch with no one in front."""),
+        ("Moving a switch",
+        """You can move the latest switch you have registered using the `pk;switch move` command.
+        
+This is useful if you log the switch a while after it happened, and you want to properly backdate it in the history.
+
+For example:
+`pk;switch move 10 minutes ago` - Moves the latest switch to 10 minutes ago
+`pk;switch move 11pm EST` - Moves the latest switch to 11pm EST
+
+Note that you can't move the switch further back than the second-last logged switch, and you can't move a switch to a time in the future.
+
+The default time zone for absolute times is UTC, but you can specify other time zones in the command itself, as given in the example."""),
         ("Viewing fronting history",
         """To view front history, you can use the `pk;system fronter` and `pk;system fronthistory` commands.
         

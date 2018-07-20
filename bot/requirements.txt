@@ -1,6 +1,7 @@
 aiohttp
 aioinflux
 asyncpg
+dateparser
 discord.py
 humanize
 uvloop
