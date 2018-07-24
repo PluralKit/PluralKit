@@ -1,7 +1,9 @@
 version: '3'
 services:
   bot:
-    build: bot
+    build:
+      context: src/
+      dockerfile: bot.Dockerfile
     depends_on:
     - db
     - influx

@@ -10,7 +10,9 @@ help_pages = {
 `pk;help proxy` - Details on message proxying.
 `pk;help switch` - Details on switch logging.
 `pk;help mod` - Details on moderator operations.
-`pk;help import` - Details on data import from other services.""")
+`pk;help import` - Details on data import from other services."""),
+        ("Discord",
+         """For feedback, bug reports, suggestions, or just chatting, join our Discord: https://discord.gg/PczBt78""")
     ],
     "system": [
         ("Registering a new system",

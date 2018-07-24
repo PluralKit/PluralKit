@@ -1,18 +1,21 @@
+from collections import namedtuple
+from datetime import datetime
+import logging
+from typing import List
 import time
 
 import asyncpg
 import asyncpg.exceptions
 
-from pluralkit import stats
-from pluralkit.bot import logger
+from pluralkit import System, Member, stats
 
+logger = logging.getLogger("pluralkit.db")
 async def connect():
     while True:
         try:
             return await asyncpg.create_pool(user="postgres", password="postgres", database="postgres", host="db")
         except (ConnectionError, asyncpg.exceptions.CannotConnectNowError):
             pass
-
 
 def db_wrap(func):
     async def inner(*args, **kwargs):
@@ -31,10 +34,11 @@ def db_wrap(func):
     return inner
 
 @db_wrap
-async def create_system(conn, system_name: str, system_hid: str):
+async def create_system(conn, system_name: str, system_hid: str) -> System:
     logger.debug("Creating system (name={}, hid={})".format(
         system_name, system_hid))
-    return await conn.fetchrow("insert into systems (name, hid) values ($1, $2) returning *", system_name, system_hid)
+    row = await conn.fetchrow("insert into systems (name, hid) values ($1, $2) returning *", system_name, system_hid)
+    return System(**row) if row else None
 
 
 @db_wrap
@@ -44,10 +48,11 @@ async def remove_system(conn, system_id: int):
 
 
 @db_wrap
-async def create_member(conn, system_id: int, member_name: str, member_hid: str):
+async def create_member(conn, system_id: int, member_name: str, member_hid: str) -> Member:
     logger.debug("Creating member (system={}, name={}, hid={})".format(
         system_id, member_name, member_hid))
-    return await conn.fetchrow("insert into members (name, system, hid) values ($1, $2, $3) returning *", member_name, system_id, member_hid)
+    row = await conn.fetchrow("insert into members (name, system, hid) values ($1, $2, $3) returning *", member_name, system_id, member_hid)
+    return Member(**row) if row else None
 
 
 @db_wrap
@@ -71,52 +76,54 @@ async def unlink_account(conn, system_id: int, account_id: str):
 
 
 @db_wrap
-async def get_linked_accounts(conn, system_id: int):
+async def get_linked_accounts(conn, system_id: int) -> List[int]:
     return [row["uid"] for row in await conn.fetch("select uid from accounts where system = $1", system_id)]
 
 
 @db_wrap
-async def get_system_by_account(conn, account_id: str):
-    return await conn.fetchrow("select systems.* from systems, accounts where accounts.uid = $1 and accounts.system = systems.id", int(account_id))
+async def get_system_by_account(conn, account_id: str) -> System:
+    row = await conn.fetchrow("select systems.* from systems, accounts where accounts.uid = $1 and accounts.system = systems.id", int(account_id))
+    return System(**row) if row else None
+
+@db_wrap
+async def get_system_by_hid(conn, system_hid: str) -> System:
+    row = await conn.fetchrow("select * from systems where hid = $1", system_hid)
+    return System(**row) if row else None
 
 
 @db_wrap
-async def get_system_by_hid(conn, system_hid: str):
-    return await conn.fetchrow("select * from systems where hid = $1", system_hid)
+async def get_system(conn, system_id: int) -> System:
+    row = await conn.fetchrow("select * from systems where id = $1", system_id)
+    return System(**row) if row else None
 
 
 @db_wrap
-async def get_system(conn, system_id: int):
-    return await conn.fetchrow("select * from systems where id = $1", system_id)
+async def get_member_by_name(conn, system_id: int, member_name: str) -> Member:
+    row = await conn.fetchrow("select * from members where system = $1 and lower(name) = lower($2)", system_id, member_name)
+    return Member(**row) if row else None
 
 
 @db_wrap
-async def get_member_by_name(conn, system_id: int, member_name: str):
-    return await conn.fetchrow("select * from members where system = $1 and lower(name) = lower($2)", system_id, member_name)
+async def get_member_by_hid_in_system(conn, system_id: int, member_hid: str) -> Member:
+    row = await conn.fetchrow("select * from members where system = $1 and hid = $2", system_id, member_hid)
+    return Member(**row) if row else None
 
 
 @db_wrap
-async def get_member_by_hid_in_system(conn, system_id: int, member_hid: str):
-    return await conn.fetchrow("select * from members where system = $1 and hid = $2", system_id, member_hid)
+async def get_member_by_hid(conn, member_hid: str) -> Member:
+    row = await conn.fetchrow("select * from members where hid = $1", member_hid)
+    return Member(**row) if row else None
 
 
 @db_wrap
-async def get_member_by_hid(conn, member_hid: str):
-    return await conn.fetchrow("select * from members where hid = $1", member_hid)
-
-
-@db_wrap
-async def get_member(conn, member_id: int):
-    return await conn.fetchrow("select * from members where id = $1", member_id)
+async def get_member(conn, member_id: int) -> Member:
+    row = await conn.fetchrow("select * from members where id = $1", member_id)
+    return Member(**row) if row else None
 
 @db_wrap
-async def get_members(conn, members: list):
-    return await conn.fetch("select * from members where id = any($1)", members)
-
-@db_wrap
-async def get_message(conn, message_id: str):
-    return await conn.fetchrow("select * from messages where mid = $1", message_id)
-
+async def get_members(conn, members: list) -> List[Member]:
+    rows = await conn.fetch("select * from members where id = any($1)", members)
+    return [Member(**row) for row in rows]
 
 @db_wrap
 async def update_system_field(conn, system_id: int, field: str, value):
@@ -133,18 +140,20 @@ async def update_member_field(conn, member_id: int, field: str, value):
 
 
 @db_wrap
-async def get_all_members(conn, system_id: int):
-    return await conn.fetch("select * from members where system = $1", system_id)
+async def get_all_members(conn, system_id: int) -> List[Member]:
+    rows = await conn.fetch("select * from members where system = $1", system_id)
+    return [Member(**row) for row in rows]
+
+@db_wrap
+async def get_members_exceeding(conn, system_id: int, length: int) -> List[Member]:
+    rows = await conn.fetch("select * from members where system = $1 and length(name) > $2", system_id, length)
+    return [Member(**row) for row in rows]
 
 
 @db_wrap
-async def get_members_exceeding(conn, system_id: int, length: int):
-    return await conn.fetch("select * from members where system = $1 and length(name) > $2", system_id, length)
-
-
-@db_wrap
-async def get_webhook(conn, channel_id: str):
-    return await conn.fetchrow("select webhook, token from webhooks where channel = $1", int(channel_id))
+async def get_webhook(conn, channel_id: str) -> (str, str):
+    row = await conn.fetchrow("select webhook, token from webhooks where channel = $1", int(channel_id))
+    return (str(row["webhook"]), row["token"]) if row else None
 
 
 @db_wrap
@@ -153,6 +162,9 @@ async def add_webhook(conn, channel_id: str, webhook_id: str, webhook_token: str
         channel_id, webhook_id, webhook_token))
     await conn.execute("insert into webhooks (channel, webhook, token) values ($1, $2, $3)", int(channel_id), int(webhook_id), webhook_token)
 
+@db_wrap
+async def delete_webhook(conn, channel_id: str):
+    await conn.execute("delete from webhooks where channel = $1", int(channel_id))
 
 @db_wrap
 async def add_message(conn, message_id: str, channel_id: str, member_id: int, sender_id: str, content: str):
@@ -160,11 +172,22 @@ async def add_message(conn, message_id: str, channel_id: str, member_id: int, se
         message_id, channel_id, member_id, sender_id))
     await conn.execute("insert into messages (mid, channel, member, sender, content) values ($1, $2, $3, $4, $5)", int(message_id), int(channel_id), member_id, int(sender_id), content)
 
+class ProxyMember(namedtuple("ProxyMember", ["id", "hid", "prefix", "suffix", "color", "name", "avatar_url", "tag", "system_name", "system_hid"])):
+    id: int
+    hid: str
+    prefix: str
+    suffix: str
+    color: str
+    name: str
+    avatar_url: str
+    tag: str
+    system_name: str
+    system_hid: str
 
 @db_wrap
-async def get_members_by_account(conn, account_id: str):
+async def get_members_by_account(conn, account_id: str) -> List[ProxyMember]:
     # Returns a "chimera" object
-    return await conn.fetch("""select
+    rows = await conn.fetch("""select
             members.id, members.hid, members.prefix, members.suffix, members.color, members.name, members.avatar_url,
             systems.tag, systems.name as system_name, systems.hid as system_hid
         from
@@ -173,11 +196,23 @@ async def get_members_by_account(conn, account_id: str):
             accounts.uid = $1
             and systems.id = accounts.system
             and members.system = systems.id""", int(account_id))
+    return [ProxyMember(**row) for row in rows]
 
+class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "content", "sender", "name", "hid", "avatar_url", "system_name", "system_hid"])):
+    mid: int
+    channel: int
+    member: int
+    content: str
+    sender: int
+    name: str
+    hid: str
+    avatar_url: str
+    system_name: str
+    system_hid: str
 
 @db_wrap
-async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str):
-    return await conn.fetchrow("""select
+async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str) -> MessageInfo:
+    row = await conn.fetchrow("""select
         messages.*,
         members.name, members.hid, members.avatar_url,
         systems.name as system_name, systems.hid as system_hid
@@ -186,7 +221,24 @@ async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str):
     where
         messages.member = members.id
         and members.system = systems.id
-        and mid = $1 and sender = $2""", int(message_id), int(sender_id))
+        and mid = $1
+        and sender = $2""", int(message_id), int(sender_id))
+    return MessageInfo(**row) if row else None
+
+
+@db_wrap
+async def get_message(conn, message_id: str) -> MessageInfo:
+    row = await conn.fetchrow("""select
+        messages.*,
+        members.name, members.hid, members.avatar_url,
+        systems.name as system_name, systems.hid as system_hid
+    from
+        messages, members, systems
+    where
+        messages.member = members.id
+        and members.system = systems.id
+        and mid = $1""", int(message_id))
+    return MessageInfo(**row) if row else None
 
 
 @db_wrap
@@ -215,7 +267,7 @@ async def add_switch(conn, system_id: int):
     return res["id"]
 
 @db_wrap
-async def move_last_switch(conn, system_id: int, switch_id: int, new_time):
+async def move_last_switch(conn, system_id: int, switch_id: int, new_time: datetime):
     logger.debug("Moving latest switch (system={}, id={}, new_time={})".format(system_id, switch_id, new_time))
     await conn.execute("update switches set timestamp = $1 where system = $2 and id = $3", new_time, system_id, switch_id)
 
@@ -235,19 +287,19 @@ async def update_server(conn, server_id: str, logging_channel_id: str):
     await conn.execute("insert into servers (id, log_channel) values ($1, $2) on conflict (id) do update set log_channel = $2", int(server_id), logging_channel_id)
 
 @db_wrap
-async def member_count(conn):
+async def member_count(conn) -> int:
     return await conn.fetchval("select count(*) from members")
 
 @db_wrap
-async def system_count(conn):
+async def system_count(conn) -> int:
     return await conn.fetchval("select count(*) from systems")
 
 @db_wrap
-async def message_count(conn):
+async def message_count(conn) -> int:
     return await conn.fetchval("select count(*) from messages")
 
 @db_wrap
-async def account_count(conn):
+async def account_count(conn) -> int:
     return await conn.fetchval("select count(*) from accounts")
 
 async def create_tables(conn):
@@ -283,7 +335,7 @@ async def create_tables(conn):
         channel     bigint not null,
         member      serial not null references members(id) on delete cascade,
         content     text not null,
-        sender      bigint not null references accounts(uid)
+        sender      bigint not null
     )""")
     await conn.execute("""create table if not exists switches (
         id          serial primary key,

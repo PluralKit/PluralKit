@@ -1,7 +1,5 @@
 from aioinflux import InfluxDBClient
 
-from pluralkit.bot import logger
-
 client = None
 async def connect():
     global client
