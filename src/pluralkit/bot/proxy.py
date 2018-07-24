@@ -1,12 +1,13 @@
 import ciso8601
 import logging
 import re
+import time
 from typing import List, Optional
 
 import aiohttp
 import discord
 
-from pluralkit import db
+from pluralkit import db, stats
 from pluralkit.bot import channel_logger, utils
 
 logger = logging.getLogger("pluralkit.bot.proxy")
@@ -162,11 +163,15 @@ class Proxy:
         if member.avatar_url:
             form_data.add_field("avatar_url", member.avatar_url)
 
+        time_before = time.perf_counter()
         async with self.session.post(
                 "https://discordapp.com/api/v6/webhooks/{}/{}?wait=true".format(hook_id, hook_token),
                 data=form_data) as resp:
             if resp.status == 200:
                 message = await resp.json()
+
+                # Report webhook stats to Influx
+                stats.report_webhook(time.perf_counter() - time_before, True)
 
                 await db.add_message(conn, message["id"], message["channel_id"], member.id, original_message.author.id,
                                      text or "")
@@ -205,6 +210,9 @@ class Proxy:
                                                                   message["timestamp"]),
                                                               message_id=message["id"])
             elif resp.status == 404 and not has_already_retried:
+                # Report webhook stats to Influx
+                stats.report_webhook(time.perf_counter() - time_before, False)
+
                 # Webhook doesn't exist. Delete it from the DB, create, and add a new one
                 self.logger.warning("Webhook registered in DB doesn't exist, deleting hook from DB, re-adding, and trying again (channel={}, hook={})".format(original_message.channel.id, hook_id))
                 await db.delete_webhook(conn, original_message.channel.id)
@@ -213,6 +221,9 @@ class Proxy:
                 # Then try again all over, making sure to not retry again and go in a loop should it continually fail
                 return await self.do_proxy_message(conn, member, original_message, text, attachment_url, has_already_retried=True)
             else:
+                # Report webhook stats to Influx
+                stats.report_webhook(time.perf_counter() - time_before, False)
+
                 raise discord.HTTPException(resp, await resp.text())
 
     async def try_proxy_message(self, conn, message: discord.Message):
