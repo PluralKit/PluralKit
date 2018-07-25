@@ -171,7 +171,7 @@ class Proxy:
                 message = await resp.json()
 
                 # Report webhook stats to Influx
-                stats.report_webhook(time.perf_counter() - time_before, True)
+                await stats.report_webhook(time.perf_counter() - time_before, True)
 
                 await db.add_message(conn, message["id"], message["channel_id"], member.id, original_message.author.id,
                                      text or "")
@@ -211,7 +211,7 @@ class Proxy:
                                                               message_id=message["id"])
             elif resp.status == 404 and not has_already_retried:
                 # Report webhook stats to Influx
-                stats.report_webhook(time.perf_counter() - time_before, False)
+                await stats.report_webhook(time.perf_counter() - time_before, False)
 
                 # Webhook doesn't exist. Delete it from the DB, create, and add a new one
                 self.logger.warning("Webhook registered in DB doesn't exist, deleting hook from DB, re-adding, and trying again (channel={}, hook={})".format(original_message.channel.id, hook_id))
@@ -222,7 +222,7 @@ class Proxy:
                 return await self.do_proxy_message(conn, member, original_message, text, attachment_url, has_already_retried=True)
             else:
                 # Report webhook stats to Influx
-                stats.report_webhook(time.perf_counter() - time_before, False)
+                await stats.report_webhook(time.perf_counter() - time_before, False)
 
                 raise discord.HTTPException(resp, await resp.text())
 
