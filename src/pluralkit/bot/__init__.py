@@ -1,9 +1,8 @@
 import asyncio
-from datetime import datetime
-import logging
 import json
-import os
+import logging
 import time
+from datetime import datetime
 
 import discord
 
@@ -11,7 +10,7 @@ from pluralkit import db, stats
 from pluralkit.bot import channel_logger, commands, proxy
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
-logging.getLogger("pluralkit").setLevel(logging.DEBUG)
+# logging.getLogger("pluralkit").setLevel(logging.DEBUG)
 
 class PluralKitBot:
     def __init__(self, token):
