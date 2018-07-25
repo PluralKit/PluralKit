@@ -47,7 +47,7 @@ def command(cmd, usage=None, description=None, category=None, system_required=Tr
             system = await db.get_system_by_account(conn, message.author.id)
 
             if system_required and system is None:
-                await client.send_message(message.channel, embed=utils.make_error_embed("No system registered to this account"))
+                await client.send_message(message.channel, embed=utils.make_error_embed("No system registered to this account. Use `pk;system new` to register one."))
                 return
             
             ctx = CommandContext(client=client, conn=conn, message=message, system=system)
@@ -58,7 +58,7 @@ def command(cmd, usage=None, description=None, category=None, system_required=Tr
                     embed = res if isinstance(res, discord.Embed) else utils.make_default_embed(res)
                     await client.send_message(message.channel, embed=embed)
             except NoSystemRegistered:
-                await client.send_message(message.channel, embed=utils.make_error_embed("No system registered to this account"))
+                await client.send_message(message.channel, embed=utils.make_error_embed("No system registered to this account. Use `pk;system new` to register one."))
             except InvalidCommandSyntax:
                 usage_str = "**Usage:** pk;{} {}".format(cmd, usage or "")
                 await client.send_message(message.channel, embed=utils.make_default_embed(usage_str))
