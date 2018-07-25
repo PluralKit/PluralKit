@@ -8,6 +8,8 @@ import pluralkit
 from pluralkit import db
 from pluralkit.bot import utils
 
+logger = logging.getLogger("pluralkit.bot.commands")
+
 command_list = {}
 
 class InvalidCommandSyntax(Exception):
@@ -63,6 +65,8 @@ def command(cmd, usage=None, description=None, category=None, system_required=Tr
             except CommandError as e:
                 embed = e.message if isinstance(e.message, discord.Embed) else utils.make_error_embed(e.message)
                 await client.send_message(message.channel, embed=embed)
+            except Exception:
+                logger.exception("Exception while handling command {} (args={}, system={})".format(cmd, args, system.hid if system else "(none)"))
 
         # Put command in map
         command_list[cmd] = CommandEntry(command=cmd, function=wrapper, usage=usage, description=description, category=category)
