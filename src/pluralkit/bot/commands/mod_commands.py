@@ -6,7 +6,7 @@ from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
-@command(cmd="mod log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.", category="Moderation commands")
+@command(cmd="mod log", usage="[channel]", description="Sets the bot to log events to a specified channel. Leave blank to disable.", category="Moderation commands", system_required=False)
 async def set_log(ctx: CommandContext, args: List[str]):
     if not ctx.message.author.server_permissions.administrator:
         raise CommandError("You must be a server administrator to use this command.")

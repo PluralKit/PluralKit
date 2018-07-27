@@ -11,7 +11,7 @@ from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
-@command(cmd="help", usage="[system|member|proxy|switch|mod]", description="Shows help messages.")
+@command(cmd="help", usage="[system|member|proxy|switch|mod]", description="Shows help messages.", system_required=False)
 async def show_help(ctx: CommandContext, args: List[str]):
     embed = utils.make_default_embed("")
     embed.title = "PluralKit Help"
@@ -31,7 +31,7 @@ async def show_help(ctx: CommandContext, args: List[str]):
 
     return embed
 
-@command(cmd="invite", description="Generates an invite link for this bot.")
+@command(cmd="invite", description="Generates an invite link for this bot.", system_required=False)
 async def invite_link(ctx: CommandContext, args: List[str]):
     client_id = os.environ["CLIENT_ID"]
 

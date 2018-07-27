@@ -8,7 +8,7 @@ logger = logging.getLogger("pluralkit.commands")
 
 
 @command(cmd="message", usage="<id>", description="Shows information about a proxied message. Requires the message ID.",
-         category="Message commands")
+         category="Message commands", system_required=False)
 async def message_info(ctx: CommandContext, args: List[str]):
     if len(args) == 0:
         raise InvalidCommandSyntax()

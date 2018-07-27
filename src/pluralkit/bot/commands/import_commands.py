@@ -9,7 +9,7 @@ from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
-@command(cmd="import tupperware", description="Import data from Tupperware.")
+@command(cmd="import tupperware", description="Import data from Tupperware.", system_required=False)
 async def import_tupperware(ctx: CommandContext, args: List[str]):
     tupperware_member = ctx.message.server.get_member("431544605209788416") or ctx.message.server.get_member("433916057053560832")
 
