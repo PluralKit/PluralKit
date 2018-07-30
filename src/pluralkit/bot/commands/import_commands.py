@@ -11,20 +11,30 @@ logger = logging.getLogger("pluralkit.commands")
 
 @command(cmd="import tupperware", description="Import data from Tupperware.", system_required=False)
 async def import_tupperware(ctx: CommandContext, args: List[str]):
-    tupperware_member = ctx.message.server.get_member("431544605209788416") or ctx.message.server.get_member("433916057053560832")
+    tupperware_ids = ["431544605209788416", "433916057053560832"]  # Main bot instance and Multi-Pals-specific fork
+    tupperware_members = [ctx.message.server.get_member(bot_id) for bot_id in tupperware_ids if ctx.message.server.get_member(bot_id)]
 
-    if not tupperware_member:
+    # Check if there's any Tupperware bot on the server
+    if not tupperware_members:
         raise CommandError("This command only works in a server where the Tupperware bot is also present.")
 
-    channel_permissions = ctx.message.channel.permissions_for(tupperware_member)
-    if not (channel_permissions.read_messages and channel_permissions.send_messages):
+    # Make sure at least one of the bts have send/read permissions here
+    for bot_member in tupperware_members:
+        channel_permissions = ctx.message.channel.permissions_for(bot_member)
+        if channel_permissions.read_messages and channel_permissions.send_messages:
+            # If so, break out of the loop
+            break
+    else:
+        # If no bots have permission (ie. loop doesn't break), throw error
         raise CommandError("This command only works in a channel where the Tupperware bot has read/send access.")
 
     await ctx.reply(embed=utils.make_default_embed("Please reply to this message with `tul!list` (or the server equivalent)."))
     
-    
-    # Check to make sure the Tupperware response actually belongs to the correct user
+    # Check to make sure the message is sent by Tupperware, and that the Tupperware response actually belongs to the correct user
     def ensure_account(tw_msg):
+        if tw_msg.author not in tupperware_members:
+            return False
+
         if not tw_msg.embeds:
             return False
 
@@ -35,7 +45,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
 
     embeds = []
     
-    tw_msg: discord.Message = await ctx.client.wait_for_message(author=tupperware_member, channel=ctx.message.channel, timeout=60.0, check=ensure_account)
+    tw_msg: discord.Message = await ctx.client.wait_for_message(channel=ctx.message.channel, timeout=60.0, check=ensure_account)
     if not tw_msg:
         raise CommandError("Tupperware import timed out.")
     embeds.append(tw_msg.embeds[0])
