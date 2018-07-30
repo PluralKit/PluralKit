@@ -101,7 +101,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
         hid = utils.generate_hid()
         logger.debug("Creating new system (hid={})...".format(hid))
         system = await db.create_system(ctx.conn, system_name=None, system_hid=hid)
-        await db.link_account(ctx.conn, system_id=system["id"], account_id=ctx.message.author.id)
+        await db.link_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
 
     for embed in embeds:
         for field in embed["fields"]:
