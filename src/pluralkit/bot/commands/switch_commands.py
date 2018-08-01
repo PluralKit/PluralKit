@@ -5,6 +5,7 @@ from typing import List
 import dateparser
 import humanize
 
+import pluralkit.utils
 from pluralkit import Member
 from pluralkit.bot import utils
 from pluralkit.bot.commands import *
@@ -27,7 +28,7 @@ async def switch_member(ctx: MemberCommandContext, args: List[str]):
     # Compare requested switch IDs and existing fronter IDs to check for existing switches
     # Lists, because order matters, it makes sense to just swap fronters
     member_ids = [member.id for member in members]
-    fronter_ids = (await utils.get_fronter_ids(ctx.conn, ctx.system.id))[0]
+    fronter_ids = (await pluralkit.utils.get_fronter_ids(ctx.conn, ctx.system.id))[0]
     if member_ids == fronter_ids:
         if len(members) == 1:
             raise CommandError("{} is already fronting.".format(members[0].name))
@@ -51,7 +52,7 @@ async def switch_member(ctx: MemberCommandContext, args: List[str]):
 @command(cmd="switch out", description="Registers a switch with no one in front.", category="Switching commands")
 async def switch_out(ctx: MemberCommandContext, args: List[str]):
     # Get current fronters
-    fronters, _ = await utils.get_fronter_ids(ctx.conn, system_id=ctx.system.id)
+    fronters, _ = await pluralkit.utils.get_fronter_ids(ctx.conn, system_id=ctx.system.id)
     if not fronters:
         raise CommandError("There's already no one in front.")
 
@@ -79,7 +80,7 @@ async def switch_move(ctx: MemberCommandContext, args: List[str]):
     # Make sure it all runs in a big transaction for atomicity
     async with ctx.conn.transaction():
         # Get the last two switches to make sure the switch to move isn't before the second-last switch
-        last_two_switches = await utils.get_front_history(ctx.conn, ctx.system.id, count=2)
+        last_two_switches = await pluralkit.utils.get_front_history(ctx.conn, ctx.system.id, count=2)
         if len(last_two_switches) == 0:
             raise CommandError("There are no registered switches for this system.")
 

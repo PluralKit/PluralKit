@@ -1,3 +1,4 @@
+aiodns
 aiohttp
 aioinflux
 asyncpg

@@ -11,6 +11,15 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
     avatar_url: str
     created: datetime
 
+    def to_json(self):
+        return {
+            "id": self.hid,
+            "name": self.name,
+            "description": self.description,
+            "tag": self.tag,
+            "avatar_url": self.avatar_url
+        }
+
 class Member(namedtuple("Member", ["id", "hid", "system", "color", "avatar_url", "name", "birthday", "pronouns", "description", "prefix", "suffix", "created"])):
     id: int
     hid: str
@@ -24,3 +33,16 @@ class Member(namedtuple("Member", ["id", "hid", "system", "color", "avatar_url",
     prefix: str
     suffix: str
     created: datetime
+
+    def to_json(self):
+        return {
+            "id": self.hid,
+            "name": self.name,
+            "color": self.color,
+            "avatar_url": self.avatar_url,
+            "birthday": self.birthday.isoformat() if self.birthday else None,
+            "pronouns": self.pronouns,
+            "description": self.description,
+            "prefix": self.prefix,
+            "suffix": self.suffix
+        }

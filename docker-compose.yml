@@ -1,9 +1,10 @@
 version: '3'
 services:
   bot:
-    build:
-      context: src/
-      dockerfile: bot.Dockerfile
+    build: src/
+    entrypoint:
+    - python
+    - bot_main.py
     depends_on:
     - db
     - influx
@@ -11,6 +12,16 @@ services:
     - CLIENT_ID
     - TOKEN
     restart: always
+  api:
+    build: src/
+    entrypoint:
+    - python
+    - api_main.py
+    depends_on:
+    - db
+    restart: always
+    ports:
+    - "2939:8080"
   db:
     image: postgres:alpine
     volumes:

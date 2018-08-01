@@ -6,6 +6,7 @@ from typing import List
 
 from discord.utils import oauth_url
 
+import pluralkit.utils
 from pluralkit.bot import utils
 from pluralkit.bot.commands import *
 
@@ -52,7 +53,7 @@ async def invite_link(ctx: CommandContext, args: List[str]):
 async def export(ctx: CommandContext, args: List[str]):
     members = await db.get_all_members(ctx.conn, ctx.system.id)
     accounts = await db.get_linked_accounts(ctx.conn, ctx.system.id)
-    switches = await utils.get_front_history(ctx.conn, ctx.system.id, 999999)
+    switches = await pluralkit.utils.get_front_history(ctx.conn, ctx.system.id, 999999)
 
     system = ctx.system
     data = {

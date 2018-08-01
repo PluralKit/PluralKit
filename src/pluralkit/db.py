@@ -6,6 +6,7 @@ import time
 
 import asyncpg
 import asyncpg.exceptions
+from discord.utils import snowflake_time
 
 from pluralkit import System, Member, stats
 
@@ -209,6 +210,17 @@ class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "content
     avatar_url: str
     system_name: str
     system_hid: str
+
+    def to_json(self):
+        return {
+            "id": str(self.mid),
+            "channel": str(self.channel),
+            "member": self.hid,
+            "system": self.system_hid,
+            "message_sender": str(self.sender),
+            "content": self.content,
+            "timestamp": snowflake_time(self.mid).isoformat()
+        }
 
 @db_wrap
 async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str) -> MessageInfo:

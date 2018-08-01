@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 import humanize
 
+import pluralkit.utils
 from pluralkit.bot import utils
 from pluralkit.bot.commands import *
 
@@ -153,7 +154,7 @@ async def system_fronter(ctx: CommandContext, args: List[str]):
         if system is None:
             raise CommandError("Can't find system \"{}\".".format(args[0]))
     
-    fronters, timestamp = await utils.get_fronters(ctx.conn, system_id=system.id)
+    fronters, timestamp = await pluralkit.utils.get_fronters(ctx.conn, system_id=system.id)
     fronter_names = [member.name for member in fronters]
 
     embed = utils.make_default_embed(None)
@@ -182,7 +183,7 @@ async def system_fronthistory(ctx: CommandContext, args: List[str]):
             raise CommandError("Can't find system \"{}\".".format(args[0]))
     
     lines = []
-    front_history = await utils.get_front_history(ctx.conn, system.id, count=10)
+    front_history = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=10)
     for i, (timestamp, members) in enumerate(front_history):
         # Special case when no one's fronting
         if len(members) == 0:

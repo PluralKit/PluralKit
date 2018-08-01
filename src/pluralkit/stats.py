@@ -7,6 +7,9 @@ async def connect():
     await client.create_database(db="pluralkit")
 
 async def report_db_query(query_name, time, success):
+    if not client:
+        return
+
     await client.write({
         "measurement": "database_query",
         "tags": {"query": query_name},
@@ -14,6 +17,9 @@ async def report_db_query(query_name, time, success):
     })
 
 async def report_command(command_name, execution_time, response_time):
+    if not client:
+        return
+
     await client.write({
         "measurement": "command",
         "tags": {"command": command_name},
@@ -21,12 +27,18 @@ async def report_command(command_name, execution_time, response_time):
     })
 
 async def report_webhook(time, success):
+    if not client:
+        return
+
     await client.write({
         "measurement": "webhook",
         "fields": {"response_time": time, "success": int(success)}
     })
 
 async def report_periodical_stats(conn):
+    if not client:
+        return
+
     from pluralkit import db
 
     systems = await db.system_count(conn)
