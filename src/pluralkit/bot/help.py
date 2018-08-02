@@ -137,7 +137,16 @@ For example:
 `pk;system fronter` - Shows the current fronter(s) in your own system.
 `pk;system fronter abcde` - Shows the current fronter in the system with the ID `abcde`.
 `pk;system fronthistory` - Shows the past 10 switches in your own system.
-`pk;system fronthistory @JohnsAccount` - Shows the past 10 switches in the system linked to @JohnsAccount.""")
+`pk;system fronthistory @JohnsAccount` - Shows the past 10 switches in the system linked to @JohnsAccount."""),
+        ("Viewing a front breakdown",
+         """To see a per-member breakdown of your switches, use the `pk;system frontpercent` command. You can optionally give it a time limit to only count switches after that point.
+
+For example:
+`pk;system frontpercent` - Shows a front breakdown for your system since you started logging switches
+`pk;system frontpercent 1 day` - Shows a front breakdown for your system for the past day
+`pk;system frontpercent Jan 1st 2018` - Shows a front breakdown for your system since January 1st, 2018
+
+Note that the percentages don't necessarily add up to 100%, as multiple members can be listed as fronting at a time.""")
     ],
     "mod": [
         (None, "Note that all moderation commands require you to have administrator privileges on the server they're used on."),

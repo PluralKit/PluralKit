@@ -1,11 +1,11 @@
-import logging
+from datetime import datetime
 from typing import List
 from urllib.parse import urlparse
 
+import dateparser
 import humanize
 
 import pluralkit.utils
-from pluralkit.bot import utils
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -22,7 +22,7 @@ async def system_info(ctx: CommandContext, args: List[str]):
 
         if system is None:
             raise CommandError("Unable to find system \"{}\".".format(args[0]))
-    
+
     await ctx.reply(embed=await utils.generate_system_info_card(ctx.conn, ctx.client, system))
 
 @command(cmd="system new", usage="[name]", description="Registers a new system to this account.", category="System commands", system_required=False)
@@ -46,7 +46,7 @@ async def new_system(ctx: CommandContext, args: List[str]):
 
 @command(cmd="system set", usage="<name|description|tag|avatar> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
 async def system_set(ctx: CommandContext, args: List[str]):
-    if len(args) == 0: 
+    if len(args) == 0:
         raise InvalidCommandSyntax()
 
     allowed_properties = ["name", "description", "tag", "avatar"]
@@ -96,7 +96,7 @@ async def system_set(ctx: CommandContext, args: List[str]):
 
     db_prop = db_properties[prop]
     await db.update_system_field(ctx.conn, system_id=ctx.system.id, field=db_prop, value=value)
-    
+
     response = utils.make_default_embed("{} system {}.".format("Updated" if value else "Cleared", prop))
     if prop == "avatar" and value:
         response.set_image(url=value)
@@ -150,10 +150,10 @@ async def system_fronter(ctx: CommandContext, args: List[str]):
         system = ctx.system
     else:
         system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
-        
+
         if system is None:
             raise CommandError("Can't find system \"{}\".".format(args[0]))
-    
+
     fronters, timestamp = await pluralkit.utils.get_fronters(ctx.conn, system_id=system.id)
     fronter_names = [member.name for member in fronters]
 
@@ -178,10 +178,10 @@ async def system_fronthistory(ctx: CommandContext, args: List[str]):
         system = ctx.system
     else:
         system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
-        
+
         if system is None:
             raise CommandError("Can't find system \"{}\".".format(args[0]))
-    
+
     lines = []
     front_history = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=10)
     for i, (timestamp, members) in enumerate(front_history):
@@ -216,3 +216,84 @@ async def system_delete(ctx: CommandContext, args: List[str]):
         return "System deleted."
     else:
         return "System deletion cancelled."
+
+
+@command(cmd="system frontpercent", usage="[time]",
+         description="Shows the fronting percentage of every member, averaged over the given time",
+         category="System commands")
+async def system_frontpercent(ctx: CommandContext, args: List[str]):
+    # Parse the time limit (will go this far back)
+    before = dateparser.parse(" ".join(args), languages=["en"], settings={
+        "TO_TIMEZONE": "UTC",
+        "RETURN_AS_TIMEZONE_AWARE": False
+    })
+
+    # If time is in the future, just kinda discard
+    if before and before > datetime.utcnow():
+        before = None
+
+    # Fetch list of switches
+    all_switches = await pluralkit.utils.get_front_history(ctx.conn, ctx.system.id, 99999)
+    if not all_switches:
+        raise CommandError("No switches registered to this system.")
+
+    # Cull the switches *ending* before the limit, if given
+    # We'll need to find the first switch starting before the limit, then cut off every switch *before* that
+    if before:
+        for last_stamp, _ in all_switches:
+            if last_stamp < before:
+                break
+
+        all_switches = [(stamp, members) for stamp, members in all_switches if stamp >= last_stamp]
+
+    start_times = [stamp for stamp, _ in all_switches]
+    end_times = [datetime.utcnow()] + start_times
+    switch_members = [members for _, members in all_switches]
+
+    # Gonna save a list of members by ID for future lookup too
+    members_by_id = {}
+
+    # Using the ID as a key here because it's a simple number that can be hashed and used as a key
+    member_times = {}
+    for start_time, end_time, members in zip(start_times, end_times, switch_members):
+        # Cut off parts of the switch that occurs before the time limit (will only happen if this is the last switch)
+        if before and start_time < before:
+            start_time = before
+
+        # Calculate length of the switch
+        switch_length = end_time - start_time
+
+        def add_switch(member_id, length):
+            if member_id not in member_times:
+                member_times[member_id] = length
+            else:
+                member_times[member_id] += length
+
+        for member in members:
+            # Add the switch length to the currently registered time for that member
+            add_switch(member.id, switch_length)
+
+            # Also save the member in the ID map for future reference
+            members_by_id[member.id] = member
+
+        # Also register a no-fronter switch with the key None
+        if not members:
+            add_switch(None, switch_length)
+
+    # Find the total timespan of the range
+    span_start = max(start_times[-1], before) if before else start_times[-1]
+    total_time = datetime.utcnow() - span_start
+
+    embed = utils.make_default_embed(None)
+    for member_id, front_time in sorted(member_times.items(), key=lambda x: x[1], reverse=True):
+        member = members_by_id[member_id] if member_id else None
+
+        # Calculate percent
+        fraction = front_time / total_time
+        percent = int(fraction * 100)
+
+        embed.add_field(name=member.name if member else "(no fronter)",
+                        value="{}% ({})".format(percent, humanize.naturaldelta(front_time)))
+
+    embed.set_footer(text="Since {}".format(span_start.isoformat(sep=" ", timespec="seconds")))
+    return embed
