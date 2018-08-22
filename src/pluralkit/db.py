@@ -11,10 +11,10 @@ from discord.utils import snowflake_time
 from pluralkit import System, Member, stats
 
 logger = logging.getLogger("pluralkit.db")
-async def connect():
+async def connect(username, password, database, host, port):
     while True:
         try:
-            return await asyncpg.create_pool(user="postgres", password="postgres", database="postgres", host="db")
+            return await asyncpg.create_pool(user=username, password=password, database=database, host=host, port=port)
         except (ConnectionError, asyncpg.exceptions.CannotConnectNowError):
             pass
 

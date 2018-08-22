@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import time
 from datetime import datetime
 
@@ -111,7 +112,13 @@ class PluralKitBot:
     async def run(self):
         try:
             self.logger.info("Connecting to database...")
-            self.pool = await db.connect()
+            self.pool = await db.connect(
+                os.environ["DATABASE_USER"],
+                os.environ["DATABASE_PASS"],
+                os.environ["DATABASE_NAME"],
+                os.environ["DATABASE_HOST"],
+                int(os.environ["DATABASE_PORT"])
+            )
 
             self.logger.info("Attempting to create tables...")
             async with self.pool.acquire() as conn:
