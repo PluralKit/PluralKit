@@ -211,7 +211,7 @@ async def system_delete(ctx: CommandContext, args: List[str]):
     await ctx.reply("Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(ctx.system.hid))
 
     msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0)
-    if msg and msg.content == ctx.system.hid:
+    if msg and msg.content.lower() == ctx.system.hid.lower():
         await db.remove_system(ctx.conn, system_id=ctx.system.id)
         return "System deleted."
     else:
