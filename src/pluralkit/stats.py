@@ -21,9 +21,9 @@ class NullStatCollector(StatCollector):
 
 class InfluxStatCollector(StatCollector):
     @staticmethod
-    async def connect():
-        client = InfluxDBClient(host="influx", db="pluralkit")
-        await client.create_database(db="pluralkit")
+    async def connect(host: str, port: int, db: str):
+        client = InfluxDBClient(host=host, port=port, db=db)
+        await client.create_database(db=db)
 
         return InfluxStatCollector(client)
 

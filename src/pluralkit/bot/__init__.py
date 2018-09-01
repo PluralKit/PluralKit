@@ -43,13 +43,13 @@ class PluralKitBot:
         # Ignore bot messages
         if message.author.bot:
             return
-        
+
         if await self.handle_command_dispatch(message):
             return
 
         if await self.handle_proxy_dispatch(message):
             return
-            
+
     async def on_socket_raw_receive(self, msg):
         # Since on_reaction_add is buggy (only works for messages the bot's already cached, ie. no old messages)
         # we parse socket data manually for the reaction add event
@@ -77,7 +77,7 @@ class PluralKitBot:
     async def handle_command_dispatch(self, message):
         command_items = commands.command_list.items()
         command_items = sorted(command_items, key=lambda x: len(x[0]), reverse=True)
-        
+
         prefix = "pk;"
         for command_name, command in command_items:
             if message.content.lower().startswith(prefix + command_name):
@@ -99,7 +99,7 @@ class PluralKitBot:
                     await self.stats.report_command(command_name, execution_time, response_time)
 
                     return True
-    
+
     async def handle_proxy_dispatch(self, message):
         # Try doing proxy parsing
         async with self.pool.acquire() as conn:
@@ -126,11 +126,16 @@ class PluralKitBot:
             async with self.pool.acquire() as conn:
                 await db.create_tables(conn)
 
-            self.logger.info("Connecting to InfluxDB...")
-            self.stats = await InfluxStatCollector.connect()
+            if "INFLUX_HOST" in os.environ:
+                self.logger.info("Connecting to InfluxDB...")
+                self.stats = await InfluxStatCollector.connect(
+                    os.environ["INFLUX_HOST"],
+                    os.environ["INFLUX_PORT"],
+                    os.environ["INFLUX_DB"]
+                )
 
-            self.logger.info("Starting periodical stat reporting...")
-            asyncio.get_event_loop().create_task(self.periodical_stat_timer(self.pool))
+                self.logger.info("Starting periodical stat reporting...")
+                asyncio.get_event_loop().create_task(self.periodical_stat_timer(self.pool))
 
             self.logger.info("Connecting to Discord...")
             await self.client.start(self.token)
