@@ -7,8 +7,9 @@ from typing import List, Optional
 import aiohttp
 import discord
 
-from pluralkit import db, stats
+from pluralkit import db
 from pluralkit.bot import channel_logger, utils
+from pluralkit.stats import StatCollector
 
 logger = logging.getLogger("pluralkit.bot.proxy")
 
@@ -86,12 +87,13 @@ class DeletionPermissionError(Exception):
 
 
 class Proxy:
-    def __init__(self, client: discord.Client, token: str, logger: channel_logger.ChannelLogger):
+    def __init__(self, client: discord.Client, token: str, logger: channel_logger.ChannelLogger, stats: StatCollector):
         self.logger = logging.getLogger("pluralkit.bot.proxy")
         self.session = aiohttp.ClientSession()
         self.client = client
         self.token = token
         self.channel_logger = logger
+        self.stats = stats
 
     async def save_channel_webhook(self, conn, channel: discord.Channel, id: str, token: str) -> (str, str):
         await db.add_webhook(conn, channel.id, id, token)
@@ -171,7 +173,7 @@ class Proxy:
                 message = await resp.json()
 
                 # Report webhook stats to Influx
-                await stats.report_webhook(time.perf_counter() - time_before, True)
+                await self.stats.report_webhook(time.perf_counter() - time_before, True)
 
                 await db.add_message(conn, message["id"], message["channel_id"], member.id, original_message.author.id,
                                      text or "")
@@ -211,7 +213,7 @@ class Proxy:
                                                               message_id=message["id"])
             elif resp.status == 404 and not has_already_retried:
                 # Report webhook stats to Influx
-                await stats.report_webhook(time.perf_counter() - time_before, False)
+                await self.stats.report_webhook(time.perf_counter() - time_before, False)
 
                 # Webhook doesn't exist. Delete it from the DB, create, and add a new one
                 self.logger.warning("Webhook registered in DB doesn't exist, deleting hook from DB, re-adding, and trying again (channel={}, hook={})".format(original_message.channel.id, hook_id))
@@ -222,7 +224,7 @@ class Proxy:
                 return await self.do_proxy_message(conn, member, original_message, text, attachment_url, has_already_retried=True)
             else:
                 # Report webhook stats to Influx
-                await stats.report_webhook(time.perf_counter() - time_before, False)
+                await self.stats.report_webhook(time.perf_counter() - time_before, False)
 
                 raise discord.HTTPException(resp, await resp.text())
 

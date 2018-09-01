@@ -26,11 +26,12 @@ def db_wrap(func):
             after = time.perf_counter()
 
             logger.debug(" - DB call {} took {:.2f} ms".format(func.__name__, (after - before) * 1000))
-            await stats.report_db_query(func.__name__, after - before, True)
+            # TODO: find some way to give this func access to the bot's stats object
+            #await stats.report_db_query(func.__name__, after - before, True)
 
             return res
         except asyncpg.exceptions.PostgresError:
-            await stats.report_db_query(func.__name__, time.perf_counter() - before, False)
+            #await stats.report_db_query(func.__name__, time.perf_counter() - before, False)
             logger.exception("Error from database query {}".format(func.__name__))
     return inner
 

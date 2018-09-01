@@ -7,8 +7,9 @@ from datetime import datetime
 
 import discord
 
-from pluralkit import db, stats
+from pluralkit import db
 from pluralkit.bot import channel_logger, commands, proxy
+from pluralkit.stats import InfluxStatCollector, NullStatCollector
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
 # logging.getLogger("pluralkit").setLevel(logging.DEBUG)
@@ -24,8 +25,10 @@ class PluralKitBot:
         self.client.event(self.on_message)
         self.client.event(self.on_socket_raw_receive)
 
+        self.stats = NullStatCollector()
+
         self.channel_logger = channel_logger.ChannelLogger(self.client)
-        self.proxy = proxy.Proxy(self.client, token, self.channel_logger)
+        self.proxy = proxy.Proxy(self.client, token, self.channel_logger, self.stats)
 
     async def on_error(self, evt, *args, **kwargs):
         self.logger.exception("Error while handling event {} with arguments {}:".format(evt, args))
@@ -93,7 +96,7 @@ class PluralKitBot:
                     # Report command time stats
                     execution_time = time_after - time_before
                     response_time = (datetime.now() - message.timestamp).total_seconds()
-                    await stats.report_command(command_name, execution_time, response_time)
+                    await self.stats.report_command(command_name, execution_time, response_time)
 
                     return True
     
@@ -105,8 +108,7 @@ class PluralKitBot:
     async def periodical_stat_timer(self, pool):
         async with pool.acquire() as conn:
             while True:
-                from pluralkit import stats
-                await stats.report_periodical_stats(conn)
+                await self.stats.report_periodical_stats(conn)
                 await asyncio.sleep(30)
 
     async def run(self):
@@ -125,8 +127,8 @@ class PluralKitBot:
                 await db.create_tables(conn)
 
             self.logger.info("Connecting to InfluxDB...")
-            await stats.connect()
-            
+            self.stats = await InfluxStatCollector.connect()
+
             self.logger.info("Starting periodical stat reporting...")
             asyncio.get_event_loop().create_task(self.periodical_stat_timer(self.pool))
 
