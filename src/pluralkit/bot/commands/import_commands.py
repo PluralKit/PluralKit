@@ -1,10 +1,8 @@
 import asyncio
 import re
 from datetime import datetime
-import logging
 from typing import List
 
-from pluralkit.bot import utils
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -16,7 +14,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
 
     # Check if there's any Tupperware bot on the server
     if not tupperware_members:
-        raise CommandError("This command only works in a server where the Tupperware bot is also present.")
+        return embeds.error("This command only works in a server where the Tupperware bot is also present.")
 
     # Make sure at least one of the bts have send/read permissions here
     for bot_member in tupperware_members:
@@ -26,7 +24,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
             break
     else:
         # If no bots have permission (ie. loop doesn't break), throw error
-        raise CommandError("This command only works in a channel where the Tupperware bot has read/send access.")
+        return embeds.error("This command only works in a channel where the Tupperware bot has read/send access.")
 
     await ctx.reply(embed=utils.make_default_embed("Please reply to this message with `tul!list` (or the server equivalent)."))
     
@@ -43,12 +41,12 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
         
         return tw_msg.embeds[0]["title"].startswith("{}#{}".format(ctx.message.author.name, ctx.message.author.discriminator))
 
-    embeds = []
+    tupperware_page_embeds = []
     
     tw_msg: discord.Message = await ctx.client.wait_for_message(channel=ctx.message.channel, timeout=60.0, check=ensure_account)
     if not tw_msg:
-        raise CommandError("Tupperware import timed out.")
-    embeds.append(tw_msg.embeds[0])
+        return embeds.error("Tupperware import timed out.")
+    tupperware_page_embeds.append(tw_msg.embeds[0])
 
     # Handle Tupperware pagination
     def match_pagination():
@@ -84,11 +82,11 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
 
             # Make sure it doesn't spin here for too long, time out after 30 seconds since last new page
             if (datetime.utcnow() - last_found_time).seconds > 30:
-                raise CommandError("Pagination scan timed out.")
+                return embeds.error("Pagination scan timed out.")
 
         # Now that we've got all the pages, put them in the embeds list
         # Make sure to erase the original one we put in above too
-        embeds = list([embed for page, embed in sorted(pages_found.items(), key=lambda x: x[0])])
+        tupperware_page_embeds = list([embed for page, embed in sorted(pages_found.items(), key=lambda x: x[0])])
 
         # Also edit the status message to indicate we're now importing, and it may take a while because there's probably a lot of members
         await ctx.client.edit_message(status_msg, "All pages read. Now importing...")
@@ -103,7 +101,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
         system = await db.create_system(ctx.conn, system_name=None, system_hid=hid)
         await db.link_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
 
-    for embed in embeds:
+    for embed in tupperware_page_embeds:
         for field in embed["fields"]:
             name = field["name"]
             lines = field["value"].split("\n")
@@ -150,4 +148,4 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
             await db.update_member_field(ctx.conn, member_id=existing_member.id, field="birthday", value=member_birthdate)
             await db.update_member_field(ctx.conn, member_id=existing_member.id, field="description", value=member_description)
     
-    return "System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting."
+    return embeds.success("System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting.")

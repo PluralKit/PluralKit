@@ -7,7 +7,7 @@ from typing import List
 from discord.utils import oauth_url
 
 import pluralkit.utils
-from pluralkit.bot import utils
+from pluralkit.bot import utils, embeds
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -47,7 +47,7 @@ async def invite_link(ctx: CommandContext, args: List[str]):
 
     url = oauth_url(client_id, permissions)
     logger.debug("Sending invite URL: {}".format(url))
-    return url
+    return embeds.success("Use this link to add PluralKit to your server: {}".format(url))
 
 @command(cmd="export", description="Exports system data to a machine-readable format.")
 async def export(ctx: CommandContext, args: List[str]):

@@ -6,6 +6,7 @@ import dateparser
 import humanize
 
 import pluralkit.utils
+from pluralkit.bot import embeds
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -21,14 +22,14 @@ async def system_info(ctx: CommandContext, args: List[str]):
         system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
 
         if system is None:
-            raise CommandError("Unable to find system \"{}\".".format(args[0]))
+            return embeds.error("Unable to find system \"{}\".".format(args[0]))
 
     await ctx.reply(embed=await utils.generate_system_info_card(ctx.conn, ctx.client, system))
 
 @command(cmd="system new", usage="[name]", description="Registers a new system to this account.", category="System commands", system_required=False)
 async def new_system(ctx: CommandContext, args: List[str]):
     if ctx.system:
-        raise CommandError("You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
+        return embeds.error("You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
 
     system_name = None
     if len(args) > 0:
@@ -42,7 +43,7 @@ async def new_system(ctx: CommandContext, args: List[str]):
 
         # Link account
         await db.link_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
-        return "System registered! To begin adding members, use `pk;member new <name>`."
+        return embeds.success("System registered! To begin adding members, use `pk;member new <name>`.")
 
 @command(cmd="system set", usage="<name|description|tag|avatar> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
 async def system_set(ctx: CommandContext, args: List[str]):
@@ -59,14 +60,14 @@ async def system_set(ctx: CommandContext, args: List[str]):
 
     prop = args[0]
     if prop not in allowed_properties:
-        raise CommandError("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)))
+        raise embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)))
 
     if len(args) >= 2:
         value = " ".join(args[1:])
         # Sanity checking
         if prop == "tag":
             if len(value) > 32:
-                raise CommandError("Can't have system tag longer than 32 characters.")
+                raise embeds.error("Can't have system tag longer than 32 characters.")
 
             # Make sure there are no members which would make the combined length exceed 32
             members_exceeding = await db.get_members_exceeding(ctx.conn, system_id=ctx.system.id, length=32 - len(value) - 1)
@@ -75,7 +76,7 @@ async def system_set(ctx: CommandContext, args: List[str]):
                 member_names = ", ".join([member.name
                                         for member in members_exceeding])
                 logger.debug("Members exceeding combined length with tag '{}': {}".format(value, member_names))
-                raise CommandError("The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names))
+                raise embeds.error("The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names))
 
         if prop == "avatar":
             user = await utils.parse_mention(ctx.client, value)
@@ -89,7 +90,7 @@ async def system_set(ctx: CommandContext, args: List[str]):
                 if u.scheme in ["http", "https"] and u.netloc and u.path:
                     value = value
                 else:
-                    raise CommandError("Invalid URL.")
+                    raise embeds.error("Invalid URL.")
     else:
         # Clear from DB
         value = None
@@ -97,7 +98,7 @@ async def system_set(ctx: CommandContext, args: List[str]):
     db_prop = db_properties[prop]
     await db.update_system_field(ctx.conn, system_id=ctx.system.id, field=db_prop, value=value)
 
-    response = utils.make_default_embed("{} system {}.".format("Updated" if value else "Cleared", prop))
+    response = embeds.success("{} system {}.".format("Updated" if value else "Cleared", prop))
     if prop == "avatar" and value:
         response.set_image(url=value)
     return response
@@ -110,12 +111,12 @@ async def system_link(ctx: CommandContext, args: List[str]):
     # Find account to link
     linkee = await utils.parse_mention(ctx.client, args[0])
     if not linkee:
-        raise CommandError("Account not found.")
+        return embeds.error("Account not found.")
 
     # Make sure account doesn't already have a system
     account_system = await db.get_system_by_account(ctx.conn, linkee.id)
     if account_system:
-        raise CommandError("Account is already linked to a system (`{}`)".format(account_system.hid))
+        return embeds.error("Account is already linked to a system (`{}`)".format(account_system.hid))
 
     # Send confirmation message
     msg = await ctx.reply("{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention))
@@ -125,22 +126,22 @@ async def system_link(ctx: CommandContext, args: List[str]):
     reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=msg, user=linkee, timeout=60.0)
     # If account to be linked confirms...
     if not reaction:
-        raise CommandError("Account link timed out.")
+        return embeds.error("Account link timed out.")
     if not reaction.reaction.emoji == "✅":
-        raise CommandError("Account link cancelled.")
+        return embeds.error("Account link cancelled.")
 
     await db.link_account(ctx.conn, system_id=ctx.system.id, account_id=linkee.id)
-    return "Account linked to system."
+    return embeds.success("Account linked to system.")
 
 @command(cmd="system unlink", description="Unlinks your system from this account. There must be at least one other account linked.", category="System commands")
 async def system_unlink(ctx: CommandContext, args: List[str]):
     # Make sure you can't unlink every account
     linked_accounts = await db.get_linked_accounts(ctx.conn, system_id=ctx.system.id)
     if len(linked_accounts) == 1:
-        raise CommandError("This is the only account on your system, so you can't unlink it.")
+        return embeds.error("This is the only account on your system, so you can't unlink it.")
 
     await db.unlink_account(ctx.conn, system_id=ctx.system.id, account_id=ctx.message.author.id)
-    return "Account unlinked."
+    return embeds.success("Account unlinked.")
 
 @command(cmd="system fronter", usage="[system]", description="Gets the current fronter(s) in the system.", category="Switching commands", system_required=False)
 async def system_fronter(ctx: CommandContext, args: List[str]):
@@ -152,7 +153,7 @@ async def system_fronter(ctx: CommandContext, args: List[str]):
         system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
 
         if system is None:
-            raise CommandError("Can't find system \"{}\".".format(args[0]))
+            return embeds.error("Can't find system \"{}\".".format(args[0]))
 
     fronters, timestamp = await pluralkit.utils.get_fronters(ctx.conn, system_id=system.id)
     fronter_names = [member.name for member in fronters]
@@ -180,7 +181,7 @@ async def system_fronthistory(ctx: CommandContext, args: List[str]):
         system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
 
         if system is None:
-            raise CommandError("Can't find system \"{}\".".format(args[0]))
+            raise embeds.error("Can't find system \"{}\".".format(args[0]))
 
     lines = []
     front_history = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=10)
@@ -213,9 +214,9 @@ async def system_delete(ctx: CommandContext, args: List[str]):
     msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0)
     if msg and msg.content.lower() == ctx.system.hid.lower():
         await db.remove_system(ctx.conn, system_id=ctx.system.id)
-        return "System deleted."
+        return embeds.success("System deleted.")
     else:
-        return "System deletion cancelled."
+        return embeds.error("System deletion cancelled.")
 
 
 @command(cmd="system frontpercent", usage="[time]",
@@ -235,7 +236,7 @@ async def system_frontpercent(ctx: CommandContext, args: List[str]):
     # Fetch list of switches
     all_switches = await pluralkit.utils.get_front_history(ctx.conn, ctx.system.id, 99999)
     if not all_switches:
-        raise CommandError("No switches registered to this system.")
+        return embeds.error("No switches registered to this system.")
 
     # Cull the switches *ending* before the limit, if given
     # We'll need to find the first switch starting before the limit, then cut off every switch *before* that
@@ -284,7 +285,7 @@ async def system_frontpercent(ctx: CommandContext, args: List[str]):
     span_start = max(start_times[-1], before) if before else start_times[-1]
     total_time = datetime.utcnow() - span_start
 
-    embed = utils.make_default_embed(None)
+    embed = embeds.status("")
     for member_id, front_time in sorted(member_times.items(), key=lambda x: x[1], reverse=True):
         member = members_by_id[member_id] if member_id else None
 

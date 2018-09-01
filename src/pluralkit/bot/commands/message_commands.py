@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from pluralkit.bot import utils
+from pluralkit.bot import utils, embeds
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -21,7 +21,7 @@ async def message_info(ctx: CommandContext, args: List[str]):
     # Find the message in the DB
     message = await db.get_message(ctx.conn, str(mid))
     if not message:
-        raise CommandError("Message not found.")
+        raise embeds.error("Message with ID '{}' not found.".format(args[0]))
 
     # Get the original sender of the messages
     try:

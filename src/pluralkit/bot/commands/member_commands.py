@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List
 from urllib.parse import urlparse
 
-from pluralkit.bot import utils
+from pluralkit.bot import utils, embeds
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -21,14 +21,14 @@ async def new_member(ctx: MemberCommandContext, args: List[str]):
     name = " ".join(args)
     bounds_error = utils.bounds_check_member_name(name, ctx.system.tag)
     if bounds_error:
-        raise CommandError(bounds_error)
+        return embeds.error(bounds_error)
 
     # TODO: figure out what to do if this errors out on collision on generate_hid
     hid = utils.generate_hid()
 
     # Insert member row
     await db.create_member(ctx.conn, system_id=ctx.system.id, member_name=name, member_hid=hid)
-    return "Member \"{}\" (`{}`) registered!".format(name, hid)
+    return embeds.success("Member \"{}\" (`{}`) registered!".format(name, hid))
 
 
 @member_command(cmd="member set", usage="<name|description|color|pronouns|birthdate|avatar> [value]", description="Edits a member property. Leave [value] blank to clear.", category="Member commands")
@@ -48,7 +48,7 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
 
     prop = args[0]
     if prop not in allowed_properties:
-        raise CommandError("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)))
+        return embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)))
 
     if len(args) >= 2:
         value = " ".join(args[1:])
@@ -57,12 +57,12 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
         if prop == "name":
             bounds_error = utils.bounds_check_member_name(value, ctx.system.tag)
             if bounds_error:
-                raise CommandError(bounds_error)
+                return embeds.error(bounds_error)
 
         if prop == "color":
             match = re.fullmatch("#?([0-9A-Fa-f]{6})", value)
             if not match:
-                raise CommandError("Color must be a valid hex color (eg. #ff0000)")
+                return embeds.error("Color must be a valid hex color (eg. #ff0000)")
 
             value = match.group(1).lower()
         
@@ -76,7 +76,7 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
                     # Useful if you want your birthday to be displayed yearless.
                     value = datetime.strptime("0001-" + value, "%Y-%m-%d").date()
                 except ValueError:
-                    raise CommandError("Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25).")
+                    return embeds.error("Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25).")
 
         if prop == "avatar":
             user = await utils.parse_mention(ctx.client, value)
@@ -90,11 +90,11 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
                 if u.scheme in ["http", "https"] and u.netloc and u.path:
                     value = value
                 else:
-                    raise CommandError("Invalid URL.")
+                    return embeds.error("Invalid URL.")
     else:
         # Can't clear member name
         if prop == "name":
-            raise CommandError("Can't clear member name.")
+            return embeds.error("Can't clear member name.")
 
         # Clear from DB
         value = None
@@ -102,7 +102,7 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
     db_prop = db_properties[prop]
     await db.update_member_field(ctx.conn, member_id=ctx.member.id, field=db_prop, value=value)
     
-    response = utils.make_default_embed("{} {}'s {}.".format("Updated" if value else "Cleared", ctx.member.name, prop))
+    response = embeds.success("{} {}'s {}.".format("Updated" if value else "Cleared", ctx.member.name, prop))
     if prop == "avatar" and value:
         response.set_image(url=value)
     if prop == "color" and value:
@@ -117,10 +117,10 @@ async def member_proxy(ctx: MemberCommandContext, args: List[str]):
         # Sanity checking
         example = " ".join(args)
         if "text" not in example:
-            raise CommandError("Example proxy message must contain the string 'text'.")
+            return embeds.error("Example proxy message must contain the string 'text'.")
 
         if example.count("text") != 1:
-            raise CommandError("Example proxy message must contain the string 'text' exactly once.")
+            return embeds.error("Example proxy message must contain the string 'text' exactly once.")
 
         # Extract prefix and suffix
         prefix = example[:example.index("text")].strip()
@@ -136,7 +136,7 @@ async def member_proxy(ctx: MemberCommandContext, args: List[str]):
     async with ctx.conn.transaction():
         await db.update_member_field(ctx.conn, member_id=ctx.member.id, field="prefix", value=prefix)
         await db.update_member_field(ctx.conn, member_id=ctx.member.id, field="suffix", value=suffix)
-        return "Proxy settings updated." if prefix or suffix else "Proxy settings cleared."
+        return embeds.success("Proxy settings updated." if prefix or suffix else "Proxy settings cleared.")
 
 @member_command("member delete", description="Deletes a member from your system ***permanently***.", category="Member commands")
 async def member_delete(ctx: MemberCommandContext, args: List[str]):
@@ -145,6 +145,6 @@ async def member_delete(ctx: MemberCommandContext, args: List[str]):
     msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0)
     if msg and msg.content.lower() == ctx.member.hid.lower():
         await db.delete_member(ctx.conn, member_id=ctx.member.id)
-        return "Member deleted."
+        return embeds.success("Member deleted.")
     else:
-        return "Member deletion cancelled."
+        return embeds.success("Member deletion cancelled.")

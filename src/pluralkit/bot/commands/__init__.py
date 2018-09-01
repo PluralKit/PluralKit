@@ -6,7 +6,7 @@ import discord
 
 import pluralkit
 from pluralkit import db
-from pluralkit.bot import utils
+from pluralkit.bot import utils, embeds
 
 logger = logging.getLogger("pluralkit.bot.commands")
 
@@ -17,10 +17,6 @@ class InvalidCommandSyntax(Exception):
 
 class NoSystemRegistered(Exception):
     pass
-    
-class CommandError(Exception):
-    def __init__(self, message):
-        self.message = message
 
 class CommandContext(namedtuple("CommandContext", ["client", "conn", "message", "system"])):
     client: discord.Client
@@ -62,9 +58,6 @@ def command(cmd, usage=None, description=None, category=None, system_required=Tr
             except InvalidCommandSyntax:
                 usage_str = "**Usage:** pk;{} {}".format(cmd, usage or "")
                 await client.send_message(message.channel, embed=utils.make_default_embed(usage_str))
-            except CommandError as e:
-                embed = e.message if isinstance(e.message, discord.Embed) else utils.make_error_embed(e.message)
-                await client.send_message(message.channel, embed=embed)
             except Exception:
                 logger.exception("Exception while handling command {} (args={}, system={})".format(cmd, args, system.hid if system else "(none)"))
 
@@ -86,7 +79,7 @@ def member_command(cmd, usage=None, description=None, category=None, system_only
             member = await utils.get_member_fuzzy(ctx.conn, system_id=system_id, key=args[0], system_only=system_only)
 
             if member is None:
-                raise CommandError("Can't find member \"{}\".".format(args[0]))
+                return embeds.error("Can't find member \"{}\".".format(args[0]))
 
             ctx = MemberCommandContext(client=ctx.client, conn=ctx.conn, message=ctx.message, system=ctx.system, member=member)
             return await func(ctx, args[1:])
