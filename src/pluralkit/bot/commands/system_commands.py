@@ -6,7 +6,7 @@ import dateparser
 import humanize
 
 import pluralkit.utils
-from pluralkit.bot import embeds
+from pluralkit.bot import embeds, help
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -48,7 +48,7 @@ async def new_system(ctx: CommandContext, args: List[str]):
 @command(cmd="system set", usage="<name|description|tag|avatar> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
 async def system_set(ctx: CommandContext, args: List[str]):
     if len(args) == 0:
-        raise InvalidCommandSyntax()
+        return embeds.error("You must pass a property name to set.", help=help.edit_system)
 
     allowed_properties = ["name", "description", "tag", "avatar"]
     db_properties = {
@@ -60,14 +60,14 @@ async def system_set(ctx: CommandContext, args: List[str]):
 
     prop = args[0]
     if prop not in allowed_properties:
-        raise embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)))
+        raise embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)), help=help.edit_system)
 
     if len(args) >= 2:
         value = " ".join(args[1:])
         # Sanity checking
         if prop == "tag":
             if len(value) > 32:
-                raise embeds.error("Can't have system tag longer than 32 characters.")
+                raise embeds.error("You can't have a system tag longer than 32 characters.")
 
             # Make sure there are no members which would make the combined length exceed 32
             members_exceeding = await db.get_members_exceeding(ctx.conn, system_id=ctx.system.id, length=32 - len(value) - 1)
@@ -90,7 +90,7 @@ async def system_set(ctx: CommandContext, args: List[str]):
                 if u.scheme in ["http", "https"] and u.netloc and u.path:
                     value = value
                 else:
-                    raise embeds.error("Invalid URL.")
+                    raise embeds.error("Invalid image URL.")
     else:
         # Clear from DB
         value = None
@@ -106,7 +106,7 @@ async def system_set(ctx: CommandContext, args: List[str]):
 @command(cmd="system link", usage="<account>", description="Links another account to your system.", category="System commands")
 async def system_link(ctx: CommandContext, args: List[str]):
     if len(args) == 0:
-        raise InvalidCommandSyntax()
+        return embeds.error("You must pass an account to link this system to.", help=help.link_account)
 
     # Find account to link
     linkee = await utils.parse_mention(ctx.client, args[0])
@@ -116,7 +116,7 @@ async def system_link(ctx: CommandContext, args: List[str]):
     # Make sure account doesn't already have a system
     account_system = await db.get_system_by_account(ctx.conn, linkee.id)
     if account_system:
-        return embeds.error("Account is already linked to a system (`{}`)".format(account_system.hid))
+        return embeds.error("The mentioned account is already linked to a system (`{}`)".format(account_system.hid))
 
     # Send confirmation message
     msg = await ctx.reply("{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention))

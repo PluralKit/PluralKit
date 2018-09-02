@@ -12,9 +12,6 @@ logger = logging.getLogger("pluralkit.bot.commands")
 
 command_list = {}
 
-class InvalidCommandSyntax(Exception):
-    pass
-
 class NoSystemRegistered(Exception):
     pass
 
@@ -55,9 +52,6 @@ def command(cmd, usage=None, description=None, category=None, system_required=Tr
                     await client.send_message(message.channel, embed=embed)
             except NoSystemRegistered:
                 await client.send_message(message.channel, embed=utils.make_error_embed("No system registered to this account. Use `pk;system new` to register one."))
-            except InvalidCommandSyntax:
-                usage_str = "**Usage:** pk;{} {}".format(cmd, usage or "")
-                await client.send_message(message.channel, embed=utils.make_default_embed(usage_str))
             except Exception:
                 logger.exception("Exception while handling command {} (args={}, system={})".format(cmd, args, system.hid if system else "(none)"))
 
@@ -71,7 +65,7 @@ def member_command(cmd, usage=None, description=None, category=None, system_only
         async def wrapper(ctx: CommandContext, args):
             # Return if no member param
             if len(args) == 0:
-                raise InvalidCommandSyntax()
+                return embeds.error("You must pass a member name or ID.")
 
             # System is allowed to be none if not system_only
             system_id = ctx.system.id if ctx.system else None

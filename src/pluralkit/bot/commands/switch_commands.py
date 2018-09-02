@@ -7,7 +7,7 @@ import humanize
 
 import pluralkit.utils
 from pluralkit import Member
-from pluralkit.bot import utils, embeds
+from pluralkit.bot import utils, embeds, help
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -15,7 +15,7 @@ logger = logging.getLogger("pluralkit.commands")
 @command(cmd="switch", usage="<name|id> [name|id]...", description="Registers a switch and changes the current fronter.", category="Switching commands")
 async def switch_member(ctx: MemberCommandContext, args: List[str]):
     if len(args) == 0:
-        raise InvalidCommandSyntax()
+        return embeds.error("You must pass at least one member name or ID to register a switch to.", help=help.switch_register)
 
     members: List[Member] = []
     for member_name in args:
@@ -36,7 +36,7 @@ async def switch_member(ctx: MemberCommandContext, args: List[str]):
 
     # Also make sure there aren't any duplicates
     if len(set(member_ids)) != len(member_ids):
-        return embeds.error("Duplicate members in switch list.")
+        return embeds.error("Duplicate members in member list.")
 
     # Log the switch
     async with ctx.conn.transaction():
@@ -54,7 +54,7 @@ async def switch_out(ctx: MemberCommandContext, args: List[str]):
     # Get current fronters
     fronters, _ = await pluralkit.utils.get_fronter_ids(ctx.conn, system_id=ctx.system.id)
     if not fronters:
-        raise embeds.error("There's already no one in front.")
+        return embeds.error("There's already no one in front.")
 
     # Log it, and don't log any members
     await db.add_switch(ctx.conn, system_id=ctx.system.id)
@@ -63,7 +63,7 @@ async def switch_out(ctx: MemberCommandContext, args: List[str]):
 @command(cmd="switch move", usage="<time>", description="Moves the most recent switch to a different point in time.", category="Switching commands")
 async def switch_move(ctx: MemberCommandContext, args: List[str]):
     if len(args) == 0:
-        raise InvalidCommandSyntax()
+        return embeds.error("You must pass a time to move the switch to.", help=help.switch_move)
 
     # Parse the time to move to
     new_time = dateparser.parse(" ".join(args), languages=["en"], settings={

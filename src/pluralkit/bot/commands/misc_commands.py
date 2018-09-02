@@ -28,7 +28,7 @@ async def show_help(ctx: CommandContext, args: List[str]):
             else:
                 embed.description = text
     else:
-        raise InvalidCommandSyntax()
+        return embeds.error("Unknown help page '{}'.".format(category))
 
     return embed
 

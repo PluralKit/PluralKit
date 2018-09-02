@@ -1,11 +1,10 @@
-import logging
 import re
 from datetime import datetime
 from typing import List
 from urllib.parse import urlparse
 
-from pluralkit.bot import utils, embeds
 from pluralkit.bot.commands import *
+from pluralkit.bot import help
 
 logger = logging.getLogger("pluralkit.commands")
 
@@ -16,7 +15,7 @@ async def member_info(ctx: MemberCommandContext, args: List[str]):
 @command(cmd="member new", usage="<name>", description="Adds a new member to your system.", category="Member commands")
 async def new_member(ctx: MemberCommandContext, args: List[str]):
     if len(args) == 0:
-        raise InvalidCommandSyntax()
+        return embeds.error("You must pass a member name or ID.", help=help.add_member)
 
     name = " ".join(args)
     bounds_error = utils.bounds_check_member_name(name, ctx.system.tag)
@@ -33,8 +32,8 @@ async def new_member(ctx: MemberCommandContext, args: List[str]):
 
 @member_command(cmd="member set", usage="<name|description|color|pronouns|birthdate|avatar> [value]", description="Edits a member property. Leave [value] blank to clear.", category="Member commands")
 async def member_set(ctx: MemberCommandContext, args: List[str]):
-    if len(args) == 0: 
-        raise InvalidCommandSyntax()
+    if len(args) == 0:
+        return embeds.error("You must pass a property name to set.", help=help.edit_member)
 
     allowed_properties = ["name", "description", "color", "pronouns", "birthdate", "avatar"]
     db_properties = {
@@ -48,7 +47,7 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
 
     prop = args[0]
     if prop not in allowed_properties:
-        return embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)))
+        return embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)), help=help.edit_member)
 
     if len(args) >= 2:
         value = " ".join(args[1:])
@@ -90,11 +89,11 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
                 if u.scheme in ["http", "https"] and u.netloc and u.path:
                     value = value
                 else:
-                    return embeds.error("Invalid URL.")
+                    return embeds.error("Invalid image URL.")
     else:
         # Can't clear member name
         if prop == "name":
-            return embeds.error("Can't clear member name.")
+            return embeds.error("You can't clear the member name.")
 
         # Clear from DB
         value = None
@@ -117,10 +116,10 @@ async def member_proxy(ctx: MemberCommandContext, args: List[str]):
         # Sanity checking
         example = " ".join(args)
         if "text" not in example:
-            return embeds.error("Example proxy message must contain the string 'text'.")
+            return embeds.error("Example proxy message must contain the string 'text'.", help=help.member_proxy)
 
         if example.count("text") != 1:
-            return embeds.error("Example proxy message must contain the string 'text' exactly once.")
+            return embeds.error("Example proxy message must contain the string 'text' exactly once.", help=help.member_proxy)
 
         # Extract prefix and suffix
         prefix = example[:example.index("text")].strip()
@@ -147,4 +146,4 @@ async def member_delete(ctx: MemberCommandContext, args: List[str]):
         await db.delete_member(ctx.conn, member_id=ctx.member.id)
         return embeds.success("Member deleted.")
     else:
-        return embeds.success("Member deletion cancelled.")
+        return embeds.error("Member deletion cancelled.")

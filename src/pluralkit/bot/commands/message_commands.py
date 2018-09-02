@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from pluralkit.bot import utils, embeds
+from pluralkit.bot import utils, embeds, help
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -11,12 +11,12 @@ logger = logging.getLogger("pluralkit.commands")
          category="Message commands", system_required=False)
 async def message_info(ctx: CommandContext, args: List[str]):
     if len(args) == 0:
-        raise InvalidCommandSyntax()
+        return embeds.error("You must pass a message ID.", help=help.message_lookup)
 
     try:
         mid = int(args[0])
     except ValueError:
-        raise InvalidCommandSyntax()
+        return embeds.error("You must pass a valid number as a message ID.", help=help.message_lookup)
 
     # Find the message in the DB
     message = await db.get_message(ctx.conn, str(mid))

@@ -65,9 +65,11 @@ For example:
 
 You will need to confirm the deletion.""")
 member_proxy = ("Setting up member proxying", """To register a member for proxying, use the `pk;member proxy` command.
+
+You will need to pass an "example proxy" message containing "text", surrounded by the brackets or prefixes you want to select.
         
 For example:
-`pk;member proxy John [text]` - Registers John to use [square brackets] as tags.
+`pk;member proxy John [text]` - Registers John to use [square brackets] as proxy brackets.
 `pk;member proxy John J:text` - Registers John to use the prefix "J:".
 
 After setting proxy tags, you can use them in any message, and they'll be interpreted by the bot and proxied appropriately.""")
