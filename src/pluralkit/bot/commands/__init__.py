@@ -131,7 +131,7 @@ async def log_error_in_channel(ctx: CommandContext):
 
     embed.set_footer(text="Sender: {}#{} | Server: {} | Channel: {}".format(
         ctx.message.author.name, ctx.message.author.discriminator,
-        ctx.message.server.id,
+        ctx.message.server.id if ctx.message.server else "(DMs)",
         ctx.message.channel.id
     ))
 
