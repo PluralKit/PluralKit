@@ -8,32 +8,36 @@ from pluralkit.bot import help
 
 logger = logging.getLogger("pluralkit.commands")
 
-@member_command(cmd="member", description="Shows information about a system member.", system_only=False, category="Member commands")
-async def member_info(ctx: MemberCommandContext, args: List[str]):
-    await ctx.reply(embed=await utils.generate_member_info_card(ctx.conn, ctx.member))
 
-@command(cmd="member new", usage="<name>", description="Adds a new member to your system.", category="Member commands")
-async def new_member(ctx: MemberCommandContext, args: List[str]):
-    if len(args) == 0:
-        return embeds.error("You must pass a member name or ID.", help=help.add_member)
+async def member_info(ctx: CommandContext):
+    member = await ctx.pop_member(
+        error=CommandError("You must pass a member name or ID.", help=help.lookup_member), system_only=False)
+    await ctx.reply(embed=await utils.generate_member_info_card(ctx.conn, member))
 
-    name = " ".join(args)
-    bounds_error = utils.bounds_check_member_name(name, ctx.system.tag)
+
+async def new_member(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    if not ctx.has_next():
+        return CommandError("You must pass a name for the new member.", help=help.add_member)
+
+    name = ctx.remaining()
+    bounds_error = utils.bounds_check_member_name(name, system.tag)
     if bounds_error:
-        return embeds.error(bounds_error)
+        return CommandError(bounds_error)
 
     # TODO: figure out what to do if this errors out on collision on generate_hid
     hid = utils.generate_hid()
 
     # Insert member row
-    await db.create_member(ctx.conn, system_id=ctx.system.id, member_name=name, member_hid=hid)
-    return embeds.success("Member \"{}\" (`{}`) registered!".format(name, hid))
+    await db.create_member(ctx.conn, system_id=system.id, member_name=name, member_hid=hid)
+    return CommandSuccess(
+        "Member \"{}\" (`{}`) registered! To register their proxy tags, use `pk;member proxy`.".format(name, hid))
 
 
-@member_command(cmd="member set", usage="<name|description|color|pronouns|birthdate|avatar> [value]", description="Edits a member property. Leave [value] blank to clear.", category="Member commands")
-async def member_set(ctx: MemberCommandContext, args: List[str]):
-    if len(args) == 0:
-        return embeds.error("You must pass a property name to set.", help=help.edit_member)
+async def member_set(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    prop = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_member))
 
     allowed_properties = ["name", "description", "color", "pronouns", "birthdate", "avatar"]
     db_properties = {
@@ -45,26 +49,27 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
         "avatar": "avatar_url"
     }
 
-    prop = args[0]
     if prop not in allowed_properties:
-        return embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)), help=help.edit_member)
+        return CommandError(
+            "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)),
+            help=help.edit_member)
 
-    if len(args) >= 2:
-        value = " ".join(args[1:])
+    if ctx.has_next():
+        value = " ".join(ctx.remaining())
 
         # Sanity/validity checks and type conversions
         if prop == "name":
-            bounds_error = utils.bounds_check_member_name(value, ctx.system.tag)
+            bounds_error = utils.bounds_check_member_name(value, system.tag)
             if bounds_error:
-                return embeds.error(bounds_error)
+                return CommandError(bounds_error)
 
         if prop == "color":
             match = re.fullmatch("#?([0-9A-Fa-f]{6})", value)
             if not match:
-                return embeds.error("Color must be a valid hex color (eg. #ff0000)")
+                return CommandError("Color must be a valid hex color (eg. #ff0000)")
 
             value = match.group(1).lower()
-        
+
         if prop == "birthdate":
             try:
                 value = datetime.strptime(value, "%Y-%m-%d").date()
@@ -75,7 +80,7 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
                     # Useful if you want your birthday to be displayed yearless.
                     value = datetime.strptime("0001-" + value, "%Y-%m-%d").date()
                 except ValueError:
-                    return embeds.error("Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25).")
+                    return CommandError("Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25).")
 
         if prop == "avatar":
             user = await utils.parse_mention(ctx.client, value)
@@ -89,41 +94,45 @@ async def member_set(ctx: MemberCommandContext, args: List[str]):
                 if u.scheme in ["http", "https"] and u.netloc and u.path:
                     value = value
                 else:
-                    return embeds.error("Invalid image URL.")
+                    return CommandError("Invalid image URL.")
     else:
         # Can't clear member name
         if prop == "name":
-            return embeds.error("You can't clear the member name.")
+            return CommandError("You can't clear the member name.")
 
         # Clear from DB
         value = None
 
     db_prop = db_properties[prop]
-    await db.update_member_field(ctx.conn, member_id=ctx.member.id, field=db_prop, value=value)
-    
-    response = embeds.success("{} {}'s {}.".format("Updated" if value else "Cleared", ctx.member.name, prop))
+    await db.update_member_field(ctx.conn, member_id=member.id, field=db_prop, value=value)
+
+    response = CommandSuccess("{} {}'s {}.".format("Updated" if value else "Cleared", member.name, prop))
     if prop == "avatar" and value:
         response.set_image(url=value)
     if prop == "color" and value:
         response.colour = int(value, 16)
     return response
 
-@member_command(cmd="member proxy", usage="[example]", description="Updates a member's proxy settings. Needs an \"example\" proxied message containing the string \"text\" (eg. [text], |text|, etc).", category="Member commands")
-async def member_proxy(ctx: MemberCommandContext, args: List[str]):
-    if len(args) == 0:
+
+async def member_proxy(ctx: CommandContext):
+    await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.member_proxy))
+
+    if not ctx.has_next():
         prefix, suffix = None, None
     else:
         # Sanity checking
-        example = " ".join(args)
+        example = ctx.remaining()
         if "text" not in example:
-            return embeds.error("Example proxy message must contain the string 'text'.", help=help.member_proxy)
+            return CommandError("Example proxy message must contain the string 'text'.", help=help.member_proxy)
 
         if example.count("text") != 1:
-            return embeds.error("Example proxy message must contain the string 'text' exactly once.", help=help.member_proxy)
+            return CommandError("Example proxy message must contain the string 'text' exactly once.",
+                                help=help.member_proxy)
 
         # Extract prefix and suffix
         prefix = example[:example.index("text")].strip()
-        suffix = example[example.index("text")+4:].strip()
+        suffix = example[example.index("text") + 4:].strip()
         logger.debug("Matched prefix '{}' and suffix '{}'".format(prefix, suffix))
 
         # DB stores empty strings as None, make that work
@@ -133,17 +142,22 @@ async def member_proxy(ctx: MemberCommandContext, args: List[str]):
             suffix = None
 
     async with ctx.conn.transaction():
-        await db.update_member_field(ctx.conn, member_id=ctx.member.id, field="prefix", value=prefix)
-        await db.update_member_field(ctx.conn, member_id=ctx.member.id, field="suffix", value=suffix)
-        return embeds.success("Proxy settings updated." if prefix or suffix else "Proxy settings cleared.")
+        await db.update_member_field(ctx.conn, member_id=member.id, field="prefix", value=prefix)
+        await db.update_member_field(ctx.conn, member_id=member.id, field="suffix", value=suffix)
+        return CommandSuccess("Proxy settings updated." if prefix or suffix else "Proxy settings cleared.")
 
-@member_command("member delete", description="Deletes a member from your system ***permanently***.", category="Member commands")
-async def member_delete(ctx: MemberCommandContext, args: List[str]):
-    await ctx.reply("Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(ctx.member.name, ctx.member.hid))
+
+async def member_delete(ctx: CommandContext):
+    await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+
+    await ctx.reply(
+        "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(
+            member.name, member.hid))
 
     msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0)
-    if msg and msg.content.lower() == ctx.member.hid.lower():
-        await db.delete_member(ctx.conn, member_id=ctx.member.id)
-        return embeds.success("Member deleted.")
+    if msg and msg.content.lower() == member.hid.lower():
+        await db.delete_member(ctx.conn, member_id=member.id)
+        return CommandSuccess("Member deleted.")
     else:
-        return embeds.error("Member deletion cancelled.")
+        return CommandError("Member deletion cancelled.")

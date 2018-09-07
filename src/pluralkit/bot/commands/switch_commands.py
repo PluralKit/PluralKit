@@ -1,120 +1,130 @@
-from datetime import datetime
-import logging
-from typing import List
-
 import dateparser
 import humanize
+from datetime import datetime, timezone
+from typing import List
 
 import pluralkit.utils
-from pluralkit import Member
-from pluralkit.bot import utils, embeds, help
+from pluralkit.bot import help
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
-@command(cmd="switch", usage="<name|id> [name|id]...", description="Registers a switch and changes the current fronter.", category="Switching commands")
-async def switch_member(ctx: MemberCommandContext, args: List[str]):
-    if len(args) == 0:
-        return embeds.error("You must pass at least one member name or ID to register a switch to.", help=help.switch_register)
+
+async def switch_member(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
+    if not ctx.has_next():
+        return CommandError("You must pass at least one member name or ID to register a switch to.",
+                            help=help.switch_register)
 
     members: List[Member] = []
-    for member_name in args:
+    for member_name in ctx.remaining().split(" "):
         # Find the member
-        member = await utils.get_member_fuzzy(ctx.conn, ctx.system.id, member_name)
+        member = await utils.get_member_fuzzy(ctx.conn, system.id, member_name)
         if not member:
-            return embeds.error("Couldn't find member \"{}\".".format(member_name))
+            return CommandError("Couldn't find member \"{}\".".format(member_name))
         members.append(member)
 
     # Compare requested switch IDs and existing fronter IDs to check for existing switches
     # Lists, because order matters, it makes sense to just swap fronters
     member_ids = [member.id for member in members]
-    fronter_ids = (await pluralkit.utils.get_fronter_ids(ctx.conn, ctx.system.id))[0]
+    fronter_ids = (await pluralkit.utils.get_fronter_ids(ctx.conn, system.id))[0]
     if member_ids == fronter_ids:
         if len(members) == 1:
-            return embeds.error("{} is already fronting.".format(members[0].name))
-        return embeds.error("Members {} are already fronting.".format(", ".join([m.name for m in members])))
+            return CommandError("{} is already fronting.".format(members[0].name))
+        return CommandError("Members {} are already fronting.".format(", ".join([m.name for m in members])))
 
     # Also make sure there aren't any duplicates
     if len(set(member_ids)) != len(member_ids):
-        return embeds.error("Duplicate members in member list.")
+        return CommandError("Duplicate members in member list.")
 
     # Log the switch
     async with ctx.conn.transaction():
-        switch_id = await db.add_switch(ctx.conn, system_id=ctx.system.id)
+        switch_id = await db.add_switch(ctx.conn, system_id=system.id)
         for member in members:
             await db.add_switch_member(ctx.conn, switch_id=switch_id, member_id=member.id)
 
     if len(members) == 1:
-        return embeds.success("Switch registered. Current fronter is now {}.".format(members[0].name))
+        return CommandSuccess("Switch registered. Current fronter is now {}.".format(members[0].name))
     else:
-        return embeds.success("Switch registered. Current fronters are now {}.".format(", ".join([m.name for m in members])))
+        return CommandSuccess(
+            "Switch registered. Current fronters are now {}.".format(", ".join([m.name for m in members])))
 
-@command(cmd="switch out", description="Registers a switch with no one in front.", category="Switching commands")
-async def switch_out(ctx: MemberCommandContext, args: List[str]):
+
+async def switch_out(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
     # Get current fronters
-    fronters, _ = await pluralkit.utils.get_fronter_ids(ctx.conn, system_id=ctx.system.id)
+    fronters, _ = await pluralkit.utils.get_fronter_ids(ctx.conn, system_id=system.id)
     if not fronters:
-        return embeds.error("There's already no one in front.")
+        return CommandError("There's already no one in front.")
 
     # Log it, and don't log any members
-    await db.add_switch(ctx.conn, system_id=ctx.system.id)
-    return embeds.success("Switch-out registered.")
+    await db.add_switch(ctx.conn, system_id=system.id)
+    return CommandSuccess("Switch-out registered.")
 
-@command(cmd="switch move", usage="<time>", description="Moves the most recent switch to a different point in time.", category="Switching commands")
-async def switch_move(ctx: MemberCommandContext, args: List[str]):
-    if len(args) == 0:
-        return embeds.error("You must pass a time to move the switch to.", help=help.switch_move)
+
+async def switch_move(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    if not ctx.has_next():
+        return CommandError("You must pass a time to move the switch to.", help=help.switch_move)
 
     # Parse the time to move to
-    new_time = dateparser.parse(" ".join(args), languages=["en"], settings={
+    new_time = dateparser.parse(ctx.remaining(), languages=["en"], settings={
         "TO_TIMEZONE": "UTC",
         "RETURN_AS_TIMEZONE_AWARE": False
     })
     if not new_time:
-        return embeds.error("{} can't be parsed as a valid time.".format(" ".join(args)))
+        return CommandError("'{}' can't be parsed as a valid time.".format(ctx.remaining()), help=help.switch_move)
 
     # Make sure the time isn't in the future
-    if new_time > datetime.now():
-        return embeds.error("Can't move switch to a time in the future.")
+    if new_time > datetime.utcnow():
+        return CommandError("Can't move switch to a time in the future.", help=help.switch_move)
 
     # Make sure it all runs in a big transaction for atomicity
     async with ctx.conn.transaction():
         # Get the last two switches to make sure the switch to move isn't before the second-last switch
-        last_two_switches = await pluralkit.utils.get_front_history(ctx.conn, ctx.system.id, count=2)
+        last_two_switches = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=2)
         if len(last_two_switches) == 0:
-            return embeds.error("There are no registered switches for this system.")
+            return CommandError("There are no registered switches for this system.")
 
         last_timestamp, last_fronters = last_two_switches[0]
         if len(last_two_switches) > 1:
             second_last_timestamp, _ = last_two_switches[1]
 
             if new_time < second_last_timestamp:
-                time_str = humanize.naturaltime(second_last_timestamp)
-                return embeds.error("Can't move switch to before last switch time ({}), as it would cause conflicts.".format(time_str))
-        
+                time_str = humanize.naturaltime(pluralkit.utils.fix_time(second_last_timestamp))
+                return CommandError(
+                    "Can't move switch to before last switch time ({}), as it would cause conflicts.".format(time_str))
+
         # Display the confirmation message w/ humanized times
         members = ", ".join([member.name for member in last_fronters]) or "nobody"
         last_absolute = last_timestamp.isoformat(sep=" ", timespec="seconds")
-        last_relative = humanize.naturaltime(last_timestamp)
+        last_relative = humanize.naturaltime(pluralkit.utils.fix_time(last_timestamp))
         new_absolute = new_time.isoformat(sep=" ", timespec="seconds")
-        new_relative = humanize.naturaltime(new_time)
-        embed = utils.make_default_embed("This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute, last_relative, new_absolute, new_relative))
-        
+        new_relative = humanize.naturaltime(pluralkit.utils.fix_time(new_time))
+        embed = embeds.status(
+            "This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute,
+                                                                                                last_relative,
+                                                                                                new_absolute,
+                                                                                                new_relative))
+
         # Await and handle confirmation reactions
         confirm_msg = await ctx.reply(embed=embed)
         await ctx.client.add_reaction(confirm_msg, "✅")
         await ctx.client.add_reaction(confirm_msg, "❌")
 
-        reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=confirm_msg, user=ctx.message.author, timeout=60.0)
+        reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=confirm_msg, user=ctx.message.author,
+                                                      timeout=60.0)
         if not reaction:
-            return embeds.error("Switch move timed out.")
+            return CommandError("Switch move timed out.")
 
         if reaction.reaction.emoji == "❌":
-            return embeds.error("Switch move cancelled.")
+            return CommandError("Switch move cancelled.")
 
         # DB requires the actual switch ID which our utility method above doesn't return, do this manually
-        switch_id = (await db.front_history(ctx.conn, ctx.system.id, count=1))[0]["id"]
+        switch_id = (await db.front_history(ctx.conn, system.id, count=1))[0]["id"]
 
         # Change the switch in the DB
-        await db.move_last_switch(ctx.conn, ctx.system.id, switch_id, new_time)
-        return embeds.success("Switch moved.")
+        await db.move_last_switch(ctx.conn, system.id, switch_id, new_time)
+        return CommandSuccess("Switch moved.")

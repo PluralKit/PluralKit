@@ -1,27 +1,21 @@
-import logging
-from typing import List
-
-from pluralkit.bot import utils, embeds, help
+from pluralkit.bot import help
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
 
-@command(cmd="message", usage="<id>", description="Shows information about a proxied message. Requires the message ID.",
-         category="Message commands", system_required=False)
-async def message_info(ctx: CommandContext, args: List[str]):
-    if len(args) == 0:
-        return embeds.error("You must pass a message ID.", help=help.message_lookup)
+async def message_info(ctx: CommandContext):
+    mid_str = ctx.pop_str(CommandError("You must pass a message ID.", help=help.message_lookup))
 
     try:
-        mid = int(args[0])
+        mid = int(mid_str)
     except ValueError:
-        return embeds.error("You must pass a valid number as a message ID.", help=help.message_lookup)
+        return CommandError("You must pass a valid number as a message ID.", help=help.message_lookup)
 
     # Find the message in the DB
     message = await db.get_message(ctx.conn, str(mid))
     if not message:
-        raise embeds.error("Message with ID '{}' not found.".format(args[0]))
+        raise CommandError("Message with ID '{}' not found.".format(mid))
 
     # Get the original sender of the messages
     try:
@@ -49,9 +43,9 @@ async def message_info(ctx: CommandContext, args: List[str]):
 
     embed.add_field(name="Sent by", value=sender_name)
 
-    if message.content: # Content can be empty string if there's an attachment
+    if message.content:  # Content can be empty string if there's an attachment
         embed.add_field(name="Content", value=message.content, inline=False)
 
     embed.set_author(name=message.name, icon_url=message.avatar_url or discord.Embed.Empty)
 
-    return embed
+    await ctx.reply(embed=embed)

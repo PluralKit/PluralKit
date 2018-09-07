@@ -323,7 +323,7 @@ async def create_tables(conn):
         description text,
         tag         text,
         avatar_url  text,
-        created     timestamp not null default current_timestamp
+        created     timestamp not null default (current_timestamp at time zone 'utc')
     )""")
     await conn.execute("""create table if not exists members (
         id          serial primary key,
@@ -337,7 +337,7 @@ async def create_tables(conn):
         description text,
         prefix      text,
         suffix      text,
-        created     timestamp not null default current_timestamp
+        created     timestamp not null default (current_timestamp at time zone 'utc')
     )""")
     await conn.execute("""create table if not exists accounts (
         uid         bigint primary key,
@@ -353,7 +353,7 @@ async def create_tables(conn):
     await conn.execute("""create table if not exists switches (
         id          serial primary key,
         system      serial not null references systems(id) on delete cascade,
-        timestamp   timestamp not null default current_timestamp
+        timestamp   timestamp not null default (current_timestamp at time zone 'utc')
     )""")
     await conn.execute("""create table if not exists switch_members (
         id          serial primary key,

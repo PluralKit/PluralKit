@@ -75,7 +75,11 @@ class PluralKitBot:
                 pass
 
     async def handle_command_dispatch(self, message):
-        command_items = commands.command_list.items()
+        async with self.pool.acquire() as conn:
+            result = await commands.command_dispatch(self.client, message, conn)
+            return result
+
+        """command_items = commands.command_list.items()
         command_items = sorted(command_items, key=lambda x: len(x[0]), reverse=True)
 
         prefix = "pk;"
@@ -98,7 +102,7 @@ class PluralKitBot:
                     response_time = (datetime.now() - message.timestamp).total_seconds()
                     await self.stats.report_command(command_name, execution_time, response_time)
 
-                    return True
+                    return True"""
 
     async def handle_proxy_dispatch(self, message):
         # Try doing proxy parsing

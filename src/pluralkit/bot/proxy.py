@@ -8,7 +8,7 @@ import aiohttp
 import discord
 
 from pluralkit import db
-from pluralkit.bot import channel_logger, utils
+from pluralkit.bot import channel_logger, utils, embeds
 from pluralkit.stats import StatCollector
 
 logger = logging.getLogger("pluralkit.bot.proxy")
@@ -253,10 +253,10 @@ class Proxy:
             async with conn.transaction():
                 await self.do_proxy_message(conn, member, message, text=text, attachment_url=attachment_url)
         except WebhookPermissionError:
-            embed = utils.make_error_embed("PluralKit does not have permission to manage webhooks for this channel. Contact your local server administrator to fix this.")
+            embed = embeds.error("PluralKit does not have permission to manage webhooks for this channel. Contact your local server administrator to fix this.")
             await self.client.send_message(message.channel, embed=embed)
         except DeletionPermissionError:
-            embed = utils.make_error_embed("PluralKit does not have permission to delete messages in this channel. Contact your local server administrator to fix this.")
+            embed = embeds.error("PluralKit does not have permission to delete messages in this channel. Contact your local server administrator to fix this.")
             await self.client.send_message(message.channel, embed=embed)
 
         return True

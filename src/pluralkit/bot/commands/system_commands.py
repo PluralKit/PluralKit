@@ -1,39 +1,31 @@
-from datetime import datetime
-from typing import List
-from urllib.parse import urlparse
-
 import dateparser
 import humanize
+from datetime import datetime
+from urllib.parse import urlparse
 
 import pluralkit.utils
-from pluralkit.bot import embeds, help
+from pluralkit.bot import help
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
-@command(cmd="system", usage="[system]", description="Shows information about a system.", category="System commands", system_required=False)
-async def system_info(ctx: CommandContext, args: List[str]):
-    if len(args) == 0:
-        if not ctx.system:
-            raise NoSystemRegistered()
-        system = ctx.system
-    else:
-        # Look one up
-        system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
 
-        if system is None:
-            return embeds.error("Unable to find system \"{}\".".format(args[0]))
+async def system_info(ctx: CommandContext):
+    if ctx.has_next():
+        system = await ctx.pop_system()
+    else:
+        system = await ctx.ensure_system()
 
     await ctx.reply(embed=await utils.generate_system_info_card(ctx.conn, ctx.client, system))
 
-@command(cmd="system new", usage="[name]", description="Registers a new system to this account.", category="System commands", system_required=False)
-async def new_system(ctx: CommandContext, args: List[str]):
-    if ctx.system:
-        return embeds.error("You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
 
-    system_name = None
-    if len(args) > 0:
-        system_name = " ".join(args)
+async def new_system(ctx: CommandContext):
+    system = await ctx.get_system()
+    if system:
+        return CommandError(
+            "You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
+
+    system_name = ctx.remaining() or None
 
     async with ctx.conn.transaction():
         # TODO: figure out what to do if this errors out on collision on generate_hid
@@ -43,12 +35,13 @@ async def new_system(ctx: CommandContext, args: List[str]):
 
         # Link account
         await db.link_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
-        return embeds.success("System registered! To begin adding members, use `pk;member new <name>`.")
+        return CommandSuccess("System registered! To begin adding members, use `pk;member new <name>`.")
 
-@command(cmd="system set", usage="<name|description|tag|avatar> [value]", description="Edits a system property. Leave [value] blank to clear.", category="System commands")
-async def system_set(ctx: CommandContext, args: List[str]):
-    if len(args) == 0:
-        return embeds.error("You must pass a property name to set.", help=help.edit_system)
+
+async def system_set(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
+    prop = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_system))
 
     allowed_properties = ["name", "description", "tag", "avatar"]
     db_properties = {
@@ -58,25 +51,29 @@ async def system_set(ctx: CommandContext, args: List[str]):
         "avatar": "avatar_url"
     }
 
-    prop = args[0]
     if prop not in allowed_properties:
-        raise embeds.error("Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)), help=help.edit_system)
+        return CommandError(
+            "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)),
+            help=help.edit_system)
 
-    if len(args) >= 2:
-        value = " ".join(args[1:])
+    if ctx.has_next():
+        value = ctx.remaining()
         # Sanity checking
         if prop == "tag":
             if len(value) > 32:
-                raise embeds.error("You can't have a system tag longer than 32 characters.")
+                return CommandError("You can't have a system tag longer than 32 characters.")
 
             # Make sure there are no members which would make the combined length exceed 32
-            members_exceeding = await db.get_members_exceeding(ctx.conn, system_id=ctx.system.id, length=32 - len(value) - 1)
+            members_exceeding = await db.get_members_exceeding(ctx.conn, system_id=system.id,
+                                                               length=32 - len(value) - 1)
             if len(members_exceeding) > 0:
                 # If so, error out and warn
                 member_names = ", ".join([member.name
-                                        for member in members_exceeding])
+                                          for member in members_exceeding])
                 logger.debug("Members exceeding combined length with tag '{}': {}".format(value, member_names))
-                raise embeds.error("The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(member_names))
+                return CommandError(
+                    "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(
+                        member_names))
 
         if prop == "avatar":
             user = await utils.parse_mention(ctx.client, value)
@@ -90,75 +87,73 @@ async def system_set(ctx: CommandContext, args: List[str]):
                 if u.scheme in ["http", "https"] and u.netloc and u.path:
                     value = value
                 else:
-                    raise embeds.error("Invalid image URL.")
+                    return CommandError("Invalid image URL.")
     else:
         # Clear from DB
         value = None
 
     db_prop = db_properties[prop]
-    await db.update_system_field(ctx.conn, system_id=ctx.system.id, field=db_prop, value=value)
+    await db.update_system_field(ctx.conn, system_id=system.id, field=db_prop, value=value)
 
-    response = embeds.success("{} system {}.".format("Updated" if value else "Cleared", prop))
+    response = CommandSuccess("{} system {}.".format("Updated" if value else "Cleared", prop))
     if prop == "avatar" and value:
         response.set_image(url=value)
     return response
 
-@command(cmd="system link", usage="<account>", description="Links another account to your system.", category="System commands")
-async def system_link(ctx: CommandContext, args: List[str]):
-    if len(args) == 0:
-        return embeds.error("You must pass an account to link this system to.", help=help.link_account)
+
+async def system_link(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    account_name = ctx.pop_str(CommandError("You must pass an account to link this system to.", help=help.link_account))
 
     # Find account to link
-    linkee = await utils.parse_mention(ctx.client, args[0])
+    linkee = await utils.parse_mention(ctx.client, account_name)
     if not linkee:
-        return embeds.error("Account not found.")
+        return CommandError("Account not found.")
 
     # Make sure account doesn't already have a system
     account_system = await db.get_system_by_account(ctx.conn, linkee.id)
     if account_system:
-        return embeds.error("The mentioned account is already linked to a system (`{}`)".format(account_system.hid))
+        return CommandError("The mentioned account is already linked to a system (`{}`)".format(account_system.hid))
 
     # Send confirmation message
-    msg = await ctx.reply("{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention))
+    msg = await ctx.reply(
+        "{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention))
     await ctx.client.add_reaction(msg, "✅")
     await ctx.client.add_reaction(msg, "❌")
 
     reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=msg, user=linkee, timeout=60.0)
     # If account to be linked confirms...
     if not reaction:
-        return embeds.error("Account link timed out.")
+        return CommandError("Account link timed out.")
     if not reaction.reaction.emoji == "✅":
-        return embeds.error("Account link cancelled.")
+        return CommandError("Account link cancelled.")
 
-    await db.link_account(ctx.conn, system_id=ctx.system.id, account_id=linkee.id)
-    return embeds.success("Account linked to system.")
+    await db.link_account(ctx.conn, system_id=system.id, account_id=linkee.id)
+    return CommandSuccess("Account linked to system.")
 
-@command(cmd="system unlink", description="Unlinks your system from this account. There must be at least one other account linked.", category="System commands")
-async def system_unlink(ctx: CommandContext, args: List[str]):
+
+async def system_unlink(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
     # Make sure you can't unlink every account
-    linked_accounts = await db.get_linked_accounts(ctx.conn, system_id=ctx.system.id)
+    linked_accounts = await db.get_linked_accounts(ctx.conn, system_id=system.id)
     if len(linked_accounts) == 1:
-        return embeds.error("This is the only account on your system, so you can't unlink it.")
+        return CommandError("This is the only account on your system, so you can't unlink it.")
 
-    await db.unlink_account(ctx.conn, system_id=ctx.system.id, account_id=ctx.message.author.id)
-    return embeds.success("Account unlinked.")
+    await db.unlink_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
+    return CommandSuccess("Account unlinked.")
 
-@command(cmd="system fronter", usage="[system]", description="Gets the current fronter(s) in the system.", category="Switching commands", system_required=False)
-async def system_fronter(ctx: CommandContext, args: List[str]):
-    if len(args) == 0:
-        if not ctx.system:
-            raise NoSystemRegistered()
-        system = ctx.system
+
+async def system_fronter(ctx: CommandContext):
+    if ctx.has_next():
+        system = await ctx.pop_system()
     else:
-        system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
-
-        if system is None:
-            return embeds.error("Can't find system \"{}\".".format(args[0]))
+        system = await ctx.ensure_system()
 
     fronters, timestamp = await pluralkit.utils.get_fronters(ctx.conn, system_id=system.id)
     fronter_names = [member.name for member in fronters]
 
-    embed = utils.make_default_embed(None)
+    embed = embeds.status("")
 
     if len(fronter_names) == 0:
         embed.add_field(name="Current fronter", value="(no fronter)")
@@ -168,20 +163,16 @@ async def system_fronter(ctx: CommandContext, args: List[str]):
         embed.add_field(name="Current fronters", value=", ".join(fronter_names))
 
     if timestamp:
-        embed.add_field(name="Since", value="{} ({})".format(timestamp.isoformat(sep=" ", timespec="seconds"), humanize.naturaltime(timestamp)))
-    return embed
+        embed.add_field(name="Since", value="{} ({})".format(timestamp.isoformat(sep=" ", timespec="seconds"),
+                                                             humanize.naturaltime(pluralkit.utils.fix_time(timestamp))))
+    await ctx.reply(embed=embed)
 
-@command(cmd="system fronthistory", usage="[system]", description="Shows the past 10 switches in the system.", category="Switching commands", system_required=False)
-async def system_fronthistory(ctx: CommandContext, args: List[str]):
-    if len(args) == 0:
-        if not ctx.system:
-            raise NoSystemRegistered()
-        system = ctx.system
+
+async def system_fronthistory(ctx: CommandContext):
+    if ctx.has_next():
+        system = await ctx.pop_system()
     else:
-        system = await utils.get_system_fuzzy(ctx.conn, ctx.client, args[0])
-
-        if system is None:
-            raise embeds.error("Can't find system \"{}\".".format(args[0]))
+        system = await ctx.ensure_system()
 
     lines = []
     front_history = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=10)
@@ -194,37 +185,39 @@ async def system_fronthistory(ctx: CommandContext, args: List[str]):
 
         # Make proper date string
         time_text = timestamp.isoformat(sep=" ", timespec="seconds")
-        rel_text = humanize.naturaltime(timestamp)
+        rel_text = humanize.naturaltime(pluralkit.utils.fix_time(timestamp))
 
         delta_text = ""
         if i > 0:
-            last_switch_time = front_history[i-1][0]
+            last_switch_time = front_history[i - 1][0]
             delta_text = ", for {}".format(humanize.naturaldelta(timestamp - last_switch_time))
         lines.append("**{}** ({}, {}{})".format(name, time_text, rel_text, delta_text))
 
-    embed = utils.make_default_embed("\n".join(lines) or "(none)")
+    embed = embeds.status("\n".join(lines) or "(none)")
     embed.title = "Past switches"
-    return embed
+    await ctx.reply(embed=embed)
 
 
-@command(cmd="system delete", description="Deletes your system from the database ***permanently***.", category="System commands")
-async def system_delete(ctx: CommandContext, args: List[str]):
-    await ctx.reply("Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(ctx.system.hid))
+async def system_delete(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
+    await ctx.reply(
+        "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(
+            system.hid))
 
     msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0)
-    if msg and msg.content.lower() == ctx.system.hid.lower():
-        await db.remove_system(ctx.conn, system_id=ctx.system.id)
-        return embeds.success("System deleted.")
+    if msg and msg.content.lower() == system.hid.lower():
+        await db.remove_system(ctx.conn, system_id=system.id)
+        return CommandSuccess("System deleted.")
     else:
-        return embeds.error("System deletion cancelled.")
+        return CommandError("System deletion cancelled.")
 
 
-@command(cmd="system frontpercent", usage="[time]",
-         description="Shows the fronting percentage of every member, averaged over the given time",
-         category="System commands")
-async def system_frontpercent(ctx: CommandContext, args: List[str]):
+async def system_frontpercent(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
     # Parse the time limit (will go this far back)
-    before = dateparser.parse(" ".join(args), languages=["en"], settings={
+    before = dateparser.parse(ctx.remaining(), languages=["en"], settings={
         "TO_TIMEZONE": "UTC",
         "RETURN_AS_TIMEZONE_AWARE": False
     })
@@ -234,9 +227,9 @@ async def system_frontpercent(ctx: CommandContext, args: List[str]):
         before = None
 
     # Fetch list of switches
-    all_switches = await pluralkit.utils.get_front_history(ctx.conn, ctx.system.id, 99999)
+    all_switches = await pluralkit.utils.get_front_history(ctx.conn, system.id, 99999)
     if not all_switches:
-        return embeds.error("No switches registered to this system.")
+        return CommandError("No switches registered to this system.")
 
     # Cull the switches *ending* before the limit, if given
     # We'll need to find the first switch starting before the limit, then cut off every switch *before* that
@@ -264,11 +257,11 @@ async def system_frontpercent(ctx: CommandContext, args: List[str]):
         # Calculate length of the switch
         switch_length = end_time - start_time
 
-        def add_switch(member_id, length):
-            if member_id not in member_times:
-                member_times[member_id] = length
+        def add_switch(id, length):
+            if id not in member_times:
+                member_times[id] = length
             else:
-                member_times[member_id] += length
+                member_times[id] += length
 
         for member in members:
             # Add the switch length to the currently registered time for that member
@@ -297,4 +290,4 @@ async def system_frontpercent(ctx: CommandContext, args: List[str]):
                         value="{}% ({})".format(percent, humanize.naturaldelta(front_time)))
 
     embed.set_footer(text="Since {}".format(span_start.isoformat(sep=" ", timespec="seconds")))
-    return embed
+    await ctx.reply(embed=embed)

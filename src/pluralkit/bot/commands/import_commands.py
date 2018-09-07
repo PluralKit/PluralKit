@@ -1,20 +1,19 @@
 import asyncio
-import re
 from datetime import datetime
-from typing import List
 
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
-@command(cmd="import tupperware", description="Import data from Tupperware.", system_required=False)
-async def import_tupperware(ctx: CommandContext, args: List[str]):
+
+async def import_tupperware(ctx: CommandContext):
     tupperware_ids = ["431544605209788416", "433916057053560832"]  # Main bot instance and Multi-Pals-specific fork
-    tupperware_members = [ctx.message.server.get_member(bot_id) for bot_id in tupperware_ids if ctx.message.server.get_member(bot_id)]
+    tupperware_members = [ctx.message.server.get_member(bot_id) for bot_id in tupperware_ids if
+                          ctx.message.server.get_member(bot_id)]
 
     # Check if there's any Tupperware bot on the server
     if not tupperware_members:
-        return embeds.error("This command only works in a server where the Tupperware bot is also present.")
+        return CommandError("This command only works in a server where the Tupperware bot is also present.")
 
     # Make sure at least one of the bts have send/read permissions here
     for bot_member in tupperware_members:
@@ -24,10 +23,11 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
             break
     else:
         # If no bots have permission (ie. loop doesn't break), throw error
-        return embeds.error("This command only works in a channel where the Tupperware bot has read/send access.")
+        return CommandError("This command only works in a channel where the Tupperware bot has read/send access.")
 
-    await ctx.reply(embed=utils.make_default_embed("Please reply to this message with `tul!list` (or the server equivalent)."))
-    
+    await ctx.reply(
+        embed=embeds.status("Please reply to this message with `tul!list` (or the server equivalent)."))
+
     # Check to make sure the message is sent by Tupperware, and that the Tupperware response actually belongs to the correct user
     def ensure_account(tw_msg):
         if tw_msg.author not in tupperware_members:
@@ -38,14 +38,16 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
 
         if not tw_msg.embeds[0]["title"]:
             return False
-        
-        return tw_msg.embeds[0]["title"].startswith("{}#{}".format(ctx.message.author.name, ctx.message.author.discriminator))
+
+        return tw_msg.embeds[0]["title"].startswith(
+            "{}#{}".format(ctx.message.author.name, ctx.message.author.discriminator))
 
     tupperware_page_embeds = []
-    
-    tw_msg: discord.Message = await ctx.client.wait_for_message(channel=ctx.message.channel, timeout=60.0, check=ensure_account)
+
+    tw_msg: discord.Message = await ctx.client.wait_for_message(channel=ctx.message.channel, timeout=60.0,
+                                                                check=ensure_account)
     if not tw_msg:
-        return embeds.error("Tupperware import timed out.")
+        return CommandError("Tupperware import timed out.")
     tupperware_page_embeds.append(tw_msg.embeds[0])
 
     # Handle Tupperware pagination
@@ -74,7 +76,9 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
             # If this isn't the same page as last check, edit the status message
             if new_page != current_page:
                 last_found_time = datetime.utcnow()
-                await ctx.client.edit_message(status_msg, "Multi-page member list found. Please manually scroll through all the pages. Read {}/{} pages.".format(len(pages_found), total_pages))
+                await ctx.client.edit_message(status_msg,
+                                              "Multi-page member list found. Please manually scroll through all the pages. Read {}/{} pages.".format(
+                                                  len(pages_found), total_pages))
             current_page = new_page
 
             # And sleep a bit to prevent spamming the CPU
@@ -82,7 +86,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
 
             # Make sure it doesn't spin here for too long, time out after 30 seconds since last new page
             if (datetime.utcnow() - last_found_time).seconds > 30:
-                return embeds.error("Pagination scan timed out.")
+                return CommandError("Pagination scan timed out.")
 
         # Now that we've got all the pages, put them in the embeds list
         # Make sure to erase the original one we put in above too
@@ -94,7 +98,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
     logger.debug("Importing from Tupperware...")
 
     # Create new (nameless) system if there isn't any registered
-    system = ctx.system
+    system = ctx.get_system()
     if system is None:
         hid = utils.generate_hid()
         logger.debug("Creating new system (hid={})...".format(hid))
@@ -117,7 +121,7 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
                 if line.startswith("Brackets:"):
                     brackets = line[len("Brackets: "):]
                     member_prefix = brackets[:brackets.index("text")].strip() or None
-                    member_suffix = brackets[brackets.index("text")+4:].strip() or None
+                    member_suffix = brackets[brackets.index("text") + 4:].strip() or None
                 elif line.startswith("Avatar URL: "):
                     url = line[len("Avatar URL: "):]
                     member_avatar = url
@@ -138,14 +142,19 @@ async def import_tupperware(ctx: CommandContext, args: List[str]):
                 # Or create a new member
                 hid = utils.generate_hid()
                 logger.debug("Creating new member {} (hid={})...".format(name, hid))
-                existing_member = await db.create_member(ctx.conn, system_id=system.id, member_name=name, member_hid=hid)
+                existing_member = await db.create_member(ctx.conn, system_id=system.id, member_name=name,
+                                                         member_hid=hid)
 
             # Save the new stuff in the DB
             logger.debug("Updating fields...")
             await db.update_member_field(ctx.conn, member_id=existing_member.id, field="prefix", value=member_prefix)
             await db.update_member_field(ctx.conn, member_id=existing_member.id, field="suffix", value=member_suffix)
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="avatar_url", value=member_avatar)
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="birthday", value=member_birthdate)
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="description", value=member_description)
-    
-    return embeds.success("System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting.")
+            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="avatar_url",
+                                         value=member_avatar)
+            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="birthday",
+                                         value=member_birthdate)
+            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="description",
+                                         value=member_description)
+
+    return CommandSuccess(
+        "System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting.")

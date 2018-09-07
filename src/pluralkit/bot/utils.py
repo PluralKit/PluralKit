@@ -81,19 +81,6 @@ async def get_member_fuzzy(conn, system_id: int, key: str, system_only=True) -> 
         if member is not None:
             return member
 
-def make_default_embed(message):
-    embed = discord.Embed()
-    embed.colour = discord.Colour.blue()
-    embed.description = message
-    return embed
-
-def make_error_embed(message):
-    embed = discord.Embed()
-    embed.colour = discord.Colour.dark_red()
-    embed.description = message
-    return embed
-
-
 async def generate_system_info_card(conn, client: discord.Client, system: System) -> discord.Embed:
     card = discord.Embed()
     card.colour = discord.Colour.blue()

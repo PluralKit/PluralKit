@@ -1,7 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Tuple
 
 from pluralkit import db, Member
+
+
+def fix_time(time: datetime):
+    # Assume we're receiving a naive datetime set to UTC, returns naive time zone set to local
+    return time.replace(tzinfo=timezone.utc).astimezone().replace(tzinfo=None)
 
 
 async def get_fronter_ids(conn, system_id) -> (List[int], datetime):

@@ -12,13 +12,13 @@ from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
-@command(cmd="help", usage="[system|member|proxy|switch|mod]", description="Shows help messages.", system_required=False)
-async def show_help(ctx: CommandContext, args: List[str]):
-    embed = utils.make_default_embed("")
-    embed.title = "PluralKit Help"
-    embed.set_footer(text="By Astrid (Ske#6201, or 'qoxvy' on PK) | GitHub: https://github.com/xSke/PluralKit/")
 
-    category = args[0] if len(args) > 0 else None
+async def show_help(ctx: CommandContext):
+    embed = embeds.status("")
+    embed.title = "PluralKit Help"
+    embed.set_footer(text="By Astrid (Ske#6201; pk;member qoxvy) | GitHub: https://github.com/xSke/PluralKit/")
+
+    category = ctx.pop_str() if ctx.has_next() else None
 
     from pluralkit.bot.help import help_pages
     if category in help_pages:
@@ -28,12 +28,12 @@ async def show_help(ctx: CommandContext, args: List[str]):
             else:
                 embed.description = text
     else:
-        return embeds.error("Unknown help page '{}'.".format(category))
+        return CommandError("Unknown help page '{}'.".format(category))
 
-    return embed
+    await ctx.reply(embed=embed)
 
-@command(cmd="invite", description="Generates an invite link for this bot.", system_required=False)
-async def invite_link(ctx: CommandContext, args: List[str]):
+
+async def invite_link(ctx: CommandContext):
     client_id = os.environ["CLIENT_ID"]
 
     permissions = discord.Permissions()
@@ -47,15 +47,16 @@ async def invite_link(ctx: CommandContext, args: List[str]):
 
     url = oauth_url(client_id, permissions)
     logger.debug("Sending invite URL: {}".format(url))
-    return embeds.success("Use this link to add PluralKit to your server: {}".format(url))
+    return CommandSuccess("Use this link to add PluralKit to your server: {}".format(url))
 
-@command(cmd="export", description="Exports system data to a machine-readable format.")
-async def export(ctx: CommandContext, args: List[str]):
-    members = await db.get_all_members(ctx.conn, ctx.system.id)
-    accounts = await db.get_linked_accounts(ctx.conn, ctx.system.id)
-    switches = await pluralkit.utils.get_front_history(ctx.conn, ctx.system.id, 999999)
 
-    system = ctx.system
+async def export(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
+    members = await db.get_all_members(ctx.conn, system.id)
+    accounts = await db.get_linked_accounts(ctx.conn, system.id)
+    switches = await pluralkit.utils.get_front_history(ctx.conn, system.id, 999999)
+
     data = {
         "name": system.name,
         "id": system.hid,
