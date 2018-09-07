@@ -44,7 +44,7 @@ async def import_tupperware(ctx: CommandContext):
 
     tupperware_page_embeds = []
 
-    tw_msg: discord.Message = await ctx.client.wait_for_message(channel=ctx.message.channel, timeout=60.0,
+    tw_msg: discord.Message = await ctx.client.wait_for_message(channel=ctx.message.channel, timeout=60.0 * 5,
                                                                 check=ensure_account)
     if not tw_msg:
         return CommandError("Tupperware import timed out.")

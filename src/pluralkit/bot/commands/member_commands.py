@@ -162,7 +162,7 @@ async def member_delete(ctx: CommandContext):
         "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(
             member.name, member.hid))
 
-    msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0)
+    msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0 * 5)
     if msg and msg.content.lower() == member.hid.lower():
         await db.delete_member(ctx.conn, member_id=member.id)
         return CommandSuccess("Member deleted.")

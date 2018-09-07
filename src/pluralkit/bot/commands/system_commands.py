@@ -128,7 +128,7 @@ async def system_link(ctx: CommandContext):
     await ctx.client.add_reaction(msg, "✅")
     await ctx.client.add_reaction(msg, "❌")
 
-    reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=msg, user=linkee, timeout=60.0)
+    reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=msg, user=linkee, timeout=60.0 * 5)
     # If account to be linked confirms...
     if not reaction:
         return CommandError("Account link timed out.")
@@ -212,7 +212,7 @@ async def system_delete(ctx: CommandContext):
         "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(
             system.hid))
 
-    msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0)
+    msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0 * 5)
     if msg and msg.content.lower() == system.hid.lower():
         await db.remove_system(ctx.conn, system_id=system.id)
         return CommandSuccess("System deleted.")

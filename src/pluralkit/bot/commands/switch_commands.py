@@ -115,7 +115,7 @@ async def switch_move(ctx: CommandContext):
         await ctx.client.add_reaction(confirm_msg, "❌")
 
         reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=confirm_msg, user=ctx.message.author,
-                                                      timeout=60.0)
+                                                      timeout=60.0 * 5)
         if not reaction:
             return CommandError("Switch move timed out.")
 
