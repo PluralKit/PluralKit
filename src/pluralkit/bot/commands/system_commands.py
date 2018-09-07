@@ -67,6 +67,9 @@ async def system_set(ctx: CommandContext):
             if len(value) > 32:
                 return CommandError("You can't have a system tag longer than 32 characters.")
 
+            if re.search("<a?:\w+:\d+>", value):
+                return CommandError("Due to a Discord limitation, custom emojis aren't supported. Please use a standard emoji instead.")
+
             # Make sure there are no members which would make the combined length exceed 32
             members_exceeding = await db.get_members_exceeding(ctx.conn, system_id=system.id,
                                                                length=32 - len(value) - 1)

@@ -55,10 +55,13 @@ async def member_set(ctx: CommandContext):
             help=help.edit_member)
 
     if ctx.has_next():
-        value = " ".join(ctx.remaining())
+        value = ctx.remaining()
 
         # Sanity/validity checks and type conversions
         if prop == "name":
+            if re.search("<a?:\w+:\d+>", value):
+                return CommandError("Due to a Discord limitation, custom emojis aren't supported. Please use a standard emoji instead.")
+
             bounds_error = utils.bounds_check_member_name(value, system.tag)
             if bounds_error:
                 return CommandError(bounds_error)
