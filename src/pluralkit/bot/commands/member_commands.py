@@ -114,10 +114,10 @@ async def member_set(ctx: CommandContext):
     await db.update_member_field(ctx.conn, member_id=member.id, field=db_prop, value=value)
 
     response = CommandSuccess("{} {}'s {}.".format("Updated" if value else "Cleared", member.name, prop))
-    if prop == "avatar" and value:
-        response.set_image(url=value)
-    if prop == "color" and value:
-        response.colour = int(value, 16)
+    #if prop == "avatar" and value:
+    #    response.set_image(url=value)
+    #if prop == "color" and value:
+    #    response.colour = int(value, 16)
     return response
 
 

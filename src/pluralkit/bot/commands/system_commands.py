@@ -103,8 +103,8 @@ async def system_set(ctx: CommandContext):
     await db.update_system_field(ctx.conn, system_id=system.id, field=db_prop, value=value)
 
     response = CommandSuccess("{} system {}.".format("Updated" if value else "Cleared", prop))
-    if prop == "avatar" and value:
-        response.set_image(url=value)
+    #if prop == "avatar" and value:
+    #    response.set_image(url=value)
     return response
 
 
