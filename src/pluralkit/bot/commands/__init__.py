@@ -14,7 +14,7 @@ logger = logging.getLogger("pluralkit.bot.commands")
 
 def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
     if arg_string.startswith("\""):
-        end_quote = arg_string.find("\"", start=1)
+        end_quote = arg_string[1:].find("\"") + 1
         if end_quote > 0:
             return arg_string[1:end_quote], arg_string[end_quote + 1:].strip()
         else:
