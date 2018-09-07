@@ -98,7 +98,7 @@ async def import_tupperware(ctx: CommandContext):
     logger.debug("Importing from Tupperware...")
 
     # Create new (nameless) system if there isn't any registered
-    system = ctx.get_system()
+    system = await ctx.get_system()
     if system is None:
         hid = utils.generate_hid()
         logger.debug("Creating new system (hid={})...".format(hid))
