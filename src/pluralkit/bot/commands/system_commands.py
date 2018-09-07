@@ -59,6 +59,10 @@ async def system_set(ctx: CommandContext):
     if ctx.has_next():
         value = ctx.remaining()
         # Sanity checking
+        if prop == "description":
+            if len(value) > 1024:
+                return CommandError("You can't have a description longer than 1024 characters.")
+
         if prop == "tag":
             if len(value) > 32:
                 return CommandError("You can't have a system tag longer than 32 characters.")

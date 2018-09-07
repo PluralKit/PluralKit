@@ -63,6 +63,10 @@ async def member_set(ctx: CommandContext):
             if bounds_error:
                 return CommandError(bounds_error)
 
+        if prop == "description":
+            if len(value) > 1024:
+                return CommandError("You can't have a description longer than 1024 characters.")
+
         if prop == "color":
             match = re.fullmatch("#?([0-9A-Fa-f]{6})", value)
             if not match:
