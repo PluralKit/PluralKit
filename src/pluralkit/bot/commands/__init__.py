@@ -1,6 +1,9 @@
+import os
+
 import discord
 import logging
 import re
+import traceback
 from typing import Tuple, Optional
 
 from pluralkit import db, System, Member
@@ -115,6 +118,26 @@ import pluralkit.bot.commands.switch_commands
 import pluralkit.bot.commands.system_commands
 
 
+async def log_error_in_channel(ctx: CommandContext):
+    channel_id = os.environ["LOG_CHANNEL"]
+    if not channel_id:
+        return
+
+    channel = ctx.client.get_channel(channel_id)
+
+    embed = discord.Embed()
+    embed.colour = discord.Colour.dark_red()
+    embed.title = ctx.message.content
+
+    embed.set_footer(text="Sender: {}#{} | Server: {} | Channel: {}".format(
+        ctx.message.author.name, ctx.message.author.discriminator,
+        ctx.message.server.id,
+        ctx.message.channel.id
+    ))
+
+    await ctx.client.send_message(channel, "```python\n{}```".format(traceback.format_exc()), embed=embed)
+
+
 async def run_command(ctx: CommandContext, func):
     try:
         result = await func(ctx)
@@ -122,8 +145,10 @@ async def run_command(ctx: CommandContext, func):
             await ctx.reply(embed=result.to_embed())
     except CommandError as e:
         await ctx.reply(embed=e.to_embed())
-    except Exception:
+    except Exception as e:
         logger.exception("Exception while dispatching command")
+
+        await log_error_in_channel(ctx)
 
 
 async def command_dispatch(client: discord.Client, message: discord.Message, conn) -> bool:
