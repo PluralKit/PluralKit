@@ -152,6 +152,10 @@ async def generate_member_info_card(conn, member: Member) -> discord.Embed:
     if member.pronouns:
         card.add_field(name="Pronouns", value=member.pronouns)
 
+    message_count = await db.get_member_message_count(conn, member.id)
+    if message_count > 0:
+        card.add_field(name="Message Count", value=str(message_count), inline=True)
+
     if member.prefix or member.suffix:
         prefix = member.prefix or ""
         suffix = member.suffix or ""
@@ -162,6 +166,5 @@ async def generate_member_info_card(conn, member: Member) -> discord.Embed:
         card.add_field(name="Description",
                        value=member.description, inline=False)
 
-    card.set_footer(text="System ID: {} | Member ID: {}".format(
-        system.hid, member.hid))
+    card.set_footer(text="System ID: {} | Member ID: {}".format(system.hid, member.hid))
     return card

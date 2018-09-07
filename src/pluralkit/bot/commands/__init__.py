@@ -60,8 +60,7 @@ class CommandContext:
         system = await self.get_system()
 
         if not system:
-            raise CommandError(
-                embeds.error("No system registered to this account. Use `pk;system new` to register one."))
+            raise CommandError("No system registered to this account. Use `pk;system new` to register one.")
 
         return system
 

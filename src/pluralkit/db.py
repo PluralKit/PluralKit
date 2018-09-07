@@ -260,6 +260,10 @@ async def delete_message(conn, message_id: str):
     await conn.execute("delete from messages where mid = $1", int(message_id))
 
 @db_wrap
+async def get_member_message_count(conn, member_id: int) -> int:
+    return await conn.fetchval("select count(*) from messages where member = $1", member_id)
+
+@db_wrap
 async def front_history(conn, system_id: int, count: int):
     return await conn.fetch("""select
         switches.*,
