@@ -103,23 +103,10 @@ async def switch_move(ctx: CommandContext):
         last_relative = humanize.naturaltime(pluralkit.utils.fix_time(last_timestamp))
         new_absolute = new_time.isoformat(sep=" ", timespec="seconds")
         new_relative = humanize.naturaltime(pluralkit.utils.fix_time(new_time))
-        embed = embeds.status(
-            "This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute,
-                                                                                                last_relative,
-                                                                                                new_absolute,
-                                                                                                new_relative))
 
-        # Await and handle confirmation reactions
-        confirm_msg = await ctx.reply(embed=embed)
-        await ctx.client.add_reaction(confirm_msg, "✅")
-        await ctx.client.add_reaction(confirm_msg, "❌")
-
-        reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=confirm_msg, user=ctx.message.author,
-                                                      timeout=60.0 * 5)
-        if not reaction:
-            return CommandError("Switch move timed out.")
-
-        if reaction.reaction.emoji == "❌":
+        # Confirm with user
+        switch_confirm_message = "This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute, last_relative, new_absolute, new_relative)
+        if not await ctx.confirm_react(ctx.message.author, switch_confirm_message):
             return CommandError("Switch move cancelled.")
 
         # DB requires the actual switch ID which our utility method above doesn't return, do this manually
@@ -128,3 +115,6 @@ async def switch_move(ctx: CommandContext):
         # Change the switch in the DB
         await db.move_last_switch(ctx.conn, system.id, switch_id, new_time)
         return CommandSuccess("Switch moved.")
+
+
+

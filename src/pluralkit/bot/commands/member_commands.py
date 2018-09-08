@@ -158,13 +158,9 @@ async def member_delete(ctx: CommandContext):
     await ctx.ensure_system()
     member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
 
-    await ctx.reply(
-        "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(
-            member.name, member.hid))
-
-    msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0 * 5)
-    if msg and msg.content.lower() == member.hid.lower():
-        await db.delete_member(ctx.conn, member_id=member.id)
-        return CommandSuccess("Member deleted.")
-    else:
+    delete_confirm_msg = "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(member.name, member.hid)
+    if not await ctx.confirm_text(ctx.message.author, ctx.message.channel, member.hid, delete_confirm_msg):
         return CommandError("Member deletion cancelled.")
+
+    await db.delete_member(ctx.conn, member_id=member.id)
+    return CommandSuccess("Member deleted.")

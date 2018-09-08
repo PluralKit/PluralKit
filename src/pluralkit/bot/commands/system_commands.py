@@ -208,16 +208,12 @@ async def system_fronthistory(ctx: CommandContext):
 async def system_delete(ctx: CommandContext):
     system = await ctx.ensure_system()
 
-    await ctx.reply(
-        "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(
-            system.hid))
-
-    msg = await ctx.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel, timeout=60.0 * 5)
-    if msg and msg.content.lower() == system.hid.lower():
-        await db.remove_system(ctx.conn, system_id=system.id)
-        return CommandSuccess("System deleted.")
-    else:
+    delete_confirm_msg = "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(system.hid)
+    if not await ctx.confirm_text(ctx.message.author, ctx.message.channel, system.hid, delete_confirm_msg):
         return CommandError("System deletion cancelled.")
+
+    await db.remove_system(ctx.conn, system_id=system.id)
+    return CommandSuccess("System deleted.")
 
 
 async def system_frontpercent(ctx: CommandContext):

@@ -41,8 +41,8 @@ class CommandSuccess(CommandResponse):
 
 
 class CommandError(Exception, CommandResponse):
-    def __init__(self, embed: str, help: Tuple[str, str] = None):
-        self.text = embed
+    def __init__(self, text: str, help: Tuple[str, str] = None):
+        self.text = text
         self.help = help
 
     def to_embed(self):
@@ -107,6 +107,25 @@ class CommandContext:
 
     async def reply(self, content=None, embed=None):
         return await self.client.send_message(self.message.channel, content=content, embed=embed)
+
+    async def confirm_react(self, user: discord.Member, message: str):
+        message = await self.reply(message)
+
+        await self.client.add_reaction(message, "✅")
+        await self.client.add_reaction(message, "❌")
+
+        reaction = await self.client.wait_for_reaction(emoji=["✅", "❌"], user=user, timeout=60.0*5)
+        if not reaction:
+            raise CommandError("Timed out - try again.")
+        return reaction.reaction.emoji == "✅"
+
+    async def confirm_text(self, user: discord.Member, channel: discord.Channel, confirm_text: str, message: str):
+        await self.reply(message)
+
+        message = await self.client.wait_for_message(channel=channel, author=user, timeout=60.0*5)
+        if not message:
+            raise CommandError("Timed out - try again.")
+        return message.content == confirm_text
 
 
 import pluralkit.bot.commands.import_commands
