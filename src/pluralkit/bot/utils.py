@@ -6,7 +6,9 @@ import string
 import discord
 import humanize
 
-from pluralkit import System, Member, db
+from pluralkit import db
+from pluralkit.system import System
+from pluralkit.member import Member
 from pluralkit.utils import get_fronters
 
 logger = logging.getLogger("pluralkit.utils")

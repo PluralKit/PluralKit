@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from typing import List, Tuple
 
-from pluralkit import db, Member
+from pluralkit import db
+from pluralkit.member import Member
 
 
 def fix_time(time: datetime):

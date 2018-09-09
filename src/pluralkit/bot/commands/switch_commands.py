@@ -1,11 +1,12 @@
 import dateparser
 import humanize
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List
 
 import pluralkit.utils
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
+from pluralkit.member import Member
 
 logger = logging.getLogger("pluralkit.commands")
 
