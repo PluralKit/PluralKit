@@ -65,7 +65,11 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
     async def link_account(self, conn, new_account_id: str):
         existing_system = await System.get_by_account(conn, new_account_id)
+
         if existing_system:
+            if existing_system.id == self.id:
+                raise errors.AccountInOwnSystemError()
+
             raise errors.AccountAlreadyLinkedError(existing_system)
 
         await db.link_account(conn, self.id, new_account_id)

@@ -5,8 +5,7 @@ from datetime import datetime
 import pluralkit.utils
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
-from pluralkit.errors import ExistingSystemError, DescriptionTooLongError, TagTooLongError, TagTooLongWithMembersError, \
-    InvalidAvatarURLError, UnlinkingLastAccountError
+from pluralkit.errors import ExistingSystemError, UnlinkingLastAccountError, PluralKitError, AccountAlreadyLinkedError
 
 logger = logging.getLogger("pluralkit.commands")
 
@@ -25,9 +24,8 @@ async def new_system(ctx: CommandContext):
 
     try:
         await System.create_system(ctx.conn, ctx.message.author.id, system_name)
-    except ExistingSystemError:
-        return CommandError(
-            "You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
+    except ExistingSystemError as e:
+        return CommandError(e.message)
 
     return CommandSuccess("System registered! To begin adding members, use `pk;member new <name>`.")
 
@@ -55,21 +53,15 @@ async def system_set(ctx: CommandContext):
 
     if property_name not in properties:
         return CommandError(
-            "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(allowed_properties)),
+            "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(properties.keys())),
             help=help.edit_system)
 
     value = ctx.remaining() or None
 
     try:
         await properties[property_name](ctx.conn, value)
-    except DescriptionTooLongError:
-        return CommandError("You can't have a description longer than 1024 characters.")
-    except TagTooLongError:
-        return CommandError("You can't have a system tag longer than 32 characters.")
-    except TagTooLongWithMembersError as e:
-        return CommandError("The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(", ".join(e.member_names)))
-    except InvalidAvatarURLError:
-        return CommandError("Invalid image URL.")
+    except PluralKitError as e:
+        return CommandError(e.message)
 
     response = CommandSuccess("{} system {}.".format("Updated" if value else "Cleared", property_name))
     # if prop == "avatar" and value:
@@ -89,7 +81,7 @@ async def system_link(ctx: CommandContext):
     # Make sure account doesn't already have a system
     account_system = await System.get_by_account(ctx.conn, linkee.id)
     if account_system:
-        return CommandError("The mentioned account is already linked to a system (`{}`)".format(account_system.hid))
+        return CommandError(AccountAlreadyLinkedError(account_system).message)
 
     if not await ctx.confirm_react(linkee, "{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention)):
         return CommandError("Account link cancelled.")
@@ -103,8 +95,8 @@ async def system_unlink(ctx: CommandContext):
 
     try:
         await system.unlink_account(ctx.conn, ctx.message.author.id)
-    except UnlinkingLastAccountError:
-        return CommandError("This is the only account on your system, so you can't unlink it.")
+    except UnlinkingLastAccountError as e:
+        return CommandError(e.message)
 
     return CommandSuccess("Account unlinked.")
 
