@@ -1,3 +1,5 @@
+import os
+
 import logging
 
 from aiohttp import web
@@ -115,7 +117,13 @@ app.add_routes([
 
 
 async def run():
-    app["pool"] = await db.connect()
+    app["pool"] = await db.connect(
+        os.environ["DATABASE_USER"],
+        os.environ["DATABASE_PASS"],
+        os.environ["DATABASE_NAME"],
+        os.environ["DATABASE_HOST"],
+        int(os.environ["DATABASE_PORT"])
+    )
     return app
 
 
