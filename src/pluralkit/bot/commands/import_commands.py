@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 
+import pluralkit.utils
 from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
@@ -100,7 +101,7 @@ async def import_tupperware(ctx: CommandContext):
     # Create new (nameless) system if there isn't any registered
     system = await ctx.get_system()
     if system is None:
-        hid = utils.generate_hid()
+        hid = pluralkit.utils.generate_hid()
         logger.debug("Creating new system (hid={})...".format(hid))
         system = await db.create_system(ctx.conn, system_name=None, system_hid=hid)
         await db.link_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
@@ -140,7 +141,7 @@ async def import_tupperware(ctx: CommandContext):
             existing_member = await db.get_member_by_name(ctx.conn, system_id=system.id, member_name=name)
             if not existing_member:
                 # Or create a new member
-                hid = utils.generate_hid()
+                hid = pluralkit.utils.generate_hid()
                 logger.debug("Creating new member {} (hid={})...".format(name, hid))
                 existing_member = await db.create_member(ctx.conn, system_id=system.id, member_name=name,
                                                          member_hid=hid)

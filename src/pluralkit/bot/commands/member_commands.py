@@ -1,10 +1,9 @@
-import re
 from datetime import datetime
-from typing import List
 from urllib.parse import urlparse
 
-from pluralkit.bot.commands import *
+import pluralkit.utils
 from pluralkit.bot import help
+from pluralkit.bot.commands import *
 
 logger = logging.getLogger("pluralkit.commands")
 
@@ -26,7 +25,7 @@ async def new_member(ctx: CommandContext):
         return CommandError(bounds_error)
 
     # TODO: figure out what to do if this errors out on collision on generate_hid
-    hid = utils.generate_hid()
+    hid = pluralkit.utils.generate_hid()
 
     # Insert member row
     await db.create_member(ctx.conn, system_id=system.id, member_name=name, member_hid=hid)

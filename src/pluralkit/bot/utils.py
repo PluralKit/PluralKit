@@ -1,7 +1,5 @@
 import logging
-import random
 import re
-import string
 
 import discord
 import humanize
@@ -15,9 +13,6 @@ logger = logging.getLogger("pluralkit.utils")
 
 def escape(s):
     return s.replace("`", "\\`")
-
-def generate_hid() -> str:
-    return "".join(random.choices(string.ascii_lowercase, k=5))
 
 def bounds_check_member_name(new_name, system_tag):
     if len(new_name) > 32:

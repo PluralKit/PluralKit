@@ -1,11 +1,12 @@
 import dateparser
 import humanize
 from datetime import datetime
-from urllib.parse import urlparse
 
 import pluralkit.utils
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
+from pluralkit.errors import ExistingSystemError, DescriptionTooLongError, TagTooLongError, TagTooLongWithMembersError, \
+    InvalidAvatarURLError, UnlinkingLastAccountError
 
 logger = logging.getLogger("pluralkit.commands")
 
@@ -20,90 +21,58 @@ async def system_info(ctx: CommandContext):
 
 
 async def new_system(ctx: CommandContext):
-    system = await ctx.get_system()
-    if system:
+    system_name = ctx.remaining() or None
+
+    try:
+        await System.create_system(ctx.conn, ctx.message.author.id, system_name)
+    except ExistingSystemError:
         return CommandError(
             "You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
 
-    system_name = ctx.remaining() or None
-
-    async with ctx.conn.transaction():
-        # TODO: figure out what to do if this errors out on collision on generate_hid
-        hid = utils.generate_hid()
-
-        system = await db.create_system(ctx.conn, system_name=system_name, system_hid=hid)
-
-        # Link account
-        await db.link_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
-        return CommandSuccess("System registered! To begin adding members, use `pk;member new <name>`.")
+    return CommandSuccess("System registered! To begin adding members, use `pk;member new <name>`.")
 
 
 async def system_set(ctx: CommandContext):
     system = await ctx.ensure_system()
 
-    prop = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_system))
+    property_name = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_system))
 
-    allowed_properties = ["name", "description", "tag", "avatar"]
-    db_properties = {
-        "name": "name",
-        "description": "description",
-        "tag": "tag",
-        "avatar": "avatar_url"
+    async def avatar_setter(conn, url):
+        user = await utils.parse_mention(ctx.client, url)
+        if user:
+            # Set the avatar to the mentioned user's avatar
+            # Discord pushes webp by default, which isn't supported by webhooks, but also hosts png alternatives
+            url = user.avatar_url.replace(".webp", ".png")
+
+        await system.set_avatar(conn, url)
+
+    properties = {
+        "name": system.set_name,
+        "description": system.set_description,
+        "tag": system.set_tag,
+        "avatar": avatar_setter
     }
 
-    if prop not in allowed_properties:
+    if property_name not in properties:
         return CommandError(
-            "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)),
+            "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(allowed_properties)),
             help=help.edit_system)
 
-    if ctx.has_next():
-        value = ctx.remaining()
-        # Sanity checking
-        if prop == "description":
-            if len(value) > 1024:
-                return CommandError("You can't have a description longer than 1024 characters.")
+    value = ctx.remaining() or None
 
-        if prop == "tag":
-            if len(value) > 32:
-                return CommandError("You can't have a system tag longer than 32 characters.")
+    try:
+        await properties[property_name](ctx.conn, value)
+    except DescriptionTooLongError:
+        return CommandError("You can't have a description longer than 1024 characters.")
+    except TagTooLongError:
+        return CommandError("You can't have a system tag longer than 32 characters.")
+    except TagTooLongWithMembersError as e:
+        return CommandError("The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(", ".join(e.member_names)))
+    except InvalidAvatarURLError:
+        return CommandError("Invalid image URL.")
 
-            if re.search("<a?:\w+:\d+>", value):
-                return CommandError("Due to a Discord limitation, custom emojis aren't supported. Please use a standard emoji instead.")
-
-            # Make sure there are no members which would make the combined length exceed 32
-            members_exceeding = await db.get_members_exceeding(ctx.conn, system_id=system.id,
-                                                               length=32 - len(value) - 1)
-            if len(members_exceeding) > 0:
-                # If so, error out and warn
-                member_names = ", ".join([member.name
-                                          for member in members_exceeding])
-                logger.debug("Members exceeding combined length with tag '{}': {}".format(value, member_names))
-                return CommandError(
-                    "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(
-                        member_names))
-
-        if prop == "avatar":
-            user = await utils.parse_mention(ctx.client, value)
-            if user:
-                # Set the avatar to the mentioned user's avatar
-                # Discord doesn't like webp, but also hosts png alternatives
-                value = user.avatar_url.replace(".webp", ".png")
-            else:
-                # Validate URL
-                u = urlparse(value)
-                if u.scheme in ["http", "https"] and u.netloc and u.path:
-                    value = value
-                else:
-                    return CommandError("Invalid image URL.")
-    else:
-        # Clear from DB
-        value = None
-
-    db_prop = db_properties[prop]
-    await db.update_system_field(ctx.conn, system_id=system.id, field=db_prop, value=value)
-
-    response = CommandSuccess("{} system {}.".format("Updated" if value else "Cleared", prop))
-    #if prop == "avatar" and value:
+    response = CommandSuccess("{} system {}.".format("Updated" if value else "Cleared", property_name))
+    # if prop == "avatar" and value:
     #    response.set_image(url=value)
     return response
 
@@ -118,36 +87,25 @@ async def system_link(ctx: CommandContext):
         return CommandError("Account not found.")
 
     # Make sure account doesn't already have a system
-    account_system = await db.get_system_by_account(ctx.conn, linkee.id)
+    account_system = await System.get_by_account(ctx.conn, linkee.id)
     if account_system:
         return CommandError("The mentioned account is already linked to a system (`{}`)".format(account_system.hid))
 
-    # Send confirmation message
-    msg = await ctx.reply(
-        "{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention))
-    await ctx.client.add_reaction(msg, "✅")
-    await ctx.client.add_reaction(msg, "❌")
-
-    reaction = await ctx.client.wait_for_reaction(emoji=["✅", "❌"], message=msg, user=linkee, timeout=60.0 * 5)
-    # If account to be linked confirms...
-    if not reaction:
-        return CommandError("Account link timed out.")
-    if not reaction.reaction.emoji == "✅":
+    if not await ctx.confirm_react(linkee, "{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention)):
         return CommandError("Account link cancelled.")
 
-    await db.link_account(ctx.conn, system_id=system.id, account_id=linkee.id)
+    await system.link_account(ctx.conn, linkee.id)
     return CommandSuccess("Account linked to system.")
 
 
 async def system_unlink(ctx: CommandContext):
     system = await ctx.ensure_system()
 
-    # Make sure you can't unlink every account
-    linked_accounts = await db.get_linked_accounts(ctx.conn, system_id=system.id)
-    if len(linked_accounts) == 1:
+    try:
+        await system.unlink_account(ctx.conn, ctx.message.author.id)
+    except UnlinkingLastAccountError:
         return CommandError("This is the only account on your system, so you can't unlink it.")
 
-    await db.unlink_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
     return CommandSuccess("Account unlinked.")
 
 
@@ -208,11 +166,12 @@ async def system_fronthistory(ctx: CommandContext):
 async def system_delete(ctx: CommandContext):
     system = await ctx.ensure_system()
 
-    delete_confirm_msg = "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(system.hid)
+    delete_confirm_msg = "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(
+        system.hid)
     if not await ctx.confirm_text(ctx.message.author, ctx.message.channel, system.hid, delete_confirm_msg):
         return CommandError("System deletion cancelled.")
 
-    await db.remove_system(ctx.conn, system_id=system.id)
+    await system.delete(ctx.conn)
     return CommandSuccess("System deleted.")
 
 

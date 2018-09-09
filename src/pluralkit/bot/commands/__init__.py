@@ -4,7 +4,7 @@ import discord
 import logging
 import re
 import traceback
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 
 from pluralkit import db
 from pluralkit.system import System
@@ -110,7 +110,7 @@ class CommandContext:
     async def reply(self, content=None, embed=None):
         return await self.client.send_message(self.message.channel, content=content, embed=embed)
 
-    async def confirm_react(self, user: discord.Member, message: str):
+    async def confirm_react(self, user: Union[discord.Member, discord.User], message: str):
         message = await self.reply(message)
 
         await self.client.add_reaction(message, "✅")

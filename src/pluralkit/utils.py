@@ -1,7 +1,13 @@
+import re
+
+import random
+import string
 from datetime import datetime, timezone
 from typing import List, Tuple
+from urllib.parse import urlparse
 
 from pluralkit import db
+from pluralkit.errors import InvalidAvatarURLError
 from pluralkit.member import Member
 
 
@@ -48,3 +54,19 @@ async def get_front_history(conn, system_id, count) -> List[Tuple[datetime, List
         members = [all_members[id] for id in switch["members"]]
         out.append((timestamp, members))
     return out
+
+
+def generate_hid() -> str:
+    return "".join(random.choices(string.ascii_lowercase, k=5))
+
+
+def contains_custom_emoji(value):
+    return bool(re.search("<a?:\w+:\d+>", value))
+
+
+def validate_avatar_url_or_raise(url):
+    u = urlparse(url)
+    if not (u.scheme in ["http", "https"] and u.netloc and u.path):
+        raise InvalidAvatarURLError()
+
+    # TODO: check file type and size of image
