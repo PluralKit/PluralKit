@@ -1,6 +1,8 @@
 # PluralKit
 
-PluralKit is a Discord bot meant for plural communities. It has features like message proxying through webhooks, switch tracking, system and member profiles, and more. 
+PluralKit is a Discord bot meant for plural communities. It has features like message proxying through webhooks, switch tracking, system and member profiles, and more.
+
+PluralKit has a Discord server for support and discussion: https://discord.gg/PczBt78 
 
 # Requirements
 Running the bot requires Python (specifically version 3.6) and PostgreSQL.
