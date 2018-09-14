@@ -4,8 +4,11 @@ categories = ("Help categories", """`pk;help system` - Details on system configu
 `pk;help switch` - Details on switch logging.
 `pk;help mod` - Details on moderator operations.
 `pk;help import` - Details on data import from other services.""")
-getting_started = ("Getting started",
-                   """To get started, set up a system with `pk;system new`. Then, inspect the other help pages for further instructions.""")
+getting_started = ("Getting started", """To get started using the bot, try running the following commands:
+**1**. `pk;system new` - Create a system if you haven't already
+**2**. `pk;member add John` - Add a new member to your system
+**3**. `pk;member proxy [text]` - Set up square brackets as proxy tags 
+**4**. You're done! See the other help pages for more commands.""")
 discord_link = (
     "Discord",
     """For feedback, bug reports, suggestions, or just chatting, join our Discord: https://discord.gg/PczBt78""")
