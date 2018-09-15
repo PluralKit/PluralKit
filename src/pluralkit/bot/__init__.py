@@ -32,6 +32,9 @@ class PluralKitBot:
         self.stats = NullStatCollector()
 
         self.channel_logger = channel_logger.ChannelLogger(self.client)
+
+        # "stats" passed here will be a NullStatsCollector, will get overwritten inside
+        # the Proxy object when the actual connection occurs
         self.proxy = proxy.Proxy(self.client, token, self.channel_logger, self.stats)
 
     async def on_error(self, evt, *args, **kwargs):
@@ -135,6 +138,9 @@ class PluralKitBot:
                     os.environ["INFLUX_PORT"],
                     os.environ["INFLUX_DB"]
                 )
+
+                # Overwrite the NullCollector passed to proxy
+                self.proxy.stats = self.stats
 
                 self.logger.info("Starting periodical stat reporting...")
                 asyncio.get_event_loop().create_task(self.periodical_stat_timer(self.pool))
