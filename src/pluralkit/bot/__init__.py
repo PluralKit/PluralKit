@@ -3,15 +3,19 @@ import json
 import logging
 import os
 import time
+
+import traceback
 from datetime import datetime
 
 import discord
 
 from pluralkit import db
-from pluralkit.bot import channel_logger, commands, proxy
+from pluralkit.bot import channel_logger, commands, proxy, embeds
 from pluralkit.stats import InfluxStatCollector, NullStatCollector
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
+
+
 # logging.getLogger("pluralkit").setLevel(logging.DEBUG)
 
 class PluralKitBot:
@@ -44,11 +48,14 @@ class PluralKitBot:
         if message.author.bot:
             return
 
-        if await self.handle_command_dispatch(message):
-            return
+        try:
+            if await self.handle_command_dispatch(message):
+                return
 
-        if await self.handle_proxy_dispatch(message):
-            return
+            if await self.handle_proxy_dispatch(message):
+                return
+        except Exception:
+            await self.log_error_in_channel(message)
 
     async def on_socket_raw_receive(self, msg):
         # Since on_reaction_add is buggy (only works for messages the bot's already cached, ie. no old messages)
@@ -83,6 +90,22 @@ class PluralKitBot:
         # Try doing proxy parsing
         async with self.pool.acquire() as conn:
             return await self.proxy.try_proxy_message(conn, message)
+
+    async def log_error_in_channel(self, message):
+        channel_id = os.environ["LOG_CHANNEL"]
+        if not channel_id:
+            return
+
+        channel = self.client.get_channel(channel_id)
+        embed = embeds.exception_log(
+            message.content,
+            message.author.name,
+            message.author.discriminator,
+            message.server.id if message.server else None,
+            message.channel.id
+        )
+
+        await self.client.send_message(channel, "```python\n{}```".format(traceback.format_exc()), embed=embed)
 
     async def periodical_stat_timer(self, pool):
         async with pool.acquire() as conn:
