@@ -1,15 +1,12 @@
-import os
-
 import discord
 import logging
 import re
-import traceback
 from typing import Tuple, Optional, Union
 
 from pluralkit import db
-from pluralkit.system import System
-from pluralkit.member import Member
 from pluralkit.bot import embeds, utils
+from pluralkit.member import Member
+from pluralkit.system import System
 
 logger = logging.getLogger("pluralkit.bot.commands")
 

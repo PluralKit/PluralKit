@@ -32,9 +32,9 @@ class ChannelLogger:
 
         return self.client.get_channel(str(log_channel))
 
-    async def send_to_log_channel(self, log_channel: discord.Channel, embed: discord.Embed):
+    async def send_to_log_channel(self, log_channel: discord.Channel, embed: discord.Embed, text: str = None):
         try:
-            await self.client.send_message(log_channel, embed=embed)
+            await self.client.send_message(log_channel, embed=embed, content=text)
         except discord.Forbidden:
             # TODO: spew big error
             self.logger.warning(
@@ -75,9 +75,7 @@ class ChannelLogger:
             embed.set_thumbnail(url=message_image)
 
         message_link = "https://discordapp.com/channels/{}/{}/{}".format(server_id, channel_id, message_id)
-        embed.author.url = message_link
-
-        await self.send_to_log_channel(log_channel, embed)
+        await self.send_to_log_channel(log_channel, embed, message_link)
 
     async def log_message_deleted(self, conn,
                                   server_id: str,
