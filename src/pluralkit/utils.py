@@ -11,7 +11,8 @@ from pluralkit.errors import InvalidAvatarURLError
 
 
 def fix_time(time: datetime):
-    # Assume we're receiving a naive datetime set to UTC, returns naive time zone set to local
+    """Convert a naive datetime from UTC to local time. humanize's methods expect a local naive time and not a time in UTC."""
+    # TODO: replace with methods that call humanize directly, to hide implementation details
     return time.replace(tzinfo=timezone.utc).astimezone().replace(tzinfo=None)
 
 

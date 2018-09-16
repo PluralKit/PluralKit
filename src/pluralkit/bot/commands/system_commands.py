@@ -1,6 +1,6 @@
 import dateparser
 import humanize
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pluralkit.utils
 from pluralkit.bot import help
@@ -172,14 +172,20 @@ async def system_frontpercent(ctx: CommandContext):
     system = await ctx.ensure_system()
 
     # Parse the time limit (will go this far back)
-    before = dateparser.parse(ctx.remaining(), languages=["en"], settings={
-        "TO_TIMEZONE": "UTC",
-        "RETURN_AS_TIMEZONE_AWARE": False
-    })
+    if ctx.remaining():
+        before = dateparser.parse(ctx.remaining(), languages=["en"], settings={
+            "TO_TIMEZONE": "UTC",
+            "RETURN_AS_TIMEZONE_AWARE": False
+        })
 
-    # If time is in the future, just kinda discard
-    if before and before > datetime.utcnow():
-        before = None
+        if not before:
+            return CommandError("Could not parse '{}' as a valid time.".format(ctx.remaining()))
+
+        # If time is in the future, just kinda discard
+        if before and before > datetime.utcnow():
+            before = None
+    else:
+        before = datetime.utcnow() - timedelta(days=30)
 
     # Fetch list of switches
     all_switches = await pluralkit.utils.get_front_history(ctx.conn, system.id, 99999)
@@ -239,10 +245,10 @@ async def system_frontpercent(ctx: CommandContext):
 
         # Calculate percent
         fraction = front_time / total_time
-        percent = int(fraction * 100)
+        percent = round(fraction * 100)
 
         embed.add_field(name=member.name if member else "(no fronter)",
                         value="{}% ({})".format(percent, humanize.naturaldelta(front_time)))
 
-    embed.set_footer(text="Since {}".format(span_start.isoformat(sep=" ", timespec="seconds")))
+    embed.set_footer(text="Since {} ({})".format(span_start.isoformat(sep=" ", timespec="seconds"), humanize.naturaltime(pluralkit.utils.fix_time(span_start))))
     await ctx.reply(embed=embed)
