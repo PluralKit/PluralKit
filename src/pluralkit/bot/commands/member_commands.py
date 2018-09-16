@@ -62,7 +62,7 @@ async def member_set(ctx: CommandContext):
                     # Useful if you want your birthday to be displayed yearless.
                     date = datetime.strptime("0001-" + date_str, "%Y-%m-%d").date()
                 except ValueError:
-                    raise CommandError("Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25).")
+                    raise CommandError("Invalid date. Date must be in ISO-8601 format (YYYY-MM-DD, eg. 1999-07-25).")
         else:
             date = None
 
