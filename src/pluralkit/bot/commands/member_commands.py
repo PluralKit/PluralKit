@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pluralkit.bot.embeds
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
 from pluralkit.errors import PluralKitError
@@ -10,7 +11,7 @@ logger = logging.getLogger("pluralkit.commands")
 async def member_info(ctx: CommandContext):
     member = await ctx.pop_member(
         error=CommandError("You must pass a member name or ID.", help=help.lookup_member), system_only=False)
-    await ctx.reply(embed=await utils.generate_member_info_card(ctx.conn, member))
+    await ctx.reply(embed=await pluralkit.bot.embeds.member_card(ctx.conn, member))
 
 
 async def new_member(ctx: CommandContext):

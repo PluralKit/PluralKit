@@ -2,6 +2,7 @@ import dateparser
 import humanize
 from datetime import datetime, timedelta
 
+import pluralkit.bot.embeds
 import pluralkit.utils
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
@@ -16,7 +17,7 @@ async def system_info(ctx: CommandContext):
     else:
         system = await ctx.ensure_system()
 
-    await ctx.reply(embed=await utils.generate_system_info_card(ctx.conn, ctx.client, system))
+    await ctx.reply(embed=await pluralkit.bot.embeds.system_card(ctx.conn, ctx.client, system))
 
 
 async def new_system(ctx: CommandContext):
