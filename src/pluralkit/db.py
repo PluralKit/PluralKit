@@ -351,7 +351,6 @@ async def create_tables(conn):
         mid         bigint primary key,
         channel     bigint not null,
         member      serial not null references members(id) on delete cascade,
-        content     text not null,
         sender      bigint not null
     )""")
     await conn.execute("""create table if not exists switches (
