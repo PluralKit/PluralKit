@@ -171,10 +171,10 @@ async def delete_webhook(conn, channel_id: str):
     await conn.execute("delete from webhooks where channel = $1", int(channel_id))
 
 @db_wrap
-async def add_message(conn, message_id: str, channel_id: str, member_id: int, sender_id: str, content: str):
+async def add_message(conn, message_id: str, channel_id: str, member_id: int, sender_id: str):
     logger.debug("Adding new message (id={}, channel={}, member={}, sender={})".format(
         message_id, channel_id, member_id, sender_id))
-    await conn.execute("insert into messages (mid, channel, member, sender, content) values ($1, $2, $3, $4, $5)", int(message_id), int(channel_id), member_id, int(sender_id), content)
+    await conn.execute("insert into messages (mid, channel, member, sender) values ($1, $2, $3, $4)", int(message_id), int(channel_id), member_id, int(sender_id))
 
 class ProxyMember(namedtuple("ProxyMember", ["id", "hid", "prefix", "suffix", "color", "name", "avatar_url", "tag", "system_name", "system_hid"])):
     id: int
@@ -202,11 +202,10 @@ async def get_members_by_account(conn, account_id: str) -> List[ProxyMember]:
             and members.system = systems.id""", int(account_id))
     return [ProxyMember(**row) for row in rows]
 
-class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "content", "sender", "name", "hid", "avatar_url", "system_name", "system_hid"])):
+class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "sender", "name", "hid", "avatar_url", "system_name", "system_hid"])):
     mid: int
     channel: int
     member: int
-    content: str
     sender: int
     name: str
     hid: str
@@ -221,7 +220,6 @@ class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "content
             "member": self.hid,
             "system": self.system_hid,
             "message_sender": str(self.sender),
-            "content": self.content,
             "timestamp": snowflake_time(self.mid).isoformat()
         }
 

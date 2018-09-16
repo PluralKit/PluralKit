@@ -175,8 +175,7 @@ class Proxy:
                 # Report webhook stats to Influx
                 await self.stats.report_webhook(time.perf_counter() - time_before, True)
 
-                await db.add_message(conn, message["id"], message["channel_id"], member.id, original_message.author.id,
-                                     text or "")
+                await db.add_message(conn, message["id"], message["channel_id"], member.id, original_message.author.id)
 
                 try:
                     await self.client.delete_message(original_message)

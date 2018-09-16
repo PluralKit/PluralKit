@@ -4,6 +4,17 @@ from pluralkit.bot.commands import *
 logger = logging.getLogger("pluralkit.commands")
 
 
+async def get_message_contents(client: discord.Client, channel_id: int, message_id: int):
+    channel = client.get_channel(str(channel_id))
+    if channel:
+        try:
+            original_message = await client.get_message(channel, str(message_id))
+            return original_message.content or None
+        except (discord.errors.Forbidden, discord.errors.NotFound):
+            pass
+
+    return None
+
 async def message_info(ctx: CommandContext):
     mid_str = ctx.pop_str(CommandError("You must pass a message ID.", help=help.message_lookup))
 
@@ -43,8 +54,9 @@ async def message_info(ctx: CommandContext):
 
     embed.add_field(name="Sent by", value=sender_name)
 
-    if message.content:  # Content can be empty string if there's an attachment
-        embed.add_field(name="Content", value=message.content, inline=False)
+    message_content = await get_message_contents(ctx.client, message.channel, message.mid)
+    if message_content:
+        embed.description = message_content
 
     embed.set_author(name=message.name, icon_url=message.avatar_url or discord.Embed.Empty)
 
