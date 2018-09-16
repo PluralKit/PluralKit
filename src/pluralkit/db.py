@@ -18,7 +18,8 @@ async def connect(username, password, database, host, port):
         try:
             return await asyncpg.create_pool(user=username, password=password, database=database, host=host, port=port)
         except (ConnectionError, asyncpg.exceptions.CannotConnectNowError):
-            pass
+            logger.exception("Failed to connect to database, retrying in 5 seconds...")
+            time.sleep(5)
 
 def db_wrap(func):
     async def inner(*args, **kwargs):
