@@ -36,13 +36,14 @@ async def system_set(ctx: CommandContext):
     property_name = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_system))
 
     async def avatar_setter(conn, url):
-        user = await utils.parse_mention(ctx.client, url)
-        if user:
-            # Set the avatar to the mentioned user's avatar
-            # Discord pushes webp by default, which isn't supported by webhooks, but also hosts png alternatives
-            url = user.avatar_url.replace(".webp", ".png")
+        if url:
+            user = await utils.parse_mention(ctx.client, url)
+            if user:
+                # Set the avatar to the mentioned user's avatar
+                # Discord pushes webp by default, which isn't supported by webhooks, but also hosts png alternatives
+                url = user.avatar_url.replace(".webp", ".png")
 
-        await system.set_avatar(conn, url)
+            await system.set_avatar(conn, url)
 
     properties = {
         "name": system.set_name,

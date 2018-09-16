@@ -28,6 +28,7 @@ def status(text: str) -> discord.Embed:
     embed.colour = discord.Colour.blue()
     return embed
 
+
 def exception_log(message_content, author_name, author_discriminator, server_id, channel_id) -> discord.Embed:
     embed = discord.Embed()
     embed.colour = discord.Colour.dark_red()

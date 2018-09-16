@@ -55,3 +55,15 @@ class AccountAlreadyLinkedError(PluralKitError):
 class UnlinkingLastAccountError(PluralKitError):
     def __init__(self):
         super().__init__("This is the only account on your system, so you can't unlink it.")
+
+
+class MemberNameTooLongError(PluralKitError):
+    def __init__(self, tag_present: bool):
+        if tag_present:
+            super().__init__("The maximum length of a name plus the system tag is 32 characters. Please reduce the length of the tag, or choose a shorter member name.")
+        else:
+            super().__init__("The maximum length of a member name is 32 characters.")
+
+class InvalidColorError(PluralKitError):
+    def __init__(self):
+        super().__init__("Color must be a valid hex color. (eg. #ff0000)")

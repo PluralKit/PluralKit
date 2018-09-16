@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 from pluralkit import db
 from pluralkit.errors import InvalidAvatarURLError
-from pluralkit.member import Member
 
 
 def fix_time(time: datetime):
@@ -27,7 +26,7 @@ async def get_fronter_ids(conn, system_id) -> (List[int], datetime):
     return switches[0]["members"], switches[0]["timestamp"]
 
 
-async def get_fronters(conn, system_id) -> (List[Member], datetime):
+async def get_fronters(conn, system_id) -> (List["Member"], datetime):
     member_ids, timestamp = await get_fronter_ids(conn, system_id)
 
     # Collect in dict and then look up as list, to preserve return order
@@ -35,7 +34,7 @@ async def get_fronters(conn, system_id) -> (List[Member], datetime):
     return [members[member_id] for member_id in member_ids], timestamp
 
 
-async def get_front_history(conn, system_id, count) -> List[Tuple[datetime, List[Member]]]:
+async def get_front_history(conn, system_id, count) -> List[Tuple[datetime, List["pluMember"]]]:
     # Get history from DB
     switches = await db.front_history(conn, system_id=system_id, count=count)
     if not switches:

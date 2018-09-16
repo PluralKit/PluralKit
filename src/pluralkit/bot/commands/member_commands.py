@@ -1,9 +1,8 @@
 from datetime import datetime
-from urllib.parse import urlparse
 
-import pluralkit.utils
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
+from pluralkit.errors import PluralKitError
 
 logger = logging.getLogger("pluralkit.commands")
 
@@ -19,103 +18,80 @@ async def new_member(ctx: CommandContext):
     if not ctx.has_next():
         return CommandError("You must pass a name for the new member.", help=help.add_member)
 
-    name = ctx.remaining()
-    bounds_error = utils.bounds_check_member_name(name, system.tag)
-    if bounds_error:
-        return CommandError(bounds_error)
+    new_name = ctx.remaining()
 
-    # TODO: figure out what to do if this errors out on collision on generate_hid
-    hid = pluralkit.utils.generate_hid()
+    try:
+        member = await system.create_member(ctx.conn, new_name)
+    except PluralKitError as e:
+        return CommandError(e.message)
 
-    # Insert member row
-    await db.create_member(ctx.conn, system_id=system.id, member_name=name, member_hid=hid)
     return CommandSuccess(
-        "Member \"{}\" (`{}`) registered! To register their proxy tags, use `pk;member proxy`.".format(name, hid))
+        "Member \"{}\" (`{}`) registered! To register their proxy tags, use `pk;member proxy`.".format(new_name, member.hid))
 
 
 async def member_set(ctx: CommandContext):
     system = await ctx.ensure_system()
     member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
-    prop = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_member))
 
-    allowed_properties = ["name", "description", "color", "pronouns", "birthdate", "avatar"]
-    db_properties = {
-        "name": "name",
-        "description": "description",
-        "color": "color",
-        "pronouns": "pronouns",
-        "birthdate": "birthday",
-        "avatar": "avatar_url"
-    }
+    property_name = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_member))
 
-    if prop not in allowed_properties:
-        return CommandError(
-            "Unknown property {}. Allowed properties are {}.".format(prop, ", ".join(allowed_properties)),
-            help=help.edit_member)
+    async def name_setter(conn, new_name):
+        if not new_name:
+            raise CommandError("You can't clear the member name.")
+        await member.set_name(conn, system, new_name)
 
-    if ctx.has_next():
-        value = ctx.remaining()
+    async def avatar_setter(conn, url):
+        if url:
+            user = await utils.parse_mention(ctx.client, url)
+            if user:
+                # Set the avatar to the mentioned user's avatar
+                # Discord pushes webp by default, which isn't supported by webhooks, but also hosts png alternatives
+                url = user.avatar_url.replace(".webp", ".png")
 
-        # Sanity/validity checks and type conversions
-        if prop == "name":
-            if re.search("<a?:\w+:\d+>", value):
-                return CommandError("Due to a Discord limitation, custom emojis aren't supported. Please use a standard emoji instead.")
+        await member.set_avatar(conn, url)
 
-            bounds_error = utils.bounds_check_member_name(value, system.tag)
-            if bounds_error:
-                return CommandError(bounds_error)
-
-        if prop == "description":
-            if len(value) > 1024:
-                return CommandError("You can't have a description longer than 1024 characters.")
-
-        if prop == "color":
-            match = re.fullmatch("#?([0-9A-Fa-f]{6})", value)
-            if not match:
-                return CommandError("Color must be a valid hex color (eg. #ff0000)")
-
-            value = match.group(1).lower()
-
-        if prop == "birthdate":
+    async def birthdate_setter(conn, date_str):
+        if date_str:
             try:
-                value = datetime.strptime(value, "%Y-%m-%d").date()
+                date = datetime.strptime(date_str, "%Y-%m-%d").date()
             except ValueError:
                 try:
                     # Try again, adding 0001 as a placeholder year
                     # This is considered a "null year" and will be omitted from the info card
                     # Useful if you want your birthday to be displayed yearless.
-                    value = datetime.strptime("0001-" + value, "%Y-%m-%d").date()
+                    date = datetime.strptime("0001-" + date_str, "%Y-%m-%d").date()
                 except ValueError:
-                    return CommandError("Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25).")
+                    raise CommandError("Invalid date. Date must be in ISO-8601 format (eg. 1999-07-25).")
+        else:
+            date = None
 
-        if prop == "avatar":
-            user = await utils.parse_mention(ctx.client, value)
-            if user:
-                # Set the avatar to the mentioned user's avatar
-                # Discord doesn't like webp, but also hosts png alternatives
-                value = user.avatar_url.replace(".webp", ".png")
-            else:
-                # Validate URL
-                u = urlparse(value)
-                if u.scheme in ["http", "https"] and u.netloc and u.path:
-                    value = value
-                else:
-                    return CommandError("Invalid image URL.")
-    else:
-        # Can't clear member name
-        if prop == "name":
-            return CommandError("You can't clear the member name.")
+        await member.set_birthdate(conn, date)
 
-        # Clear from DB
-        value = None
+    properties = {
+        "name": name_setter,
+        "description": member.set_description,
+        "avatar": avatar_setter,
+        "color": member.set_color,
+        "pronouns": member.set_pronouns,
+        "birthdate": birthdate_setter,
+    }
 
-    db_prop = db_properties[prop]
-    await db.update_member_field(ctx.conn, member_id=member.id, field=db_prop, value=value)
+    if property_name not in properties:
+        return CommandError(
+            "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(properties.keys())),
+            help=help.edit_system)
 
-    response = CommandSuccess("{} {}'s {}.".format("Updated" if value else "Cleared", member.name, prop))
-    #if prop == "avatar" and value:
+    value = ctx.remaining() or None
+
+    try:
+        await properties[property_name](ctx.conn, value)
+    except PluralKitError as e:
+        return CommandError(e.message)
+
+    response = CommandSuccess("{} member {}.".format("Updated" if value else "Cleared", property_name))
+    # if prop == "avatar" and value:
     #    response.set_image(url=value)
-    #if prop == "color" and value:
+    # if prop == "color" and value:
     #    response.colour = int(value, 16)
     return response
 
@@ -148,18 +124,17 @@ async def member_proxy(ctx: CommandContext):
             suffix = None
 
     async with ctx.conn.transaction():
-        await db.update_member_field(ctx.conn, member_id=member.id, field="prefix", value=prefix)
-        await db.update_member_field(ctx.conn, member_id=member.id, field="suffix", value=suffix)
+        await member.set_proxy_tags(ctx.conn, prefix, suffix)
         return CommandSuccess("Proxy settings updated." if prefix or suffix else "Proxy settings cleared.")
 
 
 async def member_delete(ctx: CommandContext):
     await ctx.ensure_system()
-    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.remove_member))
 
     delete_confirm_msg = "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(member.name, member.hid)
     if not await ctx.confirm_text(ctx.message.author, ctx.message.channel, member.hid, delete_confirm_msg):
         return CommandError("Member deletion cancelled.")
 
-    await db.delete_member(ctx.conn, member_id=member.id)
+    await member.delete(ctx.conn)
     return CommandSuccess("Member deleted.")
