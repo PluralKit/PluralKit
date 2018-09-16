@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from collections.__init__ import namedtuple
-from typing import Optional
+from typing import Optional, List
 
 from pluralkit import db, errors
 from pluralkit.member import Member
@@ -85,6 +85,9 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
             await db.unlink_account(conn, self.id, account_id)
 
+    async def get_linked_account_ids(self, conn) -> List[int]:
+        return await db.get_linked_accounts(conn, self.id)
+
     async def delete(self, conn):
         await db.remove_system(conn, self.id)
 
@@ -97,6 +100,9 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
         member = await db.create_member(conn, self.id, member_name, new_hid)
         return member
+
+    async def get_members(self, conn) -> List[Member]:
+        return await db.get_all_members(conn, self.id)
 
     def get_member_name_limit(self) -> int:
         """Returns the maximum length a member's name or nickname is allowed to be. Depends on the system tag."""

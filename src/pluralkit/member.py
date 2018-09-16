@@ -125,3 +125,10 @@ class Member(namedtuple("Member",
     async def delete(self, conn):
         """Delete this member from the database."""
         await db.delete_member(conn, self.id)
+
+    async def fetch_system(self, conn) -> "System":
+        """Fetch the member's system from the database"""
+        return await db.get_system(conn, self.system)
+
+    async def message_count(self, conn) -> int:
+        return await db.get_member_message_count(conn, self.id)

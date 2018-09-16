@@ -69,9 +69,10 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
         card.add_field(name="Current fronter" if len(fronters) == 1 else "Current fronters", value=fronter_val)
 
     account_names = []
-    for account_id in await db.get_linked_accounts(conn, system_id=system.id):
-        account = await client.get_user_info(account_id)
+    for account_id in await system.get_linked_account_ids(conn):
+        account = await client.get_user_info(str(account_id))
         account_names.append("{}#{}".format(account.name, account.discriminator))
+
     card.add_field(name="Linked accounts", value="\n".join(account_names))
 
     if system.description:
@@ -80,7 +81,7 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
 
     # Get names of all members
     member_texts = []
-    for member in await db.get_all_members(conn, system_id=system.id):
+    for member in await system.get_members(conn):
         member_texts.append("{} (`{}`)".format(escape(member.name), member.hid))
 
     if len(member_texts) > 0:
@@ -92,7 +93,7 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
 
 
 async def member_card(conn, member: Member) -> discord.Embed:
-    system = await db.get_system(conn, system_id=member.system)
+    system = await member.fetch_system(conn)
 
     card = discord.Embed()
     card.colour = discord.Colour.blue()
@@ -104,9 +105,6 @@ async def member_card(conn, member: Member) -> discord.Embed:
     card.set_author(name=name_and_system, icon_url=member.avatar_url or discord.Embed.Empty)
     if member.avatar_url:
         card.set_thumbnail(url=member.avatar_url)
-
-    # Get system name and hid
-    system = await db.get_system(conn, system_id=member.system)
 
     if member.color:
         card.colour = int(member.color, 16)
@@ -120,7 +118,7 @@ async def member_card(conn, member: Member) -> discord.Embed:
     if member.pronouns:
         card.add_field(name="Pronouns", value=member.pronouns)
 
-    message_count = await db.get_member_message_count(conn, member.id)
+    message_count = await member.message_count(conn)
     if message_count > 0:
         card.add_field(name="Message Count", value=str(message_count), inline=True)
 
