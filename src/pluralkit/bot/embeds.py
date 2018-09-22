@@ -84,9 +84,25 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
     for member in await system.get_members(conn):
         member_texts.append("{} (`{}`)".format(escape(member.name), member.hid))
 
-    if len(member_texts) > 0:
-        card.add_field(name="Members", value="\n".join(
-            member_texts), inline=False)
+    # Interim solution for pagination of large systems
+    # Previously a lot of systems would hit the 1024 character limit and thus break the message
+    # This splits large system lists into multiple embed fields
+    # The 6000 character total limit will still apply here but this sort of pushes the problem until I find a better fix
+    pages = [""]
+    for member in member_texts:
+        last_page = pages[-1]
+        new_page = last_page + "\n" + member
+
+        if len(new_page) >= 1024:
+            pages.append(member)
+        else:
+            pages[-1] = new_page
+
+    for index, page in enumerate(pages):
+        field_name = "Members"
+        if index >= 1:
+            field_name = "Members (part {})".format(index + 1)
+        card.add_field(name=field_name, value=page, inline=False)
 
     card.set_footer(text="System ID: {}".format(system.hid))
     return card
