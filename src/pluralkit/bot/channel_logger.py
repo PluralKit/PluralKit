@@ -47,6 +47,7 @@ class ChannelLogger:
                                   channel_id: str,
                                   sender_name: str,
                                   sender_disc: int,
+                                  sender_id: int,
                                   member_name: str,
                                   member_hid: str,
                                   member_avatar_url: str,
@@ -67,9 +68,9 @@ class ChannelLogger:
 
         embed_set_author_name(embed, channel_name, member_name, system_name, member_avatar_url)
         embed.set_footer(
-            text="System ID: {} | Member ID: {} | Sender: {}#{} | Message ID: {}".format(system_hid, member_hid,
+            text="System ID: {} | Member ID: {} | Sender: {}#{} ({}) | Message ID: {}".format(system_hid, member_hid,
                                                                                          sender_name, sender_disc,
-                                                                                         message_id))
+                                                                                         sender_id, message_id))
 
         if message_image:
             embed.set_thumbnail(url=message_image)

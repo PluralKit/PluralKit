@@ -200,6 +200,7 @@ class Proxy:
                                                               channel_id=original_message.channel.id,
                                                               sender_name=original_message.author.name,
                                                               sender_disc=original_message.author.discriminator,
+                                                              sender_id=original_message.author.id,
                                                               member_name=member.name,
                                                               member_hid=member.hid,
                                                               member_avatar_url=member.avatar_url,
