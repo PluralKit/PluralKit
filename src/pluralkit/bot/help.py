@@ -7,7 +7,7 @@ categories = ("Help categories", """`pk;help system` - Details on system configu
 getting_started = ("Getting started", """To get started using the bot, try running the following commands:
 **1**. `pk;system new` - Create a system if you haven't already
 **2**. `pk;member add John` - Add a new member to your system
-**3**. `pk;member proxy [text]` - Set up square brackets as proxy tags 
+**3**. `pk;member proxy John [text]` - Set up square brackets as proxy tags 
 **4**. You're done! See the other help pages for more commands.""")
 discord_link = (
     "Discord",
