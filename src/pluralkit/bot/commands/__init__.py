@@ -146,7 +146,7 @@ async def run_command(ctx: CommandContext, func):
 
 
 async def command_dispatch(client: discord.Client, message: discord.Message, conn) -> bool:
-    prefix = "^pk(;|!)"
+    prefix = "^(pk(;|!)|<@{}> )".format(client.user.id)
     commands = [
         (r"system (new|register|create|init)", system_commands.new_system),
         (r"system set", system_commands.system_set),
