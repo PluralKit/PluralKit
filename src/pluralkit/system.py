@@ -5,6 +5,7 @@ from typing import Optional, List
 
 from pluralkit import db, errors
 from pluralkit.member import Member
+from pluralkit.switch import Switch
 from pluralkit.utils import generate_hid, contains_custom_emoji, validate_avatar_url_or_raise
 
 
@@ -103,6 +104,18 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
     async def get_members(self, conn) -> List[Member]:
         return await db.get_all_members(conn, self.id)
+
+    async def get_switches(self, conn, count) -> List[Switch]:
+        """Returns the latest `count` switches logged for this system, ordered latest to earliest."""
+        return [Switch(**s) for s in await db.front_history(conn, self.id, count)]
+
+    async def get_latest_switch(self, conn) -> Optional[Switch]:
+        """Returns the latest switch logged for this system, or None if no switches have been logged"""
+        switches = await self.get_switches(conn, 1)
+        if switches:
+            return switches[0]
+        else:
+            return None
 
     def get_member_name_limit(self) -> int:
         """Returns the maximum length a member's name or nickname is allowed to be. Depends on the system tag."""

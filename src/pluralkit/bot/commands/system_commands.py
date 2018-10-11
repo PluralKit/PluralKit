@@ -109,21 +109,7 @@ async def system_fronter(ctx: CommandContext):
     else:
         system = await ctx.ensure_system()
 
-    fronters, timestamp = await pluralkit.utils.get_fronters(ctx.conn, system_id=system.id)
-    fronter_names = [member.name for member in fronters]
-
-    embed = embeds.status("")
-
-    if len(fronter_names) == 0:
-        embed.add_field(name="Current fronter", value="(no fronter)")
-    elif len(fronter_names) == 1:
-        embed.add_field(name="Current fronter", value=fronter_names[0])
-    else:
-        embed.add_field(name="Current fronters", value=", ".join(fronter_names))
-
-    if timestamp:
-        embed.add_field(name="Since", value="{} ({})".format(timestamp.isoformat(sep=" ", timespec="seconds"),
-                                                             humanize.naturaltime(pluralkit.utils.fix_time(timestamp))))
+    embed = await embeds.front_status(await system.get_latest_switch(ctx.conn), ctx.conn)
     await ctx.reply(embed=embed)
 
 

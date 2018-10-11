@@ -3,9 +3,11 @@ from typing import Tuple
 
 import discord
 
+import pluralkit
 from pluralkit import db
 from pluralkit.bot.utils import escape
 from pluralkit.member import Member
+from pluralkit.switch import Switch
 from pluralkit.system import System
 from pluralkit.utils import get_fronters
 
@@ -150,3 +152,24 @@ async def member_card(conn, member: Member) -> discord.Embed:
 
     card.set_footer(text="System ID: {} | Member ID: {}".format(system.hid, member.hid))
     return card
+
+
+async def front_status(switch: Switch, conn) -> discord.Embed:
+    if switch:
+        embed = status("")
+        fronter_names = [member.name for member in await switch.fetch_members(conn)]
+
+        if len(fronter_names) == 0:
+            embed.add_field(name="Current fronter", value="(no fronter)")
+        elif len(fronter_names) == 1:
+            embed.add_field(name="Current fronter", value=fronter_names[0])
+        else:
+            embed.add_field(name="Current fronters", value=", ".join(fronter_names))
+
+        if switch.timestamp:
+            embed.add_field(name="Since",
+                            value="{} ({})".format(switch.timestamp.isoformat(sep=" ", timespec="seconds"),
+                                                   humanize.naturaltime(pluralkit.utils.fix_time(switch.timestamp))))
+    else:
+        embed = error("No switches logged.")
+    return embed
