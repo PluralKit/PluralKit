@@ -1,6 +1,5 @@
 aiodns
 aiohttp
-aioinflux
 asyncpg
 dateparser
 discord.py
