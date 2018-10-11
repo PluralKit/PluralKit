@@ -11,7 +11,6 @@ import discord
 
 from pluralkit import db
 from pluralkit.bot import channel_logger, commands, proxy, embeds
-from pluralkit.stats import InfluxStatCollector, NullStatCollector
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
 
@@ -29,13 +28,9 @@ class PluralKitBot:
         self.client.event(self.on_message)
         self.client.event(self.on_socket_raw_receive)
 
-        self.stats = NullStatCollector()
-
         self.channel_logger = channel_logger.ChannelLogger(self.client)
 
-        # "stats" passed here will be a NullStatsCollector, will get overwritten inside
-        # the Proxy object when the actual connection occurs
-        self.proxy = proxy.Proxy(self.client, token, self.channel_logger, self.stats)
+        self.proxy = proxy.Proxy(self.client, token, self.channel_logger)
 
     async def on_error(self, evt, *args, **kwargs):
         self.logger.exception("Error while handling event {} with arguments {}:".format(evt, args))
@@ -110,12 +105,6 @@ class PluralKitBot:
 
         await self.client.send_message(channel, "```python\n{}```".format(traceback.format_exc()), embed=embed)
 
-    async def periodical_stat_timer(self, pool):
-        async with pool.acquire() as conn:
-            while True:
-                await self.stats.report_periodical_stats(conn)
-                await asyncio.sleep(30)
-
     async def run(self):
         try:
             self.logger.info("Connecting to database...")
@@ -130,20 +119,6 @@ class PluralKitBot:
             self.logger.info("Attempting to create tables...")
             async with self.pool.acquire() as conn:
                 await db.create_tables(conn)
-
-            if "INFLUX_HOST" in os.environ:
-                self.logger.info("Connecting to InfluxDB...")
-                self.stats = await InfluxStatCollector.connect(
-                    os.environ["INFLUX_HOST"],
-                    os.environ["INFLUX_PORT"],
-                    os.environ["INFLUX_DB"]
-                )
-
-                # Overwrite the NullCollector passed to proxy
-                self.proxy.stats = self.stats
-
-                self.logger.info("Starting periodical stat reporting...")
-                asyncio.get_event_loop().create_task(self.periodical_stat_timer(self.pool))
 
             self.logger.info("Connecting to Discord...")
             await self.client.start(self.token)

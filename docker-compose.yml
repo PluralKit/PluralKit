@@ -7,7 +7,6 @@ services:
     - bot_main.py
     depends_on:
     - db
-    - influx
     environment:
     - CLIENT_ID
     - TOKEN
@@ -17,9 +16,6 @@ services:
     - "DATABASE_NAME=postgres"
     - "DATABASE_HOST=db"
     - "DATABASE_PORT=5432"
-    - "INFLUX_HOST=influx"
-    - "INFLUX_PORT=8086"
-    - "INFLUX_DB=pluralkit"
     restart: always
   api:
     build: src/
@@ -42,22 +38,6 @@ services:
     volumes:
     - "db_data:/var/lib/postgresql/data"
     restart: always
-  influx:
-    image: influxdb:alpine
-    volumes:
-    - "influx_data:/var/lib/influxdb:Z"
-    restart: always
-  grafana:
-    build: grafana
-    depends_on:
-    - influx
-    ports:
-    - "2938:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: "${GRAFANA_USERNAME}"
-      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD}"
-    restart: always
 
 volumes:
   db_data:
-  influx_data:
