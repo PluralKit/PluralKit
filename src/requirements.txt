@@ -5,3 +5,4 @@ dateparser
 discord.py
 humanize
 uvloop
+ciso8601
