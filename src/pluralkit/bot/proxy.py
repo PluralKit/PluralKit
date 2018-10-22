@@ -163,7 +163,6 @@ class Proxy:
         if member.avatar_url:
             form_data.add_field("avatar_url", member.avatar_url)
 
-        time_before = time.perf_counter()
         async with self.session.post(
                 "https://discordapp.com/api/v6/webhooks/{}/{}?wait=true".format(hook_id, hook_token),
                 data=form_data) as resp:
@@ -237,6 +236,9 @@ class Proxy:
         if not text and not attachment_url:
             self.logger.debug("Skipping message because of no text and no attachment")
             return False
+
+        # Remember to sanitize the text (remove @everyones and such)
+        text = utils.sanitize(text)
 
         try:
             async with conn.transaction():

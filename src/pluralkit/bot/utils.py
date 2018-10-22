@@ -75,3 +75,7 @@ async def get_member_fuzzy(conn, system_id: int, key: str, system_only=True) -> 
         member = await db.get_member_by_name(conn, system_id=system_id, member_name=key)
         if member is not None:
             return member
+
+def sanitize(text):
+    # Insert a zero-width space in @everyone so it doesn't trigger
+    return text.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
