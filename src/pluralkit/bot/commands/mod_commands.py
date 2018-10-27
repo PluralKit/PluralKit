@@ -4,10 +4,13 @@ logger = logging.getLogger("pluralkit.commands")
 
 
 async def set_log(ctx: CommandContext):
-    if not ctx.message.author.server_permissions.administrator:
+    if not ctx.message.author.guild_permissions.administrator:
         return CommandError("You must be a server administrator to use this command.")
 
-    server = ctx.message.server
+    server = ctx.message.guild
+    if not server:
+        return CommandError("This command can not be run in a DM.")
+
     if not ctx.has_next():
         channel_id = None
     else:

@@ -3,10 +3,11 @@ from io import BytesIO
 import discord
 import logging
 import re
-from typing import List
+from typing import List, Optional
 
 from pluralkit import db
-from pluralkit.bot import utils
+from pluralkit.bot import utils, channel_logger
+from pluralkit.bot.channel_logger import ChannelLogger
 
 logger = logging.getLogger("pluralkit.bot.proxy")
 
@@ -99,7 +100,7 @@ async def make_attachment_file(message: discord.Message):
 
 
 async def do_proxy_message(conn, original_message: discord.Message, proxy_member: db.ProxyMember,
-                           inner_text: str):
+                           inner_text: str, logger: ChannelLogger):
     # Send the message through the webhook
     webhook = await get_or_create_webhook_for_channel(conn, original_message.channel)
     sent_message = await webhook.send(
@@ -114,10 +115,30 @@ async def do_proxy_message(conn, original_message: discord.Message, proxy_member
     await db.add_message(conn, sent_message.id, original_message.channel.id, proxy_member.id,
                          original_message.author.id)
 
-    # TODO: log message in log channel
+    await logger.log_message_proxied(
+        conn,
+        original_message.channel.guild.id,
+        original_message.channel.name,
+        original_message.channel.id,
+        original_message.author.name,
+        original_message.author.discriminator,
+        original_message.author.id,
+        proxy_member.name,
+        proxy_member.hid,
+        proxy_member.avatar_url,
+        proxy_member.system_name,
+        proxy_member.system_hid,
+        inner_text,
+        sent_message.attachments[0].url if sent_message.attachments else None,
+        sent_message.created_at,
+        sent_message.id
+    )
+
+    # And finally, gotta delete the original.
+    await original_message.delete()
 
 
-async def try_proxy_message(message: discord.Message, conn) -> bool:
+async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogger) -> bool:
     # Don't bother proxying in DMs with the bot
     if isinstance(message.channel, discord.abc.PrivateChannel):
         return False
@@ -140,8 +161,56 @@ async def try_proxy_message(message: discord.Message, conn) -> bool:
 
     # So, we now have enough information to successfully proxy a message
     async with conn.transaction():
-        await do_proxy_message(conn, message, member, inner_text)
+        await do_proxy_message(conn, message, member, inner_text, logger)
     return True
+
+
+async def handle_deleted_message(conn, client: discord.Client, message_id: int,
+                                 message_content: Optional[str], logger: channel_logger.ChannelLogger) -> bool:
+    msg = await db.get_message(conn, message_id)
+    if not msg:
+        return False
+
+    channel = client.get_channel(msg.channel)
+    if not channel:
+        # Weird edge case, but channel *could* be deleted at this point (can't think of any scenarios it would be tho)
+        return False
+
+    await db.delete_message(conn, message_id)
+    await logger.log_message_deleted(
+        conn,
+        channel.guild.id,
+        channel.name,
+        msg.name,
+        msg.hid,
+        msg.avatar_url,
+        msg.system_name,
+        msg.system_hid,
+        message_content,
+        message_id
+    )
+    return True
+
+
+async def try_delete_by_reaction(conn, client: discord.Client, message_id: int, reaction_user: int,
+                                 logger: channel_logger.ChannelLogger) -> bool:
+    # Find the message by the given message id or reaction user
+    msg = await db.get_message_by_sender_and_id(conn, message_id, reaction_user)
+    if not msg:
+        # Either the wrong user reacted or the message isn't a proxy message
+        # In either case - not our problem
+        return False
+
+    # Find the original message
+    original_message = await client.get_channel(msg.channel).get_message(message_id)
+    if not original_message:
+        # Message got deleted, possibly race condition, eh
+        return False
+
+    # Then delete the original message
+    await original_message.delete()
+
+    await handle_deleted_message(conn, client, message_id, original_message.content, logger)
 
 # # TODO: possibly move this to bot __init__ so commands can access it too
 # class WebhookPermissionError(Exception):

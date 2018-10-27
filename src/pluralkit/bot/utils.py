@@ -39,7 +39,7 @@ async def parse_mention(client: discord.Client, mention: str) -> Optional[discor
 def parse_channel_mention(mention: str, server: discord.Guild) -> Optional[discord.TextChannel]:
     match = re.fullmatch("<#(\\d+)>", mention)
     if match:
-        return server.get_channel(match.group(1))
+        return server.get_channel(int(match.group(1)))
     
     try:
         return server.get_channel(int(mention))
