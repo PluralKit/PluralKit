@@ -118,7 +118,7 @@ class CommandContext:
             raise CommandError("Timed out - try again.")
         return reaction.reaction.emoji == "✅"
 
-    async def confirm_text(self, user: discord.Member, channel: discord.Channel, confirm_text: str, message: str):
+    async def confirm_text(self, user: discord.Member, channel: discord.TextChannel, confirm_text: str, message: str):
         await self.reply(message)
 
         message = await self.client.wait_for_message(channel=channel, author=user, timeout=60.0*5)

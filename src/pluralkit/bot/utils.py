@@ -2,6 +2,7 @@ import logging
 import re
 
 import discord
+from typing import Optional
 
 from pluralkit import db
 from pluralkit.system import System
@@ -20,28 +21,28 @@ def bounds_check_member_name(new_name, system_tag):
         if len("{} {}".format(new_name, system_tag)) > 32:
             return "This name, combined with the system tag ({}), would exceed the maximum length of 32 characters. Please reduce the length of the tag, or use a shorter name.".format(system_tag)
 
-async def parse_mention(client: discord.Client, mention: str) -> discord.User:
+async def parse_mention(client: discord.Client, mention: str) -> Optional[discord.User]:
     # First try matching mention format
     match = re.fullmatch("<@!?(\\d+)>", mention)
     if match:
         try:
-            return await client.get_user_info(match.group(1))
+            return await client.get_user_info(int(match.group(1)))
         except discord.NotFound:
             return None
 
     # Then try with just ID
     try:
-        return await client.get_user_info(str(int(mention)))
+        return await client.get_user_info(int(mention))
     except (ValueError, discord.NotFound):
         return None
 
-def parse_channel_mention(mention: str, server: discord.Server) -> discord.Channel:
+def parse_channel_mention(mention: str, server: discord.Guild) -> Optional[discord.TextChannel]:
     match = re.fullmatch("<#(\\d+)>", mention)
     if match:
         return server.get_channel(match.group(1))
     
     try:
-        return server.get_channel(str(int(mention)))
+        return server.get_channel(int(mention))
     except ValueError:
         return None
 
