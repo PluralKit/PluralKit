@@ -103,13 +103,21 @@ async def do_proxy_message(conn, original_message: discord.Message, proxy_member
                            inner_text: str, logger: ChannelLogger):
     # Send the message through the webhook
     webhook = await get_or_create_webhook_for_channel(conn, original_message.channel)
-    sent_message = await webhook.send(
-        content=inner_text,
-        username=proxy_member.name,
-        avatar_url=proxy_member.avatar_url,
-        file=await make_attachment_file(original_message),
-        wait=True
-    )
+
+    try:
+        sent_message = await webhook.send(
+            content=inner_text,
+            username=proxy_member.name,
+            avatar_url=proxy_member.avatar_url,
+            file=await make_attachment_file(original_message),
+            wait=True
+        )
+    except discord.NotFound:
+        # The webhook we got from the DB doesn't actually exist
+        # If we delete it from the DB then call the function again, it'll re-create one for us
+        await db.delete_webhook(conn, original_message.channel.id)
+        await do_proxy_message(conn, original_message, proxy_member, inner_text, logger)
+        return
 
     # Save the proxied message in the database
     await db.add_message(conn, sent_message.id, original_message.channel.id, proxy_member.id,
