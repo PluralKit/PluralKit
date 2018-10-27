@@ -8,22 +8,16 @@ logger = logging.getLogger("pluralkit.commands")
 
 
 async def import_tupperware(ctx: CommandContext):
-    tupperware_ids = ["431544605209788416", "433916057053560832"]  # Main bot instance and Multi-Pals-specific fork
-    tupperware_members = [ctx.message.server.get_member(bot_id) for bot_id in tupperware_ids if
-                          ctx.message.server.get_member(bot_id)]
+    tupperware_member = ctx.message.guild.get_member(431544605209788416)
 
-    # Check if there's any Tupperware bot on the server
-    if not tupperware_members:
+    # Check if there's a Tupperware bot on the server
+    if not tupperware_member:
         return CommandError("This command only works in a server where the Tupperware bot is also present.")
 
-    # Make sure at least one of the bts have send/read permissions here
-    for bot_member in tupperware_members:
-        channel_permissions = ctx.message.channel.permissions_for(bot_member)
-        if channel_permissions.read_messages and channel_permissions.send_messages:
-            # If so, break out of the loop
-            break
-    else:
-        # If no bots have permission (ie. loop doesn't break), throw error
+    # Make sure at the bot has send/read permissions here
+    channel_permissions = ctx.message.channel.permissions_for(tupperware_member)
+    if not (channel_permissions.read_messages and channel_permissions.send_messages):
+        # If it doesn't, throw error
         return CommandError("This command only works in a channel where the Tupperware bot has read/send access.")
 
     await ctx.reply(
@@ -31,29 +25,31 @@ async def import_tupperware(ctx: CommandContext):
 
     # Check to make sure the message is sent by Tupperware, and that the Tupperware response actually belongs to the correct user
     def ensure_account(tw_msg):
-        if tw_msg.author not in tupperware_members:
+        if tw_msg.channel.id != ctx.message.channel.id:
+            return False
+
+        if tw_msg.author.id != tupperware_member.id:
             return False
 
         if not tw_msg.embeds:
             return False
 
-        if not tw_msg.embeds[0]["title"]:
+        if not tw_msg.embeds[0].title:
             return False
 
-        return tw_msg.embeds[0]["title"].startswith(
+        return tw_msg.embeds[0].title.startswith(
             "{}#{}".format(ctx.message.author.name, ctx.message.author.discriminator))
 
     tupperware_page_embeds = []
 
-    tw_msg: discord.Message = await ctx.client.wait_for_message(channel=ctx.message.channel, timeout=60.0 * 5,
-                                                                check=ensure_account)
+    tw_msg: discord.Message = await ctx.client.wait_for("message", check=ensure_account, timeout=60.0 * 5)
     if not tw_msg:
         return CommandError("Tupperware import timed out.")
-    tupperware_page_embeds.append(tw_msg.embeds[0])
+    tupperware_page_embeds.append(tw_msg.embeds[0].to_dict())
 
     # Handle Tupperware pagination
     def match_pagination():
-        pagination_match = re.search(r"\(page (\d+)/(\d+), \d+ total\)", tw_msg.embeds[0]["title"])
+        pagination_match = re.search(r"\(page (\d+)/(\d+), \d+ total\)", tw_msg.embeds[0].title)
         if not pagination_match:
             return None
         return int(pagination_match.group(1)), int(pagination_match.group(2))
@@ -72,13 +68,12 @@ async def import_tupperware(ctx: CommandContext):
             new_page, total_pages = match_pagination()
 
             # Put the found page in the pages dict
-            pages_found[new_page] = dict(tw_msg.embeds[0])
+            pages_found[new_page] = tw_msg.embeds[0].to_dict()
 
             # If this isn't the same page as last check, edit the status message
             if new_page != current_page:
                 last_found_time = datetime.utcnow()
-                await ctx.client.edit_message(status_msg,
-                                              "Multi-page member list found. Please manually scroll through all the pages. Read {}/{} pages.".format(
+                await status_msg.edit(content="Multi-page member list found. Please manually scroll through all the pages. Read {}/{} pages.".format(
                                                   len(pages_found), total_pages))
             current_page = new_page
 
@@ -94,7 +89,7 @@ async def import_tupperware(ctx: CommandContext):
         tupperware_page_embeds = list([embed for page, embed in sorted(pages_found.items(), key=lambda x: x[0])])
 
         # Also edit the status message to indicate we're now importing, and it may take a while because there's probably a lot of members
-        await ctx.client.edit_message(status_msg, "All pages read. Now importing...")
+        await status_msg.edit(content="All pages read. Now importing...")
 
     logger.debug("Importing from Tupperware...")
 
