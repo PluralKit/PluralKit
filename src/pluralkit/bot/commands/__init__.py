@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import logging
 import re
@@ -69,7 +70,7 @@ class CommandContext:
     def has_next(self) -> bool:
         return bool(self.args)
 
-    def pop_str(self, error: CommandError = None) -> str:
+    def pop_str(self, error: CommandError = None) -> Optional[str]:
         if not self.args:
             if error:
                 raise error
@@ -105,26 +106,27 @@ class CommandContext:
         return self.args
 
     async def reply(self, content=None, embed=None):
-        return await self.client.send_message(self.message.channel, content=content, embed=embed)
+        return await self.message.channel.send(content=content, embed=embed)
 
     async def confirm_react(self, user: Union[discord.Member, discord.User], message: str):
         message = await self.reply(message)
+        await message.add_reaction("\u2705")  # Checkmark
+        await message.add_reaction("\u274c")  # Red X
 
-        await self.client.add_reaction(message, "✅")
-        await self.client.add_reaction(message, "❌")
-
-        reaction = await self.client.wait_for_reaction(emoji=["✅", "❌"], user=user, timeout=60.0*5)
-        if not reaction:
+        try:
+            reaction, _ = await self.client.wait_for("reaction_add", check=lambda r, u: u.id == user.id and r.emoji in ["\u2705", "\u274c"], timeout=60.0*5)
+            return reaction.emoji == "\u2705"
+        except asyncio.TimeoutError:
             raise CommandError("Timed out - try again.")
-        return reaction.reaction.emoji == "✅"
 
     async def confirm_text(self, user: discord.Member, channel: discord.TextChannel, confirm_text: str, message: str):
         await self.reply(message)
 
-        message = await self.client.wait_for_message(channel=channel, author=user, timeout=60.0*5)
-        if not message:
+        try:
+            message = await self.client.wait_for("message", check=lambda m: m.channel.id == channel.id and m.author.id == user.id, timeout=60.0*5)
+            return message.content.lower() == confirm_text.lower()
+        except asyncio.TimeoutError:
             raise CommandError("Timed out - try again.")
-        return message.content == confirm_text
 
 
 import pluralkit.bot.commands.import_commands
