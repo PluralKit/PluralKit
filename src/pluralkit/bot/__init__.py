@@ -41,6 +41,10 @@ class PluralKitBot:
         self.logger.info("- User ID: {}".format(self.client.user.id))
         self.logger.info("- {} servers".format(len(self.client.servers)))
 
+        # Set playing message
+        # TODO: change this when merging rewrite-port branch, kwarg game -> activity
+        await self.client.change_presence(game=discord.Game(name="pk;help"))
+
     async def on_message(self, message):
         # Ignore bot messages
         if message.author.bot:
