@@ -164,7 +164,8 @@ async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogge
     inner_text = utils.sanitize(inner_text)
 
     # If we don't have an inner text OR an attachment, we cancel because the hook can't send that
-    if not inner_text and not message.attachments:
+    # Strip so it counts a string of solely spaces as blank too
+    if not inner_text.strip() and not message.attachments:
         return False
 
     # So, we now have enough information to successfully proxy a message
