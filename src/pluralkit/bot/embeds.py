@@ -38,13 +38,13 @@ def status(text: str) -> discord.Embed:
     return embed
 
 
-def exception_log(message_content, author_name, author_discriminator, server_id, channel_id) -> discord.Embed:
+def exception_log(message_content, author_name, author_discriminator, author_id, server_id, channel_id) -> discord.Embed:
     embed = discord.Embed()
     embed.colour = discord.Colour.dark_red()
     embed.title = message_content
 
-    embed.set_footer(text="Sender: {}#{} | Server: {} | Channel: {}".format(
-        author_name, author_discriminator,
+    embed.set_footer(text="Sender: {}#{} ({}) | Server: {} | Channel: {}".format(
+        author_name, author_discriminator, author_id,
         server_id if server_id else "(DMs)",
         channel_id
     ))
@@ -72,7 +72,7 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
 
     account_names = []
     for account_id in await system.get_linked_account_ids(conn):
-        account = await client.get_user_info(str(account_id))
+        account = await client.get_user_info(account_id)
         account_names.append("{}#{}".format(account.name, account.discriminator))
 
     card.add_field(name="Linked accounts", value="\n".join(account_names))
@@ -82,29 +82,31 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
                        value=system.description, inline=False)
 
     # Get names of all members
-    member_texts = []
-    for member in await system.get_members(conn):
-        member_texts.append("{} (`{}`)".format(escape(member.name), member.hid))
+    all_members = await system.get_members(conn)
+    if all_members:
+        member_texts = []
+        for member in all_members:
+            member_texts.append("{} (`{}`)".format(escape(member.name), member.hid))
 
-    # Interim solution for pagination of large systems
-    # Previously a lot of systems would hit the 1024 character limit and thus break the message
-    # This splits large system lists into multiple embed fields
-    # The 6000 character total limit will still apply here but this sort of pushes the problem until I find a better fix
-    pages = [""]
-    for member in member_texts:
-        last_page = pages[-1]
-        new_page = last_page + "\n" + member
+        # Interim solution for pagination of large systems
+        # Previously a lot of systems would hit the 1024 character limit and thus break the message
+        # This splits large system lists into multiple embed fields
+        # The 6000 character total limit will still apply here but this sort of pushes the problem until I find a better fix
+        pages = [""]
+        for member in member_texts:
+            last_page = pages[-1]
+            new_page = last_page + "\n" + member
 
-        if len(new_page) >= 1024:
-            pages.append(member)
-        else:
-            pages[-1] = new_page
+            if len(new_page) >= 1024:
+                pages.append(member)
+            else:
+                pages[-1] = new_page
 
-    for index, page in enumerate(pages):
-        field_name = "Members"
-        if index >= 1:
-            field_name = "Members (part {})".format(index + 1)
-        card.add_field(name=field_name, value=page, inline=False)
+        for index, page in enumerate(pages):
+            field_name = "Members"
+            if index >= 1:
+                field_name = "Members (part {})".format(index + 1)
+            card.add_field(name=field_name, value=page, inline=False)
 
     card.set_footer(text="System ID: {}".format(system.hid))
     return card

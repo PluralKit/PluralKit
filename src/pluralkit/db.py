@@ -62,17 +62,17 @@ async def delete_member(conn, member_id: int):
 
 
 @db_wrap
-async def link_account(conn, system_id: int, account_id: str):
+async def link_account(conn, system_id: int, account_id: int):
     logger.debug("Linking account (account_id={}, system_id={})".format(
         account_id, system_id))
-    await conn.execute("insert into accounts (uid, system) values ($1, $2)", int(account_id), system_id)
+    await conn.execute("insert into accounts (uid, system) values ($1, $2)", account_id, system_id)
 
 
 @db_wrap
-async def unlink_account(conn, system_id: int, account_id: str):
+async def unlink_account(conn, system_id: int, account_id: int):
     logger.debug("Unlinking account (account_id={}, system_id={})".format(
         account_id, system_id))
-    await conn.execute("delete from accounts where uid = $1 and system = $2", int(account_id), system_id)
+    await conn.execute("delete from accounts where uid = $1 and system = $2", account_id, system_id)
 
 
 @db_wrap
@@ -81,8 +81,8 @@ async def get_linked_accounts(conn, system_id: int) -> List[int]:
 
 
 @db_wrap
-async def get_system_by_account(conn, account_id: str) -> System:
-    row = await conn.fetchrow("select systems.* from systems, accounts where accounts.uid = $1 and accounts.system = systems.id", int(account_id))
+async def get_system_by_account(conn, account_id: int) -> System:
+    row = await conn.fetchrow("select systems.* from systems, accounts where accounts.uid = $1 and accounts.system = systems.id", account_id)
     return System(**row) if row else None
 
 @db_wrap
@@ -151,26 +151,26 @@ async def get_members_exceeding(conn, system_id: int, length: int) -> List[Membe
 
 
 @db_wrap
-async def get_webhook(conn, channel_id: str) -> (str, str):
-    row = await conn.fetchrow("select webhook, token from webhooks where channel = $1", int(channel_id))
+async def get_webhook(conn, channel_id: int) -> (str, str):
+    row = await conn.fetchrow("select webhook, token from webhooks where channel = $1", channel_id)
     return (str(row["webhook"]), row["token"]) if row else None
 
 
 @db_wrap
-async def add_webhook(conn, channel_id: str, webhook_id: str, webhook_token: str):
+async def add_webhook(conn, channel_id: int, webhook_id: int, webhook_token: str):
     logger.debug("Adding new webhook (channel={}, webhook={}, token={})".format(
         channel_id, webhook_id, webhook_token))
-    await conn.execute("insert into webhooks (channel, webhook, token) values ($1, $2, $3)", int(channel_id), int(webhook_id), webhook_token)
+    await conn.execute("insert into webhooks (channel, webhook, token) values ($1, $2, $3)", channel_id, webhook_id, webhook_token)
 
 @db_wrap
-async def delete_webhook(conn, channel_id: str):
-    await conn.execute("delete from webhooks where channel = $1", int(channel_id))
+async def delete_webhook(conn, channel_id: int):
+    await conn.execute("delete from webhooks where channel = $1", channel_id)
 
 @db_wrap
-async def add_message(conn, message_id: str, channel_id: str, member_id: int, sender_id: str):
+async def add_message(conn, message_id: int, channel_id: int, member_id: int, sender_id: int):
     logger.debug("Adding new message (id={}, channel={}, member={}, sender={})".format(
         message_id, channel_id, member_id, sender_id))
-    await conn.execute("insert into messages (mid, channel, member, sender) values ($1, $2, $3, $4)", int(message_id), int(channel_id), member_id, int(sender_id))
+    await conn.execute("insert into messages (mid, channel, member, sender) values ($1, $2, $3, $4)", message_id, channel_id, member_id, sender_id)
 
 class ProxyMember(namedtuple("ProxyMember", ["id", "hid", "prefix", "suffix", "color", "name", "avatar_url", "tag", "system_name", "system_hid"])):
     id: int
@@ -185,7 +185,7 @@ class ProxyMember(namedtuple("ProxyMember", ["id", "hid", "prefix", "suffix", "c
     system_hid: str
 
 @db_wrap
-async def get_members_by_account(conn, account_id: str) -> List[ProxyMember]:
+async def get_members_by_account(conn, account_id: int) -> List[ProxyMember]:
     # Returns a "chimera" object
     rows = await conn.fetch("""select
             members.id, members.hid, members.prefix, members.suffix, members.color, members.name, members.avatar_url,
@@ -195,7 +195,7 @@ async def get_members_by_account(conn, account_id: str) -> List[ProxyMember]:
         where
             accounts.uid = $1
             and systems.id = accounts.system
-            and members.system = systems.id""", int(account_id))
+            and members.system = systems.id""", account_id)
     return [ProxyMember(**row) for row in rows]
 
 class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "sender", "name", "hid", "avatar_url", "system_name", "system_hid"])):
@@ -220,7 +220,7 @@ class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "sender"
         }
 
 @db_wrap
-async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str) -> MessageInfo:
+async def get_message_by_sender_and_id(conn, message_id: int, sender_id: int) -> MessageInfo:
     row = await conn.fetchrow("""select
         messages.*,
         members.name, members.hid, members.avatar_url,
@@ -231,12 +231,12 @@ async def get_message_by_sender_and_id(conn, message_id: str, sender_id: str) ->
         messages.member = members.id
         and members.system = systems.id
         and mid = $1
-        and sender = $2""", int(message_id), int(sender_id))
+        and sender = $2""", message_id, sender_id)
     return MessageInfo(**row) if row else None
 
 
 @db_wrap
-async def get_message(conn, message_id: str) -> MessageInfo:
+async def get_message(conn, message_id: int) -> MessageInfo:
     row = await conn.fetchrow("""select
         messages.*,
         members.name, members.hid, members.avatar_url,
@@ -246,14 +246,14 @@ async def get_message(conn, message_id: str) -> MessageInfo:
     where
         messages.member = members.id
         and members.system = systems.id
-        and mid = $1""", int(message_id))
+        and mid = $1""", message_id)
     return MessageInfo(**row) if row else None
 
 
 @db_wrap
-async def delete_message(conn, message_id: str):
+async def delete_message(conn, message_id: int):
     logger.debug("Deleting message (id={})".format(message_id))
-    await conn.execute("delete from messages where mid = $1", int(message_id))
+    await conn.execute("delete from messages where mid = $1", message_id)
 
 @db_wrap
 async def get_member_message_count(conn, member_id: int) -> int:
@@ -290,14 +290,14 @@ async def add_switch_member(conn, switch_id: int, member_id: int):
     await conn.execute("insert into switch_members (switch, member) values ($1, $2)", switch_id, member_id)
 
 @db_wrap
-async def get_server_info(conn, server_id: str):
-    return await conn.fetchrow("select * from servers where id = $1", int(server_id))
+async def get_server_info(conn, server_id: int):
+    return await conn.fetchrow("select * from servers where id = $1", server_id)
 
 @db_wrap
-async def update_server(conn, server_id: str, logging_channel_id: str):
-    logging_channel_id = int(logging_channel_id) if logging_channel_id else None
+async def update_server(conn, server_id: int, logging_channel_id: int):
+    logging_channel_id = logging_channel_id if logging_channel_id else None
     logger.debug("Updating server settings (id={}, log_channel={})".format(server_id, logging_channel_id))
-    await conn.execute("insert into servers (id, log_channel) values ($1, $2) on conflict (id) do update set log_channel = $2", int(server_id), logging_channel_id)
+    await conn.execute("insert into servers (id, log_channel) values ($1, $2) on conflict (id) do update set log_channel = $2", server_id, logging_channel_id)
 
 @db_wrap
 async def member_count(conn) -> int:

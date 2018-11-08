@@ -8,7 +8,7 @@ async def get_message_contents(client: discord.Client, channel_id: int, message_
     channel = client.get_channel(str(channel_id))
     if channel:
         try:
-            original_message = await client.get_message(channel, str(message_id))
+            original_message = await client.get_channel(channel).get_message(message_id)
             return original_message.content or None
         except (discord.errors.Forbidden, discord.errors.NotFound):
             pass
@@ -24,19 +24,19 @@ async def message_info(ctx: CommandContext):
         return CommandError("You must pass a valid number as a message ID.", help=help.message_lookup)
 
     # Find the message in the DB
-    message = await db.get_message(ctx.conn, str(mid))
+    message = await db.get_message(ctx.conn, mid)
     if not message:
         raise CommandError("Message with ID '{}' not found.".format(mid))
 
     # Get the original sender of the messages
     try:
-        original_sender = await ctx.client.get_user_info(str(message.sender))
+        original_sender = await ctx.client.get_user_info(message.sender)
     except discord.NotFound:
         # Account was since deleted - rare but we're handling it anyway
         original_sender = None
 
     embed = discord.Embed()
-    embed.timestamp = discord.utils.snowflake_time(str(mid))
+    embed.timestamp = discord.utils.snowflake_time(mid)
     embed.colour = discord.Colour.blue()
 
     if message.system_name:
@@ -55,8 +55,7 @@ async def message_info(ctx: CommandContext):
     embed.add_field(name="Sent by", value=sender_name)
 
     message_content = await get_message_contents(ctx.client, message.channel, message.mid)
-    if message_content:
-        embed.description = message_content
+    embed.description = message_content or "(unknown, message deleted)"
 
     embed.set_author(name=message.name, icon_url=message.avatar_url or discord.Embed.Empty)
 
