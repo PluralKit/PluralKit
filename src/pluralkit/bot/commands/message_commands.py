@@ -36,7 +36,7 @@ async def message_info(ctx: CommandContext):
         original_sender = None
 
     embed = discord.Embed()
-    embed.timestamp = discord.utils.snowflake_time(str(mid))
+    embed.timestamp = discord.utils.snowflake_time(mid)
     embed.colour = discord.Colour.blue()
 
     if message.system_name:
@@ -55,8 +55,7 @@ async def message_info(ctx: CommandContext):
     embed.add_field(name="Sent by", value=sender_name)
 
     message_content = await get_message_contents(ctx.client, message.channel, message.mid)
-    if message_content:
-        embed.description = message_content
+    embed.description = message_content or "(unknown, message deleted)"
 
     embed.set_author(name=message.name, icon_url=message.avatar_url or discord.Embed.Empty)
 

@@ -88,4 +88,4 @@ async def export(ctx: CommandContext):
     }
 
     f = io.BytesIO(json.dumps(data).encode("utf-8"))
-    await ctx.client.send_file(ctx.message.channel, f, filename="system.json")
+    await ctx.message.channel.send(content="Here you go!", file=discord.File(fp=f, filename="system.json"))
