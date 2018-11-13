@@ -11,6 +11,11 @@ from pluralkit.bot.channel_logger import ChannelLogger
 
 logger = logging.getLogger("pluralkit.bot.proxy")
 
+def fix_webhook(webhook: discord.Webhook) -> discord.Webhook:
+    # Workaround for https://github.com/Rapptz/discord.py/issues/1242 and similar issues (#1150)
+    webhook._adapter.store_user = webhook._adapter._store_user
+    webhook._adapter.http = None
+    return webhook
 
 def extract_leading_mentions(message_text):
     # This regex matches one or more mentions at the start of a message, separated by any amount of spaces
@@ -75,16 +80,14 @@ async def get_or_create_webhook_for_channel(conn, channel: discord.TextChannel):
         session = channel._state.http._session
         hook = discord.Webhook.partial(webhook_id, webhook_token, adapter=discord.AsyncWebhookAdapter(session))
 
-        # Workaround for https://github.com/Rapptz/discord.py/issues/1242
         hook._adapter.store_user = hook._adapter._store_user
-        return hook
+        return fix_webhook(hook)
 
     # If not, we create one and save it
     created_webhook = await channel.create_webhook(name="PluralKit Proxy Webhook")
-    created_webhook._adapter.store_user = created_webhook._adapter._store_user
 
     await db.add_webhook(conn, channel.id, created_webhook.id, created_webhook.token)
-    return created_webhook
+    return fix_webhook(created_webhook)
 
 
 async def make_attachment_file(message: discord.Message):

@@ -123,6 +123,8 @@ def run():
             embed = None
 
         traceback_str = "```python\n{}```".format(traceback.format_exc())
+        if len(traceback.format_exc()) >= (2000 - len("```python\n```")):
+            traceback_str = "```python\n...{}```".format(traceback.format_exc()[- (2000 - len("```python\n...```")):])
         await log_channel.send(content=traceback_str, embed=embed)
 
     bot_token = os.environ["TOKEN"]
