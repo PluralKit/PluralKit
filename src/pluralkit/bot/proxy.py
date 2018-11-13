@@ -81,6 +81,8 @@ async def get_or_create_webhook_for_channel(conn, channel: discord.TextChannel):
 
     # If not, we create one and save it
     created_webhook = await channel.create_webhook(name="PluralKit Proxy Webhook")
+    created_webhook._adapter.store_user = created_webhook._adapter._store_user
+
     await db.add_webhook(conn, channel.id, created_webhook.id, created_webhook.token)
     return created_webhook
 
