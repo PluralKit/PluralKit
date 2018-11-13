@@ -112,7 +112,7 @@ async def do_proxy_message(conn, original_message: discord.Message, proxy_member
     try:
         sent_message = await webhook.send(
             content=inner_text,
-            username="{} {}".format(proxy_member.name, proxy_member.tag),
+            username="{} {}".format(proxy_member.name, proxy_member.tag or "").strip(),
             avatar_url=proxy_member.avatar_url,
             file=await make_attachment_file(original_message),
             wait=True
