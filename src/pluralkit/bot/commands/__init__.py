@@ -129,6 +129,7 @@ class CommandContext:
             raise CommandError("Timed out - try again.")
 
 
+import pluralkit.bot.commands.api_commands
 import pluralkit.bot.commands.import_commands
 import pluralkit.bot.commands.member_commands
 import pluralkit.bot.commands.message_commands
@@ -179,7 +180,10 @@ async def command_dispatch(client: discord.Client, message: discord.Message, con
 
         (r"switch move", switch_commands.switch_move),
         (r"switch out", switch_commands.switch_out),
-        (r"switch", switch_commands.switch_member)
+        (r"switch", switch_commands.switch_member),
+
+        (r"token (refresh|expire|update)", api_commands.refresh_token),
+        (r"token", api_commands.get_token)
     ]
 
     for pattern, func in commands:

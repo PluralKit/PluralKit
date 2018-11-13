@@ -1,3 +1,5 @@
+import random
+import string
 from datetime import datetime
 
 from collections.__init__ import namedtuple
@@ -9,21 +11,26 @@ from pluralkit.switch import Switch
 from pluralkit.utils import generate_hid, contains_custom_emoji, validate_avatar_url_or_raise
 
 
-class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "avatar_url", "created"])):
+class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "avatar_url", "token", "created"])):
     id: int
     hid: str
     name: str
     description: str
     tag: str
     avatar_url: str
+    token: str
     created: datetime
 
     @staticmethod
-    async def get_by_account(conn, account_id: str) -> "System":
+    async def get_by_account(conn, account_id: int) -> Optional["System"]:
         return await db.get_system_by_account(conn, account_id)
 
     @staticmethod
-    async def create_system(conn, account_id: str, system_name: Optional[str] = None) -> "System":
+    async def get_by_token(conn, token: str) -> Optional["System"]:
+        return await db.get_system_by_token(conn, token)
+
+    @staticmethod
+    async def create_system(conn, account_id: int, system_name: Optional[str] = None) -> "System":
         async with conn.transaction():
             existing_system = await System.get_by_account(conn, account_id)
             if existing_system:
@@ -66,7 +73,7 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
         await db.update_system_field(conn, self.id, "avatar_url", new_avatar_url)
 
-    async def link_account(self, conn, new_account_id: str):
+    async def link_account(self, conn, new_account_id: int):
         async with conn.transaction():
             existing_system = await System.get_by_account(conn, new_account_id)
 
@@ -78,7 +85,7 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
             await db.link_account(conn, self.id, new_account_id)
 
-    async def unlink_account(self, conn, account_id: str):
+    async def unlink_account(self, conn, account_id: int):
         async with conn.transaction():
             linked_accounts = await db.get_linked_accounts(conn, self.id)
             if len(linked_accounts) == 1:
@@ -91,6 +98,11 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
     async def delete(self, conn):
         await db.remove_system(conn, self.id)
+
+    async def refresh_token(self, conn) -> str:
+        new_token = "".join(random.choices(string.ascii_letters + string.digits, k=64))
+        await db.update_system_field(conn, self.id, "token", new_token)
+        return new_token
 
     async def create_member(self, conn, member_name: str) -> Member:
         # TODO: figure out what to do if this errors out on collision on generate_hid

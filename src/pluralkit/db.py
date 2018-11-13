@@ -1,7 +1,7 @@
 from collections import namedtuple
 from datetime import datetime
 import logging
-from typing import List
+from typing import List, Optional
 import time
 
 import asyncpg
@@ -83,6 +83,11 @@ async def get_linked_accounts(conn, system_id: int) -> List[int]:
 @db_wrap
 async def get_system_by_account(conn, account_id: int) -> System:
     row = await conn.fetchrow("select systems.* from systems, accounts where accounts.uid = $1 and accounts.system = systems.id", account_id)
+    return System(**row) if row else None
+
+@db_wrap
+async def get_system_by_token(conn, token: str) -> Optional[System]:
+    row = await conn.fetchrow("select * from systems where token = $1", token)
     return System(**row) if row else None
 
 @db_wrap
@@ -323,6 +328,7 @@ async def create_tables(conn):
         description text,
         tag         text,
         avatar_url  text,
+        token       text,
         created     timestamp not null default (current_timestamp at time zone 'utc')
     )""")
     await conn.execute("""create table if not exists members (
