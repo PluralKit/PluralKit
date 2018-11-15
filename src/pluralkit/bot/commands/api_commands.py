@@ -1,7 +1,7 @@
 import logging
 from discord import DMChannel
 
-from pluralkit.bot.commands import CommandContext, CommandSuccess
+from pluralkit.bot.commands import CommandContext
 
 logger = logging.getLogger("pluralkit.commands")
 disclaimer = "Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`."
@@ -10,7 +10,7 @@ async def reply_dm(ctx: CommandContext, message: str):
     await ctx.message.author.send(message)
 
     if not isinstance(ctx.message.channel, DMChannel):
-        return CommandSuccess("DM'd!")
+        await ctx.reply_ok("DM'd!")
 
 async def get_token(ctx: CommandContext):
     system = await ctx.ensure_system()

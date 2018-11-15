@@ -64,6 +64,7 @@ class MemberNameTooLongError(PluralKitError):
         else:
             super().__init__("The maximum length of a member name is 32 characters.")
 
+
 class InvalidColorError(PluralKitError):
     def __init__(self):
         super().__init__("Color must be a valid hex color. (eg. #ff0000)")

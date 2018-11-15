@@ -27,26 +27,13 @@ def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
         return arg_string.strip(), None
 
 
-class CommandResponse:
-    def to_embed(self):
-        pass
-
-
-class CommandSuccess(CommandResponse):
-    def __init__(self, text):
-        self.text = text
-
-    def to_embed(self):
-        return embeds.success("\u2705 " + self.text)
-
-
-class CommandError(Exception, CommandResponse):
+class CommandError(Exception):
     def __init__(self, text: str, help: Tuple[str, str] = None):
         self.text = text
         self.help = help
 
-    def to_embed(self):
-        return embeds.error("\u274c " + self.text, self.help)
+    def format(self):
+        return "\u274c " + self.text, embeds.error("", self.help) if self.help else None
 
 
 class CommandContext:
@@ -108,13 +95,19 @@ class CommandContext:
     async def reply(self, content=None, embed=None):
         return await self.message.channel.send(content=content, embed=embed)
 
+    async def reply_ok(self, content=None, embed=None):
+        return await self.reply(content="\u2705 {}".format(content or ""), embed=embed)
+
     async def confirm_react(self, user: Union[discord.Member, discord.User], message: str):
         message = await self.reply(message)
         await message.add_reaction("\u2705")  # Checkmark
         await message.add_reaction("\u274c")  # Red X
 
         try:
-            reaction, _ = await self.client.wait_for("reaction_add", check=lambda r, u: u.id == user.id and r.emoji in ["\u2705", "\u274c"], timeout=60.0*5)
+            reaction, _ = await self.client.wait_for("reaction_add",
+                                                     check=lambda r, u: u.id == user.id and r.emoji in ["\u2705",
+                                                                                                        "\u274c"],
+                                                     timeout=60.0 * 5)
             return reaction.emoji == "\u2705"
         except asyncio.TimeoutError:
             raise CommandError("Timed out - try again.")
@@ -123,7 +116,9 @@ class CommandContext:
         await self.reply(message)
 
         try:
-            message = await self.client.wait_for("message", check=lambda m: m.channel.id == channel.id and m.author.id == user.id, timeout=60.0*5)
+            message = await self.client.wait_for("message",
+                                                 check=lambda m: m.channel.id == channel.id and m.author.id == user.id,
+                                                 timeout=60.0 * 5)
             return message.content.lower() == confirm_text.lower()
         except asyncio.TimeoutError:
             raise CommandError("Timed out - try again.")
@@ -142,10 +137,9 @@ import pluralkit.bot.commands.system_commands
 async def run_command(ctx: CommandContext, func):
     try:
         result = await func(ctx)
-        if isinstance(result, CommandResponse):
-            await ctx.reply(embed=result.to_embed())
     except CommandError as e:
-        await ctx.reply(embed=e.to_embed())
+        content, embed = e.format()
+        await ctx.reply(content=content, embed=embed)
 
 
 async def command_dispatch(client: discord.Client, message: discord.Message, conn) -> bool:

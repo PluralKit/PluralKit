@@ -26,9 +26,9 @@ async def new_system(ctx: CommandContext):
     try:
         await System.create_system(ctx.conn, ctx.message.author.id, system_name)
     except ExistingSystemError as e:
-        return CommandError(e.message)
+        raise CommandError(e.message)
 
-    return CommandSuccess("System registered! To begin adding members, use `pk;member new <name>`.")
+    await ctx.reply_ok("System registered! To begin adding members, use `pk;member new <name>`.")
 
 
 async def system_set(ctx: CommandContext):
@@ -54,7 +54,7 @@ async def system_set(ctx: CommandContext):
     }
 
     if property_name not in properties:
-        return CommandError(
+        raise CommandError(
             "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(properties.keys())),
             help=help.edit_system)
 
@@ -63,12 +63,11 @@ async def system_set(ctx: CommandContext):
     try:
         await properties[property_name](ctx.conn, value)
     except PluralKitError as e:
-        return CommandError(e.message)
+        raise CommandError(e.message)
 
-    response = CommandSuccess("{} system {}.".format("Updated" if value else "Cleared", property_name))
+    await ctx.reply_ok("{} system {}.".format("Updated" if value else "Cleared", property_name))
     # if prop == "avatar" and value:
     #    response.set_image(url=value)
-    return response
 
 
 async def system_link(ctx: CommandContext):
@@ -78,18 +77,18 @@ async def system_link(ctx: CommandContext):
     # Find account to link
     linkee = await utils.parse_mention(ctx.client, account_name)
     if not linkee:
-        return CommandError("Account not found.")
+        raise CommandError("Account not found.")
 
     # Make sure account doesn't already have a system
     account_system = await System.get_by_account(ctx.conn, linkee.id)
     if account_system:
-        return CommandError(AccountAlreadyLinkedError(account_system).message)
+        raise CommandError(AccountAlreadyLinkedError(account_system).message)
 
     if not await ctx.confirm_react(linkee, "{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention)):
-        return CommandError("Account link cancelled.")
+        raise CommandError("Account link cancelled.")
 
     await system.link_account(ctx.conn, linkee.id)
-    return CommandSuccess("Account linked to system.")
+    await ctx.reply_ok("Account linked to system.")
 
 
 async def system_unlink(ctx: CommandContext):
@@ -98,9 +97,9 @@ async def system_unlink(ctx: CommandContext):
     try:
         await system.unlink_account(ctx.conn, ctx.message.author.id)
     except UnlinkingLastAccountError as e:
-        return CommandError(e.message)
+        raise CommandError(e.message)
 
-    return CommandSuccess("Account unlinked.")
+    await ctx.reply_ok("Account unlinked.")
 
 
 async def system_fronter(ctx: CommandContext):
@@ -149,10 +148,10 @@ async def system_delete(ctx: CommandContext):
     delete_confirm_msg = "Are you sure you want to delete your system? If so, reply to this message with the system's ID (`{}`).".format(
         system.hid)
     if not await ctx.confirm_text(ctx.message.author, ctx.message.channel, system.hid, delete_confirm_msg):
-        return CommandError("System deletion cancelled.")
+        raise CommandError("System deletion cancelled.")
 
     await system.delete(ctx.conn)
-    return CommandSuccess("System deleted.")
+    await ctx.reply_ok("System deleted.")
 
 
 async def system_frontpercent(ctx: CommandContext):
@@ -166,7 +165,7 @@ async def system_frontpercent(ctx: CommandContext):
         })
 
         if not before:
-            return CommandError("Could not parse '{}' as a valid time.".format(ctx.remaining()))
+            raise CommandError("Could not parse '{}' as a valid time.".format(ctx.remaining()))
 
         # If time is in the future, just kinda discard
         if before and before > datetime.utcnow():
@@ -177,7 +176,7 @@ async def system_frontpercent(ctx: CommandContext):
     # Fetch list of switches
     all_switches = await pluralkit.utils.get_front_history(ctx.conn, system.id, 99999)
     if not all_switches:
-        return CommandError("No switches registered to this system.")
+        raise CommandError("No switches registered to this system.")
 
     # Cull the switches *ending* before the limit, if given
     # We'll need to find the first switch starting before the limit, then cut off every switch *before* that

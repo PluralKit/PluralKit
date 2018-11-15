@@ -12,13 +12,13 @@ async def import_tupperware(ctx: CommandContext):
 
     # Check if there's a Tupperware bot on the server
     if not tupperware_member:
-        return CommandError("This command only works in a server where the Tupperware bot is also present.")
+        raise CommandError("This command only works in a server where the Tupperware bot is also present.")
 
     # Make sure at the bot has send/read permissions here
     channel_permissions = ctx.message.channel.permissions_for(tupperware_member)
     if not (channel_permissions.read_messages and channel_permissions.send_messages):
         # If it doesn't, throw error
-        return CommandError("This command only works in a channel where the Tupperware bot has read/send access.")
+        raise CommandError("This command only works in a channel where the Tupperware bot has read/send access.")
 
     await ctx.reply(
         embed=embeds.status("Please reply to this message with `tul!list` (or the server equivalent)."))
@@ -44,7 +44,7 @@ async def import_tupperware(ctx: CommandContext):
 
     tw_msg: discord.Message = await ctx.client.wait_for("message", check=ensure_account, timeout=60.0 * 5)
     if not tw_msg:
-        return CommandError("Tupperware import timed out.")
+        raise CommandError("Tupperware import timed out.")
     tupperware_page_embeds.append(tw_msg.embeds[0].to_dict())
 
     # Handle Tupperware pagination
@@ -82,7 +82,7 @@ async def import_tupperware(ctx: CommandContext):
 
             # Make sure it doesn't spin here for too long, time out after 30 seconds since last new page
             if (datetime.utcnow() - last_found_time).seconds > 30:
-                return CommandError("Pagination scan timed out.")
+                raise CommandError("Pagination scan timed out.")
 
         # Now that we've got all the pages, put them in the embeds list
         # Make sure to erase the original one we put in above too
@@ -152,5 +152,5 @@ async def import_tupperware(ctx: CommandContext):
             await db.update_member_field(ctx.conn, member_id=existing_member.id, field="description",
                                          value=member_description)
 
-    return CommandSuccess(
+    await ctx.reply_ok(
         "System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting.")

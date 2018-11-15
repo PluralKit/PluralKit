@@ -95,7 +95,7 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
         pages = [""]
         for member in member_texts:
             last_page = pages[-1]
-            new_page = last_page + "\n" + member
+            new_page = last_page + "\n" + member if last_page else member
 
             if len(new_page) >= 1024:
                 pages.append(member)

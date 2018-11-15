@@ -28,7 +28,7 @@ async def show_help(ctx: CommandContext):
             else:
                 embed.description = text
     else:
-        return CommandError("Unknown help page '{}'.".format(category))
+        raise CommandError("Unknown help page '{}'.".format(category))
 
     await ctx.reply(embed=embed)
 
@@ -47,7 +47,7 @@ async def invite_link(ctx: CommandContext):
 
     url = oauth_url(client_id, permissions)
     logger.debug("Sending invite URL: {}".format(url))
-    return CommandSuccess("Use this link to add PluralKit to your server: {}".format(url))
+    await ctx.reply_ok("Use this link to add PluralKit to your server: {}".format(url))
 
 
 async def export(ctx: CommandContext):

@@ -17,16 +17,16 @@ async def member_info(ctx: CommandContext):
 async def new_member(ctx: CommandContext):
     system = await ctx.ensure_system()
     if not ctx.has_next():
-        return CommandError("You must pass a name for the new member.", help=help.add_member)
+        raise CommandError("You must pass a name for the new member.", help=help.add_member)
 
     new_name = ctx.remaining()
 
     try:
         member = await system.create_member(ctx.conn, new_name)
     except PluralKitError as e:
-        return CommandError(e.message)
+        raise CommandError(e.message)
 
-    return CommandSuccess(
+    await ctx.reply_ok(
         "Member \"{}\" (`{}`) registered! To register their proxy tags, use `pk;member proxy`.".format(new_name, member.hid))
 
 
@@ -78,7 +78,7 @@ async def member_set(ctx: CommandContext):
     }
 
     if property_name not in properties:
-        return CommandError(
+        raise CommandError(
             "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(properties.keys())),
             help=help.edit_system)
 
@@ -87,14 +87,13 @@ async def member_set(ctx: CommandContext):
     try:
         await properties[property_name](ctx.conn, value)
     except PluralKitError as e:
-        return CommandError(e.message)
+        raise CommandError(e.message)
 
-    response = CommandSuccess("{} member {}.".format("Updated" if value else "Cleared", property_name))
     # if prop == "avatar" and value:
     #    response.set_image(url=value)
     # if prop == "color" and value:
     #    response.colour = int(value, 16)
-    return response
+    await ctx.reply_ok("{} member {}.".format("Updated" if value else "Cleared", property_name))
 
 
 async def member_proxy(ctx: CommandContext):
@@ -107,10 +106,10 @@ async def member_proxy(ctx: CommandContext):
         # Sanity checking
         example = ctx.remaining()
         if "text" not in example:
-            return CommandError("Example proxy message must contain the string 'text'.", help=help.member_proxy)
+            raise CommandError("Example proxy message must contain the string 'text'.", help=help.member_proxy)
 
         if example.count("text") != 1:
-            return CommandError("Example proxy message must contain the string 'text' exactly once.",
+            raise CommandError("Example proxy message must contain the string 'text' exactly once.",
                                 help=help.member_proxy)
 
         # Extract prefix and suffix
@@ -126,7 +125,7 @@ async def member_proxy(ctx: CommandContext):
 
     async with ctx.conn.transaction():
         await member.set_proxy_tags(ctx.conn, prefix, suffix)
-        return CommandSuccess("Proxy settings updated." if prefix or suffix else "Proxy settings cleared.")
+        await ctx.reply_ok("Proxy settings updated." if prefix or suffix else "Proxy settings cleared.")
 
 
 async def member_delete(ctx: CommandContext):
@@ -135,7 +134,7 @@ async def member_delete(ctx: CommandContext):
 
     delete_confirm_msg = "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(member.name, member.hid)
     if not await ctx.confirm_text(ctx.message.author, ctx.message.channel, member.hid, delete_confirm_msg):
-        return CommandError("Member deletion cancelled.")
+        raise CommandError("Member deletion cancelled.")
 
     await member.delete(ctx.conn)
-    return CommandSuccess("Member deleted.")
+    await ctx.reply_ok("Member deleted.")

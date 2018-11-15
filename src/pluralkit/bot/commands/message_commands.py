@@ -21,7 +21,7 @@ async def message_info(ctx: CommandContext):
     try:
         mid = int(mid_str)
     except ValueError:
-        return CommandError("You must pass a valid number as a message ID.", help=help.message_lookup)
+        raise CommandError("You must pass a valid number as a message ID.", help=help.message_lookup)
 
     # Find the message in the DB
     message = await db.get_message(ctx.conn, mid)
@@ -59,4 +59,4 @@ async def message_info(ctx: CommandContext):
 
     embed.set_author(name=message.name, icon_url=message.avatar_url or discord.Embed.Empty)
 
-    await ctx.reply(embed=embed)
+    await ctx.reply_ok(embed=embed)
