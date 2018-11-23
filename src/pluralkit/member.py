@@ -2,7 +2,7 @@ import re
 from datetime import date, datetime
 
 from collections.__init__ import namedtuple
-from typing import Optional
+from typing import Optional, Union
 
 from pluralkit import db, errors
 from pluralkit.utils import validate_avatar_url_or_raise, contains_custom_emoji
@@ -59,9 +59,16 @@ class Member(namedtuple("Member",
         Set the name of a member. Requires the system to be passed in order to bounds check with the system tag.
         :raises: MemberNameTooLongError, CustomEmojiError
         """
+        # Custom emojis can't go in the member name
+        # Technically they *could* but they wouldn't render properly
+        # so I'd rather explicitly ban them to in order to avoid confusion
+
+        # The textual form is longer than the length limit in most cases
+        # so we check this *before* the length check for better errors
         if contains_custom_emoji(new_name):
             raise errors.CustomEmojiError()
 
+        # Explicit name length checking
         if len(new_name) > system.get_member_name_limit():
             raise errors.MemberNameTooLongError(tag_present=bool(system.tag))
 
@@ -72,6 +79,7 @@ class Member(namedtuple("Member",
         Set or clear the description of a member.
         :raises: DescriptionTooLongError
         """
+        # Explicit length checking
         if new_description and len(new_description) > 1024:
             raise errors.DescriptionTooLongError()
 
@@ -96,14 +104,31 @@ class Member(namedtuple("Member",
         if new_color:
             match = re.fullmatch("#?([0-9A-Fa-f]{6})", new_color)
             if not match:
-                return errors.InvalidColorError()
+                raise errors.InvalidColorError()
 
             cleaned_color = match.group(1).lower()
 
         await db.update_member_field(conn, self.id, "color", cleaned_color)
 
-    async def set_birthdate(self, conn, new_date: date):
-        """Set or clear the birthdate of a member. To hide the birth year, pass a year of 0001."""
+    async def set_birthdate(self, conn, new_date: Union[date, str]):
+        """
+        Set or clear the birthdate of a member. To hide the birth year, pass a year of 0001.
+        :raises: InvalidDateStringError
+        """
+
+        if isinstance(new_date, str):
+            date_str = new_date
+            try:
+                new_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                try:
+                    # Try again, adding 0001 as a placeholder year
+                    # This is considered a "null year" and will be omitted from the info card
+                    # Useful if you want your birthday to be displayed yearless.
+                    new_date = datetime.strptime("0001-" + date_str, "%Y-%m-%d").date()
+                except ValueError:
+                    raise errors.InvalidDateStringError()
+
         await db.update_member_field(conn, self.id, "birthday", new_date)
 
     async def set_pronouns(self, conn, new_pronouns: str):

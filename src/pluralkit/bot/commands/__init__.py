@@ -6,6 +6,7 @@ from typing import Tuple, Optional, Union
 
 from pluralkit import db
 from pluralkit.bot import embeds, utils
+from pluralkit.errors import PluralKitError
 from pluralkit.member import Member
 from pluralkit.system import System
 
@@ -13,6 +14,7 @@ logger = logging.getLogger("pluralkit.bot.commands")
 
 
 def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
+    # A basic quoted-arg parser
     if arg_string.startswith("\""):
         end_quote = arg_string[1:].find("\"") + 1
         if end_quote > 0:
@@ -135,11 +137,16 @@ import pluralkit.bot.commands.system_commands
 
 
 async def run_command(ctx: CommandContext, func):
+    # lol nested try
     try:
-        result = await func(ctx)
+        try:
+            await func(ctx)
+        except PluralKitError as e:
+            raise CommandError(e.message, e.help_page)
     except CommandError as e:
         content, embed = e.format()
         await ctx.reply(content=content, embed=embed)
+
 
 
 async def command_dispatch(client: discord.Client, message: discord.Message, conn) -> bool:
@@ -147,6 +154,10 @@ async def command_dispatch(client: discord.Client, message: discord.Message, con
     commands = [
         (r"system (new|register|create|init)", system_commands.new_system),
         (r"system set", system_commands.system_set),
+        (r"system (name|rename)", system_commands.system_name),
+        (r"system description", system_commands.system_description),
+        (r"system avatar", system_commands.system_avatar),
+        (r"system tag", system_commands.system_tag),
         (r"system link", system_commands.system_link),
         (r"system unlink", system_commands.system_unlink),
         (r"system fronter", system_commands.system_fronter),
@@ -159,6 +170,12 @@ async def command_dispatch(client: discord.Client, message: discord.Message, con
 
         (r"member (new|create|add|register)", member_commands.new_member),
         (r"member set", member_commands.member_set),
+        (r"member (name|rename)", member_commands.member_name),
+        (r"member description", member_commands.member_description),
+        (r"member avatar", member_commands.member_avatar),
+        (r"member color", member_commands.member_color),
+        (r"member (pronouns|pronoun)", member_commands.member_pronouns),
+        (r"member (birthday|birthdate)", member_commands.member_birthdate),
         (r"member proxy", member_commands.member_proxy),
         (r"member (delete|remove|destroy|erase)", member_commands.member_delete),
         (r"member", member_commands.member_info),

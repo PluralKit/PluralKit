@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import pluralkit.bot.embeds
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
@@ -27,73 +25,72 @@ async def new_member(ctx: CommandContext):
         raise CommandError(e.message)
 
     await ctx.reply_ok(
-        "Member \"{}\" (`{}`) registered! To register their proxy tags, use `pk;member proxy`.".format(new_name, member.hid))
+        "Member \"{}\" (`{}`) registered! To register their proxy tags, use `pk;member proxy`.".format(new_name,
+                                                                                                       member.hid))
 
 
 async def member_set(ctx: CommandContext):
+    raise CommandError(
+        "`pk;member set` has been retired. Please use the new member modifying commands: `pk;member [name|description|avatar|color|pronouns|birthdate]`.")
+
+
+async def member_name(ctx: CommandContext):
     system = await ctx.ensure_system()
     member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    new_name = ctx.pop_str(CommandError("You must pass a new member name.", help=help.edit_member))
 
-    property_name = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_member))
+    await member.set_name(ctx.conn, system, new_name)
+    await ctx.reply_ok("Member name updated.")
 
-    async def name_setter(conn, new_name):
-        if not new_name:
-            raise CommandError("You can't clear the member name.")
-        await member.set_name(conn, system, new_name)
 
-    async def avatar_setter(conn, url):
-        if url:
-            user = await utils.parse_mention(ctx.client, url)
-            if user:
-                # Set the avatar to the mentioned user's avatar
-                # Discord pushes webp by default, which isn't supported by webhooks, but also hosts png alternatives
-                url = user.avatar_url.replace(".webp", ".png")
+async def member_description(ctx: CommandContext):
+    await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    new_description = ctx.remaining() or None
 
-        await member.set_avatar(conn, url)
+    await member.set_description(ctx.conn, new_description)
+    await ctx.reply_ok("Member description {}.".format("updated" if new_description else "cleared"))
 
-    async def birthdate_setter(conn, date_str):
-        if date_str:
-            try:
-                date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            except ValueError:
-                try:
-                    # Try again, adding 0001 as a placeholder year
-                    # This is considered a "null year" and will be omitted from the info card
-                    # Useful if you want your birthday to be displayed yearless.
-                    date = datetime.strptime("0001-" + date_str, "%Y-%m-%d").date()
-                except ValueError:
-                    raise CommandError("Invalid date. Date must be in ISO-8601 format (YYYY-MM-DD, eg. 1999-07-25).")
-        else:
-            date = None
 
-        await member.set_birthdate(conn, date)
+async def member_avatar(ctx: CommandContext):
+    await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    new_avatar_url = ctx.remaining() or None
 
-    properties = {
-        "name": name_setter,
-        "description": member.set_description,
-        "avatar": avatar_setter,
-        "color": member.set_color,
-        "pronouns": member.set_pronouns,
-        "birthdate": birthdate_setter,
-    }
+    if new_avatar_url:
+        user = await utils.parse_mention(ctx.client, new_avatar_url)
+        if user:
+            new_avatar_url = user.avatar_url_as(format="png")
 
-    if property_name not in properties:
-        raise CommandError(
-            "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(properties.keys())),
-            help=help.edit_system)
+    await member.set_avatar(ctx.conn, new_avatar_url)
+    await ctx.reply_ok("Member avatar {}.".format("updated" if new_avatar_url else "cleared"))
 
-    value = ctx.remaining() or None
 
-    try:
-        await properties[property_name](ctx.conn, value)
-    except PluralKitError as e:
-        raise CommandError(e.message)
+async def member_color(ctx: CommandContext):
+    await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    new_color = ctx.remaining() or None
 
-    # if prop == "avatar" and value:
-    #    response.set_image(url=value)
-    # if prop == "color" and value:
-    #    response.colour = int(value, 16)
-    await ctx.reply_ok("{} member {}.".format("Updated" if value else "Cleared", property_name))
+    await member.set_color(ctx.conn, new_color)
+    await ctx.reply_ok("Member color {}.".format("updated" if new_color else "cleared"))
+
+
+async def member_pronouns(ctx: CommandContext):
+    await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    new_pronouns = ctx.remaining() or None
+
+    await member.set_pronouns(ctx.conn, new_pronouns)
+    await ctx.reply_ok("Member pronouns {}.".format("updated" if new_pronouns else "cleared"))
+
+
+async def member_birthdate(ctx: CommandContext):
+    await ctx.ensure_system()
+    member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
+    new_birthdate = ctx.remaining() or None
+
+    await member.set_birthdate(ctx.conn, new_birthdate)
+    await ctx.reply_ok("Member birthdate {}.".format("updated" if new_birthdate else "cleared"))
 
 
 async def member_proxy(ctx: CommandContext):
@@ -110,7 +107,7 @@ async def member_proxy(ctx: CommandContext):
 
         if example.count("text") != 1:
             raise CommandError("Example proxy message must contain the string 'text' exactly once.",
-                                help=help.member_proxy)
+                               help=help.member_proxy)
 
         # Extract prefix and suffix
         prefix = example[:example.index("text")].strip()
@@ -132,7 +129,8 @@ async def member_delete(ctx: CommandContext):
     await ctx.ensure_system()
     member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.remove_member))
 
-    delete_confirm_msg = "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(member.name, member.hid)
+    delete_confirm_msg = "Are you sure you want to delete {}? If so, reply to this message with the member's ID (`{}`).".format(
+        member.name, member.hid)
     if not await ctx.confirm_text(ctx.message.author, ctx.message.channel, member.hid, delete_confirm_msg):
         raise CommandError("Member deletion cancelled.")
 

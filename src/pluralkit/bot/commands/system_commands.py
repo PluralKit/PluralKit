@@ -32,47 +32,52 @@ async def new_system(ctx: CommandContext):
 
 
 async def system_set(ctx: CommandContext):
+    raise CommandError("`pk;system set` has been retired. Please use the new member modifying commands: `pk;system [name|description|avatar|tag]`.")
+
+
+async def system_name(ctx: CommandContext):
     system = await ctx.ensure_system()
+    new_name = ctx.remaining() or None
 
-    property_name = ctx.pop_str(CommandError("You must pass a property name to set.", help=help.edit_system))
+    await system.set_name(ctx.conn, new_name)
+    await ctx.reply_ok("System name {}.".format("updated" if new_name else "cleared"))
 
-    async def avatar_setter(conn, url):
-        if url:
-            user = await utils.parse_mention(ctx.client, url)
-            if user:
-                # Set the avatar to the mentioned user's avatar
-                # Discord pushes webp by default, which isn't supported by webhooks, but also hosts png alternatives
-                url = user.avatar_url.replace(".webp", ".png")
 
-            await system.set_avatar(conn, url)
+async def system_description(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    new_description = ctx.remaining() or None
 
-    properties = {
-        "name": system.set_name,
-        "description": system.set_description,
-        "tag": system.set_tag,
-        "avatar": avatar_setter
-    }
+    await system.set_description(ctx.conn, new_description)
+    await ctx.reply_ok("System description {}.".format("updated" if new_description else "cleared"))
 
-    if property_name not in properties:
-        raise CommandError(
-            "Unknown property {}. Allowed properties are {}.".format(property_name, ", ".join(properties.keys())),
-            help=help.edit_system)
 
-    value = ctx.remaining() or None
+async def system_tag(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    new_tag = ctx.remaining() or None
 
-    try:
-        await properties[property_name](ctx.conn, value)
-    except PluralKitError as e:
-        raise CommandError(e.message)
+    await system.set_tag(ctx.conn, new_tag)
+    await ctx.reply_ok("System tag {}.".format("updated" if new_tag else "cleared"))
 
-    await ctx.reply_ok("{} system {}.".format("Updated" if value else "Cleared", property_name))
-    # if prop == "avatar" and value:
-    #    response.set_image(url=value)
+
+async def system_avatar(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    new_avatar_url = ctx.remaining() or None
+
+    if new_avatar_url:
+        user = await utils.parse_mention(ctx.client, new_avatar_url)
+        if user:
+            new_avatar_url = user.avatar_url_as(format="png")
+
+    await system.set_avatar(ctx.conn, new_avatar_url)
+    await ctx.reply_ok("System avatar {}.".format("updated" if new_avatar_url else "cleared"))
 
 
 async def system_link(ctx: CommandContext):
     system = await ctx.ensure_system()
     account_name = ctx.pop_str(CommandError("You must pass an account to link this system to.", help=help.link_account))
+
+    # Do the sanity checking here too (despite it being done in System.link_account)
+    # Because we want it to be done before the confirmation dialog is shown
 
     # Find account to link
     linkee = await utils.parse_mention(ctx.client, account_name)

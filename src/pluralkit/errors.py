@@ -68,3 +68,7 @@ class MemberNameTooLongError(PluralKitError):
 class InvalidColorError(PluralKitError):
     def __init__(self):
         super().__init__("Color must be a valid hex color. (eg. #ff0000)")
+
+class InvalidDateStringError(PluralKitError):
+    def __init__(self):
+        super().__init__("Invalid date string. Date must be in ISO-8601 format (YYYY-MM-DD, eg. 1999-07-25).")

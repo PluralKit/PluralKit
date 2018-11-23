@@ -20,13 +20,13 @@ For example:
 `pk;system` - Shows details of your own system.
 `pk;system abcde` - Shows details of the system with the ID `abcde`.
 `pk;system @JohnsAccount` - Shows details of the system linked to @JohnsAccount.""")
-edit_system = ("Editing system properties", """You can use the `pk;system set` command to change your system properties. The properties you can change are name, description, and tag.
+edit_system = ("Editing system properties", """You can use the `pk;system` commands to change your system properties. The properties you can change are name, description, and tag.
         
 For example:
-`pk;system set name My System` - sets your system name to "My System".
-`pk;system set description A really cool system.` - sets your system description.
-`pk;system set tag [MS]` - Sets the tag (which will be displayed after member names in messages) to "[MS]".
-`pk;system set avatar https://placekitten.com/400/400` - Changes your system's avatar to a linked image.
+`pk;system name My System` - sets your system name to "My System".
+`pk;system description A really cool system.` - sets your system description.
+`pk;system tag [MS]` - Sets the tag (which will be displayed after member names in messages) to "[MS]".
+`pk;system avatar https://placekitten.com/400/400` - Changes your system's avatar to a linked image.
 
 If you don't specify any value, the property will be cleared.""")
 link_account = ("Linking accounts", """If your system has multiple accounts, you can link all of them to your system, and you can use the bot from all of those accounts.
@@ -48,17 +48,17 @@ For example:
 `pk;member abcde` - Shows details of the member with the ID `abcde`.
 
 You can use member IDs to look up members in other systems.""")
-edit_member = ("Editing member properties", """You can use the `pk;member set` command to change a member's properties. The properties you can change are name, description, color, pronouns, birthdate and avatar.
+edit_member = ("Editing member properties", """You can use the `pk;member` commands to change a member's properties. The properties you can change are name, description, color, pronouns, birthdate and avatar.
 
 For example:
-`pk;member set John name Joe` - Changes John's name to Joe.
-`pk;member set John description Pretty cool dude.` - Changes John's description.
-`pk;member set John color #ff0000` - Changes John's color to red.
-`pk;member set John pronouns he/him` - Changes John's pronouns.
-`pk;member set John birthdate 1996-02-27` - Changes John's birthdate to Feb 27, 1996. (Must be YYYY-MM-DD format).
-`pk;member set John birthdate 02-27` - Changes John's birthdate to February 27th, with no year.
-`pk;member set John avatar https://placekitten.com/400/400` - Changes John's avatar to a linked image.
-`pk;member set John avatar @JohnsAccount` - Changes John's avatar to the avatar of the mentioned account.
+`pk;member name John Joe` - Changes John's name to Joe.
+`pk;member description John Pretty cool dude.` - Changes John's description.
+`pk;member color John #ff0000` - Changes John's color to red.
+`pk;member pronouns John he/him` - Changes John's pronouns.
+`pk;member birthdate John 1996-02-27` - Changes John's birthdate to Feb 27, 1996. (Must be YYYY-MM-DD format).
+`pk;member birthdate John 02-27` - Changes John's birthdate to February 27th, with no year.
+`pk;member avatar John https://placekitten.com/400/400` - Changes John's avatar to a linked image.
+`pk;member avatar John @JohnsAccount` - Changes John's avatar to the avatar of the mentioned account.
 
 If you don't specify any value, the property will be cleared.""")
 remove_member = ("Removing a member", """If you want to delete a member, you can use the `pk;member delete` command.

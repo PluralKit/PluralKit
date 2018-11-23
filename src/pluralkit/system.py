@@ -48,6 +48,7 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         await db.update_system_field(conn, self.id, "name", new_name)
 
     async def set_description(self, conn, new_description: Optional[str]):
+        # Explicit length error
         if new_description and len(new_description) > 1024:
             raise errors.DescriptionTooLongError()
 
@@ -55,12 +56,14 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
     async def set_tag(self, conn, new_tag: Optional[str]):
         if new_tag:
+            # Explicit length error
             if len(new_tag) > 32:
                 raise errors.TagTooLongError()
 
             if contains_custom_emoji(new_tag):
                 raise errors.CustomEmojiError()
 
+            # Check name+tag length for all members
             members_exceeding = await db.get_members_exceeding(conn, system_id=self.id, length=32 - len(new_tag) - 1)
             if len(members_exceeding) > 0:
                 raise errors.TagTooLongWithMembersError([member.name for member in members_exceeding])
