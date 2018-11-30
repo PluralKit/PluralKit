@@ -1,75 +1,25 @@
-from io import BytesIO
-
 import discord
 import logging
-import re
-from typing import List, Optional
+from io import BytesIO
+from typing import Optional
 
 from pluralkit import db
 from pluralkit.bot import utils, channel_logger
 from pluralkit.bot.channel_logger import ChannelLogger
+from pluralkit.member import Member
+from pluralkit.system import System
 
 logger = logging.getLogger("pluralkit.bot.proxy")
+
+class ProxyError(Exception):
+    pass
+
 
 def fix_webhook(webhook: discord.Webhook) -> discord.Webhook:
     # Workaround for https://github.com/Rapptz/discord.py/issues/1242 and similar issues (#1150)
     webhook._adapter.store_user = webhook._adapter._store_user
     webhook._adapter.http = None
     return webhook
-
-def extract_leading_mentions(message_text):
-    # This regex matches one or more mentions at the start of a message, separated by any amount of spaces
-    match = re.match(r"^(<(@|@!|#|@&|a?:\w+:)\d+>\s*)+", message_text)
-    if not match:
-        return message_text, ""
-
-    # Return the text after the mentions, and the mentions themselves
-    return message_text[match.span(0)[1]:].strip(), match.group(0)
-
-
-def match_member_proxy_tags(member: db.ProxyMember, message_text: str):
-    # Skip members with no defined proxy tags
-    if not member.prefix and not member.suffix:
-        return None
-
-    # DB defines empty prefix/suffixes as None, replace with empty strings to prevent errors
-    prefix = member.prefix or ""
-    suffix = member.suffix or ""
-
-    # Ignore mentions at the very start of the message, and match proxy tags after those
-    message_text, leading_mentions = extract_leading_mentions(message_text)
-
-    logger.debug(
-        "Matching text '{}' and leading mentions '{}' to proxy tags {}text{}".format(message_text, leading_mentions,
-                                                                                     prefix, suffix))
-
-    if message_text.startswith(member.prefix or "") and message_text.endswith(member.suffix or ""):
-        prefix_length = len(prefix)
-        suffix_length = len(suffix)
-
-        # If suffix_length is 0, the last bit of the slice will be "-0", and the slice will fail
-        if suffix_length > 0:
-            inner_string = message_text[prefix_length:-suffix_length]
-        else:
-            inner_string = message_text[prefix_length:]
-
-        # Add the mentions we stripped back
-        inner_string = leading_mentions + inner_string
-        return inner_string
-
-
-def match_proxy_tags(members: List[db.ProxyMember], message_text: str):
-    # Sort by specificity (members with both prefix and suffix go higher)
-    # This will make sure more "precise" proxy tags get tried first
-    members: List[db.ProxyMember] = sorted(members, key=lambda x: int(
-        bool(x.prefix)) + int(bool(x.suffix)), reverse=True)
-
-    for member in members:
-        match = match_member_proxy_tags(member, message_text)
-        if match is not None:  # Using "is not None" because an empty string is OK here too
-            logger.debug("Matched member {} with inner text '{}'".format(member.hid, match))
-            return member, match
-
 
 async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channel: discord.TextChannel):
     # First, check if we have one saved in the DB
@@ -83,17 +33,20 @@ async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channe
         hook._adapter.store_user = hook._adapter._store_user
         return fix_webhook(hook)
 
-    # If not, we check to see if there already exists one we've missed
-    for existing_hook in await channel.webhooks():
-        existing_hook_creator = existing_hook.user.id if existing_hook.user else None
-        is_mine = existing_hook.name == "PluralKit Proxy Webhook" and existing_hook_creator == bot_user.id
-        if is_mine:
-            # We found one we made, let's add that to the DB just to be sure
-            await db.add_webhook(conn, channel.id, existing_hook.id, existing_hook.token)
-            return fix_webhook(existing_hook)
+    try:
+        # If not, we check to see if there already exists one we've missed
+        for existing_hook in await channel.webhooks():
+            existing_hook_creator = existing_hook.user.id if existing_hook.user else None
+            is_mine = existing_hook.name == "PluralKit Proxy Webhook" and existing_hook_creator == bot_user.id
+            if is_mine:
+                # We found one we made, let's add that to the DB just to be sure
+                await db.add_webhook(conn, channel.id, existing_hook.id, existing_hook.token)
+                return fix_webhook(existing_hook)
 
-    # If not, we create one and save it
-    created_webhook = await channel.create_webhook(name="PluralKit Proxy Webhook")
+        # If not, we create one and save it
+        created_webhook = await channel.create_webhook(name="PluralKit Proxy Webhook")
+    except discord.Forbidden:
+        raise ProxyError("PluralKit does not have the \"Manage Webhooks\" permission, and thus cannot proxy your message. Please contact a server administrator.")
 
     await db.add_webhook(conn, channel.id, created_webhook.id, created_webhook.token)
     return fix_webhook(created_webhook)
@@ -113,28 +66,37 @@ async def make_attachment_file(message: discord.Message):
     return discord.File(bio, first_attachment.filename)
 
 
-async def do_proxy_message(conn, original_message: discord.Message, proxy_member: db.ProxyMember,
-                           inner_text: str, logger: ChannelLogger, bot_user: discord.User):
+async def send_proxy_message(conn, original_message: discord.Message, system: System, member: Member,
+                             inner_text: str, logger: ChannelLogger, bot_user: discord.User):
     # Send the message through the webhook
     webhook = await get_or_create_webhook_for_channel(conn, bot_user, original_message.channel)
+
+    # Bounds check the combined name to avoid silent erroring
+    full_username = "{} {}".format(member.name, system.tag or "").strip()
+    if len(full_username) < 2:
+        raise ProxyError("The webhook's name, `{}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.".format(full_username))
+    if len(full_username) > 32:
+        raise ProxyError("The webhook's name, `{}`, is longer than 32 characters, and thus cannot be proxied. Please change the member name or use a shorter system tag.".format(full_username))
 
     try:
         sent_message = await webhook.send(
             content=inner_text,
-            username="{} {}".format(proxy_member.name, proxy_member.tag or "").strip(),
-            avatar_url=proxy_member.avatar_url,
+            username=full_username,
+            avatar_url=member.avatar_url,
             file=await make_attachment_file(original_message),
             wait=True
         )
     except discord.NotFound:
         # The webhook we got from the DB doesn't actually exist
+        # This can happen if someone manually deletes it from the server
         # If we delete it from the DB then call the function again, it'll re-create one for us
+        # (lol, lazy)
         await db.delete_webhook(conn, original_message.channel.id)
-        await do_proxy_message(conn, original_message, proxy_member, inner_text, logger)
+        await send_proxy_message(conn, original_message, system, member, inner_text, logger, bot_user)
         return
 
     # Save the proxied message in the database
-    await db.add_message(conn, sent_message.id, original_message.channel.id, proxy_member.id,
+    await db.add_message(conn, sent_message.id, original_message.channel.id, member.id,
                          original_message.author.id)
 
     await logger.log_message_proxied(
@@ -145,11 +107,11 @@ async def do_proxy_message(conn, original_message: discord.Message, proxy_member
         original_message.author.name,
         original_message.author.discriminator,
         original_message.author.id,
-        proxy_member.name,
-        proxy_member.hid,
-        proxy_member.avatar_url,
-        proxy_member.system_name,
-        proxy_member.system_hid,
+        member.name,
+        member.hid,
+        member.avatar_url,
+        system.name,
+        system.hid,
         inner_text,
         sent_message.attachments[0].url if sent_message.attachments else None,
         sent_message.created_at,
@@ -157,34 +119,44 @@ async def do_proxy_message(conn, original_message: discord.Message, proxy_member
     )
 
     # And finally, gotta delete the original.
-    await original_message.delete()
+    try:
+        await original_message.delete()
+    except discord.Forbidden:
+        raise ProxyError("PluralKit does not have permission to delete user messages. Please contact a server administrator.")
 
 
 async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogger, bot_user: discord.User) -> bool:
-    # Don't bother proxying in DMs with the bot
+    # Don't bother proxying in DMs
     if isinstance(message.channel, discord.abc.PrivateChannel):
         return False
 
-    # Return every member associated with the account
-    members = await db.get_members_by_account(conn, message.author.id)
-    proxy_match = match_proxy_tags(members, message.content)
-    if not proxy_match:
-        # No proxy tags match here, we done
+    # Get the system associated with the account, if possible
+    system = await System.get_by_account(conn, message.author.id)
+    if not system:
         return False
 
-    member, inner_text = proxy_match
+    # Match on the members' proxy tags
+    proxy_match = await system.match_proxy(conn, message.content)
+    if not proxy_match:
+        return False
 
-    # Sanitize inner text for @everyones and such
-    inner_text = utils.sanitize(inner_text)
+    member, inner_message = proxy_match
+
+    # Make sure no @everyones slip through, etc
+    inner_message = utils.sanitize(inner_message)
 
     # If we don't have an inner text OR an attachment, we cancel because the hook can't send that
     # Strip so it counts a string of solely spaces as blank too
-    if not inner_text.strip() and not message.attachments:
+    if not inner_message.strip() and not message.attachments:
         return False
 
     # So, we now have enough information to successfully proxy a message
     async with conn.transaction():
-        await do_proxy_message(conn, message, member, inner_text, logger, bot_user)
+        try:
+            await send_proxy_message(conn, message, system,  member, inner_message, logger, bot_user)
+        except ProxyError as e:
+            await message.channel.send("\u274c {}".format(str(e)))
+
     return True
 
 

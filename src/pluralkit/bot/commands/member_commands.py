@@ -39,8 +39,17 @@ async def member_name(ctx: CommandContext):
     member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
     new_name = ctx.pop_str(CommandError("You must pass a new member name.", help=help.edit_member))
 
-    await member.set_name(ctx.conn, system, new_name)
+    await member.set_name(ctx.conn, new_name)
     await ctx.reply_ok("Member name updated.")
+
+    if len(new_name) < 2 and not system.tag:
+        await ctx.reply_warn("This member's new name is under 2 characters, and thus cannot be proxied. To prevent this, use a longer member name, or add a system tag.")
+    elif len(new_name) > 32:
+        exceeds_by = len(new_name) - 32
+        await ctx.reply_warn("This member's new name is longer than 32 characters, and thus cannot be proxied. To prevent this, shorten the member name by {} characters.".format(exceeds_by))
+    elif len(new_name) > system.get_member_name_limit():
+        exceeds_by = len(new_name) - system.get_member_name_limit()
+        await ctx.reply_warn("This member's new name, when combined with the system tag `{}`, is longer than 32 characters, and thus cannot be proxied. To prevent this, shorten the name or system tag by at least {} characters.".format(system.tag, exceeds_by))
 
 
 async def member_description(ctx: CommandContext):

@@ -1,24 +1,26 @@
+import discord
 import humanize
 from typing import Tuple
 
-import discord
-
 import pluralkit
-from pluralkit import db
 from pluralkit.bot.utils import escape
 from pluralkit.member import Member
 from pluralkit.switch import Switch
 from pluralkit.system import System
 from pluralkit.utils import get_fronters
 
+
 def truncate_field_name(s: str) -> str:
     return s[:256]
+
 
 def truncate_field_body(s: str) -> str:
     return s[:1024]
 
+
 def truncate_description(s: str) -> str:
     return s[:2048]
+
 
 def truncate_title(s: str) -> str:
     return s[:256]
@@ -33,7 +35,7 @@ def success(text: str) -> discord.Embed:
 
 def error(text: str, help: Tuple[str, str] = None) -> discord.Embed:
     embed = discord.Embed()
-    embed.description = truncate_description(s)
+    embed.description = truncate_description(text)
     embed.colour = discord.Colour.dark_red()
 
     if help:

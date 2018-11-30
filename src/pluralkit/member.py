@@ -54,23 +54,16 @@ class Member(namedtuple("Member",
 
         return member
 
-    async def set_name(self, conn, system: "System", new_name: str):
+    async def set_name(self, conn, new_name: str):
         """
-        Set the name of a member. Requires the system to be passed in order to bounds check with the system tag.
-        :raises: MemberNameTooLongError, CustomEmojiError
+        Set the name of a member.
+        :raises: CustomEmojiError
         """
         # Custom emojis can't go in the member name
-        # Technically they *could* but they wouldn't render properly
+        # Technically they *could*, but they wouldn't render properly
         # so I'd rather explicitly ban them to in order to avoid confusion
-
-        # The textual form is longer than the length limit in most cases
-        # so we check this *before* the length check for better errors
         if contains_custom_emoji(new_name):
             raise errors.CustomEmojiError()
-
-        # Explicit name length checking
-        if len(new_name) > system.get_member_name_limit():
-            raise errors.MemberNameTooLongError(tag_present=bool(system.tag))
 
         await db.update_member_field(conn, self.id, "name", new_name)
 

@@ -32,7 +32,8 @@ async def new_system(ctx: CommandContext):
 
 
 async def system_set(ctx: CommandContext):
-    raise CommandError("`pk;system set` has been retired. Please use the new member modifying commands: `pk;system [name|description|avatar|tag]`.")
+    raise CommandError(
+        "`pk;system set` has been retired. Please use the new member modifying commands: `pk;system [name|description|avatar|tag]`.")
 
 
 async def system_name(ctx: CommandContext):
@@ -57,6 +58,28 @@ async def system_tag(ctx: CommandContext):
 
     await system.set_tag(ctx.conn, new_tag)
     await ctx.reply_ok("System tag {}.".format("updated" if new_tag else "cleared"))
+
+    # System class is immutable, update the tag so get_member_name_limit works
+    system = system._replace(tag=new_tag)
+    members = await system.get_members(ctx.conn)
+
+    # Certain members might not be able to be proxied with this new tag, show a warning for those
+    members_exceeding = [member for member in members if
+                         len(member.name) > system.get_member_name_limit()]
+    if members_exceeding:
+        member_names = ", ".join([member.name for member in members_exceeding])
+        await ctx.reply_warn(
+            "Due to the length of this tag, the following members will not be able to be proxied: {}. Please use a shorter tag to prevent this.".format(
+                member_names))
+
+    # Edge case: members with name length 1 and no new tag
+    if not new_tag:
+        one_length_members = [member for member in members if len(member.name) == 1]
+        if one_length_members:
+            member_names = ", ".join([member.name for member in one_length_members])
+            await ctx.reply_warn(
+                "Without a system tag, you will not be able to proxy members with a one-character name: {}. To prevent this, please add a system tag or lengthen their name.".format(
+                    member_names))
 
 
 async def system_avatar(ctx: CommandContext):
@@ -89,7 +112,9 @@ async def system_link(ctx: CommandContext):
     if account_system:
         raise CommandError(AccountAlreadyLinkedError(account_system).message)
 
-    if not await ctx.confirm_react(linkee, "{}, please confirm the link by clicking the ✅ reaction on this message.".format(linkee.mention)):
+    if not await ctx.confirm_react(linkee,
+                                   "{}, please confirm the link by clicking the ✅ reaction on this message.".format(
+                                       linkee.mention)):
         raise CommandError("Account link cancelled.")
 
     await system.link_account(ctx.conn, linkee.id)
@@ -241,5 +266,6 @@ async def system_frontpercent(ctx: CommandContext):
         embed.add_field(name=member.name if member else "(no fronter)",
                         value="{}% ({})".format(percent, humanize.naturaldelta(front_time)))
 
-    embed.set_footer(text="Since {} ({})".format(span_start.isoformat(sep=" ", timespec="seconds"), humanize.naturaltime(pluralkit.utils.fix_time(span_start))))
+    embed.set_footer(text="Since {} ({})".format(span_start.isoformat(sep=" ", timespec="seconds"),
+                                                 humanize.naturaltime(pluralkit.utils.fix_time(span_start))))
     await ctx.reply(embed=embed)

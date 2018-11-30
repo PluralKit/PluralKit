@@ -1,9 +1,10 @@
 import random
+import re
 import string
 from datetime import datetime
 
 from collections.__init__ import namedtuple
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from pluralkit import db, errors
 from pluralkit.member import Member
@@ -62,11 +63,6 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
 
             if contains_custom_emoji(new_tag):
                 raise errors.CustomEmojiError()
-
-            # Check name+tag length for all members
-            members_exceeding = await db.get_members_exceeding(conn, system_id=self.id, length=32 - len(new_tag) - 1)
-            if len(members_exceeding) > 0:
-                raise errors.TagTooLongWithMembersError([member.name for member in members_exceeding])
 
         await db.update_system_field(conn, self.id, "tag", new_tag)
 
@@ -133,11 +129,42 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
             return None
 
     def get_member_name_limit(self) -> int:
-        """Returns the maximum length a member's name or nickname is allowed to be. Depends on the system tag."""
+        """Returns the maximum length a member's name or nickname is allowed to be in order for the member to be proxied. Depends on the system tag."""
         if self.tag:
             return 32 - len(self.tag) - 1
         else:
             return 32
+
+    async def match_proxy(self, conn, message: str) -> Optional[Tuple[Member, str]]:
+        """Tries to find a member with proxy tags matching the given message. Returns the member and the inner contents."""
+        members = await db.get_all_members(conn, self.id)
+
+        # Sort by specificity (members with both prefix and suffix defined go higher)
+        # This will make sure more "precise" proxy tags get tried first and match properly
+        members = sorted(members, key=lambda x: int(bool(x.prefix)) + int(bool(x.suffix)), reverse=True)
+
+        for member in members:
+            proxy_prefix = member.prefix or ""
+            proxy_suffix = member.suffix or ""
+
+            # Check if the message matches these tags
+            if message.startswith(proxy_prefix) and message.endswith(proxy_suffix):
+                # If the message starts with a mention, "separate" that and match the bit after
+                mention_match = re.match(r"^(<(@|@!|#|@&|a?:\w+:)\d+>\s*)+", message)
+                leading_mentions = ""
+                if mention_match:
+                    message = message[mention_match.span(0)[1]:].strip()
+                    leading_mentions = mention_match.group(0)
+
+                # Extract the inner message (special case because -0 is invalid as an end slice)
+                if len(proxy_suffix) == 0:
+                    inner_message = message[len(proxy_prefix):]
+                else:
+                    inner_message = message[len(proxy_prefix):-len(proxy_suffix)]
+
+                # Add the stripped mentions back if there are any
+                inner_message = leading_mentions + inner_message
+                return member, inner_message
 
     def to_json(self):
         return {
