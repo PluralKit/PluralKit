@@ -106,7 +106,7 @@ async def switch_move(ctx: CommandContext):
         new_relative = humanize.naturaltime(pluralkit.utils.fix_time(new_time))
 
         # Confirm with user
-        switch_confirm_message = "This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute, last_relative, new_absolute, new_relative)
+        switch_confirm_message = await ctx.reply("This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute, last_relative, new_absolute, new_relative))
         if not await ctx.confirm_react(ctx.message.author, switch_confirm_message):
             raise CommandError("Switch move cancelled.")
 

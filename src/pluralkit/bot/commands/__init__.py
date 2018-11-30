@@ -103,8 +103,7 @@ class CommandContext:
     async def reply_warn(self, content=None, embed=None):
         return await self.reply(content="\u26a0 {}".format(content or ""), embed=embed)
 
-    async def confirm_react(self, user: Union[discord.Member, discord.User], message: str):
-        message = await self.reply(message)
+    async def confirm_react(self, user: Union[discord.Member, discord.User], message: discord.Message):
         await message.add_reaction("\u2705")  # Checkmark
         await message.add_reaction("\u274c")  # Red X
 

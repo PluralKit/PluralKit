@@ -19,6 +19,12 @@ async def new_member(ctx: CommandContext):
 
     new_name = ctx.remaining()
 
+    existing_member = await Member.get_member_by_name(ctx.conn, system.id, new_name)
+    if existing_member:
+        msg = await ctx.reply_warn("There is already a member with this name, with the ID `{}`. Do you want to create a duplicate member anyway?".format(existing_member.hid))
+        if not await ctx.confirm_react(ctx.message.author, msg):
+            raise CommandError("Member creation cancelled.")
+
     try:
         member = await system.create_member(ctx.conn, new_name)
     except PluralKitError as e:
@@ -38,6 +44,13 @@ async def member_name(ctx: CommandContext):
     system = await ctx.ensure_system()
     member = await ctx.pop_member(CommandError("You must pass a member name.", help=help.edit_member))
     new_name = ctx.pop_str(CommandError("You must pass a new member name.", help=help.edit_member))
+
+    # Warn if there's a member by the same name already
+    existing_member = await Member.get_member_by_name(ctx.conn, system.id, new_name)
+    if existing_member:
+        msg = await ctx.reply_warn("There is already a member with this name, with the ID `{}`. Do you want to rename this member anyway? This will result in two members with the same name.".format(existing_member.hid))
+        if not await ctx.confirm_react(ctx.message.author, msg):
+            raise CommandError("Member renaming cancelled.")
 
     await member.set_name(ctx.conn, new_name)
     await ctx.reply_ok("Member name updated.")

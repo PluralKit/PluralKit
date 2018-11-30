@@ -10,8 +10,10 @@ from pluralkit.member import Member
 
 logger = logging.getLogger("pluralkit.utils")
 
+
 def escape(s):
     return s.replace("`", "\\`")
+
 
 def bounds_check_member_name(new_name, system_tag):
     if len(new_name) > 32:
@@ -20,6 +22,7 @@ def bounds_check_member_name(new_name, system_tag):
     if system_tag:
         if len("{} {}".format(new_name, system_tag)) > 32:
             return "This name, combined with the system tag ({}), would exceed the maximum length of 32 characters. Please reduce the length of the tag, or use a shorter name.".format(system_tag)
+
 
 async def parse_mention(client: discord.Client, mention: str) -> Optional[discord.User]:
     # First try matching mention format

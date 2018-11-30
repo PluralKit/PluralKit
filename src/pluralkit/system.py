@@ -147,6 +147,11 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
             proxy_prefix = member.prefix or ""
             proxy_suffix = member.suffix or ""
 
+            if not proxy_prefix and not proxy_suffix:
+                # If the member has neither a prefix or a suffix, cancel early
+                # Otherwise it'd match any message no matter what
+                continue
+
             # Check if the message matches these tags
             if message.startswith(proxy_prefix) and message.endswith(proxy_suffix):
                 # If the message starts with a mention, "separate" that and match the bit after

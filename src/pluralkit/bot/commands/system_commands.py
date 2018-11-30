@@ -112,9 +112,8 @@ async def system_link(ctx: CommandContext):
     if account_system:
         raise CommandError(AccountAlreadyLinkedError(account_system).message)
 
-    if not await ctx.confirm_react(linkee,
-                                   "{}, please confirm the link by clicking the ✅ reaction on this message.".format(
-                                       linkee.mention)):
+    msg = await ctx.reply("{}, please confirm the link by clicking the \u2705 reaction on this message.".format(linkee.mention))
+    if not await ctx.confirm_react(linkee, msg):
         raise CommandError("Account link cancelled.")
 
     await system.link_account(ctx.conn, linkee.id)
