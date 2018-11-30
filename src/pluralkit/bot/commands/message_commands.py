@@ -5,10 +5,10 @@ logger = logging.getLogger("pluralkit.commands")
 
 
 async def get_message_contents(client: discord.Client, channel_id: int, message_id: int):
-    channel = client.get_channel(str(channel_id))
+    channel = client.get_channel(channel_id)
     if channel:
         try:
-            original_message = await client.get_channel(channel).get_message(message_id)
+            original_message = await channel.get_message(message_id)
             return original_message.content or None
         except (discord.errors.Forbidden, discord.errors.NotFound):
             pass
