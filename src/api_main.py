@@ -104,6 +104,18 @@ async def get_switch_color(request: web.Request, conn):
     members, stamp = await utils.get_fronters(conn, system.id)
     return web.Response(text=members[0].color if members else "#ffffff")
 
+@db_handler
+async def get_stats(request: web.Request, conn):
+    system_count = await db.system_count(conn)
+    member_count = await db.member_count(conn)
+    message_count = await db.message_count(conn)
+
+    return web.json_response({
+        "systems": system_count,
+        "members": member_count,
+        "messages": message_count
+    })
+
 app = web.Application()
 app.add_routes([
     web.get("/systems/{id}", get_system),
@@ -112,7 +124,8 @@ app.add_routes([
     web.get("/systems/{id}/switch/name", get_switch_name),
     web.get("/systems/{id}/switch/color", get_switch_color),
     web.get("/members/{id}", get_member),
-    web.get("/messages/{id}", get_message)
+    web.get("/messages/{id}", get_message),
+    web.get("/stats", get_stats)
 ])
 
 
