@@ -79,7 +79,7 @@ def run():
                 return
 
             # Second pass: do proxy matching
-            await proxy.try_proxy_message(conn, message, logger)
+            await proxy.try_proxy_message(conn, message, logger, client.user)
 
     @client.event
     async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
@@ -126,6 +126,9 @@ def run():
         if len(traceback.format_exc()) >= (2000 - len("```python\n```")):
             traceback_str = "```python\n...{}```".format(traceback.format_exc()[- (2000 - len("```python\n...```")):])
         await log_channel.send(content=traceback_str, embed=embed)
+
+        # Print it to stderr anyway, though
+        logging.getLogger("pluralkit").exception("Exception while handling event {}".format(event_name))
 
     bot_token = os.environ["TOKEN"]
     if not bot_token:

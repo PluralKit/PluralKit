@@ -71,7 +71,7 @@ def match_proxy_tags(members: List[db.ProxyMember], message_text: str):
             return member, match
 
 
-async def get_or_create_webhook_for_channel(conn, channel: discord.TextChannel):
+async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channel: discord.TextChannel):
     # First, check if we have one saved in the DB
     webhook_from_db = await db.get_webhook(conn, channel.id)
     if webhook_from_db:
@@ -82,6 +82,15 @@ async def get_or_create_webhook_for_channel(conn, channel: discord.TextChannel):
 
         hook._adapter.store_user = hook._adapter._store_user
         return fix_webhook(hook)
+
+    # If not, we check to see if there already exists one we've missed
+    for existing_hook in await channel.webhooks():
+        existing_hook_creator = existing_hook.user.id if existing_hook.user else None
+        is_mine = existing_hook.name == "PluralKit Proxy Webhook" and existing_hook_creator == bot_user.id
+        if is_mine:
+            # We found one we made, let's add that to the DB just to be sure
+            await db.add_webhook(conn, channel.id, existing_hook.id, existing_hook.token)
+            return fix_webhook(existing_hook)
 
     # If not, we create one and save it
     created_webhook = await channel.create_webhook(name="PluralKit Proxy Webhook")
@@ -105,9 +114,9 @@ async def make_attachment_file(message: discord.Message):
 
 
 async def do_proxy_message(conn, original_message: discord.Message, proxy_member: db.ProxyMember,
-                           inner_text: str, logger: ChannelLogger):
+                           inner_text: str, logger: ChannelLogger, bot_user: discord.User):
     # Send the message through the webhook
-    webhook = await get_or_create_webhook_for_channel(conn, original_message.channel)
+    webhook = await get_or_create_webhook_for_channel(conn, bot_user, original_message.channel)
 
     try:
         sent_message = await webhook.send(
@@ -151,7 +160,7 @@ async def do_proxy_message(conn, original_message: discord.Message, proxy_member
     await original_message.delete()
 
 
-async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogger) -> bool:
+async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogger, bot_user: discord.User) -> bool:
     # Don't bother proxying in DMs with the bot
     if isinstance(message.channel, discord.abc.PrivateChannel):
         return False
@@ -175,7 +184,7 @@ async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogge
 
     # So, we now have enough information to successfully proxy a message
     async with conn.transaction():
-        await do_proxy_message(conn, message, member, inner_text, logger)
+        await do_proxy_message(conn, message, member, inner_text, logger, bot_user)
     return True
 
 
