@@ -51,7 +51,7 @@ You can use member IDs to look up members in other systems.""")
 edit_member = ("Editing member properties", """You can use the `pk;member` commands to change a member's properties. The properties you can change are name, description, color, pronouns, birthdate and avatar.
 
 For example:
-`pk;member name John Joe` - Changes John's name to Joe.
+`pk;member rename John Joe` - Changes John's name to Joe.
 `pk;member description John Pretty cool dude.` - Changes John's description.
 `pk;member color John #ff0000` - Changes John's color to red.
 `pk;member pronouns John he/him` - Changes John's pronouns.
@@ -76,13 +76,13 @@ For example:
 `pk;member proxy John J:text` - Registers John to use the prefix "J:".
 
 After setting proxy tags, you can use them in any message, and they'll be interpreted by the bot and proxied appropriately.""")
-system_tag = ("Setting your system tag", """To set your system tag, use the `pk;system set tag` command.
+system_tag = ("Setting your system tag", """To set your system tag, use the `pk;system tag` command.
         
 The tag is appended to the name of all proxied messages.
 
 For example:
-`pk;system set tag [MS]` - Sets your system tag to "[MS]".
-`pk;system set tag :heart:` - Sets your system tag to the heart emoji.
+`pk;system tag [MS]` - Sets your system tag to "[MS]".
+`pk;system tag :heart:` - Sets your system tag to the heart emoji.
 
 Note you can only use default Discord emojis, not custom server emojis.""")
 message_lookup = ("Looking up a message", """You can look up a message by its ID using the `pk;message` command.
@@ -110,25 +110,25 @@ For example:
 Note that you can't move the switch further back than the second-last logged switch, and you can't move a switch to a time in the future.
 
 The default time zone for absolute times is UTC, but you can specify other time zones in the command itself, as given in the example.""")
-front_history = ("Viewing fronting history", """To view front history, you can use the `pk;system fronter` and `pk;system fronthistory` commands.
+front_history = ("Viewing fronting history", """To view front history, you can use the `pk;front` and `pk;front history` commands.
         
 For example:
-`pk;system fronter` - Shows the current fronter(s) in your own system.
-`pk;system fronter abcde` - Shows the current fronter in the system with the ID `abcde`.
-`pk;system fronthistory` - Shows the past 10 switches in your own system.
-`pk;system fronthistory @JohnsAccount` - Shows the past 10 switches in the system linked to @JohnsAccount.""")
-front_breakdown = ("Viewing a front breakdown", """To see a per-member breakdown of your switches, use the `pk;system frontpercent` command. You can optionally give it a time limit to only count switches after that point.
+`pk;front` - Shows the current fronter(s) in your own system.
+`pk;front abcde` - Shows the current fronter in the system with the ID `abcde`.
+`pk;front history` - Shows the past 10 switches in your own system.
+`pk;front history @JohnsAccount` - Shows the past 10 switches in the system linked to @JohnsAccount.""")
+front_breakdown = ("Viewing a front breakdown", """To see a per-member breakdown of your switches, use the `pk;front percent` command. You can optionally give it a time limit to only count switches after that point.
 
 For example:
-`pk;system frontpercent` - Shows a front breakdown for your system since you started logging switches
-`pk;system frontpercent 1 day` - Shows a front breakdown for your system for the past day
-`pk;system frontpercent Jan 1st 2018` - Shows a front breakdown for your system since January 1st, 2018
+`pk;front percent` - Shows a front breakdown for your system since you started logging switches
+`pk;front percent 1 day` - Shows a front breakdown for your system for the past day
+`pk;front percent Jan 1st 2018` - Shows a front breakdown for your system since January 1st, 2018
 
 Note that the percentages don't necessarily add up to 100%, as multiple members can be listed as fronting at a time.""")
-logging_channel = ("Setting up a logging channel", """To designate a channel for the bot to log posted messages to, use the `pk;mod log` command.
+logging_channel = ("Setting up a logging channel", """To designate a channel for the bot to log posted messages to, use the `pk;log` command.
         
 For example:
-`pk;mod log #message-log` - Configures the bot to log to #message-log.""")
+`pk;log #message-log` - Configures the bot to log to #message-log.""")
 tupperware_import = ("Importing from Tupperware", """If you already have a registered system on Tupperware, you can use the `pk;import tupperware` command to import it into PluralKit.
         
 Note the command only works on a server and channel where the Tupperware bot is already present.""")

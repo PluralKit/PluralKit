@@ -162,11 +162,12 @@ async def command_dispatch(client: discord.Client, message: discord.Message, con
         (r"system tag", system_commands.system_tag),
         (r"system link", system_commands.system_link),
         (r"system unlink", system_commands.system_unlink),
-        (r"system fronter", system_commands.system_fronter),
-        (r"system fronthistory", system_commands.system_fronthistory),
         (r"system (delete|remove|destroy|erase)", system_commands.system_delete),
-        (r"system frontpercent(age)?", system_commands.system_frontpercent),
         (r"system", system_commands.system_info),
+
+        (r"front", system_commands.system_fronter),
+        (r"front history", system_commands.system_fronthistory),
+        (r"front percent(age)?", system_commands.system_frontpercent),
 
         (r"import tupperware", import_commands.import_tupperware),
 
@@ -184,7 +185,7 @@ async def command_dispatch(client: discord.Client, message: discord.Message, con
 
         (r"message", message_commands.message_info),
 
-        (r"mod log", mod_commands.set_log),
+        (r"log", mod_commands.set_log),
 
         (r"invite", misc_commands.invite_link),
         (r"export", misc_commands.export),
