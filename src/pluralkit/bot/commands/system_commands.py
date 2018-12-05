@@ -3,28 +3,73 @@ import humanize
 from datetime import datetime, timedelta
 
 import pluralkit.bot.embeds
-import pluralkit.utils
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
-from pluralkit.errors import ExistingSystemError, UnlinkingLastAccountError, PluralKitError, AccountAlreadyLinkedError
+from pluralkit.errors import ExistingSystemError, UnlinkingLastAccountError, AccountAlreadyLinkedError
+from pluralkit.utils import display_relative
 
-logger = logging.getLogger("pluralkit.commands")
 
-
-async def system_info(ctx: CommandContext):
-    if ctx.has_next():
-        system = await ctx.pop_system()
+async def system_root(ctx: CommandContext):
+    # Commands that operate without a specified system (usually defaults to the executor's own system)
+    if ctx.match("name") or ctx.match("rename"):
+        await system_name(ctx)
+    elif ctx.match("description"):
+        await system_description(ctx)
+    elif ctx.match("avatar") or ctx.match("icon"):
+        await system_avatar(ctx)
+    elif ctx.match("tag"):
+        await system_tag(ctx)
+    elif ctx.match("new") or ctx.match("register") or ctx.match("create") or ctx.match("init"):
+        await system_new(ctx)
+    elif ctx.match("delete") or ctx.match("delete") or ctx.match("erase"):
+        await system_delete(ctx)
+    elif ctx.match("front") or ctx.match("fronter") or ctx.match("fronters"):
+        await system_fronter(ctx, await ctx.ensure_system())
+    elif ctx.match("fronthistory"):
+        await system_fronthistory(ctx, await ctx.ensure_system())
+    elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage"):
+        await system_frontpercent(ctx, await ctx.ensure_system())
+    elif ctx.match("help"):
+        await ctx.reply(help.system_commands)
+    elif ctx.match("set"):
+        await system_set(ctx)
+    elif not ctx.has_next():
+        # (no argument, command ends here, default to showing own system)
+        await system_info(ctx, await ctx.ensure_system())
     else:
-        system = await ctx.ensure_system()
+        # If nothing matches, the next argument is likely a system name/ID, so delegate
+        # to the specific system root
+        await specified_system_root(ctx)
 
+
+async def specified_system_root(ctx: CommandContext):
+    # Commands that operate on a specified system (ie. not necessarily the command executor's)
+    system_name = ctx.pop_str()
+    system = await utils.get_system_fuzzy(ctx.conn, ctx.client, system_name)
+    if not system:
+        raise CommandError(
+            "Unable to find system `{}`. If you meant to run a command, type `pk;system help` for a list of system commands.".format(
+                system_name))
+
+    if ctx.match("front") or ctx.match("fronter"):
+        await system_fronter(ctx, system)
+    elif ctx.match("fronthistory"):
+        await system_fronthistory(ctx, system)
+    elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage"):
+        await system_frontpercent(ctx, system)
+    else:
+        await system_info(ctx, system)
+
+
+async def system_info(ctx: CommandContext, system: System):
     await ctx.reply(embed=await pluralkit.bot.embeds.system_card(ctx.conn, ctx.client, system))
 
 
-async def new_system(ctx: CommandContext):
-    system_name = ctx.remaining() or None
+async def system_new(ctx: CommandContext):
+    new_name = ctx.remaining() or None
 
     try:
-        await System.create_system(ctx.conn, ctx.message.author.id, system_name)
+        await System.create_system(ctx.conn, ctx.message.author.id, new_name)
     except ExistingSystemError as e:
         raise CommandError(e.message)
 
@@ -95,9 +140,10 @@ async def system_avatar(ctx: CommandContext):
     await ctx.reply_ok("System avatar {}.".format("updated" if new_avatar_url else "cleared"))
 
 
-async def system_link(ctx: CommandContext):
+async def account_link(ctx: CommandContext):
     system = await ctx.ensure_system()
-    account_name = ctx.pop_str(CommandError("You must pass an account to link this system to.", help=help.link_account))
+    account_name = ctx.pop_str(CommandError(
+        "You must pass an account to link this system to. You can either use a \\@mention, or a raw account ID."))
 
     # Do the sanity checking here too (despite it being done in System.link_account)
     # Because we want it to be done before the confirmation dialog is shown
@@ -105,14 +151,15 @@ async def system_link(ctx: CommandContext):
     # Find account to link
     linkee = await utils.parse_mention(ctx.client, account_name)
     if not linkee:
-        raise CommandError("Account not found.")
+        raise CommandError("Account `{}` not found.".format(account_name))
 
     # Make sure account doesn't already have a system
     account_system = await System.get_by_account(ctx.conn, linkee.id)
     if account_system:
         raise CommandError(AccountAlreadyLinkedError(account_system).message)
 
-    msg = await ctx.reply("{}, please confirm the link by clicking the \u2705 reaction on this message.".format(linkee.mention))
+    msg = await ctx.reply(
+        "{}, please confirm the link by clicking the \u2705 reaction on this message.".format(linkee.mention))
     if not await ctx.confirm_react(linkee, msg):
         raise CommandError("Account link cancelled.")
 
@@ -120,7 +167,7 @@ async def system_link(ctx: CommandContext):
     await ctx.reply_ok("Account linked to system.")
 
 
-async def system_unlink(ctx: CommandContext):
+async def account_unlink(ctx: CommandContext):
     system = await ctx.ensure_system()
 
     try:
@@ -131,24 +178,18 @@ async def system_unlink(ctx: CommandContext):
     await ctx.reply_ok("Account unlinked.")
 
 
-async def system_fronter(ctx: CommandContext):
-    if ctx.has_next():
-        system = await ctx.pop_system()
-    else:
-        system = await ctx.ensure_system()
-
+async def system_fronter(ctx: CommandContext, system: System):
     embed = await embeds.front_status(await system.get_latest_switch(ctx.conn), ctx.conn)
     await ctx.reply(embed=embed)
 
 
-async def system_fronthistory(ctx: CommandContext):
-    if ctx.has_next():
-        system = await ctx.pop_system()
-    else:
-        system = await ctx.ensure_system()
-
+async def system_fronthistory(ctx: CommandContext, system: System):
     lines = []
     front_history = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=10)
+
+    if not front_history:
+        raise CommandError("You have no logged switches. Use `pk;switch´ to start logging.")
+
     for i, (timestamp, members) in enumerate(front_history):
         # Special case when no one's fronting
         if len(members) == 0:
@@ -158,13 +199,13 @@ async def system_fronthistory(ctx: CommandContext):
 
         # Make proper date string
         time_text = timestamp.isoformat(sep=" ", timespec="seconds")
-        rel_text = humanize.naturaltime(pluralkit.utils.fix_time(timestamp))
+        rel_text = display_relative(timestamp)
 
         delta_text = ""
         if i > 0:
             last_switch_time = front_history[i - 1][0]
-            delta_text = ", for {}".format(humanize.naturaldelta(timestamp - last_switch_time))
-        lines.append("**{}** ({}, {}{})".format(name, time_text, rel_text, delta_text))
+            delta_text = ", for {}".format(display_relative(timestamp - last_switch_time))
+        lines.append("**{}** ({}, {} ago{})".format(name, time_text, rel_text, delta_text))
 
     embed = embeds.status("\n".join(lines) or "(none)")
     embed.title = "Past switches"
@@ -183,9 +224,7 @@ async def system_delete(ctx: CommandContext):
     await ctx.reply_ok("System deleted.")
 
 
-async def system_frontpercent(ctx: CommandContext):
-    system = await ctx.ensure_system()
-
+async def system_frontpercent(ctx: CommandContext, system: System):
     # Parse the time limit (will go this far back)
     if ctx.remaining():
         before = dateparser.parse(ctx.remaining(), languages=["en"], settings={
@@ -265,6 +304,6 @@ async def system_frontpercent(ctx: CommandContext):
         embed.add_field(name=member.name if member else "(no fronter)",
                         value="{}% ({})".format(percent, humanize.naturaldelta(front_time)))
 
-    embed.set_footer(text="Since {} ({})".format(span_start.isoformat(sep=" ", timespec="seconds"),
-                                                 humanize.naturaltime(pluralkit.utils.fix_time(span_start))))
+    embed.set_footer(text="Since {} ({} ago)".format(span_start.isoformat(sep=" ", timespec="seconds"),
+                                                     display_relative(span_start)))
     await ctx.reply(embed=embed)

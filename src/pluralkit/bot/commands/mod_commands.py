@@ -1,7 +1,5 @@
 from pluralkit.bot.commands import *
 
-logger = logging.getLogger("pluralkit.commands")
-
 
 async def set_log(ctx: CommandContext):
     if not ctx.message.author.guild_permissions.administrator:

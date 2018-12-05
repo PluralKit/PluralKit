@@ -1,7 +1,6 @@
+import discord
 import logging
 from datetime import datetime
-
-import discord
 
 from pluralkit import db
 
@@ -71,8 +70,8 @@ class ChannelLogger:
         embed_set_author_name(embed, channel_name, member_name, system_name, member_avatar_url)
         embed.set_footer(
             text="System ID: {} | Member ID: {} | Sender: {}#{} ({}) | Message ID: {}".format(system_hid, member_hid,
-                                                                                         sender_name, sender_disc,
-                                                                                         sender_id, message_id))
+                                                                                              sender_name, sender_disc,
+                                                                                              sender_id, message_id))
 
         if message_image:
             embed.set_thumbnail(url=message_image)
@@ -99,6 +98,7 @@ class ChannelLogger:
         embed.timestamp = datetime.utcnow()
 
         embed_set_author_name(embed, channel_name, member_name, system_name, member_avatar_url)
-        embed.set_footer(text="System ID: {} | Member ID: {} | Message ID: {}".format(system_hid, member_hid, message_id))
+        embed.set_footer(
+            text="System ID: {} | Member ID: {} | Message ID: {}".format(system_hid, member_hid, message_id))
 
         await self.send_to_log_channel(log_channel, embed)

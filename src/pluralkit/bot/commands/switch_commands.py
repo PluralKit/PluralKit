@@ -1,5 +1,4 @@
 import dateparser
-import humanize
 from datetime import datetime
 from typing import List
 
@@ -7,24 +6,34 @@ import pluralkit.utils
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
 from pluralkit.member import Member
+from pluralkit.utils import display_relative
 
-logger = logging.getLogger("pluralkit.commands")
+
+async def switch_root(ctx: CommandContext):
+    if not ctx.has_next():
+        raise CommandError("You must use a subcommand. For a list of subcommands, type `pk;switch help`.")
+
+    if ctx.match("out"):
+        await switch_out(ctx)
+    elif ctx.match("move"):
+        await switch_move(ctx)
+    elif ctx.match("delete") or ctx.match("remove") or ctx.match("erase") or ctx.match("cancel"):
+        await switch_delete(ctx)
+    elif ctx.match("help"):
+        await ctx.reply(help.member_commands)
+    else:
+        await switch_member(ctx)
 
 
 async def switch_member(ctx: CommandContext):
     system = await ctx.ensure_system()
 
     if not ctx.has_next():
-        raise CommandError("You must pass at least one member name or ID to register a switch to.",
-                            help=help.switch_register)
+        raise CommandError("You must pass at least one member name or ID to register a switch to.")
 
     members: List[Member] = []
-    for member_name in ctx.remaining().split(" "):
-        # Find the member
-        member = await utils.get_member_fuzzy(ctx.conn, system.id, member_name)
-        if not member:
-            raise CommandError("Couldn't find member \"{}\".".format(member_name))
-        members.append(member)
+    while ctx.has_next():
+        members.append(await ctx.pop_member())
 
     # Compare requested switch IDs and existing fronter IDs to check for existing switches
     # Lists, because order matters, it makes sense to just swap fronters
@@ -40,10 +49,7 @@ async def switch_member(ctx: CommandContext):
         raise CommandError("Duplicate members in member list.")
 
     # Log the switch
-    async with ctx.conn.transaction():
-        switch_id = await db.add_switch(ctx.conn, system_id=system.id)
-        for member in members:
-            await db.add_switch_member(ctx.conn, switch_id=switch_id, member_id=member.id)
+    await system.add_switch(ctx.conn, members)
 
     if len(members) == 1:
         await ctx.reply_ok("Switch registered. Current fronter is now {}.".format(members[0].name))
@@ -55,20 +61,52 @@ async def switch_member(ctx: CommandContext):
 async def switch_out(ctx: CommandContext):
     system = await ctx.ensure_system()
 
-    # Get current fronters
-    fronters, _ = await pluralkit.utils.get_fronter_ids(ctx.conn, system_id=system.id)
-    if not fronters:
+    switch = await system.get_latest_switch(ctx.conn)
+    if switch and not switch.members:
         raise CommandError("There's already no one in front.")
 
     # Log it, and don't log any members
-    await db.add_switch(ctx.conn, system_id=system.id)
+    await system.add_switch(ctx.conn, [])
     await ctx.reply_ok("Switch-out registered.")
+
+
+async def switch_delete(ctx: CommandContext):
+    system = await ctx.ensure_system()
+
+    last_two_switches = await system.get_switches(ctx.conn, 2)
+    if not last_two_switches:
+        raise CommandError("You do not have a logged switch to delete.")
+
+    last_switch = last_two_switches[0]
+    next_last_switch = last_two_switches[1] if len(last_two_switches) > 1 else None
+
+    last_switch_members = ", ".join([member.name for member in await last_switch.fetch_members(ctx.conn)])
+    last_switch_time = display_relative(last_switch.timestamp)
+
+    if next_last_switch:
+        next_last_switch_members = ", ".join([member.name for member in await next_last_switch.fetch_members(ctx.conn)])
+        next_last_switch_time = display_relative(next_last_switch.timestamp)
+        msg = await ctx.reply_warn("This will delete the latest switch ({}, {} ago). The next latest switch is {} ({} ago). Is this okay?".format(last_switch_members, last_switch_time, next_last_switch_members, next_last_switch_time))
+    else:
+        msg = await ctx.reply_warn("This will delete the latest switch ({}, {} ago). You have no other switches logged. Is this okay?".format(last_switch_members, last_switch_time))
+
+    if not await ctx.confirm_react(ctx.message.author, msg):
+        raise CommandError("Switch deletion cancelled.")
+
+    await last_switch.delete(ctx.conn)
+
+    if next_last_switch:
+        # lol block scope amirite
+        # but yeah this is fine
+        await ctx.reply_ok("Switch deleted. Next latest switch is now {} ({} ago).".format(next_last_switch_members, next_last_switch_time))
+    else:
+        await ctx.reply_ok("Switch deleted. You now have no logged switches.")
 
 
 async def switch_move(ctx: CommandContext):
     system = await ctx.ensure_system()
     if not ctx.has_next():
-        raise CommandError("You must pass a time to move the switch to.", help=help.switch_move)
+        raise CommandError("You must pass a time to move the switch to.")
 
     # Parse the time to move to
     new_time = dateparser.parse(ctx.remaining(), languages=["en"], settings={
@@ -76,11 +114,11 @@ async def switch_move(ctx: CommandContext):
         "RETURN_AS_TIMEZONE_AWARE": False
     })
     if not new_time:
-        raise CommandError("'{}' can't be parsed as a valid time.".format(ctx.remaining()), help=help.switch_move)
+        raise CommandError("'{}' can't be parsed as a valid time.".format(ctx.remaining()))
 
     # Make sure the time isn't in the future
     if new_time > datetime.utcnow():
-        raise CommandError("Can't move switch to a time in the future.", help=help.switch_move)
+        raise CommandError("Can't move switch to a time in the future.")
 
     # Make sure it all runs in a big transaction for atomicity
     async with ctx.conn.transaction():
@@ -94,19 +132,25 @@ async def switch_move(ctx: CommandContext):
             second_last_timestamp, _ = last_two_switches[1]
 
             if new_time < second_last_timestamp:
-                time_str = humanize.naturaltime(pluralkit.utils.fix_time(second_last_timestamp))
+                time_str = display_relative(second_last_timestamp)
                 raise CommandError(
-                    "Can't move switch to before last switch time ({}), as it would cause conflicts.".format(time_str))
+                    "Can't move switch to before last switch time ({} ago), as it would cause conflicts.".format(time_str))
 
         # Display the confirmation message w/ humanized times
         members = ", ".join([member.name for member in last_fronters]) or "nobody"
         last_absolute = last_timestamp.isoformat(sep=" ", timespec="seconds")
-        last_relative = humanize.naturaltime(pluralkit.utils.fix_time(last_timestamp))
+        last_relative = display_relative(last_timestamp)
         new_absolute = new_time.isoformat(sep=" ", timespec="seconds")
-        new_relative = humanize.naturaltime(pluralkit.utils.fix_time(new_time))
+        new_relative = display_relative(new_time)
 
         # Confirm with user
-        switch_confirm_message = await ctx.reply("This will move the latest switch ({}) from {} ({}) to {} ({}). Is this OK?".format(members, last_absolute, last_relative, new_absolute, new_relative))
+        switch_confirm_message = await ctx.reply(
+            "This will move the latest switch ({}) from {} ({} ago) to {} ({} ago). Is this OK?".format(members,
+                                                                                                        last_absolute,
+                                                                                                        last_relative,
+                                                                                                        new_absolute,
+                                                                                                        new_relative))
+
         if not await ctx.confirm_react(ctx.message.author, switch_confirm_message):
             raise CommandError("Switch move cancelled.")
 
@@ -116,6 +160,3 @@ async def switch_move(ctx: CommandContext):
         # Change the switch in the DB
         await db.move_last_switch(ctx.conn, system.id, switch_id, new_time)
         await ctx.reply_ok("Switch moved.")
-
-
-

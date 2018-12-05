@@ -1,6 +1,6 @@
 import asyncio
+
 import discord
-import logging
 import re
 from typing import Tuple, Optional, Union
 
@@ -9,8 +9,6 @@ from pluralkit.bot import embeds, utils
 from pluralkit.errors import PluralKitError
 from pluralkit.member import Member
 from pluralkit.system import System
-
-logger = logging.getLogger("pluralkit.bot.commands")
 
 
 def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
@@ -68,6 +66,19 @@ class CommandContext:
         popped, self.args = next_arg(self.args)
         return popped
 
+    def peek_str(self) -> Optional[str]:
+        if not self.args:
+            return None
+        popped, _ = next_arg(self.args)
+        return popped
+
+    def match(self, next) -> bool:
+        peeked = self.peek_str()
+        if peeked and peeked.lower() == next.lower():
+            self.pop_str()
+            return True
+        return False
+
     async def pop_system(self, error: CommandError = None) -> System:
         name = self.pop_str(error)
         system = await utils.get_system_fuzzy(self.conn, self.client, name)
@@ -102,6 +113,13 @@ class CommandContext:
 
     async def reply_warn(self, content=None, embed=None):
         return await self.reply(content="\u26a0 {}".format(content or ""), embed=embed)
+
+    async def reply_ok_dm(self, content: str):
+        if isinstance(self.message.channel, discord.DMChannel):
+            await self.reply_ok(content="\u2705 {}".format(content or ""))
+        else:
+            await self.message.author.send(content="\u2705 {}".format(content or ""))
+            await self.reply_ok("DM'd!")
 
     async def confirm_react(self, user: Union[discord.Member, discord.User], message: discord.Message):
         await message.add_reaction("\u2705")  # Checkmark
@@ -138,6 +156,35 @@ import pluralkit.bot.commands.switch_commands
 import pluralkit.bot.commands.system_commands
 
 
+async def command_root(ctx: CommandContext):
+    if ctx.match("system"):
+        await system_commands.system_root(ctx)
+    elif ctx.match("member"):
+        await member_commands.member_root(ctx)
+    elif ctx.match("link"):
+        await system_commands.account_link(ctx)
+    elif ctx.match("unlink"):
+        await system_commands.account_unlink(ctx)
+    elif ctx.match("message"):
+        await message_commands.message_info(ctx)
+    elif ctx.match("log"):
+        await mod_commands.set_log(ctx)
+    elif ctx.match("invite"):
+        await misc_commands.invite_link(ctx)
+    elif ctx.match("export"):
+        await misc_commands.export(ctx)
+    elif ctx.match("switch"):
+        await switch_commands.switch_root(ctx)
+    elif ctx.match("token"):
+        await api_commands.token_root(ctx)
+    elif ctx.match("import"):
+        await import_commands.import_root(ctx)
+    elif ctx.match("help"):
+        await misc_commands.help_root(ctx)
+    else:
+        raise CommandError("Unknown command {}. For a list of commands, type `pk;help commands`.".format(ctx.pop_str()))
+
+
 async def run_command(ctx: CommandContext, func):
     # lol nested try
     try:
@@ -150,71 +197,20 @@ async def run_command(ctx: CommandContext, func):
         await ctx.reply(content=content, embed=embed)
 
 
-
 async def command_dispatch(client: discord.Client, message: discord.Message, conn) -> bool:
     prefix = "^(pk(;|!)|<@{}> )".format(client.user.id)
-    commands = [
-        (r"system (new|register|create|init)", system_commands.new_system),
-        (r"system set", system_commands.system_set),
-        (r"system (name|rename)", system_commands.system_name),
-        (r"system description", system_commands.system_description),
-        (r"system avatar", system_commands.system_avatar),
-        (r"system tag", system_commands.system_tag),
-        (r"system link", system_commands.system_link),
-        (r"system unlink", system_commands.system_unlink),
-        (r"system (delete|remove|destroy|erase)", system_commands.system_delete),
-        (r"system", system_commands.system_info),
+    regex = re.compile(prefix, re.IGNORECASE)
 
-        (r"front", system_commands.system_fronter),
-        (r"front history", system_commands.system_fronthistory),
-        (r"front percent(age)?", system_commands.system_frontpercent),
-
-        (r"import tupperware", import_commands.import_tupperware),
-
-        (r"member (new|create|add|register)", member_commands.new_member),
-        (r"member set", member_commands.member_set),
-        (r"member (name|rename)", member_commands.member_name),
-        (r"member description", member_commands.member_description),
-        (r"member avatar", member_commands.member_avatar),
-        (r"member color", member_commands.member_color),
-        (r"member (pronouns|pronoun)", member_commands.member_pronouns),
-        (r"member (birthday|birthdate)", member_commands.member_birthdate),
-        (r"member proxy", member_commands.member_proxy),
-        (r"member (delete|remove|destroy|erase)", member_commands.member_delete),
-        (r"member", member_commands.member_info),
-
-        (r"message", message_commands.message_info),
-
-        (r"log", mod_commands.set_log),
-
-        (r"invite", misc_commands.invite_link),
-        (r"export", misc_commands.export),
-
-        (r"help", misc_commands.show_help),
-
-        (r"switch move", switch_commands.switch_move),
-        (r"switch out", switch_commands.switch_out),
-        (r"switch", switch_commands.switch_member),
-
-        (r"token (refresh|expire|update)", api_commands.refresh_token),
-        (r"token", api_commands.get_token)
-    ]
-
-    for pattern, func in commands:
-        regex = re.compile(prefix + pattern, re.IGNORECASE)
-
-        cmd = message.content
-        match = regex.match(cmd)
-        if match:
-            remaining_string = cmd[match.span()[1]:].strip()
-
-            ctx = CommandContext(
-                client=client,
-                message=message,
-                conn=conn,
-                args=remaining_string
-            )
-
-            await run_command(ctx, func)
-            return True
+    cmd = message.content
+    match = regex.match(cmd)
+    if match:
+        remaining_string = cmd[match.span()[1]:].strip()
+        ctx = CommandContext(
+            client=client,
+            message=message,
+            conn=conn,
+            args=remaining_string
+        )
+        await run_command(ctx, command_root)
+        return True
     return False

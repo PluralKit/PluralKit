@@ -1,5 +1,4 @@
 import discord
-import logging
 from io import BytesIO
 from typing import Optional
 
@@ -9,7 +8,6 @@ from pluralkit.bot.channel_logger import ChannelLogger
 from pluralkit.member import Member
 from pluralkit.system import System
 
-logger = logging.getLogger("pluralkit.bot.proxy")
 
 class ProxyError(Exception):
     pass
@@ -20,6 +18,7 @@ def fix_webhook(webhook: discord.Webhook) -> discord.Webhook:
     webhook._adapter.store_user = webhook._adapter._store_user
     webhook._adapter.http = None
     return webhook
+
 
 async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channel: discord.TextChannel):
     # First, check if we have one saved in the DB
@@ -46,7 +45,8 @@ async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channe
         # If not, we create one and save it
         created_webhook = await channel.create_webhook(name="PluralKit Proxy Webhook")
     except discord.Forbidden:
-        raise ProxyError("PluralKit does not have the \"Manage Webhooks\" permission, and thus cannot proxy your message. Please contact a server administrator.")
+        raise ProxyError(
+            "PluralKit does not have the \"Manage Webhooks\" permission, and thus cannot proxy your message. Please contact a server administrator.")
 
     await db.add_webhook(conn, channel.id, created_webhook.id, created_webhook.token)
     return fix_webhook(created_webhook)
@@ -74,9 +74,13 @@ async def send_proxy_message(conn, original_message: discord.Message, system: Sy
     # Bounds check the combined name to avoid silent erroring
     full_username = "{} {}".format(member.name, system.tag or "").strip()
     if len(full_username) < 2:
-        raise ProxyError("The webhook's name, `{}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.".format(full_username))
+        raise ProxyError(
+            "The webhook's name, `{}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.".format(
+                full_username))
     if len(full_username) > 32:
-        raise ProxyError("The webhook's name, `{}`, is longer than 32 characters, and thus cannot be proxied. Please change the member name or use a shorter system tag.".format(full_username))
+        raise ProxyError(
+            "The webhook's name, `{}`, is longer than 32 characters, and thus cannot be proxied. Please change the member name or use a shorter system tag.".format(
+                full_username))
 
     try:
         sent_message = await webhook.send(
@@ -122,7 +126,8 @@ async def send_proxy_message(conn, original_message: discord.Message, system: Sy
     try:
         await original_message.delete()
     except discord.Forbidden:
-        raise ProxyError("PluralKit does not have permission to delete user messages. Please contact a server administrator.")
+        raise ProxyError(
+            "PluralKit does not have permission to delete user messages. Please contact a server administrator.")
 
 
 async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogger, bot_user: discord.User) -> bool:
@@ -153,7 +158,7 @@ async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogge
     # So, we now have enough information to successfully proxy a message
     async with conn.transaction():
         try:
-            await send_proxy_message(conn, message, system,  member, inner_message, logger, bot_user)
+            await send_proxy_message(conn, message, system, member, inner_message, logger, bot_user)
         except ProxyError as e:
             await message.channel.send("\u274c {}".format(str(e)))
 

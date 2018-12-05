@@ -1,12 +1,10 @@
-import asyncpg
+import asyncio
 import sys
 
-import asyncio
-import os
-
-import logging
-
+import asyncpg
 import discord
+import logging
+import os
 import traceback
 
 from pluralkit import db

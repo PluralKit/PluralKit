@@ -2,12 +2,12 @@ import discord
 import humanize
 from typing import Tuple
 
-import pluralkit
+from pluralkit import db
 from pluralkit.bot.utils import escape
 from pluralkit.member import Member
 from pluralkit.switch import Switch
 from pluralkit.system import System
-from pluralkit.utils import get_fronters
+from pluralkit.utils import get_fronters, display_relative
 
 
 def truncate_field_name(s: str) -> str:
@@ -52,7 +52,8 @@ def status(text: str) -> discord.Embed:
     return embed
 
 
-def exception_log(message_content, author_name, author_discriminator, author_id, server_id, channel_id) -> discord.Embed:
+def exception_log(message_content, author_name, author_discriminator, author_id, server_id,
+                  channel_id) -> discord.Embed:
     embed = discord.Embed()
     embed.colour = discord.Colour.dark_red()
     embed.title = truncate_title(message_content)
@@ -82,7 +83,8 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
     if fronters:
         names = ", ".join([member.name for member in fronters])
         fronter_val = "{} (for {})".format(names, humanize.naturaldelta(switch_time))
-        card.add_field(name="Current fronter" if len(fronters) == 1 else "Current fronters", value=truncate_field_body(fronter_val))
+        card.add_field(name="Current fronter" if len(fronters) == 1 else "Current fronters",
+                       value=truncate_field_body(fronter_val))
 
     account_names = []
     for account_id in await system.get_linked_account_ids(conn):
@@ -185,7 +187,53 @@ async def front_status(switch: Switch, conn) -> discord.Embed:
         if switch.timestamp:
             embed.add_field(name="Since",
                             value="{} ({})".format(switch.timestamp.isoformat(sep=" ", timespec="seconds"),
-                                                   humanize.naturaltime(pluralkit.utils.fix_time(switch.timestamp))))
+                                                   display_relative(switch.timestamp)))
     else:
         embed = error("No switches logged.")
+    return embed
+
+
+async def get_message_contents(client: discord.Client, channel_id: int, message_id: int):
+    channel = client.get_channel(channel_id)
+    if channel:
+        try:
+            original_message = await channel.get_message(message_id)
+            return original_message.content or None
+        except (discord.errors.Forbidden, discord.errors.NotFound):
+            pass
+
+    return None
+
+
+async def message_card(client: discord.Client, message: db.MessageInfo):
+    # Get the original sender of the messages
+    try:
+        original_sender = await client.get_user_info(message.sender)
+    except discord.NotFound:
+        # Account was since deleted - rare but we're handling it anyway
+        original_sender = None
+
+    embed = discord.Embed()
+    embed.timestamp = discord.utils.snowflake_time(message.mid)
+    embed.colour = discord.Colour.blue()
+
+    if message.system_name:
+        system_value = "{} (`{}`)".format(message.system_name, message.system_hid)
+    else:
+        system_value = "`{}`".format(message.system_hid)
+    embed.add_field(name="System", value=system_value)
+
+    embed.add_field(name="Member", value="{} (`{}`)".format(message.name, message.hid))
+
+    if original_sender:
+        sender_name = "{}#{}".format(original_sender.name, original_sender.discriminator)
+    else:
+        sender_name = "(deleted account {})".format(message.sender)
+
+    embed.add_field(name="Sent by", value=sender_name)
+
+    message_content = await get_message_contents(client, message.channel, message.mid)
+    embed.description = message_content or "(unknown, message deleted)"
+
+    embed.set_author(name=message.name, icon_url=message.avatar_url or discord.Embed.Empty)
     return embed

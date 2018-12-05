@@ -1,19 +1,20 @@
+import humanize
 import re
 
 import random
 import string
-from datetime import datetime, timezone
-from typing import List, Tuple
+from datetime import datetime, timezone, timedelta
+from typing import List, Tuple, Union
 from urllib.parse import urlparse
 
 from pluralkit import db
 from pluralkit.errors import InvalidAvatarURLError
 
 
-def fix_time(time: datetime):
-    """Convert a naive datetime from UTC to local time. humanize's methods expect a local naive time and not a time in UTC."""
-    # TODO: replace with methods that call humanize directly, to hide implementation details
-    return time.replace(tzinfo=timezone.utc).astimezone().replace(tzinfo=None)
+def display_relative(time: Union[datetime, timedelta]) -> str:
+    if isinstance(time, datetime):
+        time = datetime.utcnow() - time
+    return humanize.naturaldelta(time)
 
 
 async def get_fronter_ids(conn, system_id) -> (List[int], datetime):

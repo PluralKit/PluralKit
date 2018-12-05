@@ -128,6 +128,14 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         else:
             return None
 
+    async def add_switch(self, conn, members: List[Member]):
+        async with conn.transaction():
+            switch_id = await db.add_switch(conn, self.id)
+
+            # TODO: batch query here
+            for member in members:
+                await db.add_switch_member(conn, switch_id, member.id)
+
     def get_member_name_limit(self) -> int:
         """Returns the maximum length a member's name or nickname is allowed to be in order for the member to be proxied. Depends on the system tag."""
         if self.tag:

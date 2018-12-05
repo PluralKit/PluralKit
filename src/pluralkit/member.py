@@ -106,6 +106,8 @@ class Member(namedtuple("Member",
     async def set_birthdate(self, conn, new_date: Union[date, str]):
         """
         Set or clear the birthdate of a member. To hide the birth year, pass a year of 0001.
+
+        If passed a string, will attempt to parse the string as a date.
         :raises: InvalidDateStringError
         """
 

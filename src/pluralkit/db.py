@@ -295,6 +295,11 @@ async def add_switch_member(conn, switch_id: int, member_id: int):
     await conn.execute("insert into switch_members (switch, member) values ($1, $2)", switch_id, member_id)
 
 @db_wrap
+async def delete_switch(conn, switch_id: int):
+    logger.debug("Deleting switch (id={})".format(switch_id))
+    await conn.execute("delete from switches where id = $1", switch_id)
+
+@db_wrap
 async def get_server_info(conn, server_id: int):
     return await conn.fetchrow("select * from servers where id = $1", server_id)
 

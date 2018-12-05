@@ -1,12 +1,11 @@
+import discord
 import logging
 import re
-
-import discord
 from typing import Optional
 
 from pluralkit import db
-from pluralkit.system import System
 from pluralkit.member import Member
+from pluralkit.system import System
 
 logger = logging.getLogger("pluralkit.utils")
 
@@ -21,7 +20,8 @@ def bounds_check_member_name(new_name, system_tag):
 
     if system_tag:
         if len("{} {}".format(new_name, system_tag)) > 32:
-            return "This name, combined with the system tag ({}), would exceed the maximum length of 32 characters. Please reduce the length of the tag, or use a shorter name.".format(system_tag)
+            return "This name, combined with the system tag ({}), would exceed the maximum length of 32 characters. Please reduce the length of the tag, or use a shorter name.".format(
+                system_tag)
 
 
 async def parse_mention(client: discord.Client, mention: str) -> Optional[discord.User]:
@@ -39,18 +39,19 @@ async def parse_mention(client: discord.Client, mention: str) -> Optional[discor
     except (ValueError, discord.NotFound):
         return None
 
+
 def parse_channel_mention(mention: str, server: discord.Guild) -> Optional[discord.TextChannel]:
     match = re.fullmatch("<#(\\d+)>", mention)
     if match:
         return server.get_channel(int(match.group(1)))
-    
+
     try:
         return server.get_channel(int(mention))
     except ValueError:
         return None
 
 
-async def get_system_fuzzy(conn, client: discord.Client, key) -> System:
+async def get_system_fuzzy(conn, client: discord.Client, key) -> Optional[System]:
     if isinstance(key, discord.User):
         return await db.get_system_by_account(conn, account_id=key.id)
 
@@ -79,6 +80,7 @@ async def get_member_fuzzy(conn, system_id: int, key: str, system_only=True) -> 
         member = await db.get_member_by_name(conn, system_id=system_id, member_name=key)
         if member is not None:
             return member
+
 
 def sanitize(text):
     # Insert a zero-width space in @everyone so it doesn't trigger

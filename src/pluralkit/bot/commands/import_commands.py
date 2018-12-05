@@ -1,16 +1,17 @@
-import asyncio
 from datetime import datetime
 
-import pluralkit.utils
 from pluralkit.bot.commands import *
 
-logger = logging.getLogger("pluralkit.commands")
+
+async def import_root(ctx: CommandContext):
+    # Only one import method rn, so why not default to Tupperware?
+    await import_tupperware(ctx)
 
 
 async def import_tupperware(ctx: CommandContext):
-    tupperware_member = ctx.message.guild.get_member(431544605209788416)
-
     # Check if there's a Tupperware bot on the server
+    # Main instance of TW has that ID, at least
+    tupperware_member = ctx.message.guild.get_member(431544605209788416)
     if not tupperware_member:
         raise CommandError("This command only works in a server where the Tupperware bot is also present.")
 
@@ -20,8 +21,7 @@ async def import_tupperware(ctx: CommandContext):
         # If it doesn't, throw error
         raise CommandError("This command only works in a channel where the Tupperware bot has read/send access.")
 
-    await ctx.reply(
-        embed=embeds.status("Please reply to this message with `tul!list` (or the server equivalent)."))
+    await ctx.reply("Please reply to this message with `tul!list` (or the server equivalent).")
 
     # Check to make sure the message is sent by Tupperware, and that the Tupperware response actually belongs to the correct user
     def ensure_account(tw_msg):
@@ -73,8 +73,9 @@ async def import_tupperware(ctx: CommandContext):
             # If this isn't the same page as last check, edit the status message
             if new_page != current_page:
                 last_found_time = datetime.utcnow()
-                await status_msg.edit(content="Multi-page member list found. Please manually scroll through all the pages. Read {}/{} pages.".format(
-                                                  len(pages_found), total_pages))
+                await status_msg.edit(
+                    content="Multi-page member list found. Please manually scroll through all the pages. Read {}/{} pages.".format(
+                        len(pages_found), total_pages))
             current_page = new_page
 
             # And sleep a bit to prevent spamming the CPU
@@ -91,15 +92,10 @@ async def import_tupperware(ctx: CommandContext):
         # Also edit the status message to indicate we're now importing, and it may take a while because there's probably a lot of members
         await status_msg.edit(content="All pages read. Now importing...")
 
-    logger.debug("Importing from Tupperware...")
-
     # Create new (nameless) system if there isn't any registered
     system = await ctx.get_system()
     if system is None:
-        hid = pluralkit.utils.generate_hid()
-        logger.debug("Creating new system (hid={})...".format(hid))
-        system = await db.create_system(ctx.conn, system_name=None, system_hid=hid)
-        await db.link_account(ctx.conn, system_id=system.id, account_id=ctx.message.author.id)
+        system = await System.create_system(ctx.conn, ctx.message.author.id)
 
     for embed in tupperware_page_embeds:
         for field in embed["fields"]:
@@ -133,24 +129,16 @@ async def import_tupperware(ctx: CommandContext):
                     member_description = line
 
             # Read by name - TW doesn't allow name collisions so we're safe here (prevents dupes)
-            existing_member = await db.get_member_by_name(ctx.conn, system_id=system.id, member_name=name)
+            existing_member = await Member.get_member_by_name(ctx.conn, system.id, name)
             if not existing_member:
                 # Or create a new member
-                hid = pluralkit.utils.generate_hid()
-                logger.debug("Creating new member {} (hid={})...".format(name, hid))
-                existing_member = await db.create_member(ctx.conn, system_id=system.id, member_name=name,
-                                                         member_hid=hid)
+                existing_member = await system.create_member(ctx.conn, name)
 
             # Save the new stuff in the DB
-            logger.debug("Updating fields...")
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="prefix", value=member_prefix)
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="suffix", value=member_suffix)
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="avatar_url",
-                                         value=member_avatar)
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="birthday",
-                                         value=member_birthdate)
-            await db.update_member_field(ctx.conn, member_id=existing_member.id, field="description",
-                                         value=member_description)
+            await existing_member.set_proxy_tags(ctx.conn, member_prefix, member_suffix)
+            await existing_member.set_avatar(ctx.conn, member_avatar)
+            await existing_member.set_birthdate(ctx.conn, member_birthdate)
+            await existing_member.set_description(ctx.conn, member_description)
 
     await ctx.reply_ok(
         "System information imported. Try using `pk;system` now.\nYou should probably remove your members from Tupperware to avoid double-posting.")

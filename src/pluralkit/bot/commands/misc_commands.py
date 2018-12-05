@@ -1,61 +1,57 @@
 import io
 import json
-import logging
 import os
-from typing import List
-
 from discord.utils import oauth_url
 
-import pluralkit.utils
-from pluralkit.bot import utils, embeds
+from pluralkit.bot import help
 from pluralkit.bot.commands import *
 
-logger = logging.getLogger("pluralkit.commands")
 
-
-async def show_help(ctx: CommandContext):
-    embed = embeds.status("")
-    embed.title = "PluralKit Help"
-    embed.set_footer(text="By Astrid (Ske#6201; pk;member qoxvy) | GitHub: https://github.com/xSke/PluralKit/")
-
-    category = ctx.pop_str() if ctx.has_next() else None
-
-    from pluralkit.bot.help import help_pages
-    if category in help_pages:
-        for name, text in help_pages[category]:
-            if name:
-                embed.add_field(name=name, value=text)
-            else:
-                embed.description = text
+async def help_root(ctx: CommandContext):
+    if ctx.match("commands"):
+        await ctx.reply(help.all_commands)
+    elif ctx.match("proxy"):
+        await ctx.reply(help.proxy_guide)
     else:
-        raise CommandError("Unknown help page '{}'.".format(category))
-
-    await ctx.reply(embed=embed)
+        await ctx.reply(help.root)
 
 
 async def invite_link(ctx: CommandContext):
     client_id = os.environ["CLIENT_ID"]
 
     permissions = discord.Permissions()
+
+    # So the bot can actually add the webhooks it needs to do the proxy functionality
     permissions.manage_webhooks = True
+
+    # So the bot can respond with status, error, and success messages
     permissions.send_messages = True
+
+    # So the bot can delete channels
     permissions.manage_messages = True
+
+    # So the bot can respond with extended embeds, ex. member cards
     permissions.embed_links = True
+
+    # So the bot can send images too
     permissions.attach_files = True
+
+    # (unsure if it needs this, actually, might be necessary for message lookup)
     permissions.read_message_history = True
+
+    # So the bot can add reactions for confirm/deny prompts
     permissions.add_reactions = True
 
     url = oauth_url(client_id, permissions)
-    logger.debug("Sending invite URL: {}".format(url))
     await ctx.reply_ok("Use this link to add PluralKit to your server: {}".format(url))
 
 
 async def export(ctx: CommandContext):
     system = await ctx.ensure_system()
 
-    members = await db.get_all_members(ctx.conn, system.id)
-    accounts = await db.get_linked_accounts(ctx.conn, system.id)
-    switches = await pluralkit.utils.get_front_history(ctx.conn, system.id, 999999)
+    members = await system.get_members(ctx.conn)
+    accounts = await system.get_linked_account_ids(ctx.conn)
+    switches = await system.get_switches(ctx.conn, 999999)
 
     data = {
         "name": system.name,
@@ -81,10 +77,10 @@ async def export(ctx: CommandContext):
         "accounts": [str(uid) for uid in accounts],
         "switches": [
             {
-                "timestamp": timestamp.isoformat(),
-                "members": [member.hid for member in members]
-            } for timestamp, members in switches
-        ]
+                "timestamp": switch.timestamp.isoformat(),
+                "members": [member.hid for member in await switch.fetch_members(ctx.conn)]
+            } for switch in switches
+        ]  # TODO: messages
     }
 
     f = io.BytesIO(json.dumps(data).encode("utf-8"))
