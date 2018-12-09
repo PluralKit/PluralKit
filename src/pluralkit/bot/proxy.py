@@ -103,6 +103,7 @@ async def send_proxy_message(conn, original_message: discord.Message, system: Sy
     await db.add_message(conn, sent_message.id, original_message.channel.id, member.id,
                          original_message.author.id)
 
+    # Log it in the log channel if possible
     await logger.log_message_proxied(
         conn,
         original_message.channel.guild.id,
@@ -128,6 +129,11 @@ async def send_proxy_message(conn, original_message: discord.Message, system: Sy
     except discord.Forbidden:
         raise ProxyError(
             "PluralKit does not have permission to delete user messages. Please contact a server administrator.")
+    except discord.NotFound:
+        # Sometimes some other thing will delete the original message before PK gets to it
+        # This is not a problem - message gets deleted anyway :)
+        # Usually happens when Tupperware and PK conflict
+        pass
 
 
 async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogger, bot_user: discord.User) -> bool:

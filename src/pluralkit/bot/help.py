@@ -1,48 +1,3 @@
-all_commands = """
-**All commands**
-```
-pk;system [system]
-pk;system new [system name
-pk;system rename [new name]
-pk;system description [new description]
-pk;system avatar [new avatar url]
-pk;system tag [new system tag]
-pk;system delete
-pk;system [system] fronter
-pk;system [system] fronthistory
-pk;system [system] frontpercent
-pk;member new <member name>
-pk;member <member>
-pk;member <member> rename <new name>
-pk;member <member> description [new description]
-pk;member <member> avatar [new avatar url]
-pk;member <member> proxy [example match]
-pk;member <member> pronouns [new pronouns]
-pk;member <member> color [new color]
-pk;member <member> birthday [new birthday]
-pk;member <member> delete
-pk;switch <member> [<other member>...]
-pk;switch move <time to move>
-pk;switch out
-pk;switch delete
-pk;link <other account>
-pk;unlink
-pk;message <message id>
-pk;log <log channel>
-pk;invite
-pk;import
-pk;export
-pk;token
-pk;token refresh
-```
-
-**Command notes**
-Parameters in <angle brackets> are required, [square brackets] are optional .
-System references can be a system ID, a Discord account ID or a \\@mention.
-Member references can be a member ID or, for your own system, a member name.
-Leaving an optional parameter blank will often clear the relevant value.
-"""
-
 system_commands = """
 **System commands**
 
@@ -60,11 +15,6 @@ pk;system [system] frontpercent
 pk;link <other account>
 pk;unlink
 ```
-
-**Command notes**
-Parameters in <angle brackets> are required, [square brackets] are optional .
-System references can be a system ID, a Discord account ID or a \\@mention.
-Leaving an optional parameter blank will often clear the relevant value.
 """
 
 member_commands = """
@@ -85,12 +35,39 @@ pk;switch move <time to move>
 pk;switch out
 pk;switch delete
 ```
+"""
 
+other_commands = """
+**Other commands**
+```
+pk;log <log channel>
+pk;message <message id>
+pk;invite
+pk;import
+pk;export
+pk;token
+pk;token refresh
+```
+"""
+
+command_notes = """
 **Command notes**
 Parameters in <angle brackets> are required, [square brackets] are optional .
 Member references can be a member ID or, for your own system, a member name.
 Leaving an optional parameter blank will often clear the relevant value.
 """
+
+all_commands = """
+**All commands**
+
+{}
+
+{}
+
+{}
+
+{}
+""".format(system_commands, member_commands, other_commands, command_notes)
 
 proxy_guide = """
 **Proxying**
@@ -103,6 +80,9 @@ You'll need to give the bot an "example match". Imagine you're proxying the word
 For example: `pk;member John proxy [text]`. That will set the member John up to use square brackets as proxy tags.
 Now saying something like `[hello world]` will proxy the text "hello world" with John's name and avatar.
 You can also use other symbols, letters, numbers, et cetera, as prefixes, suffixes, or both. `J:text`, `$text` and `text]` are also examples of valid example matches.
+
+**Notes**
+You can delete a proxied message by reacting to it with the :x: emoji from the sender's account.
 """
 
 root = """
