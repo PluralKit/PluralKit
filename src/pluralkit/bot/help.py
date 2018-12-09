@@ -1,6 +1,5 @@
 system_commands = """
 **System commands**
-
 ```
 pk;system [system]
 pk;system new [system name
@@ -15,7 +14,7 @@ pk;system [system] frontpercent
 pk;link <other account>
 pk;unlink
 ```
-"""
+""".strip()
 
 member_commands = """
 **Member commands**
@@ -35,7 +34,7 @@ pk;switch move <time to move>
 pk;switch out
 pk;switch delete
 ```
-"""
+""".strip()
 
 other_commands = """
 **Other commands**
@@ -48,26 +47,21 @@ pk;export
 pk;token
 pk;token refresh
 ```
-"""
+""".strip()
 
 command_notes = """
 **Command notes**
 Parameters in <angle brackets> are required, [square brackets] are optional .
 Member references can be a member ID or, for your own system, a member name.
 Leaving an optional parameter blank will often clear the relevant value.
-"""
+""".strip()
 
 all_commands = """
-**All commands**
-
 {}
-
 {}
-
 {}
-
 {}
-""".format(system_commands, member_commands, other_commands, command_notes)
+""".strip().format(system_commands, member_commands, other_commands, command_notes)
 
 proxy_guide = """
 **Proxying**
@@ -83,7 +77,7 @@ You can also use other symbols, letters, numbers, et cetera, as prefixes, suffix
 
 **Notes**
 You can delete a proxied message by reacting to it with the :x: emoji from the sender's account.
-"""
+""".strip()
 
 root = """
 **PluralKit**
@@ -100,4 +94,4 @@ To get started using the bot, try running the following commands.
 For a full list of commands, type `pk;help commands`.
 For a more in-depth explanation of proxying, type `pk;help proxy`.
 If you're an existing user of the Tupperware proxy bot, type `pk;import` to import your data from there.
-"""
+""".strip()
