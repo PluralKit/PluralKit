@@ -12,11 +12,10 @@ async def member_root(ctx: CommandContext):
     elif ctx.match("set"):
         await member_set(ctx)
     # TODO "pk;member list"
-
-    if not ctx.has_next():
+    elif not ctx.has_next():
         raise CommandError("Must pass a subcommand. For a list of subcommands, type `pk;member help`.")
-
-    await specific_member_root(ctx)
+    else:
+        await specific_member_root(ctx)
 
 
 async def specific_member_root(ctx: CommandContext):

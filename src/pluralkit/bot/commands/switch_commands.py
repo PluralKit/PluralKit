@@ -33,19 +33,6 @@ async def switch_member(ctx: CommandContext):
     while ctx.has_next():
         members.append(await ctx.pop_member())
 
-    # Compare requested switch IDs and existing fronter IDs to check for existing switches
-    # Lists, because order matters, it makes sense to just swap fronters
-    member_ids = [member.id for member in members]
-    fronter_ids = (await pluralkit.utils.get_fronter_ids(ctx.conn, system.id))[0]
-    if member_ids == fronter_ids:
-        if len(members) == 1:
-            raise CommandError("{} is already fronting.".format(members[0].name))
-        raise CommandError("Members {} are already fronting.".format(", ".join([m.name for m in members])))
-
-    # Also make sure there aren't any duplicates
-    if len(set(member_ids)) != len(member_ids):
-        raise CommandError("Duplicate members in member list.")
-
     # Log the switch
     await system.add_switch(ctx.conn, members)
 

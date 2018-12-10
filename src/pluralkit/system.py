@@ -1,9 +1,8 @@
 import random
 import re
 import string
-from datetime import datetime
-
 from collections.__init__ import namedtuple
+from datetime import datetime
 from typing import Optional, List, Tuple
 
 from pluralkit import db, errors
@@ -21,6 +20,10 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
     avatar_url: str
     token: str
     created: datetime
+
+    @staticmethod
+    async def get_by_id(conn, system_id: int) -> Optional["System"]:
+        return await db.get_system(conn, system_id)
 
     @staticmethod
     async def get_by_account(conn, account_id: int) -> Optional["System"]:
@@ -128,13 +131,37 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         else:
             return None
 
-    async def add_switch(self, conn, members: List[Member]):
+    async def add_switch(self, conn, members: List[Member]) -> Switch:
+        """
+        Logs a new switch for a system.
+
+        :raises: MembersAlreadyFrontingError, DuplicateSwitchMembersError
+        """
+        new_ids = [member.id for member in members]
+
+        last_switch = await self.get_latest_switch(conn)
+
+        # If we have a switch logged before, make sure this isn't a dupe switch
+        if last_switch:
+            last_switch_members = await last_switch.fetch_members(conn)
+            last_ids = [member.id for member in last_switch_members]
+
+            # We don't compare by set() here because swapping multiple is a valid operation
+            if last_ids == new_ids:
+                raise errors.MembersAlreadyFrontingError(members)
+
+        # Check for dupes
+        if len(set(new_ids)) != len(new_ids):
+            raise errors.DuplicateSwitchMembersError()
+
         async with conn.transaction():
             switch_id = await db.add_switch(conn, self.id)
 
             # TODO: batch query here
             for member in members:
                 await db.add_switch_member(conn, switch_id, member.id)
+
+            return await self.get_latest_switch(conn)
 
     def get_member_name_limit(self) -> int:
         """Returns the maximum length a member's name or nickname is allowed to be in order for the member to be proxied. Depends on the system tag."""

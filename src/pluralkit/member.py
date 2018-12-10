@@ -54,6 +54,16 @@ class Member(namedtuple("Member",
 
         return member
 
+    @staticmethod
+    async def get_member_fuzzy(conn, system_id: int, name: str) -> "Optional[Member]":
+        by_hid = await Member.get_member_by_hid(conn, system_id, name)
+        if by_hid:
+            return by_hid
+
+        by_name = await Member.get_member_by_name(conn, system_id, name)
+        return by_name
+
+
     async def set_name(self, conn, new_name: str):
         """
         Set the name of a member.

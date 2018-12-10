@@ -1,6 +1,5 @@
 from collections import namedtuple
 from datetime import datetime
-
 from typing import List
 
 from pluralkit import db
@@ -18,3 +17,9 @@ class Switch(namedtuple("Switch", ["id", "system", "timestamp", "members"])):
 
     async def delete(self, conn):
         await db.delete_switch(conn, self.id)
+
+    async def to_json(self, conn):
+        return {
+            "timestamp": self.timestamp.isoformat(),
+            "members": [member.hid for member in await self.fetch_members(conn)]
+        }

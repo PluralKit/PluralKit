@@ -12,7 +12,8 @@ class PluralKitError(Exception):
 
 class ExistingSystemError(PluralKitError):
     def __init__(self):
-        super().__init__("You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
+        super().__init__(
+            "You already have a system registered. To delete your system, use `pk;system delete`, or to unlink your system from this account, use `pk;system unlink`.")
 
 
 class DescriptionTooLongError(PluralKitError):
@@ -27,13 +28,16 @@ class TagTooLongError(PluralKitError):
 
 class TagTooLongWithMembersError(PluralKitError):
     def __init__(self, member_names):
-        super().__init__("The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(", ".join(member_names)))
+        super().__init__(
+            "The maximum length of a name plus the system tag is 32 characters. The following members would exceed the limit: {}. Please reduce the length of the tag, or rename the members.".format(
+                ", ".join(member_names)))
         self.member_names = member_names
 
 
 class CustomEmojiError(PluralKitError):
     def __init__(self):
-        super().__init__("Due to a Discord limitation, custom emojis aren't supported. Please use a standard emoji instead.")
+        super().__init__(
+            "Due to a Discord limitation, custom emojis aren't supported. Please use a standard emoji instead.")
 
 
 class InvalidAvatarURLError(PluralKitError):
@@ -60,7 +64,8 @@ class UnlinkingLastAccountError(PluralKitError):
 class MemberNameTooLongError(PluralKitError):
     def __init__(self, tag_present: bool):
         if tag_present:
-            super().__init__("The maximum length of a name plus the system tag is 32 characters. Please reduce the length of the tag, or choose a shorter member name.")
+            super().__init__(
+                "The maximum length of a name plus the system tag is 32 characters. Please reduce the length of the tag, or choose a shorter member name.")
         else:
             super().__init__("The maximum length of a member name is 32 characters.")
 
@@ -69,6 +74,22 @@ class InvalidColorError(PluralKitError):
     def __init__(self):
         super().__init__("Color must be a valid hex color. (eg. #ff0000)")
 
+
 class InvalidDateStringError(PluralKitError):
     def __init__(self):
         super().__init__("Invalid date string. Date must be in ISO-8601 format (YYYY-MM-DD, eg. 1999-07-25).")
+
+
+class MembersAlreadyFrontingError(PluralKitError):
+    def __init__(self, members: "List[Member]"):
+        if len(members) == 0:
+            super().__init__("There are already no members fronting.")
+        elif len(members) == 1:
+            super().__init__("Member {} is already fronting.".format(members[0].name))
+        else:
+            super().__init__("Members {} are already fronting.".format(", ".join([member.name for member in members])))
+
+
+class DuplicateSwitchMembersError(PluralKitError):
+    def __init__(self):
+        super().__init__("Duplicate members in member list.")
