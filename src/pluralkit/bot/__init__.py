@@ -98,7 +98,7 @@ def run():
 
     @client.event
     async def on_error(event_name, *args, **kwargs):
-        log_channel_id = os.environ["LOG_CHANNEL"]
+        log_channel_id = os.environ.get("LOG_CHANNEL")
         if not log_channel_id:
             return
 
