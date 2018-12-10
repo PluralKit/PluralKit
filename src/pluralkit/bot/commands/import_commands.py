@@ -42,9 +42,11 @@ async def import_tupperware(ctx: CommandContext):
 
     tupperware_page_embeds = []
 
-    tw_msg: discord.Message = await ctx.client.wait_for("message", check=ensure_account, timeout=60.0 * 5)
-    if not tw_msg:
+    try:
+        tw_msg: discord.Message = await ctx.client.wait_for("message", check=ensure_account, timeout=60.0 * 5)
+    except asyncio.TimeoutError:
         raise CommandError("Tupperware import timed out.")
+
     tupperware_page_embeds.append(tw_msg.embeds[0].to_dict())
 
     # Handle Tupperware pagination
