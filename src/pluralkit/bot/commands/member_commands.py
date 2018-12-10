@@ -45,11 +45,9 @@ async def specific_member_root(ctx: CommandContext):
             await member_birthdate(ctx, member)
         elif ctx.match("delete") or ctx.match("remove") or ctx.match("destroy") or ctx.match("erase"):
             await member_delete(ctx, member)
-        elif ctx.match("help"):
-            await ctx.reply(help.member_commands)
         else:
             raise CommandError(
-                "Unknown subcommand {}. For a list of all commands, type `pk;member help`".format(ctx.pop_str()))
+                "Unknown subcommand {}. For a list of all commands, type `pk;help member`".format(ctx.pop_str()))
     else:
         # Basic lookup
         await member_info(ctx, member)

@@ -1,5 +1,6 @@
 system_commands = """
 **System commands**
+Commands for adding, removing, editing, and linking systems, as well as querying fronter and front history.
 ```
 pk;system [system]
 pk;system new [system name
@@ -18,6 +19,7 @@ pk;unlink
 
 member_commands = """
 **Member commands**
+Commands for adding, removing, and modifying members, as well as adding, removing and moving switches.
 ```
 pk;member new <member name>
 pk;member <member>
@@ -35,6 +37,16 @@ pk;switch out
 pk;switch delete
 ```
 """.strip()
+
+help_commands = """
+**Help commands**
+```
+pk;help
+pk;help commands
+pk;help system
+pk;help member
+pk;help proxy
+```""".strip()
 
 other_commands = """
 **Other commands**
@@ -61,7 +73,8 @@ all_commands = """
 {}
 {}
 {}
-""".strip().format(system_commands, member_commands, other_commands, command_notes)
+{}
+""".strip().format(system_commands, member_commands, help_commands, other_commands, command_notes)
 
 proxy_guide = """
 **Proxying**

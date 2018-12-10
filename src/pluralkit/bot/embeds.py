@@ -237,3 +237,9 @@ async def message_card(client: discord.Client, message: db.MessageInfo):
 
     embed.set_author(name=message.name, icon_url=message.avatar_url or discord.Embed.Empty)
     return embed
+
+
+def help_footer_embed() -> discord.Embed:
+    embed = discord.Embed()
+    embed.set_footer(text="By @Ske#6201 | GitHub: https://github.com/xSke/PluralKit/")
+    return embed

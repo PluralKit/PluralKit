@@ -3,17 +3,22 @@ import json
 import os
 from discord.utils import oauth_url
 
+from bot.embeds import help_footer_embed
 from pluralkit.bot import help
 from pluralkit.bot.commands import *
 
 
 async def help_root(ctx: CommandContext):
     if ctx.match("commands"):
-        await ctx.reply(help.all_commands)
+        await ctx.reply(help.all_commands, embed=help_footer_embed())
     elif ctx.match("proxy"):
-        await ctx.reply(help.proxy_guide)
+        await ctx.reply(help.proxy_guide, embed=help_footer_embed())
+    elif ctx.match("system"):
+        await ctx.reply(help.system_commands, embed=help_footer_embed())
+    elif ctx.match("member"):
+        await ctx.reply(help.system_commands, embed=help_footer_embed())
     else:
-        await ctx.reply(help.root)
+        await ctx.reply(help.root, embed=help_footer_embed())
 
 
 async def invite_link(ctx: CommandContext):

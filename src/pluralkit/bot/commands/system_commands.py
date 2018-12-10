@@ -1,9 +1,9 @@
-import dateparser
-import humanize
 from datetime import datetime, timedelta
 
+import dateparser
+import humanize
+
 import pluralkit.bot.embeds
-from pluralkit.bot import help
 from pluralkit.bot.commands import *
 from pluralkit.errors import ExistingSystemError, UnlinkingLastAccountError, AccountAlreadyLinkedError
 from pluralkit.utils import display_relative
@@ -29,8 +29,6 @@ async def system_root(ctx: CommandContext):
         await system_fronthistory(ctx, await ctx.ensure_system())
     elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage"):
         await system_frontpercent(ctx, await ctx.ensure_system())
-    elif ctx.match("help"):
-        await ctx.reply(help.system_commands)
     elif ctx.match("set"):
         await system_set(ctx)
     elif not ctx.has_next():
@@ -48,7 +46,7 @@ async def specified_system_root(ctx: CommandContext):
     system = await utils.get_system_fuzzy(ctx.conn, ctx.client, system_name)
     if not system:
         raise CommandError(
-            "Unable to find system `{}`. If you meant to run a command, type `pk;system help` for a list of system commands.".format(
+            "Unable to find system `{}`. If you meant to run a command, type `pk;help system` for a list of system commands.".format(
                 system_name))
 
     if ctx.match("front") or ctx.match("fronter"):

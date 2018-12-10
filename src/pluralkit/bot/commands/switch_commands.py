@@ -1,9 +1,9 @@
-import dateparser
 from datetime import datetime
 from typing import List
 
+import dateparser
+
 import pluralkit.utils
-from pluralkit.bot import help
 from pluralkit.bot.commands import *
 from pluralkit.member import Member
 from pluralkit.utils import display_relative
@@ -11,7 +11,7 @@ from pluralkit.utils import display_relative
 
 async def switch_root(ctx: CommandContext):
     if not ctx.has_next():
-        raise CommandError("You must use a subcommand. For a list of subcommands, type `pk;switch help`.")
+        raise CommandError("You must use a subcommand. For a list of subcommands, type `pk;help member`.")
 
     if ctx.match("out"):
         await switch_out(ctx)
@@ -19,8 +19,6 @@ async def switch_root(ctx: CommandContext):
         await switch_move(ctx)
     elif ctx.match("delete") or ctx.match("remove") or ctx.match("erase") or ctx.match("cancel"):
         await switch_delete(ctx)
-    elif ctx.match("help"):
-        await ctx.reply(help.member_commands)
     else:
         await switch_member(ctx)
 
