@@ -107,4 +107,7 @@ To get started using the bot, try running the following commands.
 For a full list of commands, type `pk;help commands`.
 For a more in-depth explanation of proxying, type `pk;help proxy`.
 If you're an existing user of the Tupperware proxy bot, type `pk;import` to import your data from there.
+
+**Support server**
+We also have a Discord server for support, discussion, suggestions, announcements, etc: <https://discord.gg/PczBt78>
 """.strip()
