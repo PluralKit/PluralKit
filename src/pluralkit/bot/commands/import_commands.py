@@ -1,6 +1,13 @@
+import os
 from datetime import datetime
 
 from pluralkit.bot.commands import *
+
+
+def default_tupperware_id():
+    if "TUPPERWARE_ID" in os.environ:
+        return int(os.environ["TUPPERWARE_ID"])
+    return 431544605209788416
 
 
 async def import_root(ctx: CommandContext):
@@ -11,7 +18,7 @@ async def import_root(ctx: CommandContext):
 async def import_tupperware(ctx: CommandContext):
     # Check if there's a Tupperware bot on the server
     # Main instance of TW has that ID, at least
-    tupperware_id = 431544605209788416
+    tupperware_id = default_tupperware_id()
     if ctx.has_next():
         try:
             id_str = ctx.pop_str()
@@ -24,7 +31,8 @@ async def import_tupperware(ctx: CommandContext):
         raise CommandError(
             """This command only works in a server where the Tupperware bot is also present. 
 
-If you're trying to import from a Tupperware instance other than the main one (which has the ID 431544605209788416), pass the ID of that instance as a parameter.""")
+If you're trying to import from a Tupperware instance other than the main one (which has the ID {}), pass the ID of that instance as a parameter.""".format(
+                default_tupperware_id()))
 
     # Make sure at the bot has send/read permissions here
     channel_permissions = ctx.message.channel.permissions_for(tupperware_member)
