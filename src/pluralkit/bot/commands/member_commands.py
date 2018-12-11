@@ -13,7 +13,7 @@ async def member_root(ctx: CommandContext):
         await member_set(ctx)
     # TODO "pk;member list"
     elif not ctx.has_next():
-        raise CommandError("Must pass a subcommand. For a list of subcommands, type `pk;member help`.")
+        raise CommandError("Must pass a subcommand. For a list of subcommands, type `pk;help member`.")
     else:
         await specific_member_root(ctx)
 
@@ -77,13 +77,12 @@ async def new_member(ctx: CommandContext):
         raise CommandError(e.message)
 
     await ctx.reply_ok(
-        "Member \"{}\" (`{}`) registered! To register their proxy tags, use `pk;member proxy`.".format(new_name,
-                                                                                                       member.hid))
+        "Member \"{}\" (`{}`) registered! Type `pk;help member` for a list of commands to edit this member.".format(new_name, member.hid))
 
 
 async def member_set(ctx: CommandContext):
     raise CommandError(
-        "`pk;member set` has been retired. Please use the new member modifying commands. Type `pk;member help` for a list.")
+        "`pk;member set` has been retired. Please use the new member modifying commands. Type `pk;help member` for a list.")
 
 
 async def member_name(ctx: CommandContext, member: Member):

@@ -76,7 +76,7 @@ async def system_new(ctx: CommandContext):
 
 async def system_set(ctx: CommandContext):
     raise CommandError(
-        "`pk;system set` has been retired. Please use the new member modifying commands: `pk;system [name|description|avatar|tag]`.")
+        "`pk;system set` has been retired. Please use the new system modifying commands. Type `pk;help system` for a list.")
 
 
 async def system_name(ctx: CommandContext):
