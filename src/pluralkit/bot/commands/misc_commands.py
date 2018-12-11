@@ -16,7 +16,7 @@ async def help_root(ctx: CommandContext):
     elif ctx.match("system"):
         await ctx.reply(help.system_commands, embed=help_footer_embed())
     elif ctx.match("member"):
-        await ctx.reply(help.system_commands, embed=help_footer_embed())
+        await ctx.reply(help.member_commands, embed=help_footer_embed())
     else:
         await ctx.reply(help.root, embed=help_footer_embed())
 
