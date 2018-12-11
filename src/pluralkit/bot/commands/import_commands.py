@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from pluralkit.bot.commands import *
@@ -11,7 +12,11 @@ async def import_root(ctx: CommandContext):
 async def import_tupperware(ctx: CommandContext):
     # Check if there's a Tupperware bot on the server
     # Main instance of TW has that ID, at least
-    tupperware_member = ctx.message.guild.get_member(431544605209788416)
+    tupperware_id = 431544605209788416
+    if "TUPPERWARE_ID" in os.environ:
+        tupperware_id = int(os.environ["TUPPERWARE_ID"])
+
+    tupperware_member = ctx.message.guild.get_member(tupperware_id)
     if not tupperware_member:
         raise CommandError("This command only works in a server where the Tupperware bot is also present.")
 
