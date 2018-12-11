@@ -11,6 +11,7 @@ services:
     - CLIENT_ID
     - TOKEN
     - LOG_CHANNEL
+    - TUPPERWARE_ID
     - "DATABASE_USER=postgres"
     - "DATABASE_PASS=postgres"
     - "DATABASE_NAME=postgres"
