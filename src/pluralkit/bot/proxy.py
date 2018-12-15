@@ -1,3 +1,5 @@
+import re
+
 import discord
 from io import BytesIO
 from typing import Optional
@@ -66,6 +68,13 @@ async def make_attachment_file(message: discord.Message):
     return discord.File(bio, first_attachment.filename)
 
 
+def fix_clyde(name: str) -> str:
+    # Discord doesn't allow any webhook username to contain the word "Clyde"
+    # So replace "Clyde" with "C lyde" (except with a hair space, hence \u200A)
+    # Zero-width spacers are ignored by Discord and will still trigger the error
+    return re.sub("(c)(lyde)", "\\1\u200A\\2", name, flags=re.IGNORECASE)
+
+
 async def send_proxy_message(conn, original_message: discord.Message, system: System, member: Member,
                              inner_text: str, logger: ChannelLogger, bot_user: discord.User):
     # Send the message through the webhook
@@ -73,6 +82,7 @@ async def send_proxy_message(conn, original_message: discord.Message, system: Sy
 
     # Bounds check the combined name to avoid silent erroring
     full_username = "{} {}".format(member.name, system.tag or "").strip()
+    full_username = fix_clyde(full_username)
     if len(full_username) < 2:
         raise ProxyError(
             "The webhook's name, `{}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.".format(
@@ -153,7 +163,8 @@ async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogge
 
     member, inner_message = proxy_match
 
-    # Make sure no @everyones slip through, etc
+    # Make sure no @everyones slip through
+    # Webhooks implicitly have permission to mention @everyone so we have to enforce that manually
     inner_message = utils.sanitize(inner_message)
 
     # If we don't have an inner text OR an attachment, we cancel because the hook can't send that
