@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List
 
 import dateparser
+import pytz
 
 from pluralkit.bot.commands import *
 from pluralkit.member import Member
@@ -94,9 +95,17 @@ async def switch_move(ctx: CommandContext):
 
     # Parse the time to move to
     new_time = dateparser.parse(ctx.remaining(), languages=["en"], settings={
-        "TO_TIMEZONE": "UTC",
-        "RETURN_AS_TIMEZONE_AWARE": False
+        # Tell it to default to the system's given time zone
+        # If no time zone was given *explicitly in the string* it'll return as naive
+        "TIMEZONE": system.ui_tz
     })
+    tz = pytz.timezone(system.ui_tz)
+    # So we default to putting the system's time zone in the tzinfo
+    if not new_time.tzinfo:
+        new_time = tz.localize(new_time)
+
+    # Now that we have a system-time datetime, convert this to UTC and make it naive since that's what we deal with
+    new_time = pytz.utc.normalize(new_time).replace(tzinfo=None)
     if not new_time:
         raise CommandError("'{}' can't be parsed as a valid time.".format(ctx.remaining()))
 
