@@ -90,3 +90,18 @@ async def export(ctx: CommandContext):
 
     f = io.BytesIO(json.dumps(data).encode("utf-8"))
     await ctx.message.channel.send(content="Here you go!", file=discord.File(fp=f, filename="system.json"))
+
+
+async def tell(ctx: CommandContext):
+    # Dev command only
+    # This is used to tell members of servers I'm not in when something is broken so they can contact me with debug info
+    if ctx.message.author.id != 102083498529026048:
+        # Just silently fail, not really a public use command
+        return
+
+    channel = ctx.pop_str()
+    message = ctx.remaining()
+
+    # lol error handling
+    await ctx.client.get_channel(int(channel)).send(content="[dev message] " + message)
+    await ctx.reply_ok("Sent!")

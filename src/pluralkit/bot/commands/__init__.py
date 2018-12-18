@@ -181,6 +181,8 @@ async def command_root(ctx: CommandContext):
         await import_commands.import_root(ctx)
     elif ctx.match("help"):
         await misc_commands.help_root(ctx)
+    elif ctx.match("tell"):
+        await misc_commands.tell(ctx)
     else:
         raise CommandError("Unknown command {}. For a list of commands, type `pk;help commands`.".format(ctx.pop_str()))
 
