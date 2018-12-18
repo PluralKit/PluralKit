@@ -334,7 +334,8 @@ async def create_tables(conn):
         tag         text,
         avatar_url  text,
         token       text,
-        created     timestamp not null default (current_timestamp at time zone 'utc')
+        created     timestamp not null default (current_timestamp at time zone 'utc'),
+        ui_tz       text not null default 'UTC'
     )""")
     await conn.execute("""create table if not exists members (
         id          serial primary key,

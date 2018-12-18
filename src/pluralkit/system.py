@@ -5,13 +5,29 @@ from collections.__init__ import namedtuple
 from datetime import datetime
 from typing import Optional, List, Tuple
 
+import pytz
+
 from pluralkit import db, errors
 from pluralkit.member import Member
 from pluralkit.switch import Switch
 from pluralkit.utils import generate_hid, contains_custom_emoji, validate_avatar_url_or_raise
 
 
-class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "avatar_url", "token", "created"])):
+def canonicalize_tz_name(name: str) -> Optional[str]:
+    # First, try a direct search
+    try:
+        pytz.timezone(name)
+        return name
+    except pytz.UnknownTimeZoneError:
+        pass
+
+    # Then check last fragment of common time zone identifiers
+    name_map = {tz.split("/")[-1].replace("_", " "): tz for tz in pytz.common_timezones}
+    if name in name_map:
+        return name_map[name]
+
+
+class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "avatar_url", "token", "created", "ui_tz"])):
     id: int
     hid: str
     name: str
@@ -20,6 +36,8 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
     avatar_url: str
     token: str
     created: datetime
+    # pytz-compatible time zone name, usually Olson-style (eg. Europe/Amsterdam)
+    ui_tz: str
 
     @staticmethod
     async def get_by_id(conn, system_id: int) -> Optional["System"]:
@@ -205,6 +223,36 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
                 # Add the stripped mentions back if there are any
                 inner_message = leading_mentions + inner_message
                 return member, inner_message
+
+    def format_time(self, dt: datetime) -> str:
+        """
+        Localizes the given `datetime` to a string based on the system's preferred time zone.
+
+        Assumes `dt` is a naïve `datetime` instance set to UTC, which is consistent with the rest of PluralKit.
+        """
+        tz = pytz.timezone(self.ui_tz)
+
+        # Set to aware (UTC), convert to tz, set to naive (tz), then format and append name
+        return tz.normalize(pytz.utc.localize(dt)).replace(tzinfo=None).isoformat(sep=" ", timespec="seconds") + " " + tz.tzname(dt)
+
+    async def set_time_zone(self, conn, tz_name: str) -> pytz.tzinfo:
+        """
+        Sets the system time zone to the time zone represented by the given string.
+
+        If `tz_name` is None or an empty string, will default to UTC.
+        If `tz_name` does not represent a valid time zone string, will raise InvalidTimeZoneError.
+
+        :raises: InvalidTimeZoneError
+        :returns: The `pytz.tzinfo` instance of the newly set time zone.
+        """
+
+        canonical_name = canonicalize_tz_name(tz_name)
+        if not canonical_name:
+            raise errors.InvalidTimeZoneError(tz_name)
+        tz = pytz.timezone(canonical_name)
+
+        await db.update_system_field(conn, self.id, "ui_tz", tz.zone)
+        return tz
 
     def to_json(self):
         return {

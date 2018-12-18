@@ -124,14 +124,14 @@ async def switch_move(ctx: CommandContext):
         last_fronters = await last_switch.fetch_members(ctx.conn)
 
         members = ", ".join([member.name for member in last_fronters]) or "nobody"
-        last_absolute = last_switch.timestamp.isoformat(sep=" ", timespec="seconds")
+        last_absolute = ctx.format_time(last_switch.timestamp)
         last_relative = display_relative(last_switch.timestamp)
-        new_absolute = new_time.isoformat(sep=" ", timespec="seconds")
+        new_absolute = ctx.format_time(new_time)
         new_relative = display_relative(new_time)
 
         # Confirm with user
         switch_confirm_message = await ctx.reply(
-            "This will move the latest switch ({}) from {} UTC ({} ago) to {} UTC ({} ago). Is this OK?".format(members,
+            "This will move the latest switch ({}) from {} ({} ago) to {} ({} ago). Is this OK?".format(members,
                                                                                                         last_absolute,
                                                                                                         last_relative,
                                                                                                         new_absolute,

@@ -93,3 +93,8 @@ class MembersAlreadyFrontingError(PluralKitError):
 class DuplicateSwitchMembersError(PluralKitError):
     def __init__(self):
         super().__init__("Duplicate members in member list.")
+
+
+class InvalidTimeZoneError(PluralKitError):
+    def __init__(self, tz_name: str):
+        super().__init__("Invalid time zone designation \"{}\".\n\nFor a list of valid time zone designations, see the `TZ database name` column here: <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List>.".format(tz_name))

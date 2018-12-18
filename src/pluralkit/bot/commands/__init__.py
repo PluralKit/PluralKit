@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 import discord
 import re
@@ -37,14 +38,15 @@ class CommandError(Exception):
 
 
 class CommandContext:
-    def __init__(self, client: discord.Client, message: discord.Message, conn, args: str):
+    def __init__(self, client: discord.Client, message: discord.Message, conn, args: str, system: Optional[System]):
         self.client = client
         self.message = message
         self.conn = conn
         self.args = args
+        self._system = system
 
     async def get_system(self) -> Optional[System]:
-        return await db.get_system_by_account(self.conn, self.message.author.id)
+        return self._system
 
     async def ensure_system(self) -> System:
         system = await self.get_system()
@@ -56,6 +58,11 @@ class CommandContext:
 
     def has_next(self) -> bool:
         return bool(self.args)
+
+    def format_time(self, dt: datetime):
+        if self._system:
+            return self._system.format_time(dt)
+        return dt.isoformat(sep=" ", timespec="seconds") + " UTC"
 
     def pop_str(self, error: CommandError = None) -> Optional[str]:
         if not self.args:
@@ -211,7 +218,8 @@ async def command_dispatch(client: discord.Client, message: discord.Message, con
             client=client,
             message=message,
             conn=conn,
-            args=remaining_string
+            args=remaining_string,
+            system=await System.get_by_account(conn, message.author.id)
         )
         await run_command(ctx, command_root)
         return True

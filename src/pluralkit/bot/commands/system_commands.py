@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import dateparser
 import humanize
+import pytz
 
 import pluralkit.bot.embeds
 from pluralkit.bot.commands import *
@@ -29,6 +30,8 @@ async def system_root(ctx: CommandContext):
         await system_fronthistory(ctx, await ctx.ensure_system())
     elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage"):
         await system_frontpercent(ctx, await ctx.ensure_system())
+    elif ctx.match("timezone") or ctx.match("tz"):
+        await system_timezone(ctx)
     elif ctx.match("set"):
         await system_set(ctx)
     elif not ctx.has_next():
@@ -93,6 +96,16 @@ async def system_description(ctx: CommandContext):
 
     await system.set_description(ctx.conn, new_description)
     await ctx.reply_ok("System description {}.".format("updated" if new_description else "cleared"))
+
+
+async def system_timezone(ctx: CommandContext):
+    system = await ctx.ensure_system()
+    new_tz = ctx.remaining() or None
+
+    tz = await system.set_time_zone(ctx.conn, new_tz)
+    offset = tz.utcoffset(datetime.utcnow())
+    offset_str = "UTC{:+02d}:{:02d}".format(int(offset.total_seconds() // 3600), int(offset.total_seconds() // 60 % 60))
+    await ctx.reply_ok("System time zone set to {} ({}, {}).".format(tz.tzname(datetime.utcnow()), offset_str, tz.zone))
 
 
 async def system_tag(ctx: CommandContext):
@@ -196,14 +209,14 @@ async def system_fronthistory(ctx: CommandContext, system: System):
             name = ", ".join([member.name for member in members])
 
         # Make proper date string
-        time_text = timestamp.isoformat(sep=" ", timespec="seconds")
+        time_text = ctx.format_time(timestamp)
         rel_text = display_relative(timestamp)
 
         delta_text = ""
         if i > 0:
             last_switch_time = front_history[i - 1][0]
             delta_text = ", for {}".format(display_relative(timestamp - last_switch_time))
-        lines.append("**{}** ({} UTC, {} ago{})".format(name, time_text, rel_text, delta_text))
+        lines.append("**{}** ({}, {} ago{})".format(name, time_text, rel_text, delta_text))
 
     embed = embeds.status("\n".join(lines) or "(none)")
     embed.title = "Past switches"
@@ -302,6 +315,6 @@ async def system_frontpercent(ctx: CommandContext, system: System):
         embed.add_field(name=member.name if member else "(no fronter)",
                         value="{}% ({})".format(percent, humanize.naturaldelta(front_time)))
 
-    embed.set_footer(text="Since {} UTC ({} ago)".format(span_start.isoformat(sep=" ", timespec="seconds"),
+    embed.set_footer(text="Since {} ({} ago)".format(ctx.format_time(span_start),
                                                      display_relative(span_start)))
     await ctx.reply(embed=embed)

@@ -172,7 +172,7 @@ async def member_card(conn, member: Member) -> discord.Embed:
     return card
 
 
-async def front_status(switch: Switch, conn) -> discord.Embed:
+async def front_status(ctx: "CommandContext", switch: Switch, conn) -> discord.Embed:
     if switch:
         embed = status("")
         fronter_names = [member.name for member in await switch.fetch_members(conn)]
@@ -186,7 +186,7 @@ async def front_status(switch: Switch, conn) -> discord.Embed:
 
         if switch.timestamp:
             embed.add_field(name="Since",
-                            value="{} UTC ({})".format(switch.timestamp.isoformat(sep=" ", timespec="seconds"),
+                            value="{} ({})".format(ctx.format_time(switch.timestamp),
                                                    display_relative(switch.timestamp)))
     else:
         embed = error("No switches logged.")
