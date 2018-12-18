@@ -172,10 +172,10 @@ async def member_card(conn, member: Member) -> discord.Embed:
     return card
 
 
-async def front_status(ctx: "CommandContext", switch: Switch, conn) -> discord.Embed:
+async def front_status(ctx: "CommandContext", switch: Switch) -> discord.Embed:
     if switch:
         embed = status("")
-        fronter_names = [member.name for member in await switch.fetch_members(conn)]
+        fronter_names = [member.name for member in await switch.fetch_members(ctx.conn)]
 
         if len(fronter_names) == 0:
             embed.add_field(name="Current fronter", value="(no fronter)")

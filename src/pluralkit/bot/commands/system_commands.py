@@ -190,7 +190,7 @@ async def account_unlink(ctx: CommandContext):
 
 
 async def system_fronter(ctx: CommandContext, system: System):
-    embed = await embeds.front_status(await system.get_latest_switch(ctx.conn), ctx.conn)
+    embed = await embeds.front_status(ctx, await system.get_latest_switch(ctx.conn))
     await ctx.reply(embed=embed)
 
 
