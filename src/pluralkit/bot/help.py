@@ -8,6 +8,7 @@ pk;system rename [new name]
 pk;system description [new description]
 pk;system avatar [new avatar url]
 pk;system tag [new system tag]
+pk;system timezone [time zone name]
 pk;system delete
 pk;system [system] fronter
 pk;system [system] fronthistory
