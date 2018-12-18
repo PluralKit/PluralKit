@@ -3,7 +3,6 @@ from typing import List
 
 import dateparser
 
-import pluralkit.utils
 from pluralkit.bot.commands import *
 from pluralkit.member import Member
 from pluralkit.utils import display_relative
@@ -108,29 +107,31 @@ async def switch_move(ctx: CommandContext):
     # Make sure it all runs in a big transaction for atomicity
     async with ctx.conn.transaction():
         # Get the last two switches to make sure the switch to move isn't before the second-last switch
-        last_two_switches = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=2)
+        last_two_switches = await system.get_switches(ctx.conn, 2)
         if len(last_two_switches) == 0:
             raise CommandError("There are no registered switches for this system.")
 
-        last_timestamp, last_fronters = last_two_switches[0]
+        last_switch = last_two_switches[0]
         if len(last_two_switches) > 1:
-            second_last_timestamp, _ = last_two_switches[1]
+            second_last_switch = last_two_switches[1]
 
-            if new_time < second_last_timestamp:
-                time_str = display_relative(second_last_timestamp)
+            if new_time < second_last_switch.timestamp:
+                time_str = display_relative(second_last_switch.timestamp)
                 raise CommandError(
                     "Can't move switch to before last switch time ({} ago), as it would cause conflicts.".format(time_str))
 
         # Display the confirmation message w/ humanized times
+        last_fronters = await last_switch.fetch_members(ctx.conn)
+
         members = ", ".join([member.name for member in last_fronters]) or "nobody"
-        last_absolute = last_timestamp.isoformat(sep=" ", timespec="seconds")
-        last_relative = display_relative(last_timestamp)
+        last_absolute = last_switch.timestamp.isoformat(sep=" ", timespec="seconds")
+        last_relative = display_relative(last_switch.timestamp)
         new_absolute = new_time.isoformat(sep=" ", timespec="seconds")
         new_relative = display_relative(new_time)
 
         # Confirm with user
         switch_confirm_message = await ctx.reply(
-            "This will move the latest switch ({}) from {} ({} ago) to {} ({} ago). Is this OK?".format(members,
+            "This will move the latest switch ({}) from {} UTC ({} ago) to {} UTC ({} ago). Is this OK?".format(members,
                                                                                                         last_absolute,
                                                                                                         last_relative,
                                                                                                         new_absolute,
@@ -139,9 +140,6 @@ async def switch_move(ctx: CommandContext):
         if not await ctx.confirm_react(ctx.message.author, switch_confirm_message):
             raise CommandError("Switch move cancelled.")
 
-        # DB requires the actual switch ID which our utility method above doesn't return, do this manually
-        switch_id = (await db.front_history(ctx.conn, system.id, count=1))[0]["id"]
-
-        # Change the switch in the DB
-        await db.move_last_switch(ctx.conn, system.id, switch_id, new_time)
+        # Actually move the switch
+        await last_switch.move(ctx.conn, new_time)
         await ctx.reply_ok("Switch moved.")

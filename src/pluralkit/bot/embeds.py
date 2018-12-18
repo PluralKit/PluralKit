@@ -186,7 +186,7 @@ async def front_status(switch: Switch, conn) -> discord.Embed:
 
         if switch.timestamp:
             embed.add_field(name="Since",
-                            value="{} ({})".format(switch.timestamp.isoformat(sep=" ", timespec="seconds"),
+                            value="{} UTC ({})".format(switch.timestamp.isoformat(sep=" ", timespec="seconds"),
                                                    display_relative(switch.timestamp)))
     else:
         embed = error("No switches logged.")

@@ -18,6 +18,9 @@ class Switch(namedtuple("Switch", ["id", "system", "timestamp", "members"])):
     async def delete(self, conn):
         await db.delete_switch(conn, self.id)
 
+    async def move(self, conn, new_timestamp):
+        await db.move_switch(conn, self.system, self.id, new_timestamp)
+
     async def to_json(self, conn):
         return {
             "timestamp": self.timestamp.isoformat(),

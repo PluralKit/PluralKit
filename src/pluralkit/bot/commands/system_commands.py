@@ -203,7 +203,7 @@ async def system_fronthistory(ctx: CommandContext, system: System):
         if i > 0:
             last_switch_time = front_history[i - 1][0]
             delta_text = ", for {}".format(display_relative(timestamp - last_switch_time))
-        lines.append("**{}** ({}, {} ago{})".format(name, time_text, rel_text, delta_text))
+        lines.append("**{}** ({} UTC, {} ago{})".format(name, time_text, rel_text, delta_text))
 
     embed = embeds.status("\n".join(lines) or "(none)")
     embed.title = "Past switches"
@@ -302,6 +302,6 @@ async def system_frontpercent(ctx: CommandContext, system: System):
         embed.add_field(name=member.name if member else "(no fronter)",
                         value="{}% ({})".format(percent, humanize.naturaldelta(front_time)))
 
-    embed.set_footer(text="Since {} ({} ago)".format(span_start.isoformat(sep=" ", timespec="seconds"),
+    embed.set_footer(text="Since {} UTC ({} ago)".format(span_start.isoformat(sep=" ", timespec="seconds"),
                                                      display_relative(span_start)))
     await ctx.reply(embed=embed)
