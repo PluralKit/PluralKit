@@ -15,4 +15,4 @@ async def message_info(ctx: CommandContext):
         raise CommandError(
             "Message with ID '{}' not found. Are you sure it's a message proxied by PluralKit?".format(mid))
 
-    await ctx.reply_ok(embed=await embeds.message_card(ctx.client, message))
+    await ctx.reply(embed=await embeds.message_card(ctx.client, message))
