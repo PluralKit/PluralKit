@@ -246,7 +246,7 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         :returns: The `pytz.tzinfo` instance of the newly set time zone.
         """
 
-        canonical_name = canonicalize_tz_name(tz_name)
+        canonical_name = canonicalize_tz_name(tz_name or "UTC")
         if not canonical_name:
             raise errors.InvalidTimeZoneError(tz_name)
         tz = pytz.timezone(canonical_name)
