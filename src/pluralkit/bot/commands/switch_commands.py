@@ -99,6 +99,10 @@ async def switch_move(ctx: CommandContext):
         # If no time zone was given *explicitly in the string* it'll return as naive
         "TIMEZONE": system.ui_tz
     })
+
+    if not new_time:
+        raise CommandError("'{}' can't be parsed as a valid time.".format(ctx.remaining()))
+
     tz = pytz.timezone(system.ui_tz)
     # So we default to putting the system's time zone in the tzinfo
     if not new_time.tzinfo:
@@ -106,8 +110,6 @@ async def switch_move(ctx: CommandContext):
 
     # Now that we have a system-time datetime, convert this to UTC and make it naive since that's what we deal with
     new_time = pytz.utc.normalize(new_time).replace(tzinfo=None)
-    if not new_time:
-        raise CommandError("'{}' can't be parsed as a valid time.".format(ctx.remaining()))
 
     # Make sure the time isn't in the future
     if new_time > datetime.utcnow():
