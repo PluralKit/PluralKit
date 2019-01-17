@@ -180,6 +180,10 @@ async def account_link(ctx: CommandContext):
 
 async def account_unlink(ctx: CommandContext):
     system = await ctx.ensure_system()
+    
+    msg = await ctx.reply("Are you sure you want to unlink this account from your system?")
+    if not await ctx.confirm_react(ctx.message.author, msg):
+        raise CommandError("Account unlink cancelled.")
 
     try:
         await system.unlink_account(ctx.conn, ctx.message.author.id)
