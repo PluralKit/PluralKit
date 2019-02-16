@@ -36,3 +36,6 @@ You'll need to pass configuration options through shell environment variables.
 * Create a virtualenv: `virtualenv --python=python3.6 venv`
 * Install dependencies: `venv/bin/pip install -r requirements.txt`
 * Run PluralKit with environment variables: `TOKEN=... CLIENT_ID=... DATABASE_USER=... venv/bin/python src/bot_main.py`
+
+# License
+This project is under the Apache License, Version 2.0. It is available at the following link: https://www.apache.org/licenses/LICENSE-2.0
