@@ -14,6 +14,10 @@ from pluralkit.system import System
 
 def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
     # A basic quoted-arg parser
+    
+    for quote in "“‟”":
+        arg_string = arg_string.replace(quote, "\"")
+
     if arg_string.startswith("\""):
         end_quote = arg_string[1:].find("\"") + 1
         if end_quote > 0:
