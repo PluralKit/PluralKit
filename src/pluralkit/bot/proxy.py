@@ -177,7 +177,16 @@ async def try_proxy_message(conn, message: discord.Message, logger: ChannelLogge
         try:
             await send_proxy_message(conn, message, system, member, inner_message, logger, bot_user)
         except ProxyError as e:
-            await message.channel.send("\u274c {}".format(str(e)))
+            # First, try to send the error in the channel it was triggered in
+            # Failing that, send the error in a DM.
+            # Failing *that*... give up, I guess.
+            try:
+                await message.channel.send("\u274c {}".format(str(e)))
+            except discord.Forbidden:
+                try:
+                    await message.author.send("\u274c {}".format(str(e)))
+                except discord.Forbidden:
+                    pass
 
     return True
 
