@@ -26,6 +26,8 @@ def canonicalize_tz_name(name: str) -> Optional[str]:
     if name in name_map:
         return name_map[name]
 
+class TupperboxImportResult(namedtuple("TupperboxImportResult", ["updated", "created", "tags"])):
+    pass
 
 class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "avatar_url", "token", "created", "ui_tz"])):
     id: int
@@ -254,6 +256,66 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         await db.update_system_field(conn, self.id, "ui_tz", tz.zone)
         return tz
 
+    async def import_from_tupperbox(self, conn, data: dict):
+        """
+        Imports from a Tupperbox JSON data file.
+        :raises: TupperboxImportError
+        """
+        if not "tuppers" in data:
+            raise errors.TupperboxImportError()
+        if not isinstance(data["tuppers"], list):
+            raise errors.TupperboxImportError()
+        
+        all_tags = set()
+        created_members = set()
+        updated_members = set()
+        for tupper in data["tuppers"]:
+            # Sanity check tupper fields
+            for field in ["name", "avatar_url", "brackets", "birthday", "description", "tag"]:
+                if field not in tupper:
+                    raise errors.TupperboxImportError()
+            
+            # Find member by name, create if not exists
+            member_name = str(tupper["name"])
+            member = await Member.get_member_by_name(conn, self.id, member_name)
+            if not member:
+                # And keep track of created members
+                created_members.add(member_name)
+                member = await self.create_member(conn, member_name)
+            else:
+                # Keep track of updated members
+                updated_members.add(member_name)
+
+            # Set avatar
+            await member.set_avatar(conn, str(tupper["avatar_url"]))
+
+            # Set proxy tags
+            if not (isinstance(tupper["brackets"], list) and len(tupper["brackets"]) >= 2):
+                raise errors.TupperboxImportError()
+            await member.set_proxy_tags(conn, str(tupper["brackets"][0]), str(tupper["brackets"][1]))
+
+            # Set birthdate (input is in ISO-8601, first 10 characters is the date)
+            if tupper["birthday"]:
+                try:
+                    await member.set_birthdate(conn, str(tupper["birthday"][:10]))
+                except errors.InvalidDateStringError:
+                    pass
+            
+            # Set description
+            await member.set_description(conn, tupper["description"])
+
+            # Keep track of tag
+            all_tags.add(tupper["tag"])
+
+        # Since Tupperbox does tags on a per-member basis, we only apply a system tag if
+        # every member has the same tag (surprisingly common)
+        # If not, we just do nothing. (This will be reported in the caller function through the returned result)
+        if len(all_tags) == 1:
+            tag = list(all_tags)[0]
+            await self.set_tag(ctx.conn, tag)
+
+        return TupperboxImportResult(updated=updated_members, created=created_members, tags=all_tags)
+                
     def to_json(self):
         return {
             "id": self.hid,
