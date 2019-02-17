@@ -312,7 +312,7 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         # If not, we just do nothing. (This will be reported in the caller function through the returned result)
         if len(all_tags) == 1:
             tag = list(all_tags)[0]
-            await self.set_tag(ctx.conn, tag)
+            await self.set_tag(conn, tag)
 
         return TupperboxImportResult(updated=updated_members, created=created_members, tags=all_tags)
                 
