@@ -35,7 +35,7 @@ async def import_tupperbox(ctx: CommandContext):
     
     system = await ctx.get_system()
     if not system:
-        system = await System.create_system(ctx.conn, account_id=ctx.author.id)
+        system = await System.create_system(ctx.conn, account_id=ctx.message.author.id)
     
     result = await system.import_from_tupperbox(ctx.conn, data)
     tag_note = ""
