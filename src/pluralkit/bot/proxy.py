@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 import discord
@@ -134,7 +135,11 @@ async def send_proxy_message(conn, original_message: discord.Message, system: Sy
     )
 
     # And finally, gotta delete the original.
+    # We wait half a second or so because if the client receives the message deletion
+    # event before the message actually gets confirmed sent on their end, the message
+    # doesn't properly get deleted for them, leading to duplication
     try:
+        await asyncio.sleep(0.5)
         await original_message.delete()
     except discord.Forbidden:
         raise ProxyError(
