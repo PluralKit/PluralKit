@@ -12,20 +12,6 @@ from pluralkit.member import Member
 from pluralkit.switch import Switch
 from pluralkit.utils import generate_hid, contains_custom_emoji, validate_avatar_url_or_raise
 
-
-def canonicalize_tz_name(name: str) -> Optional[str]:
-    # First, try a direct search
-    try:
-        pytz.timezone(name)
-        return name
-    except pytz.UnknownTimeZoneError:
-        pass
-
-    # Then check last fragment of common time zone identifiers
-    name_map = {tz.split("/")[-1].replace("_", " "): tz for tz in pytz.common_timezones}
-    if name in name_map:
-        return name_map[name]
-
 class TupperboxImportResult(namedtuple("TupperboxImportResult", ["updated", "created", "tags"])):
     pass
 
@@ -248,11 +234,7 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         :returns: The `pytz.tzinfo` instance of the newly set time zone.
         """
 
-        canonical_name = canonicalize_tz_name(tz_name or "UTC")
-        if not canonical_name:
-            raise errors.InvalidTimeZoneError(tz_name)
-        tz = pytz.timezone(canonical_name)
-
+        tz = pytz.timezone(tz_name or "UTC")
         await db.update_system_field(conn, self.id, "ui_tz", tz.zone)
         return tz
 

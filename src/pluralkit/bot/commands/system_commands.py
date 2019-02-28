@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 
+import aiohttp
 import dateparser
 import humanize
+import timezonefinder
 import pytz
 
 import pluralkit.bot.embeds
@@ -9,6 +11,9 @@ from pluralkit.bot.commands import *
 from pluralkit.errors import ExistingSystemError, UnlinkingLastAccountError, AccountAlreadyLinkedError
 from pluralkit.utils import display_relative
 
+# This needs to load from the timezone file so we're preloading this so we
+# don't have to do it on every invocation
+tzf = timezonefinder.TimezoneFinder()
 
 async def system_root(ctx: CommandContext):
     # Commands that operate without a specified system (usually defaults to the executor's own system)
@@ -100,12 +105,34 @@ async def system_description(ctx: CommandContext):
 
 async def system_timezone(ctx: CommandContext):
     system = await ctx.ensure_system()
-    new_tz = ctx.remaining() or None
+    city_query = ctx.remaining() or None
 
-    tz = await system.set_time_zone(ctx.conn, new_tz)
+    msg = await ctx.reply("\U0001F50D Searching '{}' (may take a while)...".format(city_query))
+
+    # Look up the city on Overpass (OpenStreetMap)
+    async with aiohttp.ClientSession() as sess:
+        # OverpassQL is weird, but this basically searches for every node of type city with name [input].
+        async with sess.get("https://nominatim.openstreetmap.org/search?city=novosibirsk&format=json&limit=1", params={"city": city_query, "format": "json", "limit": "1"}) as r:
+            if r.status != 200:
+                raise CommandError("OSM Nominatim API returned error. Try again.")
+            data = await r.json()
+
+    # If we didn't find a city, complain
+    if not data:
+        raise CommandError("City '{}' not found.".format(city_query))
+
+    # Take the lat/long given by Overpass and put it into timezonefinder
+    lat, lng = (float(data[0]["lat"]), float(data[0]["lon"]))
+    timezone_name = tzf.timezone_at(lng=lng, lat=lat)
+    if not timezone_name:
+        raise CommandError("Time zone for city '{}' not found. This should never happen.".format(data[0]["display_name"]))
+    
+    # This should hopefully result in a valid time zone name
+    # (if not, something went wrong)
+    tz = await system.set_time_zone(ctx.conn, timezone_name)
     offset = tz.utcoffset(datetime.utcnow())
     offset_str = "UTC{:+02d}:{:02d}".format(int(offset.total_seconds() // 3600), int(offset.total_seconds() // 60 % 60))
-    await ctx.reply_ok("System time zone set to {} ({}, {}).".format(tz.tzname(datetime.utcnow()), offset_str, tz.zone))
+    await ctx.reply_ok("System time zone set to {} ({}, {}).\n*Data from OpenStreetMap, queried using Nominatim.*".format(tz.tzname(datetime.utcnow()), offset_str, tz.zone))
 
 
 async def system_tag(ctx: CommandContext):

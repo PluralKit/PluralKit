@@ -7,3 +7,4 @@ humanize
 uvloop; sys.platform != 'win32' and sys.platform != 'cygwin' and sys.platform != 'cli'
 ciso8601
 pytz
+timezonefinder
