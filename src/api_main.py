@@ -169,11 +169,6 @@ async def get_stats(request: web.Request, conn):
         "messages": message_count
     })
 
-@web.middleware
-async def add_cors_headers(request, handler):
-    resp = await handler(request)
-    resp.headers["Access-Control-Allow-Origin"] = "*";
-    return resp
 
 @web.middleware
 async def render_pk_errors(request, handler):
@@ -183,7 +178,7 @@ async def render_pk_errors(request, handler):
         raise web.HTTPBadRequest(body=e.message)
 
 
-app = web.Application(middlewares=[render_pk_errors, add_cors_headers])
+app = web.Application(middlewares=[render_pk_errors])
 app.add_routes([
     web.get("/systems/{id}", get_system),
     web.get("/systems/{id}/switches", get_switches),
