@@ -3,7 +3,7 @@ system_commands = """
 Commands for adding, removing, editing, and linking systems, as well as querying fronter and front history.
 ```
 pk;system [system]
-pk;system new [system name
+pk;system new [system name]
 pk;system rename [new name]
 pk;system description [new description]
 pk;system avatar [new avatar url]
