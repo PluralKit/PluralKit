@@ -61,7 +61,7 @@ def run():
         print("{} servers".format(len(client.guilds)))
         print("{} shards".format(client.shard_count or 1))
 
-        await client.change_presence(activity=discord.Game(name="kek;help"))
+        await client.change_presence(activity=discord.Game(name="pk;help"))
 
     @client.event
     async def on_message(message: discord.Message):

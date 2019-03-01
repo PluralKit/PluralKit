@@ -211,7 +211,7 @@ async def run_command(ctx: CommandContext, func):
 
 
 async def command_dispatch(client: discord.Client, message: discord.Message, conn) -> bool:
-    prefix = "^(kek(;|!)|<@{}> )".format(client.user.id)
+    prefix = "^(pk(;|!)|<@{}> )".format(client.user.id)
     regex = re.compile(prefix, re.IGNORECASE)
 
     cmd = message.content
