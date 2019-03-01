@@ -53,7 +53,7 @@ async def invite_link(ctx: CommandContext):
 
 async def export(ctx: CommandContext):
     working_msg = await ctx.message.channel.send("Working...")
-    
+
     system = await ctx.ensure_system()
 
     members = await system.get_members(ctx.conn)
@@ -94,7 +94,7 @@ async def export(ctx: CommandContext):
     await working_msg.delete()
 
     f = io.BytesIO(json.dumps(data).encode("utf-8"))
-    await ctx.message.channel.send(content="Here you go!", file=discord.File(fp=f, filename="pluralkit_system.json"))
+    await ctx.message.author.send(content="Here you go!", file=discord.File(fp=f, filename="pluralkit_system.json"))
 
 
 async def tell(ctx: CommandContext):
