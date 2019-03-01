@@ -14,7 +14,7 @@ from pluralkit.system import System
 
 def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
     # A basic quoted-arg parser
-    
+
     for quote in "“‟”":
         arg_string = arg_string.replace(quote, "\"")
 
@@ -211,7 +211,7 @@ async def run_command(ctx: CommandContext, func):
 
 
 async def command_dispatch(client: discord.Client, message: discord.Message, conn) -> bool:
-    prefix = "^(pk(;|!)|<@{}> )".format(client.user.id)
+    prefix = "^(kek(;|!)|<@{}> )".format(client.user.id)
     regex = re.compile(prefix, re.IGNORECASE)
 
     cmd = message.content
