@@ -194,6 +194,12 @@ async def command_root(ctx: CommandContext):
         await misc_commands.help_root(ctx)
     elif ctx.match("tell"):
         await misc_commands.tell(ctx)
+    elif ctx.match("fire"):
+        await misc_commands.pkfire(ctx)
+    elif ctx.match("thunder"):
+        await misc_commands.pkthunder(ctx)
+    elif ctx.match("starstorm"):
+        await misc_commands.pkstarstorm(ctx)
     else:
         raise CommandError("Unknown command {}. For a list of commands, type `pk;help commands`.".format(ctx.pop_str()))
 
