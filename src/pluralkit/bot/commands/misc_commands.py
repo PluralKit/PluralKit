@@ -94,6 +94,7 @@ async def export(ctx: CommandContext):
     await working_msg.delete()
 
     f = io.BytesIO(json.dumps(data).encode("utf-8"))
+    await ctx.message.channel.send(content="Export successful! File sent in your DMs.")
     await ctx.message.author.send(content="Here you go!", file=discord.File(fp=f, filename="pluralkit_system.json"))
 
 
@@ -110,3 +111,14 @@ async def tell(ctx: CommandContext):
     # lol error handling
     await ctx.client.get_channel(int(channel)).send(content="[dev message] " + message)
     await ctx.reply_ok("Sent!")
+
+
+# Easter eggs lmao because why not
+async def pkfire(ctx: CommandContext):
+    await ctx.message.channel.send("*A giant lightning bolt propmptly erupts into a pillar of fire as it hits your opponent.*")
+
+async def pkthunder(ctx: CommandContext):
+    await ctx.message.channel.send("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*")
+
+async def pkstarstorm(ctx: CommandContext):
+    await ctx.message.channel.send("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*")
