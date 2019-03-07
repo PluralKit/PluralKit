@@ -8,16 +8,14 @@ PluralKit has a Discord server for support and discussion: https://discord.gg/Pc
 Running the bot requires Python (specifically version 3.6) and PostgreSQL.
 
 # Configuration
-Configuring the bot is done through environment variables.
+Configuring the bot is done through a configuration file. An example of the configuration format can be seen in [`pluralkit.conf.example`](https://github.com/xSke/PluralKit/blob/master/pluralkit.conf.example).
 
-* TOKEN - the Discord bot token to connect with
-* CLIENT_ID - the Discord bot client ID
-* DATABASE_USER - the username to log into the database with
-* DATABASE_PASS - the password to log into the database with
-* DATABASE_NAME - the name of the database to use
-* DATABASE_HOST - the hostname of the PostgreSQL instance to connect to
-* DATABASE_PORT - the port of the PostgreSQL instance to connect to
-* LOG_CHANNEL (optional) - a Discord channel ID the bot will post exception tracebacks in (make this private!)
+The following keys are available:
+* `token`: the Discord bot token to connect with
+* `database_uri`: the URI of the database to connect to (format: `postgres://username:password@hostname:port/database_name`)
+* `log_channel` (optional): a Discord channel ID the bot will post exception tracebacks in (make this private!)
+
+The environment variables `TOKEN` and `DATABASE_URI` will override the configuration file values when present.
 
 # Running
 
@@ -25,17 +23,16 @@ Configuring the bot is done through environment variables.
 Running PluralKit is pretty easy with Docker. The repository contains a `docker-compose.yml` file ready to use.
 
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
-* Create a `.env` file containing at least `TOKEN` and `CLIENT_ID` in `key=value` format
+* Create a `pluralkit.conf` file in the same directory as `docker-compose.yml` containing at least a `token` field
 * Build the bot: `docker-compose build`
 * Run the bot: `docker-compose up`
 
 ## Manually
-You'll need to pass configuration options through shell environment variables.
-
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
 * Create a virtualenv: `virtualenv --python=python3.6 venv`
 * Install dependencies: `venv/bin/pip install -r requirements.txt`
-* Run PluralKit with environment variables: `TOKEN=... CLIENT_ID=... DATABASE_USER=... venv/bin/python src/bot_main.py`
+* Run PluralKit with the config file: `venv/bin/python src/bot_main.py`
+  * The bot optionally takes a parameter describing the location of the configuration file, defaulting to `./pluralkit.conf`.
 
 # License
 This project is under the Apache License, Version 2.0. It is available at the following link: https://www.apache.org/licenses/LICENSE-2.0

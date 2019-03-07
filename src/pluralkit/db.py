@@ -12,10 +12,10 @@ from pluralkit.system import System
 from pluralkit.member import Member
 
 logger = logging.getLogger("pluralkit.db")
-async def connect(username, password, database, host, port):
+async def connect(uri):
     while True:
         try:
-            return await asyncpg.create_pool(user=username, password=password, database=database, host=host, port=port)
+            return await asyncpg.create_pool(uri)
         except (ConnectionError, asyncpg.exceptions.CannotConnectNowError):
             logger.exception("Failed to connect to database, retrying in 5 seconds...")
             time.sleep(5)

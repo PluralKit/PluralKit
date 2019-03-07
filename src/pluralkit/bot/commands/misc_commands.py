@@ -22,7 +22,7 @@ async def help_root(ctx: CommandContext):
 
 
 async def invite_link(ctx: CommandContext):
-    client_id = os.environ["CLIENT_ID"]
+    client_id = (await ctx.client.application_info()).id
 
     permissions = discord.Permissions()
 

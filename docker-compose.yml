@@ -5,18 +5,12 @@ services:
     entrypoint:
     - python
     - bot_main.py
+    volumes:
+    - "./pluralkit.conf:/app/pluralkit.conf:ro"
+    environment:
+    - "DATABASE_URI=postgres://postgres:postgres@db:5432/postgres"
     depends_on:
     - db
-    environment:
-    - CLIENT_ID
-    - TOKEN
-    - LOG_CHANNEL
-    - TUPPERWARE_ID
-    - "DATABASE_USER=postgres"
-    - "DATABASE_PASS=postgres"
-    - "DATABASE_NAME=postgres"
-    - "DATABASE_HOST=db"
-    - "DATABASE_PORT=5432"
     restart: always
   api:
     build: src/
@@ -29,11 +23,7 @@ services:
     ports:
     - "2939:8080"
     environment:
-    - "DATABASE_USER=postgres"
-    - "DATABASE_PASS=postgres"
-    - "DATABASE_NAME=postgres"
-    - "DATABASE_HOST=db"
-    - "DATABASE_PORT=5432"
+    - "DATABASE_URI=postgres://postgres:postgres@db:5432/postgres"
   db:
     image: postgres:alpine
     volumes:

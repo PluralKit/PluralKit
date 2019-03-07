@@ -4,3 +4,5 @@
 venv/
 
 *.pyc
+pluralkit.conf
+pluralkit.*.conf

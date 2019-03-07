@@ -13,36 +13,12 @@ from pluralkit.bot import commands, proxy, channel_logger, embeds
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
 
 
-def connect_to_database() -> asyncpg.pool.Pool:
-    username = os.environ["DATABASE_USER"]
-    password = os.environ["DATABASE_PASS"]
-    name = os.environ["DATABASE_NAME"]
-    host = os.environ["DATABASE_HOST"]
-    port = os.environ["DATABASE_PORT"]
-
-    if username is None or password is None or name is None or host is None or port is None:
-        print(
-            "Database credentials not specified. Please pass valid PostgreSQL database credentials in the DATABASE_[USER|PASS|NAME|HOST|PORT] environment variable.",
-            file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        port = int(port)
-    except ValueError:
-        print("Please pass a valid integer as the DATABASE_PORT environment variable.", file=sys.stderr)
-        sys.exit(1)
-
-    return asyncio.get_event_loop().run_until_complete(db.connect(
-        username=username,
-        password=password,
-        database=name,
-        host=host,
-        port=port
-    ))
+def connect_to_database(uri: str) -> asyncpg.pool.Pool:
+    return asyncio.get_event_loop().run_until_complete(db.connect(uri))
 
 
-def run():
-    pool = connect_to_database()
+def run(token: str, db_uri: str, log_channel_id: int):
+    pool = connect_to_database(db_uri)
 
     async def create_tables():
         async with pool.acquire() as conn:
@@ -51,7 +27,6 @@ def run():
     asyncio.get_event_loop().run_until_complete(create_tables())
 
     client = discord.Client()
-
     logger = channel_logger.ChannelLogger(client)
 
     @client.event
@@ -98,11 +73,14 @@ def run():
 
     @client.event
     async def on_error(event_name, *args, **kwargs):
-        log_channel_id = os.environ.get("LOG_CHANNEL")
+        # Print it to stderr
+        logging.getLogger("pluralkit").exception("Exception while handling event {}".format(event_name))
+
+        # Then log it to the given log channel
+        # TODO: replace this with Sentry or something
         if not log_channel_id:
             return
-
-        log_channel = client.get_channel(int(log_channel_id))
+        log_channel = client.get_channel(log_channel_id)
 
         # If this is a message event, we can attach additional information in an event
         # ie. username, channel, content, etc
@@ -124,14 +102,4 @@ def run():
         if len(traceback.format_exc()) >= (2000 - len("```python\n```")):
             traceback_str = "```python\n...{}```".format(traceback.format_exc()[- (2000 - len("```python\n...```")):])
         await log_channel.send(content=traceback_str, embed=embed)
-
-        # Print it to stderr anyway, though
-        logging.getLogger("pluralkit").exception("Exception while handling event {}".format(event_name))
-
-    bot_token = os.environ["TOKEN"]
-    if not bot_token:
-        print("No token specified. Please pass a valid Discord bot token in the TOKEN environment variable.",
-              file=sys.stderr)
-        sys.exit(1)
-
-    client.run(bot_token)
+    client.run(token)

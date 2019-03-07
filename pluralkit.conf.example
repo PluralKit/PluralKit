@@ -1,0 +1,5 @@
+{
+    "database_uri": "postgres://username:password@hostname:port/database_name",
+    "token": "BOT_TOKEN_GOES_HERE",
+    "log_channel": null
+}
