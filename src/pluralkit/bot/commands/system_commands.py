@@ -39,6 +39,8 @@ async def system_root(ctx: CommandContext):
         await system_timezone(ctx)
     elif ctx.match("set"):
         await system_set(ctx)
+    elif ctx.match("list") or ctx.match("members"):
+        await system_list(ctx, await ctx.ensure_system())
     elif not ctx.has_next():
         # (no argument, command ends here, default to showing own system)
         await system_info(ctx, await ctx.ensure_system())
@@ -63,12 +65,15 @@ async def specified_system_root(ctx: CommandContext):
         await system_fronthistory(ctx, system)
     elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage"):
         await system_frontpercent(ctx, system)
+    elif ctx.match("list") or ctx.match("members"):
+        await system_list(ctx, system)
     else:
         await system_info(ctx, system)
 
 
 async def system_info(ctx: CommandContext, system: System):
-    await ctx.reply(embed=await pluralkit.bot.embeds.system_card(ctx.conn, ctx.client, system))
+    this_system = await ctx.get_system()
+    await ctx.reply(embed=await pluralkit.bot.embeds.system_card(ctx.conn, ctx.client, system, this_system and this_system.id == system.id))
 
 
 async def system_new(ctx: CommandContext):
@@ -124,6 +129,10 @@ async def system_timezone(ctx: CommandContext):
     # Take the lat/long given by Overpass and put it into timezonefinder
     lat, lng = (float(data[0]["lat"]), float(data[0]["lon"]))
     timezone_name = tzf.timezone_at(lng=lng, lat=lat)
+
+    # Also delete the original searching message
+    await msg.delete()
+
     if not timezone_name:
         raise CommandError("Time zone for city '{}' not found. This should never happen.".format(data[0]["display_name"]))
     
@@ -132,6 +141,7 @@ async def system_timezone(ctx: CommandContext):
     tz = await system.set_time_zone(ctx.conn, timezone_name)
     offset = tz.utcoffset(datetime.utcnow())
     offset_str = "UTC{:+02d}:{:02d}".format(int(offset.total_seconds() // 3600), int(offset.total_seconds() // 60 % 60))
+    
     await ctx.reply_ok("System time zone set to {} ({}, {}).\n*Data from OpenStreetMap, queried using Nominatim.*".format(tz.tzname(datetime.utcnow()), offset_str, tz.zone))
 
 
@@ -349,3 +359,41 @@ async def system_frontpercent(ctx: CommandContext, system: System):
     embed.set_footer(text="Since {} ({} ago)".format(ctx.format_time(span_start),
                                                      display_relative(span_start)))
     await ctx.reply(embed=embed)
+
+async def system_list(ctx: CommandContext, system: System):
+    all_members = sorted(await system.get_members(ctx.conn), key=lambda m: m.name)
+    page_size = 10
+    if len(all_members) <= page_size:
+        # If we have less than 10 members, don't bother paginating
+        await ctx.reply(embed=embeds.member_list(await ctx.get_system(), all_members, 0, page_size = page_size))
+    else:
+        current_page = 0
+        msg: discord.Message = None
+        while True:
+            page_count = len(all_members) // page_size
+            embed = embeds.member_list(await ctx.get_system(), all_members, current_page)
+            
+            # Add reactions for moving back and forth
+            if not msg:
+                msg = await ctx.reply(embed=embed)
+                await msg.add_reaction("\u2B05")
+                await msg.add_reaction("\u27A1")
+            else:
+                await msg.edit(embed=embed)
+
+            def check(reaction, user):
+                return user.id == ctx.message.author.id and reaction.emoji in ["\u2B05", "\u27A1"]
+
+            try:
+                reaction, _ = await ctx.client.wait_for("reaction_add", timeout=5*60, check=check)
+            except asyncio.TimeoutError:
+                return 
+
+            if reaction.emoji == "\u2B05":
+                current_page = (current_page - 1) % page_count
+            elif reaction.emoji == "\u27A1":
+                current_page = (current_page + 1) % page_count
+            
+            # If we can, remove the original reaction from the member
+            if ctx.message.channel.permissions_for(ctx.message.guild.get_member(ctx.client.user.id)).manage_messages:
+                await reaction.remove(ctx.message.author)

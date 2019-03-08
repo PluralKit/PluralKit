@@ -42,6 +42,9 @@ class CommandError(Exception):
 
 
 class CommandContext:
+    client: discord.Client
+    message: discord.Message
+    
     def __init__(self, client: discord.Client, message: discord.Message, conn, args: str, system: Optional[System]):
         self.client = client
         self.message = message

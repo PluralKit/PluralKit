@@ -9,8 +9,8 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceRoot}/src/bot_main.py",
-            "envFile": "${workspaceFolder}/.env",
-            "console": "integratedTerminal"
+            "args": ["${workspaceRoot}/pluralkit.conf"],
+            "console": "integratedTerminal",
         }
     ]
 }

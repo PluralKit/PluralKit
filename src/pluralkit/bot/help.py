@@ -13,6 +13,7 @@ pk;system delete
 pk;system [system] fronter
 pk;system [system] fronthistory
 pk;system [system] frontpercent
+pk;system [system] list
 pk;link <other account>
 pk;unlink
 ```

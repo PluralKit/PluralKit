@@ -1,6 +1,6 @@
 import discord
 import humanize
-from typing import Tuple
+from typing import Tuple, List
 
 from pluralkit import db
 from pluralkit.bot.utils import escape
@@ -66,7 +66,7 @@ def exception_log(message_content, author_name, author_discriminator, author_id,
     return embed
 
 
-async def system_card(conn, client: discord.Client, system: System) -> discord.Embed:
+async def system_card(conn, client: discord.Client, system: System, is_own_system: bool = True) -> discord.Embed:
     card = discord.Embed()
     card.colour = discord.Colour.blue()
 
@@ -97,33 +97,7 @@ async def system_card(conn, client: discord.Client, system: System) -> discord.E
         card.add_field(name="Description",
                        value=truncate_field_body(system.description), inline=False)
 
-    # Get names of all members
-    all_members = await system.get_members(conn)
-    if all_members:
-        member_texts = []
-        for member in all_members:
-            member_texts.append("{} (`{}`)".format(escape(member.name), member.hid))
-
-        # Interim solution for pagination of large systems
-        # Previously a lot of systems would hit the 1024 character limit and thus break the message
-        # This splits large system lists into multiple embed fields
-        # The 6000 character total limit will still apply here but this sort of pushes the problem until I find a better fix
-        pages = [""]
-        for member in member_texts:
-            last_page = pages[-1]
-            new_page = last_page + "\n" + member if last_page else member
-
-            if len(new_page) >= 1024:
-                pages.append(member)
-            else:
-                pages[-1] = new_page
-
-        for index, page in enumerate(pages):
-            field_name = "Members"
-            if index >= 1:
-                field_name = "Members (part {})".format(index + 1)
-            card.add_field(name=truncate_field_name(field_name), value=truncate_field_body(page), inline=False)
-
+    card.add_field(name="Members", value="*See `pk;system {} list`".format(system.hid) if not is_own_system else "*See `pk;system list`*")
     card.set_footer(text="System ID: {}".format(system.hid))
     return card
 
@@ -242,4 +216,22 @@ async def message_card(client: discord.Client, message: db.MessageInfo):
 def help_footer_embed() -> discord.Embed:
     embed = discord.Embed()
     embed.set_footer(text="By @Ske#6201 | GitHub: https://github.com/xSke/PluralKit/")
+    return embed
+
+def member_list(system: System, all_members: List[Member], current_page: int = 0, page_size: int = 10):
+    page_count = len(all_members) // page_size
+
+    title = ""
+    if len(all_members) > page_size:
+        title += "[{}/{}] ".format(current_page + 1, page_count)
+
+    if system.name:
+        title += "Members of {} (`{}`)".format(system.name, system.hid)
+    else:
+        title += "Members of `{}`".format(system.hid)
+
+    embed = discord.Embed()
+    embed.title = title
+    for member in all_members[current_page*page_size:current_page*page_size+page_size]:
+        embed.add_field(name=member.name, value=(member.description or "") + "\n*ID: `{}`*".format(member.hid), inline=False)
     return embed
