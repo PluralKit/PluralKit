@@ -13,9 +13,9 @@ except ImportError:
 with open(sys.argv[1] if len(sys.argv) > 1 else "pluralkit.conf") as f:
     config = json.load(f)
 
-if "database_uri" not in config and "database_uri" not in os.environ:
+if "database_uri" not in config and "DATABASE_URI" not in os.environ:
     print("Config file must contain key 'database_uri', or the environment variable DATABASE_URI must be present.")
-elif "token" not in config and "token" not in os.environ:
+elif "token" not in config and "TOKEN" not in os.environ:
     print("Config file must contain key 'token', or the environment variable TOKEN must be present.")
 else:
     from pluralkit import bot
