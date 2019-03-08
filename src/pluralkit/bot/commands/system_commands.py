@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import aiohttp
 import dateparser
 import humanize
+import math
 import timezonefinder
 import pytz
 
@@ -370,9 +371,9 @@ async def system_list(ctx: CommandContext, system: System):
         current_page = 0
         msg: discord.Message = None
         while True:
-            page_count = len(all_members) // page_size
+            page_count = math.ceil(len(all_members) / page_size)
             embed = embeds.member_list(await ctx.get_system(), all_members, current_page)
-            
+
             # Add reactions for moving back and forth
             if not msg:
                 msg = await ctx.reply(embed=embed)

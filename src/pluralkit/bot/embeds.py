@@ -1,4 +1,5 @@
 import discord
+import math
 import humanize
 from typing import Tuple, List
 
@@ -219,7 +220,7 @@ def help_footer_embed() -> discord.Embed:
     return embed
 
 def member_list(system: System, all_members: List[Member], current_page: int = 0, page_size: int = 10):
-    page_count = len(all_members) // page_size
+    page_count = math.ceil(len(all_members) / page_size)
 
     title = ""
     if len(all_members) > page_size:
