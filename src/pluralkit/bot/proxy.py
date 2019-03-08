@@ -21,10 +21,7 @@ async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channe
     if webhook_from_db:
         webhook_id, webhook_token = webhook_from_db
 
-        session = channel._state.http._session
         hook = discord.Webhook.partial(webhook_id, webhook_token, adapter=discord.AsyncWebhookAdapter(session))
-
-        hook._adapter.store_user = hook._adapter._store_user
         return hook
 
     try:
