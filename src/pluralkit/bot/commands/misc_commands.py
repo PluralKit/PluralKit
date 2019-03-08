@@ -115,7 +115,7 @@ async def tell(ctx: CommandContext):
 
 # Easter eggs lmao because why not
 async def pkfire(ctx: CommandContext):
-    await ctx.message.channel.send("*A giant lightning bolt propmptly erupts into a pillar of fire as it hits your opponent.*")
+    await ctx.message.channel.send("*A giant lightning bolt promptly erupts into a pillar of fire as it hits your opponent.*")
 
 async def pkthunder(ctx: CommandContext):
     await ctx.message.channel.send("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*")
