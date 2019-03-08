@@ -219,8 +219,8 @@ def help_footer_embed() -> discord.Embed:
     embed.set_footer(text="By @Ske#6201 | GitHub: https://github.com/xSke/PluralKit/")
     return embed
 
-def member_list(system: System, all_members: List[Member], current_page: int = 0, page_size: int = 10):
-    page_count = math.ceil(len(all_members) / page_size)
+def member_list(system: System, all_members: List[Member], current_page: int, page_size: int):
+    page_count = int(math.ceil(len(all_members) / page_size))
 
     title = ""
     if len(all_members) > page_size:
@@ -234,5 +234,13 @@ def member_list(system: System, all_members: List[Member], current_page: int = 0
     embed = discord.Embed()
     embed.title = title
     for member in all_members[current_page*page_size:current_page*page_size+page_size]:
-        embed.add_field(name=member.name, value=(member.description or "") + "\n*ID: `{}`*".format(member.hid), inline=False)
+        member_description = "**ID**: {}\n".format(member.hid)
+        if member.birthday:
+            member_description += "**Birthday:** {}\n".format(member.birthday.isoformat())
+        if member.pronouns:
+            member_description += "**Pronouns:** {}\n".format(member.pronouns)
+        if member.description:
+            member_description += "\n" + member.description
+
+        embed.add_field(name=member.name, value=member_description or "\u200B", inline=False)
     return embed
