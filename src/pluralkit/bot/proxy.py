@@ -15,14 +15,6 @@ from pluralkit.system import System
 class ProxyError(Exception):
     pass
 
-
-def fix_webhook(webhook: discord.Webhook) -> discord.Webhook:
-    # Workaround for https://github.com/Rapptz/discord.py/issues/1242 and similar issues (#1150)
-    webhook._adapter.store_user = webhook._adapter._store_user
-    webhook._adapter.http = None
-    return webhook
-
-
 async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channel: discord.TextChannel):
     # First, check if we have one saved in the DB
     webhook_from_db = await db.get_webhook(conn, channel.id)
@@ -33,7 +25,7 @@ async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channe
         hook = discord.Webhook.partial(webhook_id, webhook_token, adapter=discord.AsyncWebhookAdapter(session))
 
         hook._adapter.store_user = hook._adapter._store_user
-        return fix_webhook(hook)
+        return hook
 
     try:
         # If not, we check to see if there already exists one we've missed
@@ -43,7 +35,7 @@ async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channe
             if is_mine:
                 # We found one we made, let's add that to the DB just to be sure
                 await db.add_webhook(conn, channel.id, existing_hook.id, existing_hook.token)
-                return fix_webhook(existing_hook)
+                return existing_hook
 
         # If not, we create one and save it
         created_webhook = await channel.create_webhook(name="PluralKit Proxy Webhook")
@@ -52,7 +44,7 @@ async def get_or_create_webhook_for_channel(conn, bot_user: discord.User, channe
             "PluralKit does not have the \"Manage Webhooks\" permission, and thus cannot proxy your message. Please contact a server administrator.")
 
     await db.add_webhook(conn, channel.id, created_webhook.id, created_webhook.token)
-    return fix_webhook(created_webhook)
+    return created_webhook
 
 
 async def make_attachment_file(message: discord.Message):
