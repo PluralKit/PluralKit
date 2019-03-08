@@ -23,6 +23,10 @@ def truncate_description(s: str) -> str:
     return s[:2048]
 
 
+def truncate_description_system_list(s: str) -> str:
+    return s[:512]
+
+
 def truncate_title(s: str) -> str:
     return s[:256]
 
@@ -236,10 +240,14 @@ def member_list(system: System, all_members: List[Member], current_page: int, pa
             member_description += "**Birthday:** {}\n".format(member.birthday_string())
         if member.pronouns:
             member_description += "**Pronouns:** {}\n".format(member.pronouns)
+
+        # If the member description is longer than 512 characters, we truncate it and leave a message to query the member for full Description
         if (len(member.description)) > 512:
             member_description += "\n" + truncate_description_system_list(member.description) + "..." + "\n\n" + "Type `pk;member <id>` for full member description."
+
+        # If the member description isn't that long, just show it anwyay
         elif member.description:
-            member_description += "\n" + member.description + "\n"
+            member_description += "\n" + member.description
 
         embed.add_field(name=member.name, value=member_description or "\u200B", inline=False)
     return embed
