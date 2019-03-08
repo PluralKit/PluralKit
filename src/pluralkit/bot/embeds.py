@@ -236,8 +236,10 @@ def member_list(system: System, all_members: List[Member], current_page: int, pa
             member_description += "**Birthday:** {}\n".format(member.birthday_string())
         if member.pronouns:
             member_description += "**Pronouns:** {}\n".format(member.pronouns)
-        if member.description:
-            member_description += "\n" + member.description
+        if (len(member.description)) > 512:
+            member_description += "\n" + truncate_description_system_list(member.description) + "..." + "\n\n" + "Type `pk;member <id>` for full member description."
+        elif member.description:
+            member_description += "\n" + member.description + "\n"
 
         embed.add_field(name=member.name, value=member_description or "\u200B", inline=False)
     return embed
