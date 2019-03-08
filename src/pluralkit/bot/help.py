@@ -8,7 +8,7 @@ pk;system rename [new name]
 pk;system description [new description]
 pk;system avatar [new avatar url]
 pk;system tag [new system tag]
-pk;system timezone [time zone name]
+pk;system timezone [city/town]
 pk;system delete
 pk;system [system] fronter
 pk;system [system] fronthistory
@@ -27,6 +27,7 @@ pk;member <member>
 pk;member <member> rename <new name>
 pk;member <member> description [new description]
 pk;member <member> avatar [new avatar url]
+(Please bear in mind that your avatar image has to have 1 dimension 1024 pixels or less, i.e. 1024x2000 or 2500x1024, otherwise it will not stick!)
 pk;member <member> proxy [example match]
 pk;member <member> pronouns [new pronouns]
 pk;member <member> color [new color]
