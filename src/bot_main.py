@@ -19,4 +19,4 @@ elif "token" not in config and "TOKEN" not in os.environ:
     print("Config file must contain key 'token', or the environment variable TOKEN must be present.")
 else:
     from pluralkit import bot
-    bot.run(os.environ.get("TOKEN", config["token"]), os.environ.get("DATABASE_URI", config["database_uri"]), int(config.get("log_channel", 0)))
+    bot.run(os.environ.get("TOKEN", config.get("token")), os.environ.get("DATABASE_URI", config.get("database_uri"), int(config.get("log_channel", 0)))
