@@ -162,3 +162,11 @@ class Member(namedtuple("Member",
 
     async def message_count(self, conn) -> int:
         return await db.get_member_message_count(conn, self.id)
+
+    def birthday_string(self) -> Optional[str]:
+        if not self.birthday:
+            return None
+
+        if self.birthday.year == 1:
+            return self.birthday.strftime("%b %d")
+        return self.birthday.strftime("%b %d, %Y")

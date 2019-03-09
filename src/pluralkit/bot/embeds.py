@@ -121,10 +121,7 @@ async def member_card(conn, member: Member) -> discord.Embed:
         card.colour = int(member.color, 16)
 
     if member.birthday:
-        bday_val = member.birthday.strftime("%b %d, %Y")
-        if member.birthday.year == 1:
-            bday_val = member.birthday.strftime("%b %d")
-        card.add_field(name="Birthdate", value=bday_val)
+        card.add_field(name="Birthdate", value=member.birthday_string())
 
     if member.pronouns:
         card.add_field(name="Pronouns", value=truncate_field_body(member.pronouns))
@@ -236,7 +233,7 @@ def member_list(system: System, all_members: List[Member], current_page: int, pa
     for member in all_members[current_page*page_size:current_page*page_size+page_size]:
         member_description = "**ID**: {}\n".format(member.hid)
         if member.birthday:
-            member_description += "**Birthday:** {}\n".format(member.birthday.isoformat())
+            member_description += "**Birthday:** {}\n".format(member.birthday_string())
         if member.pronouns:
             member_description += "**Pronouns:** {}\n".format(member.pronouns)
         if member.description:
