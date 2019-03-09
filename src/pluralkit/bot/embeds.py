@@ -23,7 +23,7 @@ def truncate_description(s: str) -> str:
     return s[:2048]
 
 
-def truncate_description_system_list(s: str) -> str:
+def truncate_description_member_list(s: str) -> str:
     return s[:512]
 
 
@@ -102,7 +102,7 @@ async def system_card(conn, client: discord.Client, system: System, is_own_syste
         card.add_field(name="Description",
                        value=truncate_field_body(system.description), inline=False)
 
-    card.add_field(name="Members", value="*See `pk;system {} list`".format(system.hid) if not is_own_system else "*See `pk;system list`*")
+    card.add_field(name="Members", value="*See `pk;system {} list`*".format(system.hid) if not is_own_system else "*See `pk;system list`*")
     card.set_footer(text="System ID: {}".format(system.hid))
     return card
 
@@ -243,7 +243,7 @@ def member_list(system: System, all_members: List[Member], current_page: int, pa
 
         # If the member description is longer than 512 characters, we truncate it and leave a message to query the member for full Description
         if (len(member.description)) > 512:
-            member_description += "\n" + truncate_description_system_list(member.description) + "..." + "\n\n" + "Type `pk;member <id>` for full member description."
+            member_description += "\n" + truncate_description_member_list(member.description) + "..." + "\n\n" + "*See `pk;member <id>` for full member description.*"
 
         # If the member description isn't that long, just show it anwyay
         elif member.description:
