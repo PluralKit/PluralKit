@@ -362,7 +362,7 @@ async def system_frontpercent(ctx: CommandContext, system: System):
     await ctx.reply(embed=embed)
 
 async def system_list(ctx: CommandContext, system: System):
-    all_members = sorted(await system.get_members(ctx.conn), key=lambda m: m.name)
+    all_members = sorted(await system.get_members(ctx.conn), key=lambda m: m.name.lower())
     page_size = 5
     if len(all_members) <= page_size:
         # If we have less than 10 members, don't bother paginating
