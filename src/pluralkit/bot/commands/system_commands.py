@@ -396,5 +396,7 @@ async def system_list(ctx: CommandContext, system: System):
                 current_page = (current_page + 1) % page_count
             
             # If we can, remove the original reaction from the member
-            if ctx.message.channel.permissions_for(ctx.message.guild.get_member(ctx.client.user.id)).manage_messages:
-                await reaction.remove(ctx.message.author)
+            # Don't bother checking permission if we're in DMs (wouldn't work anyway)
+            if ctx.message.guild:
+                if ctx.message.channel.permissions_for(ctx.message.guild.get_member(ctx.client.user.id)).manage_messages:
+                    await reaction.remove(ctx.message.author)
