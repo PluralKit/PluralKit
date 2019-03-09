@@ -366,13 +366,13 @@ async def system_list(ctx: CommandContext, system: System):
     page_size = 5
     if len(all_members) <= page_size:
         # If we have less than 10 members, don't bother paginating
-        await ctx.reply(embed=embeds.member_list(await ctx.get_system(), all_members, 0, page_size))
+        await ctx.reply(embed=embeds.member_list(system, all_members, 0, page_size))
     else:
         current_page = 0
         msg: discord.Message = None
         while True:
             page_count = math.ceil(len(all_members) / page_size)
-            embed = embeds.member_list(await ctx.get_system(), all_members, current_page, page_size)
+            embed = embeds.member_list(system, all_members, current_page, page_size)
 
             # Add reactions for moving back and forth
             if not msg:
