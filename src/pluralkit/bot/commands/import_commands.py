@@ -30,7 +30,7 @@ async def import_tupperbox(ctx: CommandContext):
         raise CommandError("Timed out. Try running `pk;import` again.")
 
     s = io.BytesIO()
-    await message.attachments[0].save(s)
+    await message.attachments[0].save(s, use_cached=False)
     data = json.load(s)
     
     system = await ctx.get_system()
