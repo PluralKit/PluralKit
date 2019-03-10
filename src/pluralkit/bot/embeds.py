@@ -16,7 +16,9 @@ def truncate_field_name(s: str) -> str:
 
 
 def truncate_field_body(s: str) -> str:
-    return s[:1024]
+    if len(s) > 1024:
+        return s[:1024-3] + "..."
+    return s
 
 
 def truncate_description(s: str) -> str:
@@ -239,5 +241,5 @@ def member_list(system: System, all_members: List[Member], current_page: int, pa
         if member.description:
             member_description += "\n" + member.description
 
-        embed.add_field(name=member.name, value=member_description or "\u200B", inline=False)
+        embed.add_field(name=member.name, value=truncate_field_body(member_description) or "\u200B", inline=False)
     return embed
