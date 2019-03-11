@@ -21,8 +21,8 @@ class Switch(namedtuple("Switch", ["id", "system", "timestamp", "members"])):
     async def move(self, conn, new_timestamp):
         await db.move_switch(conn, self.system, self.id, new_timestamp)
 
-    async def to_json(self, conn):
+    async def to_json(self, hid_getter):
         return {
             "timestamp": self.timestamp.isoformat(),
-            "members": [member.hid for member in await self.fetch_members(conn)]
+            "members": [await hid_getter(m) for m in self.members]
         }

@@ -14,13 +14,19 @@ from pluralkit.bot import commands, proxy, channel_logger, embeds
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
 
-class Config(namedtuple("Config", ["database_uri", "token", "log_channel"])):
+class Config:
     required_fields = ["database_uri", "token"]
+    fields = ["database_uri", "token", "log_channel"]
 
     database_uri: str
     token: str
     log_channel: str
 
+    def __init__(self, database_uri: str, token: str, log_channel: str = None):
+        self.database_uri = database_uri
+        self.token = token
+        self.log_channel = log_channel
+        
     @staticmethod
     def from_file_and_env(filename: str) -> "Config":
         try:
@@ -36,7 +42,7 @@ class Config(namedtuple("Config", ["database_uri", "token", "log_channel"])):
                 raise e
 
         # Override with environment variables
-        for f in Config._fields:
+        for f in Config.fields:
             if f.upper() in os.environ:
                 config[f] = os.environ[f.upper()]
 

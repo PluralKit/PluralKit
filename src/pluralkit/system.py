@@ -38,6 +38,10 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
     @staticmethod
     async def get_by_token(conn, token: str) -> Optional["System"]:
         return await db.get_system_by_token(conn, token)
+    
+    @staticmethod
+    async def get_by_hid(conn, hid: str) -> Optional["System"]:
+        return await db.get_system_by_hid(conn, hid)
 
     @staticmethod
     async def create_system(conn, account_id: int, system_name: Optional[str] = None) -> "System":
@@ -234,7 +238,11 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         :returns: The `pytz.tzinfo` instance of the newly set time zone.
         """
 
-        tz = pytz.timezone(tz_name or "UTC")
+        try:
+            tz = pytz.timezone(tz_name or "UTC")
+        except pytz.UnknownTimeZoneError:
+            raise errors.InvalidTimeZoneError(tz_name)
+
         await db.update_system_field(conn, self.id, "ui_tz", tz.zone)
         return tz
 
@@ -304,5 +312,6 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
             "name": self.name,
             "description": self.description,
             "tag": self.tag,
-            "avatar_url": self.avatar_url
+            "avatar_url": self.avatar_url,
+            "tz": self.ui_tz
         }

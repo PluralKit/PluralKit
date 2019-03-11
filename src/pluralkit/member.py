@@ -39,6 +39,11 @@ class Member(namedtuple("Member",
         }
 
     @staticmethod
+    async def get_member_by_id(conn, member_id: int) -> Optional["Member"]:
+        """Fetch a member with the given internal member ID from the database."""
+        return await db.get_member(conn, member_id)
+
+    @staticmethod
     async def get_member_by_name(conn, system_id: int, member_name: str) -> "Optional[Member]":
         """Fetch a member by the given name in the given system from the database."""
         member = await db.get_member_by_name(conn, system_id, member_name)
