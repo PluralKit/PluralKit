@@ -24,6 +24,9 @@ services:
     - "2939:8080"
     environment:
     - "DATABASE_URI=postgres://postgres:postgres@db:5432/postgres"
+    - "CLIENT_ID"
+    - "CLIENT_SECRET"
+    - "REDIRECT_URI"
   db:
     image: postgres:alpine
     volumes:

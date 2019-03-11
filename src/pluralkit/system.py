@@ -116,6 +116,11 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         await db.update_system_field(conn, self.id, "token", new_token)
         return new_token
 
+    async def get_token(self, conn) -> str:
+        if self.token:
+            return self.token
+        return await self.refresh_token(conn)
+
     async def create_member(self, conn, member_name: str) -> Member:
         # TODO: figure out what to do if this errors out on collision on generate_hid
         new_hid = generate_hid()

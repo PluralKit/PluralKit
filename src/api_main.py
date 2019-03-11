@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-from aiohttp import web
+from aiohttp import web, ClientSession
 
 from pluralkit import db, utils
 from pluralkit.errors import PluralKitError
@@ -166,6 +166,33 @@ class Handlers:
 
         return web.json_response(await switch.to_json(hid_getter))
 
+    async def discord_oauth(request):
+        code = await request.text()
+        async with ClientSession() as sess:
+            data = {
+                'client_id': os.environ["CLIENT_ID"],
+                'client_secret': os.environ["CLIENT_SECRET"],
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': os.environ["REDIRECT_URI"],
+                'scope': 'identify'
+            }
+            headers = {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+            res = await sess.post("https://discordapp.com/api/v6/oauth2/token", data=data, headers=headers)
+            if res.status != 200:
+                raise web.HTTPBadRequest()
+
+            access_token = (await res.json())["access_token"]
+            res = await sess.get("https://discordapp.com/api/v6/users/@me", headers={"Authorization": "Bearer " + access_token})
+            user_id = int((await res.json())["id"])
+            
+            system = await System.get_by_account(request["conn"], user_id)
+            if not system:
+                raise web.HTTPUnauthorized()
+            return web.Response(text=await system.get_token(request["conn"]))
+
 async def run():
     app = web.Application(middlewares=[db_middleware, auth_middleware, error_middleware])
 
@@ -179,7 +206,8 @@ async def run():
         web.get("/m/{member}", Handlers.get_member),
         web.post("/m", Handlers.post_member),
         web.patch("/m/{member}", Handlers.patch_member),
-        web.delete("/m/{member}", Handlers.delete_member)
+        web.delete("/m/{member}", Handlers.delete_member),
+        web.post("/discord_oauth", Handlers.discord_oauth)
     ])
     app["pool"] = await db.connect(
         os.environ["DATABASE_URI"]
