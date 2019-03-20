@@ -104,7 +104,8 @@ class Handlers:
 
     @require_system
     async def post_member(request):
-        member = await request["system"].create_member(request["conn"])
+        req = await request.json()
+        member = await request["system"].create_member(request["conn"], req["name"])
         return web.json_response(member.to_json())
 
     @require_system
