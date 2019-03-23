@@ -136,13 +136,13 @@ async def system_timezone(ctx: CommandContext):
 
     if not timezone_name:
         raise CommandError("Time zone for city '{}' not found. This should never happen.".format(data[0]["display_name"]))
-    
+
     # This should hopefully result in a valid time zone name
     # (if not, something went wrong)
     tz = await system.set_time_zone(ctx.conn, timezone_name)
     offset = tz.utcoffset(datetime.utcnow())
     offset_str = "UTC{:+02d}:{:02d}".format(int(offset.total_seconds() // 3600), int(offset.total_seconds() // 60 % 60))
-    
+
     await ctx.reply_ok("System time zone set to {} ({}, {}).\n*Data from OpenStreetMap, queried using Nominatim.*".format(tz.tzname(datetime.utcnow()), offset_str, tz.zone))
 
 
@@ -218,7 +218,7 @@ async def account_link(ctx: CommandContext):
 
 async def account_unlink(ctx: CommandContext):
     system = await ctx.ensure_system()
-    
+
     msg = await ctx.reply("Are you sure you want to unlink this account from your system?")
     if not await ctx.confirm_react(ctx.message.author, msg):
         raise CommandError("Account unlink cancelled.")
@@ -363,9 +363,9 @@ async def system_frontpercent(ctx: CommandContext, system: System):
 
 async def system_list(ctx: CommandContext, system: System):
     all_members = sorted(await system.get_members(ctx.conn), key=lambda m: m.name.lower())
-    page_size = 5
+    page_size = 8
     if len(all_members) <= page_size:
-        # If we have less than 10 members, don't bother paginating
+        # If we have less than 8 members, don't bother paginating
         await ctx.reply(embed=embeds.member_list(system, all_members, 0, page_size))
     else:
         current_page = 0
@@ -388,13 +388,13 @@ async def system_list(ctx: CommandContext, system: System):
             try:
                 reaction, _ = await ctx.client.wait_for("reaction_add", timeout=5*60, check=check)
             except asyncio.TimeoutError:
-                return 
+                return
 
             if reaction.emoji == "\u2B05":
                 current_page = (current_page - 1) % page_count
             elif reaction.emoji == "\u27A1":
                 current_page = (current_page + 1) % page_count
-            
+
             # If we can, remove the original reaction from the member
             # Don't bother checking permission if we're in DMs (wouldn't work anyway)
             if ctx.message.guild:
