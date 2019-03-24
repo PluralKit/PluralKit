@@ -1,3 +1,10 @@
+command_notes = """
+__**Command notes**__
+Parameters in <angle brackets> are required, [square brackets] are optional. **Do not include the brackets themselves when using the command.**
+Member references can be a member ID or, for your own system, a member name. **If a member name contains spaces, it must be wrapped in "quotation marks" when being referenced (but not during creation).**
+Leaving an optional parameter blank will often clear the relevant value.
+""".strip()
+
 system_commands = """
 __**System commands**__
 Commands for adding, removing, editing, and linking systems, as well as querying fronter and front history.
@@ -38,8 +45,8 @@ pk;switch move <time to move>
 pk;switch out
 pk;switch delete
 ```
-**Please bear in mind that your avatar image has to have 1 dimension 1024 pixels or less, i.e. 1024x2000 or 2500x1024, and be 1 MB or less in size otherwise it will not stick!**
-""".strip()
+**Please bear in mind that your avatar image has to have 1 dimension 1024 pixels or less, i.e. 1024x2000 or 2500x1024, and be 1 MB or less in size otherwise it will not stick!**\n\n{}
+""".strip().format(command_notes)
 
 help_commands = """
 __**Help commands**__
@@ -62,13 +69,6 @@ pk;export
 pk;token
 pk;token refresh
 ```
-""".strip()
-
-command_notes = """
-__**Command notes**__
-Parameters in <angle brackets> are required, [square brackets] are optional. **Do not include the brackets themselves when using the command.**
-Member references can be a member ID or, for your own system, a member name. **If a member name contains spaces, it must be wrapped in "quotation marks" when being referenced (but not during creation).**
-Leaving an optional parameter blank will often clear the relevant value.
 """.strip()
 
 all_commands = """

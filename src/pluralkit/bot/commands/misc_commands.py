@@ -121,7 +121,7 @@ async def pkthunder(ctx: CommandContext):
     await ctx.message.channel.send("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*")
 
 async def pkfreeze(ctx: CommandContext):
-    await ctx.message.channel.send("A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact. ")
+    await ctx.message.channel.send("*A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact.*")
 
 async def pkstarstorm(ctx: CommandContext):
     await ctx.message.channel.send("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*")
