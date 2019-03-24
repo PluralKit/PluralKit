@@ -18,14 +18,17 @@ async def token_get(ctx: CommandContext):
     else:
         token = await system.refresh_token(ctx.conn)
 
-    token_message = "Here's your API token: \n**`{}`**\n{}".format(token, disclaimer)
-    return await ctx.reply_ok_dm(token_message)
-
+    token_message = "{}\n\u2705 Here's your API token:".format(disclaimer)
+    if token:
+        await ctx.message.author.send(token_message)
+        await ctx.message.author.send(token)
+    return
 
 async def token_refresh(ctx: CommandContext):
     system = await ctx.ensure_system()
 
     token = await system.refresh_token(ctx.conn)
-    token_message = "Your previous API token has been invalidated. You will need to change it anywhere it's currently used.\nHere's your new API token:\n**`{}`**\n{}".format(
-        token, disclaimer)
-    return await ctx.reply_ok_dm(token_message)
+    token_message = "Your previous API token has been invalidated. You will need to change it anywhere it's currently used.\n{}\n\u2705 Here's your new API token:".format(disclaimer)
+    if token:
+        await ctx.message.author.send(token_message)
+        await ctx.message.author.send(token)
