@@ -45,8 +45,8 @@ pk;switch move <time to move>
 pk;switch out
 pk;switch delete
 ```
-**Please bear in mind that your avatar image has to have 1 dimension 1024 pixels or less, i.e. 1024x2000 or 2500x1024, and be 1 MB or less in size otherwise it will not stick!**\n\n{}
-""".strip().format(command_notes)
+**Please bear in mind that your avatar image has to have 1 dimension 1024 pixels or less, i.e. 1024x2000 or 2500x1024, and be 1 MB or less in size otherwise it will not stick!**
+""".strip()
 
 help_commands = """
 __**Help commands**__
