@@ -66,7 +66,7 @@ def run(config: Config):
 
     asyncio.get_event_loop().run_until_complete(create_tables())
 
-    client = discord.Client()
+    client = discord.AutoShardedClient()
     logger = channel_logger.ChannelLogger(client)
 
     @client.event
