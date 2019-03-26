@@ -47,7 +47,7 @@ class Handlers:
     @require_system
     async def get_system(request):
         return web.json_response(request["system"].to_json())
-    
+
     async def get_other_system(request):
         system_id = request.match_info.get("system")
         system = await System.get_by_hid(request["conn"], system_id)
@@ -79,6 +79,24 @@ class Handlers:
             return cache[member_id].hid
 
         return web.json_response([await s.to_json(hid_getter) for s in switches])
+
+    async def get_system_fronters(request):
+        system_id = request.match_info.get("system")
+        system = await System.get_by_hid(request["conn"], system_id)
+
+        if not system:
+            raise web.HTTPNotFound()
+
+        members, stamp = await utils.get_fronters(request["conn"], system.id)
+        if not stamp:
+            # No switch has been registered at all
+            raise web.HTTPNotFound()
+
+        data = {
+            "timestamp": stamp.isoformat(),
+            "members": [member.to_json() for member in members]
+            }
+        return web.json_response(data)
 
     @require_system
     async def patch_system(request):
@@ -116,7 +134,7 @@ class Handlers:
             raise web.HTTPNotFound()
         if member.system != request["system"].id:
             raise web.HTTPUnauthorized()
-        
+
         req = await request.json()
         if "name" in req:
             await member.set_name(request["conn"], req["name"])
@@ -133,7 +151,7 @@ class Handlers:
         if "prefix" in req or "suffix" in req:
             await member.set_proxy_tags(request["conn"], req.get("prefix", member.prefix), req.get("suffix", member.suffix))
         return web.json_response((await Member.get_member_by_id(request["conn"], member.id)).to_json())
-    
+
     @require_system
     async def delete_member(request):
         member_id = request.match_info.get("member")
@@ -188,7 +206,7 @@ class Handlers:
             access_token = (await res.json())["access_token"]
             res = await sess.get("https://discordapp.com/api/v6/users/@me", headers={"Authorization": "Bearer " + access_token})
             user_id = int((await res.json())["id"])
-            
+
             system = await System.get_by_account(request["conn"], user_id)
             if not system:
                 raise web.HTTPUnauthorized()
@@ -203,6 +221,7 @@ async def run():
         web.get("/s/{system}", Handlers.get_other_system),
         web.get("/s/{system}/members", Handlers.get_system_members),
         web.get("/s/{system}/switches", Handlers.get_system_switches),
+        web.get("/s/{system}/fronters", Handlers.get_system_fronters),
         web.patch("/s", Handlers.patch_system),
         web.get("/m/{member}", Handlers.get_member),
         web.post("/m", Handlers.post_member),
