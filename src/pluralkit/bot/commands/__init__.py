@@ -201,6 +201,8 @@ async def command_root(ctx: CommandContext):
         await misc_commands.pkfire(ctx)
     elif ctx.match("thunder"):
         await misc_commands.pkthunder(ctx)
+    elif ctx.match("freeze"):
+        await misc_commands.pkfreeze(ctx)
     elif ctx.match("starstorm"):
         await misc_commands.pkstarstorm(ctx)
     else:

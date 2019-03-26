@@ -16,7 +16,7 @@ async def help_root(ctx: CommandContext):
     elif ctx.match("system"):
         await ctx.reply(help.system_commands, embed=help_footer_embed())
     elif ctx.match("member"):
-        await ctx.reply(help.member_commands, embed=help_footer_embed())
+        await ctx.reply(help.member_commands + "\n\n" + help.command_notes, embed=help_footer_embed())
     else:
         await ctx.reply(help.root, embed=help_footer_embed())
 
@@ -94,7 +94,7 @@ async def export(ctx: CommandContext):
     await working_msg.delete()
 
     f = io.BytesIO(json.dumps(data).encode("utf-8"))
-    await ctx.message.channel.send(content="Export successful! File sent in your DMs.")
+    await ctx.reply_ok("DM'd!")
     await ctx.message.author.send(content="Here you go!", file=discord.File(fp=f, filename="pluralkit_system.json"))
 
 
@@ -119,6 +119,9 @@ async def pkfire(ctx: CommandContext):
 
 async def pkthunder(ctx: CommandContext):
     await ctx.message.channel.send("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*")
+
+async def pkfreeze(ctx: CommandContext):
+    await ctx.message.channel.send("*A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact.*")
 
 async def pkstarstorm(ctx: CommandContext):
     await ctx.message.channel.send("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*")
