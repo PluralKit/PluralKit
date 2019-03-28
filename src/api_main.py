@@ -186,24 +186,9 @@ class Handlers:
         return web.json_response(await switch.to_json(hid_getter))
 
     async def discord_oauth(request):
-        code = await request.text()
+        access_token = await request.text()
         async with ClientSession() as sess:
-            data = {
-                'client_id': os.environ["CLIENT_ID"],
-                'client_secret': os.environ["CLIENT_SECRET"],
-                'grant_type': 'authorization_code',
-                'code': code,
-                'redirect_uri': os.environ["REDIRECT_URI"],
-                'scope': 'identify'
-            }
-            headers = {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-            res = await sess.post("https://discordapp.com/api/v6/oauth2/token", data=data, headers=headers)
-            if res.status != 200:
-                raise web.HTTPBadRequest()
-
-            access_token = (await res.json())["access_token"]
+            
             res = await sess.get("https://discordapp.com/api/v6/users/@me", headers={"Authorization": "Bearer " + access_token})
             user_id = int((await res.json())["id"])
 
