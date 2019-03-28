@@ -42,7 +42,7 @@ async def import_tupperbox(ctx: CommandContext):
     if len(result.tags) > 1:
         tag_note = "\n\nPluralKit's tags work on a per-system basis. Since your Tupperbox members have more than one unique tag, PluralKit has not imported the tags. Set your system tag manually with `pk;system tag <tag>`."
     
-    await ctx.reply_ok("Updated {} member{}, created {} member{}. Type `pk;system` to check!{}".format(
+    await ctx.reply_ok("Updated {} member{}, created {} member{}. Type `pk;system list` to check!{}".format(
         len(result.updated), "s" if len(result.updated) != 1 else "",
         len(result.created), "s" if len(result.created) != 1 else "",
         tag_note
