@@ -1,6 +1,6 @@
 from pluralkit.bot.commands import CommandContext
 
-disclaimer = "Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`."
+disclaimer = "\u26A0 Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`."
 
 
 async def token_root(ctx: CommandContext):
@@ -20,6 +20,7 @@ async def token_get(ctx: CommandContext):
 
     token_message = "{}\n\u2705 Here's your API token:".format(disclaimer)
     if token:
+        await ctx.message.add_reaction("\u2705")
         await ctx.message.author.send(token_message)
         await ctx.message.author.send(token)
     return
