@@ -7,19 +7,81 @@ from pluralkit.bot import help
 from pluralkit.bot.commands import *
 from pluralkit.bot.embeds import help_footer_embed
 
+prefix = "pk;" # TODO: configurable
+
+def make_footer_embed():
+    embed = discord.Embed()
+    embed.set_footer(text=help.helpfile["footer"])
+    return embed
+
+def make_command_embed(command):
+    embed = make_footer_embed()
+    embed.title = prefix + command["usage"]
+    embed.description = (command["description"] + "\n" + command.get("longdesc", "")).strip()
+    embed.add_field(name="Usage", value=prefix + command["usage"], inline=False)
+    if "examples" in command:
+        embed.add_field(name="Examples" if len(command["examples"]) > 1 else "Example", value="\n".join([prefix + cmd for cmd in command["examples"]]), inline=False)
+    if "subcommands" in command:
+        embed.add_field(name="Subcommands", value="\n".join([command["name"] + " " + sc["name"] for sc in command["subcommands"]]), inline=False)
+    return embed
+
+def find_command(command_list, name):
+    for command in command_list:
+        if command["name"].lower().strip() == name.lower().strip():
+            return command 
 
 async def help_root(ctx: CommandContext):
-    if ctx.match("commands"):
-        await ctx.reply(help.all_commands, embed=help_footer_embed())
-    elif ctx.match("proxy"):
-        await ctx.reply(help.proxy_guide, embed=help_footer_embed())
-    elif ctx.match("system"):
-        await ctx.reply(help.system_commands, embed=help_footer_embed())
-    elif ctx.match("member"):
-        await ctx.reply(help.member_commands + "\n\n" + help.command_notes, embed=help_footer_embed())
-    else:
-        await ctx.reply(help.root, embed=help_footer_embed())
+    for page_name, page_content in help.helpfile["pages"].items():
+        if ctx.match(page_name):
+            return await help_page(ctx, page_content)
+    
+    if not ctx.has_next():
+        return await help_page(ctx, help.helpfile["pages"]["root"])
 
+    return await help_command(ctx, ctx.remaining())
+    
+async def help_page(ctx, sections):
+    msg = ""
+    for section in sections:
+        msg += "__**{}**__\n{}\n\n".format(section["name"], section["content"])
+
+    return await ctx.reply(content=msg, embed=make_footer_embed())
+
+async def help_command(ctx, command_name):
+    name_parts = command_name.replace(prefix, "").split(" ")
+    command = find_command(help.helpfile["commands"], name_parts[0])
+    name_parts = name_parts[1:]
+    if not command:
+        raise CommandError("Could not find command '{}'.".format(command_name))
+    while len(name_parts) > 0:
+        found_command = find_command(command["subcommands"], name_parts[0])
+        if not found_command:
+            break
+        command = found_command
+        name_parts = name_parts[1:]
+    
+    return await ctx.reply(embed=make_command_embed(command))
+
+async def command_list(ctx):
+    cmds = []
+
+    categories = {}
+    def make_command_list(lst):
+        for cmd in lst:
+            if not cmd["category"] in categories:
+                categories[cmd["category"]] = []
+            categories[cmd["category"]].append("**{}{}** - {}".format(prefix, cmd["usage"], cmd["description"]))
+            if "subcommands" in cmd:
+                make_command_list(cmd["subcommands"])
+    make_command_list(help.helpfile["commands"])
+
+    embed = discord.Embed()
+    embed.title = "PluralKit Commands"
+    embed.description = "Type `pk;help <command>` for more information."
+    for cat_name, cat_cmds in categories.items():
+        embed.add_field(name=cat_name, value="\n".join(cat_cmds))
+    await ctx.reply(embed=embed)
+    
 
 async def invite_link(ctx: CommandContext):
     client_id = (await ctx.client.application_info()).id

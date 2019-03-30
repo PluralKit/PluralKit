@@ -205,8 +205,10 @@ async def command_root(ctx: CommandContext):
         await misc_commands.pkfreeze(ctx)
     elif ctx.match("starstorm"):
         await misc_commands.pkstarstorm(ctx)
+    elif ctx.match("commands"):
+        await misc_commands.command_list(ctx)
     else:
-        raise CommandError("Unknown command {}. For a list of commands, type `pk;help commands`.".format(ctx.pop_str()))
+        raise CommandError("Unknown command {}. For a list of commands, type `pk;commands`.".format(ctx.pop_str()))
 
 
 async def run_command(ctx: CommandContext, func):
