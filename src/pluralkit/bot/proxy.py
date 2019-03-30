@@ -6,7 +6,7 @@ from io import BytesIO
 from typing import Optional
 
 from pluralkit import db
-from pluralkit.bot import utils, channel_logger
+from pluralkit.bot import utils, channel_logger, embeds
 from pluralkit.bot.channel_logger import ChannelLogger
 from pluralkit.member import Member
 from pluralkit.system import System
@@ -232,3 +232,23 @@ async def try_delete_by_reaction(conn, client: discord.Client, message_id: int, 
     await original_message.delete()
 
     await handle_deleted_message(conn, client, message_id, original_message.content, logger)
+
+async def do_query_message(conn, client: discord.Client, queryer_id: int, message_id: int) -> bool:
+    # Find the message that was queried
+    msg = await db.get_message(conn, message_id)
+    if not msg:
+        return False
+
+    # Then DM the queryer the message embed
+    card = await embeds.message_card(client, msg)
+    user = client.get_user(queryer_id)
+    if not user:
+        # We couldn't find this user in the cache - bail
+        return False
+    
+    # Send the card to the user
+    try:
+        await user.send(embed=card)
+    except discord.Forbidden:
+        # User doesn't have DMs enabled, not much we can do about that
+        pass
