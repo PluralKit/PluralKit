@@ -20,7 +20,7 @@ async def token_get(ctx: CommandContext):
 
     token_message = "{}\n\u2705 Here's your API token:".format(disclaimer)
     if token:
-        await ctx.message.add_reaction("\u2705")
+        await ctx.reply_ok("DM'd!")
         await ctx.message.author.send(token_message)
         await ctx.message.author.send(token)
     return
