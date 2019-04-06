@@ -363,40 +363,79 @@ async def system_frontpercent(ctx: CommandContext, system: System):
 
 async def system_list(ctx: CommandContext, system: System):
     all_members = sorted(await system.get_members(ctx.conn), key=lambda m: m.name.lower())
-    page_size = 8
-    if len(all_members) <= page_size:
-        # If we have less than 8 members, don't bother paginating
-        await ctx.reply(embed=embeds.member_list(system, all_members, 0, page_size))
+    if ctx.match("full"):
+        page_size = 8
+        if len(all_members) <= page_size:
+            # If we have less than 8 members, don't bother paginating
+            await ctx.reply(embed=embeds.member_list_full(system, all_members, 0, page_size))
+        else:
+            current_page = 0
+            msg: discord.Message = None
+            while True:
+                page_count = math.ceil(len(all_members) / page_size)
+                embed = embeds.member_list_full(system, all_members, current_page, page_size)
+
+                # Add reactions for moving back and forth
+                if not msg:
+                    msg = await ctx.reply(embed=embed)
+                    await msg.add_reaction("\u2B05")
+                    await msg.add_reaction("\u27A1")
+                else:
+                    await msg.edit(embed=embed)
+
+                def check(reaction, user):
+                    return user.id == ctx.message.author.id and reaction.emoji in ["\u2B05", "\u27A1"]
+
+                try:
+                    reaction, _ = await ctx.client.wait_for("reaction_add", timeout=5*60, check=check)
+                except asyncio.TimeoutError:
+                    return
+
+                if reaction.emoji == "\u2B05":
+                    current_page = (current_page - 1) % page_count
+                elif reaction.emoji == "\u27A1":
+                    current_page = (current_page + 1) % page_count
+
+                # If we can, remove the original reaction from the member
+                # Don't bother checking permission if we're in DMs (wouldn't work anyway)
+                if ctx.message.guild:
+                    if ctx.message.channel.permissions_for(ctx.message.guild.get_member(ctx.client.user.id)).manage_messages:
+                        await reaction.remove(ctx.message.author)
     else:
-        current_page = 0
-        msg: discord.Message = None
-        while True:
-            page_count = math.ceil(len(all_members) / page_size)
-            embed = embeds.member_list(system, all_members, current_page, page_size)
 
-            # Add reactions for moving back and forth
-            if not msg:
-                msg = await ctx.reply(embed=embed)
-                await msg.add_reaction("\u2B05")
-                await msg.add_reaction("\u27A1")
-            else:
-                await msg.edit(embed=embed)
+        #Basically same code as above
+        #A dozen members at a time seems handy
+        page_size = 12
+        if len(all_members) <= page_size:
+            # If we have less than 12 members, don't bother paginating
+            await ctx.reply(embed=embeds.member_list_short(system, all_members, 0, page_size))
+        else:
+            current_page = 0
+            msg: discord.Message = None
+            while True:
+                page_count = math.ceil(len(all_members) / page_size)
+                embed = embeds.member_list_short(system, all_members, current_page, page_size)
 
-            def check(reaction, user):
-                return user.id == ctx.message.author.id and reaction.emoji in ["\u2B05", "\u27A1"]
+                if not msg:
+                    msg = await ctx.reply(embed=embed)
+                    await msg.add_reaction("\u2B05")
+                    await msg.add_reaction("\u27A1")
+                else:
+                    await msg.edit(embed=embed)
 
-            try:
-                reaction, _ = await ctx.client.wait_for("reaction_add", timeout=5*60, check=check)
-            except asyncio.TimeoutError:
-                return
+                def check(reaction, user):
+                    return user.id == ctx.message.author.id and reaction.emoji in ["\u2B05", "\u27A1"]
 
-            if reaction.emoji == "\u2B05":
-                current_page = (current_page - 1) % page_count
-            elif reaction.emoji == "\u27A1":
-                current_page = (current_page + 1) % page_count
+                try:
+                    reaction, _ = await ctx.client.wait_for("reaction_add", timeout=5*60, check=check)
+                except asyncio.TimeoutError:
+                    return
 
-            # If we can, remove the original reaction from the member
-            # Don't bother checking permission if we're in DMs (wouldn't work anyway)
-            if ctx.message.guild:
-                if ctx.message.channel.permissions_for(ctx.message.guild.get_member(ctx.client.user.id)).manage_messages:
-                    await reaction.remove(ctx.message.author)
+                if reaction.emoji == "\u2B05":
+                    current_page = (current_page - 1) % page_count
+                elif reaction.emoji == "\u27A1":
+                    current_page = (current_page + 1) % page_count
+
+                if ctx.message.guild:
+                    if ctx.message.channel.permissions_for(ctx.message.guild.get_member(ctx.client.user.id)).manage_messages:
+                        await reaction.remove(ctx.message.author)
