@@ -243,7 +243,7 @@ def member_list_short(system: System, all_members: List[Member], current_page: i
     desc = ""
     for member in all_members[current_page*page_size:current_page*page_size+page_size]:
         if member.prefix or member.suffix:
-            desc += "[`{}`] {} *({}text{})*\n".format(member.hid, member.name, member.prefix, member.suffix)
+            desc += "[`{}`] {} *({}text{})*\n".format(member.hid, member.name, member.prefix or "", member.suffix or "")
         else:
             desc += "[`{}`] {}\n".format(member.hid, member.name)
     embed.description = desc
