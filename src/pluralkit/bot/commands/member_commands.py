@@ -7,8 +7,6 @@ from pluralkit.errors import PluralKitError
 async def member_root(ctx: CommandContext):
     if ctx.match("new") or ctx.match("create") or ctx.match("add") or ctx.match("register"):
         await new_member(ctx)
-    elif ctx.match("help"):
-        await ctx.reply(help.member_commands)
     elif ctx.match("set"):
         await member_set(ctx)
     # TODO "pk;member list"
