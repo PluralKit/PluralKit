@@ -79,9 +79,10 @@
                 },
                 {
                     "name": "list",
-                    "usage": "system [id] list",
+                    "usage": "system [id] list [full]",
                     "category": "System",
-                    "description": "Shows a paginated list of a system's members."
+                    "description": "Shows a paginated list of a system's members. Add 'full' for more details.",
+                    "examples": ["system list", "system list full", "system 102083498529026048 list"]
                 }
             ]
         },
