@@ -362,6 +362,8 @@ async def system_frontpercent(ctx: CommandContext, system: System):
     await ctx.reply(embed=embed)
 
 async def system_list(ctx: CommandContext, system: System):
+    # TODO: refactor this
+    
     all_members = sorted(await system.get_members(ctx.conn), key=lambda m: m.name.lower())
     if ctx.match("full"):
         page_size = 8
@@ -404,10 +406,10 @@ async def system_list(ctx: CommandContext, system: System):
     else:
 
         #Basically same code as above
-        #A dozen members at a time seems handy
-        page_size = 12
+        #25 members at a time seems handy
+        page_size = 25
         if len(all_members) <= page_size:
-            # If we have less than 12 members, don't bother paginating
+            # If we have less than 25 members, don't bother paginating
             await ctx.reply(embed=embeds.member_list_short(system, all_members, 0, page_size))
         else:
             current_page = 0

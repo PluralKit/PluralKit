@@ -224,6 +224,7 @@ def help_footer_embed() -> discord.Embed:
     embed.set_footer(text="By @Ske#6201 | GitHub: https://github.com/xSke/PluralKit/")
     return embed
 
+# TODO: merge these somehow, they're very similar
 def member_list_short(system: System, all_members: List[Member], current_page: int, page_size: int):
     page_count = int(math.ceil(len(all_members) / page_size))
 
@@ -238,11 +239,14 @@ def member_list_short(system: System, all_members: List[Member], current_page: i
 
     embed = discord.Embed()
     embed.title = title
+
+    desc = ""
     for member in all_members[current_page*page_size:current_page*page_size+page_size]:
-        member_description = "**ID**: {}\n".format(member.hid)
-        
-        #Removed truncating since it's just the ID
-        embed.add_field(name=member.name, value=member_description, inline=False)
+        if member.prefix or member.suffix:
+            desc += "[`{}`] {} *({}text{})*\n".format(member.hid, member.name, member.prefix, member.suffix)
+        else:
+            desc += "[`{}`] {}\n".format(member.hid, member.name)
+    embed.description = desc
     return embed
 
 def member_list_full(system: System, all_members: List[Member], current_page: int, page_size: int):
