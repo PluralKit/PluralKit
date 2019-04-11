@@ -28,7 +28,7 @@ async def specific_member_root(ctx: CommandContext):
 
         if ctx.match("name") or ctx.match("rename"):
             await member_name(ctx, member)
-        elif ctx.match("description"):
+        elif ctx.match("description") or ctx.match("desc"):
             await member_description(ctx, member)
         elif ctx.match("avatar") or ctx.match("icon"):
             await member_avatar(ctx, member)

@@ -28,7 +28,7 @@ async def system_root(ctx: CommandContext):
         await system_tag(ctx)
     elif ctx.match("new") or ctx.match("register") or ctx.match("create") or ctx.match("init"):
         await system_new(ctx)
-    elif ctx.match("delete") or ctx.match("delete") or ctx.match("erase"):
+    elif ctx.match("delete") or ctx.match("remove") or ctx.match("destroy") or ctx.match("erase"):
         await system_delete(ctx)
     elif ctx.match("front") or ctx.match("fronter") or ctx.match("fronters"):
         await system_fronter(ctx, await ctx.ensure_system())
@@ -363,7 +363,7 @@ async def system_frontpercent(ctx: CommandContext, system: System):
 
 async def system_list(ctx: CommandContext, system: System):
     # TODO: refactor this
-    
+
     all_members = sorted(await system.get_members(ctx.conn), key=lambda m: m.name.lower())
     if ctx.match("full"):
         page_size = 8
