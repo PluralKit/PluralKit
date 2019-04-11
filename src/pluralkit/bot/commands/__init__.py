@@ -44,7 +44,7 @@ class CommandError(Exception):
 class CommandContext:
     client: discord.Client
     message: discord.Message
-    
+
     def __init__(self, client: discord.Client, message: discord.Message, conn, args: str, system: Optional[System]):
         self.client = client
         self.message = message
@@ -171,9 +171,9 @@ import pluralkit.bot.commands.system_commands
 
 
 async def command_root(ctx: CommandContext):
-    if ctx.match("system"):
+    if ctx.match("system") or ctx.match("s"):
         await system_commands.system_root(ctx)
-    elif ctx.match("member"):
+    elif ctx.match("member") or ctx.match("m"):
         await member_commands.member_root(ctx)
     elif ctx.match("link"):
         await system_commands.account_link(ctx)
@@ -187,7 +187,7 @@ async def command_root(ctx: CommandContext):
         await misc_commands.invite_link(ctx)
     elif ctx.match("export"):
         await misc_commands.export(ctx)
-    elif ctx.match("switch"):
+    elif ctx.match("switch") or ctx.match("sw"):
         await switch_commands.switch_root(ctx)
     elif ctx.match("token"):
         await api_commands.token_root(ctx)
