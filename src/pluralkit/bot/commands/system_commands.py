@@ -20,7 +20,7 @@ async def system_root(ctx: CommandContext):
     # Commands that operate without a specified system (usually defaults to the executor's own system)
     if ctx.match("name") or ctx.match("rename"):
         await system_name(ctx)
-    elif ctx.match("description"):
+    elif ctx.match("description") or ctx.match("desc"):
         await system_description(ctx)
     elif ctx.match("avatar") or ctx.match("icon"):
         await system_avatar(ctx)

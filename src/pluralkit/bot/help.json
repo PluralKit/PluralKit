@@ -2,6 +2,7 @@
     "commands": [
         {
             "name": "system",
+            "aliases": ["s"],
             "usage": "system [id]",
             "description": "Shows information about a system.",
             "longdesc": "The given ID can either be a 5-character ID, a Discord account @mention, or a Discord account ID. Leave blank to show your own system.",
@@ -10,24 +11,28 @@
             "subcommands": [
                 {
                     "name": "new",
+                    "aliases": ["system register", "system create", "system init"],
                     "usage": "system new [name]",
                     "category": "System",
                     "description": "Creates a new system registered to your account."
                 },
                 {
                     "name": "name",
+                    "alises": ["system rename"],
                     "usage": "system name [name]",
                     "category": "System",
                     "description": "Changes the name of your system."
                 },
                 {
                     "name": "description",
+                    "aliases": ["system desc"],
                     "usage": "system description [description]",
                     "category": "System",
                     "description": "Changes the description of your system."
                 },
                 {
                     "name": "avatar",
+                    "aliases": ["system icon"],
                     "usage": "system avatar [avatar url]",
                     "category": "System",
                     "description": "Changes the avatar of your system.",
@@ -52,6 +57,7 @@
                 },
                 {
                     "name": "delete",
+                    "aliases": ["system remove", "system destroy", "system erase"],
                     "usage": "system delete",
                     "category": "System",
                     "description": "Deletes your system.",
@@ -59,6 +65,7 @@
                 },
                 {
                     "name": "fronter",
+                    "aliases": ["system front", "system fronters"],
                     "usage": "system [id] fronter",
                     "category": "System",
                     "description": "Shows the current fronter of a system."
@@ -71,6 +78,7 @@
                 },
                 {
                     "name": "frontpercent",
+                    "aliases": ["system frontbreakdown", "system frontpercentage"],
                     "usage": "system [id] fronthistory [timeframe]",
                     "category": "System",
                     "description": "Shows the aggregated front history of a system within a given time frame.",
@@ -79,6 +87,7 @@
                 },
                 {
                     "name": "list",
+                    "aliases": ["system members"],
                     "usage": "system [id] list [full]",
                     "category": "System",
                     "description": "Shows a paginated list of a system's members. Add 'full' for more details.",
@@ -103,12 +112,21 @@
         },
         {
             "name": "member",
+            "aliases": ["m"],
             "usage": "member <name>",
             "category": "Member",
             "description": "Shows information about a member.",
             "longdesc": "The given member name can either be the name of a member in your own system or a 5-character member ID (in any system).",
             "examples": ["member John", "member abcde"],
             "subcommands": [
+                {
+                    "name": "new",
+                    "aliases": ["member add", "member create", "member register"],
+                    "usage": "member new <name>",
+                    "category": "Member",
+                    "description": "Creates a new system member.",
+                    "exmaples": ["member new Jack"]
+                },
                 {
                     "name": "rename",
                     "usage": "member <name> rename <name>",
@@ -118,6 +136,7 @@
                 },
                 {
                     "name": "description",
+                    "aliases": ["member desc"],
                     "usage": "member <name> description [description]",
                     "category": "Member",
                     "description": "Changes the description of a member.",
@@ -125,6 +144,7 @@
                 },
                 {
                     "name": "avatar",
+                    "aliases": ["member icon"],
                     "usage": "member <name> avatar [avatarurl]",
                     "category": "Member",
                     "description": "Changes the avatar of a member.",
@@ -133,6 +153,7 @@
                 },
                 {
                     "name": "proxy",
+                    "aliases": ["member tags"],
                     "usage": "member <name> proxy [tags]",
                     "category": "Member",
                     "description": "Changes the proxy tags of a member.",
@@ -141,6 +162,7 @@
                 },
                 {
                     "name": "pronouns",
+                    "aliases": ["member pronoun"],
                     "usage": "member <name> pronouns [pronouns]",
                     "category": "Member",
                     "description": "Changes the pronouns of a member.",
@@ -149,6 +171,7 @@
                 },
                 {
                     "name": "color",
+                    "aliases": ["member colour"],
                     "usage": "member <name> color [color]",
                     "category": "Member",
                     "description": "Changes the color of a member.",
@@ -157,6 +180,7 @@
                 },
                 {
                     "name": "birthday",
+                    "aliases": ["member bday", "member birthdate"],
                     "usage": "member <name> birthday [birthday]",
                     "category": "Member",
                     "description": "Changes the birthday of a member.",
@@ -165,6 +189,7 @@
                 },
                 {
                     "name": "delete",
+                    "aliases": ["member remove", "member destroy", "member erase"],
                     "usage": "member <name> delete",
                     "category": "Member",
                     "description": "Deletes a member.",
@@ -174,6 +199,7 @@
         },
         {
             "name": "switch",
+            "aliases": ["sw"],
             "usage": "switch <member> [member...]",
             "category": "Switching",
             "description": "Registers a switch with the given members.",
