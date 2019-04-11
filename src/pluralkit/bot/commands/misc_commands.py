@@ -18,6 +18,7 @@ def make_command_embed(command):
     embed = make_footer_embed()
     embed.title = prefix + command["usage"]
     embed.description = (command["description"] + "\n" + command.get("longdesc", "")).strip()
+    embed.add_field(name="Aliases" if len(command["aliases"]) > 1 else "Alias", value="\n".join([prefix + cmd for cmd in command["aliases"]]), inline=False)
     embed.add_field(name="Usage", value=prefix + command["usage"], inline=False)
     if "examples" in command:
         embed.add_field(name="Examples" if len(command["examples"]) > 1 else "Example", value="\n".join([prefix + cmd for cmd in command["examples"]]), inline=False)
@@ -28,18 +29,18 @@ def make_command_embed(command):
 def find_command(command_list, name):
     for command in command_list:
         if command["name"].lower().strip() == name.lower().strip():
-            return command 
+            return command
 
 async def help_root(ctx: CommandContext):
     for page_name, page_content in help.helpfile["pages"].items():
         if ctx.match(page_name):
             return await help_page(ctx, page_content)
-    
+
     if not ctx.has_next():
         return await help_page(ctx, help.helpfile["pages"]["root"])
 
     return await help_command(ctx, ctx.remaining())
-    
+
 async def help_page(ctx, sections):
     msg = ""
     for section in sections:
@@ -59,7 +60,7 @@ async def help_command(ctx, command_name):
             break
         command = found_command
         name_parts = name_parts[1:]
-    
+
     return await ctx.reply(embed=make_command_embed(command))
 
 async def command_list(ctx):
@@ -81,7 +82,7 @@ async def command_list(ctx):
     for cat_name, cat_cmds in categories.items():
         embed.add_field(name=cat_name, value="\n".join(cat_cmds))
     await ctx.reply(embed=embed)
-    
+
 
 async def invite_link(ctx: CommandContext):
     client_id = (await ctx.client.application_info()).id

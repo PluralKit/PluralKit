@@ -38,7 +38,7 @@ async def specific_member_root(ctx: CommandContext):
             await member_pronouns(ctx, member)
         elif ctx.match("color") or ctx.match("colour"):
             await member_color(ctx, member)
-        elif ctx.match("birthday") or ctx.match("birthdate"):
+        elif ctx.match("birthday") or ctx.match("birthdate") or ctx.match("bday"):
             await member_birthdate(ctx, member)
         elif ctx.match("delete") or ctx.match("remove") or ctx.match("destroy") or ctx.match("erase"):
             await member_delete(ctx, member)
