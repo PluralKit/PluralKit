@@ -18,7 +18,8 @@ def make_command_embed(command):
     embed = make_footer_embed()
     embed.title = prefix + command["usage"]
     embed.description = (command["description"] + "\n" + command.get("longdesc", "")).strip()
-    embed.add_field(name="Aliases" if len(command["aliases"]) > 1 else "Alias", value="\n".join([prefix + cmd for cmd in command["aliases"]]), inline=False)
+    if "aliases" in command:
+        embed.add_field(name="Aliases" if len(command["aliases"]) > 1 else "Alias", value="\n".join([prefix + cmd for cmd in command["aliases"]]), inline=False)
     embed.add_field(name="Usage", value=prefix + command["usage"], inline=False)
     if "examples" in command:
         embed.add_field(name="Examples" if len(command["examples"]) > 1 else "Example", value="\n".join([prefix + cmd for cmd in command["examples"]]), inline=False)
