@@ -209,7 +209,7 @@ async def message_card(client: discord.Client, message: db.MessageInfo, include_
         embed.add_field(name="Member", value="{} (`{}`)".format(message.name, message.hid))
 
     if original_sender:
-        sender_name = "{}#{}".format(original_sender.name, original_sender.discriminator)
+        sender_name = "<@{}> ({}#{})".format(message.sender, original_sender.name, original_sender.discriminator)
     else:
         sender_name = "(deleted account {})".format(message.sender)
 
