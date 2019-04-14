@@ -203,7 +203,7 @@ async def get_members_by_account(conn, account_id: int) -> List[ProxyMember]:
             and members.system = systems.id""", account_id)
     return [ProxyMember(**row) for row in rows]
 
-class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "sender", "name", "hid", "avatar_url", "system_name", "system_hid"])):
+class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "sender", "name", "hid", "avatar_url", "system_name", "system_hid", "pronouns"])):
     mid: int
     channel: int
     member: int
@@ -213,6 +213,7 @@ class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "sender"
     avatar_url: str
     system_name: str
     system_hid: str
+    pronouns: str
 
     def to_json(self):
         return {
@@ -228,7 +229,7 @@ class MessageInfo(namedtuple("MemberInfo", ["mid", "channel", "member", "sender"
 async def get_message_by_sender_and_id(conn, message_id: int, sender_id: int) -> MessageInfo:
     row = await conn.fetchrow("""select
         messages.*,
-        members.name, members.hid, members.avatar_url,
+        members.name, members.hid, members.avatar_url, members.pronouns,
         systems.name as system_name, systems.hid as system_hid
     from
         messages, members, systems
@@ -244,7 +245,7 @@ async def get_message_by_sender_and_id(conn, message_id: int, sender_id: int) ->
 async def get_message(conn, message_id: int) -> MessageInfo:
     row = await conn.fetchrow("""select
         messages.*,
-        members.name, members.hid, members.avatar_url,
+        members.name, members.hid, members.avatar_url, members.pronouns,
         systems.name as system_name, systems.hid as system_hid
     from
         messages, members, systems

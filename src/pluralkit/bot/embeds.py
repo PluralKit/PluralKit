@@ -185,7 +185,7 @@ async def get_message_contents(client: discord.Client, channel_id: int, message_
     return None
 
 
-async def message_card(client: discord.Client, message: db.MessageInfo):
+async def message_card(client: discord.Client, message: db.MessageInfo, include_pronouns: bool = False):
     # Get the original sender of the messages
     try:
         original_sender = await client.get_user_info(message.sender)
@@ -203,7 +203,10 @@ async def message_card(client: discord.Client, message: db.MessageInfo):
         system_value = "`{}`".format(message.system_hid)
     embed.add_field(name="System", value=system_value)
 
-    embed.add_field(name="Member", value="{} (`{}`)".format(message.name, message.hid))
+    if include_pronouns and message.pronouns:
+        embed.add_field(name="Member", value="{} (`{}`)\n*(pronouns: **{}**)*".format(message.name, message.hid, message.pronouns))
+    else:
+        embed.add_field(name="Member", value="{} (`{}`)".format(message.name, message.hid))
 
     if original_sender:
         sender_name = "{}#{}".format(original_sender.name, original_sender.discriminator)

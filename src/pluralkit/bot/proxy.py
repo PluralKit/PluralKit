@@ -240,7 +240,7 @@ async def do_query_message(conn, client: discord.Client, queryer_id: int, messag
         return False
 
     # Then DM the queryer the message embed
-    card = await embeds.message_card(client, msg)
+    card = await embeds.message_card(client, msg, include_pronouns=True)
     user = client.get_user(queryer_id)
     if not user:
         # We couldn't find this user in the cache - bail
