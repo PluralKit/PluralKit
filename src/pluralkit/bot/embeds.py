@@ -97,8 +97,11 @@ async def system_card(conn, client: discord.Client, system: System, is_own_syste
 
     account_names = []
     for account_id in await system.get_linked_account_ids(conn):
-        account = await client.get_user_info(account_id)
-        account_names.append("{}#{}".format(account.name, account.discriminator))
+        try:
+            account = await client.get_user_info(account_id)
+            account_names.append("{} ({}#{})".format(account_id, account.name, account.discriminator))
+        except discord.NotFound:
+            account_names.append("(deleted account {})".format(account_id))
 
     card.add_field(name="Linked accounts", value=truncate_field_body("\n".join(account_names)))
 
