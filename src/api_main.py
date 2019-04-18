@@ -221,7 +221,7 @@ class Handlers:
             raise web.HTTPBadRquest()
 
         # Find the message in the DB
-        message = await db.get_message(ctx.conn, mid)
+        message = await db.get_message(request["conn"], mid)
         if not message:
             raise web.HTTPNotFound()
             
