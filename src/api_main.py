@@ -211,6 +211,21 @@ class Handlers:
             if not system:
                 raise web.HTTPUnauthorized()
             return web.Response(text=await system.get_token(request["conn"]))
+        
+    async def get_message(request):
+        mid_str = request.match_info.get("message")
+        
+        try:
+            mid = int(mid_str)
+        except ValueError:
+            raise web.HTTPBadRquest()
+
+        # Find the message in the DB
+        message = await db.get_message(ctx.conn, mid)
+        if not message:
+            raise web.HTTPNotFound()
+            
+        return web.json_response(message.to_json())
 
 async def run():
     app = web.Application(middlewares=[db_middleware, auth_middleware, error_middleware])
@@ -227,7 +242,8 @@ async def run():
         web.post("/m", Handlers.post_member),
         web.patch("/m/{member}", Handlers.patch_member),
         web.delete("/m/{member}", Handlers.delete_member),
-        web.post("/discord_oauth", Handlers.discord_oauth)
+        web.post("/discord_oauth", Handlers.discord_oauth),
+        web.get("/message/{message}", Handlers.get_message)
     ])
     app["pool"] = await db.connect(
         os.environ["DATABASE_URI"]
