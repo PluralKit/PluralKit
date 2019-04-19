@@ -25,6 +25,7 @@ services:
     environment:
     - "DATABASE_URI=postgres://postgres:postgres@db:5432/postgres"
     - "CLIENT_ID"
+    - "INVITE_CLIENT_ID_OVERRIDE"
     - "CLIENT_SECRET"
     - "REDIRECT_URI"
   db:
