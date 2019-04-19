@@ -1,15 +1,14 @@
 import Vue from "vue";
-import VueRouter from "vue-router";
-import BootstrapVue from "bootstrap-vue";
-Vue.use(VueRouter);
-Vue.use(BootstrapVue);
 
-import App from "./App.vue";
-import HomePage from "./HomePage.vue";
-import SystemPage from "./SystemPage.vue";
-import SystemEditPage from "./SystemEditPage.vue";
-import MemberEditPage from "./MemberEditPage.vue";
-import OAuthRedirectPage from "./OAuthRedirectPage.vue";
+import VueRouter from "vue-router";
+Vue.use(VueRouter);
+
+const App = () => import("./App.vue");
+const HomePage = () => import("./HomePage.vue");
+const SystemPage = () => import("./SystemPage.vue");
+const SystemEditPage = () => import("./SystemEditPage.vue");
+const MemberEditPage = () => import("./MemberEditPage.vue");
+const OAuthRedirectPage = () => import("./OAuthRedirectPage.vue");
 
 const router = new VueRouter({
     mode: "history",

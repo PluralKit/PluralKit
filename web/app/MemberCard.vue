@@ -26,7 +26,9 @@
 </template>
 
 <script>
-import { CalendarIcon, HashIcon, MessageCircleIcon } from "vue-feather-icons";
+import CalendarIcon from "vue-feather-icons/icons/CalendarIcon";
+import HashIcon from "vue-feather-icons/icons/HashIcon";
+import MessageCircleIcon from "vue-feather-icons/icons/MessageCircleIcon";
 
 export default {
   props: ["member"],

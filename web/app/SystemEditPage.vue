@@ -31,6 +31,15 @@
 </template>
 
 <script>
+import BButton from 'bootstrap-vue/es/components/button/button';
+import BContainer from 'bootstrap-vue/es/components/layout/container';
+import BLink from 'bootstrap-vue/es/components/link/link';
+import BSpinner from 'bootstrap-vue/es/components/spinner/spinner';
+import BForm from 'bootstrap-vue/es/components/form/form';
+import BFormInput from 'bootstrap-vue/es/components/form-input/form-input';
+import BFormGroup from 'bootstrap-vue/es/components/form-group/form-group';
+import BFormTextarea from 'bootstrap-vue/es/components/form-textarea/form-textarea';
+
 import API from "./API";
 
 export default {
@@ -64,7 +73,8 @@ export default {
             }
             this.saving = false;
         }
-    }
+    },
+    components: {BButton, BContainer, BLink, BSpinner, BForm, BFormGroup, BFormInput, BFormTextarea}
 }
 </script>
 

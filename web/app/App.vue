@@ -17,6 +17,14 @@
 </template>
 
 <script>
+import BCollapse from 'bootstrap-vue/es/components/collapse/collapse';
+import BNav from 'bootstrap-vue/es/components/nav/nav';
+import BNavItem from 'bootstrap-vue/es/components/nav/nav-item';
+import BNavbar from 'bootstrap-vue/es/components/navbar/navbar';
+import BNavbarBrand from 'bootstrap-vue/es/components/navbar/navbar-brand';
+import BNavbarNav from 'bootstrap-vue/es/components/navbar/navbar-nav';
+import BNavbarToggle from 'bootstrap-vue/es/components/navbar/navbar-toggle';
+
 import API from "./API";
 import { AUTH_URI } from "./API";
 
@@ -42,7 +50,8 @@ export default {
     authUri() {
       return AUTH_URI;
     }
-  }
+  },
+  components: {BCollapse, BNav, BNavItem, BNavbar, BNavbarBrand, BNavbarNav, BNavbarToggle}
 };
 </script>
 
@@ -55,7 +64,21 @@ $container-max-widths: (
   xl: 960px,
 ) !default;
 
-@import '~bootstrap/scss/bootstrap.scss';
+
+@import '~bootstrap/scss/_functions';
+@import '~bootstrap/scss/_variables';
+@import '~bootstrap/scss/_mixins';
+
+@import '~bootstrap/scss/_buttons';
+@import '~bootstrap/scss/_code';
+@import '~bootstrap/scss/_forms';
+@import '~bootstrap/scss/_grid';
+@import '~bootstrap/scss/_nav';
+@import '~bootstrap/scss/_navbar';
+@import '~bootstrap/scss/_reboot';
+@import '~bootstrap/scss/_type';
+@import '~bootstrap/scss/_utilities';
+
 @import '~bootstrap-vue/src/index.scss';
 </style>
 

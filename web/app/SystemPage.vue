@@ -36,9 +36,16 @@
 <script>
 import API from "./API";
 
+import BContainer from 'bootstrap-vue/es/components/layout/container';
+import BLink from 'bootstrap-vue/es/components/link/link';
+import BSpinner from 'bootstrap-vue/es/components/spinner/spinner';
+
 import MemberCard from "./MemberCard.vue";
 
-import { Edit2Icon, ClockIcon, HashIcon, TagIcon } from "vue-feather-icons";
+import Edit2Icon from "vue-feather-icons/icons/Edit2Icon";
+import ClockIcon from "vue-feather-icons/icons/ClockIcon";
+import HashIcon from "vue-feather-icons/icons/HashIcon";
+import TagIcon from "vue-feather-icons/icons/TagIcon";
 
 export default {
   data() {
@@ -79,7 +86,8 @@ export default {
     ClockIcon,
     HashIcon,
     TagIcon,
-    MemberCard
+    MemberCard,
+    BContainer, BLink, BSpinner
   }
 };
 </script>
