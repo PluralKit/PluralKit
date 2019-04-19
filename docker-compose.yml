@@ -1,38 +1,11 @@
-version: '3'
+version: "3"
 services:
   bot:
-    build: src/
-    entrypoint:
-    - python
-    - bot_main.py
-    volumes:
-    - "./pluralkit.conf:/app/pluralkit.conf:ro"
+    build: .
     environment:
-    - "DATABASE_URI=postgres://postgres:postgres@db:5432/postgres"
-    depends_on:
-    - db
-    restart: always
-  api:
-    build: src/
-    entrypoint:
-    - python
-    - api_main.py
-    depends_on:
-    - db
-    restart: always
-    ports:
-    - "2939:8080"
-    environment:
-    - "DATABASE_URI=postgres://postgres:postgres@db:5432/postgres"
-    - "CLIENT_ID"
-    - "INVITE_CLIENT_ID_OVERRIDE"
-    - "CLIENT_SECRET"
-    - "REDIRECT_URI"
+      - PK_TOKEN
+      - "PK_DATABASE_URI=Host=db;Username=postgres;Password=postgres;Database=postgres"
+    links:
+      - db
   db:
     image: postgres:alpine
-    volumes:
-    - "db_data:/var/lib/postgresql/data"
-    restart: always
-
-volumes:
-  db_data:
