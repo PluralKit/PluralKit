@@ -38,6 +38,7 @@ namespace PluralKit
                 var connection = services.GetRequiredService<IDbConnection>() as NpgsqlConnection;
                 connection.ConnectionString = Environment.GetEnvironmentVariable("PK_DATABASE_URI");
                 await connection.OpenAsync();
+                await Schema.CreateTables(connection);
 
                 Console.WriteLine("- Connecting to Discord...");
                 var client = services.GetRequiredService<IDiscordClient>() as DiscordSocketClient;
@@ -127,9 +128,9 @@ namespace PluralKit
                 {
                     // If it does, fetch the sender's system (because most commands need that) into the context,
                     // and start command execution
-                    var system = await _connection.QueryFirstAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
-                        await _commands.ExecuteAsync(new PKCommandContext(_client, arg as SocketUserMessage, _connection, system), argPos, _services);
-    
+                    // Note system may be null if user has no system, hence `OrDefault`
+                    var system = await _connection.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
+                    await _commands.ExecuteAsync(new PKCommandContext(_client, arg as SocketUserMessage, _connection, system), argPos, _services);
                 }
                 else
                 {
