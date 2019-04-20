@@ -23,6 +23,8 @@ namespace PluralKit
 
         private async Task MainAsync()
         {
+            Console.WriteLine("Starting PluralKit...");
+
             // Dapper by default tries to pass ulongs to Npgsql, which rejects them since PostgreSQL technically
             // doesn't support unsigned types on its own.
             // Instead we add a custom mapper to encode them as signed integers instead, converting them back and forth.
@@ -32,15 +34,19 @@ namespace PluralKit
 
             using (var services = BuildServiceProvider())
             {
+                Console.WriteLine("- Connecting to database...");
                 var connection = services.GetRequiredService<IDbConnection>() as NpgsqlConnection;
                 connection.ConnectionString = Environment.GetEnvironmentVariable("PK_DATABASE_URI");
                 await connection.OpenAsync();
 
+                Console.WriteLine("- Connecting to Discord...");
                 var client = services.GetRequiredService<IDiscordClient>() as DiscordSocketClient;
                 await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("PK_TOKEN"));
                 await client.StartAsync();
 
+                Console.WriteLine("- Initializing bot...");
                 await services.GetRequiredService<Bot>().Init();
+                
                 await Task.Delay(-1);
             }
         }
@@ -85,9 +91,17 @@ namespace PluralKit
             _commands.CommandExecuted += CommandExecuted;
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
+            _client.Ready += Ready;
             _client.MessageReceived += MessageReceived;
             _client.ReactionAdded += _proxy.HandleReactionAddedAsync;
             _client.MessageDeleted += _proxy.HandleMessageDeletedAsync;
+        }
+
+        private Task Ready()
+        {
+            Console.WriteLine($"Shard #{_client.ShardId} connected to {_client.Guilds.Sum(g => g.Channels.Count)} channels in {_client.Guilds.Count} guilds.");
+            Console.WriteLine($"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
+            return Task.CompletedTask;
         }
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
