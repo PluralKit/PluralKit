@@ -113,27 +113,38 @@ namespace PluralKit
 
         private async Task MessageReceived(SocketMessage _arg)
         {
-            // Ignore system messages (member joined, message pinned, etc)
-            var arg = _arg as SocketUserMessage;
-            if (arg == null) return;
+            try {
+                // Ignore system messages (member joined, message pinned, etc)
+                var arg = _arg as SocketUserMessage;
+                if (arg == null) return;
 
-            // Ignore bot messages
-            if (arg.Author.IsBot || arg.Author.IsWebhook) return;
+                // Ignore bot messages
+                if (arg.Author.IsBot || arg.Author.IsWebhook) return;
 
-            int argPos = 0;
-            // Check if message starts with the command prefix
-            if (arg.HasStringPrefix("pk;", ref argPos) || arg.HasStringPrefix("pk!", ref argPos) || arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
-            {
-                // If it does, fetch the sender's system (because most commands need that) into the context,
-                // and start command execution
-                var system = await _connection.QueryFirstAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
-                await _commands.ExecuteAsync(new PKCommandContext(_client, arg as SocketUserMessage, _connection, system), argPos, _services);
+                int argPos = 0;
+                // Check if message starts with the command prefix
+                if (arg.HasStringPrefix("pk;", ref argPos) || arg.HasStringPrefix("pk!", ref argPos) || arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+                {
+                    // If it does, fetch the sender's system (because most commands need that) into the context,
+                    // and start command execution
+                    var system = await _connection.QueryFirstAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
+                        await _commands.ExecuteAsync(new PKCommandContext(_client, arg as SocketUserMessage, _connection, system), argPos, _services);
+    
+                }
+                else
+                {
+                    // If not, try proxying anyway
+                    await _proxy.HandleMessageAsync(arg);
+                }
+            } catch (Exception e) {
+                // Generic exception handler
+                HandleRuntimeError(_arg, e);
             }
-            else
-            {
-                // If not, try proxying anyway
-                await _proxy.HandleMessageAsync(arg);
-            }
+        }
+
+        private void HandleRuntimeError(SocketMessage arg, Exception e)
+        {
+            Console.Error.WriteLine(e);
         }
     }
 }
