@@ -1,10 +1,11 @@
 import json
 import logging
-import os
+import os, sys
 
 from aiohttp import web, ClientSession
 
 from pluralkit import db, utils
+from pluralkit.bot import Config
 from pluralkit.errors import PluralKitError
 from pluralkit.member import Member
 from pluralkit.system import System
@@ -226,7 +227,7 @@ class Handlers:
                 raise web.HTTPUnauthorized()
             return web.Response(text=await system.get_token(request["conn"]))
 
-async def run():
+async def run(config):
     app = web.Application(middlewares=[cors_middleware, db_middleware, auth_middleware, error_middleware])
     def cors_fallback(req):
         return web.Response(headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "x-token", "Access-Control-Allow-Methods": "GET, POST, PATCH"}, status=404 if req.method != "OPTIONS" else 200)
@@ -246,9 +247,9 @@ async def run():
         web.route("*", "/{tail:.*}", cors_fallback)
     ])
     app["pool"] = await db.connect(
-        os.environ["DATABASE_URI"]
+        config.database_uri
     )
     return app
 
 
-web.run_app(run())
+web.run_app(run(Config.from_file_and_env(sys.argv[1] if len(sys.argv) > 1 else "pluralkit.conf")))
