@@ -51,6 +51,8 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
                 raise errors.ExistingSystemError()
 
             new_hid = generate_hid()
+            while await System.get_by_hid(conn, new_hid):
+                new_hid = generate_hid()
 
             async with conn.transaction():
                 new_system = await db.create_system(conn, system_name, new_hid)
@@ -122,11 +124,12 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         return await self.refresh_token(conn)
 
     async def create_member(self, conn, member_name: str) -> Member:
-        # TODO: figure out what to do if this errors out on collision on generate_hid
-        new_hid = generate_hid()
-
         if len(member_name) > self.get_member_name_limit():
             raise errors.MemberNameTooLongError(tag_present=bool(self.tag))
+        
+        new_hid = generate_hid()
+        while await db.get_member_by_hid(conn, new_hid):
+            new_hid = generate_hid()
 
         member = await db.create_member(conn, self.id, member_name, new_hid)
         return member
