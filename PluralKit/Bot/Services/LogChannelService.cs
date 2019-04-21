@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Discord;
 
-namespace PluralKit {
+namespace PluralKit.Bot {
     class ServerDefinition {
         public ulong Id;
         public ulong LogChannel;

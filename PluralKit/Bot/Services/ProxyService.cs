@@ -11,7 +11,7 @@ using Discord.Rest;
 using Discord.Webhook;
 using Discord.WebSocket;
 
-namespace PluralKit
+namespace PluralKit.Bot
 {
     class ProxyDatabaseResult
     {

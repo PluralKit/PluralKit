@@ -15,7 +15,7 @@ using Npgsql.TypeHandling;
 using Npgsql.TypeMapping;
 using NpgsqlTypes;
 
-namespace PluralKit
+namespace PluralKit.Bot
 {
     class Initialize
     {
@@ -58,6 +58,7 @@ namespace PluralKit
                 .AddSingleton<Bot>()
 
                 .AddSingleton<CommandService>()
+                .AddSingleton<EmbedService>()
                 .AddSingleton<LogChannelService>()
                 .AddSingleton<ProxyService>()
                 
@@ -66,7 +67,6 @@ namespace PluralKit
                 .AddSingleton<MessageStore>()
                 .BuildServiceProvider();
     }
-
 
     class Bot
     {

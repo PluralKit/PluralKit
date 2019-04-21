@@ -16,8 +16,12 @@ namespace PluralKit {
         
         public async Task<PKSystem> Create(string systemName = null) {
             // TODO: handle HID collision case
-            var hid = HidUtils.GenerateHid();
+            var hid = Utils.GenerateHid();
             return await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (@Hid, @Name) returning *", new { Hid = hid, Name = systemName });
+        }
+
+        public async Task Link(PKSystem system, ulong accountId) {
+            await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId)", new { Id = accountId, SystemId = system.Id });
         }
 
         public async Task<PKSystem> GetByAccount(ulong accountId) {
@@ -39,6 +43,11 @@ namespace PluralKit {
         public async Task Delete(PKSystem system) {
             await conn.DeleteAsync(system);
         }
+
+        public async Task<IEnumerable<ulong>> GetLinkedAccountIds(PKSystem system)
+        {
+            return await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new { Id = system.Id });
+        }
     }
 
     public class MemberStore {
@@ -50,7 +59,7 @@ namespace PluralKit {
 
         public async Task<PKMember> Create(PKSystem system, string name) {
             // TODO: handle collision
-            var hid = HidUtils.GenerateHid();
+            var hid = Utils.GenerateHid();
             return await conn.QuerySingleAsync("insert into members (hid, system, name) values (@Hid, @SystemId, @Name) returning *", new {
                 Hid = hid,
                 SystemID = system.Id,
