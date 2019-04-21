@@ -27,7 +27,7 @@ namespace PluralKit.Bot {
                 .WithFooter($"System ID: {system.Hid}");
 
             eb.AddField("Linked accounts", string.Join(", ", users));
-            eb.AddField("Members", $"(see `pk;system {system.Id} list` or `pk;system {system.Hid} list full`)");
+            eb.AddField("Members", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)");
             // TODO: fronter
             return eb.Build();
         }
