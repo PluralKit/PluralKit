@@ -233,7 +233,7 @@ async def try_delete_by_reaction(conn, client: discord.Client, message_id: int, 
 
     await handle_deleted_message(conn, client, message_id, original_message.content, logger)
 
-async def do_query_message(conn, client: discord.Client, payload: RawReactionActionEvent) -> bool:
+async def do_query_message(conn, client: discord.Client, payload: discord.RawReactionActionEvent) -> bool:
     # Find the message that was queried
     msg = await db.get_message(conn, payload.message_id)
     if not msg:
