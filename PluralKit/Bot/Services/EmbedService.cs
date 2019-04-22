@@ -13,7 +13,7 @@ namespace PluralKit.Bot {
             this._client = client;
         }
 
-        public async Task<Embed> CreateEmbed(PKSystem system) {
+        public async Task<Embed> CreateSystemEmbed(PKSystem system) {
             var accounts = await _systems.GetLinkedAccountIds(system);
 
             // Fetch/render info for all accounts simultaneously
@@ -30,6 +30,16 @@ namespace PluralKit.Bot {
             eb.AddField("Members", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)");
             // TODO: fronter
             return eb.Build();
+        }
+
+        public Embed CreateLoggedMessageEmbed(PKSystem system, PKMember member, IMessage message, IUser sender) {
+            // TODO: pronouns in ?-reacted response using this card
+            return new EmbedBuilder()
+                .WithAuthor($"#{message.Channel.Name}: {member.Name}", member.AvatarUrl)
+                .WithDescription(message.Content)
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: ${sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: ${message.Id}")
+                .WithTimestamp(message.Timestamp)
+                .Build();
         }
     }
 }

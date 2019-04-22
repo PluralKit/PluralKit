@@ -12,23 +12,20 @@ namespace PluralKit.Bot {
     class LogChannelService {
         private IDiscordClient _client;
         private IDbConnection _connection;
+        private EmbedService _embed;
 
-        public LogChannelService(IDiscordClient client, IDbConnection connection)
+        public LogChannelService(IDiscordClient client, IDbConnection connection, EmbedService embed)
         {
             this._client = client;
             this._connection = connection;
+            this._embed = embed;
         }
 
         public async Task LogMessage(PKSystem system, PKMember member, IMessage message, IUser sender) {
             var channel = await GetLogChannel((message.Channel as IGuildChannel).Guild);
             if (channel == null) return;
 
-            var embed = new EmbedBuilder()
-                .WithAuthor($"#{message.Channel.Name}: {member.Name}", member.AvatarUrl)
-                .WithDescription(message.Content)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: ${sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: ${message.Id}")
-                .WithTimestamp(message.Timestamp)
-                .Build();
+            var embed = _embed.CreateLoggedMessageEmbed(system, member, message, sender);
             await channel.SendMessageAsync(text: message.GetJumpUrl(), embed: embed);
         }
 
