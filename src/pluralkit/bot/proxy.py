@@ -249,7 +249,8 @@ async def do_query_message(conn, client: discord.Client, payload: discord.RawRea
     # Send the card to the user
     try:
         await user.send(embed=card)
-        message = await client.fetch_message(payload.message_id)
+        channel = await client.fetch_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
         if message.guild and message.channel.permissions_for(message.guild.get_member(client.user.id)).manage_messages:
             await message.remove_reaction(payload.emoji, user)
     except discord.Forbidden:
