@@ -246,13 +246,13 @@ async def do_query_message(conn, client: discord.Client, payload: discord.RawRea
         # We couldn't find this user in the cache - bail
         return False
     
-    # Send the card to the user
+    # Remove reaction and send the card to the user
     try:
-        await user.send(embed=card)
-        channel = await client.fetch_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
+        channel = await client.get_channel(payload.channel_id)
+        message = await channel.get_message(payload.message_id)
         if message.guild and message.channel.permissions_for(message.guild.get_member(client.user.id)).manage_messages:
             await message.remove_reaction(payload.emoji, user)
+        await user.send(embed=card)
     except discord.Forbidden:
         # User doesn't have DMs enabled, not much we can do about that
         pass
