@@ -306,7 +306,7 @@
         "root": [
             {
                 "name": "PluralKit",
-                "content": "PluralKit is a bot designed for plural communities on Discord. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.\n\n**What's this for? What are systems?**\nThis bot detects messages with certain prefixes and/or suffixes associated with a registered profile, then replaces that message under a \"pseudo-account\" of that profile using things called webhooks. This is useful for multiple people sharing one body (aka \"systems\"), people who wish to roleplay as different characters without having several accounts, or anyone else who may want to post messages as a different person from the same account.\n\n**Why are people's names saying [BOT] next to them? What's going on?**\nThese people are not actually bots, this is simply a caveat to the message proxying feature of PluralKit.\nType `pk;help proxy` for an in-depth explanation."
+                "content": "PluralKit is a bot designed for plural communities on Discord. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.\n\n**What's this for? What are systems?**\nThis bot detects messages with certain tags associated with a profile, then replaces that message under a \"pseudo-account\" of that profile using webhooks. This is useful for multiple people sharing one body (aka \"systems\"), people who wish to roleplay as different characters without having several accounts, or anyone else who may want to post messages as a different person from the same account.\n\n**Why are people's names saying [BOT] next to them?**\nThese people are not actually bots, this is just a Discord a limitation.\nType `pk;help proxy` for an in-depth explanation."
             },
             {
                 "name": "Getting started",
@@ -318,7 +318,7 @@
             },
             {
                 "name": "More information",
-                "content": "For a full list of commands, type `pk;commands`.\nFor a more in-depth explanation of message proxying, type `pk;help proxy`.\nIf you're an existing user of the Tupperbox proxy bot, type `pk;import` to import your data from there."
+                "content": "For a full list of commands, type `pk;commands`.\nFor a more in-depth explanation of message proxying, type `pk;help proxy`.\nIf you're an existing user of Tupperbox, type `pk;import` to import your data from there."
             },
             {
                 "name": "Support server",
