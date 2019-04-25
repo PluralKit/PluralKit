@@ -21,7 +21,7 @@ namespace PluralKit.Bot.Commands
             if (system == null) system = Context.SenderSystem;
             if (system == null) return NO_SYSTEM_ERROR;
 
-            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateEmbed(system));
+            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateSystemEmbed(system));
             return PKResult.Success();
         }
 
@@ -33,7 +33,7 @@ namespace PluralKit.Bot.Commands
 
             var system = await Systems.Create(systemName);
             await Systems.Link(system, Context.User.Id);
-            
+
             await ReplyAsync("Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now.");
             return PKResult.Success();
         }

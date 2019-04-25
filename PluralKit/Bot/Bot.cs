@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
@@ -75,6 +76,7 @@ namespace PluralKit.Bot
         private CommandService _commands;
         private IDbConnection _connection;
         private ProxyService _proxy;
+        private Timer _updateTimer;
 
         public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, IDbConnection connection, ProxyService proxy)
         {
@@ -98,11 +100,18 @@ namespace PluralKit.Bot
             _client.MessageDeleted += _proxy.HandleMessageDeletedAsync;
         }
 
-        private Task Ready()
+        private async Task UpdatePeriodic()
         {
+            // Method called every 60 seconds
+            await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
+        }
+
+        private async Task Ready()
+        {
+            _updateTimer = new Timer((_) => Task.Run(this.UpdatePeriodic), null, 0, 60*1000);
+
             Console.WriteLine($"Shard #{_client.ShardId} connected to {_client.Guilds.Sum(g => g.Channels.Count)} channels in {_client.Guilds.Count} guilds.");
             Console.WriteLine($"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
-            return Task.CompletedTask;
         }
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
