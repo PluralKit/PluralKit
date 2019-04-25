@@ -314,7 +314,7 @@
             },
             {
                 "name": "Useful tips",
-                "content": "React with ❌ on a proxied message to delete it (if you sent it!).\nReact with ❓ on a proxied message to look up information about it, like who sent it."
+                "content": "React with ❌ on a proxied message to delete it (if you sent it!).\nReact with ❓ on a proxied message to look up information about it, like who sent it.\nType `pk;invite` for a link to invite this bot to your own server!"
             },
             {
                 "name": "More information",
