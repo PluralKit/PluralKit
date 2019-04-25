@@ -36,7 +36,7 @@ async def db_middleware(request, handler):
 
 @web.middleware
 async def auth_middleware(request, handler):
-    token = request.headers.get("X-Token") or request.query.get("token")
+    token = request.headers.get("Authorization") or request.query.get("token")
     if token:
         system = await System.get_by_token(request["conn"], token)
         if system:
@@ -51,7 +51,7 @@ async def cors_middleware(request, handler):
         resp = r
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PATCH"
-    resp.headers["Access-Control-Allow-Headers"] = "X-Token"
+    resp.headers["Access-Control-Allow-Headers"] = "Authorization"
     return resp
 
 class Handlers:
@@ -229,7 +229,7 @@ class Handlers:
 async def run():
     app = web.Application(middlewares=[cors_middleware, db_middleware, auth_middleware, error_middleware])
     def cors_fallback(req):
-        return web.Response(headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "x-token", "Access-Control-Allow-Methods": "GET, POST, PATCH"}, status=404 if req.method != "OPTIONS" else 200)
+        return web.Response(headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Authorization", "Access-Control-Allow-Methods": "GET, POST, PATCH"}, status=404 if req.method != "OPTIONS" else 200)
     app.add_routes([
         web.get("/s", Handlers.get_system),
         web.post("/s/switches", Handlers.post_switch),
