@@ -30,7 +30,7 @@ namespace PluralKit.Bot.Commands
         public async Task New([Remainder] string systemName = null)
         {
             if (ContextEntity != null) throw OTHER_SYSTEM_CONTEXT_ERROR;
-            if (Context.SenderSystem != null) throw new PKError("You already have a system registered with PluralKit. To view it, type `pk;system`. If you'd like to delete your system and start anew, type `pk;system delete`, or if you'd like to unlink this account from it, type `pk;unlink.");
+            if (Context.SenderSystem != null) throw new PKError("You already have a system registered with PluralKit. To view it, type `pk;system`. If you'd like to delete your system and start anew, type `pk;system delete`, or if you'd like to unlink this account from it, type `pk;unlink`.");
 
             var system = await Systems.Create(systemName);
             await Systems.Link(system, Context.User.Id);
@@ -77,6 +77,19 @@ namespace PluralKit.Bot.Commands
 
             await Systems.Save(Context.SenderSystem);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
+        }
+
+        [Command("delete")]
+        public async Task Delete() {
+            if (ContextEntity != null) throw OTHER_SYSTEM_CONTEXT_ERROR;
+            if (Context.SenderSystem == null) throw NO_SYSTEM_ERROR;
+
+            var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{Context.SenderSystem.Hid}`).\n**Note: this action is permanent.**");
+            var reply = await Context.AwaitMessage(Context.Channel, Context.User, timeout: TimeSpan.FromMinutes(1));
+            if (reply.Content != Context.SenderSystem.Hid) throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{Context.SenderSystem.Hid}`) *verbatim*.");
+
+            await Systems.Delete(Context.SenderSystem);
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} System deleted.");
         }
 
         public override async Task<PKSystem> ReadContextParameterAsync(string value)

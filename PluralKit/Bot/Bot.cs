@@ -94,9 +94,12 @@ namespace PluralKit.Bot
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             _client.Ready += Ready;
-            _client.MessageReceived += MessageReceived;
-            _client.ReactionAdded += _proxy.HandleReactionAddedAsync;
-            _client.MessageDeleted += _proxy.HandleMessageDeletedAsync;
+
+            // Deliberately wrapping in an async function *without* awaiting, we don't want to "block" since this'd hold up the main loop
+            // These handlers return Task so we gotta be careful not to return the Task itself (which would then be awaited) - kinda weird design but eh
+            _client.MessageReceived += async (msg) => MessageReceived(msg);
+            _client.ReactionAdded += async (message, channel, reaction) => _proxy.HandleReactionAddedAsync(message, channel, reaction);
+            _client.MessageDeleted += async (message, channel) => _proxy.HandleMessageDeletedAsync(message, channel);
         }
 
         private async Task UpdatePeriodic()
@@ -118,9 +121,11 @@ namespace PluralKit.Bot
             if (!_result.IsSuccess) {
                 // If this is a PKError (ie. thrown deliberately), show user facing message
                 // If not, log as error
-                var pkError = (_result as ExecuteResult?)?.Exception as PKError;
-                if (pkError != null) {
-                    await ctx.Message.Channel.SendMessageAsync("\u274C " + pkError.Message);
+                var exception = (_result as ExecuteResult?)?.Exception;
+                if (exception is PKError) {
+                    await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {exception.Message}");
+                } else if (exception is TimeoutException) {
+                    await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} Operation timed out. Try being faster");
                 } else {
                     HandleRuntimeError(ctx.Message as SocketMessage, (_result as ExecuteResult?)?.Exception);
                 }
