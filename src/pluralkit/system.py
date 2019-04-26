@@ -192,9 +192,8 @@ class System(namedtuple("System", ["id", "hid", "name", "description", "tag", "a
         """Tries to find a member with proxy tags matching the given message. Returns the member and the inner contents."""
         members = await db.get_all_members(conn, self.id)
 
-        # Sort by specificity (members with both prefix and suffix defined go higher)
-        # This will make sure more "precise" proxy tags get tried first and match properly
-        members = sorted(members, key=lambda x: int(bool(x.prefix)) + int(bool(x.suffix)), reverse=True)
+        # Sort by match specificity (longer prefix/suffix = smaller match = more specific)
+        members = sorted(members, key=lambda x: len(x.prefix or "") + len(x.suffix or ""), reverse=True)
 
         for member in members:
             proxy_prefix = member.prefix or ""
