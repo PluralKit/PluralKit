@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
@@ -28,5 +29,24 @@ namespace PluralKit
             if (str.Length < maxLength) return str;
             return str.Substring(0, maxLength - ellipsis.Length) + ellipsis;
         }
+
+        public static async Task<TResult> TimeoutAfter<TResult>(this Task<TResult> task, TimeSpan? timeout) {
+            // https://stackoverflow.com/a/22078975
+            using (var timeoutCancellationTokenSource = new CancellationTokenSource()) {
+                var completedTask = await Task.WhenAny(task, Task.Delay(timeout ?? TimeSpan.FromMilliseconds(-1), timeoutCancellationTokenSource.Token));
+                if (completedTask == task) {
+                    timeoutCancellationTokenSource.Cancel();
+                    return await task;  // Very important in order to propagate exceptions
+                } else {
+                    throw new TimeoutException();
+                }
+            }
+        }
+    }
+
+    public static class Emojis {
+        public static readonly string Warn = "\u26A0";
+        public static readonly string Success = "\u2705";
+        public static readonly string Error = "\u274C";
     }
 }

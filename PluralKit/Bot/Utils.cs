@@ -159,13 +159,43 @@ namespace PluralKit.Bot
         }
     }
 
-    public class PKResult : RuntimeResult
-    {
-        public PKResult(CommandError? error, string reason) : base(error, reason)
-        {
+    public static class ContextExt {
+        public static async Task<bool> PromptYesNo(this ICommandContext ctx, IMessage message, TimeSpan? timeout = null) {
+            await ctx.Message.AddReactionsAsync(new[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
+            var reaction = await ctx.WaitForReaction(ctx.Message, message.Author, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error);
+            return reaction.Emote.Name == Emojis.Success;
         }
 
-        public static RuntimeResult Error(string reason) => new PKResult(CommandError.Unsuccessful, reason);
-        public static RuntimeResult Success(string reason = null) => new PKResult(null, reason);
+        public static async Task<SocketReaction> WaitForReaction(this ICommandContext ctx, IUserMessage message, IUser user = null, Func<SocketReaction, bool> predicate = null, TimeSpan? timeout = null) {
+            var tcs = new TaskCompletionSource<SocketReaction>();
+
+            Task Inner(Cacheable<IUserMessage, ulong> _message, ISocketMessageChannel _channel, SocketReaction reaction) {
+                // Ignore reactions for different messages
+                if (message.Id != _message.Id) return Task.CompletedTask;
+
+                // Ignore messages from other users if a user was defined
+                if (user != null && user.Id != reaction.UserId) return Task.CompletedTask;
+                
+                // Check the predicate, if true - accept the reaction
+                if (predicate?.Invoke(reaction) ?? true) {
+                    tcs.SetResult(reaction);
+                }
+                return Task.CompletedTask;
+            }
+
+            (ctx as BaseSocketClient).ReactionAdded += Inner;
+
+            try {
+                return await (tcs.Task.TimeoutAfter(timeout));
+            } finally {
+                (ctx as BaseSocketClient).ReactionAdded -= Inner;
+            }
+        }
+    }
+    class PKError : Exception
+    {
+        public PKError(string message) : base(message)
+        {
+        }
     }
 }

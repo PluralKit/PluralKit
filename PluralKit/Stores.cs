@@ -37,12 +37,12 @@ namespace PluralKit {
         }
 
         public async Task Save(PKSystem system) {
-            await conn.UpdateAsync(system);
+            await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz where id = @Id", system);
         }
 
         public async Task Delete(PKSystem system) {
-            await conn.DeleteAsync(system);
-        }
+            await conn.ExecuteAsync("delete from systems where id = @Id", system);
+        }        
 
         public async Task<IEnumerable<ulong>> GetLinkedAccountIds(PKSystem system)
         {

@@ -68,7 +68,6 @@ namespace PluralKit.Bot
                 .AddSingleton<MessageStore>()
                 .BuildServiceProvider();
     }
-
     class Bot
     {
         private IServiceProvider _services;
@@ -117,7 +116,14 @@ namespace PluralKit.Bot
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
         {
             if (!_result.IsSuccess) {
-                await ctx.Message.Channel.SendMessageAsync("\u274C " + _result.ErrorReason);
+                // If this is a PKError (ie. thrown deliberately), show user facing message
+                // If not, log as error
+                var pkError = (_result as ExecuteResult?)?.Exception as PKError;
+                if (pkError != null) {
+                    await ctx.Message.Channel.SendMessageAsync("\u274C " + pkError.Message);
+                } else {
+                    HandleRuntimeError(ctx.Message as SocketMessage, (_result as ExecuteResult?)?.Exception);
+                }
             }
         }
 
