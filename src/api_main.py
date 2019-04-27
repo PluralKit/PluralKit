@@ -36,12 +36,23 @@ async def db_middleware(request, handler):
 
 @web.middleware
 async def auth_middleware(request, handler):
-    token = request.headers.get("X-Token") or request.query.get("token")
+    token = request.headers.get("Authorization") or request.query.get("token")
     if token:
         system = await System.get_by_token(request["conn"], token)
         if system:
             request["system"] = system
     return await handler(request)
+
+@web.middleware
+async def cors_middleware(request, handler):
+    try:
+        resp = await handler(request)
+    except web.HTTPException as r:
+        resp = r
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PATCH"
+    resp.headers["Access-Control-Allow-Headers"] = "Authorization"
+    return resp
 
 class Handlers:
     @require_system
@@ -52,14 +63,14 @@ class Handlers:
         system_id = request.match_info.get("system")
         system = await System.get_by_hid(request["conn"], system_id)
         if not system:
-            raise web.HTTPNotFound()
+            raise web.HTTPNotFound(body="null")
         return web.json_response(system.to_json())
 
     async def get_system_members(request):
         system_id = request.match_info.get("system")
         system = await System.get_by_hid(request["conn"], system_id)
         if not system:
-            raise web.HTTPNotFound()
+            raise web.HTTPNotFound(body="null")
 
         members = await system.get_members(request["conn"])
         return web.json_response([m.to_json() for m in members])
@@ -68,7 +79,7 @@ class Handlers:
         system_id = request.match_info.get("system")
         system = await System.get_by_hid(request["conn"], system_id)
         if not system:
-            raise web.HTTPNotFound()
+            raise web.HTTPNotFound(body="null")
 
         switches = await system.get_switches(request["conn"], 9999)
 
@@ -85,17 +96,17 @@ class Handlers:
         system = await System.get_by_hid(request["conn"], system_id)
 
         if not system:
-            raise web.HTTPNotFound()
+            raise web.HTTPNotFound(body="null")
 
         members, stamp = await utils.get_fronters(request["conn"], system.id)
         if not stamp:
             # No switch has been registered at all
-            raise web.HTTPNotFound()
+            raise web.HTTPNotFound(body="null")
 
         data = {
             "timestamp": stamp.isoformat(),
             "members": [member.to_json() for member in members]
-            }
+        }
         return web.json_response(data)
 
     @require_system
@@ -117,8 +128,11 @@ class Handlers:
         member_id = request.match_info.get("member")
         member = await Member.get_member_by_hid(request["conn"], None, member_id)
         if not member:
-            raise web.HTTPNotFound()
-        return web.json_response(member.to_json())
+            raise web.HTTPNotFound(body="{}")
+        system = await System.get_by_id(request["conn"], member.system)
+        member_json = member.to_json()
+        member_json["system"] = system.to_json()
+        return web.json_response(member_json)
 
     @require_system
     async def post_member(request):
@@ -228,8 +242,9 @@ class Handlers:
         return web.json_response(message.to_json())
 
 async def run():
-    app = web.Application(middlewares=[db_middleware, auth_middleware, error_middleware])
-
+    app = web.Application(middlewares=[cors_middleware, db_middleware, auth_middleware, error_middleware])
+    def cors_fallback(req):
+        return web.Response(headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Authorization", "Access-Control-Allow-Methods": "GET, POST, PATCH"}, status=404 if req.method != "OPTIONS" else 200)
     app.add_routes([
         web.get("/s", Handlers.get_system),
         web.post("/s/switches", Handlers.post_switch),
@@ -244,6 +259,7 @@ async def run():
         web.delete("/m/{member}", Handlers.delete_member),
         web.post("/discord_oauth", Handlers.discord_oauth),
         web.get("/message/{message}", Handlers.get_message)
+        web.route("*", "/{tail:.*}", cors_fallback)
     ])
     app["pool"] = await db.connect(
         os.environ["DATABASE_URI"]

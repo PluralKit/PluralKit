@@ -158,8 +158,11 @@ async def export(ctx: CommandContext):
     await working_msg.delete()
 
     f = io.BytesIO(json.dumps(data).encode("utf-8"))
-    await ctx.reply_ok("DM'd!")
-    await ctx.message.author.send(content="Here you go!", file=discord.File(fp=f, filename="pluralkit_system.json"))
+
+    if not isinstance(ctx.message.channel, discord.DMChannel):
+        await ctx.reply_ok("DM'd!")
+
+    await ctx.message.author.send(content="Here you go! \u2709", file=discord.File(fp=f, filename="pluralkit_system.json"))
 
 
 async def tell(ctx: CommandContext):
