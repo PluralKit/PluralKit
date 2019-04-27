@@ -112,6 +112,11 @@ namespace PluralKit.Bot
         public void SetContextEntity(object entity) {
             _entity = entity;
         }
+
+        public void RaiseNoSystemError()
+        {
+            throw new PKError($"You do not have a system registered with PluralKit. To create one, type `pk;system new`. If you already have a system registered on another account, type `pk;link {User.Mention}` from that account to link it here.");
+        }
     }
 
     public abstract class ContextParameterModuleBase<T> : ModuleBase<PKCommandContext> where T: class
@@ -120,6 +125,7 @@ namespace PluralKit.Bot
         public CommandService _commands { get; set; }
 
         public abstract string Prefix { get; }
+        public abstract string ContextNoun { get; }
         public abstract Task<T> ReadContextParameterAsync(string value);
 
         public T ContextEntity => Context.GetContextEntity<T>();
@@ -141,6 +147,10 @@ namespace PluralKit.Bot
                 cb.AddParameter<string>("rest", (pb) => pb.WithDefault("").WithIsRemainder(true));
             });
         }
+
+        public void RaiseNoContextError() {
+            throw new PKError($"You can only run this command on your own {ContextNoun}.");
+        }
     }
 
     public class ContextParameterFallbackPreconditionAttribute : PreconditionAttribute
@@ -160,9 +170,9 @@ namespace PluralKit.Bot
     }
 
     public static class ContextExt {
-        public static async Task<bool> PromptYesNo(this ICommandContext ctx, IMessage message, TimeSpan? timeout = null) {
-            await ctx.Message.AddReactionsAsync(new[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
-            var reaction = await ctx.AwaitReaction(ctx.Message, message.Author, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout);
+        public static async Task<bool> PromptYesNo(this ICommandContext ctx, IUserMessage message, TimeSpan? timeout = null) {
+            await message.AddReactionsAsync(new[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
+            var reaction = await ctx.AwaitReaction(message, ctx.User, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
             return reaction.Emote.Name == Emojis.Success;
         }
 

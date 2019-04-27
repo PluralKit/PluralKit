@@ -118,16 +118,23 @@ namespace PluralKit.Bot
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
         {
+            // TODO: refactor this entire block, it's fugly.
             if (!_result.IsSuccess) {
-                // If this is a PKError (ie. thrown deliberately), show user facing message
-                // If not, log as error
-                var exception = (_result as ExecuteResult?)?.Exception;
-                if (exception is PKError) {
-                    await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {exception.Message}");
-                } else if (exception is TimeoutException) {
-                    await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} Operation timed out. Try being faster");
-                } else {
-                    HandleRuntimeError(ctx.Message as SocketMessage, (_result as ExecuteResult?)?.Exception);
+                if (_result.Error == CommandError.Unsuccessful || _result.Error == CommandError.Exception) {
+                    // If this is a PKError (ie. thrown deliberately), show user facing message
+                    // If not, log as error
+                    var exception = (_result as ExecuteResult?)?.Exception;
+                    if (exception is PKError) {
+                        await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {exception.Message}");
+                    } else if (exception is TimeoutException) {
+                        await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} Operation timed out. Try being faster next time :)");
+                    } else {
+                        HandleRuntimeError(ctx.Message as SocketMessage, (_result as ExecuteResult?)?.Exception);
+                    }
+                } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
+                    await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}\n**Usage: **pk;{cmd.Value.Remarks}");
+                } else if (_result.Error == CommandError.UnknownCommand || _result.Error == CommandError.UnmetPrecondition) {
+                    await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
                 }
             }
         }

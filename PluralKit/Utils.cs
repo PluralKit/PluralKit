@@ -48,5 +48,6 @@ namespace PluralKit
         public static readonly string Warn = "\u26A0";
         public static readonly string Success = "\u2705";
         public static readonly string Error = "\u274C";
+        public static readonly string Note = "\u2757";
     }
 }

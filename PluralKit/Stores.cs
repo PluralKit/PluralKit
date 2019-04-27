@@ -60,7 +60,7 @@ namespace PluralKit {
         public async Task<PKMember> Create(PKSystem system, string name) {
             // TODO: handle collision
             var hid = Utils.GenerateHid();
-            return await conn.QuerySingleAsync("insert into members (hid, system, name) values (@Hid, @SystemId, @Name) returning *", new {
+            return await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (@Hid, @SystemId, @Name) returning *", new {
                 Hid = hid,
                 SystemID = system.Id,
                 Name = name
@@ -68,15 +68,11 @@ namespace PluralKit {
         }
 
         public async Task<PKMember> GetByHid(string hid) {
-            return await conn.QuerySingleAsync("select * from members where hid = @Hid", new { Hid = hid.ToLower() });
+            return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where hid = @Hid", new { Hid = hid.ToLower() });
         }
 
-        public async Task<PKMember> GetByName(string name) {
-            return await conn.QuerySingleAsync("select * from members where lower(name) = lower(@Name)", new { Name = name });
-        }
-
-        public async Task<PKMember> GetByNameConstrained(PKSystem system, string name) {
-            return await conn.QuerySingleAsync("select * from members where lower(name) = @Name and system = @SystemID", new { Name = name, SystemID = system.Id });
+        public async Task<PKMember> GetByName(PKSystem system, string name) {
+            return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where lower(name) = @Name and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
         public async Task<ICollection<PKMember>> GetUnproxyableMembers(PKSystem system) {
