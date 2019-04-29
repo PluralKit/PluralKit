@@ -103,7 +103,7 @@ namespace PluralKit.Bot.Commands
                 var members = await Members.GetBySystem(system);
                 var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
                 await Context.Paginate<PKMember>(
-                    members.ToList(),
+                    members.OrderBy(m => m.Name).ToList(),
                     25,
                     embedTitle,
                     (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => $"[`{m.Hid}`] **{m.Name}** *({m.Prefix ?? ""}text{m.Suffix ?? ""})*"))
@@ -120,7 +120,7 @@ namespace PluralKit.Bot.Commands
                 var members = await Members.GetBySystem(system);
                 var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
                 await Context.Paginate<PKMember>(
-                    members.ToList(),
+                    members.OrderBy(m => m.Name).ToList(),
                     10,
                     embedTitle,
                     (eb, ms) => {
