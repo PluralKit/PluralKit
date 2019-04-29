@@ -46,5 +46,8 @@ namespace PluralKit
                 return Birthday?.ToString("MMMM dd, yyyy");
             }
         }
+
+        public bool HasProxyTags => Prefix != null || Suffix != null;
+        public string ProxyString => $"{Prefix ?? ""}text{Suffix ?? ""}";
     }
 }

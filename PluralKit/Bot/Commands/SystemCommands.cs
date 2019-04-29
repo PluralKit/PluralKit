@@ -106,7 +106,10 @@ namespace PluralKit.Bot.Commands
                     members.OrderBy(m => m.Name).ToList(),
                     25,
                     embedTitle,
-                    (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => $"[`{m.Hid}`] **{m.Name}** *({m.Prefix ?? ""}text{m.Suffix ?? ""})*"))
+                    (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
+                        if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name}** *({m.ProxyString})*";
+                        return $"[`{m.Hid}`] **{m.Name}**";
+                    }))
                 );
             }
 
@@ -124,12 +127,13 @@ namespace PluralKit.Bot.Commands
                     10,
                     embedTitle,
                     (eb, ms) => {
-                        foreach (var member in ms) {
-                            var profile = $"**ID**: {member.Hid}";
-                            if (member.Pronouns != null) profile += $"\n**Pronouns**: {member.Pronouns}";
-                            if (member.Birthday != null) profile += $"\n**Birthdate**: {member.BirthdayString}";
-                            if (member.Description != null) profile += $"\n\n{member.Description}";
-                            eb.AddField(member.Name, profile);
+                        foreach (var m in ms) {
+                            var profile = $"**ID**: {m.Hid}";
+                            if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
+                            if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
+                            if (m.Prefix != null || m.Suffix != null) profile += $"\n**Proxy tags**: {m.ProxyString}";
+                            if (m.Description != null) profile += $"\n\n{m.Description}";
+                            eb.AddField(m.Name, profile);
                         }
                     }
                 );
