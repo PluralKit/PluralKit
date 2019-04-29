@@ -71,6 +71,19 @@ namespace PluralKit.Bot.Commands
             if (newName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
         }
 
+        [Command("description")]
+        [Alias("info", "bio", "text")]
+        [Remarks("member <member> description <description")]
+        [MustPassOwnMember]
+        public async Task MemberDescription([Remainder] string description = null) {
+            if (description.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(description.Length);
+
+            ContextEntity.Description = description;
+            await Members.Save(ContextEntity);
+
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member description {(description == null ? "cleared" : "changed")}.");
+        }
+
         public override async Task<PKMember> ReadContextParameterAsync(string value)
         {
             var res = await new PKMemberTypeReader().ReadAsync(Context, value, _services);
