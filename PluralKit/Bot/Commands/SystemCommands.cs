@@ -26,6 +26,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("new")]
+        [Remarks("system new <name>")]
         public async Task New([Remainder] string systemName = null)
         {
             if (ContextEntity != null) RaiseNoContextError();
@@ -37,6 +38,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("name")]
+        [Remarks("system name <name>")]
         public async Task Name([Remainder] string newSystemName = null) {
             if (ContextEntity != null) RaiseNoContextError();
             if (Context.SenderSystem == null) Context.RaiseNoSystemError();
@@ -48,6 +50,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("description")]
+        [Remarks("system description <description>")]
         public async Task Description([Remainder] string newDescription = null) {
             if (ContextEntity != null) RaiseNoContextError();
             if (Context.SenderSystem == null) Context.RaiseNoSystemError();
@@ -59,6 +62,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("tag")]
+        [Remarks("system tag <tag>")]
         public async Task Tag([Remainder] string newTag = null) {
             if (ContextEntity != null) RaiseNoContextError();
             if (Context.SenderSystem == null) Context.RaiseNoSystemError();
@@ -78,6 +82,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("delete")]
+        [Remarks("system delete")]
         public async Task Delete() {
             if (ContextEntity != null) RaiseNoContextError();
             if (Context.SenderSystem == null) Context.RaiseNoSystemError();
@@ -95,6 +100,7 @@ namespace PluralKit.Bot.Commands
             public MemberStore Members { get; set; }
 
             [Command]
+            [Remarks("system [system] list")]
             public async Task MemberShortList() {
                 var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
                 if (system == null) Context.RaiseNoSystemError();
@@ -111,6 +117,7 @@ namespace PluralKit.Bot.Commands
 
             [Command("full")]
             [Alias("big", "details", "long")]
+            [Remarks("system [system] list full")]
             public async Task MemberLongList() {
                 var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
                 if (system == null) Context.RaiseNoSystemError();
