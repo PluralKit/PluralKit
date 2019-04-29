@@ -41,7 +41,7 @@ namespace PluralKit.Bot.Commands
         [Remarks("system name <name>")]
         [MustHaveSystem]
         public async Task Name([Remainder] string newSystemName = null) {
-            if (newSystemName != null && newSystemName.Length > 250) throw new PKError($"Your chosen system name is too long. ({newSystemName.Length} > 250 characters)");
+            if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
 
             Context.SenderSystem.Name = newSystemName;
             await Systems.Save(Context.SenderSystem);
@@ -52,7 +52,7 @@ namespace PluralKit.Bot.Commands
         [Remarks("system description <description>")]
         [MustHaveSystem]
         public async Task Description([Remainder] string newDescription = null) {
-            if (newDescription != null && newDescription.Length > 1000) throw new PKError($"Your chosen description is too long. ({newDescription.Length} > 250 characters)");
+            if (newDescription != null && newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
 
             Context.SenderSystem.Description = newDescription;
             await Systems.Save(Context.SenderSystem);
@@ -63,7 +63,7 @@ namespace PluralKit.Bot.Commands
         [Remarks("system tag <tag>")]
         [MustHaveSystem]
         public async Task Tag([Remainder] string newTag = null) {
-            if (newTag.Length > 30) throw new PKError($"Your chosen description is too long. ({newTag.Length} > 30 characters)");
+            if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
 
             Context.SenderSystem.Tag = newTag;
 

@@ -16,6 +16,9 @@ namespace PluralKit.Bot.Commands
         [Remarks("member new <name>")]
         [MustHaveSystem]
         public async Task NewMember([Remainder] string memberName) {
+            // Hard name length cap
+            if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
+
             // Warn if member name will be unproxyable (with/without tag)
             if (memberName.Length > Context.SenderSystem.MaxMemberNameLength) {
                 var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Member name too long ({memberName.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to create it anyway? (You can change the name later)");
@@ -43,6 +46,9 @@ namespace PluralKit.Bot.Commands
         [MustPassOwnMember]
         public async Task RenameMember([Remainder] string newName) {
             // TODO: this method is pretty much a 1:1 copy/paste of the above creation method, find a way to clean?
+
+            // Hard name length cap
+            if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
 
             // Warn if member name will be unproxyable (with/without tag)
             if (newName.Length > Context.SenderSystem.MaxMemberNameLength) {
