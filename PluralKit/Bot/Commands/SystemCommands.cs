@@ -20,7 +20,7 @@ namespace PluralKit.Bot.Commands
         [Command]
         public async Task Query(PKSystem system = null) {
             if (system == null) system = Context.SenderSystem;
-            if (system == null) Context.RaiseNoSystemError();
+            if (system == null) throw Errors.NotOwnSystemError;
 
             await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateSystemEmbed(system));
         }
@@ -29,8 +29,8 @@ namespace PluralKit.Bot.Commands
         [Remarks("system new <name>")]
         public async Task New([Remainder] string systemName = null)
         {
-            if (ContextEntity != null) RaiseNoContextError();
-            if (Context.SenderSystem != null) throw new PKError("You already have a system registered with PluralKit. To view it, type `pk;system`. If you'd like to delete your system and start anew, type `pk;system delete`, or if you'd like to unlink this account from it, type `pk;unlink`.");
+            if (ContextEntity != null) throw Errors.NotOwnSystemError;
+            if (Context.SenderSystem != null) throw Errors.NoSystemError;
 
             var system = await Systems.Create(systemName);
             await Systems.Link(system, Context.User.Id);
@@ -39,9 +39,8 @@ namespace PluralKit.Bot.Commands
 
         [Command("name")]
         [Remarks("system name <name>")]
+        [MustHaveSystem]
         public async Task Name([Remainder] string newSystemName = null) {
-            if (ContextEntity != null) RaiseNoContextError();
-            if (Context.SenderSystem == null) Context.RaiseNoSystemError();
             if (newSystemName != null && newSystemName.Length > 250) throw new PKError($"Your chosen system name is too long. ({newSystemName.Length} > 250 characters)");
 
             Context.SenderSystem.Name = newSystemName;
@@ -51,9 +50,8 @@ namespace PluralKit.Bot.Commands
 
         [Command("description")]
         [Remarks("system description <description>")]
+        [MustHaveSystem]
         public async Task Description([Remainder] string newDescription = null) {
-            if (ContextEntity != null) RaiseNoContextError();
-            if (Context.SenderSystem == null) Context.RaiseNoSystemError();
             if (newDescription != null && newDescription.Length > 1000) throw new PKError($"Your chosen description is too long. ({newDescription.Length} > 250 characters)");
 
             Context.SenderSystem.Description = newDescription;
@@ -63,9 +61,8 @@ namespace PluralKit.Bot.Commands
 
         [Command("tag")]
         [Remarks("system tag <tag>")]
+        [MustHaveSystem]
         public async Task Tag([Remainder] string newTag = null) {
-            if (ContextEntity != null) RaiseNoContextError();
-            if (Context.SenderSystem == null) Context.RaiseNoSystemError();
             if (newTag.Length > 30) throw new PKError($"Your chosen description is too long. ({newTag.Length} > 30 characters)");
 
             Context.SenderSystem.Tag = newTag;
@@ -83,10 +80,8 @@ namespace PluralKit.Bot.Commands
 
         [Command("delete")]
         [Remarks("system delete")]
+        [MustHaveSystem]
         public async Task Delete() {
-            if (ContextEntity != null) RaiseNoContextError();
-            if (Context.SenderSystem == null) Context.RaiseNoSystemError();
-
             var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{Context.SenderSystem.Hid}`).\n**Note: this action is permanent.**");
             var reply = await Context.AwaitMessage(Context.Channel, Context.User, timeout: TimeSpan.FromMinutes(1));
             if (reply.Content != Context.SenderSystem.Hid) throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{Context.SenderSystem.Hid}`) *verbatim*.");
@@ -103,7 +98,7 @@ namespace PluralKit.Bot.Commands
             [Remarks("system [system] list")]
             public async Task MemberShortList() {
                 var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
-                if (system == null) Context.RaiseNoSystemError();
+                if (system == null) throw Errors.NoSystemError;
 
                 var members = await Members.GetBySystem(system);
                 var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
@@ -120,7 +115,7 @@ namespace PluralKit.Bot.Commands
             [Remarks("system [system] list full")]
             public async Task MemberLongList() {
                 var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
-                if (system == null) Context.RaiseNoSystemError();
+                if (system == null) throw Errors.NoSystemError;
 
                 var members = await Members.GetBySystem(system);
                 var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";

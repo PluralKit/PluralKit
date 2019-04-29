@@ -16,6 +16,8 @@ namespace PluralKit
         public string Token { get; set; }
         public DateTime Created { get; set; }
         public string UiTz { get; set; }
+
+        public int MaxMemberNameLength => Tag != null ? 32 - Tag.Length - 1 : 32;
     }
 
     [Table("members")]

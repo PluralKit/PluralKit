@@ -72,7 +72,8 @@ namespace PluralKit {
         }
 
         public async Task<PKMember> GetByName(PKSystem system, string name) {
-            return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where lower(name) = @Name and system = @SystemID", new { Name = name, SystemID = system.Id });
+            // QueryFirst, since members can (in rare cases) share names
+            return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(name) = @Name and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
         public async Task<ICollection<PKMember>> GetUnproxyableMembers(PKSystem system) {
@@ -88,11 +89,11 @@ namespace PluralKit {
         }
 
         public async Task Save(PKMember member) {
-            await conn.UpdateAsync(member);
+            await conn.ExecuteAsync("update members set name = @Name, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
         }
 
         public async Task Delete(PKMember member) {
-            await conn.DeleteAsync(member);
+            await conn.ExecuteAsync("delete from members where id = @Id", member);
         }
     }
 

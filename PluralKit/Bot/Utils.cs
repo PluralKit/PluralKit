@@ -114,11 +114,6 @@ namespace PluralKit.Bot
         public void SetContextEntity(object entity) {
             _entity = entity;
         }
-
-        public void RaiseNoSystemError()
-        {
-            throw new PKError($"You do not have a system registered with PluralKit. To create one, type `pk;system new`. If you already have a system registered on another account, type `pk;link {User.Mention}` from that account to link it here.");
-        }
     }
 
     public abstract class ContextParameterModuleBase<T> : ModuleBase<PKCommandContext> where T: class
@@ -138,41 +133,41 @@ namespace PluralKit.Bot
             // context, with the context argument removed so it delegates to the subcommand executor
             builder.AddCommand("", async (ctx, param, services, info) => {
                 var pkCtx = ctx as PKCommandContext;
-                var res = await ReadContextParameterAsync(param[0] as string);
-                pkCtx.SetContextEntity(res);
+                pkCtx.SetContextEntity(param[0] as T);
 
                 await commandService.ExecuteAsync(pkCtx, Prefix + " " + param[1] as string, services);
             }, (cb) => {
                 cb.WithPriority(-9999);
-                cb.AddPrecondition(new ContextParameterFallbackPreconditionAttribute());
-                cb.AddParameter<string>("contextValue", (pb) => pb.WithDefault(""));
+                cb.AddPrecondition(new MustNotHaveContextPrecondition());
+                cb.AddParameter<T>("contextValue", (pb) => pb.WithDefault(""));
                 cb.AddParameter<string>("rest", (pb) => pb.WithDefault("").WithIsRemainder(true));
             });
         }
-
-        public void RaiseNoContextError() {
-            throw new PKError($"You can only run this command on your own {ContextNoun}.");
-        }
     }
 
-    public class ContextParameterFallbackPreconditionAttribute : PreconditionAttribute
+    public class MustNotHaveContextPrecondition : PreconditionAttribute
     {
-        public ContextParameterFallbackPreconditionAttribute()
+        public MustNotHaveContextPrecondition()
         {
         }
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            if (context.GetType().Name != "ContextualContext`1") {
-                return PreconditionResult.FromSuccess();
-            } else {
-                return PreconditionResult.FromError("");
-            }
+            if ((context as PKCommandContext)?.GetContextEntity<object>() == null) return PreconditionResult.FromSuccess();
+            return PreconditionResult.FromError("(should not be seen)");
         }
     }
-    class PKError : Exception
+
+    public class PKError : Exception
     {
         public PKError(string message) : base(message)
+        {
+        }
+    }
+
+    public class PKSyntaxError : PKError
+    {
+        public PKSyntaxError(string message) : base(message)
         {
         }
     }
