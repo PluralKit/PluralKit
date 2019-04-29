@@ -97,9 +97,9 @@ namespace PluralKit.Bot
 
             // Deliberately wrapping in an async function *without* awaiting, we don't want to "block" since this'd hold up the main loop
             // These handlers return Task so we gotta be careful not to return the Task itself (which would then be awaited) - kinda weird design but eh
-            _client.MessageReceived += async (msg) => MessageReceived(msg);
-            _client.ReactionAdded += async (message, channel, reaction) => _proxy.HandleReactionAddedAsync(message, channel, reaction);
-            _client.MessageDeleted += async (message, channel) => _proxy.HandleMessageDeletedAsync(message, channel);
+            _client.MessageReceived += async (msg) => MessageReceived(msg).CatchException(HandleRuntimeError);
+            _client.ReactionAdded += async (message, channel, reaction) => _proxy.HandleReactionAddedAsync(message, channel, reaction).CatchException(HandleRuntimeError);
+            _client.MessageDeleted += async (message, channel) => _proxy.HandleMessageDeletedAsync(message, channel).CatchException(HandleRuntimeError);
         }
 
         private async Task UpdatePeriodic()
@@ -110,7 +110,7 @@ namespace PluralKit.Bot
 
         private async Task Ready()
         {
-            _updateTimer = new Timer((_) => Task.Run(this.UpdatePeriodic), null, 0, 60*1000);
+            _updateTimer = new Timer((_) => this.UpdatePeriodic(), null, 0, 60*1000);
 
             Console.WriteLine($"Shard #{_client.ShardId} connected to {_client.Guilds.Sum(g => g.Channels.Count)} channels in {_client.Guilds.Count} guilds.");
             Console.WriteLine($"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
@@ -129,7 +129,7 @@ namespace PluralKit.Bot
                     } else if (exception is TimeoutException) {
                         await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} Operation timed out. Try being faster next time :)");
                     } else {
-                        HandleRuntimeError(ctx.Message as SocketMessage, (_result as ExecuteResult?)?.Exception);
+                        HandleRuntimeError((_result as ExecuteResult?)?.Exception);
                     }
                 } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
                     await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}\n**Usage: **pk;{cmd.Value.Remarks}");
@@ -141,36 +141,31 @@ namespace PluralKit.Bot
 
         private async Task MessageReceived(SocketMessage _arg)
         {
-            try {
-                // Ignore system messages (member joined, message pinned, etc)
-                var arg = _arg as SocketUserMessage;
-                if (arg == null) return;
+            // Ignore system messages (member joined, message pinned, etc)
+            var arg = _arg as SocketUserMessage;
+            if (arg == null) return;
 
-                // Ignore bot messages
-                if (arg.Author.IsBot || arg.Author.IsWebhook) return;
+            // Ignore bot messages
+            if (arg.Author.IsBot || arg.Author.IsWebhook) return;
 
-                int argPos = 0;
-                // Check if message starts with the command prefix
-                if (arg.HasStringPrefix("pk;", ref argPos) || arg.HasStringPrefix("pk!", ref argPos) || arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
-                {
-                    // If it does, fetch the sender's system (because most commands need that) into the context,
-                    // and start command execution
-                    // Note system may be null if user has no system, hence `OrDefault`
-                    var system = await _connection.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
-                    await _commands.ExecuteAsync(new PKCommandContext(_client, arg as SocketUserMessage, _connection, system), argPos, _services);
-                }
-                else
-                {
-                    // If not, try proxying anyway
-                    await _proxy.HandleMessageAsync(arg);
-                }
-            } catch (Exception e) {
-                // Generic exception handler
-                HandleRuntimeError(_arg, e);
+            int argPos = 0;
+            // Check if message starts with the command prefix
+            if (arg.HasStringPrefix("pk;", ref argPos) || arg.HasStringPrefix("pk!", ref argPos) || arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            {
+                // If it does, fetch the sender's system (because most commands need that) into the context,
+                // and start command execution
+                // Note system may be null if user has no system, hence `OrDefault`
+                var system = await _connection.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
+                await _commands.ExecuteAsync(new PKCommandContext(_client, arg as SocketUserMessage, _connection, system), argPos, _services);
+            }
+            else
+            {
+                // If not, try proxying anyway
+                await _proxy.HandleMessageAsync(arg);
             }
         }
 
-        private void HandleRuntimeError(SocketMessage arg, Exception e)
+        private void HandleRuntimeError(Exception e)
         {
             Console.Error.WriteLine(e);
         }

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
@@ -165,50 +167,6 @@ namespace PluralKit.Bot
                 return PreconditionResult.FromSuccess();
             } else {
                 return PreconditionResult.FromError("");
-            }
-        }
-    }
-
-    public static class ContextExt {
-        public static async Task<bool> PromptYesNo(this ICommandContext ctx, IUserMessage message, TimeSpan? timeout = null) {
-            await message.AddReactionsAsync(new[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
-            var reaction = await ctx.AwaitReaction(message, ctx.User, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
-            return reaction.Emote.Name == Emojis.Success;
-        }
-
-        public static async Task<SocketReaction> AwaitReaction(this ICommandContext ctx, IUserMessage message, IUser user = null, Func<SocketReaction, bool> predicate = null, TimeSpan? timeout = null) {
-            var tcs = new TaskCompletionSource<SocketReaction>();
-            Task Inner(Cacheable<IUserMessage, ulong> _message, ISocketMessageChannel _channel, SocketReaction reaction) {
-                if (message.Id != _message.Id) return Task.CompletedTask; // Ignore reactions for different messages
-                if (user != null && user.Id != reaction.UserId) return Task.CompletedTask; // Ignore messages from other users if a user was defined
-                if (predicate != null && !predicate.Invoke(reaction)) return Task.CompletedTask; // Check predicate
-                tcs.SetResult(reaction);
-                return Task.CompletedTask;
-            }
-
-            (ctx.Client as BaseSocketClient).ReactionAdded += Inner;
-            try {
-                return await (tcs.Task.TimeoutAfter(timeout));
-            } finally {
-                (ctx.Client as BaseSocketClient).ReactionAdded -= Inner;
-            }
-        }
-
-        public static async Task<IUserMessage> AwaitMessage(this ICommandContext ctx, IMessageChannel channel, IUser user = null, Func<SocketMessage, bool> predicate = null, TimeSpan? timeout = null) {
-            var tcs = new TaskCompletionSource<IUserMessage>();
-            Task Inner(SocketMessage msg) {
-                if (channel != msg.Channel) return Task.CompletedTask; // Ignore messages in a different channel
-                if (user != null && user != msg.Author) return Task.CompletedTask; // Ignore messages from other users
-                if (predicate != null && !predicate.Invoke(msg)) return Task.CompletedTask; // Check predicate
-                tcs.SetResult(msg as IUserMessage);
-                return Task.CompletedTask;
-            }
-
-            (ctx.Client as BaseSocketClient).MessageReceived += Inner;
-            try {
-                return await (tcs.Task.TimeoutAfter(timeout));
-            } finally {
-                (ctx.Client as BaseSocketClient).MessageReceived -= Inner;
             }
         }
     }

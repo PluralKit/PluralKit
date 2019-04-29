@@ -33,7 +33,6 @@ namespace PluralKit.Bot.Commands
 
             var system = await Systems.Create(systemName);
             await Systems.Link(system, Context.User.Id);
-
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now.");
         }
 
@@ -89,6 +88,50 @@ namespace PluralKit.Bot.Commands
 
             await Systems.Delete(Context.SenderSystem);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} System deleted.");
+        }
+
+        [Group("list")]
+        public class SystemListCommands: ModuleBase<PKCommandContext> {
+            public MemberStore Members { get; set; }
+
+            [Command]
+            public async Task MemberShortList() {
+                var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
+                if (system == null) Context.RaiseNoSystemError();
+
+                var members = await Members.GetBySystem(system);
+                var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
+                await Context.Paginate<PKMember>(
+                    members.ToList(),
+                    25,
+                    embedTitle,
+                    (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => $"[`{m.Hid}`] **{m.Name}** *({m.Prefix ?? ""}text{m.Suffix ?? ""})*"))
+                );
+            }
+
+            [Command("full")]
+            [Alias("big", "details", "long")]
+            public async Task MemberLongList() {
+                var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
+                if (system == null) Context.RaiseNoSystemError();
+
+                var members = await Members.GetBySystem(system);
+                var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
+                await Context.Paginate<PKMember>(
+                    members.ToList(),
+                    10,
+                    embedTitle,
+                    (eb, ms) => {
+                        foreach (var member in ms) {
+                            var profile = $"**ID**: {member.Hid}";
+                            if (member.Pronouns != null) profile += $"\n**Pronouns**: {member.Pronouns}";
+                            if (member.Birthday != null) profile += $"\n**Birthdate**: {member.BirthdayString}";
+                            if (member.Description != null) profile += $"\n\n{member.Description}";
+                            eb.AddField(member.Name, profile);
+                        }
+                    }
+                );
+            }
         }
 
         public override async Task<PKSystem> ReadContextParameterAsync(string value)

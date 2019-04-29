@@ -125,7 +125,7 @@ namespace PluralKit {
                 msg.System = system;
                 msg.Member = member;
                 return msg;
-            }, new { Id = id })).First();
+            }, new { Id = id })).FirstOrDefault();
         }
         
         public async Task Delete(ulong id) {
