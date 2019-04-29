@@ -84,6 +84,19 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member description {(description == null ? "cleared" : "changed")}.");
         }
 
+        [Command("pronouns")]
+        [Alias("pronoun")]
+        [Remarks("member <member> pronouns <pronouns")]
+        [MustPassOwnMember]
+        public async Task MemberPronouns([Remainder] string pronouns = null) {
+            if (pronouns.Length > Limits.MaxPronounsLength) throw Errors.MemberPronounsTooLongError(pronouns.Length);
+
+            ContextEntity.Pronouns = pronouns;
+            await Members.Save(ContextEntity);
+
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member pronouns {(pronouns == null ? "cleared" : "changed")}.");
+        }
+
         public override async Task<PKMember> ReadContextParameterAsync(string value)
         {
             var res = await new PKMemberTypeReader().ReadAsync(Context, value, _services);
