@@ -233,21 +233,25 @@ async def try_delete_by_reaction(conn, client: discord.Client, message_id: int, 
 
     await handle_deleted_message(conn, client, message_id, original_message.content, logger)
 
-async def do_query_message(conn, client: discord.Client, queryer_id: int, message_id: int) -> bool:
+async def do_query_message(conn, client: discord.Client, payload: discord.RawReactionActionEvent) -> bool:
     # Find the message that was queried
-    msg = await db.get_message(conn, message_id)
+    msg = await db.get_message(conn, payload.message_id)
     if not msg:
         return False
 
     # Then DM the queryer the message embed
     card = await embeds.message_card(client, msg, include_pronouns=True)
-    user = client.get_user(queryer_id)
+    user = client.get_user(payload.user_id)
     if not user:
         # We couldn't find this user in the cache - bail
         return False
     
-    # Send the card to the user
+    # Remove reaction and send the card to the user
     try:
+        channel = await client.get_channel(payload.channel_id)
+        message = await channel.get_message(payload.message_id)
+        if message.guild and message.channel.permissions_for(message.guild.get_member(client.user.id)).manage_messages:
+            await message.remove_reaction(payload.emoji, user)
         await user.send(embed=card)
     except discord.Forbidden:
         # User doesn't have DMs enabled, not much we can do about that
