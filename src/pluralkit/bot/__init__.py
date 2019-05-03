@@ -112,7 +112,7 @@ def run(config: Config):
                 await proxy.try_delete_by_reaction(conn, client, payload.message_id, payload.user_id, logger)
         if payload.emoji.name in "\u2753\u2754":  # Question mark
             async with pool.acquire() as conn:
-                await proxy.do_query_message(conn, client, payload)
+                await proxy.do_query_message(conn, client, payload.user_id, payload.message_id, payload.emoji)
 
     @client.event
     async def on_error(event_name, *args, **kwargs):

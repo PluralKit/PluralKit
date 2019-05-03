@@ -233,25 +233,34 @@ async def try_delete_by_reaction(conn, client: discord.Client, message_id: int, 
 
     await handle_deleted_message(conn, client, message_id, original_message.content, logger)
 
-async def do_query_message(conn, client: discord.Client, payload: discord.RawReactionActionEvent) -> bool:
+async def do_query_message(conn, client: discord.Client, queryer_id: int, message_id: int, reacted_emoji: str) -> bool:
     # Find the message that was queried
-    msg = await db.get_message(conn, payload.message_id)
+    msg = await db.get_message(conn, message_id)
     if not msg:
         return False
 
     # Then DM the queryer the message embed
     card = await embeds.message_card(client, msg, include_pronouns=True)
-    user = client.get_user(payload.user_id)
+    user = client.get_user(queryer_id)
     if not user:
         # We couldn't find this user in the cache - bail
         return False
-    
-    # Remove reaction and send the card to the user
+
+    # Remove the original reaction by the user if we have "Manage Messages"
+    channel = client.get_channel(msg.channel)
+    if isinstance(channel, discord.TextChannel) and channel.permissions_for(channel.guild.get_member(client.user.id)).manage_messages:
+        # We need the message instance itself to remove the reaction, since discord.py doesn't let you
+        # call HTTP endpoints with arbitrary IDs (at least, not without internals-hacking)
+        try:
+            message_instance = await channel.get_message(message_id)
+            member = channel.guild.get_member(queryer_id)
+            await message_instance.remove_reaction(reacted_emoji, member)
+        except (discord.Forbidden, discord.NotFound):
+            # Oh yeah, and this can also fail. yeet.
+            pass
+
+    # Send the card to the user
     try:
-        channel = await client.get_channel(payload.channel_id)
-        message = await channel.get_message(payload.message_id)
-        if message.guild and message.channel.permissions_for(message.guild.get_member(client.user.id)).manage_messages:
-            await message.remove_reaction(payload.emoji, user)
         await user.send(embed=card)
     except discord.Forbidden:
         # User doesn't have DMs enabled, not much we can do about that
