@@ -36,7 +36,7 @@
                     "usage": "system avatar [avatar url]",
                     "category": "System",
                     "description": "Changes the avatar of your system.",
-                    "longdesc": "**NB:** Avatar URLs must be a *direct* link to an image (ending in .jpg, .gif or .png), AND must be under the size of 1000x1000 (in both dimensions), AND must be smaller than 1 MB. If the avatar doesn't show up properly, it is likely one or more of these rules aren't followed. If you need somewhere to host an image, you can upload it to Discord or Imgur and copy the *direct* link from there.",
+                    "longdesc": "**NB:** Avatar URLs must be a *direct* link to an image (ending in .jpg, .gif or .png), AND must be under the size of 1000x1000 (in both dimensions), AND must be smaller than 1 MB. If the avatar doesn't show up properly, it is likely one or more of these rules aren't followed. If you need somewhere to host an image, you can upload it to Discord or Imgur and copy the *direct* link from there.\n\nYou can also upload an avatar by attaching an image and sending it with the command (without the url).",
                     "examples": ["system avatar https://i.imgur.com/HmK2Wgo.png"]
                 },
                 {
@@ -148,7 +148,7 @@
                     "usage": "member <name> avatar [avatarurl]",
                     "category": "Member",
                     "description": "Changes the avatar of a member.",
-                    "longdesc": "**NB:** Avatar URLs must be a *direct* link to an image (ending in .jpg, .gif or .png), AND must be under the size of 1000x1000 (in both dimensions), AND must be smaller than 1 MB. If the avatar doesn't show up properly, it is likely one or more of these rules aren't followed. If you need somewhere to host an image, you can upload it to Discord or Imgur and copy the *direct* link from there.",
+                    "longdesc": "**NB:** Avatar URLs must be a *direct* link to an image (ending in .jpg, .gif or .png), AND must be under the size of 1000x1000 (in both dimensions), AND must be smaller than 1 MB. If the avatar doesn't show up properly, it is likely one or more of these rules aren't followed. If you need somewhere to host an image, you can upload it to Discord or Imgur and copy the *direct* link from there.\n\nYou can also upload an avatar by attaching an image and sending it with the command (without the url).",
                     "examples": ["member Jack avatar https://i.imgur.com/HmK2Wgo.png"]
                 },
                 {
@@ -306,11 +306,11 @@
         "root": [
             {
                 "name": "PluralKit",
-                "content": "PluralKit is a bot designed for plural communities on Discord. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.\n\n**What's this for? What are systems?**\nThis bot detects messages with certain tags associated with a profile, then replaces that message under a \"pseudo-account\" of that profile using webhooks. This is useful for multiple people sharing one body (aka \"systems\"), people who wish to roleplay as different characters without having several accounts, or anyone else who may want to post messages as a different person from the same account.\n\n**Why are people's names saying [BOT] next to them?**\nThese people are not actually bots, this is just a Discord a limitation.\nType `pk;help proxy` for an in-depth explanation."
+                "content": "PluralKit is a bot designed for plural communities on Discord. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.\n\n**What's this for? What are systems?**\nThis bot detects messages with certain tags associated with a profile, then replaces that message under a \"pseudo-account\" of that profile using webhooks. This is useful for multiple people sharing one body (aka \"systems\"), people who wish to roleplay as different characters without having several accounts, or anyone else who may want to post messages as a different person from the same account.\n\n**Why are people's names saying [BOT] next to them?**\nThese people are not actually bots, this is just a Discord limitation.\nType `pk;help proxy` for an in-depth explanation."
             },
             {
                 "name": "Getting started",
-                "content": "To get started using the bot, try running the following commands.\n**1**. `pk;system new` - Create a system if you haven't already\n**2**. `pk;member add John` - Add a new member to your system\n**3**. `pk;member John proxy [text]` - Set up square brackets as proxy tags\n**4**. You're done!\n**5**. Optionally, you may set an avatar from the URL of an image with:\n`pk;member John avatar [link to image]`\n\nType `pk;help member` for more information."
+                "content": "To get started using the bot, try running the following commands.\n**1**. `pk;system new` - Create a system if you haven't already\n**2**. `pk;member add John` - Add a new member to your system\n**3**. `pk;member John proxy [text]` - Set up square brackets as proxy tags\n**4**. You're done!\n**5**. Optionally, you may set an avatar from the URL of an image with:\n`pk;member John avatar [link to image]` or from a file by typing:\n`pk;member John avatar` and sending it with an attached image. \n\nType `pk;help member` for more information."
             },
             {
                 "name": "Useful tips",
