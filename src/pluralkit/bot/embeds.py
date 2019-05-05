@@ -110,7 +110,7 @@ async def system_card(conn, client: discord.Client, system: System, is_own_syste
                        value=truncate_field_body(system.description), inline=False)
 
     all_members = await system.get_members(conn)
-    if len(all_members) == 0:
+    if not all_members:
         member_count = "(no members)"
     else:
         member_count = len(all_members)
