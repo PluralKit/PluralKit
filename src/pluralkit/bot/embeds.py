@@ -110,7 +110,10 @@ async def system_card(conn, client: discord.Client, system: System, is_own_syste
                        value=truncate_field_body(system.description), inline=False)
 
     all_members = await system.get_members(conn)
-    member_count = len(all_members)
+    if len(all_members) == 0:
+        member_count = "(no members)"
+    else:
+        member_count = len(all_members)
 
     card.add_field(name="Members", value="Count: {}\n*See `pk;system {0} list`for the short list, or `pk;system {0} list full` for the detailed list*".format(member_count, system.hid) if not is_own_system else "Count: {}\n*See `pk;system list` for the short list, or `pk;system list full` for the detailed list*".format(member_count))
     card.set_footer(text="System ID: {}".format(system.hid))
