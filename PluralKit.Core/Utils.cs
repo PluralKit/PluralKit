@@ -1,13 +1,5 @@
 using System;
-using System.Data;
-using System.Threading;
-using System.Threading.Tasks;
-using Dapper;
-using Discord;
-using Discord.Commands;
-using Discord.Commands.Builders;
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
+
 
 namespace PluralKit
 {
