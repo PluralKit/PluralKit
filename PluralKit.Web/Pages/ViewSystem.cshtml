@@ -32,17 +32,17 @@
 
     @if (Model.System.Description != null)
     {
-        <p>@Model.System.Description</p>
+        <div>@Model.System.Description</div>
     }
 
     <h2>Members</h2>
     @foreach (var member in Model.Members)
     {
         <div class="member-card">
-            <div class="member-avatar" style="background-image: url(@(member.AvatarUrl)"></div>
+            <div class="member-avatar" style="background-image: url(@member.AvatarUrl); border-color: #@member.Color;"></div>
             <div class="member-body">
                 <span class="member-name">@member.Name</span>
-                <p class="member-description">@member.Description</p>
+                <div class="member-description">@member.Description</div>
 
                 <ul class="taglist">
                     <li>

@@ -15,5 +15,7 @@ services:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
     links: 
       - db
+    ports:
+      - 2837:80
   db:
     image: postgres:alpine
