@@ -25,15 +25,15 @@ namespace PluralKit {
         }
 
         public async Task<PKSystem> GetByAccount(ulong accountId) {
-            return await conn.QuerySingleAsync<PKSystem>("select systems.* from systems, accounts where accounts.system = system.id and accounts.uid = @Id", new { Id = accountId });
+            return await conn.QuerySingleOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.system = system.id and accounts.uid = @Id", new { Id = accountId });
         }
 
         public async Task<PKSystem> GetByHid(string hid) {
-            return await conn.QuerySingleAsync<PKSystem>("select * from systems where systems.hid = @Hid", new { Hid = hid.ToLower() });
+            return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where systems.hid = @Hid", new { Hid = hid.ToLower() });
         }
 
         public async Task<PKSystem> GetByToken(string token) {
-            return await conn.QuerySingleAsync<PKSystem>("select * from systems where token = @Token", new { Token = token });
+            return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where token = @Token", new { Token = token });
         }
 
         public async Task Save(PKSystem system) {

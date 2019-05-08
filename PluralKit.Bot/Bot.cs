@@ -8,19 +8,20 @@ using Dapper;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using Npgsql.BackendMessages;
-using Npgsql.PostgresTypes;
-using Npgsql.TypeHandling;
-using Npgsql.TypeMapping;
-using NpgsqlTypes;
 
 namespace PluralKit.Bot
 {
     class Initialize
     {
-        static void Main() => new Initialize().MainAsync().GetAwaiter().GetResult();
+        private IConfiguration _config;
+        
+        static void Main(string[] args) => new Initialize { _config = new ConfigurationBuilder()
+            .AddEnvironmentVariables()
+            .AddCommandLine(args)
+            .Build()}.MainAsync().GetAwaiter().GetResult();
 
         private async Task MainAsync()
         {
@@ -37,13 +38,13 @@ namespace PluralKit.Bot
             {
                 Console.WriteLine("- Connecting to database...");
                 var connection = services.GetRequiredService<IDbConnection>() as NpgsqlConnection;
-                connection.ConnectionString = Environment.GetEnvironmentVariable("PK_DATABASE_URI");
+                connection.ConnectionString = services.GetRequiredService<CoreConfig>().Database;
                 await connection.OpenAsync();
                 await Schema.CreateTables(connection);
 
                 Console.WriteLine("- Connecting to Discord...");
                 var client = services.GetRequiredService<IDiscordClient>() as DiscordSocketClient;
-                await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("PK_TOKEN"));
+                await client.LoginAsync(TokenType.Bot, services.GetRequiredService<BotConfig>().Token);
                 await client.StartAsync();
 
                 Console.WriteLine("- Initializing bot...");
@@ -54,6 +55,9 @@ namespace PluralKit.Bot
         }
 
         public ServiceProvider BuildServiceProvider() => new ServiceCollection()
+                .AddSingleton(_config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
+                .AddSingleton(_config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
+                
                 .AddSingleton<IDiscordClient, DiscordSocketClient>()
                 .AddSingleton<IDbConnection, NpgsqlConnection>()
                 .AddSingleton<Bot>()
