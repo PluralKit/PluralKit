@@ -2,10 +2,18 @@ version: "3"
 services:
   bot:
     build: .
+    entrypoint: ["dotnet", "run", "--project", "PluralKit.Bot"]
     environment:
-      - PK_TOKEN
-      - "PK_DATABASE_URI=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:Bot:Token"
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
     links:
+      - db
+  web:
+    build: .
+    entrypoint: ["dotnet", "run", "--project", "PluralKit.Web"]
+    environment:
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+    links: 
       - db
   db:
     image: postgres:alpine
