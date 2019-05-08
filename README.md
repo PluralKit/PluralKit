@@ -8,7 +8,7 @@ PluralKit has a Discord server for support and discussion: https://discord.gg/Pc
 Running the bot requires Python (specifically version 3.6) and PostgreSQL.
 
 # Configuration
-Configuring the bot is done through a configuration file. An example of the configuration format can be seen below, in the Example PluralKit COnfiguration section.
+Configuring the bot is done through a configuration file. An example of the configuration format can be seen below, in the Example PluralKit Configuration section.
 
 The following keys are available:
 * `token`: the Discord bot token to connect with
