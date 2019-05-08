@@ -75,19 +75,19 @@ namespace PluralKit.Bot
     {
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
-            var conn = services.GetService(typeof(IDbConnection)) as IDbConnection;
+            var members = services.GetRequiredService<MemberStore>();
 
             // If the sender of the command is in a system themselves,
             // then try searching by the member's name
             if (context is PKCommandContext ctx && ctx.SenderSystem != null)
             {
-                var foundByName = await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where system = @System and lower(name) = lower(@Name)", new { System = ctx.SenderSystem.Id, Name = input });
+                var foundByName = await members.GetByName(ctx.SenderSystem, input);
                 if (foundByName != null) return TypeReaderResult.FromSuccess(foundByName);
             }
 
             // Otherwise, if sender isn't in a system, or no member found by that name,
             // do a standard by-hid search.
-            var foundByHid = await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where hid = @Hid", new { Hid = input });
+            var foundByHid = await members.GetByHid(input);
             if (foundByHid != null) return TypeReaderResult.FromSuccess(foundByHid);
             return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Member not found.");
         }
