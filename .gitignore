@@ -7,5 +7,5 @@ venv/
 pluralkit.conf
 pluralkit.*.conf
 
-#ignores the __init__.py files they are blank and create unneeded writes to disks
+#ignores the __init__.py files they are blank and create unneeded writes to disks, with one exeception
 *__init__.py
