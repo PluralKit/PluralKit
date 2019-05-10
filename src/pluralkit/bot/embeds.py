@@ -83,10 +83,7 @@ async def system_card(conn, client: discord.Client, system: System, is_own_syste
     member_count = str(len(all_members))
 
     if system.name:
-        if not all_members:
-            card.title = truncate_title(system.name + " (no members)")
-        else:
-            card.title = truncate_title(system.name + " (" + member_count + " members)")
+        card.title = truncate_title(system.name)
 
     if system.avatar_url:
         card.set_thumbnail(url=system.avatar_url)
@@ -115,10 +112,7 @@ async def system_card(conn, client: discord.Client, system: System, is_own_syste
         card.add_field(name="Description",
                        value=truncate_field_body(system.description), inline=False)
 
-    if system.name:
-        card.add_field(name="Members", value="*See `pk;system {0} list`for the short list, or `pk;system {0} list full` for the detailed list*".format(system.hid) if not is_own_system else "*See `pk;system list` for the short list, or `pk;system list full` for the detailed list*")
-    else:
-        card.add_field(name="Members ({})".format(member_count), value="*See `pk;system {0} list`for the short list, or `pk;system {0} list full` for the detailed list*".format(system.hid) if not is_own_system else "*See `pk;system list` for the short list, or `pk;system list full` for the detailed list*")
+    card.add_field(name="Members ({})".format(member_count), value="*See `pk;system {0} list`for the short list, or `pk;system {0} list full` for the detailed list*".format(system.hid) if not is_own_system else "*See `pk;system list` for the short list, or `pk;system list full` for the detailed list*")
     card.set_footer(text="System ID: {}".format(system.hid))
     return card
 
