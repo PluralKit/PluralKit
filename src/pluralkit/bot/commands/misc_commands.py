@@ -192,3 +192,6 @@ async def pkfreeze(ctx: CommandContext):
 
 async def pkstarstorm(ctx: CommandContext):
     await ctx.message.channel.send("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*")
+
+async def pkmn(ctx: CommandContext):
+    await ctx.message.channel.send("Gotta catch 'em all!")
