@@ -35,6 +35,11 @@ namespace PluralKit {
         public async Task<PKSystem> GetByToken(string token) {
             return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where token = @Token", new { Token = token });
         }
+        
+        public async Task<PKSystem> GetById(int id)
+        {
+            return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where id = @Id", new { Id = id });
+        }
 
         public async Task Save(PKSystem system) {
             await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz where id = @Id", system);
@@ -94,6 +99,11 @@ namespace PluralKit {
 
         public async Task Delete(PKMember member) {
             await conn.ExecuteAsync("delete from members where id = @Id", member);
+        }
+
+        public async Task<int> MessageCount(PKMember member)
+        {
+            return await conn.QuerySingleAsync<int>("select count(*) from messages where member = @Id", member);
         }
     }
 

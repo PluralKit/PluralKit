@@ -8,7 +8,9 @@ namespace PluralKit.Bot.Commands
     [Group("member")]
     public class MemberCommands : ContextParameterModuleBase<PKMember>
     {
+        public SystemStore Systems { get; set; }
         public MemberStore Members { get; set; }
+        public EmbedService Embeds { get; set;  }
 
         public override string Prefix => "member";
         public override string ContextNoun => "member";
@@ -114,6 +116,14 @@ namespace PluralKit.Bot.Commands
             await Members.Save(ContextEntity);
 
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");
+        }
+
+        [Command]
+        [Remarks("member")]
+        public async Task ViewMember(PKMember member)
+        {
+            var system = await Systems.GetById(member.Id);
+            await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMemberEmbed(system, member));
         }
         
         public override async Task<PKMember> ReadContextParameterAsync(string value)

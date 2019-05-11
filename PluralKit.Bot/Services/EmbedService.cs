@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -5,11 +6,13 @@ using Discord;
 namespace PluralKit.Bot {
     public class EmbedService {
         private SystemStore _systems;
+        private MemberStore _members;
         private IDiscordClient _client;
 
-        public EmbedService(SystemStore systems, IDiscordClient client)
+        public EmbedService(SystemStore systems, MemberStore members, IDiscordClient client)
         {
             this._systems = systems;
+            this._members = members;
             this._client = client;
         }
 
@@ -40,6 +43,31 @@ namespace PluralKit.Bot {
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: ${sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: ${message.Id}")
                 .WithTimestamp(message.Timestamp)
                 .Build();
+        }
+
+        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member)
+        {
+            var name = member.Name;
+            if (system.Name != null) name = $"{member.Name} ({system.Name})";
+            
+            var color = Color.Default;
+            if (member.Color != null) color = new Color(uint.Parse(member.Color, NumberStyles.HexNumber));
+
+            var messageCount = await _members.MessageCount(member);
+
+            var eb = new EmbedBuilder()
+                // TODO: add URL of website when that's up
+                .WithAuthor(name, member.AvatarUrl)
+                .WithColor(color)
+                .WithDescription(member.Description)
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid}");
+
+            if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString);
+            if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns);
+            if (messageCount > 0) eb.AddField("Message Count", messageCount);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix}text{member.Suffix}");
+
+            return eb.Build();
         }
     }
 }
