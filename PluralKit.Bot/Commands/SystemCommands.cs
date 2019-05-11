@@ -30,7 +30,7 @@ namespace PluralKit.Bot.Commands
         public async Task New([Remainder] string systemName = null)
         {
             if (ContextEntity != null) throw Errors.NotOwnSystemError;
-            if (Context.SenderSystem != null) throw Errors.NoSystemError;
+            if (Context.SenderSystem != null) throw Errors.ExistingSystemError;
 
             var system = await Systems.Create(systemName);
             await Systems.Link(system, Context.User.Id);

@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord.Commands;
 
@@ -63,7 +64,7 @@ namespace PluralKit.Bot.Commands
                 if (!await Context.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
-            // Rename the mebmer
+            // Rename the member
             ContextEntity.Name = newName;
             await Members.Save(ContextEntity);
 
@@ -73,10 +74,10 @@ namespace PluralKit.Bot.Commands
 
         [Command("description")]
         [Alias("info", "bio", "text")]
-        [Remarks("member <member> description <description")]
+        [Remarks("member <member> description <description>")]
         [MustPassOwnMember]
         public async Task MemberDescription([Remainder] string description = null) {
-            if (description.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(description.Length);
+            if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
 
             ContextEntity.Description = description;
             await Members.Save(ContextEntity);
@@ -86,10 +87,10 @@ namespace PluralKit.Bot.Commands
 
         [Command("pronouns")]
         [Alias("pronoun")]
-        [Remarks("member <member> pronouns <pronouns")]
+        [Remarks("member <member> pronouns <pronouns>")]
         [MustPassOwnMember]
         public async Task MemberPronouns([Remainder] string pronouns = null) {
-            if (pronouns.Length > Limits.MaxPronounsLength) throw Errors.MemberPronounsTooLongError(pronouns.Length);
+            if (pronouns.IsLongerThan(Limits.MaxPronounsLength)) throw Errors.MemberPronounsTooLongError(pronouns.Length);
 
             ContextEntity.Pronouns = pronouns;
             await Members.Save(ContextEntity);
@@ -97,6 +98,24 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member pronouns {(pronouns == null ? "cleared" : "changed")}.");
         }
 
+        [Command("color")]
+        [Alias("colour")]
+        [Remarks("member <member> color <color>")]
+        [MustPassOwnMember]
+        public async Task MemberColor([Remainder] string color = null)
+        {
+            if (color != null)
+            {
+                if (color.StartsWith("#")) color = color.Substring(1);
+                if (!Regex.IsMatch(color, "[0-9a-f]{6}")) throw Errors.InvalidColorError(color);
+            }
+
+            ContextEntity.Color = color;
+            await Members.Save(ContextEntity);
+
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");
+        }
+        
         public override async Task<PKMember> ReadContextParameterAsync(string value)
         {
             var res = await new PKMemberTypeReader().ReadAsync(Context, value, _services);
