@@ -153,8 +153,12 @@ namespace PluralKit.Bot
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
+            // This stops the "delegating command" we define above from being called multiple times
+            // If we've already added a context object to the context, then we'll return with the same
+            // error you get when there's an invalid command - it's like it didn't exist
+            // This makes sure the user gets the proper error, instead of the command trying to parse things weirdly
             if ((context as PKCommandContext)?.GetContextEntity<object>() == null) return PreconditionResult.FromSuccess();
-            return PreconditionResult.FromError("(should not be seen)");
+            return PreconditionResult.FromError(command.Module.Service.Search("<unknown>"));
         }
     }
 
