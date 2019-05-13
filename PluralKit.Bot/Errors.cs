@@ -16,5 +16,7 @@ namespace PluralKit.Bot {
         
         public static PKError InvalidColorError(string color) => new PKError($"\"{color}\" is not a valid color. Color must be in hex format (eg. #ff0000).");
         public static PKError BirthdayParseError(string birthday) => new PKError($"\"{birthday}\" could not be parsed as a valid date. Try a format like \"2016-12-24\" or \"May 3 1996\".");
+        public static PKError ProxyMustHaveText => new PKSyntaxError("Example proxy message must contain the string 'text'.");
+        public static PKError ProxyMultipleText => new PKSyntaxError("Example proxy message must contain the string 'text' exactly once.");
     }
 }

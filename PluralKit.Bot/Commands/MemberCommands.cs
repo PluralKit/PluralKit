@@ -138,6 +138,35 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {ContextEntity.BirthdayString}")}.");
         }
 
+        [Command("proxy")]
+        [Alias("proxy", "tags", "proxytags", "brackets")]
+        [Remarks("member <member> proxy <proxy tags>")]
+        [MustPassOwnMember]
+        public async Task MemberProxy([Remainder] string exampleProxy = null)
+        {
+            // Handling the clear case in an if here to keep the body dedented
+            if (exampleProxy == null)
+            {
+                // Just reset and send OK message
+                ContextEntity.Prefix = null;
+                ContextEntity.Suffix = null;
+                await Members.Save(ContextEntity);
+                await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags cleared.");
+                return;
+            }
+            
+            // Make sure there's one and only one instance of "text" in the example proxy given
+            var prefixAndSuffix = exampleProxy.Split("text");
+            if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
+            if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
+
+            // If the prefix/suffix is empty, use "null" instead (for DB)
+            ContextEntity.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
+            ContextEntity.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
+            await Members.Save(ContextEntity);
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags changed to `{ContextEntity.ProxyString}`. Try proxying now!");
+        }
+
         [Command]
         [Alias("view", "show", "info")]
         [Remarks("member")]
@@ -146,7 +175,6 @@ namespace PluralKit.Bot.Commands
             var system = await Systems.GetById(member.System);
             await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMemberEmbed(system, member));
         }
-        
         public override async Task<PKMember> ReadContextParameterAsync(string value)
         {
             var res = await new PKMemberTypeReader().ReadAsync(Context, value, _services);
