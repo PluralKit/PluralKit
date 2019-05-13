@@ -48,8 +48,8 @@ namespace PluralKit.Bot
         private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials) {
             // TODO: add detection of leading @mention
 
-            // Sort by specificity (prefix+suffix first, prefix/suffix second)
-            var ordered = potentials.OrderByDescending((p) => (p.Member.Prefix != null ? 0 : 1) + (p.Member.Suffix != null ? 0 : 1));
+            // Sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
+            var ordered = potentials.OrderByDescending(p => p.Member.ProxyString.Length);
             foreach (var potential in ordered) {
                 var prefix = potential.Member.Prefix ?? "";
                 var suffix = potential.Member.Suffix ?? "";
@@ -63,7 +63,7 @@ namespace PluralKit.Bot
         }
 
         public async Task HandleMessageAsync(IMessage message) {
-            var results = await _connection.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>("select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid", (member, system) => new ProxyDatabaseResult { Member = member, System = system }, new { Uid = message.Author.Id });
+            var results = await _connection.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>("select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid and (members.prefix != null or members.suffix != null)", (member, system) => new ProxyDatabaseResult { Member = member, System = system }, new { Uid = message.Author.Id });
 
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, results);
