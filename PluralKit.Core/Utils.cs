@@ -101,5 +101,6 @@ namespace PluralKit
         public static readonly string Success = "\u2705";
         public static readonly string Error = "\u274C";
         public static readonly string Note = "\u2757";
+        public static readonly string ThumbsUp = "\U0001f44d";
     }
 }

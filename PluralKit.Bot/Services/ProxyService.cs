@@ -24,7 +24,7 @@ namespace PluralKit.Bot
         public PKSystem System;
         public string InnerText;
 
-        public string ProxyName => Member.Name + (System.Tag.Length > 0 ? " " + System.Tag : "");
+        public string ProxyName => Member.Name + (System.Tag != null ? " " + System.Tag : "");
     }
 
     class ProxyService {

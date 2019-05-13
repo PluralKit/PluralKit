@@ -48,6 +48,12 @@ namespace PluralKit.Bot {
             (ctx.Client as BaseSocketClient).MessageReceived += Inner;
             return await (tcs.Task.TimeoutAfter(timeout));
         }
+        
+        public static async Task<bool> ConfirmWithReply(this ICommandContext ctx, string expectedReply)
+        {
+            var msg = await ctx.AwaitMessage(ctx.Channel, ctx.User, timeout: TimeSpan.FromMinutes(1));
+            return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
+        }
 
         public static async Task Paginate<T>(this ICommandContext ctx, ICollection<T> items, int itemsPerPage, string title, Action<EmbedBuilder, IEnumerable<T>> renderer) {
             var pageCount = (items.Count / itemsPerPage) + 1;

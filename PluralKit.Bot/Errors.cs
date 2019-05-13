@@ -18,5 +18,7 @@ namespace PluralKit.Bot {
         public static PKError BirthdayParseError(string birthday) => new PKError($"\"{birthday}\" could not be parsed as a valid date. Try a format like \"2016-12-24\" or \"May 3 1996\".");
         public static PKError ProxyMustHaveText => new PKSyntaxError("Example proxy message must contain the string 'text'.");
         public static PKError ProxyMultipleText => new PKSyntaxError("Example proxy message must contain the string 'text' exactly once.");
+        
+        public static PKError MemberDeleteCancelled => new PKError($"Member deletion cancelled. Stay safe! {Emojis.ThumbsUp}");
     }
 }

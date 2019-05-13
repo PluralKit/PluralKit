@@ -167,6 +167,18 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags changed to `{ContextEntity.ProxyString}`. Try proxying now!");
         }
 
+        [Command("delete")]
+        [Alias("remove", "erase", "yeet")]
+        [Remarks("member <member> delete")]
+        [MustPassOwnMember]
+        public async Task MemberDelete()
+        {
+            await Context.Channel.SendMessageAsync($"{Emojis.Warn} Are you sure you want to delete \"{ContextEntity.Name}\"? If so, reply to this message with the member's ID (`{ContextEntity.Hid}`). __***This cannot be undone!***__");
+            if (!await Context.ConfirmWithReply(ContextEntity.Hid)) throw Errors.MemberDeleteCancelled;
+            await Members.Delete(ContextEntity);
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member deleted.");
+        }
+
         [Command]
         [Alias("view", "show", "info")]
         [Remarks("member")]
