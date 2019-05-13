@@ -2,6 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord.Commands;
+using NodaTime;
 
 namespace PluralKit.Bot.Commands
 {
@@ -118,11 +119,31 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");
         }
 
+        [Command("birthday")]
+        [Alias("birthdate", "bday", "cakeday", "bdate")]
+        [Remarks("member <member> birthday <birthday>")]
+        [MustPassOwnMember]
+        public async Task MemberBirthday([Remainder] string birthday = null)
+        {
+            LocalDate? date = null;
+            if (birthday != null)
+            {
+                date = PluralKit.Utils.ParseDate(birthday, true);
+                if (date == null) throw Errors.BirthdayParseError(birthday);
+            }
+
+            ContextEntity.Birthday = date;
+            await Members.Save(ContextEntity);
+            
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {ContextEntity.BirthdayString}")}.");
+        }
+
         [Command]
+        [Alias("view", "show", "info")]
         [Remarks("member")]
         public async Task ViewMember(PKMember member)
         {
-            var system = await Systems.GetById(member.Id);
+            var system = await Systems.GetById(member.System);
             await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMemberEmbed(system, member));
         }
         

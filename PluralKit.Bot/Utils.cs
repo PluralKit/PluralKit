@@ -9,6 +9,7 @@ using Discord.Commands;
 using Discord.Commands.Builders;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using NodaTime;
 
 namespace PluralKit.Bot
 {
@@ -29,6 +30,19 @@ namespace PluralKit.Bot
         public override void SetValue(IDbDataParameter parameter, ulong value)
         {
             parameter.Value = (long)value;
+        }
+    }
+
+    class PassthroughTypeHandler<T> : SqlMapper.TypeHandler<T>
+    {
+        public override void SetValue(IDbDataParameter parameter, T value)
+        {
+            parameter.Value = value;
+        }
+
+        public override T Parse(object value)
+        {
+            return (T) value;
         }
     }
 

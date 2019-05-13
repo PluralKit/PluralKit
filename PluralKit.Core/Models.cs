@@ -1,5 +1,7 @@
 using System;
 using Dapper.Contrib.Extensions;
+using NodaTime;
+using NodaTime.Text;
 
 namespace PluralKit
 {
@@ -14,7 +16,7 @@ namespace PluralKit
         public string Tag { get; set; }
         public string AvatarUrl { get; set; }
         public string Token { get; set; }
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
         public string UiTz { get; set; }
 
         public int MaxMemberNameLength => Tag != null ? 32 - Tag.Length - 1 : 32;
@@ -29,12 +31,12 @@ namespace PluralKit
         public string Color { get; set; }
         public string AvatarUrl { get; set; }
         public string Name { get; set; }
-        public DateTime? Birthday { get; set; }
+        public LocalDate? Birthday { get; set; }
         public string Pronouns { get; set; }
         public string Description { get; set; }
         public string Prefix { get; set; }
         public string Suffix { get; set; }
-        public DateTime Created { get; set; }
+        public Instant Created { get; set; }
 
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" is hidden
         public string BirthdayString
@@ -42,8 +44,10 @@ namespace PluralKit
             get
             {
                 if (Birthday == null) return null;
-                if (Birthday?.Year == 1) return Birthday?.ToString("MMMM dd");
-                return Birthday?.ToString("MMMM dd, yyyy");
+
+                var format = LocalDatePattern.CreateWithInvariantCulture("MMM dd, yyyy");
+                if (Birthday?.Year == 1) format = LocalDatePattern.CreateWithInvariantCulture("MMM dd");
+                return format.Format(Birthday.Value);
             }
         }
 

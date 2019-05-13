@@ -12,6 +12,7 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.2.0" />
       <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.4" />
       <PackageReference Include="Npgsql" Version="4.0.6" />
+      <PackageReference Include="Npgsql.NodaTime" Version="4.0.6" />
     </ItemGroup>
 
 </Project>

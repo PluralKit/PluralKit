@@ -14,6 +14,7 @@ namespace PluralKit.Bot {
         public static PKError MemberNameTooLongError(int length) => new PKError($"Member name too long ({length}/{Limits.MaxMemberNameLength} characters).");
         public static PKError MemberPronounsTooLongError(int length) => new PKError($"Member pronouns too long ({length}/{Limits.MaxMemberNameLength} characters).");
         
-        public static PKError InvalidColorError(string color) => new PKError($"{color} is not a valid color. Color must be in hex format (eg. #ff0000).");
+        public static PKError InvalidColorError(string color) => new PKError($"\"{color}\" is not a valid color. Color must be in hex format (eg. #ff0000).");
+        public static PKError BirthdayParseError(string birthday) => new PKError($"\"{birthday}\" could not be parsed as a valid date. Try a format like \"2016-12-24\" or \"May 3 1996\".");
     }
 }

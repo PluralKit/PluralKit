@@ -10,6 +10,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NodaTime;
 using Npgsql;
 
 namespace PluralKit.Bot
@@ -34,6 +35,14 @@ namespace PluralKit.Bot
             SqlMapper.AddTypeHandler<ulong>(new UlongEncodeAsLongHandler());
             Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
+            // Also, use NodaTime. it's good.
+            NpgsqlConnection.GlobalTypeMapper.UseNodaTime();
+            // With the thing we add above, Npgsql already handles NodaTime integration
+            // This makes Dapper confused since it thinks it has to convert it anyway and doesn't understand the types
+            // So we add a custom type handler that literally just passes the type through to Npgsql
+            SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
+            SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
+            
             using (var services = BuildServiceProvider())
             {
                 Console.WriteLine("- Connecting to database...");
