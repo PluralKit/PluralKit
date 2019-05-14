@@ -45,6 +45,21 @@ class InvalidAvatarURLError(PluralKitError):
         super().__init__("Invalid image URL.")
 
 
+class AvatarHTTPError(PluralKitError):
+    def __init__(self):
+        super().__init__("Avatar could not be retrieved. ")
+
+
+class InvalidAvatarContentTypeError(PluralKitError):
+    def __init__(self):
+        super().__init__("Avatar file type disallowed. (Types: jpg, png, gif)")
+
+
+class AvatarFileSizeTooLargeError(PluralKitError):
+    def __init__(self):
+        super().__init__("Avatar file size too large. (Limit: 1MB)")
+
+
 class AccountInOwnSystemError(PluralKitError):
     def __init__(self):
         super().__init__("That account is already linked to your own system.")
@@ -102,3 +117,4 @@ class InvalidTimeZoneError(PluralKitError):
 class TupperboxImportError(PluralKitError):
     def __init__(self):
         super().__init__("Invalid Tupperbox file.")
+        
