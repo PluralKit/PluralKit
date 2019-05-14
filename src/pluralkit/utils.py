@@ -6,9 +6,13 @@ import string
 from datetime import datetime, timezone, timedelta
 from typing import List, Tuple, Union
 from urllib.parse import urlparse
+from urllib.request import urlopen
+from urllib.error import HTTPError
+import requests
+
 
 from pluralkit import db
-from pluralkit.errors import InvalidAvatarURLError
+from pluralkit.errors import InvalidAvatarURLError, AvatarHTTPError, InvalidAvatarContentTypeError, AvatarFileSizeTooLargeError
 
 
 def display_relative(time: Union[datetime, timedelta]) -> str:
@@ -69,5 +73,18 @@ def validate_avatar_url_or_raise(url):
     u = urlparse(url)
     if not (u.scheme in ["http", "https"] and u.netloc and u.path):
         raise InvalidAvatarURLError()
+    response = ''
+    response = requests.head(url) # Requests won't output a ton of garbage to console when there's a 404, just one line.
+    if (response.status_code() != 200):
+        raise AvatarHTTPError(error)
+    u = urlopen(url) # get header info
+    u.close() # we don't need to read the file
+    ContentType = u.info()['content-type']
+    ContentType = str.lower(ContentType) # HTTP header feilds are case insensitive so we may get capital letters from sillier web servers
+    ContentLength = int(u.info()['content-length'])
+    if (ContentType != 'image/jpeg') and (ContentType != 'image/png') and (ContentType != 'image/gif'): # check for valid avatar filetype
+        raise InvalidAvatarContentTypeError()
+    elif (ContentLength > 1000000):
+        raise AvatarFileSizeTooLargeError()
 
     # TODO: check file type and size of image
