@@ -103,5 +103,29 @@ namespace PluralKit.Bot {
         }
 
         public static async Task<bool> HasPermission(this ICommandContext ctx, ChannelPermission permission) => (await Permissions(ctx)).Has(permission);
+
+        public static async Task BusyIndicator(this ICommandContext ctx, Func<Task> f, string emoji = "\u23f3" /* hourglass */)
+        {
+            await ctx.BusyIndicator<object>(async () =>
+            {
+                await f();
+                return null;
+            }, emoji);
+        }
+
+        public static async Task<T> BusyIndicator<T>(this ICommandContext ctx, Func<Task<T>> f, string emoji = "\u23f3" /* hourglass */)
+        {
+            var task = f();
+
+            try
+            {
+                await Task.WhenAll(ctx.Message.AddReactionAsync(new Emoji(emoji)), task);
+                return await task;
+            }
+            finally
+            {
+                ctx.Message.RemoveReactionAsync(new Emoji(emoji), ctx.Client.CurrentUser);
+            }
+        }
     }
 }

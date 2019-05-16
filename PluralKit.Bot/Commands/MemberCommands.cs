@@ -1,8 +1,12 @@
 using System;
+using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using NodaTime;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace PluralKit.Bot.Commands
 {
@@ -179,6 +183,22 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member deleted.");
         }
 
+        [Command("avatar")]
+        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
+        [Remarks("member <member> avatar <avatar url>")]
+        [MustPassOwnMember]
+        public async Task MemberAvatar([Remainder] string avatarUrl = null)
+        {
+            string url = avatarUrl ?? Context.Message.Attachments.FirstOrDefault()?.ProxyUrl;
+            if (url != null) await Context.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
+
+            ContextEntity.AvatarUrl = url;
+            await Members.Save(ContextEntity);
+
+            var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
+        }
+
         [Command]
         [Alias("view", "show", "info")]
         [Remarks("member")]
@@ -187,6 +207,7 @@ namespace PluralKit.Bot.Commands
             var system = await Systems.GetById(member.System);
             await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMemberEmbed(system, member));
         }
+        
         public override async Task<PKMember> ReadContextParameterAsync(string value)
         {
             var res = await new PKMemberTypeReader().ReadAsync(Context, value, _services);

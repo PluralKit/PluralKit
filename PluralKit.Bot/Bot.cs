@@ -64,21 +64,23 @@ namespace PluralKit.Bot
         }
 
         public ServiceProvider BuildServiceProvider() => new ServiceCollection()
-                .AddSingleton(_config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
-                .AddSingleton(_config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
+                .AddTransient(_ => _config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
+                .AddTransient(_ => _config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
+                
+                .AddScoped<IDbConnection>(svc => new NpgsqlConnection(svc.GetRequiredService<CoreConfig>().Database))
                 
                 .AddSingleton<IDiscordClient, DiscordSocketClient>()
-                .AddSingleton<IDbConnection, NpgsqlConnection>()
                 .AddSingleton<Bot>()
 
-                .AddSingleton<CommandService>()
-                .AddSingleton<EmbedService>()
-                .AddSingleton<LogChannelService>()
-                .AddSingleton<ProxyService>()
+                .AddTransient<CommandService>()
+                .AddTransient<EmbedService>()
+                .AddTransient<ProxyService>()
+                .AddTransient<LogChannelService>()
+                .AddSingleton<WebhookCacheService>()
                 
-                .AddSingleton<SystemStore>()
-                .AddSingleton<MemberStore>()
-                .AddSingleton<MessageStore>()
+                .AddTransient<SystemStore>()
+                .AddTransient<MemberStore>()
+                .AddTransient<MessageStore>()
                 .BuildServiceProvider();
     }
     class Bot
@@ -154,6 +156,8 @@ namespace PluralKit.Bot
 
         private async Task MessageReceived(SocketMessage _arg)
         {
+            var serviceScope = _services.CreateScope();
+            
             // Ignore system messages (member joined, message pinned, etc)
             var arg = _arg as SocketUserMessage;
             if (arg == null) return;
@@ -169,7 +173,7 @@ namespace PluralKit.Bot
                 // and start command execution
                 // Note system may be null if user has no system, hence `OrDefault`
                 var system = await _connection.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
-                await _commands.ExecuteAsync(new PKCommandContext(_client, arg as SocketUserMessage, _connection, system), argPos, _services);
+                await _commands.ExecuteAsync(new PKCommandContext(_client, arg, _connection, system), argPos, serviceScope.ServiceProvider);
             }
             else
             {

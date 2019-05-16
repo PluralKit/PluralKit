@@ -31,18 +31,17 @@ namespace PluralKit.Bot
         private IDiscordClient _client;
         private IDbConnection _connection;
         private LogChannelService _logger;
+        private WebhookCacheService _webhookCache;
         private MessageStore _messageStorage;
 
-        private ConcurrentDictionary<ulong, Lazy<Task<IWebhook>>> _webhooks;
         
-        public ProxyService(IDiscordClient client, IDbConnection connection, LogChannelService logger, MessageStore messageStorage)
+        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, IDbConnection connection, LogChannelService logger, MessageStore messageStorage)
         {
             this._client = client;
+            this._webhookCache = webhookCache;
             this._connection = connection;
             this._logger = logger;
             this._messageStorage = messageStorage;
-
-            _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<IWebhook>>>();
         }
 
         private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials) {
@@ -70,7 +69,7 @@ namespace PluralKit.Bot
             if (match == null) return;
 
             // Fetch a webhook for this channel, and send the proxied message
-            var webhook = await GetWebhookByChannelCaching(message.Channel as ITextChannel);
+            var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
             var hookMessage = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, match.Member.AvatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
@@ -94,28 +93,6 @@ namespace PluralKit.Bot
                 messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
             }
             return await webhook.Channel.GetMessageAsync(messageId);
-        }
-
-        private async Task<IWebhook> GetWebhookByChannelCaching(ITextChannel channel) {
-            // We cache the webhook through a Lazy<Task<T>>, this way we make sure to only create one webhook per channel
-            // TODO: make sure this is sharding-safe. Intuition says yes, since one channel is guaranteed to only be handled by one shard, but best to make sure
-            var webhookFactory = _webhooks.GetOrAdd(channel.Id, new Lazy<Task<IWebhook>>(() => FindWebhookByChannel(channel)));
-            return await webhookFactory.Value;
-        }
-
-        private async Task<IWebhook> FindWebhookByChannel(ITextChannel channel) {
-            IWebhook webhook;
-
-            webhook = (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
-            if (webhook != null) return webhook;
-
-            webhook = await channel.CreateWebhookAsync("PluralKit Proxy Webhook");
-            return webhook;
-        }
-
-        private bool IsWebhookMine(IWebhook arg)
-        {
-            return arg.Creator.Id == this._client.CurrentUser.Id && arg.Name == "PluralKit Proxy Webhook";
         }
 
         public async Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
