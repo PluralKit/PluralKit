@@ -20,14 +20,16 @@ namespace PluralKit.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            DatabaseUtils.Init();
+
             var config = Configuration.GetSection("PluralKit").Get<CoreConfig>();
             
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             
             services
-                .AddSingleton<IDbConnection, NpgsqlConnection>(_ => new NpgsqlConnection(config.Database))
-                .AddSingleton<SystemStore>()
-                .AddSingleton<MemberStore>()
+                .AddScoped<IDbConnection, NpgsqlConnection>(_ => new NpgsqlConnection(config.Database))
+                .AddTransient<SystemStore>()
+                .AddTransient<MemberStore>()
                 .AddSingleton(config);
         }
 

@@ -61,33 +61,6 @@ namespace PluralKit.Bot
         }
     }
 
-    class UlongEncodeAsLongHandler : SqlMapper.TypeHandler<ulong>
-    {
-        public override ulong Parse(object value)
-        {
-            // Cast to long to unbox, then to ulong (???)
-            return (ulong)(long)value;
-        }
-
-        public override void SetValue(IDbDataParameter parameter, ulong value)
-        {
-            parameter.Value = (long)value;
-        }
-    }
-
-    class PassthroughTypeHandler<T> : SqlMapper.TypeHandler<T>
-    {
-        public override void SetValue(IDbDataParameter parameter, T value)
-        {
-            parameter.Value = value;
-        }
-
-        public override T Parse(object value)
-        {
-            return (T) value;
-        }
-    }
-
     class PKSystemTypeReader : TypeReader
     {
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)

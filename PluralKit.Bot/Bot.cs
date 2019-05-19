@@ -27,21 +27,8 @@ namespace PluralKit.Bot
         private async Task MainAsync()
         {
             Console.WriteLine("Starting PluralKit...");
-
-            // Dapper by default tries to pass ulongs to Npgsql, which rejects them since PostgreSQL technically
-            // doesn't support unsigned types on its own.
-            // Instead we add a custom mapper to encode them as signed integers instead, converting them back and forth.
-            SqlMapper.RemoveTypeMap(typeof(ulong));
-            SqlMapper.AddTypeHandler<ulong>(new UlongEncodeAsLongHandler());
-            Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-
-            // Also, use NodaTime. it's good.
-            NpgsqlConnection.GlobalTypeMapper.UseNodaTime();
-            // With the thing we add above, Npgsql already handles NodaTime integration
-            // This makes Dapper confused since it thinks it has to convert it anyway and doesn't understand the types
-            // So we add a custom type handler that literally just passes the type through to Npgsql
-            SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
-            SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
+            
+            DatabaseUtils.Init();
             
             using (var services = BuildServiceProvider())
             {
