@@ -23,9 +23,13 @@ namespace PluralKit {
         public async Task Link(PKSystem system, ulong accountId) {
             await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId)", new { Id = accountId, SystemId = system.Id });
         }
+        
+        public async Task Unlink(PKSystem system, ulong accountId) {
+            await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
+        }
 
         public async Task<PKSystem> GetByAccount(ulong accountId) {
-            return await conn.QuerySingleOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.system = system.id and accounts.uid = @Id", new { Id = accountId });
+            return await conn.QuerySingleOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.system = systems.id and accounts.uid = @Id", new { Id = accountId });
         }
 
         public async Task<PKSystem> GetByHid(string hid) {

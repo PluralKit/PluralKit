@@ -66,7 +66,7 @@ namespace PluralKit.Bot
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
             var client = services.GetService<IDiscordClient>();
-            var conn = services.GetService<IDbConnection>();
+            var systems = services.GetService<SystemStore>();
 
             // System references can take three forms:
             // - The direct user ID of an account connected to the system
@@ -74,20 +74,20 @@ namespace PluralKit.Bot
             // - A system hid
 
             // First, try direct user ID parsing
-            if (ulong.TryParse(input, out var idFromNumber)) return await FindSystemByAccountHelper(idFromNumber, client, conn);
+            if (ulong.TryParse(input, out var idFromNumber)) return await FindSystemByAccountHelper(idFromNumber, client, systems);
 
             // Then, try mention parsing.
-            if (MentionUtils.TryParseUser(input, out var idFromMention)) return await FindSystemByAccountHelper(idFromMention, client, conn);
+            if (MentionUtils.TryParseUser(input, out var idFromMention)) return await FindSystemByAccountHelper(idFromMention, client, systems);
 
             // Finally, try HID parsing
-            var res = await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where hid = @Hid", new { Hid = input });
+            var res = await systems.GetByHid(input);
             if (res != null) return TypeReaderResult.FromSuccess(res);
             return TypeReaderResult.FromError(CommandError.ObjectNotFound, $"System with ID `{input}` not found.");
         }
 
-        async Task<TypeReaderResult> FindSystemByAccountHelper(ulong id, IDiscordClient client, IDbConnection conn)
+        async Task<TypeReaderResult> FindSystemByAccountHelper(ulong id, IDiscordClient client, SystemStore systems)
         {
-            var foundByAccountId = await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from accounts, systems where accounts.system = system.id and accounts.id = @Id", new { Id = id });
+            var foundByAccountId = await systems.GetByAccount(id);
             if (foundByAccountId != null) return TypeReaderResult.FromSuccess(foundByAccountId);
 
             // We didn't find any, so we try to resolve the user ID to find the associated account,

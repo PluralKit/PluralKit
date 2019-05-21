@@ -130,6 +130,9 @@ namespace PluralKit.Bot
                         await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {exception.Message}");
                     } else if (exception is TimeoutException) {
                         await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} Operation timed out. Try being faster next time :)");
+                    } else if (_result is PreconditionResult)
+                    {
+                        await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
                     } else {
                         HandleRuntimeError((_result as ExecuteResult?)?.Exception);
                     }

@@ -8,9 +8,9 @@ using Discord.WebSocket;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
-                public static async Task<bool> PromptYesNo(this ICommandContext ctx, IUserMessage message, TimeSpan? timeout = null) {
+                public static async Task<bool> PromptYesNo(this ICommandContext ctx, IUserMessage message, IUser user = null, TimeSpan? timeout = null) {
             await message.AddReactionsAsync(new[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
-            var reaction = await ctx.AwaitReaction(message, ctx.User, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
+            var reaction = await ctx.AwaitReaction(message, user ?? ctx.User, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
             return reaction.Emote.Name == Emojis.Success;
         }
 

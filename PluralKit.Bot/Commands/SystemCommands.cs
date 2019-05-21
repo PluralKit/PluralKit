@@ -20,7 +20,7 @@ namespace PluralKit.Bot.Commands
         [Command]
         public async Task Query(PKSystem system = null) {
             if (system == null) system = Context.SenderSystem;
-            if (system == null) throw Errors.NotOwnSystemError;
+            if (system == null) throw Errors.NoSystemError;
 
             await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateSystemEmbed(system));
         }

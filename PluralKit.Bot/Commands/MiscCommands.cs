@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 
-namespace PluralKit.Bot {
+namespace PluralKit.Bot.Commands {
     public class MiscCommands: ModuleBase<PKCommandContext> {
         [Command("invite")]
         [Remarks("invite")]
