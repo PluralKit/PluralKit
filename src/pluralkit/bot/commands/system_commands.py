@@ -34,7 +34,7 @@ async def system_root(ctx: CommandContext):
         await system_fronter(ctx, await ctx.ensure_system())
     elif ctx.match("fronthistory"):
         await system_fronthistory(ctx, await ctx.ensure_system())
-    elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage"):
+    elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage") or ctx.match("front%") or ctx.match("fp"):
         await system_frontpercent(ctx, await ctx.ensure_system())
     elif ctx.match("timezone") or ctx.match("tz"):
         await system_timezone(ctx)
