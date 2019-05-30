@@ -11,6 +11,11 @@ from pluralkit.errors import PluralKitError
 from pluralkit.member import Member
 from pluralkit.system import System
 
+def find_with_predicate(s: str, pred) -> int:
+    for i, v in enumerate(s):
+        if pred(v):
+            return i
+    return -1
 
 def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
     # A basic quoted-arg parser
@@ -25,7 +30,7 @@ def next_arg(arg_string: str) -> Tuple[str, Optional[str]]:
         else:
             return arg_string[1:], None
 
-    next_space = arg_string.find(" ")
+    next_space = find_with_predicate(arg_string, lambda ch: ch.isspace())
     if next_space >= 0:
         return arg_string[:next_space].strip(), arg_string[next_space:].strip()
     else:
