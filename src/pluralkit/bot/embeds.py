@@ -278,6 +278,8 @@ def member_list_full(system: System, all_members: List[Member], current_page: in
             member_description += "**Birthday:** {}\n".format(member.birthday_string())
         if member.pronouns:
             member_description += "**Pronouns:** {}\n".format(member.pronouns)
+        if member.prefix or member.suffix:
+            member_description += "**Proxy tags:** {}`text`{}\n".format(member.prefix or "", member.suffix or "")
         if member.description:
             if len(member.description) > 512:
                 member_description += "\n" + truncate_description_list(member.description) + "\n" + "Type `pk;member {}` for full description.".format(member.hid)
