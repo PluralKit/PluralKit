@@ -32,7 +32,7 @@ async def system_root(ctx: CommandContext):
         await system_delete(ctx)
     elif ctx.match("front") or ctx.match("fronter") or ctx.match("fronters"):
         await system_fronter(ctx, await ctx.ensure_system())
-    elif ctx.match("fronthistory"):
+    elif ctx.match("fronthistory") or ctx.match("fh") or ctx.match("history") or ctx.match("switches"):
         await system_fronthistory(ctx, await ctx.ensure_system())
     elif ctx.match("frontpercent") or ctx.match("frontbreakdown") or ctx.match("frontpercentage") or ctx.match("front%") or ctx.match("fp"):
         await system_frontpercent(ctx, await ctx.ensure_system())

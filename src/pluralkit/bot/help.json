@@ -72,6 +72,7 @@
                 },
                 {
                     "name": "fronthistory",
+                    "aliases": ["system fh", "system history", "system switches"],
                     "usage": "system [id] fronthistory",
                     "category": "System",
                     "description": "Shows the last 10 switches of a system."
