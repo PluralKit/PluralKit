@@ -201,11 +201,11 @@
         {
             "name": "switch",
             "aliases": ["sw"],
-            "usage": "switch <member> [member...]",
+            "usage": "switch [member] [extra members...]",
             "category": "Switching",
-            "description": "Registers a switch with the given members.",
-            "longdesc": "You may specify multiple members to indicate cofronting.",
-            "examples": ["switch Jack", "switch Jack Jill"],
+            "description": "Registers a switch with the given members, or displays a list of logged switches if no members are given.",
+            "longdesc": "You may specify multiple members to indicate cofronting. Shows the last 10 switches of a system if no members are given.",
+            "examples": ["switch Jack", "switch Jack Jill", "switch"],
             "subcommands": [
                 {
                     "name": "move",

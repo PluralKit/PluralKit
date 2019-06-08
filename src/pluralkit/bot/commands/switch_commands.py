@@ -5,14 +5,16 @@ import dateparser
 import pytz
 
 from pluralkit.bot.commands import *
+from pluralkit.bot.commands.system_commands import system_fronthistory
 from pluralkit.member import Member
 from pluralkit.utils import display_relative
 
 
 async def switch_root(ctx: CommandContext):
     if not ctx.has_next():
-        raise CommandError("You must use a subcommand. For a list of subcommands, type `pk;help member`.")
-
+        # We could raise an error here, but we display the system front history instead as a shortcut
+        #raise CommandError("You must use a subcommand. For a list of subcommands, type `pk;help member`.")
+        await system_fronthistory(ctx, await ctx.ensure_system())
     if ctx.match("out"):
         await switch_out(ctx)
     elif ctx.match("move"):

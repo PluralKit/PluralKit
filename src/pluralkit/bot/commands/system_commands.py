@@ -244,7 +244,7 @@ async def system_fronthistory(ctx: CommandContext, system: System):
     front_history = await pluralkit.utils.get_front_history(ctx.conn, system.id, count=10)
 
     if not front_history:
-        raise CommandError("You have no logged switches. Use `pk;switch´ to start logging.")
+        raise CommandError("You have no logged switches. Use `pk;switch [member] [extra members...]` to start logging.")
 
     for i, (timestamp, members) in enumerate(front_history):
         # Special case when no one's fronting
