@@ -158,16 +158,25 @@ async def export(ctx: CommandContext):
     await working_msg.delete()
 
     try:
+        # Try sending the file to the user in a DM first
         f = io.BytesIO(json.dumps(data).encode("utf-8"))
         await ctx.message.author.send(content="Here you go! \u2709", file=discord.File(fp=f, filename="pluralkit_system.json"))
         if not isinstance(ctx.message.channel, discord.DMChannel):
             await ctx.reply_ok("DM'd!")
     except discord.Forbidden:
-        msg = await ctx.reply_warn("I'm not allowed to DM you! Do you want me to post the exported data here instead?")
-        if not await ctx.confirm_react(ctx.message.author, msg):
+        # If that fails, warn the user and ask whether the want the file posted in the channel
+        fallback_msg = await ctx.reply_warn("I'm not allowed to DM you! Do you want me to post the exported data here instead? I can delete the file after you save it if you want.")
+        # Use reactions to get their response
+        if not await ctx.confirm_react(ctx.message.author, fallback_msg):
             raise CommandError("Export cancelled.")
         f = io.BytesIO(json.dumps(data).encode("utf-8"))
-        await ctx.message.channel.send(content="Here you go! \u2709", file=discord.File(fp=f, filename="pluralkit_system.json"))
+        # If they reacted with ✅, post the file in the channel and give them the option to delete it
+        fallback_data = await ctx.message.channel.send(content="Here you go! \u2709\nReact with \u2705 if you want me to delete the file.", file=discord.File(fp=f, filename="pluralkit_system.json"))
+        if not await ctx.confirm_react(ctx.message.author, fallback_data):
+            await fallback_data.add_reaction("👌")
+            return
+        await fallback_data.delete()
+        await ctx.reply_ok("Export file deleted.")
 
 
 async def tell(ctx: CommandContext):
