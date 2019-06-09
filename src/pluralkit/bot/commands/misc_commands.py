@@ -157,12 +157,17 @@ async def export(ctx: CommandContext):
 
     await working_msg.delete()
 
-    f = io.BytesIO(json.dumps(data).encode("utf-8"))
-
-    if not isinstance(ctx.message.channel, discord.DMChannel):
-        await ctx.reply_ok("DM'd!")
-
-    await ctx.message.author.send(content="Here you go! \u2709", file=discord.File(fp=f, filename="pluralkit_system.json"))
+    try:
+        f = io.BytesIO(json.dumps(data).encode("utf-8"))
+        await ctx.message.author.send(content="Here you go! \u2709", file=discord.File(fp=f, filename="pluralkit_system.json"))
+        if not isinstance(ctx.message.channel, discord.DMChannel):
+            await ctx.reply_ok("DM'd!")
+    except discord.Forbidden:
+        msg = await ctx.reply_warn("I'm not allowed to DM you! Do you want me to post the exported data here instead?")
+        if not await ctx.confirm_react(ctx.message.author, msg):
+            raise CommandError("Export cancelled.")
+        f = io.BytesIO(json.dumps(data).encode("utf-8"))
+        await ctx.message.channel.send(content="Here you go! \u2709", file=discord.File(fp=f, filename="pluralkit_system.json"))
 
 
 async def tell(ctx: CommandContext):
