@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using Humanizer;
+using NodaTime;
 
 namespace PluralKit.Bot {
     public static class Errors {
@@ -35,5 +39,21 @@ namespace PluralKit.Bot {
         public static PKError UnlinkingLastAccount => new PKError("Since this is the only account linked to this system, you cannot unlink it (as that would leave your system account-less).");
         public static PKError MemberLinkCancelled => new PKError("Member link cancelled.");
         public static PKError MemberUnlinkCancelled => new PKError("Member unlink cancelled.");
+
+        public static PKError SameSwitch(ICollection<PKMember> members)
+        {
+            if (members.Count == 0) return new PKError("There's already no one in front.");
+            if (members.Count == 1) return new PKError($"Member {members.First().Name} is already fronting.");
+            return new PKError($"Members {string.Join(", ", members.Select(m => m.Name))} are already fronting.");
+        }
+
+        public static PKError DuplicateSwitchMembers => new PKError("Duplicate members in member list.");
+
+        public static PKError InvalidDateTime(string str) => new PKError($"Could not parse '{str}' as a valid date/time.");
+        public static PKError SwitchTimeInFuture => new PKError("Can't move switch to a time in the future.");
+        public static PKError NoRegisteredSwitches => new PKError("There are no registered switches for this system.");
+
+        public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({time.ToString(Formats.DateTimeFormat, null)}), as it would cause conflicts.");
+        public static PKError SwitchMoveCancelled => new PKError("Switch move cancelled.");
     }
 }

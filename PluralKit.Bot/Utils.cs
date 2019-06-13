@@ -118,7 +118,7 @@ namespace PluralKit.Bot
             // do a standard by-hid search.
             var foundByHid = await members.GetByHid(input);
             if (foundByHid != null) return TypeReaderResult.FromSuccess(foundByHid);
-            return TypeReaderResult.FromError(CommandError.ObjectNotFound, "Member not found.");
+            return TypeReaderResult.FromError(CommandError.ObjectNotFound, $"Member '{input}' not found.");
         }
     }
 

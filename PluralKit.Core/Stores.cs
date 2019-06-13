@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Dapper.Contrib.Extensions;
+using NodaTime;
 
 namespace PluralKit {
     public class SystemStore {
@@ -145,6 +147,61 @@ namespace PluralKit {
         
         public async Task Delete(ulong id) {
             await _connection.ExecuteAsync("delete from messages where mid = @Id", new { Id = id });
+        }
+    }
+
+    public class SwitchStore
+    {
+        private IDbConnection _connection;
+
+        public SwitchStore(IDbConnection connection)
+        {
+            _connection = connection;
+        }
+
+        public async Task RegisterSwitch(PKSystem system, IEnumerable<PKMember> members)
+        {
+            // Use a transaction here since we're doing multiple executed commands in one
+            using (var tx = _connection.BeginTransaction())
+            {
+                // First, we insert the switch itself
+                var sw = await _connection.QuerySingleAsync<PKSwitch>("insert into switches(system) values (@System) returning *",
+                    new {System = system.Id});
+                
+                // Then we insert each member in the switch in the switch_members table
+                // TODO: can we parallelize this or send it in bulk somehow?
+                foreach (var member in members)
+                {
+                    await _connection.ExecuteAsync(
+                        "insert into switch_members(switch, member) values(@Switch, @Member)",
+                        new {Switch = sw.Id, Member = member.Id});
+                }
+                
+                // Finally we commit the tx, since the using block will otherwise rollback it
+                tx.Commit();
+            }
+        }
+
+        public async Task<IEnumerable<PKSwitch>> GetSwitches(PKSystem system, int count)
+        {
+            // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
+            // (maybe when we get caching in?)
+            return await _connection.QueryAsync<PKSwitch>("select * from switches where system = @System order by timestamp desc limit @Count", new {System = system.Id, Count = count});
+        }
+
+        public async Task<IEnumerable<PKMember>> GetSwitchMembers(PKSwitch sw)
+        {
+            return await _connection.QueryAsync<PKMember>(
+                "select * from switch_members, members where switch_members.member = members.id and switch_members.switch = @Switch",
+                new {Switch = sw.Id});
+        }
+
+        public async Task<PKSwitch> GetLatestSwitch(PKSystem system) => (await GetSwitches(system, 1)).FirstOrDefault();
+
+        public async Task MoveSwitch(PKSwitch sw, Instant time)
+        {
+            await _connection.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
+                new {Time = time, Id = sw.Id});
         }
     }
 }

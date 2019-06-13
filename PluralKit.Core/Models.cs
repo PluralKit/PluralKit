@@ -1,11 +1,9 @@
-using System;
 using Dapper.Contrib.Extensions;
 using NodaTime;
 using NodaTime.Text;
 
 namespace PluralKit
 {
-    [Table("systems")]
     public class PKSystem
     {
         [Key]
@@ -22,7 +20,6 @@ namespace PluralKit
         public int MaxMemberNameLength => Tag != null ? 32 - Tag.Length - 1 : 32;
     }
 
-    [Table("members")]
     public class PKMember
     {
         public int Id { get; set; }
@@ -53,5 +50,19 @@ namespace PluralKit
 
         public bool HasProxyTags => Prefix != null || Suffix != null;
         public string ProxyString => $"{Prefix ?? ""}text{Suffix ?? ""}";
+    }
+
+    public class PKSwitch
+    {
+        public int Id { get; set; }
+        public int System { get; set; }
+        public Instant Timestamp { get; set; }
+    }
+
+    public class PKSwitchMember
+    {
+        public int Id { get; set; }
+        public int Switch { get; set; }
+        public int Member { get; set; }
     }
 }

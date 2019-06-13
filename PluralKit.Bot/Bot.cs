@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -34,8 +35,6 @@ namespace PluralKit.Bot
             {
                 Console.WriteLine("- Connecting to database...");
                 var connection = services.GetRequiredService<IDbConnection>() as NpgsqlConnection;
-                connection.ConnectionString = services.GetRequiredService<CoreConfig>().Database;
-                await connection.OpenAsync();
                 await Schema.CreateTables(connection);
 
                 Console.WriteLine("- Connecting to Discord...");
@@ -54,7 +53,13 @@ namespace PluralKit.Bot
                 .AddTransient(_ => _config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
                 .AddTransient(_ => _config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
                 
-                .AddScoped<IDbConnection>(svc => new NpgsqlConnection(svc.GetRequiredService<CoreConfig>().Database))
+                .AddScoped<IDbConnection>(svc =>
+                {
+                    
+                    var conn = new NpgsqlConnection(svc.GetRequiredService<CoreConfig>().Database);
+                    conn.Open();
+                    return conn;
+                })
                 
                 .AddSingleton<IDiscordClient, DiscordSocketClient>()
                 .AddSingleton<Bot>()
@@ -68,6 +73,7 @@ namespace PluralKit.Bot
                 .AddTransient<SystemStore>()
                 .AddTransient<MemberStore>()
                 .AddTransient<MessageStore>()
+                .AddTransient<SwitchStore>()
                 .BuildServiceProvider();
     }
     class Bot
@@ -138,7 +144,7 @@ namespace PluralKit.Bot
                     }
                 } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
                     await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}\n**Usage: **pk;{cmd.Value.Remarks}");
-                } else if (_result.Error == CommandError.UnknownCommand || _result.Error == CommandError.UnmetPrecondition) {
+                } else if (_result.Error == CommandError.UnknownCommand || _result.Error == CommandError.UnmetPrecondition || _result.Error == CommandError.ObjectNotFound) {
                     await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
                 }
             }
