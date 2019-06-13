@@ -194,6 +194,23 @@ namespace PluralKit
             // Still haven't parsed something, we just give up lmao
             return null;
         }
+        
+        public static string ExtractCountryFlag(string flag)
+        {
+            if (flag.Length != 4) return null;
+            try
+            {
+                var cp1 = char.ConvertToUtf32(flag, 0);
+                var cp2 = char.ConvertToUtf32(flag, 2);
+                if (cp1 < 0x1F1E6 || cp1 > 0x1F1FF) return null;
+                if (cp2 < 0x1F1E6 || cp2 > 0x1F1FF) return null;
+                return $"{(char) (cp1 - 0x1F1E6 + 'A')}{(char) (cp2 - 0x1F1E6 + 'A')}";
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
     }
 
     public static class Emojis {

@@ -56,6 +56,8 @@ namespace PluralKit.Bot {
         }
 
         public static async Task Paginate<T>(this ICommandContext ctx, ICollection<T> items, int itemsPerPage, string title, Action<EmbedBuilder, IEnumerable<T>> renderer) {
+            // TODO: make this generic enough we can use it in Choose<T> below
+            
             var pageCount = (items.Count / itemsPerPage) + 1;
             Embed MakeEmbedForPage(int page) {
                 var eb = new EmbedBuilder();
@@ -92,6 +94,88 @@ namespace PluralKit.Bot {
 
             if (await ctx.HasPermission(ChannelPermission.ManageMessages)) await msg.RemoveAllReactionsAsync();
             else await msg.RemoveReactionsAsync(ctx.Client.CurrentUser, botEmojis);
+        }
+        
+        public static async Task<T> Choose<T>(this ICommandContext ctx, string description, IList<T> items, Func<T, string> display = null)
+        {
+            // Generate a list of :regional_indicator_?: emoji surrogate pairs (starting at codepoint 0x1F1E6)
+            // We just do 7 (ABCDEFG), this amount is arbitrary (although sending a lot of emojis takes a while)
+            var pageSize = 7;
+            var indicators = new string[pageSize];
+            for (var i = 0; i < pageSize; i++) indicators[i] = char.ConvertFromUtf32(0x1F1E6 + i);
+
+            // Default to x.ToString()
+            if (display == null) display = x => x.ToString();
+
+            string MakeOptionList(int page)
+            {
+                var makeOptionList = string.Join("\n", items
+                    .Skip(page * pageSize)
+                    .Take(pageSize)
+                    .Select((x, i) => $"{indicators[i]} {display(x)}"));
+                return makeOptionList;
+            }
+
+            // If we have more items than the page size, we paginate as appropriate
+            if (items.Count > pageSize)
+            {
+                var currPage = 0;
+                var pageCount = (items.Count-1) / pageSize + 1;
+                
+                // Send the original message
+                var msg = await ctx.Channel.SendMessageAsync($"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
+                
+                // Add back/forward reactions and the actual indicator emojis
+                async Task AddEmojis()
+                {
+                    await msg.AddReactionAsync(new Emoji("\u2B05"));
+                    await msg.AddReactionAsync(new Emoji("\u27A1"));
+                    for (int i = 0; i < items.Count; i++) await msg.AddReactionAsync(new Emoji(indicators[i]));
+                }
+
+                AddEmojis(); // Not concerned about awaiting
+
+
+                while (true)
+                {
+                    // Wait for a reaction
+                    var reaction = await ctx.AwaitReaction(msg, ctx.User);
+                    
+                    // If it's a movement reaction, inc/dec the page index
+                    if (reaction.Emote.Name == "\u2B05") currPage -= 1; // <
+                    if (reaction.Emote.Name == "\u27A1") currPage += 1; // >
+                    if (currPage < 0) currPage += pageCount;
+                    if (currPage >= pageCount) currPage -= pageCount;
+
+                    // If it's an indicator emoji, return the relevant item
+                    if (indicators.Contains(reaction.Emote.Name))
+                    {
+                        var idx = Array.IndexOf(indicators, reaction.Emote.Name) + pageSize * currPage;
+                        // only if it's in bounds, though
+                        // eg. 8 items, we're on page 2, and I hit D (3 + 1*7 = index 10 on an 8-long list) = boom 
+                        if (idx < items.Count) return items[idx];
+                    }
+
+                    msg.RemoveReactionAsync(reaction.Emote, ctx.User); // don't care about awaiting
+                    await msg.ModifyAsync(mp => mp.Content = $"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
+                }
+            }
+            else
+            {
+                var msg = await ctx.Channel.SendMessageAsync($"{description}\n{MakeOptionList(0)}");
+
+                // Add the relevant reactions (we don't care too much about awaiting)
+                async Task AddEmojis()
+                {
+                    for (int i = 0; i < items.Count; i++) await msg.AddReactionAsync(new Emoji(indicators[i]));
+                }
+
+                AddEmojis();
+
+                // Then wait for a reaction and return whichever one we found
+                var reaction = await ctx.AwaitReaction(msg, ctx.User,rx => indicators.Contains(rx.Emote.Name));
+                return items[Array.IndexOf(indicators, reaction.Emote.Name)];
+            }
         }
 
         public static async Task<ChannelPermissions> Permissions(this ICommandContext ctx) {

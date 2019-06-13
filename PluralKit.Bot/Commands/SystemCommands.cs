@@ -157,8 +157,7 @@ namespace PluralKit.Bot.Commands
                 return;
             }
 
-            var zones = DateTimeZoneProviders.Tzdb;
-            var zone = zones.GetZoneOrNull(zoneStr);
+            var zone = await FindTimeZone(zoneStr);
             if (zone == null) throw Errors.InvalidTimeZone(zoneStr);
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
@@ -170,6 +169,64 @@ namespace PluralKit.Bot.Commands
 
             await Context.Channel.SendMessageAsync($"System time zone changed to {zone.Id}.");
         }
+
+        public async Task<DateTimeZone> FindTimeZone(string zoneStr) {
+            // First, if we're given a flag emoji, we extract the flag emoji code from it.
+            zoneStr = PluralKit.Utils.ExtractCountryFlag(zoneStr) ?? zoneStr;
+            
+            // Then, we find all *locations* matching either the given country code or the country name.
+            var locations = TzdbDateTimeZoneSource.Default.Zone1970Locations;
+            var matchingLocations = locations.Where(l => l.Countries.Any(c =>
+                string.Equals(c.Code, zoneStr, StringComparison.InvariantCultureIgnoreCase) ||
+                string.Equals(c.Name, zoneStr, StringComparison.InvariantCultureIgnoreCase)));
+            
+            // Then, we find all (unique) time zone IDs that match.
+            var matchingZones = matchingLocations.Select(l => DateTimeZoneProviders.Tzdb.GetZoneOrNull(l.ZoneId))
+                .Distinct().ToList();
+            
+            // If the set of matching zones is empty (ie. we didn't find anything), we try a few other things.
+            if (matchingZones.Count == 0)
+            {
+                // First, we try to just find the time zone given directly and return that.
+                var givenZone = DateTimeZoneProviders.Tzdb.GetZoneOrNull(zoneStr);
+                if (givenZone != null) return givenZone;
+
+                // If we didn't find anything there either, we try parsing the string as an offset, then
+                // find all possible zones that match that offset. For an offset like UTC+2, this doesn't *quite*
+                // work, since there are 57(!) matching zones (as of 2019-06-13) - but for less populated time zones
+                // this could work nicely.
+                var inputWithoutUtc = zoneStr.Replace("UTC", "").Replace("GMT", "");
+
+                var res = OffsetPattern.CreateWithInvariantCulture("+H").Parse(inputWithoutUtc);
+                if (!res.Success) res = OffsetPattern.CreateWithInvariantCulture("+H:mm").Parse(inputWithoutUtc);
+
+                // If *this* didn't parse correctly, fuck it, bail.
+                if (!res.Success) return null;
+                var offset = res.Value;
+
+                // To try to reduce the count, we go by locations from the 1970+ database instead of just the full database
+                // This elides regions that have been identical since 1970, omitting small distinctions due to Ancient History(tm).
+                var allZones = TzdbDateTimeZoneSource.Default.Zone1970Locations.Select(l => l.ZoneId).Distinct();
+                matchingZones = allZones.Select(z => DateTimeZoneProviders.Tzdb.GetZoneOrNull(z))
+                    .Where(z => z.GetUtcOffset(SystemClock.Instance.GetCurrentInstant()) == offset).ToList();
+            }
+            
+            // If we have a list of viable time zones, we ask the user which is correct.
+            
+            // If we only have one, return that one.
+            if (matchingZones.Count == 1)
+                return matchingZones.First();
+            
+            // Otherwise, prompt and return!
+            return await Context.Choose("There were multiple matches for your time zone query. Please select the region that matches you the closest:", matchingZones,
+                z =>
+                {
+                    if (TzdbDateTimeZoneSource.Default.Aliases.Contains(z.Id))
+                        return $"**{z.Id}**, {string.Join(", ", TzdbDateTimeZoneSource.Default.Aliases[z.Id])}";
+
+                    return $"**{z.Id}**";
+                });
+        } 
 
         public override async Task<PKSystem> ReadContextParameterAsync(string value)
         {
