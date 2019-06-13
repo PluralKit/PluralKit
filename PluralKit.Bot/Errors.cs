@@ -55,5 +55,6 @@ namespace PluralKit.Bot {
 
         public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({time.ToString(Formats.DateTimeFormat, null)}), as it would cause conflicts.");
         public static PKError SwitchMoveCancelled => new PKError("Switch move cancelled.");
+        public static PKError SwitchDeleteCancelled => new PKError("Switch deletion cancelled.");
     }
 }

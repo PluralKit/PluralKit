@@ -76,17 +76,52 @@ namespace PluralKit.Bot.Commands
             // Now we can actually do the move, yay!
             // But, we do a prompt to confirm.
             var lastSwitchMembers = await Switches.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMemberStr = string.Join(", ", lastSwitchMembers.Select(m => m.Name));
+            var lastSwitchTimeStr = lastTwoSwitches[0].Timestamp.ToString(Formats.DateTimeFormat, null);
+            var lastSwitchDeltaStr = SystemClock.Instance.GetCurrentInstant().Minus(lastTwoSwitches[0].Timestamp).ToString(Formats.DurationFormat, null);
+            var newSwitchTimeStr = time.ToString(Formats.DateTimeFormat, null);
+            var newSwitchDeltaStr = SystemClock.Instance.GetCurrentInstant().Minus(time.ToInstant()).ToString(Formats.DurationFormat, null);
             
             // yeet
-            var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} This will move the latest switch ({string.Join(", ", lastSwitchMembers.Select(m => m.Name))}) from {lastTwoSwitches[0].Timestamp.ToString(Formats.DateTimeFormat, null)} ({SystemClock.Instance.GetCurrentInstant().Minus(lastTwoSwitches[0].Timestamp).ToString(Formats.DurationFormat, null)} ago) to {time.ToString(Formats.DateTimeFormat, null)} ({SystemClock.Instance.GetCurrentInstant().Minus(time.ToInstant()).ToString(Formats.DurationFormat, null)} ago). Is this OK?");
-            if (!await Context.PromptYesNo(msg))
-            {
-                throw Errors.SwitchMoveCancelled;
-            }
+            var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
+            if (!await Context.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
             await Switches.MoveSwitch(lastTwoSwitches[0], time.ToInstant());
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Switch moved.");
+        }
+
+        [Command("delete")]
+        [MustHaveSystem]
+        public async Task SwitchDelete()
+        {
+            // Fetch the last two switches for the system to do bounds checking on
+            var lastTwoSwitches = (await Switches.GetSwitches(Context.SenderSystem, 2)).ToArray();
+            if (lastTwoSwitches.Length == 0) throw Errors.NoRegisteredSwitches;
+
+            var lastSwitchMembers = await Switches.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMemberStr = string.Join(", ", lastSwitchMembers.Select(m => m.Name));
+            var lastSwitchDeltaStr = SystemClock.Instance.GetCurrentInstant().Minus(lastTwoSwitches[0].Timestamp).ToString(Formats.DurationFormat, null);
+
+            IUserMessage msg;
+            if (lastTwoSwitches.Length == 1)
+            {
+                msg = await Context.Channel.SendMessageAsync(
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
+            }
+            else
+            {
+                var secondSwitchMembers = await Switches.GetSwitchMembers(lastTwoSwitches[1]);
+                var secondSwitchMemberStr = string.Join(", ", secondSwitchMembers.Select(m => m.Name));
+                var secondSwitchDeltaStr = SystemClock.Instance.GetCurrentInstant().Minus(lastTwoSwitches[1].Timestamp).ToString(Formats.DurationFormat, null);
+                msg = await Context.Channel.SendMessageAsync(
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?");
+            }
+
+            if (!await Context.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;
+            await Switches.DeleteSwitch(lastTwoSwitches[0]);
+            
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Switch deleted.");
         }
     }
 }

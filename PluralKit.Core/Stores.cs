@@ -203,5 +203,10 @@ namespace PluralKit {
             await _connection.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
                 new {Time = time, Id = sw.Id});
         }
+
+        public async Task DeleteSwitch(PKSwitch sw)
+        {
+            await _connection.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
+        }
     }
 }

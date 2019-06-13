@@ -123,7 +123,7 @@ namespace PluralKit.Bot
     }
 
     /// Subclass of ICommandContext with PK-specific additional fields and functionality
-    public class PKCommandContext : SocketCommandContext, ICommandContext
+    public class PKCommandContext : SocketCommandContext
     {
         public IDbConnection Connection { get; }
         public PKSystem SenderSystem { get; }
