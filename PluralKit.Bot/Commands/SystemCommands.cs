@@ -1,9 +1,14 @@
 using System;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 using Discord.Commands;
+using NodaTime;
+using NodaTime.Extensions;
+using NodaTime.Text;
+using NodaTime.TimeZones;
 
 namespace PluralKit.Bot.Commands
 {
@@ -138,6 +143,32 @@ namespace PluralKit.Bot.Commands
                     }
                 );
             }
+        }
+
+        [Command("timezone")]
+        [Remarks("system timezone [timezone]")]
+        public async Task SystemTimezone([Remainder] string zoneStr = null)
+        {
+            if (zoneStr == null)
+            {
+                Context.SenderSystem.UiTz = "UTC";
+                await Systems.Save(Context.SenderSystem);
+                await Context.Channel.SendMessageAsync($"{Emojis.Success} System time zone cleared.");
+                return;
+            }
+
+            var zones = DateTimeZoneProviders.Tzdb;
+            var zone = zones.GetZoneOrNull(zoneStr);
+            if (zone == null) throw Errors.InvalidTimeZone(zoneStr);
+
+            var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
+            var msg = await Context.Channel.SendMessageAsync(
+                $"This will change the system time zone to {zone.Id}. The current time is {currentTime.ToString(Formats.DateTimeFormat, null)}. Is this correct?");
+            if (!await Context.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
+            Context.SenderSystem.UiTz = zone.Id;
+            await Systems.Save(Context.SenderSystem);
+
+            await Context.Channel.SendMessageAsync($"System time zone changed to {zone.Id}.");
         }
 
         public override async Task<PKSystem> ReadContextParameterAsync(string value)

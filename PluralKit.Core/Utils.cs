@@ -206,7 +206,7 @@ namespace PluralKit
 
     public static class Formats
     {
-        public static string DateTimeFormat = "yyyy-MM-dd HH-mm-ss";
+        public static string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
         public static string DurationFormat = "D'd' h'h' m'm' s's'";
     }
 }

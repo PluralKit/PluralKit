@@ -56,5 +56,9 @@ namespace PluralKit.Bot {
         public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({time.ToString(Formats.DateTimeFormat, null)}), as it would cause conflicts.");
         public static PKError SwitchMoveCancelled => new PKError("Switch move cancelled.");
         public static PKError SwitchDeleteCancelled => new PKError("Switch deletion cancelled.");
+        public static PKError TimezoneParseError(string timezone) => new PKError($"Could not parse timezone offset {timezone}. Offset must be a value like 'UTC+5' or 'GMT-4:30'.");
+
+        public static PKError InvalidTimeZone(string zoneStr) => new PKError($"Invalid time zone ID '{zoneStr}'. To find your time zone ID, use the following website: <https://xske.github.io/tz>");
+        public static PKError TimezoneChangeCancelled => new PKError("Time zone change cancelled.");
     }
 }
