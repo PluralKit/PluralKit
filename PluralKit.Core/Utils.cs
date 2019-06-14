@@ -224,6 +224,8 @@ namespace PluralKit
     public static class Formats
     {
         public static string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+        public static string DateExportFormat = "yyyy-MM-dd";
+        public static string TimestampExportFormat = "g";
         public static string DurationFormat = "D'd' h'h' m'm' s's'";
     }
 }

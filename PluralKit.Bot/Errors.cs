@@ -60,7 +60,8 @@ namespace PluralKit.Bot {
 
         public static PKError InvalidTimeZone(string zoneStr) => new PKError($"Invalid time zone ID '{zoneStr}'. To find your time zone ID, use the following website: <https://xske.github.io/tz>");
         public static PKError TimezoneChangeCancelled => new PKError("Time zone change cancelled.");
-
         public static PKError AmbiguousTimeZone(string zoneStr, int count) => new PKError($"The time zone query '{zoneStr}' resulted in **{count}** different time zone regions. Try being more specific - e.g. pass an exact time zone specifier from the following website: <https://xske.github.io/tz>");
+        public static Exception NoImportFilePassed => new PKError("You must either pass an URL to a file as a command parameter, or as an attachment to the message containing the command.");
+        public static Exception InvalidImportFile => new PKError("Imported data file invalid. Make sure this is a .json file directly exported from PluralKit or Tupperbox.");
     }
 }

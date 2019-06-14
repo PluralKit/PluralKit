@@ -68,6 +68,8 @@ namespace PluralKit.Bot
                 .AddTransient<EmbedService>()
                 .AddTransient<ProxyService>()
                 .AddTransient<LogChannelService>()
+                .AddTransient<DataFileService>()
+                
                 .AddSingleton<WebhookCacheService>()
                 
                 .AddTransient<SystemStore>()
