@@ -113,19 +113,5 @@ namespace PluralKit.Bot.Commands
                 await Context.Channel.SendFileAsync(stream, "system.json", $"{Emojis.Success} Here you go!");
             });
         }
-
-        private DataFileSystem? TryDeserialize(string json)
-        {
-            try
-            {
-                
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine("uww");
-            }
-
-            return null;
-        }
     }
 }
