@@ -15,6 +15,7 @@ async def switch_root(ctx: CommandContext):
         # We could raise an error here, but we display the system front history instead as a shortcut
         #raise CommandError("You must use a subcommand. For a list of subcommands, type `pk;help member`.")
         await system_fronthistory(ctx, await ctx.ensure_system())
+        return
     if ctx.match("out"):
         await switch_out(ctx)
     elif ctx.match("move"):
@@ -27,9 +28,6 @@ async def switch_root(ctx: CommandContext):
 
 async def switch_member(ctx: CommandContext):
     system = await ctx.ensure_system()
-
-    if not ctx.has_next():
-        raise CommandError("You must pass at least one member name or ID to register a switch to.")
 
     members: List[Member] = []
     while ctx.has_next():
