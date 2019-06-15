@@ -18,4 +18,7 @@ async def message_info(ctx: CommandContext):
     msg = await ctx.reply(embed=await embeds.message_card(ctx.client, message))
     if await ctx.delete_by_react(ctx.message.author, msg):
         await msg.delete()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass

@@ -76,7 +76,10 @@ async def system_info(ctx: CommandContext, system: System):
 
     if await ctx.delete_by_react(ctx.message.author, msg):
         await msg.delete()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
 
 async def system_new(ctx: CommandContext):
     new_name = ctx.remaining() or None
@@ -265,7 +268,10 @@ async def system_fronthistory(ctx: CommandContext, system: System):
 
     if await ctx.delete_by_react(ctx.message.author, msg):
         await msg.delete()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
 
 
 async def system_delete(ctx: CommandContext):
@@ -366,7 +372,10 @@ async def system_frontpercent(ctx: CommandContext, system: System):
 
     if await ctx.delete_by_react(ctx.message.author, msg):
         await msg.delete()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
 
 async def system_list(ctx: CommandContext, system: System):
     # TODO: refactor this
@@ -379,7 +388,10 @@ async def system_list(ctx: CommandContext, system: System):
             msg = await ctx.reply(embed=embeds.member_list_full(system, all_members, 0, page_size))
             if await ctx.delete_by_react(ctx.message.author, msg):
                 await msg.delete()
-                await ctx.message.delete()
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    pass
         else:
             current_page = 0
             msg: discord.Message = None
@@ -394,7 +406,10 @@ async def system_list(ctx: CommandContext, system: System):
                     await msg.add_reaction("\u27A1")
                     if await ctx.delete_by_react(ctx.message.author, msg):
                         await msg.delete()
-                        await ctx.message.delete()
+                        try:
+                            await ctx.message.delete()
+                        except discord.Forbidden:
+                            pass
                 else:
                     await msg.edit(embed=embed)
 
@@ -426,7 +441,10 @@ async def system_list(ctx: CommandContext, system: System):
             msg = await ctx.reply(embed=embeds.member_list_short(system, all_members, 0, page_size))
             if await ctx.delete_by_react(ctx.message.author, msg):
                 await msg.delete()
-                await ctx.message.delete()
+                try:
+                    await ctx.message.delete()
+                except discord.Forbidden:
+                    pass
         else:
             current_page = 0
             msg: discord.Message = None
@@ -440,7 +458,10 @@ async def system_list(ctx: CommandContext, system: System):
                     await msg.add_reaction("\u27A1")
                     if await ctx.delete_by_react(ctx.message.author, msg):
                         await msg.delete()
-                        await ctx.message.delete()
+                        try:
+                            await ctx.message.delete()
+                        except discord.Forbidden:
+                            pass
                 else:
                     await msg.edit(embed=embed)
 

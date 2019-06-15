@@ -52,7 +52,12 @@ async def member_info(ctx: CommandContext, member: Member):
     msg = await ctx.reply(embed=await pluralkit.bot.embeds.member_card(ctx.conn, member))
     if await ctx.delete_by_react(ctx.message.author, msg):
         await msg.delete()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            # This will fail if we don't have Manage messages, just silently fail tbh
+            # The user can delete their own command if they want
+            pass
 
 
 async def new_member(ctx: CommandContext):
