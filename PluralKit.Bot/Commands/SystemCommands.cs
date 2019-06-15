@@ -157,8 +157,19 @@ namespace PluralKit.Bot.Commands
             var sw = await Switches.GetLatestSwitch(system);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
-            var members = await Switches.GetSwitchMembers(sw);
-            await Context.Channel.SendMessageAsync(embed: EmbedService.CreateFronterEmbed(sw, members.ToList(), system.Zone));
+            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFronterEmbed(sw, system.Zone));
+        }
+
+        [Command("fronthistory")]
+        public async Task SystemFrontHistory()
+        {
+            var system = ContextEntity ?? Context.SenderSystem;
+            if (system == null) throw Errors.NoSystemError;
+
+            var sws = (await Switches.GetSwitches(system, 10)).ToList();
+            if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
+            
+            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFrontHistoryEmbed(sws, system.Zone));
         }
 
         [Command("timezone")]

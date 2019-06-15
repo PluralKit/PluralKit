@@ -9,13 +9,15 @@ namespace PluralKit.Bot {
     public class EmbedService {
         private SystemStore _systems;
         private MemberStore _members;
+        private SwitchStore _switches;
         private IDiscordClient _client;
 
-        public EmbedService(SystemStore systems, MemberStore members, IDiscordClient client)
+        public EmbedService(SystemStore systems, MemberStore members, IDiscordClient client, SwitchStore switches)
         {
-            this._systems = systems;
-            this._members = members;
-            this._client = client;
+            _systems = systems;
+            _members = members;
+            _client = client;
+            _switches = switches;
         }
 
         public async Task<Embed> CreateSystemEmbed(PKSystem system) {
@@ -71,13 +73,48 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateFronterEmbed(PKSwitch sw, ICollection<PKMember> members, DateTimeZone zone)
+        public async Task<Embed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone)
         {
+            var members = (await _switches.GetSwitchMembers(sw)).ToList();
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new EmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
                 .AddField("Current fronter", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*", true)
                 .AddField("Since", $"{Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({Formats.DurationFormat.Format(timeSinceSwitch)} ago)", true)
+                .Build();
+        }
+
+        public async Task<Embed> CreateFrontHistoryEmbed(IEnumerable<PKSwitch> sws, DateTimeZone zone)
+        {
+            var outputStr = "";
+
+            PKSwitch lastSw = null;
+            foreach (var sw in sws)
+            {
+                // Fetch member list and format
+                var members = (await _switches.GetSwitchMembers(sw)).ToList();
+                var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
+
+                var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
+                
+                // If this isn't the latest switch, we also show duration
+                if (lastSw != null)
+                {
+                    // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
+                    var switchDuration = lastSw.Timestamp - sw.Timestamp;
+                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
+                }
+                else
+                {
+                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
+                }
+
+                lastSw = sw;
+            }
+            
+            return new EmbedBuilder()
+                .WithTitle("Past switches")
+                .WithDescription(outputStr)
                 .Build();
         }
     }
