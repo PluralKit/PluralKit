@@ -223,11 +223,23 @@ namespace PluralKit
 
     public static class Formats
     {
-        public static InstantPattern InstantDateTimeFormat = InstantPattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
-        public static InstantPattern TimestampExportFormat = InstantPattern.CreateWithInvariantCulture("g");
-        public static LocalDatePattern DateExportFormat = LocalDatePattern.CreateWithInvariantCulture("yyyy-MM-dd");
-        public static DurationPattern DurationFormat = DurationPattern.CreateWithInvariantCulture("D'd' h'h' m'm' s's'");
-        public static LocalDateTimePattern LocalDateTimeFormat = LocalDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
-        public static ZonedDateTimePattern ZonedDateTimeFormat = ZonedDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss x", DateTimeZoneProviders.Tzdb);
+        public static IPattern<Instant> TimestampExportFormat = InstantPattern.CreateWithInvariantCulture("g");
+        public static IPattern<LocalDate> DateExportFormat = LocalDatePattern.CreateWithInvariantCulture("yyyy-MM-dd");
+        public static IPattern<Duration> DurationFormat;
+        public static IPattern<LocalDateTime> LocalDateTimeFormat = LocalDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
+        public static IPattern<ZonedDateTime> ZonedDateTimeFormat = ZonedDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss x", DateTimeZoneProviders.Tzdb);
+
+        static Formats()
+        {
+            // We create a composite pattern that only shows the two most significant things
+            // eg. if we have something with nonzero day component, we show <x>d <x>h, but if it's
+            // a smaller duration we may only bother with showing <x>h <x>m or <x>m <x>s
+            var compositeDuration = new CompositePatternBuilder<Duration>();
+            compositeDuration.Add(DurationPattern.CreateWithInvariantCulture("D'd' h'h'"), d => d.Days > 0);
+            compositeDuration.Add(DurationPattern.CreateWithInvariantCulture("H'h' m'm'"), d => d.Hours > 0);
+            compositeDuration.Add(DurationPattern.CreateWithInvariantCulture("m'm' s's'"), d => d.Minutes > 0);
+            compositeDuration.Add(DurationPattern.CreateWithInvariantCulture("s's'"), d => true);
+            DurationFormat = compositeDuration.Build();
+        }
     }
 }
