@@ -71,13 +71,13 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateFronterEmbed(PKSwitch sw, ICollection<PKMember> members)
+        public Embed CreateFronterEmbed(PKSwitch sw, ICollection<PKMember> members, DateTimeZone zone)
         {
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new EmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
                 .AddField("Current fronter", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*", true)
-                .AddField("Since", $"{sw.Timestamp.ToString(Formats.DateTimeFormat, null)} ({timeSinceSwitch.ToString(Formats.DurationFormat, null)} ago)", true)
+                .AddField("Since", $"{Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({Formats.DurationFormat.Format(timeSinceSwitch)} ago)", true)
                 .Build();
         }
     }

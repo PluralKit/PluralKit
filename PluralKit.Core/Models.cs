@@ -18,6 +18,8 @@ namespace PluralKit
         public string UiTz { get; set; }
 
         public int MaxMemberNameLength => Tag != null ? 32 - Tag.Length - 1 : 32;
+
+        public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }
 
     public class PKMember

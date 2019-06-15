@@ -223,9 +223,11 @@ namespace PluralKit
 
     public static class Formats
     {
-        public static string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
-        public static string DateExportFormat = "yyyy-MM-dd";
-        public static string TimestampExportFormat = "g";
-        public static string DurationFormat = "D'd' h'h' m'm' s's'";
+        public static InstantPattern InstantDateTimeFormat = InstantPattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
+        public static InstantPattern TimestampExportFormat = InstantPattern.CreateWithInvariantCulture("g");
+        public static LocalDatePattern DateExportFormat = LocalDatePattern.CreateWithInvariantCulture("yyyy-MM-dd");
+        public static DurationPattern DurationFormat = DurationPattern.CreateWithInvariantCulture("D'd' h'h' m'm' s's'");
+        public static LocalDateTimePattern LocalDateTimeFormat = LocalDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
+        public static ZonedDateTimePattern ZonedDateTimeFormat = ZonedDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss x", DateTimeZoneProviders.Tzdb);
     }
 }

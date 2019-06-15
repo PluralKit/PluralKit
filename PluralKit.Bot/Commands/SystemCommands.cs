@@ -158,7 +158,7 @@ namespace PluralKit.Bot.Commands
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
             var members = await Switches.GetSwitchMembers(sw);
-            await Context.Channel.SendMessageAsync(embed: EmbedService.CreateFronterEmbed(sw, members.ToList()));
+            await Context.Channel.SendMessageAsync(embed: EmbedService.CreateFronterEmbed(sw, members.ToList(), system.Zone));
         }
 
         [Command("timezone")]
@@ -179,7 +179,7 @@ namespace PluralKit.Bot.Commands
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
             var msg = await Context.Channel.SendMessageAsync(
-                $"This will change the system time zone to {zone.Id}. The current time is {currentTime.ToString(Formats.DateTimeFormat, null)}. Is this correct?");
+                $"This will change the system time zone to {zone.Id}. The current time is {Formats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?");
             if (!await Context.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             Context.SenderSystem.UiTz = zone.Id;
             await Systems.Save(Context.SenderSystem);

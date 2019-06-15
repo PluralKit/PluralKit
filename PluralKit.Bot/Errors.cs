@@ -53,7 +53,7 @@ namespace PluralKit.Bot {
         public static PKError SwitchTimeInFuture => new PKError("Can't move switch to a time in the future.");
         public static PKError NoRegisteredSwitches => new PKError("There are no registered switches for this system.");
 
-        public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({time.ToString(Formats.DateTimeFormat, null)}), as it would cause conflicts.");
+        public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({Formats.ZonedDateTimeFormat.Format(time)}), as it would cause conflicts.");
         public static PKError SwitchMoveCancelled => new PKError("Switch move cancelled.");
         public static PKError SwitchDeleteCancelled => new PKError("Switch deletion cancelled.");
         public static PKError TimezoneParseError(string timezone) => new PKError($"Could not parse timezone offset {timezone}. Offset must be a value like 'UTC+5' or 'GMT-4:30'.");

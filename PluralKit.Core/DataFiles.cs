@@ -38,7 +38,7 @@ namespace PluralKit.Bot
                 TimeZone = system.UiTz,
                 Members = members,
                 Switches = switches,
-                Created = system.Created.ToString(Formats.TimestampExportFormat, null),
+                Created = Formats.TimestampExportFormat.Format(system.Created),
                 LinkedAccounts = (await _systems.GetLinkedAccountIds(system)).ToList()
             };
         }
@@ -48,20 +48,20 @@ namespace PluralKit.Bot
             Id = member.Hid,
             Name = member.Name,
             Description = member.Description,
-            Birthday = member.Birthday?.ToString(Formats.DateExportFormat, null),
+            Birthday = member.Birthday != null ? Formats.DateExportFormat.Format(member.Birthday.Value) : null,
             Pronouns = member.Pronouns,
             Color = member.Color,
             AvatarUrl = member.AvatarUrl,
             Prefix = member.Prefix,
             Suffix = member.Suffix,
-            Created = member.Created.ToString(Formats.TimestampExportFormat, null),
+            Created = Formats.TimestampExportFormat.Format(member.Created),
             MessageCount = await _members.MessageCount(member)
         };
 
         private async Task<DataFileSwitch> ExportSwitch(PKSwitch sw) => new DataFileSwitch
         {
             Members = (await _switches.GetSwitchMembers(sw)).Select(m => m.Hid).ToList(),
-            Timestamp = sw.Timestamp.ToString(Formats.TimestampExportFormat, null)
+            Timestamp = Formats.TimestampExportFormat.Format(sw.Timestamp)
         };
 
         public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system)
@@ -120,8 +120,7 @@ namespace PluralKit.Bot
 
                 if (dataMember.Birthday != null)
                 {
-                    var birthdayParse = LocalDatePattern.CreateWithInvariantCulture(Formats.DateExportFormat)
-                        .Parse(dataMember.Birthday);
+                    var birthdayParse = Formats.DateExportFormat.Parse(dataMember.Birthday);
                     member.Birthday = birthdayParse.Success ? (LocalDate?) birthdayParse.Value : null;
                 }
 
