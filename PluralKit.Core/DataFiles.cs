@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using NodaTime;
 using NodaTime.Text;
-using NodaTime.TimeZones;
 
 namespace PluralKit.Bot
 {
@@ -49,7 +48,7 @@ namespace PluralKit.Bot
             Id = member.Hid,
             Name = member.Name,
             Description = member.Description,
-            Birthdate = member.Birthday?.ToString(Formats.DateExportFormat, null),
+            Birthday = member.Birthday?.ToString(Formats.DateExportFormat, null),
             Pronouns = member.Pronouns,
             Color = member.Color,
             AvatarUrl = member.AvatarUrl,
@@ -67,19 +66,19 @@ namespace PluralKit.Bot
 
         public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system)
         {
-            var result = new ImportResult { AddedNames = new List<string>(), ModifiedNames = new List<string>() };
-            
+            var result = new ImportResult {AddedNames = new List<string>(), ModifiedNames = new List<string>()};
+
             // If we don't already have a system to save to, create one
             if (system == null) system = await _systems.Create(data.Name);
-            
+
             // Apply system info
             system.Name = data.Name;
-            system.Description = data.Description;
-            system.Tag = data.Tag;
-            system.AvatarUrl = data.AvatarUrl;
-            system.UiTz = data.TimeZone ?? "UTC";
+            if (data.Description != null) system.Description = data.Description;
+            if (data.Tag != null) system.Tag = data.Tag;
+            if (data.AvatarUrl != null) system.AvatarUrl = data.AvatarUrl;
+            if (data.TimeZone != null) system.UiTz = data.TimeZone ?? "UTC";
             await _systems.Save(system);
-            
+
             // Apply members
             // TODO: parallelize?
             foreach (var dataMember in data.Members)
@@ -93,10 +92,10 @@ namespace PluralKit.Bot
                     // ...but if it's a different system's member, we just make a new one anyway
                     if (member != null && member.System != system.Id) member = null;
                 }
-                
+
                 // Try to look up by name, too
                 if (member == null) member = await _members.GetByName(system, dataMember.Name);
-                
+
                 // And if all else fails (eg. fresh import from Tupperbox, etc) we just make a member lol
                 if (member == null)
                 {
@@ -107,20 +106,28 @@ namespace PluralKit.Bot
                 {
                     result.ModifiedNames.Add(dataMember.Name);
                 }
-                
+
                 // Apply member info
                 member.Name = dataMember.Name;
-                member.Description = dataMember.Description;
-                member.Color = dataMember.Color;
-                member.AvatarUrl = dataMember.AvatarUrl;
-                member.Prefix = dataMember.Prefix;
-                member.Suffix = dataMember.Suffix;
+                if (dataMember.Description != null) member.Description = dataMember.Description;
+                if (dataMember.Color != null) member.Color = dataMember.Color;
+                if (dataMember.AvatarUrl != null) member.AvatarUrl = dataMember.AvatarUrl;
+                if (dataMember.Prefix != null || dataMember.Suffix != null)
+                {
+                    member.Prefix = dataMember.Prefix;
+                    member.Suffix = dataMember.Suffix;
+                }
 
-                var birthdayParse = LocalDatePattern.CreateWithInvariantCulture(Formats.DateExportFormat).Parse(dataMember.Birthdate);
-                member.Birthday = birthdayParse.Success ? (LocalDate?) birthdayParse.Value : null;
+                if (dataMember.Birthday != null)
+                {
+                    var birthdayParse = LocalDatePattern.CreateWithInvariantCulture(Formats.DateExportFormat)
+                        .Parse(dataMember.Birthday);
+                    member.Birthday = birthdayParse.Success ? (LocalDate?) birthdayParse.Value : null;
+                }
+
                 await _members.Save(member);
             }
-            
+
             // TODO: import switches, too?
 
             result.System = system;
@@ -137,87 +144,128 @@ namespace PluralKit.Bot
 
     public struct DataFileSystem
     {
-        [JsonProperty("id")]
-        public string Id;
-        
-        [JsonProperty("name")]
-        public string Name;
-        
-        [JsonProperty("description")]
-        public string Description;
-        
-        [JsonProperty("tag")]
-        public string Tag;
-        
-        [JsonProperty("avatar_url")]
-        public string AvatarUrl;
-        
-        [JsonProperty("timezone")]
-        public string TimeZone;
+        [JsonProperty("id")] public string Id;
+        [JsonProperty("name")] public string Name;
+        [JsonProperty("description")] public string Description;
+        [JsonProperty("tag")] public string Tag;
+        [JsonProperty("avatar_url")] public string AvatarUrl;
+        [JsonProperty("timezone")] public string TimeZone;
+        [JsonProperty("members")] public ICollection<DataFileMember> Members;
+        [JsonProperty("switches")] public ICollection<DataFileSwitch> Switches;
+        [JsonProperty("accounts")] public ICollection<ulong> LinkedAccounts;
+        [JsonProperty("created")] public string Created;
 
-        [JsonProperty("members")]
-        public ICollection<DataFileMember> Members;
-        
-        [JsonProperty("switches")]
-        public ICollection<DataFileSwitch> Switches;
-        
-        [JsonProperty("accounts")]
-        public ICollection<ulong> LinkedAccounts;
-
-        [JsonProperty("created")]
-        public string Created;
-        
         private bool TimeZoneValid => TimeZone == null || DateTimeZoneProviders.Tzdb.GetZoneOrNull(TimeZone) != null;
-        
-        [JsonIgnore]
-        public bool Valid => TimeZoneValid && Members.All(m => m.Valid);
+
+        [JsonIgnore] public bool Valid => TimeZoneValid && Members != null && Members.All(m => m.Valid);
     }
 
     public struct DataFileMember
     {
-        [JsonProperty("id")]
-        public string Id;
-        
-        [JsonProperty("name")]
-        public string Name;
-        
-        [JsonProperty("description")]
-        public string Description;
-        
-        [JsonProperty("birthday")]
-        public string Birthdate;
-        
-        [JsonProperty("pronouns")]
-        public string Pronouns;
-        
-        [JsonProperty("color")]
-        public string Color;
-        
-        [JsonProperty("avatar_url")]
-        public string AvatarUrl;
-        
-        [JsonProperty("prefix")]
-        public string Prefix;
-        
-        [JsonProperty("suffix")]
-        public string Suffix;
-        
-        [JsonProperty("message_count")]
-        public int MessageCount;
+        [JsonProperty("id")] public string Id;
+        [JsonProperty("name")] public string Name;
+        [JsonProperty("description")] public string Description;
+        [JsonProperty("birthday")] public string Birthday;
+        [JsonProperty("pronouns")] public string Pronouns;
+        [JsonProperty("color")] public string Color;
+        [JsonProperty("avatar_url")] public string AvatarUrl;
+        [JsonProperty("prefix")] public string Prefix;
+        [JsonProperty("suffix")] public string Suffix;
+        [JsonProperty("message_count")] public int MessageCount;
+        [JsonProperty("created")] public string Created;
 
-        [JsonProperty("created")]
-        public string Created;
-
-        [JsonIgnore]
-        public bool Valid => Name != null;
+        [JsonIgnore] public bool Valid => Name != null;
     }
 
     public struct DataFileSwitch
     {
-        [JsonProperty("timestamp")]
-        public string Timestamp;
-        
-        [JsonProperty("members")]
-        public ICollection<string> Members;
+        [JsonProperty("timestamp")] public string Timestamp;
+        [JsonProperty("members")] public ICollection<string> Members;
+    }
+
+    public struct TupperboxConversionResult
+    {
+        public bool HadGroups;
+        public bool HadIndividualTags;
+        public bool HadMultibrackets;
+        public DataFileSystem System;
+    }
+
+    public struct TupperboxProfile
+    {
+        [JsonProperty("tuppers")] public ICollection<TupperboxTupper> Tuppers;
+        [JsonProperty("groups")] public ICollection<TupperboxGroup> Groups;
+
+        [JsonIgnore] public bool Valid => Tuppers != null && Groups != null && Tuppers.All(t => t.Valid) && Groups.All(g => g.Valid);
+
+        public TupperboxConversionResult ToPluralKit()
+        {
+            // Set by member conversion function
+            string lastSetTag = null;
+            
+            TupperboxConversionResult output = default(TupperboxConversionResult);
+            
+            output.System = new DataFileSystem
+            {
+                Members = Tuppers.Select(t => t.ToPluralKit(ref lastSetTag, ref output.HadMultibrackets,
+                    ref output.HadGroups, ref output.HadMultibrackets)).ToList(),
+                
+                // If we haven't had multiple tags set, use the last (and only) one we set as the system tag
+                Tag = !output.HadIndividualTags ? lastSetTag : null
+            };
+            return output;
+        }
+    }
+
+    public struct TupperboxTupper
+    {
+        [JsonProperty("name")] public string Name;
+        [JsonProperty("avatar_url")] public string AvatarUrl;
+        [JsonProperty("brackets")] public ICollection<string> Brackets;
+        [JsonProperty("posts")] public int Posts; // Not supported by PK
+        [JsonProperty("show_brackets")] public bool ShowBrackets; // Not supported by PK
+        [JsonProperty("birthday")] public string Birthday;
+        [JsonProperty("description")] public string Description;
+        [JsonProperty("tag")] public string Tag; // Not supported by PK
+        [JsonProperty("group_id")] public string GroupId; // Not supported by PK
+        [JsonProperty("group_pos")] public int? GroupPos; // Not supported by PK
+
+        [JsonIgnore] public bool Valid => Name != null && Brackets != null && Brackets.Count % 2 == 0;
+
+        public DataFileMember ToPluralKit(ref string lastSetTag, ref bool multipleTags, ref bool hasGroup, ref bool hasMultiBrackets)
+        {
+            // If we've set a tag before and it's not the same as this one,
+            // then we have multiple unique tags and we pass that flag back to the caller
+            if (Tag != null && lastSetTag != null && lastSetTag != Tag) multipleTags = true;
+            lastSetTag = Tag;
+
+            // If this member is in a group, we have a (used) group and we flag that
+            if (GroupId != null) hasGroup = true;
+
+            // Brackets in Tupperbox format are arranged as a single array
+            // [prefix1, suffix1, prefix2, suffix2, prefix3... etc]
+            // If there are more than two entries this member has multiple brackets and we flag that
+            if (Brackets.Count > 2) hasMultiBrackets = true;
+
+            return new DataFileMember
+            {
+                Name = Name,
+                AvatarUrl = AvatarUrl,
+                Birthday = Birthday,
+                Description = Description,
+                Prefix = Brackets.FirstOrDefault(),
+                Suffix = Brackets.Skip(1).FirstOrDefault() // TODO: can Tupperbox members have no proxies at all?
+            };
+        }
+    }
+
+    public struct TupperboxGroup
+    {
+        [JsonProperty("id")] public int Id;
+        [JsonProperty("name")] public string Name;
+        [JsonProperty("description")] public string Description;
+        [JsonProperty("tag")] public string Tag;
+
+        [JsonIgnore] public bool Valid => true;
     }
 }
