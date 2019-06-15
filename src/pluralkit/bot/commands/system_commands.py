@@ -38,8 +38,6 @@ async def system_root(ctx: CommandContext):
         await system_frontpercent(ctx, await ctx.ensure_system())
     elif ctx.match("timezone") or ctx.match("tz"):
         await system_timezone(ctx)
-    elif ctx.match("set"):
-        await system_set(ctx)
     elif ctx.match("list") or ctx.match("members"):
         await system_list(ctx, await ctx.ensure_system())
     elif not ctx.has_next():
@@ -89,11 +87,6 @@ async def system_new(ctx: CommandContext):
         raise CommandError(e.message)
 
     await ctx.reply_ok("System registered! To begin adding members, use `pk;member new <name>`.")
-
-
-async def system_set(ctx: CommandContext):
-    raise CommandError(
-        "`pk;system set` has been retired. Please use the new system modifying commands. Type `pk;help system` for a list.")
 
 
 async def system_name(ctx: CommandContext):

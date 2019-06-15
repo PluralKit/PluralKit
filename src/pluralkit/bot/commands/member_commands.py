@@ -7,8 +7,6 @@ from pluralkit.errors import PluralKitError
 async def member_root(ctx: CommandContext):
     if ctx.match("new") or ctx.match("create") or ctx.match("add") or ctx.match("register"):
         await new_member(ctx)
-    elif ctx.match("set"):
-        await member_set(ctx)
     # TODO "pk;member list"
     elif not ctx.has_next():
         raise CommandError("Must pass a subcommand. For a list of subcommands, type `pk;help member`.")
@@ -79,11 +77,6 @@ async def new_member(ctx: CommandContext):
 
     await ctx.reply_ok(
         "Member \"{}\" (`{}`) registered! Type `pk;help member` for a list of commands to edit this member.".format(new_name, member.hid))
-
-
-async def member_set(ctx: CommandContext):
-    raise CommandError(
-        "`pk;member set` has been retired. Please use the new member modifying commands. Type `pk;help member` for a list.")
 
 
 async def member_name(ctx: CommandContext, member: Member):
