@@ -164,6 +164,16 @@ class CommandContext:
         except asyncio.TimeoutError:
             raise CommandError("Timed out - try again.")
 
+    async def delete_by_react(self, user: Union[discord.Member, discord.User], message: discord.Message):
+        try:
+            await message.add_reaction("🗑")  # Wastebasket
+            reaction, _ = await self.client.wait_for("reaction_add", check=lambda r, u: u.id == user.id and r.emoji in ["🗑"], 
+                                                     timeout=60 * 10) # 10 minute timeout
+            return reaction.emoji == "🗑"
+        except asyncio.TimeoutError:
+            # Delete the reaction if the user doesn't react within the timeout period
+            await message.remove_reaction("🗑", self.client.user)
+
 
 import pluralkit.bot.commands.api_commands
 import pluralkit.bot.commands.import_commands

@@ -15,4 +15,7 @@ async def message_info(ctx: CommandContext):
         raise CommandError(
             "Message with ID '{}' not found. Are you sure it's a message proxied by PluralKit?".format(mid))
 
-    await ctx.reply(embed=await embeds.message_card(ctx.client, message))
+    msg = await ctx.reply(embed=await embeds.message_card(ctx.client, message))
+    if await ctx.delete_by_react(ctx.message.author, msg):
+        await msg.delete()
+        await ctx.message.delete()

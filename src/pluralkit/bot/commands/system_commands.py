@@ -74,8 +74,11 @@ async def specified_system_root(ctx: CommandContext):
 
 async def system_info(ctx: CommandContext, system: System):
     this_system = await ctx.get_system()
-    await ctx.reply(embed=await pluralkit.bot.embeds.system_card(ctx.conn, ctx.client, system, this_system and this_system.id == system.id))
+    msg = await ctx.reply(embed=await pluralkit.bot.embeds.system_card(ctx.conn, ctx.client, system, this_system and this_system.id == system.id))
 
+    if await ctx.delete_by_react(ctx.message.author, msg):
+        await msg.delete()
+        await ctx.message.delete()
 
 async def system_new(ctx: CommandContext):
     new_name = ctx.remaining() or None
@@ -265,7 +268,11 @@ async def system_fronthistory(ctx: CommandContext, system: System):
 
     embed = embeds.status("\n".join(lines) or "(none)")
     embed.title = "Past switches"
-    await ctx.reply(embed=embed)
+    msg = await ctx.reply(embed=embed)
+
+    if await ctx.delete_by_react(ctx.message.author, msg):
+        await msg.delete()
+        await ctx.message.delete()
 
 
 async def system_delete(ctx: CommandContext):
@@ -362,7 +369,11 @@ async def system_frontpercent(ctx: CommandContext, system: System):
 
     embed.set_footer(text="Since {} ({} ago)".format(ctx.format_time(span_start),
                                                      display_relative(span_start)))
-    await ctx.reply(embed=embed)
+    msg = await ctx.reply(embed=embed)
+
+    if await ctx.delete_by_react(ctx.message.author, msg):
+        await msg.delete()
+        await ctx.message.delete()
 
 async def system_list(ctx: CommandContext, system: System):
     # TODO: refactor this
@@ -372,7 +383,10 @@ async def system_list(ctx: CommandContext, system: System):
         page_size = 8
         if len(all_members) <= page_size:
             # If we have less than 8 members, don't bother paginating
-            await ctx.reply(embed=embeds.member_list_full(system, all_members, 0, page_size))
+            msg = await ctx.reply(embed=embeds.member_list_full(system, all_members, 0, page_size))
+            if await ctx.delete_by_react(ctx.message.author, msg):
+                await msg.delete()
+                await ctx.message.delete()
         else:
             current_page = 0
             msg: discord.Message = None
@@ -385,6 +399,9 @@ async def system_list(ctx: CommandContext, system: System):
                     msg = await ctx.reply(embed=embed)
                     await msg.add_reaction("\u2B05")
                     await msg.add_reaction("\u27A1")
+                    if await ctx.delete_by_react(ctx.message.author, msg):
+                        await msg.delete()
+                        await ctx.message.delete()
                 else:
                     await msg.edit(embed=embed)
 
@@ -413,7 +430,10 @@ async def system_list(ctx: CommandContext, system: System):
         page_size = 25
         if len(all_members) <= page_size:
             # If we have less than 25 members, don't bother paginating
-            await ctx.reply(embed=embeds.member_list_short(system, all_members, 0, page_size))
+            msg = await ctx.reply(embed=embeds.member_list_short(system, all_members, 0, page_size))
+            if await ctx.delete_by_react(ctx.message.author, msg):
+                await msg.delete()
+                await ctx.message.delete()
         else:
             current_page = 0
             msg: discord.Message = None
@@ -425,6 +445,9 @@ async def system_list(ctx: CommandContext, system: System):
                     msg = await ctx.reply(embed=embed)
                     await msg.add_reaction("\u2B05")
                     await msg.add_reaction("\u27A1")
+                    if await ctx.delete_by_react(ctx.message.author, msg):
+                        await msg.delete()
+                        await ctx.message.delete()
                 else:
                     await msg.edit(embed=embed)
 

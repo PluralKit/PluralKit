@@ -51,7 +51,10 @@ async def specific_member_root(ctx: CommandContext):
 
 
 async def member_info(ctx: CommandContext, member: Member):
-    await ctx.reply(embed=await pluralkit.bot.embeds.member_card(ctx.conn, member))
+    msg = await ctx.reply(embed=await pluralkit.bot.embeds.member_card(ctx.conn, member))
+    if await ctx.delete_by_react(ctx.message.author, msg):
+        await msg.delete()
+        await ctx.message.delete()
 
 
 async def new_member(ctx: CommandContext):
