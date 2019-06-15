@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using NodaTime;
 
 namespace PluralKit.Bot {
     public class EmbedService {
@@ -50,8 +52,7 @@ namespace PluralKit.Bot {
             var name = member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
             
-            var color = Color.Default;
-            if (member.Color != null) color = new Color(uint.Parse(member.Color, NumberStyles.HexNumber));
+            var color = member.Color?.ToDiscordColor() ?? Color.Default;
 
             var messageCount = await _members.MessageCount(member);
 
@@ -68,6 +69,16 @@ namespace PluralKit.Bot {
             if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix}text{member.Suffix}");
 
             return eb.Build();
+        }
+
+        public Embed CreateFronterEmbed(PKSwitch sw, ICollection<PKMember> members)
+        {
+            var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
+            return new EmbedBuilder()
+                .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
+                .AddField("Current fronter", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*", true)
+                .AddField("Since", $"{sw.Timestamp.ToString(Formats.DateTimeFormat, null)} ({timeSinceSwitch.ToString(Formats.DurationFormat, null)} ago)", true)
+                .Build();
         }
     }
 }

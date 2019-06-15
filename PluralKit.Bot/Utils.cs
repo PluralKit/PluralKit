@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -18,6 +19,13 @@ namespace PluralKit.Bot
     public static class Utils {
         public static string NameAndMention(this IUser user) {
             return $"{user.Username}#{user.Discriminator} ({user.Mention})";
+        }
+
+        public static Color? ToDiscordColor(this string color)
+        {
+            if (uint.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
+                return new Color(colorInt);
+            throw new ArgumentException($"Invalid color string '{color}'.");
         }
 
         public static async Task VerifyAvatarOrThrow(string url)

@@ -20,7 +20,10 @@ namespace PluralKit.Bot.Commands
 
         public SystemStore Systems {get; set;}
         public MemberStore Members {get; set;}
+        
+        public SwitchStore Switches {get; set;}
         public EmbedService EmbedService {get; set;}
+        
 
         [Command]
         public async Task Query(PKSystem system = null) {
@@ -145,8 +148,22 @@ namespace PluralKit.Bot.Commands
             }
         }
 
+        [Command("fronter")]
+        public async Task SystemFronter()
+        {
+            var system = ContextEntity ?? Context.SenderSystem;
+            if (system == null) throw Errors.NoSystemError;
+            
+            var sw = await Switches.GetLatestSwitch(system);
+            if (sw == null) throw Errors.NoRegisteredSwitches;
+            
+            var members = await Switches.GetSwitchMembers(sw);
+            await Context.Channel.SendMessageAsync(embed: EmbedService.CreateFronterEmbed(sw, members.ToList()));
+        }
+
         [Command("timezone")]
         [Remarks("system timezone [timezone]")]
+        [MustHaveSystem]
         public async Task SystemTimezone([Remainder] string zoneStr = null)
         {
             if (zoneStr == null)
