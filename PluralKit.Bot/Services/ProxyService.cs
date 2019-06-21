@@ -33,15 +33,16 @@ namespace PluralKit.Bot
         private LogChannelService _logger;
         private WebhookCacheService _webhookCache;
         private MessageStore _messageStorage;
-
+        private EmbedService _embeds;
         
-        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, IDbConnection connection, LogChannelService logger, MessageStore messageStorage)
+        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, IDbConnection connection, LogChannelService logger, MessageStore messageStorage, EmbedService embeds)
         {
-            this._client = client;
-            this._webhookCache = webhookCache;
-            this._connection = connection;
-            this._logger = logger;
-            this._messageStorage = messageStorage;
+            _client = client;
+            _webhookCache = webhookCache;
+            _connection = connection;
+            _logger = logger;
+            _messageStorage = messageStorage;
+            _embeds = embeds;
         }
 
         private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials) {
@@ -98,17 +99,40 @@ namespace PluralKit.Bot
             return await webhook.Channel.GetMessageAsync(messageId);
         }
 
-        public async Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
-            // Make sure it's the right emoji (red X)
-            if (reaction.Emote.Name != "\u274C") return;
+            // Dispatch on emoji
+            switch (reaction.Emote.Name)
+            {
+                case "\u274C": // Red X
+                    return HandleMessageDeletionByReaction(message, reaction.UserId);
+                case "\u2753": // Red question mark
+                case "\u2754": // White question mark
+                    return HandleMessageQueryByReaction(message, reaction.UserId);
+                default:
+                    return Task.CompletedTask;
+            }
+        }
 
+        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted)
+        {
+            var user = await _client.GetUserAsync(userWhoReacted);
+            if (user == null) return;
+
+            var msg = await _messageStorage.Get(message.Id);
+            if (msg == null) return;
+            
+            await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
+        }
+
+        public async Task HandleMessageDeletionByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted)
+        {
             // Find the message in the database
             var storedMessage = await _messageStorage.Get(message.Id);
             if (storedMessage == null) return; // (if we can't, that's ok, no worries)
 
             // Make sure it's the actual sender of that message deleting the message
-            if (storedMessage.Message.Sender != reaction.UserId) return;
+            if (storedMessage.Message.Sender != userWhoReacted) return;
 
             try {
                 // Then, fetch the Discord message and delete that

@@ -32,7 +32,7 @@ namespace PluralKit.Bot.Commands
             var message = await Messages.Get(messageId);
             if (message == null) throw Errors.MessageNotFound(messageId);
 
-            await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMessageInfoEmbed(messageId));
+            await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMessageInfoEmbed(message));
         }
 
         [Command("message")]

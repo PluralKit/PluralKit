@@ -120,9 +120,8 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateMessageInfoEmbed(ulong messageId)
+        public async Task<Embed> CreateMessageInfoEmbed(MessageStore.StoredMessage msg)
         {
-            var msg = await _messages.Get(messageId);
             var channel = (ITextChannel) await _client.GetChannelAsync(msg.Message.Channel);
             var serverMsg = await channel.GetMessageAsync(msg.Message.Mid);
 
@@ -131,7 +130,7 @@ namespace PluralKit.Bot {
             
             return new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
-                .WithDescription(serverMsg.Content)
+                .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
                 .AddField("System", msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)
                 .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid))
