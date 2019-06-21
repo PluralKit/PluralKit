@@ -64,5 +64,6 @@ namespace PluralKit.Bot {
         public static PKError NoImportFilePassed => new PKError("You must either pass an URL to a file as a command parameter, or as an attachment to the message containing the command.");
         public static PKError InvalidImportFile => new PKError("Imported data file invalid. Make sure this is a .json file directly exported from PluralKit or Tupperbox.");
         public static PKError ImportCancelled => new PKError("Import cancelled.");
+        public static PKError MessageNotFound(ulong id) => new PKError($"Message with ID '{id}' not found. Are you sure it's a message proxied by PluralKit?");
     }
 }

@@ -10,14 +10,16 @@ namespace PluralKit.Bot {
         private SystemStore _systems;
         private MemberStore _members;
         private SwitchStore _switches;
+        private MessageStore _messages;
         private IDiscordClient _client;
 
-        public EmbedService(SystemStore systems, MemberStore members, IDiscordClient client, SwitchStore switches)
+        public EmbedService(SystemStore systems, MemberStore members, IDiscordClient client, SwitchStore switches, MessageStore messages)
         {
             _systems = systems;
             _members = members;
             _client = client;
             _switches = switches;
+            _messages = messages;
         }
 
         public async Task<Embed> CreateSystemEmbed(PKSystem system) {
@@ -115,6 +117,24 @@ namespace PluralKit.Bot {
             return new EmbedBuilder()
                 .WithTitle("Past switches")
                 .WithDescription(outputStr)
+                .Build();
+        }
+
+        public async Task<Embed> CreateMessageInfoEmbed(ulong messageId)
+        {
+            var msg = await _messages.Get(messageId);
+            var channel = (ITextChannel) await _client.GetChannelAsync(msg.Message.Channel);
+            var serverMsg = await channel.GetMessageAsync(msg.Message.Mid);
+
+            var memberStr = $"{msg.Member.Name} (`{msg.Member.Hid}`)";
+            if (msg.Member.Pronouns != null) memberStr += $"\n*(pronouns: **{msg.Member.Pronouns}**)*";
+            
+            return new EmbedBuilder()
+                .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
+                .WithDescription(serverMsg.Content)
+                .AddField("System", msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
+                .AddField("Member", memberStr, true)
+                .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid))
                 .Build();
         }
     }

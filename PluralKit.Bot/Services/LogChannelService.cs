@@ -4,12 +4,12 @@ using Dapper;
 using Discord;
 
 namespace PluralKit.Bot {
-    class ServerDefinition {
-        public ulong Id;
-        public ulong LogChannel;
+    public class ServerDefinition {
+        public ulong Id { get; set; }
+        public ulong LogChannel { get; set; } 
     }
 
-    class LogChannelService {
+    public class LogChannelService {
         private IDiscordClient _client;
         private IDbConnection _connection;
         private EmbedService _embed;
@@ -30,7 +30,7 @@ namespace PluralKit.Bot {
         }
 
         public async Task<ITextChannel> GetLogChannel(IGuild guild) {
-            var server = await _connection.QueryFirstAsync<ServerDefinition>("select * from servers where id = @Id", new { Id = guild.Id });
+            var server = await _connection.QueryFirstOrDefaultAsync<ServerDefinition>("select * from servers where id = @Id", new { Id = guild.Id });
             if (server == null) return null;
             return await _client.GetChannelAsync(server.LogChannel) as ITextChannel;
         }
@@ -40,8 +40,8 @@ namespace PluralKit.Bot {
                 Id = guild.Id,
                 LogChannel = newLogChannel.Id
             };
-            
-            await _connection.ExecuteAsync("insert into servers(id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel", def);
+
+            await _connection.QueryAsync("insert into servers (id, log_channel) values (@Id, @LogChannel)", def);
         }
     }
 }

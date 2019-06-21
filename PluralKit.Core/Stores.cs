@@ -114,10 +114,15 @@ namespace PluralKit {
     }
 
     public class MessageStore {
-        public class StoredMessage {
+        public struct PKMessage
+        {
             public ulong Mid;
-            public ulong ChannelId;
-            public ulong SenderId;
+            public ulong Channel;
+            public ulong Sender;
+        }
+        public class StoredMessage
+        {
+            public PKMessage Message;
             public PKMember Member;
             public PKSystem System;
         }
@@ -137,11 +142,13 @@ namespace PluralKit {
             });      
         }
 
-        public async Task<StoredMessage> Get(ulong id) {
-            return (await _connection.QueryAsync<StoredMessage, PKMember, PKSystem, StoredMessage>("select * from messages, members, systems where mid = @Id and messages.member = members.id and systems.id = members.system", (msg, member, system) => {
-                msg.System = system;
-                msg.Member = member;
-                return msg;
+        public async Task<StoredMessage> Get(ulong id)
+        {
+            return (await _connection.QueryAsync<PKMessage, PKMember, PKSystem, StoredMessage>("select messages.*, members.*, systems.* from messages, members, systems where mid = @Id and messages.member = members.id and systems.id = members.system", (msg, member, system) => new StoredMessage
+            {
+                Message = msg,
+                System = system,
+                Member = member
             }, new { Id = id })).FirstOrDefault();
         }
         

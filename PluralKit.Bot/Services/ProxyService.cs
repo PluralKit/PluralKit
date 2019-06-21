@@ -49,7 +49,10 @@ namespace PluralKit.Bot
 
             // Sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
             var ordered = potentials.OrderByDescending(p => p.Member.ProxyString.Length);
-            foreach (var potential in ordered) {
+            foreach (var potential in ordered)
+            {
+                if (potential.Member.Prefix == null && potential.Member.Suffix != null) continue;
+                
                 var prefix = potential.Member.Prefix ?? "";
                 var suffix = potential.Member.Suffix ?? "";
 
@@ -62,7 +65,7 @@ namespace PluralKit.Bot
         }
 
         public async Task HandleMessageAsync(IMessage message) {
-            var results = await _connection.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>("select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid and (members.prefix != null or members.suffix != null)", (member, system) => new ProxyDatabaseResult { Member = member, System = system }, new { Uid = message.Author.Id });
+            var results = await _connection.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>("select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid", (member, system) => new ProxyDatabaseResult { Member = member, System = system }, new { Uid = message.Author.Id });
 
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, results);
@@ -105,7 +108,7 @@ namespace PluralKit.Bot
             if (storedMessage == null) return; // (if we can't, that's ok, no worries)
 
             // Make sure it's the actual sender of that message deleting the message
-            if (storedMessage.SenderId != reaction.UserId) return;
+            if (storedMessage.Message.Sender != reaction.UserId) return;
 
             try {
                 // Then, fetch the Discord message and delete that
