@@ -6,7 +6,7 @@ using Discord;
 namespace PluralKit.Bot {
     public class ServerDefinition {
         public ulong Id { get; set; }
-        public ulong LogChannel { get; set; } 
+        public ulong? LogChannel { get; set; } 
     }
 
     public class LogChannelService {
@@ -31,17 +31,17 @@ namespace PluralKit.Bot {
 
         public async Task<ITextChannel> GetLogChannel(IGuild guild) {
             var server = await _connection.QueryFirstOrDefaultAsync<ServerDefinition>("select * from servers where id = @Id", new { Id = guild.Id });
-            if (server == null) return null;
-            return await _client.GetChannelAsync(server.LogChannel) as ITextChannel;
+            if (server?.LogChannel == null) return null;
+            return await _client.GetChannelAsync(server.LogChannel.Value) as ITextChannel;
         }
 
         public async Task SetLogChannel(IGuild guild, ITextChannel newLogChannel) {
             var def = new ServerDefinition {
                 Id = guild.Id,
-                LogChannel = newLogChannel.Id
+                LogChannel = newLogChannel?.Id
             };
 
-            await _connection.QueryAsync("insert into servers (id, log_channel) values (@Id, @LogChannel)", def);
+            await _connection.QueryAsync("insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel", def);
         }
     }
 }
