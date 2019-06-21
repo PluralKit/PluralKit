@@ -51,7 +51,7 @@ namespace PluralKit.Bot
             var ordered = potentials.OrderByDescending(p => p.Member.ProxyString.Length);
             foreach (var potential in ordered)
             {
-                if (potential.Member.Prefix == null && potential.Member.Suffix != null) continue;
+                if (potential.Member.Prefix == null && potential.Member.Suffix == null) continue;
                 
                 var prefix = potential.Member.Prefix ?? "";
                 var suffix = potential.Member.Suffix ?? "";
