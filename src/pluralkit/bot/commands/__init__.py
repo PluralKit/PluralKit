@@ -11,6 +11,10 @@ from pluralkit.errors import PluralKitError
 from pluralkit.member import Member
 from pluralkit.system import System
 
+def clean_mentions(name: str) -> str:
+    # Sanitizes all mentions so we don't run into code injection problems
+    return re.sub("(@)((?s).*)", "\\1\u200B\\2", name, flags=re.IGNORECASE)
+
 def find_with_predicate(s: str, pred) -> int:
     for i, v in enumerate(s):
         if pred(v):
@@ -215,7 +219,7 @@ async def command_root(ctx: CommandContext):
     elif ctx.match("commands"):
         await misc_commands.command_list(ctx)
     else:
-        raise CommandError("Unknown command {}. For a list of commands, type `pk;commands`.".format(ctx.pop_str()))
+        raise CommandError("Unknown command {}. For a list of commands, type `pk;commands`.".format(clean_mentions(ctx.pop_str())))
 
 
 async def run_command(ctx: CommandContext, func):
