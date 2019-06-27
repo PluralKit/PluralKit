@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -7,7 +6,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
-using Discord.Rest;
 using Discord.Webhook;
 using Discord.WebSocket;
 
@@ -45,8 +43,18 @@ namespace PluralKit.Bot
             _embeds = embeds;
         }
 
-        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials) {
-            // TODO: add detection of leading @mention
+        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials)
+        {
+            // If the message starts with a @mention, and then proceeds to have proxy tags,
+            // extract the mention and place it inside the inner message
+            // eg. @Ske [text] => [@Ske text]
+            int matchStartPosition = 0;
+            string leadingMention = null;
+            if (Utils.HasMentionPrefix(message, ref matchStartPosition))
+            {
+                leadingMention = message.Substring(0, matchStartPosition);
+                message = message.Substring(matchStartPosition);
+            }
 
             // Sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
             var ordered = potentials.OrderByDescending(p => p.Member.ProxyString.Length);
@@ -59,9 +67,11 @@ namespace PluralKit.Bot
 
                 if (message.StartsWith(prefix) && message.EndsWith(suffix)) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
+                    if (leadingMention != null) inner = $"{leadingMention} {inner}";
                     return new ProxyMatch { Member = potential.Member, System = potential.System, InnerText = inner };
                 }
             }
+            
             return null;
         }
 

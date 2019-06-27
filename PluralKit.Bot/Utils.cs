@@ -69,6 +69,18 @@ namespace PluralKit.Bot
                     throw Errors.AvatarDimensionsTooLarge(image.Width, image.Height);
             }
         }
+        
+        public static bool HasMentionPrefix(string content, ref int argPos)
+        {
+            // Roughly ported from Discord.Commands.MessageExtensions.HasMentionPrefix
+            if (string.IsNullOrEmpty(content) || content.Length <= 3 || (content[0] != '<' || content[1] != '@'))
+                return false;
+            int num = content.IndexOf('>');
+            if (num == -1 || content.Length < num + 2 || content[num + 1] != ' ' || !MentionUtils.TryParseUser(content.Substring(0, num + 1), out _))
+                return false;
+            argPos = num + 2;
+            return true;
+        }
     }
 
     class PKSystemTypeReader : TypeReader

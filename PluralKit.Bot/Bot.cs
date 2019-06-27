@@ -83,16 +83,14 @@ namespace PluralKit.Bot
         private IServiceProvider _services;
         private DiscordSocketClient _client;
         private CommandService _commands;
-        private IDbConnection _connection;
         private ProxyService _proxy;
         private Timer _updateTimer;
 
-        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, IDbConnection connection, ProxyService proxy)
+        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy)
         {
             this._services = services;
             this._client = client as DiscordSocketClient;
             this._commands = commands;
-            this._connection = connection;
             this._proxy = proxy;
         }
 
@@ -120,7 +118,7 @@ namespace PluralKit.Bot
 
         private async Task Ready()
         {
-            _updateTimer = new Timer((_) => this.UpdatePeriodic(), null, 0, 60*1000);
+            _updateTimer = new Timer((_) => UpdatePeriodic(), null, 0, 60*1000);
 
             Console.WriteLine($"Shard #{_client.ShardId} connected to {_client.Guilds.Sum(g => g.Channels.Count)} channels in {_client.Guilds.Count} guilds.");
             Console.WriteLine($"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
@@ -170,8 +168,9 @@ namespace PluralKit.Bot
                 // If it does, fetch the sender's system (because most commands need that) into the context,
                 // and start command execution
                 // Note system may be null if user has no system, hence `OrDefault`
-                var system = await _connection.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
-                await _commands.ExecuteAsync(new PKCommandContext(_client, arg, _connection, system), argPos, serviceScope.ServiceProvider);
+                var connection = serviceScope.ServiceProvider.GetService<IDbConnection>();
+                var system = await connection.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
+                await _commands.ExecuteAsync(new PKCommandContext(_client, arg, connection, system), argPos, serviceScope.ServiceProvider);
             }
             else
             {

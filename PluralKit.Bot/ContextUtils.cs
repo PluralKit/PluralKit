@@ -67,6 +67,7 @@ namespace PluralKit.Bot {
             }
 
             var msg = await ctx.Channel.SendMessageAsync(embed: MakeEmbedForPage(0));
+            if (pageCount == 1) return; // If we only have one page, don't bother with the reaction/pagination logic, lol
             var botEmojis = new[] { new Emoji("\u23EA"), new Emoji("\u2B05"), new Emoji("\u27A1"), new Emoji("\u23E9"), new Emoji(Emojis.Error) };
             await msg.AddReactionsAsync(botEmojis);
 
