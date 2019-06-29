@@ -129,7 +129,7 @@ async def member_avatar(ctx: CommandContext, member: Member):
         if user:
             new_avatar_url = user.avatar_url_as(format="png")
     
-    if not new_avatar_url and ctx.message.attachments[0]:
+    if not new_avatar_url and ctx.message.attachments:
         new_avatar_url = ctx.message.attachments[0].url
 
     await member.set_avatar(ctx.conn, new_avatar_url)
