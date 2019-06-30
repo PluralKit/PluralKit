@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -21,6 +22,8 @@ namespace PluralKit.Bot
         private IConfiguration _config;
         
         static void Main(string[] args) => new Initialize { _config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("pluralkit.conf", true)
             .AddEnvironmentVariables()
             .AddCommandLine(args)
             .Build()}.MainAsync().GetAwaiter().GetResult();
