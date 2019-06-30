@@ -1,0 +1,8 @@
+{
+  "PluralKit": {
+    "Bot": {
+      "Token": "BOT_TOKEN_GOES_HERE"
+    },
+    "Database": "Host=localhost;Port=5432;Username=myusername;Password=mypassword;Database=mydatabasename"
+  }
+}
