@@ -4,8 +4,9 @@ services:
     build: .
     entrypoint: ["dotnet", "run", "--project", "PluralKit.Bot"]
     environment:
-      - "PluralKit:Bot:Token"
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+    volumes:
+      - "./pluralkit.conf:/app/pluralkit.conf:ro"
     links:
       - db
   web:
