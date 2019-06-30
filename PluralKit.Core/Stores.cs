@@ -189,13 +189,19 @@ namespace PluralKit {
             }
         }
 
-        public async Task<IEnumerable<PKSwitch>> GetSwitches(PKSystem system, int count)
+        public async Task<IEnumerable<PKSwitch>> GetSwitches(PKSystem system, int count = 9999999)
         {
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
             // (maybe when we get caching in?)
             return await _connection.QueryAsync<PKSwitch>("select * from switches where system = @System order by timestamp desc limit @Count", new {System = system.Id, Count = count});
         }
 
+        public async Task<IEnumerable<int>> GetSwitchMemberIds(PKSwitch sw)
+        {
+            return await _connection.QueryAsync<int>("select member from switch_members where switch = @Switch",
+                new {Switch = sw.Id});
+        }
+        
         public async Task<IEnumerable<PKMember>> GetSwitchMembers(PKSwitch sw)
         {
             return await _connection.QueryAsync<PKMember>(
@@ -214,6 +220,77 @@ namespace PluralKit {
         public async Task DeleteSwitch(PKSwitch sw)
         {
             await _connection.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
+        }
+        
+        public struct SwitchListEntry
+        {
+            public ICollection<PKMember> Members;
+            public Duration TimespanWithinRange;
+        }
+
+        public async Task<IEnumerable<SwitchListEntry>> GetTruncatedSwitchList(PKSystem system, Instant periodStart, Instant periodEnd)
+        {
+            // TODO: only fetch the necessary switches here
+            // todo: this is in general not very efficient LOL
+            // returns switches in chronological (newest first) order
+            var switches = await GetSwitches(system);
+            
+            // we skip all switches that happened later than the range end, and taking all the ones that happened after the range start
+            // *BUT ALSO INCLUDING* the last switch *before* the range (that partially overlaps the range period)
+            var switchesInRange = switches.SkipWhile(sw => sw.Timestamp >= periodEnd).TakeWhileIncluding(sw => sw.Timestamp > periodStart).ToList();
+
+            // query DB for all members involved in any of the switches above and collect into a dictionary for future use
+            // this makes sure the return list has the same instances of PKMember throughout, which is important for the dictionary
+            // key used in GetPerMemberSwitchDuration below
+            var memberObjects = (await _connection.QueryAsync<PKMember>(
+                "select distinct members.* from members, switch_members where switch_members.switch = any(@Switches) and switch_members.member = members.id", // lol postgres specific `= any()` syntax
+                new {Switches = switchesInRange.Select(sw => sw.Id).ToList()}))
+                .ToDictionary(m => m.Id);
+            
+
+            // we create the entry objects
+            var outList = new List<SwitchListEntry>();
+
+            // loop through every switch that *occurred* in-range and add it to the list
+            // end time is the switch *after*'s timestamp - we cheat and start it out at the range end so the first switch in-range "ends" there instead of the one after's start point
+            var endTime = periodEnd;
+            foreach (var switchInRange in switchesInRange)
+            {
+                // find the start time of the switch, but clamp it to the range (only applicable to the Last Switch Before Range we include in the TakeWhileIncluding call above)
+                var switchStartClamped = switchInRange.Timestamp;
+                if (switchStartClamped < periodStart) switchStartClamped = periodStart;
+                
+                var span = endTime - switchStartClamped;
+                outList.Add(new SwitchListEntry
+                {
+                    Members = (await GetSwitchMemberIds(switchInRange)).Select(id => memberObjects[id]).ToList(),
+                    TimespanWithinRange = span
+                });
+                
+                // next switch's end is this switch's start
+                endTime = switchInRange.Timestamp;
+            }
+
+            return outList;
+        }
+
+        public async Task<IDictionary<PKMember, Duration>> GetPerMemberSwitchDuration(PKSystem system, Instant periodStart,
+            Instant periodEnd)
+        {
+            var dict = new Dictionary<PKMember, Duration>();
+            
+            // Sum up all switch durations for each member
+            // switches with multiple members will result in the duration to add up to more than the actual period range
+            foreach (var sw in await GetTruncatedSwitchList(system, periodStart, periodEnd))
+            {
+                foreach (var member in sw.Members)
+                {
+                    if (!dict.ContainsKey(member)) dict.Add(member, sw.TimespanWithinRange);
+                    else dict[member] += sw.TimespanWithinRange;
+                }
+            }
+            
+            return dict;
         }
     }
 }

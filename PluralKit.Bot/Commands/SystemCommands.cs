@@ -172,6 +172,22 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFrontHistoryEmbed(sws, system.Zone));
         }
 
+        [Command("frontpercent")]
+        public async Task SystemFrontPercent(string durationStr = "30d")
+        {
+            var system = ContextEntity ?? Context.SenderSystem;
+            if (system == null) throw Errors.NoSystemError;
+
+            var duration = PluralKit.Utils.ParsePeriod(durationStr);
+            if (duration == null) throw Errors.InvalidDateTime(durationStr); 
+            
+            var rangeEnd = SystemClock.Instance.GetCurrentInstant();
+            var rangeStart = rangeEnd - duration.Value;
+            
+            var frontpercent = await Switches.GetPerMemberSwitchDuration(system, rangeEnd - duration.Value, rangeEnd);
+            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFrontPercentEmbed(frontpercent, rangeStart.InZone(system.Zone)));
+        }
+
         [Command("timezone")]
         [Remarks("system timezone [timezone]")]
         [MustHaveSystem]

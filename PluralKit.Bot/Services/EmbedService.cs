@@ -136,5 +136,32 @@ namespace PluralKit.Bot {
                 .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid))
                 .Build();
         }
+
+        public async Task<Embed> CreateFrontPercentEmbed(IDictionary<PKMember, Duration> frontpercent, ZonedDateTime startingFrom)
+        {
+            var totalDuration = SystemClock.Instance.GetCurrentInstant() - startingFrom.ToInstant();
+            
+            var eb = new EmbedBuilder()
+                .WithColor(Color.Blue)
+                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(startingFrom)} ({Formats.DurationFormat.Format(totalDuration)} ago)");
+
+            var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
+            
+            var membersOrdered = frontpercent.OrderBy(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
+            foreach (var pair in membersOrdered)
+            {
+                var frac = pair.Value / totalDuration;
+                eb.AddField(pair.Key.Name, $"{frac*100:F0}% ({Formats.DurationFormat.Format(pair.Value)})");
+            }
+
+            if (membersOrdered.Count > maxEntriesToDisplay)
+            {
+                eb.AddField("(others)",
+                    Formats.DurationFormat.Format(membersOrdered.Skip(maxEntriesToDisplay)
+                        .Aggregate(Duration.Zero, (prod, next) => prod + next.Value)), true);
+            }
+
+            return eb.Build();
+        }
     }
 }

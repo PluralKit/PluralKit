@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
@@ -216,6 +217,17 @@ namespace PluralKit
                 return null;
             }
         }
+        
+        public static IEnumerable<T> TakeWhileIncluding<T>(this IEnumerable<T> list, Func<T, bool> predicate)
+        {
+            // modified from https://stackoverflow.com/a/6817553
+            foreach(var el in list)
+            {
+                yield return el;
+                if (!predicate(el))
+                    yield break;
+            }
+        }
     }
 
     public static class Emojis {
@@ -236,10 +248,10 @@ namespace PluralKit
         // a smaller duration we may only bother with showing <x>h <x>m or <x>m <x>s
         public static IPattern<Duration> DurationFormat = new CompositePatternBuilder<Duration>
         {
-            {DurationPattern.CreateWithInvariantCulture("D'd' h'h'"), d => d.Days > 0},
-            {DurationPattern.CreateWithInvariantCulture("H'h' m'm'"), d => d.Hours > 0},
+            {DurationPattern.CreateWithInvariantCulture("s's'"), d => true},
             {DurationPattern.CreateWithInvariantCulture("m'm' s's'"), d => d.Minutes > 0},
-            {DurationPattern.CreateWithInvariantCulture("s's'"), d => true}
+            {DurationPattern.CreateWithInvariantCulture("H'h' m'm'"), d => d.Hours > 0},
+            {DurationPattern.CreateWithInvariantCulture("D'd' h'h'"), d => d.Days > 0}
         }.Build();
         
         public static IPattern<LocalDateTime> LocalDateTimeFormat = LocalDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
