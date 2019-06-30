@@ -14,7 +14,7 @@ The configuration file needs to be placed in the bot's working directory (usuall
 The configuration file is in JSON format (albeit with a `.conf` extension), and the following keys (using `.` to indicate a nested object level) are available:
 
 The following keys are available:
-* `PluralKit.Database`: the URI of the database to connect to (in [ADO.NET Npgsql format](https://www.connectionstrings.com/npgsql/): `postgres://username:password@hostname:port/database_name`)
+* `PluralKit.Database`: the URI of the database to connect to (in [ADO.NET Npgsql format](https://www.connectionstrings.com/npgsql/))
 * `PluralKit.Bot.Token`: the Discord bot token to connect with
 
 # Running
