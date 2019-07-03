@@ -86,7 +86,7 @@ namespace PluralKit
                 "MMMM d",       // January 1
                 "MM-dd",        // 01-01
                 "MM dd",        // 01 01
-                "MM/dd"         // 01-01
+                "MM/dd"         // 01/01
             });
 
             // Giving a template value so year will be parsed as 0001 if not present
