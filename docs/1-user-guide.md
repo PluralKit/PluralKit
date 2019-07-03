@@ -324,3 +324,39 @@ This requires you to have the *Manage Server* permission on the server. For exam
     pk;log #proxy-log
     
 To disable logging, use the `pk;log` command with no channel name.
+
+## Importing and exporting data
+If you're a user of another proxy bot (eg. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands.
+
+### Importing from Tupperbox
+If you're a user of the *other proxying bot* Tupperbox, you can import system and member information from there. This is a fairly simple process:
+
+1. Export your data from Tupperbox:
+```
+tul!export
+```
+2. Copy the URL for the data file (or download it)
+3. Import your data into PluralKit:
+```
+pk;import https://link/to/the/data/file.json
+```
+*(alternatively, run `pk;import` by itself and attach the .json file)*
+
+Note that while Tupperbox supports features such as multiple proxies per member, per-member system tags, and member groups, PluralKit does not.
+PluralKit will warn you when you're importing a Tupperbox file that makes use of such features, as they will not carry over. 
+
+### Importing from PluralKit
+If you have an exported file from PluralKit, you can import system, member and switch information from there like so:
+1. Export your data from PluralKit:
+```
+pk;export
+```
+2. Copy the URL for the data file (or download it)
+3. Import your data into PluralKit:
+```
+pk;import https://link/to/the/data/file.json
+```
+*(alternatively, run `pk;import` by itself and attach the .json file)*
+
+### Exporting your PluralKit data
+To export all the data associated with your system, run the `pk;export` command. This will send you a JSON file containing your system, member, and switch information.
