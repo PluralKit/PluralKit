@@ -12,6 +12,7 @@ using Discord.Commands.Builders;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
+using PluralKit.Core;
 using Image = SixLabors.ImageSharp.Image;
 
 namespace PluralKit.Bot

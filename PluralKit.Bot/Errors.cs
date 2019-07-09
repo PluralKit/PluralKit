@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using Humanizer;
 using NodaTime;
+using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class Errors {

@@ -99,9 +99,9 @@ namespace PluralKit.API.Controllers
         }
 
         [HttpPatch]
+        [RequiresSystem]
         public async Task<ActionResult<PKSystem>> EditSystem([FromBody] PKSystem newSystem)
         {
-            if (_auth.CurrentSystem == null) return Unauthorized("No token specified in Authorization header.");
             var system = _auth.CurrentSystem;
             
             system.Name = newSystem.Name;
@@ -115,10 +115,9 @@ namespace PluralKit.API.Controllers
         }
 
         [HttpPost("switches")]
+        [RequiresSystem]
         public async Task<IActionResult> PostSwitch([FromBody] PostSwitchParams param)
         {
-            if (_auth.CurrentSystem == null) return Unauthorized("No token specified in Authorization header.");
-
             if (param.Members.Distinct().Count() != param.Members.Count())
                 return BadRequest("Duplicate members in member list.");
             
