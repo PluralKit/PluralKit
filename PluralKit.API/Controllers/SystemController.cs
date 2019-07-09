@@ -30,6 +30,7 @@ namespace PluralKit.API.Controllers
 
     [ApiController]
     [Route("s")]
+    [Route("v1/s")]
     public class SystemController : ControllerBase
     {
         private SystemStore _systems;
@@ -68,7 +69,7 @@ namespace PluralKit.API.Controllers
         [HttpGet("{hid}/switches")]
         public async Task<ActionResult<IEnumerable<SwitchesReturn>>> GetSwitches(string hid, [FromQuery(Name = "before")] Instant? before)
         {
-            if (before == default(Instant)) before = SystemClock.Instance.GetCurrentInstant();
+            if (before == null) before = SystemClock.Instance.GetCurrentInstant();
             
             var system = await _systems.GetByHid(hid);
             if (system == null) return NotFound("System not found.");

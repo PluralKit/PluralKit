@@ -7,6 +7,7 @@ namespace PluralKit.API.Controllers
 {
     [ApiController]
     [Route("m")]
+    [Route("v1/m")]
     public class MemberController: ControllerBase
     {
         private MemberStore _members;
