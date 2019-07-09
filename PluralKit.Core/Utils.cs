@@ -1,10 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using Dapper;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using NodaTime;
+using NodaTime.Serialization.JsonNet;
 using NodaTime.Text;
+using Npgsql;
 
 
 namespace PluralKit
@@ -257,5 +264,71 @@ namespace PluralKit
         
         public static IPattern<LocalDateTime> LocalDateTimeFormat = LocalDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
         public static IPattern<ZonedDateTime> ZonedDateTimeFormat = ZonedDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss x", DateTimeZoneProviders.Tzdb);
+    }
+    public static class InitUtils
+    {
+        public static IConfigurationBuilder BuildConfiguration(string[] args) => new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("pluralkit.conf", true)
+            .AddEnvironmentVariables()
+            .AddCommandLine(args);
+
+        public static void Init()
+        {
+            InitDatabase();
+        }
+        
+        private static void InitDatabase()
+        {
+            // Dapper by default tries to pass ulongs to Npgsql, which rejects them since PostgreSQL technically
+            // doesn't support unsigned types on its own.
+            // Instead we add a custom mapper to encode them as signed integers instead, converting them back and forth.
+            SqlMapper.RemoveTypeMap(typeof(ulong));
+            SqlMapper.AddTypeHandler<ulong>(new UlongEncodeAsLongHandler());
+            Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
+            // Also, use NodaTime. it's good.
+            NpgsqlConnection.GlobalTypeMapper.UseNodaTime();
+            // With the thing we add above, Npgsql already handles NodaTime integration
+            // This makes Dapper confused since it thinks it has to convert it anyway and doesn't understand the types
+            // So we add a custom type handler that literally just passes the type through to Npgsql
+            SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
+            SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
+        }
+
+        public static JsonSerializerSettings BuildSerializerSettings() => new JsonSerializerSettings().BuildSerializerSettings();
+
+        public static JsonSerializerSettings BuildSerializerSettings(this JsonSerializerSettings settings)
+        {
+            settings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+            return settings;
+        }
+    }
+    
+    public class UlongEncodeAsLongHandler : SqlMapper.TypeHandler<ulong>
+    {
+        public override ulong Parse(object value)
+        {
+            // Cast to long to unbox, then to ulong (???)
+            return (ulong)(long)value;
+        }
+
+        public override void SetValue(IDbDataParameter parameter, ulong value)
+        {
+            parameter.Value = (long)value;
+        }
+    }
+
+    public class PassthroughTypeHandler<T> : SqlMapper.TypeHandler<T>
+    {
+        public override void SetValue(IDbDataParameter parameter, T value)
+        {
+            parameter.Value = value;
+        }
+
+        public override T Parse(object value)
+        {
+            return (T) value;
+        }
     }
 }

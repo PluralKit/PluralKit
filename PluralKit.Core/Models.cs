@@ -1,4 +1,5 @@
 using Dapper.Contrib.Extensions;
+using Newtonsoft.Json;
 using NodaTime;
 using NodaTime.Text;
 
@@ -6,39 +7,38 @@ namespace PluralKit
 {
     public class PKSystem
     {
-        [Key]
-        public int Id { get; set; }
-        public string Hid { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Tag { get; set; }
-        public string AvatarUrl { get; set; }
-        public string Token { get; set; }
-        public Instant Created { get; set; }
-        public string UiTz { get; set; }
+        [Key] [JsonIgnore] public int Id { get; set; }
+        [JsonProperty("id")] public string Hid { get; set; }
+        [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("description")] public string Description { get; set; }
+        [JsonProperty("tag")] public string Tag { get; set; }
+        [JsonProperty("avatar_url")] public string AvatarUrl { get; set; }
+        [JsonIgnore] public string Token { get; set; }
+        [JsonProperty("created")] public Instant Created { get; set; }
+        [JsonProperty("tz")] public string UiTz { get; set; }
 
-        public int MaxMemberNameLength => Tag != null ? 32 - Tag.Length - 1 : 32;
+        [JsonIgnore] public int MaxMemberNameLength => Tag != null ? 32 - Tag.Length - 1 : 32;
 
-        public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
+        [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }
 
     public class PKMember
     {
-        public int Id { get; set; }
-        public string Hid { get; set; }
-        public int System { get; set; }
-        public string Color { get; set; }
-        public string AvatarUrl { get; set; }
-        public string Name { get; set; }
-        public LocalDate? Birthday { get; set; }
-        public string Pronouns { get; set; }
-        public string Description { get; set; }
-        public string Prefix { get; set; }
-        public string Suffix { get; set; }
-        public Instant Created { get; set; }
+        [JsonIgnore] public int Id { get; set; }
+        [JsonProperty("id")] public string Hid { get; set; }
+        [JsonIgnore] public int System { get; set; }
+        [JsonProperty("color")] public string Color { get; set; }
+        [JsonProperty("avatar_url")] public string AvatarUrl { get; set; }
+        [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("birthday")] public LocalDate? Birthday { get; set; }
+        [JsonProperty("pronouns")] public string Pronouns { get; set; }
+        [JsonProperty("description")] public string Description { get; set; }
+        [JsonProperty("prefix")] public string Prefix { get; set; }
+        [JsonProperty("suffix")] public string Suffix { get; set; }
+        [JsonProperty("created")] public Instant Created { get; set; }
 
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" is hidden
-        public string BirthdayString
+        [JsonIgnore] public string BirthdayString
         {
             get
             {
@@ -50,8 +50,8 @@ namespace PluralKit
             }
         }
 
-        public bool HasProxyTags => Prefix != null || Suffix != null;
-        public string ProxyString => $"{Prefix ?? ""}text{Suffix ?? ""}";
+        [JsonIgnore] public bool HasProxyTags => Prefix != null || Suffix != null;
+        [JsonIgnore] public string ProxyString => $"{Prefix ?? ""}text{Suffix ?? ""}";
     }
 
     public class PKSwitch

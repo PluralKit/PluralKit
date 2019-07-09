@@ -21,18 +21,13 @@ namespace PluralKit.Bot
     {
         private IConfiguration _config;
         
-        static void Main(string[] args) => new Initialize { _config = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("pluralkit.conf", true)
-            .AddEnvironmentVariables()
-            .AddCommandLine(args)
-            .Build()}.MainAsync().GetAwaiter().GetResult();
+        static void Main(string[] args) => new Initialize { _config = InitUtils.BuildConfiguration(args).Build()}.MainAsync().GetAwaiter().GetResult();
 
         private async Task MainAsync()
         {
             Console.WriteLine("Starting PluralKit...");
             
-            DatabaseUtils.Init();
+            InitUtils.Init();
             
             using (var services = BuildServiceProvider())
             {

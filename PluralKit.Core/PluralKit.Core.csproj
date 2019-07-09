@@ -13,8 +13,15 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.4" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
       <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+      <PackageReference Include="NodaTime" Version="3.0.0-alpha01" />
+      <PackageReference Include="NodaTime.Serialization.JsonNet" Version="2.2.0" />
       <PackageReference Include="Npgsql" Version="4.0.6" />
       <PackageReference Include="Npgsql.NodaTime" Version="4.0.6" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="db_schema.sql" />
+      <EmbeddedResource Include="db_schema.sql" />
     </ItemGroup>
 
 </Project>
