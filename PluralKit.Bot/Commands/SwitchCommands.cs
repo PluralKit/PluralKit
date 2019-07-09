@@ -27,10 +27,15 @@ namespace PluralKit.Bot.Commands
 
         private async Task DoSwitchCommand(ICollection<PKMember> members)
         {
+            // Make sure all the members *are actually in the system*
+            // PKMember parameters won't let this happen if they resolve by name
+            // but they can if they resolve with ID
+            if (members.Any(m => m.System != Context.SenderSystem.Id)) throw Errors.SwitchMemberNotInSystem;
+            
             // Make sure there are no dupes in the list
             // We do this by checking if removing duplicate member IDs results in a list of different length 
             if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
-            
+
             // Find the last switch and its members if applicable
             var lastSwitch = await Switches.GetLatestSwitch(Context.SenderSystem);
             if (lastSwitch != null)
