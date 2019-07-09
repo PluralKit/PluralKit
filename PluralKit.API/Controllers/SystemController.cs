@@ -7,6 +7,7 @@ using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NodaTime;
+using PluralKit.Core;
 
 namespace PluralKit.API.Controllers
 {
@@ -104,6 +105,14 @@ namespace PluralKit.API.Controllers
         {
             var system = _auth.CurrentSystem;
             
+            // Bounds checks
+            if (newSystem.Name.Length > Limits.MaxSystemNameLength)
+                return BadRequest($"System name too long ({newSystem.Name.Length} > {Limits.MaxSystemNameLength}.");
+            if (newSystem.Tag.Length > Limits.MaxSystemTagLength)
+                return BadRequest($"System tag too long ({newSystem.Tag.Length} > {Limits.MaxSystemTagLength}.");
+            if (newSystem.Description.Length > Limits.MaxDescriptionLength)
+                return BadRequest($"System description too long ({newSystem.Description.Length} > {Limits.MaxDescriptionLength}.");
+
             system.Name = newSystem.Name;
             system.Description = newSystem.Description;
             system.Tag = newSystem.Tag;
