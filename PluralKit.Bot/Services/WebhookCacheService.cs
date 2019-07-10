@@ -32,13 +32,24 @@ namespace PluralKit.Bot
             // We cache the webhook through a Lazy<Task<T>>, this way we make sure to only create one webhook per channel
             // If the webhook is requested twice before it's actually been found, the Lazy<T> wrapper will stop the
             // webhook from being created twice.
-            var lazyWebhookValue =
+            var lazyWebhookValue =    
                 _webhooks.GetOrAdd(channel.Id, new Lazy<Task<IWebhook>>(() => GetOrCreateWebhook(channel)));
-            return await lazyWebhookValue.Value;
+            
+            // It's possible to "move" a webhook to a different channel after creation
+            // Here, we ensure it's actually still pointing towards the proper channel, and if not, wipe and refetch one.
+            var webhook = await lazyWebhookValue.Value;
+            if (webhook.Channel.Id != channel.Id) return await InvalidateAndRefreshWebhook(webhook);
+            return webhook;
+        }
+
+        public async Task<IWebhook> InvalidateAndRefreshWebhook(IWebhook webhook)
+        {
+            _webhooks.TryRemove(webhook.Channel.Id, out _);
+            return await GetWebhook(webhook.Channel.Id);
         }
 
         private async Task<IWebhook> GetOrCreateWebhook(ITextChannel channel) =>
-            await FindExistingWebhook(channel) ?? await GetOrCreateWebhook(channel);
+            await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
 
         private async Task<IWebhook> FindExistingWebhook(ITextChannel channel) => (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
         

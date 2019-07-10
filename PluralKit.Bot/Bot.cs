@@ -51,7 +51,7 @@ namespace PluralKit.Bot
                 .AddTransient(_ => _config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
                 .AddTransient(_ => _config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
                 
-                .AddScoped<IDbConnection>(svc =>
+                .AddTransient<IDbConnection>(svc =>
                 {
                     
                     var conn = new NpgsqlConnection(svc.GetRequiredService<CoreConfig>().Database);

@@ -46,7 +46,7 @@ namespace PluralKit.Bot {
             return new EmbedBuilder()
                 .WithAuthor($"#{message.Channel.Name}: {member.Name}", member.AvatarUrl)
                 .WithDescription(message.Content)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: ${message.Id}")
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {message.Id}")
                 .WithTimestamp(message.Timestamp)
                 .Build();
         }
