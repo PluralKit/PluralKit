@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
@@ -100,7 +101,8 @@ namespace PluralKit.Bot
 
             ulong messageId;
             if (attachment != null) {
-                using (var stream = await WebRequest.CreateHttp(attachment.Url).GetRequestStreamAsync()) {
+                using (var http = new HttpClient())
+                using (var stream = await http.GetStreamAsync(attachment.Url)) {
                     messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text, username: username, avatarUrl: avatarUrl);
                 }
             } else {
