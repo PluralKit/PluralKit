@@ -9,6 +9,7 @@ services:
       - "./pluralkit.conf:/app/pluralkit.conf:ro"
     links:
       - db
+    restart: always
   web:
     build: .
     entrypoint: ["dotnet", "run", "--project", "PluralKit.Web"]
@@ -18,5 +19,17 @@ services:
       - db
     ports:
       - 2837:80
+    restart: always
+  api:
+    build: .
+    entrypoint: ["dotnet", "run", "--project", "PluralKit.API"]
+    environment:
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+    links:
+      - db
+    ports:
+      - 2838:80
+    restart: always
   db:
     image: postgres:alpine
+    restart: always
