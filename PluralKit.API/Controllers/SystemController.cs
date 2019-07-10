@@ -92,6 +92,8 @@ namespace PluralKit.API.Controllers
             if (system == null) return NotFound("System not found.");
             
             var sw = await _switches.GetLatestSwitch(system);
+            if (sw == null) return NotFound("System has no registered switches."); 
+                
             var members = await _switches.GetSwitchMembers(sw);
             return Ok(new FrontersReturn
             {
