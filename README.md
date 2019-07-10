@@ -2,10 +2,11 @@
 PluralKit is a Discord bot meant for plural communities. It has features like message proxying through webhooks, switch tracking, system and member profiles, and more.
 
 **Do you just want to add PluralKit to your server? If so, you don't need any of this. Use the bot's invite link: https://discordapp.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904**
+
 PluralKit has a Discord server for support, feedback, and discussion: https://discord.gg/PczBt78 
 
 # Requirements
-Running the bot requires [.NET Core](https://dotnet.microsoft.com/download) (>=2.2) and a PostgreSQL database.
+Running the bot requires [.NET Core](https://dotnet.microsoft.com/download) (v2.2) and a PostgreSQL database.
 
 # Configuration
 Configuring the bot is done through a JSON configuration file. An example of the configuration format can be seen in [`pluralkit.conf.example`](https://github.com/xSke/PluralKit/blob/master/pluralkit.conf.example).
