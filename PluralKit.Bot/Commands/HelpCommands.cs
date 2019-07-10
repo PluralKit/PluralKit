@@ -7,6 +7,7 @@ namespace PluralKit.Bot.Commands
     public class HelpCommands: ModuleBase<PKCommandContext>
     {
         [Command("help")]
+        [Remarks("help")]
         public async Task HelpRoot([Remainder] string _ignored)
         {
             await Context.Channel.SendMessageAsync(embed: new EmbedBuilder()
@@ -24,6 +25,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("commands")]
+        [Remarks("commands")]
         public async Task CommandList()
         {
             await Context.Channel.SendMessageAsync(

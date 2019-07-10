@@ -28,6 +28,7 @@ namespace PluralKit.Bot.Commands
         
 
         [Command]
+        [Remarks("system <name>")]
         public async Task Query(PKSystem system = null) {
             if (system == null) system = Context.SenderSystem;
             if (system == null) throw Errors.NoSystemError;
@@ -151,6 +152,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("fronter")]
+        [Remarks("system [system] fronter")]
         public async Task SystemFronter()
         {
             var system = ContextEntity ?? Context.SenderSystem;
@@ -163,6 +165,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("fronthistory")]
+        [Remarks("system [system] fronthistory")]
         public async Task SystemFrontHistory()
         {
             var system = ContextEntity ?? Context.SenderSystem;
@@ -175,6 +178,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("frontpercent")]
+        [Remarks("system [system] frontpercent [duration]")]
         public async Task SystemFrontPercent(string durationStr = "30d")
         {
             var system = ContextEntity ?? Context.SenderSystem;
