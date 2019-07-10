@@ -27,6 +27,7 @@ namespace PluralKit.Bot.Commands
 
         [Command("message")]
         [Remarks("message <messageid>")]
+        [Alias("msg")]
         public async Task GetMessage(ulong messageId)
         {
             var message = await Messages.Get(messageId);
@@ -37,6 +38,7 @@ namespace PluralKit.Bot.Commands
 
         [Command("message")]
         [Remarks("message <messageid>")]
+        [Alias("msg")]
         public async Task GetMessage(IMessage msg) => await GetMessage(msg.Id);
     }
 }

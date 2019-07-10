@@ -37,6 +37,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("new")]
+        [Alias("register", "create", "init", "add", "make")]
         [Remarks("system new <name>")]
         public async Task New([Remainder] string systemName = null)
         {
@@ -49,6 +50,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("name")]
+        [Alias("rename", "changename")]
         [Remarks("system name <name>")]
         [MustHaveSystem]
         public async Task Name([Remainder] string newSystemName = null) {
@@ -60,6 +62,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("description")]
+        [Alias("desc")]
         [Remarks("system description <description>")]
         [MustHaveSystem]
         public async Task Description([Remainder] string newDescription = null) {
@@ -96,6 +99,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("delete")]
+        [Alias("remove", "destroy", "erase", "yeet")]
         [Remarks("system delete")]
         [MustHaveSystem]
         public async Task Delete() {
@@ -108,6 +112,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Group("list")]
+        [Alias("l", "members")]
         public class SystemListCommands: ModuleBase<PKCommandContext> {
             public MemberStore Members { get; set; }
 
@@ -158,6 +163,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("fronter")]
+        [Alias("f", "front", "fronters")]
         [Remarks("system [system] fronter")]
         public async Task SystemFronter()
         {
@@ -171,6 +177,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("fronthistory")]
+        [Alias("fh", "history", "switches")]
         [Remarks("system [system] fronthistory")]
         public async Task SystemFrontHistory()
         {
@@ -184,6 +191,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("frontpercent")]
+        [Alias("frontbreakdown", "frontpercent", "front%", "fp")]
         [Remarks("system [system] frontpercent [duration]")]
         public async Task SystemFrontPercent(string durationStr = "30d")
         {
@@ -201,6 +209,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("timezone")]
+        [Alias("tz")]
         [Remarks("system timezone [timezone]")]
         [MustHaveSystem]
         public async Task SystemTimezone([Remainder] string zoneStr = null)

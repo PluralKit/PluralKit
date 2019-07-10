@@ -22,6 +22,7 @@ namespace PluralKit.Bot.Commands
         public async Task Switch(params PKMember[] members) => await DoSwitchCommand(members);
 
         [Command("out")]
+        [Alias("none")]
         [Remarks("switch out")]
         [MustHaveSystem]
         public async Task SwitchOut() => await DoSwitchCommand(new PKMember[] { });
@@ -56,6 +57,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("move")]
+        [Alias("shift")]
         [Remarks("switch move <date/time>")]
         [MustHaveSystem]
         public async Task SwitchMove([Remainder] string str)
@@ -101,6 +103,7 @@ namespace PluralKit.Bot.Commands
 
         [Command("delete")]
         [Remarks("switch delete")]
+        [Alias("remove", "erase", "cancel", "yeet")]
         [MustHaveSystem]
         public async Task SwitchDelete()
         {

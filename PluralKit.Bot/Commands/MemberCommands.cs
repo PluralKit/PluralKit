@@ -23,6 +23,7 @@ namespace PluralKit.Bot.Commands
         public override string ContextNoun => "member";
 
         [Command("new")]
+        [Alias("n", "add", "create", "register")]
         [Remarks("member new <name>")]
         [MustHaveSystem]
         public async Task NewMember([Remainder] string memberName) {
@@ -82,7 +83,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("description")]
-        [Alias("info", "bio", "text")]
+        [Alias("info", "bio", "text", "desc")]
         [Remarks("member <member> description <description>")]
         [MustPassOwnMember]
         public async Task MemberDescription([Remainder] string description = null) {
@@ -174,7 +175,7 @@ namespace PluralKit.Bot.Commands
         }
 
         [Command("delete")]
-        [Alias("remove", "erase", "yeet")]
+        [Alias("remove", "destroy", "erase", "yeet")]
         [Remarks("member <member> delete")]
         [MustPassOwnMember]
         public async Task MemberDelete()

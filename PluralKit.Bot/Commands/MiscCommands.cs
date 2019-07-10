@@ -7,6 +7,7 @@ namespace PluralKit.Bot.Commands {
         public BotConfig BotConfig { get; set; }
         
         [Command("invite")]
+        [Alias("inv")]
         [Remarks("invite")]
         public async Task Invite()
         {
