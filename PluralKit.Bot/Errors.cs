@@ -51,7 +51,7 @@ namespace PluralKit.Bot {
         public static PKError DuplicateSwitchMembers => new PKError("Duplicate members in member list.");
         public static PKError SwitchMemberNotInSystem => new PKError("One or more switch members aren't in your own system.");
 
-        public static PKError InvalidDateTime(string str) => new PKError($"Could not parse '{str}' as a valid date/time.");
+        public static PKError InvalidDateTime(string str) => new PKError($"Could not parse '{str}' as a valid date/time. Try using a syntax such as \"May 21, 12:30 PM\" or \"3d12h\" (ie. 3 days, 12 hours ago).");
         public static PKError SwitchTimeInFuture => new PKError("Can't move switch to a time in the future.");
         public static PKError NoRegisteredSwitches => new PKError("There are no registered switches for this system.");
 

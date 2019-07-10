@@ -180,19 +180,21 @@ namespace PluralKit
                 }
             }
             
-            // Then we try specific date+time combinations, both date first and time first
+            // Then we try specific date+time combinations, both date first and time first, with and without commas
             foreach (var timePattern in timePatterns)
             {
                 foreach (var datePattern in datePatterns)
                 {
-                    var p1 = LocalDateTimePattern.CreateWithInvariantCulture($"{timePattern} {datePattern}").WithTemplateValue(midnight);
-                    var res1 = p1.Parse(str);
-                    if (res1.Success) return res1.Value.InZoneLeniently(zone);
-
-                    
-                    var p2 = LocalDateTimePattern.CreateWithInvariantCulture($"{datePattern} {timePattern}").WithTemplateValue(midnight);
-                    var res2 = p2.Parse(str);
-                    if (res2.Success) return res2.Value.InZoneLeniently(zone);
+                    foreach (var patternStr in new[]
+                    {
+                        $"{timePattern}, {datePattern}", $"{datePattern}, {timePattern}",
+                        $"{timePattern} {datePattern}", $"{datePattern} {timePattern}"
+                    })
+                    {
+                        var pattern = LocalDateTimePattern.CreateWithInvariantCulture(patternStr).WithTemplateValue(midnight);
+                        var res = pattern.Parse(str);
+                        if (res.Success) return res.Value.InZoneLeniently(zone);
+                    }
                 }
             }
             
