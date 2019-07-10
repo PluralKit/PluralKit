@@ -10,6 +10,7 @@ using NodaTime.TimeZones;
 namespace PluralKit.Bot.Commands
 {
     [Group("switch")]
+    [Alias("sw")]
     public class SwitchCommands: ModuleBase<PKCommandContext>
     {
         public SystemStore Systems { get; set; }

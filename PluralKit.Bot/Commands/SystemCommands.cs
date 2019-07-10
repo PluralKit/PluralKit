@@ -14,6 +14,7 @@ using PluralKit.Core;
 namespace PluralKit.Bot.Commands
 {
     [Group("system")]
+    [Alias("s")]
     public class SystemCommands : ContextParameterModuleBase<PKSystem>
     {
         public override string Prefix => "system";

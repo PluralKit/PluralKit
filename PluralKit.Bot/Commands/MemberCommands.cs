@@ -12,6 +12,7 @@ using Image = SixLabors.ImageSharp.Image;
 namespace PluralKit.Bot.Commands
 {
     [Group("member")]
+    [Alias("m")]
     public class MemberCommands : ContextParameterModuleBase<PKMember>
     {
         public SystemStore Systems { get; set; }
