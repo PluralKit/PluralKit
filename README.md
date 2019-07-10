@@ -25,12 +25,23 @@ Running PluralKit is pretty easy with Docker. The repository contains a `docker-
 
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
 * Create a `pluralkit.conf` file in the same directory as `docker-compose.yml` containing at least a `PluralKit.Bot.Token` field
+  * (`PluralKit.Database` is overridden in `docker-compose.yml` to point to the Postgres container)
 * Build the bot: `docker-compose build`
 * Run the bot: `docker-compose up`
+
+In other words:
+```
+$ git clone https://github.com/xSke/PluralKit
+$ cd PluralKit
+$ cp pluralkit.conf.example pluralkit.conf
+$ nano pluralkit.conf  # (or vim, or whatever)
+$ docker-compose up -d
+```
 
 ## Manually
 * Install the .NET Core 2.2 SDK (see https://dotnet.microsoft.com/download)
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
+* Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`
 
 
