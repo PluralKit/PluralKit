@@ -52,7 +52,7 @@ namespace PluralKit.Bot.Commands
             if (members.Count == 0)
                 await Context.Channel.SendMessageAsync($"{Emojis.Success} Switch-out registered.");
             else
-                await Context.Channel.SendMessageAsync($"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.Name))}.");
+                await Context.Channel.SendMessageAsync($"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.Name)).Sanitize()}.");
         }
 
         [Command("move")]
@@ -91,7 +91,7 @@ namespace PluralKit.Bot.Commands
             var newSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - time.ToInstant());
             
             // yeet
-            var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
+            var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr.Sanitize()}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
             if (!await Context.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
@@ -116,7 +116,7 @@ namespace PluralKit.Bot.Commands
             if (lastTwoSwitches.Length == 1)
             {
                 msg = await Context.Channel.SendMessageAsync(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.Sanitize()}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
             }
             else
             {
@@ -124,7 +124,7 @@ namespace PluralKit.Bot.Commands
                 var secondSwitchMemberStr = string.Join(", ", secondSwitchMembers.Select(m => m.Name));
                 var secondSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
                 msg = await Context.Channel.SendMessageAsync(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?");
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.Sanitize()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.Sanitize()} ({secondSwitchDeltaStr} ago). Is this okay?");
             }
 
             if (!await Context.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;

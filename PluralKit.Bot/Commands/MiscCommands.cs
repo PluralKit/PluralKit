@@ -21,7 +21,6 @@ namespace PluralKit.Bot.Commands {
                 sendMessages: true
             );
 
-            // TODO: allow customization of invite ID
             var invite = $"https://discordapp.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={permissions.RawValue}";
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }

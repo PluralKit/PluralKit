@@ -20,7 +20,7 @@ namespace PluralKit.Bot.Commands
             await LogChannels.SetLogChannel(Context.Guild, channel);
 
             if (channel != null)
-                await Context.Channel.SendMessageAsync($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
+                await Context.Channel.SendMessageAsync($"{Emojis.Success} Proxy logging channel set to #{channel.Name.Sanitize()}.");
             else
                 await Context.Channel.SendMessageAsync($"{Emojis.Success} Proxy logging channel cleared.");
         }

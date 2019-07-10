@@ -38,7 +38,7 @@ namespace PluralKit.Bot.Commands
             // Warn if there's already a member by this name
             var existingMember = await Members.GetByName(Context.SenderSystem, memberName);
             if (existingMember != null) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
+                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.Sanitize()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
                 if (!await Context.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
@@ -46,7 +46,7 @@ namespace PluralKit.Bot.Commands
             var member = await Members.Create(Context.SenderSystem, memberName);
             
             // Send confirmation and space hint
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Type `pk;help member` for a list of commands to edit this member.");
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member \"{memberName.Sanitize()}\" (`{member.Hid}`) registered! Type `pk;help member` for a list of commands to edit this member.");
             if (memberName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
         }
 
@@ -69,7 +69,7 @@ namespace PluralKit.Bot.Commands
             // Warn if there's already a member by this name
             var existingMember = await Members.GetByName(Context.SenderSystem, newName);
             if (existingMember != null) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
+                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.Sanitize()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
                 if (!await Context.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
@@ -170,7 +170,7 @@ namespace PluralKit.Bot.Commands
             ContextEntity.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
             ContextEntity.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
             await Members.Save(ContextEntity);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags changed to `{ContextEntity.ProxyString}`. Try proxying now!");
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags changed to `{ContextEntity.ProxyString.Sanitize()}`. Try proxying now!");
         }
 
         [Command("delete")]
@@ -179,7 +179,7 @@ namespace PluralKit.Bot.Commands
         [MustPassOwnMember]
         public async Task MemberDelete()
         {
-            await Context.Channel.SendMessageAsync($"{Emojis.Warn} Are you sure you want to delete \"{ContextEntity.Name}\"? If so, reply to this message with the member's ID (`{ContextEntity.Hid}`). __***This cannot be undone!***__");
+            await Context.Channel.SendMessageAsync($"{Emojis.Warn} Are you sure you want to delete \"{ContextEntity.Name.Sanitize()}\"? If so, reply to this message with the member's ID (`{ContextEntity.Hid}`). __***This cannot be undone!***__");
             if (!await Context.ConfirmWithReply(ContextEntity.Hid)) throw Errors.MemberDeleteCancelled;
             await Members.Delete(ContextEntity);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member deleted.");

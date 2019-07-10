@@ -4,6 +4,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
@@ -82,6 +83,9 @@ namespace PluralKit.Bot
             argPos = num + 2;
             return true;
         }
+
+        public static string Sanitize(this string input) =>
+            Regex.Replace(Regex.Replace(input, "<@[!&]?(\\d{17,19})>", "<\\@$1>"), "@(everyone|here)", "@\u200B$1");
     }
 
     class PKSystemTypeReader : TypeReader

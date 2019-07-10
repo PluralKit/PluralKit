@@ -74,15 +74,21 @@ namespace PluralKit.Bot.Commands
         [Remarks("system tag <tag>")]
         [MustHaveSystem]
         public async Task Tag([Remainder] string newTag = null) {
-            if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
 
             Context.SenderSystem.Tag = newTag;
 
-            // Check unproxyable messages *after* changing the tag (so it's seen in the method) but *before* we save to DB (so we can cancel)
-            var unproxyableMembers = await Members.GetUnproxyableMembers(Context.SenderSystem);
-            if (unproxyableMembers.Count > 0) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Changing your system tag to '{newTag}' will result in the following members being unproxyable, since the tag would bring their name over 32 characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name))}**\nDo you want to continue anyway?");
-                if (!await Context.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
+            if (newTag != null)
+            {
+                if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
+
+                // Check unproxyable messages *after* changing the tag (so it's seen in the method) but *before* we save to DB (so we can cancel)
+                var unproxyableMembers = await Members.GetUnproxyableMembers(Context.SenderSystem);
+                if (unproxyableMembers.Count > 0)
+                {
+                    var msg = await Context.Channel.SendMessageAsync(
+                        $"{Emojis.Warn} Changing your system tag to '{newTag}' will result in the following members being unproxyable, since the tag would bring their name over 32 characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name))}**\nDo you want to continue anyway?");
+                    if (!await Context.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
+                }
             }
 
             await Systems.Save(Context.SenderSystem);
