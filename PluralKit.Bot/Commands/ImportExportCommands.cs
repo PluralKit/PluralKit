@@ -17,7 +17,7 @@ namespace PluralKit.Bot.Commands
         [Remarks("import [fileurl]")]
         public async Task Import([Remainder] string url = null)
         {
-            if (url == null) url = Context.Message.Attachments.FirstOrDefault()?.Filename;
+            if (url == null) url = Context.Message.Attachments.FirstOrDefault()?.Url;
             if (url == null) throw Errors.NoImportFilePassed;
 
             await Context.BusyIndicator(async () =>
