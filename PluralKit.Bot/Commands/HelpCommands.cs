@@ -8,7 +8,7 @@ namespace PluralKit.Bot.Commands
     public class HelpCommands: ModuleBase<PKCommandContext>
     {
         [Command]
-        public async Task HelpRoot()
+        public async Task HelpRoot([Remainder] string _ignored)
         {
             await Context.Channel.SendMessageAsync(embed: new EmbedBuilder()
                 .WithTitle("PluralKit")

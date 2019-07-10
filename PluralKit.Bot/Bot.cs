@@ -161,8 +161,12 @@ namespace PluralKit.Bot
 
             int argPos = 0;
             // Check if message starts with the command prefix
-            if (arg.HasStringPrefix("pk;", ref argPos) || arg.HasStringPrefix("pk!", ref argPos) || arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            if (arg.HasStringPrefix("pk;", ref argPos, StringComparison.OrdinalIgnoreCase) || arg.HasStringPrefix("pk!", ref argPos, StringComparison.OrdinalIgnoreCase) || arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
+                // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
+                var trimStartLengthDiff = arg.Content.Substring(argPos).Length - arg.Content.Substring(argPos).TrimStart().Length;
+                argPos += trimStartLengthDiff;
+                
                 // If it does, fetch the sender's system (because most commands need that) into the context,
                 // and start command execution
                 // Note system may be null if user has no system, hence `OrDefault`
