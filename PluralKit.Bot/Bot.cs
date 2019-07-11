@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -57,7 +58,19 @@ namespace PluralKit.Bot
                 .AddSingleton<IDiscordClient, DiscordSocketClient>()
                 .AddSingleton<Bot>()
 
-                .AddTransient<CommandService>()
+                .AddTransient<CommandService>(_ => new CommandService(new CommandServiceConfig
+                {
+                    CaseSensitiveCommands = false,
+                    QuotationMarkAliasMap = new Dictionary<char, char>
+                    {
+                        {'"', '"'},
+                        {'\'', '\''},
+                        {'‘', '’'},
+                        {'“', '”'},
+                        {'„', '‟'},
+                    },
+                    DefaultRunMode = RunMode.Async
+                }))
                 .AddTransient<EmbedService>()
                 .AddTransient<ProxyService>()
                 .AddTransient<LogChannelService>()
