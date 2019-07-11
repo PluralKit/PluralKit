@@ -28,17 +28,17 @@ namespace PluralKit.Bot
 
     class ProxyService {
         private IDiscordClient _client;
-        private IDbConnection _connection;
+        private DbConnectionFactory _conn;
         private LogChannelService _logger;
         private WebhookCacheService _webhookCache;
         private MessageStore _messageStorage;
         private EmbedService _embeds;
         
-        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, IDbConnection connection, LogChannelService logger, MessageStore messageStorage, EmbedService embeds)
+        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logger, MessageStore messageStorage, EmbedService embeds)
         {
             _client = client;
             _webhookCache = webhookCache;
-            _connection = connection;
+            _conn = conn;
             _logger = logger;
             _messageStorage = messageStorage;
             _embeds = embeds;
@@ -76,11 +76,16 @@ namespace PluralKit.Bot
             return null;
         }
 
-        public async Task HandleMessageAsync(IMessage message) {
-            var results = await _connection.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>(
-                "select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid", 
-                (member, system) =>
-                    new ProxyDatabaseResult { Member = member, System = system }, new { Uid = message.Author.Id });
+        public async Task HandleMessageAsync(IMessage message)
+        {
+            IEnumerable<ProxyDatabaseResult> results;
+            using (var conn = _conn.Obtain())
+            {
+                results = await conn.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>(
+                    "select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid",
+                    (member, system) =>
+                        new ProxyDatabaseResult {Member = member, System = system}, new {Uid = message.Author.Id});
+            }
 
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, results);

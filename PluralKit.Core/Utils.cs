@@ -333,4 +333,19 @@ namespace PluralKit
             return (T) value;
         }
     }
+    
+    public class DbConnectionFactory
+    {
+        private string _connectionString;
+
+        public DbConnectionFactory(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
+
+        public IDbConnection Obtain()
+        {
+            return new NpgsqlConnection(_connectionString);
+        }
+    }
 }

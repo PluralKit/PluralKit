@@ -152,14 +152,12 @@ namespace PluralKit.Bot
     /// Subclass of ICommandContext with PK-specific additional fields and functionality
     public class PKCommandContext : SocketCommandContext
     {
-        public IDbConnection Connection { get; }
         public PKSystem SenderSystem { get; }
         
         private object _entity;
 
-        public PKCommandContext(DiscordSocketClient client, SocketUserMessage msg, IDbConnection connection, PKSystem system) : base(client, msg)
+        public PKCommandContext(DiscordSocketClient client, SocketUserMessage msg, PKSystem system) : base(client, msg)
         {
-            Connection = connection;
             SenderSystem = system;
         }
 

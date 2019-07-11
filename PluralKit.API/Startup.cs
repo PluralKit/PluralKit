@@ -33,22 +33,17 @@ namespace PluralKit.API
             services.AddMvc(opts => { })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddJsonOptions(opts => { opts.SerializerSettings.BuildSerializerSettings(); });
-            
+
             services
                 .AddTransient<SystemStore>()
                 .AddTransient<MemberStore>()
                 .AddTransient<SwitchStore>()
                 .AddTransient<MessageStore>()
-                
+
                 .AddScoped<TokenAuthService>()
-                
+
                 .AddTransient(_ => Configuration.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
-                .AddScoped<IDbConnection>(svc =>
-                {
-                    var conn = new NpgsqlConnection(svc.GetRequiredService<CoreConfig>().Database);
-                    conn.Open();
-                    return conn;
-                });
+                .AddSingleton(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

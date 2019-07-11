@@ -36,10 +36,10 @@ namespace PluralKit.API.Controllers
         private SystemStore _systems;
         private MemberStore _members;
         private SwitchStore _switches;
-        private IDbConnection _conn;
+        private DbConnectionFactory _conn;
         private TokenAuthService _auth;
 
-        public SystemController(SystemStore systems, MemberStore members, SwitchStore switches, IDbConnection conn, TokenAuthService auth)
+        public SystemController(SystemStore systems, MemberStore members, SwitchStore switches, DbConnectionFactory conn, TokenAuthService auth)
         {
             _systems = systems;
             _members = members;
@@ -74,15 +74,18 @@ namespace PluralKit.API.Controllers
             var system = await _systems.GetByHid(hid);
             if (system == null) return NotFound("System not found.");
 
-            var res = await _conn.QueryAsync<SwitchesReturn>(
-                @"select *, array(
+            using (var conn = _conn.Obtain())
+            {
+                var res = await conn.QueryAsync<SwitchesReturn>(
+                    @"select *, array(
                         select members.hid from switch_members, members
                         where switch_members.switch = switches.id and members.id = switch_members.member
                     ) as members from switches
                     where switches.system = @System and switches.timestamp < @Before
                     order by switches.timestamp desc
-                    limit 100;", new { System = system.Id, Before = before });
-            return Ok(res);
+                    limit 100;", new {System = system.Id, Before = before});
+                return Ok(res);
+            }
         }
 
         [HttpGet("{hid}/fronters")]
@@ -142,7 +145,10 @@ namespace PluralKit.API.Controllers
                 return BadRequest("New members identical to existing fronters.");
             
             // Resolve member objects for all given IDs
-            var membersList = (await _conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new {Hids = param.Members})).ToList();
+            IEnumerable<PKMember> membersList;
+            using (var conn = _conn.Obtain())
+                membersList = (await conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new {Hids = param.Members})).ToList();
+            
             foreach (var member in membersList)
                 if (member.System != _auth.CurrentSystem.Id)
                     return BadRequest($"Cannot switch to member '{member.Hid}' not in system.");

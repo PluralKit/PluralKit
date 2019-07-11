@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -32,8 +33,8 @@ namespace PluralKit.Bot
             using (var services = BuildServiceProvider())
             {
                 Console.WriteLine("- Connecting to database...");
-                var connection = services.GetRequiredService<IDbConnection>() as NpgsqlConnection;
-                await Schema.CreateTables(connection);
+                using (var conn = services.GetRequiredService<DbConnectionFactory>().Obtain())
+                    await Schema.CreateTables(conn);
 
                 Console.WriteLine("- Connecting to Discord...");
                 var client = services.GetRequiredService<IDiscordClient>() as DiscordSocketClient;
@@ -51,13 +52,7 @@ namespace PluralKit.Bot
                 .AddTransient(_ => _config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
                 .AddTransient(_ => _config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
                 
-                .AddTransient<IDbConnection>(svc =>
-                {
-                    
-                    var conn = new NpgsqlConnection(svc.GetRequiredService<CoreConfig>().Database);
-                    conn.Open();
-                    return conn;
-                })
+                .AddTransient(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database))
                 
                 .AddSingleton<IDiscordClient, DiscordSocketClient>()
                 .AddSingleton<Bot>()
@@ -170,9 +165,10 @@ namespace PluralKit.Bot
                 // If it does, fetch the sender's system (because most commands need that) into the context,
                 // and start command execution
                 // Note system may be null if user has no system, hence `OrDefault`
-                var connection = serviceScope.ServiceProvider.GetService<IDbConnection>();
-                var system = await connection.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
-                await _commands.ExecuteAsync(new PKCommandContext(_client, arg, connection, system), argPos, serviceScope.ServiceProvider);
+                PKSystem system;
+                using (var conn = serviceScope.ServiceProvider.GetService<DbConnectionFactory>().Obtain())
+                    system = await conn.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
+                await _commands.ExecuteAsync(new PKCommandContext(_client, arg, system), argPos, serviceScope.ServiceProvider);
             }
             else
             {

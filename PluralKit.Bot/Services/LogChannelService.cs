@@ -11,13 +11,13 @@ namespace PluralKit.Bot {
 
     public class LogChannelService {
         private IDiscordClient _client;
-        private IDbConnection _connection;
+        private DbConnectionFactory _conn;
         private EmbedService _embed;
 
-        public LogChannelService(IDiscordClient client, IDbConnection connection, EmbedService embed)
+        public LogChannelService(IDiscordClient client, DbConnectionFactory conn, EmbedService embed)
         {
             this._client = client;
-            this._connection = connection;
+            this._conn = conn;
             this._embed = embed;
         }
 
@@ -30,9 +30,14 @@ namespace PluralKit.Bot {
         }
 
         public async Task<ITextChannel> GetLogChannel(IGuild guild) {
-            var server = await _connection.QueryFirstOrDefaultAsync<ServerDefinition>("select * from servers where id = @Id", new { Id = guild.Id });
-            if (server?.LogChannel == null) return null;
-            return await _client.GetChannelAsync(server.LogChannel.Value) as ITextChannel;
+            using (var conn = _conn.Obtain())
+            {
+                var server =
+                    await conn.QueryFirstOrDefaultAsync<ServerDefinition>("select * from servers where id = @Id",
+                        new {Id = guild.Id});
+                if (server?.LogChannel == null) return null;
+                return await _client.GetChannelAsync(server.LogChannel.Value) as ITextChannel;
+            }
         }
 
         public async Task SetLogChannel(IGuild guild, ITextChannel newLogChannel) {
@@ -41,7 +46,12 @@ namespace PluralKit.Bot {
                 LogChannel = newLogChannel?.Id
             };
 
-            await _connection.QueryAsync("insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel", def);
+            using (var conn = _conn.Obtain())
+            {
+                await conn.QueryAsync(
+                    "insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel",
+                    def);
+            }
         }
     }
 }
