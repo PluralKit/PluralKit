@@ -85,7 +85,7 @@ namespace PluralKit.Bot.Commands
 
                     // If passed system is null, it'll create a new one
                     // (and that's okay!)
-                    var result = await DataFiles.ImportSystem(data, Context.SenderSystem);
+                    var result = await DataFiles.ImportSystem(data, Context.SenderSystem, Context.User.Id);
                     
                     if (Context.SenderSystem == null)
                     {

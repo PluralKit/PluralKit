@@ -25,8 +25,10 @@ namespace PluralKit {
         }
 
         public async Task Link(PKSystem system, ulong accountId) {
+            // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
+            // This is used in import/export, although the pk;link command checks for this case beforehand
             using (var conn = _conn.Obtain())
-                await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId)", new { Id = accountId, SystemId = system.Id });
+                await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
         }
         
         public async Task Unlink(PKSystem system, ulong accountId) {

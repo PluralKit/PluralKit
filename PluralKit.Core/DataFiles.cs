@@ -64,8 +64,11 @@ namespace PluralKit.Bot
             Timestamp = Formats.TimestampExportFormat.Format(sw.Timestamp)
         };
 
-        public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system)
+        public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system, ulong accountId)
         {
+            // TODO: make atomic, somehow - we'd need to obtain one IDbConnection and reuse it
+            // which probably means refactoring SystemStore.Save and friends etc
+            
             var result = new ImportResult {AddedNames = new List<string>(), ModifiedNames = new List<string>()};
 
             // If we don't already have a system to save to, create one
@@ -78,6 +81,9 @@ namespace PluralKit.Bot
             if (data.AvatarUrl != null) system.AvatarUrl = data.AvatarUrl;
             if (data.TimeZone != null) system.UiTz = data.TimeZone ?? "UTC";
             await _systems.Save(system);
+            
+            // Make sure to link the sender account, too
+            await _systems.Link(system, accountId);
 
             // Apply members
             // TODO: parallelize?
