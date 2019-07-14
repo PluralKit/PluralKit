@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
@@ -130,7 +131,10 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task<IMessage> ExecuteWebhook(IWebhook webhook, string text, string username, string avatarUrl, IAttachment attachment) {
+        private async Task<IMessage> ExecuteWebhook(IWebhook webhook, string text, string username, string avatarUrl, IAttachment attachment)
+        {
+            username = FixClyde(username);
+            
             // TODO: DiscordWebhookClient's ctor does a call to GetWebhook that may be unnecessary, see if there's a way to do this The Hard Way :tm:
             // TODO: this will probably crash if there are multiple consecutive failures, perhaps have a loop instead?
             DiscordWebhookClient client;
@@ -218,6 +222,16 @@ namespace PluralKit.Bot
         public async Task HandleMessageDeletedAsync(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
             await _messageStorage.Delete(message.Id);
+        }
+
+        private string FixClyde(string name)
+        {
+            var match = Regex.Match(name, "clyde", RegexOptions.IgnoreCase);
+            if (!match.Success) return name;
+            
+            // Put a hair space (\u200A) between the "c" and the "lyde" in the match to avoid Discord matching it
+            // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
+            return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
         }
     }
 }
