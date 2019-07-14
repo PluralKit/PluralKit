@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Humanizer;
 using NodaTime;
 
 namespace PluralKit.Bot {
@@ -81,7 +82,7 @@ namespace PluralKit.Bot {
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new EmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
-                .AddField("Current fronter", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
+                .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
                 .AddField("Since", $"{Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({Formats.DurationFormat.Format(timeSinceSwitch)} ago)")
                 .Build();
         }
