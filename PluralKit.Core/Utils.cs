@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -343,9 +344,11 @@ namespace PluralKit
             _connectionString = connectionString;
         }
 
-        public IDbConnection Obtain()
+        public async Task<IDbConnection> Obtain()
         {
-            return new NpgsqlConnection(_connectionString);
+            var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+            return conn;
         }
     }
 }

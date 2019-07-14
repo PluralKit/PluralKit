@@ -74,7 +74,7 @@ namespace PluralKit.API.Controllers
             var system = await _systems.GetByHid(hid);
             if (system == null) return NotFound("System not found.");
 
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
             {
                 var res = await conn.QueryAsync<SwitchesReturn>(
                     @"select *, array(
@@ -146,7 +146,7 @@ namespace PluralKit.API.Controllers
             
             // Resolve member objects for all given IDs
             IEnumerable<PKMember> membersList;
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 membersList = (await conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new {Hids = param.Members})).ToList();
             
             foreach (var member in membersList)

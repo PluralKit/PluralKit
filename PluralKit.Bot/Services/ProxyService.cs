@@ -79,7 +79,7 @@ namespace PluralKit.Bot
         public async Task HandleMessageAsync(IMessage message)
         {
             IEnumerable<ProxyDatabaseResult> results;
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
             {
                 results = await conn.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>(
                     "select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid",
@@ -168,21 +168,29 @@ namespace PluralKit.Bot
                     return HandleMessageDeletionByReaction(message, reaction.UserId);
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
-                    return HandleMessageQueryByReaction(message, reaction.UserId);
+                    return HandleMessageQueryByReaction(message, reaction.UserId, reaction.Emote);
                 default:
                     return Task.CompletedTask;
             }
         }
 
-        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted)
+        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted, IEmote reactedEmote)
         {
+            // Find the user who sent the reaction, so we can DM them
             var user = await _client.GetUserAsync(userWhoReacted);
             if (user == null) return;
 
+            // Find the message in the DB
             var msg = await _messageStorage.Get(message.Id);
             if (msg == null) return;
             
+            // DM them the message card
             await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
+            
+            // And finally remove the original reaction (if we can)
+            var msgObj = await message.GetOrDownloadAsync();
+            if (await msgObj.Channel.HasPermission(ChannelPermission.ManageMessages))
+                await msgObj.RemoveReactionAsync(reactedEmote, user);
         }
 
         public async Task HandleMessageDeletionByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted)

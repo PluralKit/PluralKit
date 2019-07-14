@@ -34,7 +34,7 @@ namespace PluralKit.Bot
             using (var services = BuildServiceProvider())
             {
                 Console.WriteLine("- Connecting to database...");
-                using (var conn = services.GetRequiredService<DbConnectionFactory>().Obtain())
+                using (var conn = await services.GetRequiredService<DbConnectionFactory>().Obtain())
                     await Schema.CreateTables(conn);
 
                 Console.WriteLine("- Connecting to Discord...");
@@ -179,7 +179,7 @@ namespace PluralKit.Bot
                 // and start command execution
                 // Note system may be null if user has no system, hence `OrDefault`
                 PKSystem system;
-                using (var conn = serviceScope.ServiceProvider.GetService<DbConnectionFactory>().Obtain())
+                using (var conn = await serviceScope.ServiceProvider.GetService<DbConnectionFactory>().Obtain())
                     system = await conn.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
                 await _commands.ExecuteAsync(new PKCommandContext(_client, arg, system), argPos, serviceScope.ServiceProvider);
             }

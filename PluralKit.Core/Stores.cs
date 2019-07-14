@@ -20,56 +20,56 @@ namespace PluralKit {
             // TODO: handle HID collision case
             var hid = Utils.GenerateHid();
             
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (@Hid, @Name) returning *", new { Hid = hid, Name = systemName });
         }
 
         public async Task Link(PKSystem system, ulong accountId) {
             // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
             // This is used in import/export, although the pk;link command checks for this case beforehand
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
         }
         
         public async Task Unlink(PKSystem system, ulong accountId) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
         }
 
         public async Task<PKSystem> GetByAccount(ulong accountId) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.system = systems.id and accounts.uid = @Id", new { Id = accountId });
         }
 
         public async Task<PKSystem> GetByHid(string hid) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where systems.hid = @Hid", new { Hid = hid.ToLower() });
         }
 
         public async Task<PKSystem> GetByToken(string token) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where token = @Token", new { Token = token });
         }
         
         public async Task<PKSystem> GetById(int id)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where id = @Id", new { Id = id });
         }
 
         public async Task Save(PKSystem system) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz where id = @Id", system);
         }
 
         public async Task Delete(PKSystem system) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from systems where id = @Id", system);
         }        
 
         public async Task<IEnumerable<ulong>> GetLinkedAccountIds(PKSystem system)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new { Id = system.Id });
         }
     }
@@ -85,7 +85,7 @@ namespace PluralKit {
             // TODO: handle collision
             var hid = Utils.GenerateHid();
             
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (@Hid, @SystemId, @Name) returning *", new {
                     Hid = hid,
                     SystemID = system.Id,
@@ -94,13 +94,13 @@ namespace PluralKit {
         }
 
         public async Task<PKMember> GetByHid(string hid) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where hid = @Hid", new { Hid = hid.ToLower() });
         }
 
         public async Task<PKMember> GetByName(PKSystem system, string name) {
             // QueryFirst, since members can (in rare cases) share names
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
@@ -113,23 +113,23 @@ namespace PluralKit {
         }
 
         public async Task<IEnumerable<PKMember>> GetBySystem(PKSystem system) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKMember>("select * from members where system = @SystemID", new { SystemID = system.Id });
         }
 
         public async Task Save(PKMember member) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update members set name = @Name, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
         }
 
         public async Task Delete(PKMember member) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
         }
 
         public async Task<int> MessageCount(PKMember member)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleAsync<int>("select count(*) from messages where member = @Id", member);
         }
     }
@@ -155,7 +155,7 @@ namespace PluralKit {
         }
 
         public async Task Store(ulong senderId, ulong messageId, ulong channelId, PKMember member) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into messages(mid, channel, member, sender) values(@MessageId, @ChannelId, @MemberId, @SenderId)", new {
                     MessageId = messageId,
                     ChannelId = channelId,
@@ -166,7 +166,7 @@ namespace PluralKit {
 
         public async Task<StoredMessage> Get(ulong id)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, StoredMessage>("select messages.*, members.*, systems.* from messages, members, systems where mid = @Id and messages.member = members.id and systems.id = members.system", (msg, member, system) => new StoredMessage
                 {
                     Message = msg,
@@ -176,7 +176,7 @@ namespace PluralKit {
         }
         
         public async Task Delete(ulong id) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id });
         }
     }
@@ -193,7 +193,7 @@ namespace PluralKit {
         public async Task RegisterSwitch(PKSystem system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
             using (var tx = conn.BeginTransaction())
             {
                 // First, we insert the switch itself
@@ -218,20 +218,20 @@ namespace PluralKit {
         {
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
             // (maybe when we get caching in?)
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKSwitch>("select * from switches where system = @System order by timestamp desc limit @Count", new {System = system.Id, Count = count});
         }
 
         public async Task<IEnumerable<int>> GetSwitchMemberIds(PKSwitch sw)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<int>("select member from switch_members where switch = @Switch",
                     new {Switch = sw.Id});
         }
         
         public async Task<IEnumerable<PKMember>> GetSwitchMembers(PKSwitch sw)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKMember>(
                     "select * from switch_members, members where switch_members.member = members.id and switch_members.switch = @Switch",
                     new {Switch = sw.Id});
@@ -241,14 +241,14 @@ namespace PluralKit {
 
         public async Task MoveSwitch(PKSwitch sw, Instant time)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
                     new {Time = time, Id = sw.Id});
         }
 
         public async Task DeleteSwitch(PKSwitch sw)
         {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
         }
         
@@ -273,7 +273,7 @@ namespace PluralKit {
             // this makes sure the return list has the same instances of PKMember throughout, which is important for the dictionary
             // key used in GetPerMemberSwitchDuration below
             Dictionary<int, PKMember> memberObjects;
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
             {
                 memberObjects = (await conn.QueryAsync<PKMember>(
                         "select distinct members.* from members, switch_members where switch_members.switch = any(@Switches) and switch_members.member = members.id", // lol postgres specific `= any()` syntax

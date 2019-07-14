@@ -30,7 +30,7 @@ namespace PluralKit.Bot {
         }
 
         public async Task<ITextChannel> GetLogChannel(IGuild guild) {
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
             {
                 var server =
                     await conn.QueryFirstOrDefaultAsync<ServerDefinition>("select * from servers where id = @Id",
@@ -46,7 +46,7 @@ namespace PluralKit.Bot {
                 LogChannel = newLogChannel?.Id
             };
 
-            using (var conn = _conn.Obtain())
+            using (var conn = await _conn.Obtain())
             {
                 await conn.QueryAsync(
                     "insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel",

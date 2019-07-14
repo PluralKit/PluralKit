@@ -86,6 +86,25 @@ namespace PluralKit.Bot
 
         public static string Sanitize(this string input) =>
             Regex.Replace(Regex.Replace(input, "<@[!&]?(\\d{17,19})>", "<\\@$1>"), "@(everyone|here)", "@\u200B$1");
+
+        public static async Task<ChannelPermissions> PermissionsIn(this IChannel channel)
+        {
+            switch (channel)
+            {
+                case IDMChannel _:
+                    return ChannelPermissions.DM;
+                case IGroupChannel _:
+                    return ChannelPermissions.Group;
+                case IGuildChannel gc:
+                    var currentUser = await gc.Guild.GetCurrentUserAsync();
+                    return currentUser.GetPermissions(gc);
+                default:
+                    return ChannelPermissions.None;
+            }
+        }
+
+        public static async Task<bool> HasPermission(this IChannel channel, ChannelPermission permission) =>
+            (await PermissionsIn(channel)).Has(permission);
     }
 
     class PKSystemTypeReader : TypeReader
