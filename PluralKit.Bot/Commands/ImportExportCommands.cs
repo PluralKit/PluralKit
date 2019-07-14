@@ -4,7 +4,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
+using Discord.Net;
 using Newtonsoft.Json;
 
 namespace PluralKit.Bot.Commands
@@ -104,14 +106,31 @@ namespace PluralKit.Bot.Commands
         [MustHaveSystem]
         public async Task Export()
         {
-            await Context.BusyIndicator(async () =>
+            var json = await Context.BusyIndicator(async () =>
             {
+                // Make the actual data file
                 var data = await DataFiles.ExportSystem(Context.SenderSystem);
-                var json = JsonConvert.SerializeObject(data, Formatting.None);
-                
-                var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                await Context.Channel.SendFileAsync(stream, "system.json", $"{Emojis.Success} Here you go!");
+                return JsonConvert.SerializeObject(data, Formatting.None);
             });
+            
+                            
+            // Send it as a Discord attachment *in DMs*
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+
+            try
+            {
+                await Context.User.SendFileAsync(stream, "system.json", $"{Emojis.Success} Here you go!");
+                
+                // If the original message wasn't posted in DMs, send a public reminder
+                if (!(Context.Channel is IDMChannel))
+                    await Context.Channel.SendMessageAsync($"{Emojis.Success} Check your DMs!");
+            }
+            catch (HttpException)
+            {
+                // If user has DMs closed, tell 'em to open them
+                await Context.Channel.SendMessageAsync(
+                    $"{Emojis.Error} Could not send the data file in your DMs. Do you have DMs closed?");
+            }
         }
     }
 }
