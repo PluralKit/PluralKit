@@ -27,7 +27,7 @@ namespace PluralKit.Bot {
             var accounts = await _systems.GetLinkedAccountIds(system);
 
             // Fetch/render info for all accounts simultaneously
-            var users = await Task.WhenAll(accounts.Select(async uid => (await _client.GetUserAsync(uid)).NameAndMention() ?? $"(deleted account {uid})"));
+            var users = await Task.WhenAll(accounts.Select(async uid => (await _client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
