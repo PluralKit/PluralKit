@@ -225,7 +225,7 @@ namespace PluralKit {
         public async Task<IEnumerable<int>> GetSwitchMemberIds(PKSwitch sw)
         {
             using (var conn = await _conn.Obtain())
-                return await conn.QueryAsync<int>("select member from switch_members where switch = @Switch",
+                return await conn.QueryAsync<int>("select member from switch_members where switch = @Switch order by switch_members.id",
                     new {Switch = sw.Id});
         }
         
@@ -233,7 +233,7 @@ namespace PluralKit {
         {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKMember>(
-                    "select * from switch_members, members where switch_members.member = members.id and switch_members.switch = @Switch",
+                    "select * from switch_members, members where switch_members.member = members.id and switch_members.switch = @Switch order by switch_members.id",
                     new {Switch = sw.Id});
         }
 
