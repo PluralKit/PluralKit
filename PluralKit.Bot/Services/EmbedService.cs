@@ -75,6 +75,7 @@ namespace PluralKit.Bot {
             if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns);
             if (messageCount > 0) eb.AddField("Message Count", messageCount);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix}text{member.Suffix}");
+            if (member.Color != null) eb.AddField("Color", $"#{member.Color}");
 
             return eb.Build();
         }
