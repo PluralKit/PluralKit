@@ -193,7 +193,7 @@ namespace PluralKit.Bot.Commands
         [Command("frontpercent")]
         [Alias("frontbreakdown", "frontpercent", "front%", "fp")]
         [Remarks("system [system] frontpercent [duration]")]
-        public async Task SystemFrontPercent(string durationStr = "30d")
+        public async Task SystemFrontPercent([Remainder] string durationStr = "30d")
         {
             var system = ContextEntity ?? Context.SenderSystem;
             if (system == null) throw Errors.NoSystemError;
