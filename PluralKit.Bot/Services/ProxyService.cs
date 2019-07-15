@@ -98,11 +98,11 @@ namespace PluralKit.Bot
 
             // Fetch a webhook for this channel, and send the proxied message
             var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
-            var hookMessage = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, match.Member.AvatarUrl, message.Attachments.FirstOrDefault());
+            var hookMessageId = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, match.Member.AvatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
-            await _messageStorage.Store(message.Author.Id, hookMessage.Id, hookMessage.Channel.Id, match.Member);
-            await _logger.LogMessage(match.System, match.Member, hookMessage, message.Author);
+            await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, match.Member);
+            await _logger.LogMessage(match.System, match.Member, hookMessageId, message.Channel as IGuildChannel, message.Author, match.InnerText);
 
             // Wait a second or so before deleting the original message
             await Task.Delay(1000);
@@ -131,7 +131,7 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task<IMessage> ExecuteWebhook(IWebhook webhook, string text, string username, string avatarUrl, IAttachment attachment)
+        private async Task<ulong> ExecuteWebhook(IWebhook webhook, string text, string username, string avatarUrl, IAttachment attachment)
         {
             username = FixClyde(username);
             
@@ -159,8 +159,9 @@ namespace PluralKit.Bot
                 messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
             }
             
-            // TODO: SendMessageAsync should return a full object(??), see if there's a way to avoid the extra server call here
-            return await webhook.Channel.GetMessageAsync(messageId);
+            // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
+            // doesn't work if there's no permission to)
+            return messageId;
         }
 
         public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)

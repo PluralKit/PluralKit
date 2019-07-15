@@ -21,12 +21,14 @@ namespace PluralKit.Bot {
             this._embed = embed;
         }
 
-        public async Task LogMessage(PKSystem system, PKMember member, IMessage message, IUser sender) {
-            var channel = await GetLogChannel((message.Channel as IGuildChannel).Guild);
-            if (channel == null) return;
+        public async Task LogMessage(PKSystem system, PKMember member, ulong messageId, IGuildChannel originalChannel, IUser sender, string content) {
+            var logChannel = await GetLogChannel(originalChannel.Guild);
+            if (logChannel == null) return;
 
-            var embed = _embed.CreateLoggedMessageEmbed(system, member, message, sender);
-            await channel.SendMessageAsync(text: message.GetJumpUrl(), embed: embed);
+            var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, sender, content, originalChannel);
+
+            var url = $"https://discordapp.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
+            await logChannel.SendMessageAsync(text: url, embed: embed);
         }
 
         public async Task<ITextChannel> GetLogChannel(IGuild guild) {
