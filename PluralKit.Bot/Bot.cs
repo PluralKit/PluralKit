@@ -16,6 +16,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 using Npgsql;
+using Sentry;
+using Sentry.Extensibility;
 
 namespace PluralKit.Bot
 {
@@ -33,19 +35,26 @@ namespace PluralKit.Bot
             
             using (var services = BuildServiceProvider())
             {
-                Console.WriteLine("- Connecting to database...");
-                using (var conn = await services.GetRequiredService<DbConnectionFactory>().Obtain())
-                    await Schema.CreateTables(conn);
+                var coreConfig = services.GetRequiredService<CoreConfig>();
+                var botConfig = services.GetRequiredService<BotConfig>();
 
-                Console.WriteLine("- Connecting to Discord...");
-                var client = services.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
-                await client.LoginAsync(TokenType.Bot, services.GetRequiredService<BotConfig>().Token);
-                await client.StartAsync();
+                using (SentrySdk.Init(coreConfig.SentryUrl))
+                {
 
-                Console.WriteLine("- Initializing bot...");
-                await services.GetRequiredService<Bot>().Init();
-                
-                await Task.Delay(-1);
+                    Console.WriteLine("- Connecting to database...");
+                    using (var conn = await services.GetRequiredService<DbConnectionFactory>().Obtain())
+                        await Schema.CreateTables(conn);
+
+                    Console.WriteLine("- Connecting to Discord...");
+                    var client = services.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
+                    await client.LoginAsync(TokenType.Bot, botConfig.Token);
+                    await client.StartAsync();
+
+                    Console.WriteLine("- Initializing bot...");
+                    await services.GetRequiredService<Bot>().Init();
+
+                    await Task.Delay(-1);
+                }
             }
         }
 
@@ -82,6 +91,8 @@ namespace PluralKit.Bot
                 .AddTransient<MemberStore>()
                 .AddTransient<MessageStore>()
                 .AddTransient<SwitchStore>()
+            
+                .AddScoped<IHub>(_ => HubAdapter.Instance)
                 .BuildServiceProvider();
     }
     class Bot
@@ -91,13 +102,15 @@ namespace PluralKit.Bot
         private CommandService _commands;
         private ProxyService _proxy;
         private Timer _updateTimer;
+        private IHub _hub;
 
-        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy)
+        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IHub hub)
         {
             this._services = services;
             this._client = client as DiscordShardedClient;
             this._commands = commands;
             this._proxy = proxy;
+            _hub = hub;
         }
 
         public async Task Init()
@@ -158,40 +171,57 @@ namespace PluralKit.Bot
 
         private async Task MessageReceived(SocketMessage _arg)
         {
-            var serviceScope = _services.CreateScope();
-            
-            // Ignore system messages (member joined, message pinned, etc)
-            var arg = _arg as SocketUserMessage;
-            if (arg == null) return;
-
-            // Ignore bot messages
-            if (arg.Author.IsBot || arg.Author.IsWebhook) return;
-
-            int argPos = 0;
-            // Check if message starts with the command prefix
-            if (arg.HasStringPrefix("pk;", ref argPos, StringComparison.OrdinalIgnoreCase) || arg.HasStringPrefix("pk!", ref argPos, StringComparison.OrdinalIgnoreCase) || arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            using (SentrySdk.PushScope())
+            using (var serviceScope = _services.CreateScope())
             {
-                // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
-                var trimStartLengthDiff = arg.Content.Substring(argPos).Length - arg.Content.Substring(argPos).TrimStart().Length;
-                argPos += trimStartLengthDiff;
-                
-                // If it does, fetch the sender's system (because most commands need that) into the context,
-                // and start command execution
-                // Note system may be null if user has no system, hence `OrDefault`
-                PKSystem system;
-                using (var conn = await serviceScope.ServiceProvider.GetService<DbConnectionFactory>().Obtain())
-                    system = await conn.QueryFirstOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system", new { Id = arg.Author.Id });
-                await _commands.ExecuteAsync(new PKCommandContext(_client, arg, system), argPos, serviceScope.ServiceProvider);
-            }
-            else
-            {
-                // If not, try proxying anyway
-                await _proxy.HandleMessageAsync(arg);
+                SentrySdk.AddBreadcrumb("event.message", data: new Dictionary<string, string>()
+                {
+                    {"content", _arg.Content},
+                    {"user", _arg.Author.Id.ToString()},
+                    {"channel", _arg.Channel.Id.ToString()},
+                    {"guild", ((_arg.Channel as IGuildChannel)?.GuildId ?? 0).ToString()}
+                });
+
+                // Ignore system messages (member joined, message pinned, etc)
+                var arg = _arg as SocketUserMessage;
+                if (arg == null) return;
+
+                // Ignore bot messages
+                if (arg.Author.IsBot || arg.Author.IsWebhook) return;
+
+                int argPos = 0;
+                // Check if message starts with the command prefix
+                if (arg.HasStringPrefix("pk;", ref argPos, StringComparison.OrdinalIgnoreCase) ||
+                    arg.HasStringPrefix("pk!", ref argPos, StringComparison.OrdinalIgnoreCase) ||
+                    arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+                {
+                    // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
+                    var trimStartLengthDiff = arg.Content.Substring(argPos).Length -
+                                              arg.Content.Substring(argPos).TrimStart().Length;
+                    argPos += trimStartLengthDiff;
+
+                    // If it does, fetch the sender's system (because most commands need that) into the context,
+                    // and start command execution
+                    // Note system may be null if user has no system, hence `OrDefault`
+                    PKSystem system;
+                    using (var conn = await serviceScope.ServiceProvider.GetService<DbConnectionFactory>().Obtain())
+                        system = await conn.QueryFirstOrDefaultAsync<PKSystem>(
+                            "select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system",
+                            new {Id = arg.Author.Id});
+                    await _commands.ExecuteAsync(new PKCommandContext(_client, arg, system), argPos,
+                        serviceScope.ServiceProvider);
+                }
+                else
+                {
+                    // If not, try proxying anyway
+                    await _proxy.HandleMessageAsync(arg);
+                }
             }
         }
 
         private void HandleRuntimeError(Exception e)
         {
+            SentrySdk.CaptureException(e);
             Console.Error.WriteLine(e);
         }
     }

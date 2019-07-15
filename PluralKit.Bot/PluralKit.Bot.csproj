@@ -14,6 +14,7 @@
       <PackageReference Include="Discord.Net.Webhook" Version="2.0.1" />
       <PackageReference Include="Discord.Net.WebSocket" Version="2.0.1" />
       <PackageReference Include="Humanizer.Core" Version="2.6.2" />
+      <PackageReference Include="Sentry" Version="2.0.0-beta2" />
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0006" />
     </ItemGroup>
 
