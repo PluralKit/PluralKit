@@ -38,7 +38,7 @@ namespace PluralKit.Bot
                     await Schema.CreateTables(conn);
 
                 Console.WriteLine("- Connecting to Discord...");
-                var client = services.GetRequiredService<IDiscordClient>() as DiscordSocketClient;
+                var client = services.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
                 await client.LoginAsync(TokenType.Bot, services.GetRequiredService<BotConfig>().Token);
                 await client.StartAsync();
 
