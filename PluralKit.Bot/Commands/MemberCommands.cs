@@ -204,7 +204,7 @@ namespace PluralKit.Bot.Commands
 
         [Command]
         [Alias("view", "show", "info")]
-        [Remarks("member")]
+        [Remarks("member <member>")]
         public async Task ViewMember(PKMember member)
         {
             var system = await Systems.GetById(member.System);
