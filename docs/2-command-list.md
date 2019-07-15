@@ -45,7 +45,7 @@ Words in <angle brackets> are *required parameters*. Words in [square brackets] 
 - `pk;message <message id>` - Looks up information about a proxied message by its message ID.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
-- `pk;expoort` - Exports a data file containing your system information.
+- `pk;export` - Exports a data file containing your system information.
 ## API
 - `pk;token` - DMs you a token for using the PluralKit API.
 - `pk;token refresh` - Refreshes your API token and invalidates the old one.
