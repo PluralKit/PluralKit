@@ -55,7 +55,7 @@ namespace PluralKit.Bot
                 
                 .AddTransient(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database))
                 
-                .AddSingleton<IDiscordClient, DiscordSocketClient>()
+                .AddSingleton<IDiscordClient, DiscordShardedClient>()
                 .AddSingleton<Bot>()
 
                 .AddTransient<CommandService>(_ => new CommandService(new CommandServiceConfig
@@ -87,7 +87,7 @@ namespace PluralKit.Bot
     class Bot
     {
         private IServiceProvider _services;
-        private DiscordSocketClient _client;
+        private DiscordShardedClient _client;
         private CommandService _commands;
         private ProxyService _proxy;
         private Timer _updateTimer;
@@ -95,7 +95,7 @@ namespace PluralKit.Bot
         public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy)
         {
             this._services = services;
-            this._client = client as DiscordSocketClient;
+            this._client = client as DiscordShardedClient;
             this._commands = commands;
             this._proxy = proxy;
         }
@@ -107,7 +107,7 @@ namespace PluralKit.Bot
             _commands.CommandExecuted += CommandExecuted;
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-            _client.Ready += Ready;
+            _client.ShardReady += ShardReady;
 
             // Deliberately wrapping in an async function *without* awaiting, we don't want to "block" since this'd hold up the main loop
             // These handlers return Task so we gotta be careful not to return the Task itself (which would then be awaited) - kinda weird design but eh
@@ -122,12 +122,12 @@ namespace PluralKit.Bot
             await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
         }
 
-        private async Task Ready()
+        private async Task ShardReady(DiscordSocketClient shardClient)
         {
-            _updateTimer = new Timer((_) => UpdatePeriodic(), null, 0, 60*1000);
+            //_updateTimer = new Timer((_) => UpdatePeriodic(), null, 0, 60*1000);
 
-            Console.WriteLine($"Shard #{_client.ShardId} connected to {_client.Guilds.Sum(g => g.Channels.Count)} channels in {_client.Guilds.Count} guilds.");
-            Console.WriteLine($"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
+            Console.WriteLine($"Shard #{shardClient.ShardId} connected to {shardClient.Guilds.Sum(g => g.Channels.Count)} channels in {shardClient.Guilds.Count} guilds.");
+            //Console.WriteLine($"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
         }
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
