@@ -171,6 +171,11 @@ namespace PluralKit.Bot
 
         private async Task MessageReceived(SocketMessage _arg)
         {
+            // _client.CurrentUser will be null if we've connected *some* shards but not shard #0 yet
+            // This will cause an error in WebhookCacheServices so we just workaround and don't process any messages
+            // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
+            if (_client.CurrentUser == null) return;
+
             using (SentrySdk.PushScope())
             using (var serviceScope = _services.CreateScope())
             {
