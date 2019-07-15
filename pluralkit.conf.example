@@ -1,5 +1,8 @@
 {
-    "database_uri": "postgres://username:password@hostname:port/database_name",
-    "token": "BOT_TOKEN_GOES_HERE",
-    "log_channel": null
+  "PluralKit": {
+    "Bot": {
+      "Token": "BOT_TOKEN_GOES_HERE"
+    },
+    "Database": "Host=localhost;Port=5432;Username=myusername;Password=mypassword;Database=mydatabasename"
+  }
 }

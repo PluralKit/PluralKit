@@ -1,8 +1,8 @@
+bin/
+obj/
 .env
 .vscode/
 .idea/
-venv/
 
-*.pyc
 pluralkit.conf
 pluralkit.*.conf

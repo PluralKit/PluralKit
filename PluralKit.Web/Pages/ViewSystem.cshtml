@@ -1,0 +1,122 @@
+@page "/s/{systemId}"
+@model PluralKit.Web.Pages.ViewSystem
+
+<div class="system">
+    <ul class="taglist">
+        <li>
+            <i data-feather="hash"></i>
+            @Model.System.Hid
+        </li>
+
+        @if (Model.System.Tag != null)
+        {
+            <li>
+                <i data-feather="tag"></i>
+                @Model.System.Tag
+            </li>
+        }
+        
+        @if (Model.System.UiTz != null)
+        {
+            <li>
+                <i data-feather="clock"></i>
+                @Model.System.UiTz
+            </li>
+        }
+    </ul>
+
+    @if (Model.System.Name != null)
+    {
+        <h1>@Model.System.Name</h1>
+    }
+
+    @if (Model.System.Description != null)
+    {
+        <div>@Model.System.Description</div>
+    }
+
+    <h2>Members</h2>
+    @foreach (var member in Model.Members)
+    {
+        <div class="member-card">
+            <div class="member-avatar" style="background-image: url(@member.AvatarUrl); border-color: #@member.Color;"></div>
+            <div class="member-body">
+                <span class="member-name">@member.Name</span>
+                <div class="member-description">@member.Description</div>
+
+                <ul class="taglist">
+                    <li>
+                        <i data-feather="hash"></i>
+                        @member.Hid
+                    </li>
+
+                    @if (member.Birthday != null)
+                    {
+                        <li>
+                            <i data-feather="calendar"></i>
+                            @member.BirthdayString
+                        </li>
+                    }
+
+                    @if (member.Pronouns != null)
+                    {
+                        <li>
+                            <i data-feather="message-circle"></i>
+                            @member.Pronouns
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <style>
+        .taglist {
+            margin: 0;
+            padding: 0;
+            color: #aaa;
+            display: flex;
+        }
+        
+        .taglist li {
+            display: inline-block;
+            margin-right: 1rem;
+            list-style-type: none;
+        }
+        
+        .taglist .feather {
+            display: inline-block;
+            margin-top: -2px;
+            width: 1em;
+        }
+        
+        .member-card {
+            display: flex;
+            flex-direction: row;
+        }
+        
+        .member-avatar {
+            margin: 1.5rem 1rem 0 0;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: top center;
+            flex-basis: 4rem;
+            height: 4rem;
+            border: 4px solid white;
+        }
+        
+        .member-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1rem 1rem 0;
+        }
+        
+        .member-name {
+            font-size: 13pt;
+            font-weight: bold;
+        }
+    </style>
+}
