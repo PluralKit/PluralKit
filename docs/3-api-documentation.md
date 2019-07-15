@@ -50,6 +50,27 @@ The following three models (usually represented in JSON format) represent the va
 
 ## Endpoints
 
+### `GET /s`
+**Requires authentication.**
+
+Returns information about your own system.
+
+#### Example request
+    GET https://api.pluralkit.me/v1/s
+
+#### Example response
+```json
+{
+  "id": "abcde",
+  "name": "My System",
+  "description": "This is my system description. Yay.",
+  "tag": "[MySys]",
+  "avatar_url": "https://path/to/avatar/image.png",
+  "tz": "Europe/Copenhagen",
+  "created": "2019-01-01T14:30:00.987654Z"
+}
+```
+
 ### `GET /s/<id>`
 Queries a system by its 5-character ID, and returns information about it. If the system doesn't exist, returns `404 Not Found`.
 
