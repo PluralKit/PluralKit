@@ -314,10 +314,18 @@ namespace PluralKit {
             return outList;
         }
 
-        public async Task<IDictionary<PKMember, Duration>> GetPerMemberSwitchDuration(PKSystem system, Instant periodStart,
+        public struct PerMemberSwitchDuration
+        {
+            public Dictionary<PKMember, Duration> MemberSwitchDurations;
+            public Duration NoFronterDuration;
+        }
+
+        public async Task<PerMemberSwitchDuration> GetPerMemberSwitchDuration(PKSystem system, Instant periodStart,
             Instant periodEnd)
         {
             var dict = new Dictionary<PKMember, Duration>();
+            
+            var noFronterDuration = Duration.Zero;
             
             // Sum up all switch durations for each member
             // switches with multiple members will result in the duration to add up to more than the actual period range
@@ -328,9 +336,15 @@ namespace PluralKit {
                     if (!dict.ContainsKey(member)) dict.Add(member, sw.TimespanWithinRange);
                     else dict[member] += sw.TimespanWithinRange;
                 }
+
+                if (sw.Members.Count == 0) noFronterDuration += sw.TimespanWithinRange;
             }
             
-            return dict;
+            return new PerMemberSwitchDuration
+            {
+                MemberSwitchDurations = dict,
+                NoFronterDuration = noFronterDuration
+            };
         }
     }
 }

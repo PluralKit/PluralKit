@@ -141,7 +141,7 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateFrontPercentEmbed(IDictionary<PKMember, Duration> frontpercent, ZonedDateTime startingFrom)
+        public async Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, ZonedDateTime startingFrom)
         {
             var totalDuration = SystemClock.Instance.GetCurrentInstant() - startingFrom.ToInstant();
             
@@ -150,12 +150,18 @@ namespace PluralKit.Bot {
                 .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(startingFrom)} ({Formats.DurationFormat.Format(totalDuration)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
+
+            // We convert to a list of pairs so we can add the no-fronter value
+            // Dictionary doesn't allow for null keys so we instead have a pair with a null key ;)
+            var pairs = frontpercent.MemberSwitchDurations.ToList();
+            if (frontpercent.NoFronterDuration != Duration.Zero) 
+                pairs.Add(new KeyValuePair<PKMember, Duration>(null, frontpercent.NoFronterDuration));
             
-            var membersOrdered = frontpercent.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
+            var membersOrdered = pairs.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / totalDuration;
-                eb.AddField(pair.Key.Name, $"{frac*100:F0}% ({Formats.DurationFormat.Format(pair.Value)})");
+                eb.AddField(pair.Key?.Name ?? "*(no fronter)*", $"{frac*100:F0}% ({Formats.DurationFormat.Format(pair.Value)})");
             }
 
             if (membersOrdered.Count > maxEntriesToDisplay)
