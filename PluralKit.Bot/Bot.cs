@@ -175,9 +175,8 @@ namespace PluralKit.Bot
 
             using (var serviceScope = _services.CreateScope())
             {
-                SentrySdk.AddBreadcrumb("event.message", data: new Dictionary<string, string>()
+                SentrySdk.AddBreadcrumb(message: _arg.Content, category: "event.message", data: new Dictionary<string, string>()
                 {
-                    {"content", _arg.Content},
                     {"user", _arg.Author.Id.ToString()},
                     {"channel", _arg.Channel.Id.ToString()},
                     {"guild", ((_arg.Channel as IGuildChannel)?.GuildId ?? 0).ToString()}
