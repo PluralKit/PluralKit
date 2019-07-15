@@ -29,6 +29,8 @@ namespace PluralKit.Bot {
             // Fetch/render info for all accounts simultaneously
             var users = await Task.WhenAll(accounts.Select(async uid => (await _client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
+            var memberCount = await _members.MemberCount(system);
+
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
@@ -37,7 +39,7 @@ namespace PluralKit.Bot {
                 .WithFooter($"System ID: {system.Hid}");
 
             eb.AddField("Linked accounts", string.Join(", ", users));
-            eb.AddField("Members", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)");
+            eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)");
             // TODO: fronter
             return eb.Build();
         }

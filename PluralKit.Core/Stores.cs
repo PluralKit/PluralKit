@@ -132,6 +132,12 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleAsync<int>("select count(*) from messages where member = @Id", member);
         }
+
+        public async Task<int> MemberCount(PKSystem system)
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.ExecuteScalarAsync<int>("select count(*) from members where system = @Id", system);
+        }
     }
 
     public class MessageStore {
