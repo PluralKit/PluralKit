@@ -50,7 +50,7 @@ The following three models (usually represented in JSON format) represent the va
 
 ## Endpoints
 
-### `GET /s`
+### GET /s
 **Requires authentication.**
 
 Returns information about your own system.
@@ -71,7 +71,7 @@ Returns information about your own system.
 }
 ```
 
-### `GET /s/<id>`
+### GET /s/<id>
 Queries a system by its 5-character ID, and returns information about it. If the system doesn't exist, returns `404 Not Found`.
 
 #### Example request
@@ -90,7 +90,7 @@ Queries a system by its 5-character ID, and returns information about it. If the
 }
 ```
 
-### `GET /s/<id>/members`
+### GET /s/<id>/members
 Queries a system's member list by its 5-character ID. If the system doesn't exist, returns `404 Not Found`.
 
 #### Example request
@@ -114,7 +114,7 @@ Queries a system's member list by its 5-character ID. If the system doesn't exis
 ]
 ```
 
-### `GET /s/<id>/switches[?before=<timestamp>]`
+### GET /s/<id>/switches[?before=<timestamp>]
 Returns a system's switch history in newest-first chronological order, with a maximum of 100 switches. If the system doesn't exist, returns `404 Not Found`.
 Optionally takes a `?before=` query parameter with an ISO-8601-formatted timestamp, and will only return switches
 that happen before that timestamp.
@@ -140,7 +140,7 @@ that happen before that timestamp.
 ]
 ```
 
-### `GET /s/<id>/fronters`
+### GET /s/<id>/fronters
 Returns a system's current fronter(s), with fully hydrated member objects. If the system doesn't exist, *or* the system has no registered switches, returns `404 Not Found`.
 
 #### Example request
@@ -167,7 +167,7 @@ Returns a system's current fronter(s), with fully hydrated member objects. If th
 }
 ```
 
-### `PATCH /s`
+### PATCH /s
 **Requires authentication.**
 
 Edits your own system's information. Missing fields will be set to `null`. Will return the new system object.
@@ -198,7 +198,7 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
 }
 ```
 
-### `POST /s/switches`
+### POST /s/switches
 **Requires authentication.**
 
 Registers a new switch to your own system given a list of member IDs.
@@ -215,7 +215,7 @@ Registers a new switch to your own system given a list of member IDs.
 #### Example response
 (`204 No Content`)
 
-### `GET /m/<id>`
+### GET /m/<id>
 Queries a member's information by its 5-character member ID. If the member does not exist, will return `404 Not Found`.
 
 #### Example request
@@ -237,7 +237,7 @@ Queries a member's information by its 5-character member ID. If the member does 
 }
 ```
 
-### `PATCH /m/<id>`
+### PATCH /m/<id>
 **Requires authentication.**
 
 Edits a member's information. Missing fields will be set to `null`. Will return the new member object. Member must (obviously) belong to your own system.
