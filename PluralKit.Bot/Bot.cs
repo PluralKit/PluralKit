@@ -91,8 +91,7 @@ namespace PluralKit.Bot
                 .AddTransient<MemberStore>()
                 .AddTransient<MessageStore>()
                 .AddTransient<SwitchStore>()
-            
-                .AddScoped<IHub>(_ => HubAdapter.Instance)
+                
                 .BuildServiceProvider();
     }
     class Bot
@@ -102,15 +101,13 @@ namespace PluralKit.Bot
         private CommandService _commands;
         private ProxyService _proxy;
         private Timer _updateTimer;
-        private IHub _hub;
 
-        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IHub hub)
+        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy)
         {
             this._services = services;
             this._client = client as DiscordShardedClient;
             this._commands = commands;
             this._proxy = proxy;
-            _hub = hub;
         }
 
         public async Task Init()
@@ -176,7 +173,6 @@ namespace PluralKit.Bot
             // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
             if (_client.CurrentUser == null) return;
 
-            using (SentrySdk.PushScope())
             using (var serviceScope = _services.CreateScope())
             {
                 SentrySdk.AddBreadcrumb("event.message", data: new Dictionary<string, string>()
