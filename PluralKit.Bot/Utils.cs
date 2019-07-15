@@ -169,13 +169,13 @@ namespace PluralKit.Bot
     }
 
     /// Subclass of ICommandContext with PK-specific additional fields and functionality
-    public class PKCommandContext : SocketCommandContext
+    public class PKCommandContext : ShardedCommandContext
     {
         public PKSystem SenderSystem { get; }
         
         private object _entity;
 
-        public PKCommandContext(DiscordSocketClient client, SocketUserMessage msg, PKSystem system) : base(client, msg)
+        public PKCommandContext(DiscordShardedClient client, SocketUserMessage msg, PKSystem system) : base(client, msg)
         {
             SenderSystem = system;
         }
