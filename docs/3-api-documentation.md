@@ -22,31 +22,31 @@ The following three models (usually represented in JSON format) represent the va
 ### System model
 |Key|Type|Patchable?|Notes|
 |---|---|---|---|
-|id|string|No|
-|name|string?|Yes|100-character limit.
-|description|string?|Yes|1000-character limit.
-|tag|string?|Yes|
-|avatar_url|url?|Yes|Not validated server-side.
-|tz|string?|Yes|Tzdb identifier. Patching with `null` will store `"UTC"`.
-|created|datetime|No|
+|id|string|No||
+|name|string?|Yes|100-character limit.|
+|description|string?|Yes|1000-character limit.|
+|tag|string?|Yes||
+|avatar_url|url?|Yes|Not validated server-side.|
+|tz|string?|Yes|Tzdb identifier. Patching with `null` will store `"UTC"`.|
+|created|datetime|No||
 
 ### Member model
 |Key|Type|Patchable?|Notes|
 |---|---|---|---|
-|id|string|No|
-|name|string?|Yes|50-character limit.
-|description|string?|Yes|1000-character limit.
-|color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.
-|avatar_url|url?|Yes|Not validated server-side.
-|birthday|date?|Yes|ISO-8601 (`YYYY-MM-DD`) format, year of `0001` means hidden year.
+|id|string|No||
+|name|string?|Yes|50-character limit.|
+|description|string?|Yes|1000-character limit.|
+|color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.|
+|avatar_url|url?|Yes|Not validated server-side.|
+|birthday|date?|Yes|ISO-8601 (`YYYY-MM-DD`) format, year of `0001` means hidden year.|
 |prefix|string?|Yes||
 |suffix|string?|Yes||
-|created|datetime|No|
+|created|datetime|No||
 ### Switch model
 |Key|Type|Notes|
 |---|---|---|
-|timestamp|datetime|
-|members|list of id/Member|Is sometimes in plain ID list form (eg. `GET /s/<id>/switches`), sometimes includes the full Member model (eg. `GET /s/<id>/fronters`).
+|timestamp|datetime||
+|members|list of id/Member|Is sometimes in plain ID list form (eg. `GET /s/<id>/switches`), sometimes includes the full Member model (eg. `GET /s/<id>/fronters`).|
 
 ## Endpoints
 
