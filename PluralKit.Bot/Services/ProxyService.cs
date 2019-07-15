@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
+using Discord.Net;
 using Discord.Webhook;
 using Discord.WebSocket;
 
@@ -106,7 +107,11 @@ namespace PluralKit.Bot
 
             // Wait a second or so before deleting the original message
             await Task.Delay(1000);
-            await message.DeleteAsync();
+
+            try
+            {
+                await message.DeleteAsync();
+            } catch (HttpException) {} // If it's already deleted, we just swallow the exception
         }
 
         private async Task<bool> EnsureBotPermissions(ITextChannel channel)
