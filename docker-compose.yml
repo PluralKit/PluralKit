@@ -32,4 +32,9 @@ services:
     restart: always
   db:
     image: postgres:alpine
+    volumes:
+      - "db_data:/var/lib/postgresql/data"
     restart: always
+    
+volumes:
+  db_data:
