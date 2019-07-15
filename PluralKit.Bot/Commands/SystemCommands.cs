@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
+using Discord;
 using Discord.Commands;
 using NodaTime;
 using NodaTime.Extensions;
@@ -96,6 +97,22 @@ namespace PluralKit.Bot.Commands
 
             await Systems.Save(Context.SenderSystem);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
+        }
+        
+        [Command("avatar")]
+        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
+        [Remarks("system avatar <avatar url>")]
+        [MustHaveSystem]
+        public async Task SystemAvatar([Remainder] string avatarUrl = null)
+        {
+            string url = avatarUrl ?? Context.Message.Attachments.FirstOrDefault()?.ProxyUrl;
+            if (url != null) await Context.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
+
+            Context.SenderSystem.AvatarUrl = url;
+            await Systems.Save(Context.SenderSystem);
+
+            var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} System avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
         }
 
         [Command("delete")]
