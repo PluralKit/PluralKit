@@ -132,12 +132,16 @@ namespace PluralKit.Bot {
 
             var memberStr = $"{msg.Member.Name} (`{msg.Member.Hid}`)";
             if (msg.Member.Pronouns != null) memberStr += $"\n*(pronouns: **{msg.Member.Pronouns}**)*";
+
+            var user = await _client.GetUserAsync(msg.Message.Sender);
+            var userStr = user.NameAndMention() ?? $"*(deleted user {msg.Message.Sender})*";
             
             return new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
                 .AddField("System", msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)
+                .AddField("Sent by", userStr, inline: true)
                 .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid))
                 .Build();
         }
