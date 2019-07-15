@@ -92,11 +92,15 @@ namespace PluralKit.Bot
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, results);
             if (match == null) return;
-
+            
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
             if (!await EnsureBotPermissions(message.Channel as ITextChannel)) return;
-
+            
+            // Can't proxy a message with no content and no attachment
+            if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
+                return;
+            
             // Fetch a webhook for this channel, and send the proxied message
             var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
             var hookMessageId = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, match.Member.AvatarUrl, message.Attachments.FirstOrDefault());
