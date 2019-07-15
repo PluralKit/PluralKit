@@ -59,7 +59,7 @@ namespace PluralKit.API
                 //app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseMiddleware<TokenAuthService>();
             app.UseMvc();
         }
