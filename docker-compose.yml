@@ -18,7 +18,7 @@ services:
     links: 
       - db
     ports:
-      - 2837:80
+      - 2837:5000
     restart: always
   api:
     build: .
@@ -28,7 +28,7 @@ services:
     links:
       - db
     ports:
-      - 2838:80
+      - 2838:5000
     restart: always
   db:
     image: postgres:alpine
