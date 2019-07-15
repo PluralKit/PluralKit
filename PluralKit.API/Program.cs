@@ -21,6 +21,7 @@ namespace PluralKit.API
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(InitUtils.BuildConfiguration(args).Build())
+                .ConfigureKestrel(opts => { opts.ListenAnyIP(5000); })
                 .UseStartup<Startup>();
     }
 }
