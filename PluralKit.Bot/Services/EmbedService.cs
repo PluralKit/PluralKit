@@ -151,7 +151,7 @@ namespace PluralKit.Bot {
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
             
-            var membersOrdered = frontpercent.OrderBy(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
+            var membersOrdered = frontpercent.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / totalDuration;
