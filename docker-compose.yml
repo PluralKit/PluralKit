@@ -5,10 +5,13 @@ services:
     entrypoint: ["dotnet", "run", "--project", "PluralKit.Bot"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:InfluxUrl=http://influx:8086"
+      - "PluralKit:InfluxDb=pluralkit
     volumes:
       - "./pluralkit.conf:/app/pluralkit.conf:ro"
     links:
       - db
+      - influx
     restart: always
   web:
     build: .
@@ -35,6 +38,14 @@ services:
     volumes:
       - "db_data:/var/lib/postgresql/data"
     restart: always
+  influx:
+    image: influxdb:alpine
+    volumes:
+      - "influx_data:/var/lib/influxdb"
+    ports:
+      - 2839:8086
+    restart: always
     
 volumes:
   db_data:
+  influx_data:

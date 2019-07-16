@@ -72,6 +72,12 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new { Id = system.Id });
         }
+
+        public async Task<ulong> Count()
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.ExecuteScalarAsync<ulong>("select count(id) from systems");
+        }
     }
 
     public class MemberStore {
@@ -138,6 +144,12 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<int>("select count(*) from members where system = @Id", system);
         }
+        
+        public async Task<ulong> Count()
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.ExecuteScalarAsync<ulong>("select count(id) from members");
+        }
     }
 
     public class MessageStore {
@@ -184,6 +196,12 @@ namespace PluralKit {
         public async Task Delete(ulong id) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id });
+        }
+        
+        public async Task<ulong> Count()
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.ExecuteScalarAsync<ulong>("select count(mid) from messages");
         }
     }
 
@@ -256,6 +274,12 @@ namespace PluralKit {
         {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
+        }
+        
+        public async Task<ulong> Count()
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.ExecuteScalarAsync<ulong>("select count(id) from switches");
         }
         
         public struct SwitchListEntry

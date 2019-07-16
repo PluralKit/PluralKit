@@ -18,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 using Npgsql;
 using Npgsql.Logging;
+using PluralKit.Core;
 using Sentry;
 using Sentry.Extensibility;
 
@@ -94,7 +95,15 @@ namespace PluralKit.Bot
                 .AddTransient<MessageStore>()
                 .AddTransient<SwitchStore>()
                 
-                .AddSingleton<IMetrics>(_ => AppMetrics.CreateDefaultBuilder().Build())
+                .AddSingleton<IMetrics>(svc =>
+                {
+                    var cfg = svc.GetRequiredService<CoreConfig>();
+                    var builder = AppMetrics.CreateDefaultBuilder();
+                    if (cfg.InfluxUrl != null && cfg.InfluxDb != null)
+                        builder.Report.ToInfluxDb(cfg.InfluxUrl, cfg.InfluxDb);
+                    return builder.Build();
+                })
+                .AddSingleton<PeriodicStatCollector>()
                 
                 .BuildServiceProvider();
     }
@@ -106,14 +115,16 @@ namespace PluralKit.Bot
         private ProxyService _proxy;
         private Timer _updateTimer;
         private IMetrics _metrics;
+        private PeriodicStatCollector _collector;
 
-        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IMetrics metrics)
+        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IMetrics metrics, PeriodicStatCollector collector)
         {
             this._services = services;
             this._client = client as DiscordShardedClient;
             this._commands = commands;
             this._proxy = proxy;
             _metrics = metrics;
+            _collector = collector;
         }
 
         public async Task Init()
@@ -132,18 +143,28 @@ namespace PluralKit.Bot
             _client.MessageDeleted += async (message, channel) => _proxy.HandleMessageDeletedAsync(message, channel).CatchException(HandleRuntimeError);
         }
 
+        // Method called every 60 seconds
         private async Task UpdatePeriodic()
         {
-            // Method called every 60 seconds
+            // Change bot status
             await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
+            
+            await _collector.CollectStats();
+            await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
         }
 
         private async Task ShardReady(DiscordSocketClient shardClient)
         {
-            //_updateTimer = new Timer((_) => UpdatePeriodic(), null, 0, 60*1000);
 
             Console.WriteLine($"Shard #{shardClient.ShardId} connected to {shardClient.Guilds.Sum(g => g.Channels.Count)} channels in {shardClient.Guilds.Count} guilds.");
-            //Console.WriteLine($"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
+
+            if (shardClient.ShardId == 0)
+            {
+                _updateTimer = new Timer((_) => UpdatePeriodic().CatchException(HandleRuntimeError), null, 0, 60*1000);
+
+                Console.WriteLine(
+                    $"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
+            }
         }
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
