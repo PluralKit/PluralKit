@@ -148,11 +148,10 @@ namespace PluralKit.Bot {
 
         public async Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, ZonedDateTime startingFrom)
         {
-            var totalDuration = SystemClock.Instance.GetCurrentInstant() - startingFrom.ToInstant();
-            
+            var actualPeriod = frontpercent.RangeEnd - frontpercent.RangeStart;
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
-                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(startingFrom)} ({Formats.DurationFormat.Format(totalDuration)} ago)");
+                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(startingFrom)} ({Formats.DurationFormat.Format(actualPeriod)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
@@ -165,7 +164,7 @@ namespace PluralKit.Bot {
             var membersOrdered = pairs.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)
             {
-                var frac = pair.Value / totalDuration;
+                var frac = pair.Value / actualPeriod;
                 eb.AddField(pair.Key?.Name ?? "*(no fronter)*", $"{frac*100:F0}% ({Formats.DurationFormat.Format(pair.Value)})");
             }
 

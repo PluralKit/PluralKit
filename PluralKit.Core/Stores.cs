@@ -261,7 +261,8 @@ namespace PluralKit {
         public struct SwitchListEntry
         {
             public ICollection<PKMember> Members;
-            public Duration TimespanWithinRange;
+            public Instant TimespanStart;
+            public Instant TimespanEnd;
         }
 
         public async Task<IEnumerable<SwitchListEntry>> GetTruncatedSwitchList(PKSystem system, Instant periodStart, Instant periodEnd)
@@ -304,7 +305,8 @@ namespace PluralKit {
                 outList.Add(new SwitchListEntry
                 {
                     Members = (await GetSwitchMemberIds(switchInRange)).Select(id => memberObjects[id]).ToList(),
-                    TimespanWithinRange = span
+                    TimespanStart = switchStartClamped,
+                    TimespanEnd = endTime
                 });
                 
                 // next switch's end is this switch's start
@@ -318,6 +320,8 @@ namespace PluralKit {
         {
             public Dictionary<PKMember, Duration> MemberSwitchDurations;
             public Duration NoFronterDuration;
+            public Instant RangeStart;
+            public Instant RangeEnd;
         }
 
         public async Task<PerMemberSwitchDuration> GetPerMemberSwitchDuration(PKSystem system, Instant periodStart,
@@ -329,21 +333,31 @@ namespace PluralKit {
             
             // Sum up all switch durations for each member
             // switches with multiple members will result in the duration to add up to more than the actual period range
+
+            var actualStart = periodEnd; // will be "pulled" down
+            var actualEnd = periodStart; // will be "pulled" up
+            
             foreach (var sw in await GetTruncatedSwitchList(system, periodStart, periodEnd))
             {
+                var span = sw.TimespanEnd - sw.TimespanStart;
                 foreach (var member in sw.Members)
                 {
-                    if (!dict.ContainsKey(member)) dict.Add(member, sw.TimespanWithinRange);
-                    else dict[member] += sw.TimespanWithinRange;
+                    if (!dict.ContainsKey(member)) dict.Add(member, span);
+                    else dict[member] += span;
                 }
 
-                if (sw.Members.Count == 0) noFronterDuration += sw.TimespanWithinRange;
+                if (sw.Members.Count == 0) noFronterDuration += span;
+
+                if (sw.TimespanStart < actualStart) actualStart = sw.TimespanStart;
+                if (sw.TimespanEnd < actualStart) actualStart = sw.TimespanEnd;
             }
             
             return new PerMemberSwitchDuration
             {
                 MemberSwitchDurations = dict,
-                NoFronterDuration = noFronterDuration
+                NoFronterDuration = noFronterDuration,
+                RangeStart = actualStart,
+                RangeEnd = actualEnd
             };
         }
     }
