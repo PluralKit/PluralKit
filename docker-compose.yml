@@ -6,7 +6,7 @@ services:
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
       - "PluralKit:InfluxUrl=http://influx:8086"
-      - "PluralKit:InfluxDb=pluralkit
+      - "PluralKit:InfluxDb=pluralkit"
     volumes:
       - "./pluralkit.conf:/app/pluralkit.conf:ro"
     links:
