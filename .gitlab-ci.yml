@@ -1,0 +1,17 @@
+deploy:
+  image: alpine:3.10
+  stage: deploy
+  environment:
+    name: production
+    url: pluralkit.me
+  before_script:
+    # Based on https://gitlab.com/gitlab-examples/ssh-private-key/issues/4#note_35042568
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | ssh-add -
+    - ssh-keyscan -H $PROD_IP >> ~/.ssh/known_hosts
+  only:
+    - master
+  script:
+    - ssh $PROD_USER@$PROD_IP "cd PluralKit && git pull && docker-compose build && docker-compose up -d"
