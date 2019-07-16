@@ -11,10 +11,10 @@ namespace PluralKit.API.Controllers
     public class MemberController: ControllerBase
     {
         private MemberStore _members;
-        private IDbConnection _conn;
+        private DbConnectionFactory _conn;
         private TokenAuthService _auth;
 
-        public MemberController(MemberStore members, IDbConnection conn, TokenAuthService auth)
+        public MemberController(MemberStore members, DbConnectionFactory conn, TokenAuthService auth)
         {
             _members = members;
             _conn = conn;
