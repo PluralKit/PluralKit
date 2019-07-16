@@ -30,6 +30,7 @@ namespace PluralKit.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
             services.AddMvc(opts => { })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddJsonOptions(opts => { opts.SerializerSettings.BuildSerializerSettings(); });
@@ -60,6 +61,7 @@ namespace PluralKit.API
             }
 
             //app.UseHttpsRedirection();
+            app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin());
             app.UseMiddleware<TokenAuthService>();
             app.UseMvc();
         }
