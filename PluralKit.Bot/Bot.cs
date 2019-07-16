@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using App.Metrics;
 using Dapper;
 using Discord;
 using Discord.Commands;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 using Npgsql;
+using Npgsql.Logging;
 using Sentry;
 using Sentry.Extensibility;
 
@@ -92,6 +94,8 @@ namespace PluralKit.Bot
                 .AddTransient<MessageStore>()
                 .AddTransient<SwitchStore>()
                 
+                .AddSingleton<IMetrics>(_ => AppMetrics.CreateDefaultBuilder().Build())
+                
                 .BuildServiceProvider();
     }
     class Bot
@@ -101,13 +105,15 @@ namespace PluralKit.Bot
         private CommandService _commands;
         private ProxyService _proxy;
         private Timer _updateTimer;
+        private IMetrics _metrics;
 
-        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy)
+        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IMetrics metrics)
         {
             this._services = services;
             this._client = client as DiscordShardedClient;
             this._commands = commands;
             this._proxy = proxy;
+            _metrics = metrics;
         }
 
         public async Task Init()
@@ -142,6 +148,8 @@ namespace PluralKit.Bot
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
         {
+            _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
+            
             // TODO: refactor this entire block, it's fugly.
             if (!_result.IsSuccess) {
                 if (_result.Error == CommandError.Unsuccessful || _result.Error == CommandError.Exception) {
@@ -168,6 +176,8 @@ namespace PluralKit.Bot
 
         private async Task MessageReceived(SocketMessage _arg)
         {
+            _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
+            
             // _client.CurrentUser will be null if we've connected *some* shards but not shard #0 yet
             // This will cause an error in WebhookCacheServices so we just workaround and don't process any messages
             // until we properly connect. TODO: can we do this without chucking away a bunch of messages?

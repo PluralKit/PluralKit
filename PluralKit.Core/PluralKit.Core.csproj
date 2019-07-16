@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="App.Metrics" Version="3.1.0" />
       <PackageReference Include="Dapper" Version="1.60.6" />
       <PackageReference Include="Dapper.Contrib" Version="1.60.1" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />

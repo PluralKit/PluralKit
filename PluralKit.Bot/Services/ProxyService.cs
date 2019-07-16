@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using App.Metrics;
 using Dapper;
 using Discord;
 using Discord.Net;
@@ -35,8 +36,9 @@ namespace PluralKit.Bot
         private WebhookCacheService _webhookCache;
         private MessageStore _messageStorage;
         private EmbedService _embeds;
+        private IMetrics _metrics;
         
-        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logger, MessageStore messageStorage, EmbedService embeds)
+        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logger, MessageStore messageStorage, EmbedService embeds, IMetrics metrics)
         {
             _client = client;
             _webhookCache = webhookCache;
@@ -44,6 +46,7 @@ namespace PluralKit.Bot
             _logger = logger;
             _messageStorage = messageStorage;
             _embeds = embeds;
+            _metrics = metrics;
         }
 
         private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials)
@@ -159,15 +162,33 @@ namespace PluralKit.Bot
             }
 
             ulong messageId;
-            if (attachment != null) {
-                using (var http = new HttpClient())
-                using (var stream = await http.GetStreamAsync(attachment.Url)) {
-                    messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text, username: username, avatarUrl: avatarUrl);
+
+            try
+            {
+                if (attachment != null)
+                {
+                    using (var http = new HttpClient())
+                    using (var stream = await http.GetStreamAsync(attachment.Url))
+                    {
+                        messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text,
+                            username: username, avatarUrl: avatarUrl);
+                    }
                 }
-            } else {
-                messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
+                else
+                {
+                    messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
+                }
+                
+                // Log it in the metrics
+                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
             }
-            
+            catch (HttpException)
+            {
+                // Log failure in metrics and rethrow (we still need to cancel everything else)
+                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
+                throw;
+            }
+
             // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
             // doesn't work if there's no permission to)
             return messageId;
