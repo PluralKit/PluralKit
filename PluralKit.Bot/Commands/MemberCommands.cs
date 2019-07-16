@@ -190,6 +190,20 @@ namespace PluralKit.Bot.Commands
         [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
         [Remarks("member <member> avatar <avatar url>")]
         [MustPassOwnMember]
+        public async Task MemberAvatarByMention(IUser member)
+        {
+            if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
+            ContextEntity.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
+            
+            var embed = new EmbedBuilder().WithImageUrl(ContextEntity.AvatarUrl).Build();
+            await Context.Channel.SendMessageAsync(
+                $"{Emojis.Success} Member avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the webhook's avatar will need to be re-set.", embed: embed);
+        }
+
+        [Command("avatar")]
+        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
+        [Remarks("member <member> avatar <avatar url>")]
+        [MustPassOwnMember]
         public async Task MemberAvatar([Remainder] string avatarUrl = null)
         {
             string url = avatarUrl ?? Context.Message.Attachments.FirstOrDefault()?.ProxyUrl;

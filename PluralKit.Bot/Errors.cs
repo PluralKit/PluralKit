@@ -32,6 +32,7 @@ namespace PluralKit.Bot {
         public static PKError AvatarFileSizeLimit(long size) => new PKError($"File size too large ({size.Bytes().ToString("#.#")} > {Limits.AvatarFileSizeLimit.Bytes().ToString("#.#")}), try shrinking or compressing the image.");
         public static PKError AvatarNotAnImage(string mimeType) => new PKError($"The given link does not point to an image{(mimeType != null ? $" ({mimeType.Sanitize()})" : "")}. Make sure you're using a direct link (ending in .jpg, .png, .gif).");
         public static PKError AvatarDimensionsTooLarge(int width, int height) => new PKError($"Image too large ({width}x{height} > {Limits.AvatarDimensionLimit}x{Limits.AvatarDimensionLimit}), try resizing the image.");
+        public static PKError UserHasNoAvatar => new PKError("The given user has no avatar set.");
         public static PKError InvalidUrl(string url) => new PKError($"The given URL is invalid.");
         
         public static PKError AccountAlreadyLinked => new PKError("That account is already linked to your system.");
