@@ -61,7 +61,7 @@ namespace PluralKit.API
             }
 
             //app.UseHttpsRedirection();
-            app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin());
+            app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization"));
             app.UseMiddleware<TokenAuthService>();
             app.UseMvc();
         }
