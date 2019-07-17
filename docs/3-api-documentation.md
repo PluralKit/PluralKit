@@ -53,6 +53,16 @@ The following three models (usually represented in JSON format) represent the va
 |timestamp|datetime||
 |members|list of id/Member|Is sometimes in plain ID list form (eg. `GET /s/<id>/switches`), sometimes includes the full Member model (eg. `GET /s/<id>/fronters`).|
 
+### Message model
+|Key|Type|Notes|
+|---|---|---
+|timestamp|datetime||
+|id|snowflake|The ID of the message sent by the webhook. Encoded as string for precision reasons.|
+|sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
+|channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
+|system|full System object|The system that proxied the message.|
+|member|full Member object|The member that proxied the message.|
+
 ## Endpoints
 
 ### GET /s
@@ -66,13 +76,13 @@ Returns information about your own system.
 #### Example response
 ```json
 {
-  "id": "abcde",
-  "name": "My System",
-  "description": "This is my system description. Yay.",
-  "tag": "[MySys]",
-  "avatar_url": "https://path/to/avatar/image.png",
-  "tz": "Europe/Copenhagen",
-  "created": "2019-01-01T14:30:00.987654Z"
+    "id": "abcde",
+    "name": "My System",
+    "description": "This is my system description. Yay.",
+    "tag": "[MySys]",
+    "avatar_url": "https://path/to/avatar/image.png",
+    "tz": "Europe/Copenhagen",
+    "created": "2019-01-01T14:30:00.987654Z"
 }
 ```
 
@@ -85,13 +95,13 @@ Queries a system by its 5-character ID, and returns information about it. If the
 #### Example response
 ```json
 {
-  "id": "abcde",
-  "name": "My System",
-  "description": "This is my system description. Yay.",
-  "tag": "[MySys]",
-  "avatar_url": "https://path/to/avatar/image.png",
-  "tz": "Europe/Copenhagen",
-  "created": "2019-01-01T14:30:00.987654Z"
+    "id": "abcde",
+    "name": "My System",
+    "description": "This is my system description. Yay.",
+    "tag": "[MySys]",
+    "avatar_url": "https://path/to/avatar/image.png",
+    "tz": "Europe/Copenhagen",
+    "created": "2019-01-01T14:30:00.987654Z"
 }
 ```
 
@@ -104,18 +114,18 @@ Queries a system's member list by its 5-character ID. If the system doesn't exis
 #### Example response
 ```json
 [
-  {
-    "id": "qwert",
-    "name": "Craig Johnson",
-    "color": "ff7000",
-    "avatar_url": "https://path/to/avatar/image.png",
-    "birthday": "1997-07-14",
-    "pronouns": "he/him or they/them",
-    "description": "I am Craig, example user extraordinaire.",
-    "prefix": "[",
-    "suffix": "]",
-    "created": "2019-01-01T15:00:00.654321Z"
-  }
+    {
+        "id": "qwert",
+        "name": "Craig Johnson",
+        "color": "ff7000",
+        "avatar_url": "https://path/to/avatar/image.png",
+        "birthday": "1997-07-14",
+        "pronouns": "he/him or they/them",
+        "description": "I am Craig, example user extraordinaire.",
+        "prefix": "[",
+        "suffix": "]",
+        "created": "2019-01-01T15:00:00.654321Z"
+    }
 ]
 ```
 
@@ -130,18 +140,18 @@ that happen before that timestamp.
 #### Example response
 ```json
 [
-  {
-    "timestamp": "2019-02-23T14:20:59.123456Z",
-    "members": ["qwert", "yuiop"]
-  },
-  {
-    "timestamp": "2019-02-22T12:00:00Z",
-    "members": ["yuiop"]
-  },
-  {
-    "timestamp": "2019-02-20T09:30:00Z",
-    "members": []
-  }
+    {
+        "timestamp": "2019-02-23T14:20:59.123456Z",
+        "members": ["qwert", "yuiop"]
+    },
+    {
+        "timestamp": "2019-02-22T12:00:00Z",
+        "members": ["yuiop"]
+    },
+    {
+        "timestamp": "2019-02-20T09:30:00Z",
+        "members": []
+    }
 ]
 ```
 
@@ -154,21 +164,21 @@ Returns a system's current fronter(s), with fully hydrated member objects. If th
 #### Example response
 ```json
 {
-  "timestamp": "2019-07-09T17:22:46.47441Z",
-  "members": [
-      {
-        "id": "qwert",
-        "name": "Craig Johnson",
-        "color": "ff7000",
-        "avatar_url": "https://path/to/avatar/image.png",
-        "birthday": "1997-07-14",
-        "pronouns": "he/him or they/them",
-        "description": "I am Craig, example user extraordinaire.",
-        "prefix": "[",
-        "suffix": "]",
-        "created": "2019-01-01T15:00:00.654321Z"
-      }
-  ]
+    "timestamp": "2019-07-09T17:22:46.47441Z",
+    "members": [
+        {
+            "id": "qwert",
+            "name": "Craig Johnson",
+            "color": "ff7000",
+            "avatar_url": "https://path/to/avatar/image.png",
+            "birthday": "1997-07-14",
+            "pronouns": "he/him or they/them",
+            "description": "I am Craig, example user extraordinaire.",
+            "prefix": "[",
+            "suffix": "]",
+            "created": "2019-01-01T15:00:00.654321Z"
+        }
+    ]
 }
 ```
 
@@ -193,13 +203,13 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
 #### Example response
 ```json
 {
-  "id": "abcde",
-  "name": "New System Name",
-  "description": null,
-  "tag": "{Sys}",
-  "avatar_url": "https://path/to/new/avatar.png",
-  "tz": "America/New_York",
-  "created": "2019-01-01T14:30:00.987654Z"
+    "id": "abcde",
+    "name": "New System Name",
+    "description": null,
+    "tag": "{Sys}",
+    "avatar_url": "https://path/to/new/avatar.png",
+    "tz": "America/New_York",
+    "created": "2019-01-01T14:30:00.987654Z"
 }
 ```
 
@@ -288,19 +298,57 @@ Queries a system by its linked Discord account ID (17/18-digit numeric snowflake
 #### Example response
 ```json
 {
-  "id": "abcde",
-  "name": "My System",
-  "description": "This is my system description. Yay.",
-  "tag": "[MySys]",
-  "avatar_url": "https://path/to/avatar/image.png",
-  "tz": "Europe/Copenhagen",
-  "created": "2019-01-01T14:30:00.987654Z"
+    "id": "abcde",
+    "name": "My System",
+    "description": "This is my system description. Yay.",
+    "tag": "[MySys]",
+    "avatar_url": "https://path/to/avatar/image.png",
+    "tz": "Europe/Copenhagen",
+    "created": "2019-01-01T14:30:00.987654Z"
+}
+```
+
+### GET /msg/\<id>
+Looks up a proxied message by its message ID. Returns `404 Not Found` if the message ID is invalid or wasn't found (eg. was deleted or not proxied by PK).
+
+#### Example request
+    GET https://api.pluralkit.me/v1/msg/601014599386398700
+
+#### Example response
+```json
+{
+    "timestamp": "2019-07-17T11:37:26.805Z",
+    "id": "601014599386398700",
+    "sender": "466378653216014359",
+    "channel": "471388251102380000",
+    "system": {
+        "id": "abcde",
+        "name": "My System",
+        "description": "This is my system description. Yay.",
+        "tag": "[MySys]",
+        "avatar_url": "https://path/to/avatar/image.png",
+        "tz": "Europe/Copenhagen",
+        "created": "2019-01-01T14:30:00.987654Z"
+    },
+    "member": {
+        "id": "qwert",
+        "name": "Craig Johnson",
+        "color": "ff7000",
+        "avatar_url": "https://path/to/avatar/image.png",
+        "birthday": "1997-07-14",
+        "pronouns": "he/him or they/them",
+        "description": "I am Craig, example user extraordinaire.",
+        "prefix": "[",
+        "suffix": "]",
+        "created": "2019-01-01T15:00:00.654321Z"
+    }
 }
 ```
 
 ## Version history
 * 2019-07-17
   * Add endpoint for querying system by account
+  * Add endpoint for querying message contents
 * 2019-07-10 **(v1)**
   * First specified version
 * (prehistory)
