@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using App.Metrics;
-using App.Metrics.Meter;
 using Discord;
 using Discord.Commands;
 

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using NodaTime;
-using NodaTime.Text;
 
 namespace PluralKit.Bot
 {

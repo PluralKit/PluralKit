@@ -1,9 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.Common;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -15,12 +11,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NodaTime;
-using Npgsql;
-using Npgsql.Logging;
-using PluralKit.Core;
 using Sentry;
-using Sentry.Extensibility;
 
 namespace PluralKit.Bot
 {

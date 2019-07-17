@@ -1,18 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Dapper;
 using Discord;
 using Discord.Commands;
 using Discord.Commands.Builders;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using NodaTime;
 using PluralKit.Core;
 using Image = SixLabors.ImageSharp.Image;
 

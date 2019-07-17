@@ -1,4 +1,3 @@
-using System.Data;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PluralKit.Core;

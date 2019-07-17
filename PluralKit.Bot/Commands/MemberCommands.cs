@@ -1,13 +1,10 @@
-using System;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using NodaTime;
 using PluralKit.Core;
-using Image = SixLabors.ImageSharp.Image;
 
 namespace PluralKit.Bot.Commands
 {
