@@ -279,7 +279,28 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
 }
 ```
 
+### GET /a/\<id>
+Queries a system by its linked Discord account ID (17/18-digit numeric snowflake). Returns `404 Not Found` if the account doesn't have a system linked.
+
+#### Example request
+    GET https://api.pluralkit.me/v1/a/466378653216014359
+
+#### Example response
+```json
+{
+  "id": "abcde",
+  "name": "My System",
+  "description": "This is my system description. Yay.",
+  "tag": "[MySys]",
+  "avatar_url": "https://path/to/avatar/image.png",
+  "tz": "Europe/Copenhagen",
+  "created": "2019-01-01T14:30:00.987654Z"
+}
+```
+
 ## Version history
+* 2019-07-17
+  * Add endpoint for querying system by account
 * 2019-07-10 **(v1)**
   * First specified version
 * (prehistory)
