@@ -146,12 +146,12 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, ZonedDateTime startingFrom)
+        public async Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, DateTimeZone tz)
         {
             var actualPeriod = frontpercent.RangeEnd - frontpercent.RangeStart;
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
-                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(startingFrom)} ({Formats.DurationFormat.Format(actualPeriod)} ago)");
+                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(frontpercent.RangeStart.InZone(tz))} ({Formats.DurationFormat.Format(actualPeriod)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 

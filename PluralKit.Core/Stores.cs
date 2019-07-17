@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -325,7 +326,6 @@ namespace PluralKit {
                 var switchStartClamped = switchInRange.Timestamp;
                 if (switchStartClamped < periodStart) switchStartClamped = periodStart;
                 
-                var span = endTime - switchStartClamped;
                 outList.Add(new SwitchListEntry
                 {
                     Members = (await GetSwitchMemberIds(switchInRange)).Select(id => memberObjects[id]).ToList(),
@@ -373,7 +373,7 @@ namespace PluralKit {
                 if (sw.Members.Count == 0) noFronterDuration += span;
 
                 if (sw.TimespanStart < actualStart) actualStart = sw.TimespanStart;
-                if (sw.TimespanEnd < actualStart) actualStart = sw.TimespanEnd;
+                if (sw.TimespanEnd > actualEnd) actualEnd = sw.TimespanEnd;
             }
             
             return new PerMemberSwitchDuration

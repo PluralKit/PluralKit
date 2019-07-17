@@ -214,15 +214,15 @@ namespace PluralKit.Bot.Commands
         {
             var system = ContextEntity ?? Context.SenderSystem;
             if (system == null) throw Errors.NoSystemError;
+            
+            var now = SystemClock.Instance.GetCurrentInstant();
 
-            var duration = PluralKit.Utils.ParsePeriod(durationStr);
-            if (duration == null) throw Errors.InvalidDateTime(durationStr); 
+            var rangeStart = PluralKit.Utils.ParseDateTime(durationStr);
+            if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
+            if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
-            var rangeEnd = SystemClock.Instance.GetCurrentInstant();
-            var rangeStart = rangeEnd - duration.Value;
-            
-            var frontpercent = await Switches.GetPerMemberSwitchDuration(system, rangeEnd - duration.Value, rangeEnd);
-            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFrontPercentEmbed(frontpercent, rangeStart.InZone(system.Zone)));
+            var frontpercent = await Switches.GetPerMemberSwitchDuration(system, rangeStart.Value.ToInstant(), now);
+            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFrontPercentEmbed(frontpercent, system.Zone));
         }
 
         [Command("timezone")]
