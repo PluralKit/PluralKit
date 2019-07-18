@@ -37,6 +37,7 @@ namespace PluralKit.Bot {
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid}");
 
+            if (system.Tag != null) eb.AddField("Tag", system.Tag);
             eb.AddField("Linked accounts", string.Join(", ", users));
             eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)");
             // TODO: fronter
