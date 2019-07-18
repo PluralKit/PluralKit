@@ -29,18 +29,26 @@ namespace PluralKit.Bot {
             var users = await Task.WhenAll(accounts.Select(async uid => (await _client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
             var memberCount = await _members.MemberCount(system);
-
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
                 .WithDescription(system.Description?.Truncate(1024))
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid}");
+            
+            var latestSwitch = await _switches.GetLatestSwitch(system);
+            if (latestSwitch != null)
+            {
+                var switchMembers = (await _switches.GetSwitchMembers(latestSwitch)).ToList();
+                if (switchMembers.Count > 0)
+                    eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None), 
+                        string.Join(", ", switchMembers.Select(m => m.Name)));
+            }
 
             if (system.Tag != null) eb.AddField("Tag", system.Tag);
             eb.AddField("Linked accounts", string.Join(", ", users));
             eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)");
-            // TODO: fronter
+            
             return eb.Build();
         }
 
