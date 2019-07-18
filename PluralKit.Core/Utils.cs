@@ -13,6 +13,9 @@ using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using NodaTime.Text;
 using Npgsql;
+using Serilog;
+using Serilog.Formatting.Compact;
+using Serilog.Sinks.SystemConsole.Themes;
 
 
 namespace PluralKit
@@ -297,6 +300,20 @@ namespace PluralKit
             // So we add a custom type handler that literally just passes the type through to Npgsql
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
+        }
+
+        public static ILogger  InitLogger(CoreConfig config, string component)
+        {
+            return new LoggerConfiguration()
+                .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
+                .WriteTo.File(
+                    new CompactJsonFormatter(),
+                    (config.LogDir ?? "logs") + $"/pluralkit.{component}.log",
+                    rollingInterval: RollingInterval.Day,
+                    flushToDiskInterval: TimeSpan.FromSeconds(10),
+                    buffered: true)
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+                .CreateLogger();
         }
 
         public static JsonSerializerSettings BuildSerializerSettings() => new JsonSerializerSettings().BuildSerializerSettings();

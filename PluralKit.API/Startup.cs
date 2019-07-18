@@ -32,6 +32,7 @@ namespace PluralKit.API
                 .AddScoped<TokenAuthService>()
 
                 .AddTransient(_ => Configuration.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
+                .AddSingleton(svc => InitUtils.InitLogger(svc.GetRequiredService<CoreConfig>(), "api"))
                 .AddSingleton(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database));
         }
 

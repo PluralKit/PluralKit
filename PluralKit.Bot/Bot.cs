@@ -116,18 +116,8 @@ namespace PluralKit.Bot
             })
             .AddSingleton<PeriodicStatCollector>()
 
-            .AddSingleton<ILogger>(svc => new LoggerConfiguration()
-                .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
-                .WriteTo.File(
-                    new CompactJsonFormatter(),
-                        (svc.GetRequiredService<CoreConfig>().LogDir ?? "logs") + "/pluralkit.bot.log",
-                        rollingInterval: RollingInterval.Day,
-                        flushToDiskInterval: TimeSpan.FromSeconds(10),
-                        buffered: true)
-                    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                    .CreateLogger())
-                
-                .BuildServiceProvider();
+            .AddSingleton(svc => InitUtils.InitLogger(svc.GetRequiredService<CoreConfig>(), "bot"))
+            .BuildServiceProvider();
     }
     class Bot
     {
