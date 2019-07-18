@@ -180,7 +180,7 @@ namespace PluralKit.Bot
                     messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
                 }
                 
-                _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id, webhook.Channel);
+                _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
 
                 // Log it in the metrics
                 _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
