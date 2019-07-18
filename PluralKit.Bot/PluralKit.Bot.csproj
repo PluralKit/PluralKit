@@ -15,6 +15,10 @@
       <PackageReference Include="Discord.Net.WebSocket" Version="2.0.1" />
       <PackageReference Include="Humanizer.Core" Version="2.6.2" />
       <PackageReference Include="Sentry" Version="2.0.0-beta2" />
+      <PackageReference Include="Serilog.Formatting.Compact" Version="1.0.0" />
+      <PackageReference Include="Serilog.NodaTime" Version="1.0.0" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+      <PackageReference Include="Serilog.Sinks.File" Version="4.0.0" />
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0006" />
     </ItemGroup>
 

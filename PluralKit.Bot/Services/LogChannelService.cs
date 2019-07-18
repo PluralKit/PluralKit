@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Dapper;
 using Discord;
+using Serilog;
 
 namespace PluralKit.Bot {
     public class ServerDefinition {
@@ -12,12 +13,14 @@ namespace PluralKit.Bot {
         private IDiscordClient _client;
         private DbConnectionFactory _conn;
         private EmbedService _embed;
+        private ILogger _logger;
 
-        public LogChannelService(IDiscordClient client, DbConnectionFactory conn, EmbedService embed)
+        public LogChannelService(IDiscordClient client, DbConnectionFactory conn, EmbedService embed, ILogger logger)
         {
             this._client = client;
             this._conn = conn;
             this._embed = embed;
+            _logger = logger.ForContext<LogChannelService>();
         }
 
         public async Task LogMessage(PKSystem system, PKMember member, ulong messageId, IGuildChannel originalChannel, IUser sender, string content) {
@@ -53,6 +56,8 @@ namespace PluralKit.Bot {
                     "insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel",
                     def);
             }
+            
+            _logger.Information("Set guild {} log channel to {Channel}", guild.Id, newLogChannel?.Id);
         }
     }
 }

@@ -1,23 +1,32 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using App.Metrics.Logging;
 using Dapper;
 using NodaTime;
+using Serilog;
 
 namespace PluralKit {
     public class SystemStore {
         private DbConnectionFactory _conn;
+        private ILogger _logger;
 
-        public SystemStore(DbConnectionFactory conn) {
+        public SystemStore(DbConnectionFactory conn, ILogger logger)
+        {
             this._conn = conn;
+            _logger = logger.ForContext<SystemStore>();
         }
         
         public async Task<PKSystem> Create(string systemName = null) {
             // TODO: handle HID collision case
             var hid = Utils.GenerateHid();
-            
+
+            PKSystem system;
             using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (@Hid, @Name) returning *", new { Hid = hid, Name = systemName });
+                system = await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (@Hid, @Name) returning *", new { Hid = hid, Name = systemName });
+            
+            _logger.Information("Created system {System}", system.Id);
+            return system;
         }
 
         public async Task Link(PKSystem system, ulong accountId) {
@@ -25,11 +34,15 @@ namespace PluralKit {
             // This is used in import/export, although the pk;link command checks for this case beforehand
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
+            
+            _logger.Information("Linked system {System} to account {Account}", system.Id, accountId);
         }
         
         public async Task Unlink(PKSystem system, ulong accountId) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
+            
+            _logger.Information("Unlinked system {System} from account {Account}", system.Id, accountId);
         }
 
         public async Task<PKSystem> GetByAccount(ulong accountId) {
@@ -56,11 +69,14 @@ namespace PluralKit {
         public async Task Save(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz where id = @Id", system);
+            
+            _logger.Information("Updated system {@System}", system);
         }
 
         public async Task Delete(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from systems where id = @Id", system);
+            _logger.Information("Deleted system {System}", system.Id);
         }        
 
         public async Task<IEnumerable<ulong>> GetLinkedAccountIds(PKSystem system)
@@ -78,21 +94,28 @@ namespace PluralKit {
 
     public class MemberStore {
         private DbConnectionFactory _conn;
+        private ILogger _logger;
 
-        public MemberStore(DbConnectionFactory conn) {
+        public MemberStore(DbConnectionFactory conn, ILogger logger)
+        {
             this._conn = conn;
+            _logger = logger.ForContext<MemberStore>();
         }
 
         public async Task<PKMember> Create(PKSystem system, string name) {
             // TODO: handle collision
             var hid = Utils.GenerateHid();
-            
+
+            PKMember member;
             using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (@Hid, @SystemId, @Name) returning *", new {
+                member = await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (@Hid, @SystemId, @Name) returning *", new {
                     Hid = hid,
                     SystemID = system.Id,
                     Name = name
                 });
+            
+            _logger.Information("Created member {Member}", member.Id);
+            return member;
         }
 
         public async Task<PKMember> GetByHid(string hid) {
@@ -122,11 +145,15 @@ namespace PluralKit {
         public async Task Save(PKMember member) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update members set name = @Name, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
+            
+            _logger.Information("Updated member {@Member}", member);
         }
 
         public async Task Delete(PKMember member) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
+            
+            _logger.Information("Deleted member {@Member}", member);
         }
 
         public async Task<int> MessageCount(PKMember member)
@@ -163,9 +190,12 @@ namespace PluralKit {
         }
 
         private DbConnectionFactory _conn;
+        private ILogger _logger;
 
-        public MessageStore(DbConnectionFactory conn) {
+        public MessageStore(DbConnectionFactory conn, ILogger logger)
+        {
             this._conn = conn;
+            _logger = logger.ForContext<MessageStore>();
         }
 
         public async Task Store(ulong senderId, ulong messageId, ulong channelId, PKMember member) {
@@ -176,6 +206,8 @@ namespace PluralKit {
                     MemberId = member.Id,
                     SenderId = senderId
                 });      
+            
+            _logger.Information("Stored message {Message} in channel {Channel}", messageId, channelId);
         }
 
         public async Task<StoredMessage> Get(ulong id)
@@ -192,6 +224,8 @@ namespace PluralKit {
         public async Task Delete(ulong id) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id });
+            
+            _logger.Information("Deleted message {Message}", id);
         }
         
         public async Task<ulong> Count()
@@ -204,13 +238,15 @@ namespace PluralKit {
     public class SwitchStore
     {
         private DbConnectionFactory _conn;
+        private ILogger _logger;
 
-        public SwitchStore(DbConnectionFactory conn)
+        public SwitchStore(DbConnectionFactory conn, ILogger logger)
         {
             _conn = conn;
+            _logger = logger.ForContext<SwitchStore>();
         }
 
-        public async Task RegisterSwitch(PKSystem system, IEnumerable<PKMember> members)
+        public async Task RegisterSwitch(PKSystem system, ICollection<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
             using (var conn = await _conn.Obtain())
@@ -231,6 +267,8 @@ namespace PluralKit {
                 
                 // Finally we commit the tx, since the using block will otherwise rollback it
                 tx.Commit();
+                
+                _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system.Id, members.Select(m => m.Id));
             }
         }
 
@@ -264,12 +302,16 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
                     new {Time = time, Id = sw.Id});
+            
+            _logger.Information("Moved switch {Switch} to {Time}", sw.Id, time);
         }
 
         public async Task DeleteSwitch(PKSwitch sw)
         {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
+            
+            _logger.Information("Deleted switch {Switch}");
         }
         
         public async Task<ulong> Count()

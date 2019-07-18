@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using NodaTime;
+using Serilog;
 
 namespace PluralKit.Bot
 {
@@ -11,12 +12,14 @@ namespace PluralKit.Bot
         private SystemStore _systems;
         private MemberStore _members;
         private SwitchStore _switches;
+        private ILogger _logger;
 
-        public DataFileService(SystemStore systems, MemberStore members, SwitchStore switches)
+        public DataFileService(SystemStore systems, MemberStore members, SwitchStore switches, ILogger logger)
         {
             _systems = systems;
             _members = members;
             _switches = switches;
+            _logger = logger.ForContext<DataFileService>();
         }
 
         public async Task<DataFileSystem> ExportSystem(PKSystem system)
@@ -131,6 +134,8 @@ namespace PluralKit.Bot
 
                 await _members.Save(member);
             }
+            
+            _logger.Information("Imported system {System}", system.Id);
 
             // TODO: import switches, too?
 

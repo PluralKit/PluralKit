@@ -6,5 +6,6 @@ namespace PluralKit
         public string SentryUrl { get; set; }
         public string InfluxUrl { get; set; }
         public string InfluxDb { get; set; }
+        public string LogDir { get; set; }
     }
 }

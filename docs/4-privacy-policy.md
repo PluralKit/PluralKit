@@ -13,7 +13,9 @@ This is the data PluralKit collects indefinitely:
 * Information *you give the bot* (eg. system/member profiles, switch history, linked accounts, etc)
 * Metadata about proxied messages (sender account ID, sender system/member, timestamp)
 * Aggregate anonymous usage metrics (eg. gateway events received/second, messages proxied/second, commands executed/second)
+  * This is visible on [https://stats.pluralkit.me/](https://stats.pluralkit.me/)
 * Nightly database backups of the above information
+* High-level logs of actions taken on the bot (eg. systems created or deleted, switches logged, etc)
 
 This is the data PluralKit does *not* collect:
 * Anything not listed above, including...

@@ -11,7 +11,12 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NodaTime;
 using Sentry;
+using Serilog;
+using Serilog.Core;
+using Serilog.Formatting.Compact;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PluralKit.Bot
 {
@@ -26,6 +31,15 @@ namespace PluralKit.Bot
             Console.WriteLine("Starting PluralKit...");
             
             InitUtils.Init();
+
+            // Set up a CancellationToken and a SIGINT hook to properly dispose of things when the app is closed
+            // The Task.Delay line will throw/exit (forgot which) and the stack and using statements will properly unwind
+            var token = new CancellationTokenSource();
+            Console.CancelKeyPress += delegate(object e, ConsoleCancelEventArgs args)
+            {
+                args.Cancel = true;
+                token.Cancel();
+            };
             
             using (var services = BuildServiceProvider())
             {
@@ -42,59 +56,76 @@ namespace PluralKit.Bot
                     Console.WriteLine("- Connecting to Discord...");
                     var client = services.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
                     await client.LoginAsync(TokenType.Bot, botConfig.Token);
-                    await client.StartAsync();
 
                     Console.WriteLine("- Initializing bot...");
                     await services.GetRequiredService<Bot>().Init();
+                    
+                    await client.StartAsync();
 
-                    await Task.Delay(-1);
+                    try
+                    {
+                        await Task.Delay(-1, token.Token);
+                    }
+                    catch (TaskCanceledException) { } // We'll just exit normally
+                    Console.WriteLine("- Shutting down...");
                 }
             }
         }
 
         public ServiceProvider BuildServiceProvider() => new ServiceCollection()
-                .AddTransient(_ => _config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
-                .AddTransient(_ => _config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
-                
-                .AddTransient(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database))
-                
-                .AddSingleton<IDiscordClient, DiscordShardedClient>()
-                .AddSingleton<Bot>()
+            .AddTransient(_ => _config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
+            .AddTransient(_ => _config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
 
-                .AddTransient<CommandService>(_ => new CommandService(new CommandServiceConfig
+            .AddTransient(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database))
+
+            .AddSingleton<IDiscordClient, DiscordShardedClient>()
+            .AddSingleton<Bot>()
+
+            .AddTransient<CommandService>(_ => new CommandService(new CommandServiceConfig
+            {
+                CaseSensitiveCommands = false,
+                QuotationMarkAliasMap = new Dictionary<char, char>
                 {
-                    CaseSensitiveCommands = false,
-                    QuotationMarkAliasMap = new Dictionary<char, char>
-                    {
-                        {'"', '"'},
-                        {'\'', '\''},
-                        {'‘', '’'},
-                        {'“', '”'},
-                        {'„', '‟'},
-                    },
-                    DefaultRunMode = RunMode.Async
-                }))
-                .AddTransient<EmbedService>()
-                .AddTransient<ProxyService>()
-                .AddTransient<LogChannelService>()
-                .AddTransient<DataFileService>()
-                
-                .AddSingleton<WebhookCacheService>()
-                
-                .AddTransient<SystemStore>()
-                .AddTransient<MemberStore>()
-                .AddTransient<MessageStore>()
-                .AddTransient<SwitchStore>()
-                
-                .AddSingleton<IMetrics>(svc =>
-                {
-                    var cfg = svc.GetRequiredService<CoreConfig>();
-                    var builder = AppMetrics.CreateDefaultBuilder();
-                    if (cfg.InfluxUrl != null && cfg.InfluxDb != null)
-                        builder.Report.ToInfluxDb(cfg.InfluxUrl, cfg.InfluxDb);
-                    return builder.Build();
-                })
-                .AddSingleton<PeriodicStatCollector>()
+                    {'"', '"'},
+                    {'\'', '\''},
+                    {'‘', '’'},
+                    {'“', '”'},
+                    {'„', '‟'},
+                },
+                DefaultRunMode = RunMode.Async
+            }))
+            .AddTransient<EmbedService>()
+            .AddTransient<ProxyService>()
+            .AddTransient<LogChannelService>()
+            .AddTransient<DataFileService>()
+
+            .AddSingleton<WebhookCacheService>()
+
+            .AddTransient<SystemStore>()
+            .AddTransient<MemberStore>()
+            .AddTransient<MessageStore>()
+            .AddTransient<SwitchStore>()
+
+            .AddSingleton<IMetrics>(svc =>
+            {
+                var cfg = svc.GetRequiredService<CoreConfig>();
+                var builder = AppMetrics.CreateDefaultBuilder();
+                if (cfg.InfluxUrl != null && cfg.InfluxDb != null)
+                    builder.Report.ToInfluxDb(cfg.InfluxUrl, cfg.InfluxDb);
+                return builder.Build();
+            })
+            .AddSingleton<PeriodicStatCollector>()
+
+            .AddSingleton<ILogger>(svc => new LoggerConfiguration()
+                .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
+                .WriteTo.File(
+                    new CompactJsonFormatter(),
+                        (svc.GetRequiredService<CoreConfig>().LogDir ?? "logs") + "/pluralkit.bot.log",
+                        rollingInterval: RollingInterval.Day,
+                        flushToDiskInterval: TimeSpan.FromSeconds(10),
+                        buffered: true)
+                    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+                    .CreateLogger())
                 
                 .BuildServiceProvider();
     }
@@ -107,8 +138,9 @@ namespace PluralKit.Bot
         private Timer _updateTimer;
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
+        private ILogger _logger;
 
-        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IMetrics metrics, PeriodicStatCollector collector)
+        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
             this._services = services;
             this._client = client as DiscordShardedClient;
@@ -116,6 +148,7 @@ namespace PluralKit.Bot
             this._proxy = proxy;
             _metrics = metrics;
             _collector = collector;
+            _logger = logger.ForContext<Bot>();
         }
 
         public async Task Init()
@@ -141,12 +174,14 @@ namespace PluralKit.Bot
             await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
             
             await _collector.CollectStats();
+            
+            _logger.Information("Submitted metrics to backend");
             await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
         }
 
         private async Task ShardReady(DiscordSocketClient shardClient)
         {
-
+            _logger.Information("Shard {Shard} connected", shardClient.ShardId);
             Console.WriteLine($"Shard #{shardClient.ShardId} connected to {shardClient.Guilds.Sum(g => g.Channels.Count)} channels in {shardClient.Guilds.Count} guilds.");
 
             if (shardClient.ShardId == 0)
@@ -207,7 +242,7 @@ namespace PluralKit.Bot
                 // Ignore system messages (member joined, message pinned, etc)
                 var arg = _arg as SocketUserMessage;
                 if (arg == null) return;
-
+                
                 // Ignore bot messages
                 if (arg.Author.IsBot || arg.Author.IsWebhook) return;
 
@@ -243,6 +278,7 @@ namespace PluralKit.Bot
 
         private void HandleRuntimeError(Exception e)
         {
+            _logger.Error(e, "Exception in bot event handler");
             SentrySdk.CaptureException(e);
             Console.Error.WriteLine(e);
         }

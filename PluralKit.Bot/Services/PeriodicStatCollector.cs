@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using App.Metrics;
 using Discord;
 using Discord.WebSocket;
+using NodaTime.Extensions;
 using PluralKit.Core;
+using Serilog;
 
 namespace PluralKit.Bot
 {
@@ -18,7 +21,9 @@ namespace PluralKit.Bot
         private SwitchStore _switches;
         private MessageStore _messages;
 
-        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, SystemStore systems, MemberStore members, SwitchStore switches, MessageStore messages)
+        private ILogger _logger;
+
+        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, SystemStore systems, MemberStore members, SwitchStore switches, MessageStore messages, ILogger logger)
         {
             _client = (DiscordShardedClient) client;
             _metrics = metrics;
@@ -26,10 +31,14 @@ namespace PluralKit.Bot
             _members = members;
             _switches = switches;
             _messages = messages;
+            _logger = logger.ForContext<PeriodicStatCollector>();
         }
 
         public async Task CollectStats()
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            
             // Aggregate guild/channel stats
             _metrics.Measure.Gauge.SetValue(BotMetrics.Guilds, _client.Guilds.Count);
             _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, _client.Guilds.Sum(g => g.TextChannels.Count));
@@ -52,6 +61,9 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, await _members.Count());
             _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, await _switches.Count());
             _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, await _messages.Count());
+
+            stopwatch.Stop();
+            _logger.Information("Updated metrics in {Time}", stopwatch.ElapsedDuration());
         }
     }
 }

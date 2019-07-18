@@ -10,6 +10,7 @@ using Discord;
 using Discord.Net;
 using Discord.Webhook;
 using Discord.WebSocket;
+using Serilog;
 
 namespace PluralKit.Bot
 {
@@ -30,21 +31,23 @@ namespace PluralKit.Bot
     class ProxyService {
         private IDiscordClient _client;
         private DbConnectionFactory _conn;
-        private LogChannelService _logger;
+        private LogChannelService _logChannel;
         private WebhookCacheService _webhookCache;
         private MessageStore _messageStorage;
         private EmbedService _embeds;
         private IMetrics _metrics;
+        private ILogger _logger;
         
-        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logger, MessageStore messageStorage, EmbedService embeds, IMetrics metrics)
+        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, IMetrics metrics, ILogger logger)
         {
             _client = client;
             _webhookCache = webhookCache;
             _conn = conn;
-            _logger = logger;
+            _logChannel = logChannel;
             _messageStorage = messageStorage;
             _embeds = embeds;
             _metrics = metrics;
+            _logger = logger.ForContext<ProxyService>();
         }
 
         private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials)
@@ -108,7 +111,7 @@ namespace PluralKit.Bot
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, match.Member);
-            await _logger.LogMessage(match.System, match.Member, hookMessageId, message.Channel as IGuildChannel, message.Author, match.InnerText);
+            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Channel as IGuildChannel, message.Author, match.InnerText);
 
             // Wait a second or so before deleting the original message
             await Task.Delay(1000);
@@ -177,11 +180,15 @@ namespace PluralKit.Bot
                     messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
                 }
                 
+                _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id, webhook.Channel);
+
                 // Log it in the metrics
                 _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
             }
-            catch (HttpException)
+            catch (HttpException e)
             {
+                _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
+                
                 // Log failure in metrics and rethrow (we still need to cancel everything else)
                 _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
                 throw;

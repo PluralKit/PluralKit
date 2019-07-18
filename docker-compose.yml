@@ -7,8 +7,10 @@ services:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
       - "PluralKit:InfluxUrl=http://influx:8086"
       - "PluralKit:InfluxDb=pluralkit"
+      - "PluralKit:LogDir=/var/log/pluralkit"
     volumes:
       - "./pluralkit.conf:/app/pluralkit.conf:ro"
+      - "/var/log/pluralkit:/var/log/pluralkit"
     links:
       - db
       - influx
