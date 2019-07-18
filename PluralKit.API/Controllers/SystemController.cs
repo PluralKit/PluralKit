@@ -143,12 +143,15 @@ namespace PluralKit.API.Controllers
             
             // We get the current switch, if it exists
             var latestSwitch = await _switches.GetLatestSwitch(_auth.CurrentSystem);
-            var latestSwitchMembers = await _switches.GetSwitchMembers(latestSwitch);
+            if (latestSwitch != null)
+            {
+                var latestSwitchMembers = await _switches.GetSwitchMembers(latestSwitch);
 
-            // Bail if this switch is identical to the latest one
-            if (latestSwitchMembers.Select(m => m.Hid).SequenceEqual(param.Members))
-                return BadRequest("New members identical to existing fronters.");
-            
+                // Bail if this switch is identical to the latest one
+                if (latestSwitchMembers.Select(m => m.Hid).SequenceEqual(param.Members))
+                    return BadRequest("New members identical to existing fronters.");
+            }
+
             // Resolve member objects for all given IDs
             IEnumerable<PKMember> membersList;
             using (var conn = await _conn.Obtain())
