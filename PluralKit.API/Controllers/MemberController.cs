@@ -38,16 +38,23 @@ namespace PluralKit.API.Controllers
 
             if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
 
+            if (newMember.Name == null)
+                return BadRequest("Member name can not be null.");
+
             // Explicit bounds checks
-            if (newMember.Name.Length > Limits.MaxMemberNameLength)
+            if (newMember.Name != null && newMember.Name.Length > Limits.MaxMemberNameLength)
                 return BadRequest($"Member name too long ({newMember.Name.Length} > {Limits.MaxMemberNameLength}.");
-            if (newMember.Pronouns.Length > Limits.MaxPronounsLength)
+            if (newMember.Pronouns != null && newMember.Pronouns.Length > Limits.MaxPronounsLength)
                 return BadRequest($"Member pronouns too long ({newMember.Pronouns.Length} > {Limits.MaxPronounsLength}.");
-            if (newMember.Description.Length > Limits.MaxDescriptionLength)
+            if (newMember.Description != null && newMember.Description.Length > Limits.MaxDescriptionLength)
                 return BadRequest($"Member descriptions too long ({newMember.Description.Length} > {Limits.MaxDescriptionLength}.");
 
             // Sanity bounds checks
-            if (newMember.AvatarUrl.Length > 1000 || newMember.Prefix.Length > 1000 || newMember.Suffix.Length > 1000)
+            if (newMember.AvatarUrl != null && newMember.AvatarUrl.Length > 1000)
+                return BadRequest();
+            if (newMember.Prefix != null && newMember.Prefix.Length > 1000)
+                return BadRequest();
+            if (newMember.Suffix != null && newMember.Suffix.Length > 1000)
                 return BadRequest();
 
             member.Name = newMember.Name;
