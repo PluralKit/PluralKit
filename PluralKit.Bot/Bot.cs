@@ -15,6 +15,7 @@ using NodaTime;
 using Sentry;
 using Serilog;
 using Serilog.Core;
+using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -43,22 +44,24 @@ namespace PluralKit.Bot
             
             using (var services = BuildServiceProvider())
             {
+                var logger = services.GetRequiredService<ILogger>().ForContext<Initialize>();
                 var coreConfig = services.GetRequiredService<CoreConfig>();
                 var botConfig = services.GetRequiredService<BotConfig>();
 
                 using (SentrySdk.Init(coreConfig.SentryUrl))
                 {
 
-                    Console.WriteLine("- Connecting to database...");
+                    logger.Information("Connecting to database");
                     using (var conn = await services.GetRequiredService<DbConnectionFactory>().Obtain())
                         await Schema.CreateTables(conn);
 
-                    Console.WriteLine("- Connecting to Discord...");
+                    logger.Information("Connecting to Discord");
                     var client = services.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
                     await client.LoginAsync(TokenType.Bot, botConfig.Token);
 
-                    Console.WriteLine("- Initializing bot...");
+                    logger.Information("Initializing bot");
                     await services.GetRequiredService<Bot>().Init();
+
                     
                     await client.StartAsync();
 
@@ -67,7 +70,7 @@ namespace PluralKit.Bot
                         await Task.Delay(-1, token.Token);
                     }
                     catch (TaskCanceledException) { } // We'll just exit normally
-                    Console.WriteLine("- Shutting down...");
+                    logger.Information("Shutting down");
                 }
             }
         }
@@ -155,6 +158,38 @@ namespace PluralKit.Bot
             _client.MessageReceived += async (msg) => MessageReceived(msg).CatchException(HandleRuntimeError);
             _client.ReactionAdded += async (message, channel, reaction) => _proxy.HandleReactionAddedAsync(message, channel, reaction).CatchException(HandleRuntimeError);
             _client.MessageDeleted += async (message, channel) => _proxy.HandleMessageDeletedAsync(message, channel).CatchException(HandleRuntimeError);
+
+            _client.Log += FrameworkLog;
+        }
+
+        private Task FrameworkLog(LogMessage msg)
+        {
+            // Bridge D.NET logging to Serilog
+            LogEventLevel level = LogEventLevel.Verbose;
+            switch (msg.Severity)
+            {
+                case LogSeverity.Critical:
+                    level = LogEventLevel.Fatal;
+                    break;
+                case LogSeverity.Debug:
+                    level = LogEventLevel.Debug;
+                    break;
+                case LogSeverity.Error:
+                    level = LogEventLevel.Error;
+                    break;
+                case LogSeverity.Info:
+                    level = LogEventLevel.Information;
+                    break;
+                case LogSeverity.Verbose:
+                    level = LogEventLevel.Verbose;
+                    break;
+                case LogSeverity.Warning:
+                    level = LogEventLevel.Warning;
+                    break;
+            }
+
+            _logger.Write(level, msg.Exception, "Discord.Net {Source}: {Message}", msg.Source, msg.Message);
+            return Task.CompletedTask;
         }
 
         // Method called every 60 seconds

@@ -57,7 +57,7 @@ namespace PluralKit.Bot {
                     def);
             }
             
-            _logger.Information("Set guild {} log channel to {Channel}", guild.Id, newLogChannel?.Id);
+            _logger.Information("Set guild {Guild} log channel to {Channel}", guild.Id, newLogChannel?.Id);
         }
     }
 }
