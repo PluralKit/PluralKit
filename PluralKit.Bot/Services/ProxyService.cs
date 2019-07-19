@@ -72,7 +72,7 @@ namespace PluralKit.Bot
                 var prefix = potential.Member.Prefix ?? "";
                 var suffix = potential.Member.Suffix ?? "";
 
-                if (message.StartsWith(prefix) && message.EndsWith(suffix)) {
+                if (message.Length >= prefix.Length + suffix.Length && message.StartsWith(prefix) && message.EndsWith(suffix)) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
                     if (leadingMention != null) inner = $"{leadingMention} {inner}";
                     return new ProxyMatch { Member = potential.Member, System = potential.System, InnerText = inner };
