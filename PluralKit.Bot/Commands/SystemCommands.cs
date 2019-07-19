@@ -99,6 +99,21 @@ namespace PluralKit.Bot.Commands
         [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
         [Remarks("system avatar <avatar url>")]
         [MustHaveSystem]
+        public async Task SystemAvatar(IUser member)
+        {
+            if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
+            Context.SenderSystem.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
+            await Systems.Save(Context.SenderSystem);
+            
+            var embed = new EmbedBuilder().WithImageUrl(Context.SenderSystem.AvatarUrl).Build();
+            await Context.Channel.SendMessageAsync(
+                $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
+        }
+        
+        [Command("avatar")]
+        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
+        [Remarks("system avatar <avatar url>")]
+        [MustHaveSystem]
         public async Task SystemAvatar([Remainder] string avatarUrl = null)
         {
             string url = avatarUrl ?? Context.Message.Attachments.FirstOrDefault()?.ProxyUrl;

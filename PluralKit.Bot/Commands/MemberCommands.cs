@@ -191,6 +191,7 @@ namespace PluralKit.Bot.Commands
         {
             if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
             ContextEntity.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
+            await Members.Save(ContextEntity);
             
             var embed = new EmbedBuilder().WithImageUrl(ContextEntity.AvatarUrl).Build();
             await Context.Channel.SendMessageAsync(
