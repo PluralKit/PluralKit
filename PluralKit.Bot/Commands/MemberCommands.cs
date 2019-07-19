@@ -114,7 +114,7 @@ namespace PluralKit.Bot.Commands
             if (color != null)
             {
                 if (color.StartsWith("#")) color = color.Substring(1);
-                if (!Regex.IsMatch(color, "^[0-9a-f]{6}$")) throw Errors.InvalidColorError(color);
+                if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
             }
 
             ContextEntity.Color = color;
