@@ -81,7 +81,10 @@ namespace PluralKit.Bot
 
             .AddTransient(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database))
 
-            .AddSingleton<IDiscordClient, DiscordShardedClient>()
+            .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
+            {
+                MessageCacheSize = 0
+            }))
             .AddSingleton<Bot>()
 
             .AddTransient<CommandService>(_ => new CommandService(new CommandServiceConfig
