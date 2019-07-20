@@ -4,4 +4,12 @@
 # eg. rclone-db.sh b2:pluralkit
 
 FILENAME=pluralkit-$(date -u +"%Y-%m-%dT%H:%M:%S").sql.gz
-$(dirname $0)/dump-db.sh | gzip | rclone rcat $1/$FILENAME
+
+echo Dumping database to /tmp/$FILENAME...
+$(dirname $0)/dump-db.sh | gzip > /tmp/$FILENAME
+
+echo Transferring to remote $1...
+rclone -P copy /tmp/$FILENAME $1
+
+echo Cleaning up...
+rm /tmp/$FILENAME
