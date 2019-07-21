@@ -54,5 +54,7 @@ namespace PluralKit.Bot
         
         private async Task<IWebhook> DoCreateWebhook(ITextChannel channel) => await channel.CreateWebhookAsync(WebhookName);
         private bool IsWebhookMine(IWebhook arg) => arg.Creator.Id == _client.CurrentUser.Id && arg.Name == WebhookName;
+
+        public int CacheSize => _webhooks.Count;
     }
 }

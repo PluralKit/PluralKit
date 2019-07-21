@@ -22,9 +22,11 @@ namespace PluralKit.Bot
         private SwitchStore _switches;
         private MessageStore _messages;
 
+        private WebhookCacheService _webhookCache;
+
         private ILogger _logger;
 
-        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, SystemStore systems, MemberStore members, SwitchStore switches, MessageStore messages, ILogger logger)
+        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, SystemStore systems, MemberStore members, SwitchStore switches, MessageStore messages, ILogger logger, WebhookCacheService webhookCache)
         {
             _client = (DiscordShardedClient) client;
             _metrics = metrics;
@@ -32,6 +34,7 @@ namespace PluralKit.Bot
             _members = members;
             _switches = switches;
             _messages = messages;
+            _webhookCache = webhookCache;
             _logger = logger.ForContext<PeriodicStatCollector>();
         }
 
@@ -71,6 +74,9 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessThreads, process.Threads.Count);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessHandles, process.HandleCount);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.CpuUsage, await EstimateCpuUsage());
+            
+            // Other shiz
+            _metrics.Measure.Gauge.SetValue(BotMetrics.WebhookCacheSize, _webhookCache.CacheSize);
 
             stopwatch.Stop();
             _logger.Information("Updated metrics in {Time}", stopwatch.ElapsedDuration());
