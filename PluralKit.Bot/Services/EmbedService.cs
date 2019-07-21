@@ -32,7 +32,6 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
-                .WithDescription(system.Description?.Truncate(1024))
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid}");
             
@@ -46,8 +45,10 @@ namespace PluralKit.Bot {
             }
 
             if (system.Tag != null) eb.AddField("Tag", system.Tag);
-            eb.AddField("Linked accounts", string.Join(", ", users));
-            eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)");
+            eb.AddField("Linked accounts", string.Join(", ", users), true);
+            eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
+
+            if (system.Description != null) eb.AddField("Description", system.Description.Truncate(1024), false);
             
             return eb.Build();
         }
@@ -76,14 +77,16 @@ namespace PluralKit.Bot {
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
                 .WithColor(color)
-                .WithDescription(member.Description)
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid}");
 
-            if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString);
-            if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns);
-            if (messageCount > 0) eb.AddField("Message Count", messageCount);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix}text{member.Suffix}");
-            if (member.Color != null) eb.AddField("Color", $"#{member.Color}");
+            if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
+            
+            if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
+            if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns, true);
+            if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix}text{member.Suffix}", true);
+            if (member.Color != null) eb.AddField("Color", $"#{member.Color}", true);
+            if (member.Description != null) eb.AddField("Description", member.Description, false);
 
             return eb.Build();
         }
