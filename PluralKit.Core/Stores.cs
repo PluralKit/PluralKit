@@ -223,9 +223,8 @@ namespace PluralKit {
         
         public async Task Delete(ulong id) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id });
-            
-            _logger.Information("Deleted message {Message}", id);
+                if (await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id }) > 0)
+                    _logger.Information("Deleted message {Message}", id);
         }
         
         public async Task<ulong> Count()
