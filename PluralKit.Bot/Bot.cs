@@ -83,7 +83,8 @@ namespace PluralKit.Bot
 
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {
-                MessageCacheSize = 0
+                MessageCacheSize = 0,
+                ExclusiveBulkDelete = true
             }))
             .AddSingleton<Bot>()
 
@@ -161,6 +162,7 @@ namespace PluralKit.Bot
             _client.MessageReceived += (msg) => { var _ = MessageReceived(msg).CatchException(HandleRuntimeError); return Task.CompletedTask; };
             _client.ReactionAdded += (message, channel, reaction) => { var _ = _proxy.HandleReactionAddedAsync(message, channel, reaction).CatchException(HandleRuntimeError); return Task.CompletedTask; };
             _client.MessageDeleted += (message, channel) => { var _ = _proxy.HandleMessageDeletedAsync(message, channel).CatchException(HandleRuntimeError); return Task.CompletedTask; };
+            _client.MessagesBulkDeleted += (messages, channel) => { var _ = _proxy.HandleMessageBulkDeleteAsync(messages, channel).CatchException(HandleRuntimeError); return Task.CompletedTask; };
 
             _client.Log += FrameworkLog;
         }

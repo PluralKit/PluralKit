@@ -271,6 +271,12 @@ namespace PluralKit.Bot
             await _messageStorage.Delete(message.Id);
         }
 
+        public async Task HandleMessageBulkDeleteAsync(IReadOnlyCollection<Cacheable<IMessage, ulong>> messages, IMessageChannel channel)
+        {
+            _logger.Information("Bulk deleting {Count} messages in channel {Channel}", messages.Count, channel.Id);
+            await _messageStorage.BulkDelete(messages.Select(m => m.Id).ToList());
+        }
+
         private string FixClyde(string name)
         {
             var match = Regex.Match(name, "clyde", RegexOptions.IgnoreCase);

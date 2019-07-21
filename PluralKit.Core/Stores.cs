@@ -227,6 +227,18 @@ namespace PluralKit {
                     _logger.Information("Deleted message {Message}", id);
         }
         
+        public async Task BulkDelete(IReadOnlyCollection<ulong> ids)
+        {
+            using (var conn = await _conn.Obtain())
+            {
+                // Npgsql doesn't support ulongs in general - we hacked around it for plain ulongs but tbh not worth it for collections of ulong
+                // Hence we map them to single longs, which *are* supported (this is ok since they're Technically (tm) stored as signed longs in the db anyway)
+                var foundCount = await conn.ExecuteAsync("delete from messages where mid = any(@Ids)", new {Ids = ids.Select(id => (long) id).ToArray()});
+                if (foundCount > 0)
+                    _logger.Information("Bulk deleted messages {Messages}, {FoundCount} found", ids, foundCount);
+            }
+        }
+        
         public async Task<ulong> Count()
         {
             using (var conn = await _conn.Obtain())
