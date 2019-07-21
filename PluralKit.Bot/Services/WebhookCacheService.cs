@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Serilog;
 
 namespace PluralKit.Bot
 {
@@ -13,9 +14,12 @@ namespace PluralKit.Bot
         private IDiscordClient _client;
         private ConcurrentDictionary<ulong, Lazy<Task<IWebhook>>> _webhooks;
 
-        public WebhookCacheService(IDiscordClient client)
+        private ILogger _logger;
+
+        public WebhookCacheService(IDiscordClient client, ILogger logger)
         {
-            this._client = client;
+            _client = client;
+            _logger = logger.ForContext<WebhookCacheService>();
             _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<IWebhook>>>();
         }
 
@@ -43,16 +47,27 @@ namespace PluralKit.Bot
 
         public async Task<IWebhook> InvalidateAndRefreshWebhook(IWebhook webhook)
         {
-            _webhooks.TryRemove(webhook.Channel.Id, out _);
-            return await GetWebhook(webhook.Channel.Id);
+            _logger.Information("Refreshing webhook for channel {Channel}", webhook.ChannelId);
+            
+            _webhooks.TryRemove(webhook.ChannelId, out _);
+            return await GetWebhook(webhook.ChannelId);
         }
 
         private async Task<IWebhook> GetOrCreateWebhook(ITextChannel channel) =>
             await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
 
-        private async Task<IWebhook> FindExistingWebhook(ITextChannel channel) => (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
-        
-        private async Task<IWebhook> DoCreateWebhook(ITextChannel channel) => await channel.CreateWebhookAsync(WebhookName);
+        private async Task<IWebhook> FindExistingWebhook(ITextChannel channel)
+        {
+            _logger.Debug("Finding webhook for channel {Channel}", channel.Id);
+            return (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
+        }
+
+        private async Task<IWebhook> DoCreateWebhook(ITextChannel channel)
+        {
+            _logger.Information("Creating new webhook for channel {Channel}", channel.Id);
+            return await channel.CreateWebhookAsync(WebhookName);
+        }
+
         private bool IsWebhookMine(IWebhook arg) => arg.Creator.Id == _client.CurrentUser.Id && arg.Name == WebhookName;
 
         public int CacheSize => _webhooks.Count;

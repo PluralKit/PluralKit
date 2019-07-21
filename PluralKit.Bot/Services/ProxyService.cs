@@ -28,7 +28,7 @@ namespace PluralKit.Bot
         public string ProxyName => Member.Name + (System.Tag != null ? " " + System.Tag : "");
     }
 
-    class ProxyService {
+    class ProxyService: IDisposable {
         private IDiscordClient _client;
         private DbConnectionFactory _conn;
         private LogChannelService _logChannel;
@@ -37,6 +37,8 @@ namespace PluralKit.Bot
         private EmbedService _embeds;
         private IMetrics _metrics;
         private ILogger _logger;
+
+        private HttpClient _httpClient;
         
         public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, IMetrics metrics, ILogger logger)
         {
@@ -48,6 +50,8 @@ namespace PluralKit.Bot
             _embeds = embeds;
             _metrics = metrics;
             _logger = logger.ForContext<ProxyService>();
+            
+            _httpClient = new HttpClient();
         }
 
         private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials)
@@ -157,46 +161,53 @@ namespace PluralKit.Bot
             }
             catch (InvalidOperationException)
             {
+                // TODO: does this leak internal stuff in the (now-invalid) client?
+                
                 // webhook was deleted or invalid
                 webhook = await _webhookCache.InvalidateAndRefreshWebhook(webhook);
                 client = new DiscordWebhookClient(webhook);
             }
 
-            ulong messageId;
-
-            try
+            // TODO: clean this entire block up
+            using (client)
             {
-                if (attachment != null)
+                ulong messageId;
+
+                try
                 {
-                    using (var http = new HttpClient())
-                    using (var stream = await http.GetStreamAsync(attachment.Url))
+                    if (attachment != null)
                     {
-                        messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text,
-                            username: username, avatarUrl: avatarUrl);
+                        using (var stream = await _httpClient.GetStreamAsync(attachment.Url))
+                        {
+                            messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text,
+                                username: username, avatarUrl: avatarUrl);
+                        }
                     }
+                    else
+                    {
+                        messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
+                    }
+
+                    _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id,
+                        webhook.ChannelId);
+
+                    // Log it in the metrics
+                    _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
                 }
-                else
+                catch (HttpException e)
                 {
-                    messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
+                    _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", webhook.Id,
+                        webhook.ChannelId);
+
+                    // Log failure in metrics and rethrow (we still need to cancel everything else)
+                    _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
+                    throw;
                 }
                 
-                _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
-
-                // Log it in the metrics
-                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
+                // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
+                // doesn't work if there's no permission to)
+                return messageId;
             }
-            catch (HttpException e)
-            {
-                _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
-                
-                // Log failure in metrics and rethrow (we still need to cancel everything else)
-                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
-                throw;
-            }
-
-            // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
-            // doesn't work if there's no permission to)
-            return messageId;
         }
 
         public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
@@ -268,6 +279,11 @@ namespace PluralKit.Bot
             // Put a hair space (\u200A) between the "c" and the "lyde" in the match to avoid Discord matching it
             // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
             return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
+        }
+
+        public void Dispose()
+        {
+            _httpClient.Dispose();
         }
     }
 }
