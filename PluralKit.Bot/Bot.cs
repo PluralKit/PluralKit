@@ -156,11 +156,11 @@ namespace PluralKit.Bot
 
             _client.ShardReady += ShardReady;
 
-            // Deliberately wrapping in an async function *without* awaiting, we don't want to "block" since this'd hold up the main loop
+            // Deliberately wrapping in a fake-"async" function *without* awaiting, we don't want to "block" since this'd hold up the main loop
             // These handlers return Task so we gotta be careful not to return the Task itself (which would then be awaited) - kinda weird design but eh
-            _client.MessageReceived += async (msg) => MessageReceived(msg).CatchException(HandleRuntimeError);
-            _client.ReactionAdded += async (message, channel, reaction) => _proxy.HandleReactionAddedAsync(message, channel, reaction).CatchException(HandleRuntimeError);
-            _client.MessageDeleted += async (message, channel) => _proxy.HandleMessageDeletedAsync(message, channel).CatchException(HandleRuntimeError);
+            _client.MessageReceived += (msg) => { var _ = MessageReceived(msg).CatchException(HandleRuntimeError); return Task.CompletedTask; };
+            _client.ReactionAdded += (message, channel, reaction) => { var _ = _proxy.HandleReactionAddedAsync(message, channel, reaction).CatchException(HandleRuntimeError); return Task.CompletedTask; };
+            _client.MessageDeleted += (message, channel) => { var _ = _proxy.HandleMessageDeletedAsync(message, channel).CatchException(HandleRuntimeError); return Task.CompletedTask; };
 
             _client.Log += FrameworkLog;
         }
@@ -207,7 +207,7 @@ namespace PluralKit.Bot
             await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
         }
 
-        private async Task ShardReady(DiscordSocketClient shardClient)
+        private Task ShardReady(DiscordSocketClient shardClient)
         {
             _logger.Information("Shard {Shard} connected", shardClient.ShardId);
             Console.WriteLine($"Shard #{shardClient.ShardId} connected to {shardClient.Guilds.Sum(g => g.Channels.Count)} channels in {shardClient.Guilds.Count} guilds.");
@@ -219,6 +219,8 @@ namespace PluralKit.Bot
                 Console.WriteLine(
                     $"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)

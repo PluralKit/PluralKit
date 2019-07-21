@@ -5,18 +5,18 @@ using Discord.Commands;
 namespace PluralKit.Bot {
     class MustHaveSystem : PreconditionAttribute
     {
-        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             var c = context as PKCommandContext;
-            if (c == null) return PreconditionResult.FromError("Must be called on a PKCommandContext (should never happen!)");
-            if (c.SenderSystem == null) return PreconditionResult.FromError(Errors.NoSystemError);
-            return PreconditionResult.FromSuccess();
+            if (c == null) return Task.FromResult(PreconditionResult.FromError("Must be called on a PKCommandContext (should never happen!)"))    ;
+            if (c.SenderSystem == null) return Task.FromResult(PreconditionResult.FromError(Errors.NoSystemError));
+            return Task.FromResult(PreconditionResult.FromSuccess());
         }
     }
 
     class MustPassOwnMember : PreconditionAttribute
     {
-        public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+        public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
             // OK when:
             // - Sender has a system
@@ -24,11 +24,10 @@ namespace PluralKit.Bot {
             // - Sender owns said member 
 
             var c = context as PKCommandContext;
-            if (c == null) 
-            if (c.SenderSystem == null) return PreconditionResult.FromError(Errors.NoSystemError);
-            if (c.GetContextEntity<PKMember>() == null) return PreconditionResult.FromError(Errors.MissingMemberError);
-            if (c.GetContextEntity<PKMember>().System != c.SenderSystem.Id) return PreconditionResult.FromError(Errors.NotOwnMemberError);
-            return PreconditionResult.FromSuccess();
+            if (c.SenderSystem == null) return Task.FromResult(PreconditionResult.FromError(Errors.NoSystemError));
+            if (c.GetContextEntity<PKMember>() == null) return Task.FromResult(PreconditionResult.FromError(Errors.MissingMemberError));
+            if (c.GetContextEntity<PKMember>().System != c.SenderSystem.Id) return Task.FromResult(PreconditionResult.FromError(Errors.NotOwnMemberError));
+            return Task.FromResult(PreconditionResult.FromSuccess());
         }
     }
 }

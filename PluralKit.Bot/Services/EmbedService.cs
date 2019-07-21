@@ -157,7 +157,7 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, DateTimeZone tz)
+        public Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, DateTimeZone tz)
         {
             var actualPeriod = frontpercent.RangeEnd - frontpercent.RangeStart;
             var eb = new EmbedBuilder()
@@ -186,7 +186,7 @@ namespace PluralKit.Bot {
                         .Aggregate(Duration.Zero, (prod, next) => prod + next.Value)), true);
             }
 
-            return eb.Build();
+            return Task.FromResult(eb.Build());
         }
     }
 }

@@ -134,7 +134,7 @@ namespace PluralKit.Bot {
                     for (int i = 0; i < items.Count; i++) await msg.AddReactionAsync(new Emoji(indicators[i]));
                 }
 
-                AddEmojis(); // Not concerned about awaiting
+                var _ = AddEmojis(); // Not concerned about awaiting
 
 
                 while (true)
@@ -157,7 +157,7 @@ namespace PluralKit.Bot {
                         if (idx < items.Count) return items[idx];
                     }
 
-                    msg.RemoveReactionAsync(reaction.Emote, ctx.User); // don't care about awaiting
+                    var __ = msg.RemoveReactionAsync(reaction.Emote, ctx.User); // don't care about awaiting
                     await msg.ModifyAsync(mp => mp.Content = $"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
                 }
             }
@@ -171,7 +171,7 @@ namespace PluralKit.Bot {
                     for (int i = 0; i < items.Count; i++) await msg.AddReactionAsync(new Emoji(indicators[i]));
                 }
 
-                AddEmojis();
+                var _ = AddEmojis();
 
                 // Then wait for a reaction and return whichever one we found
                 var reaction = await ctx.AwaitReaction(msg, ctx.User,rx => indicators.Contains(rx.Emote.Name));
@@ -209,7 +209,7 @@ namespace PluralKit.Bot {
             }
             finally
             {
-                ctx.Message.RemoveReactionAsync(new Emoji(emoji), ctx.Client.CurrentUser);
+                var _ = ctx.Message.RemoveReactionAsync(new Emoji(emoji), ctx.Client.CurrentUser);
             }
         }
     }
