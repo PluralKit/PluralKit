@@ -114,7 +114,7 @@ namespace PluralKit.Bot
             var hookMessageId = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, match.Member.AvatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
-            await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, match.Member);
+            await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
             await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Channel as IGuildChannel, message.Author, match.InnerText);
 
             // Wait a second or so before deleting the original message

@@ -35,10 +35,11 @@ create table if not exists accounts
 
 create table if not exists messages
 (
-    mid     bigint primary key,
-    channel bigint not null,
-    member  serial not null references members (id) on delete cascade,
-    sender  bigint not null
+    mid          bigint primary key,
+    channel      bigint not null,
+    member       serial not null references members (id) on delete cascade,
+    sender       bigint not null,
+    original_mid bigint
 );
 
 create table if not exists switches

@@ -181,6 +181,7 @@ namespace PluralKit {
             public ulong Mid;
             public ulong Channel;
             public ulong Sender;
+            public ulong? OriginalMid;
         }
         public class StoredMessage
         {
@@ -198,13 +199,14 @@ namespace PluralKit {
             _logger = logger.ForContext<MessageStore>();
         }
 
-        public async Task Store(ulong senderId, ulong messageId, ulong channelId, PKMember member) {
+        public async Task Store(ulong senderId, ulong messageId, ulong channelId, ulong originalMessage, PKMember member) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("insert into messages(mid, channel, member, sender) values(@MessageId, @ChannelId, @MemberId, @SenderId)", new {
+                await conn.ExecuteAsync("insert into messages(mid, channel, member, sender, original_mid) values(@MessageId, @ChannelId, @MemberId, @SenderId, @OriginalMid)", new {
                     MessageId = messageId,
                     ChannelId = channelId,
                     MemberId = member.Id,
-                    SenderId = senderId
+                    SenderId = senderId,
+                    OriginalMid = originalMessage
                 });      
             
             _logger.Information("Stored message {Message} in channel {Channel}", messageId, channelId);
@@ -213,7 +215,7 @@ namespace PluralKit {
         public async Task<StoredMessage> Get(ulong id)
         {
             using (var conn = await _conn.Obtain())
-                return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, StoredMessage>("select messages.*, members.*, systems.* from messages, members, systems where mid = @Id and messages.member = members.id and systems.id = members.system", (msg, member, system) => new StoredMessage
+                return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, StoredMessage>("select messages.*, members.*, systems.* from messages, members, systems where (mid = @Id or original_mid = @Id) and messages.member = members.id and systems.id = members.system", (msg, member, system) => new StoredMessage
                 {
                     Message = msg,
                     System = system,
