@@ -18,6 +18,15 @@ namespace PluralKit.Bot.Commands
                     "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
             }
             
+            [Command("member")]
+            [Priority(1)]
+            [Remarks("help member")]
+            public async Task HelpMember()
+            {
+                await Context.Channel.SendMessageAsync(
+                    "The member help page has been moved! See the website: https://pluralkit.me/guide#member-management");
+            }
+            
             [Command]
             [Remarks("help")]
             public async Task HelpRoot([Remainder] string _ignored = null)
