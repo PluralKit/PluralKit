@@ -44,7 +44,7 @@ namespace PluralKit.Bot.Commands
             var member = await Members.Create(Context.SenderSystem, memberName);
             
             // Send confirmation and space hint
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member \"{memberName.Sanitize()}\" (`{member.Hid}`) registered! Type `pk;help member` for a list of commands to edit this member.");
+            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member \"{memberName.Sanitize()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
             if (memberName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
         }
 
