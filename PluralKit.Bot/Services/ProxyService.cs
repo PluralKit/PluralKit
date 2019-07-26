@@ -111,7 +111,8 @@ namespace PluralKit.Bot
             
             // Fetch a webhook for this channel, and send the proxied message
             var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
-            var hookMessageId = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, match.Member.AvatarUrl, message.Attachments.FirstOrDefault());
+            var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
+            var hookMessageId = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, avatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
