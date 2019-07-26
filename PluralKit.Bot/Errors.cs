@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -70,5 +71,7 @@ namespace PluralKit.Bot {
         
         public static PKError DurationParseError(string durationStr) => new PKError($"Could not parse '{durationStr.Sanitize()}' as a valid duration. Try a format such as `30d`, `1d3h` or `20m30s`.");
         public static PKError FrontPercentTimeInFuture => new PKError("Cannot get the front percent between now and a time in the future.");
+
+        public static PKError GuildNotFound(ulong guildId) => new PKError($"Guild with ID {guildId} not found.");
     }
 }
