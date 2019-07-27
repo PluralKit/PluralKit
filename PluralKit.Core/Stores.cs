@@ -16,15 +16,18 @@ namespace PluralKit {
             this._conn = conn;
             _logger = logger.ForContext<SystemStore>();
         }
-        
+
         public async Task<PKSystem> Create(string systemName = null) {
-            // TODO: handle HID collision case
-            var hid = Utils.GenerateHid();
+            string hid;
+            do
+            {
+                hid = Utils.GenerateHid();
+            } while (await GetByHid(hid) != null);
 
             PKSystem system;
             using (var conn = await _conn.Obtain())
                 system = await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (@Hid, @Name) returning *", new { Hid = hid, Name = systemName });
-            
+
             _logger.Information("Created system {System}", system.Id);
             return system;
         }
@@ -34,14 +37,14 @@ namespace PluralKit {
             // This is used in import/export, although the pk;link command checks for this case beforehand
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
-            
+
             _logger.Information("Linked system {System} to account {Account}", system.Id, accountId);
         }
-        
+
         public async Task Unlink(PKSystem system, ulong accountId) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
-            
+
             _logger.Information("Unlinked system {System} from account {Account}", system.Id, accountId);
         }
 
@@ -59,7 +62,7 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where token = @Token", new { Token = token });
         }
-        
+
         public async Task<PKSystem> GetById(int id)
         {
             using (var conn = await _conn.Obtain())
@@ -69,7 +72,7 @@ namespace PluralKit {
         public async Task Save(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz where id = @Id", system);
-            
+
             _logger.Information("Updated system {@System}", system);
         }
 
@@ -77,7 +80,7 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from systems where id = @Id", system);
             _logger.Information("Deleted system {System}", system.Id);
-        }        
+        }
 
         public async Task<IEnumerable<ulong>> GetLinkedAccountIds(PKSystem system)
         {
@@ -103,8 +106,11 @@ namespace PluralKit {
         }
 
         public async Task<PKMember> Create(PKSystem system, string name) {
-            // TODO: handle collision
-            var hid = Utils.GenerateHid();
+            string hid;
+            do
+            {
+                hid = Utils.GenerateHid();
+            } while (await GetByHid(hid) != null);
 
             PKMember member;
             using (var conn = await _conn.Obtain())
@@ -113,7 +119,7 @@ namespace PluralKit {
                     SystemID = system.Id,
                     Name = name
                 });
-            
+
             _logger.Information("Created member {Member}", member.Id);
             return member;
         }
@@ -145,14 +151,14 @@ namespace PluralKit {
         public async Task Save(PKMember member) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update members set name = @Name, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
-            
+
             _logger.Information("Updated member {@Member}", member);
         }
 
         public async Task Delete(PKMember member) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
-            
+
             _logger.Information("Deleted member {@Member}", member);
         }
 
@@ -167,7 +173,7 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<int>("select count(*) from members where system = @Id", system);
         }
-        
+
         public async Task<ulong> Count()
         {
             using (var conn = await _conn.Obtain())
@@ -207,8 +213,8 @@ namespace PluralKit {
                     MemberId = member.Id,
                     SenderId = senderId,
                     OriginalMid = originalMessage
-                });      
-            
+                });
+
             _logger.Information("Stored message {Message} in channel {Channel}", messageId, channelId);
         }
 
@@ -222,13 +228,13 @@ namespace PluralKit {
                     Member = member
                 }, new { Id = id })).FirstOrDefault();
         }
-        
+
         public async Task Delete(ulong id) {
             using (var conn = await _conn.Obtain())
                 if (await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id }) > 0)
                     _logger.Information("Deleted message {Message}", id);
         }
-        
+
         public async Task BulkDelete(IReadOnlyCollection<ulong> ids)
         {
             using (var conn = await _conn.Obtain())
@@ -240,7 +246,7 @@ namespace PluralKit {
                     _logger.Information("Bulk deleted messages {Messages}, {FoundCount} found", ids, foundCount);
             }
         }
-        
+
         public async Task<ulong> Count()
         {
             using (var conn = await _conn.Obtain())
@@ -268,7 +274,7 @@ namespace PluralKit {
                 // First, we insert the switch itself
                 var sw = await conn.QuerySingleAsync<PKSwitch>("insert into switches(system) values (@System) returning *",
                     new {System = system.Id});
-                
+
                 // Then we insert each member in the switch in the switch_members table
                 // TODO: can we parallelize this or send it in bulk somehow?
                 foreach (var member in members)
@@ -277,10 +283,10 @@ namespace PluralKit {
                         "insert into switch_members(switch, member) values(@Switch, @Member)",
                         new {Switch = sw.Id, Member = member.Id});
                 }
-                
+
                 // Finally we commit the tx, since the using block will otherwise rollback it
                 tx.Commit();
-                
+
                 _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system.Id, members.Select(m => m.Id));
             }
         }
@@ -299,7 +305,7 @@ namespace PluralKit {
                 return await conn.QueryAsync<int>("select member from switch_members where switch = @Switch order by switch_members.id",
                     new {Switch = sw.Id});
         }
-        
+
         public async Task<IEnumerable<PKMember>> GetSwitchMembers(PKSwitch sw)
         {
             using (var conn = await _conn.Obtain())
@@ -315,7 +321,7 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
                     new {Time = time, Id = sw.Id});
-            
+
             _logger.Information("Moved switch {Switch} to {Time}", sw.Id, time);
         }
 
@@ -323,16 +329,16 @@ namespace PluralKit {
         {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
-            
+
             _logger.Information("Deleted switch {Switch}");
         }
-        
+
         public async Task<ulong> Count()
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from switches");
         }
-        
+
         public struct SwitchListEntry
         {
             public ICollection<PKMember> Members;
@@ -346,7 +352,7 @@ namespace PluralKit {
             // todo: this is in general not very efficient LOL
             // returns switches in chronological (newest first) order
             var switches = await GetSwitches(system);
-            
+
             // we skip all switches that happened later than the range end, and taking all the ones that happened after the range start
             // *BUT ALSO INCLUDING* the last switch *before* the range (that partially overlaps the range period)
             var switchesInRange = switches.SkipWhile(sw => sw.Timestamp >= periodEnd).TakeWhileIncluding(sw => sw.Timestamp > periodStart).ToList();
@@ -375,14 +381,14 @@ namespace PluralKit {
                 // find the start time of the switch, but clamp it to the range (only applicable to the Last Switch Before Range we include in the TakeWhileIncluding call above)
                 var switchStartClamped = switchInRange.Timestamp;
                 if (switchStartClamped < periodStart) switchStartClamped = periodStart;
-                
+
                 outList.Add(new SwitchListEntry
                 {
                     Members = (await GetSwitchMemberIds(switchInRange)).Select(id => memberObjects[id]).ToList(),
                     TimespanStart = switchStartClamped,
                     TimespanEnd = endTime
                 });
-                
+
                 // next switch's end is this switch's start
                 endTime = switchInRange.Timestamp;
             }
@@ -402,15 +408,15 @@ namespace PluralKit {
             Instant periodEnd)
         {
             var dict = new Dictionary<PKMember, Duration>();
-            
+
             var noFronterDuration = Duration.Zero;
-            
+
             // Sum up all switch durations for each member
             // switches with multiple members will result in the duration to add up to more than the actual period range
 
             var actualStart = periodEnd; // will be "pulled" down
             var actualEnd = periodStart; // will be "pulled" up
-            
+
             foreach (var sw in await GetTruncatedSwitchList(system, periodStart, periodEnd))
             {
                 var span = sw.TimespanEnd - sw.TimespanStart;
@@ -425,7 +431,7 @@ namespace PluralKit {
                 if (sw.TimespanStart < actualStart) actualStart = sw.TimespanStart;
                 if (sw.TimespanEnd > actualEnd) actualEnd = sw.TimespanEnd;
             }
-            
+
             return new PerMemberSwitchDuration
             {
                 MemberSwitchDurations = dict,
