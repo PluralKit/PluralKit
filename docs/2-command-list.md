@@ -5,7 +5,7 @@ permalink: /commands
 ---
 
 # How to read this
-Words in <angle brackets> are *required parameters*. Words in [square brackets] are *optional parameters*. Words with ellipses... indicate multiple repeating parameters.
+Words in \<angle brackets> are *required parameters*. Words in [square brackets] are *optional parameters*. Words with ellipses... indicate multiple repeating parameters.
 
 # Commands
 ## System commands
@@ -34,7 +34,7 @@ Words in <angle brackets> are *required parameters*. Words in [square brackets] 
 - `pk;member <name> pronouns [pronouns]` - Changes the pronouns of a member.
 - `pk;member <name> color [color]` - Changes the color of a member.
 - `pk;member <name> birthdate [birthdate]` - Changes the birthday of a member.
-- `pk;member <name> delete` - Deletes a member. 
+- `pk;member <name> delete` - Deletes a member.
 ## Switching commands
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
