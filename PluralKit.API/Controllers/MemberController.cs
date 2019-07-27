@@ -29,6 +29,46 @@ namespace PluralKit.API.Controllers
             return Ok(member);
         }
 
+        [HttpPost]
+        [RequiresSystem]
+        public async Task<ActionResult<PKMember>> PostMember([FromBody] PKMember newMember)
+        {
+            var system = _auth.CurrentSystem;
+
+            if (newMember.Name == null)
+            return BadRequest("Member name cannot be null.");
+
+            // Explicit bounds checks
+            if (newMember.Name != null && newMember.Name.Length > Limits.MaxMemberNameLength)
+                return BadRequest($"Member name too long ({newMember.Name.Length} > {Limits.MaxMemberNameLength}.");
+            if (newMember.Pronouns != null && newMember.Pronouns.Length > Limits.MaxPronounsLength)
+                return BadRequest($"Member pronouns too long ({newMember.Pronouns.Length} > {Limits.MaxPronounsLength}.");
+            if (newMember.Description != null && newMember.Description.Length > Limits.MaxDescriptionLength)
+                return BadRequest($"Member descriptions too long ({newMember.Description.Length} > {Limits.MaxDescriptionLength}.");
+
+            // Sanity bounds checks
+            if (newMember.AvatarUrl != null && newMember.AvatarUrl.Length > 1000)
+                return BadRequest();
+            if (newMember.Prefix != null && newMember.Prefix.Length > 1000)
+                return BadRequest();
+            if (newMember.Suffix != null && newMember.Suffix.Length > 1000)
+                return BadRequest();
+
+            var member = await _members.Create(system, newMember.Name);
+
+            member.Name = newMember.Name;
+            member.Color = newMember.Color;
+            member.AvatarUrl = newMember.AvatarUrl;
+            member.Birthday = newMember.Birthday;
+            member.Pronouns = newMember.Pronouns;
+            member.Description = newMember.Description;
+            member.Prefix = newMember.Prefix;
+            member.Suffix = newMember.Suffix;
+            await _members.Save(member);
+
+            return Ok();
+        }
+
         [HttpPatch("{hid}")]
         [RequiresSystem]
         public async Task<ActionResult<PKMember>> PatchMember(string hid, [FromBody] PKMember newMember)
@@ -66,7 +106,7 @@ namespace PluralKit.API.Controllers
             member.Prefix = newMember.Prefix;
             member.Suffix = newMember.Suffix;
             await _members.Save(member);
-            
+
             return Ok();
         }
     }
