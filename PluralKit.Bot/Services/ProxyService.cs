@@ -88,6 +88,9 @@ namespace PluralKit.Bot
 
         public async Task HandleMessageAsync(IMessage message)
         {
+            // Bail early if this isn't in a guild channel
+            if (!(message.Channel is IGuildChannel)) return;
+            
             IEnumerable<ProxyDatabaseResult> results;
             using (var conn = await _conn.Obtain())
             {
@@ -108,11 +111,14 @@ namespace PluralKit.Bot
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
-            
+
+            // Sanitize @everyone, but only if the original user wouldn't have permission to
+            var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
+
             // Fetch a webhook for this channel, and send the proxied message
             var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
-            var hookMessageId = await ExecuteWebhook(webhook, match.InnerText, match.ProxyName, avatarUrl, message.Attachments.FirstOrDefault());
+            var hookMessageId = await ExecuteWebhook(webhook, messageContents, match.ProxyName, avatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
@@ -125,6 +131,13 @@ namespace PluralKit.Bot
             {
                 await message.DeleteAsync();
             } catch (HttpException) {} // If it's already deleted, we just swallow the exception
+        }
+
+        private static string SanitizeEveryoneMaybe(IMessage message, string messageContents)
+        {
+            var senderPermissions = ((IGuildUser) message.Author).GetPermissions(message.Channel as IGuildChannel);
+            if (!senderPermissions.MentionEveryone) return messageContents.SanitizeEveryone();
+            return messageContents;
         }
 
         private async Task<bool> EnsureBotPermissions(ITextChannel channel)
