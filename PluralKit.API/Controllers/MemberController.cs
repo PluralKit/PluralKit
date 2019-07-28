@@ -109,5 +109,19 @@ namespace PluralKit.API.Controllers
 
             return Ok(member);
         }
+        
+        [HttpDelete("{hid}")]
+        [RequiresSystem]
+        public async Task<ActionResult<PKMember>> DeleteMember(string hid)
+        {
+            var member = await _members.GetByHid(hid);
+            if (member == null) return NotFound("Member not found.");
+            
+            if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
+            
+            _members.Delete(member);
+
+            return Ok();
+        }
     }
 }
