@@ -66,7 +66,7 @@ namespace PluralKit.API.Controllers
             member.Suffix = newMember.Suffix;
             await _members.Save(member);
 
-            return Ok();
+            return Ok(member);
         }
 
         [HttpPatch("{hid}")]
@@ -107,7 +107,7 @@ namespace PluralKit.API.Controllers
             member.Suffix = newMember.Suffix;
             await _members.Save(member);
 
-            return Ok();
+            return Ok(member);
         }
     }
 }
