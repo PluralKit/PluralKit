@@ -40,6 +40,7 @@ services:
     volumes:
       - "db_data:/var/lib/postgresql/data"
     restart: always
+    command: ["postgres", "-c", "max-connections=1000"]
   influx:
     image: influxdb:alpine
     volumes:
