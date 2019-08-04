@@ -41,11 +41,6 @@ namespace PluralKit
             return Convert.ToBase64String(buf);
         }
 
-        public static string Truncate(this string str, int maxLength, string ellipsis = "...") {
-            if (str.Length < maxLength) return str;
-            return str.Substring(0, maxLength - ellipsis.Length) + ellipsis;
-        }
-
         public static bool IsLongerThan(this string str, int length)
         {
             if (str != null) return str.Length > length;

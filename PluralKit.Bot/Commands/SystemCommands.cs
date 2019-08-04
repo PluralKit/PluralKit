@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Humanizer;
 using NodaTime;
 using NodaTime.Text;
 using NodaTime.TimeZones;
@@ -174,7 +175,7 @@ namespace PluralKit.Bot.Commands
                 var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
                 await Context.Paginate<PKMember>(
                     members.OrderBy(m => m.Name).ToList(),
-                    10,
+                    5,
                     embedTitle,
                     (eb, ms) => {
                         foreach (var m in ms) {
@@ -183,7 +184,7 @@ namespace PluralKit.Bot.Commands
                             if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                             if (m.Prefix != null || m.Suffix != null) profile += $"\n**Proxy tags**: {m.ProxyString}";
                             if (m.Description != null) profile += $"\n\n{m.Description}";
-                            eb.AddField(m.Name, profile);
+                            eb.AddField(m.Name, profile.Truncate(1024));
                         }
                     }
                 );
