@@ -11,7 +11,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 ## System commands
 - `pk;system [id]` - Shows information about a system.
 - `pk;system new [name]` - Creates a new system registered to your account.
-- `pk;system rename [new name]` - Changes the description of your system.
+- `pk;system rename [new name]` - Changes the name of your system.
 - `pk;system description [description]` - Changes the description of your system.
 - `pk;system avatar [avatar url]` - Changes the avatar of your system.
 - `pk;system tag [tag]` - Changes the system tag of your system.
