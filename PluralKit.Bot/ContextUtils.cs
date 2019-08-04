@@ -83,6 +83,9 @@ namespace PluralKit.Bot {
                     if (reaction.Emote.Name == "\u23E9") currentPage = pageCount - 1; // >>
                     if (reaction.Emote.Name == Emojis.Error) break; // X
                     
+                    // C#'s % operator is dumb and wrong, so we fix negative numbers
+                    if (currentPage < 0) currentPage += pageCount;
+                    
                     // If we can, remove the user's reaction (so they can press again quickly)
                     if (await ctx.HasPermission(ChannelPermission.ManageMessages) && reaction.User.IsSpecified) await msg.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                     
