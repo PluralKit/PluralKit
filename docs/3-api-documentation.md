@@ -110,7 +110,7 @@ Queries a system's member list by its 5-character ID. If the system doesn't exis
 
 #### Example request
     GET https://api.pluralkit.me/v1/s/abcde/members
-    
+
 #### Example response
 ```json
 [
@@ -189,7 +189,7 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
 
 #### Example request
     PATCH https://api.pluralkit.me/v1/s
-   
+
 ```json
 {
     "name": "New System Name",
@@ -220,7 +220,7 @@ Registers a new switch to your own system given a list of member IDs.
 
 #### Example request
     POST https://api.pluralkit.me/v1/s/switches
-    
+
 ```json
 {
     "members": ["qwert", "yuiop"]
@@ -252,14 +252,14 @@ Queries a member's information by its 5-character member ID. If the member does 
 }
 ```
 
-### PATCH /m/\<id>
+### POST /m
 **Requires authentication.**
 
-Edits a member's information. Missing fields will be set to `null`. Will return the new member object. Member must (obviously) belong to your own system.
+Creates a new member with the information given. Missing fields (except for name) will be set to `null`. Will return the new member object. Member must (obviously) belong to your own system.
 
 #### Example request
-    PATCH https://api.pluralkit.me/v1/m/qwert
-    
+    POST https://api.pluralkit.me/v1/m
+
 ```json
 {
     "name": "Craig Peterson",
@@ -271,7 +271,44 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "prefix": "["
 }
 ```
-(note the absence of a `suffix` field, which is set to null in the response) 
+(note the absence of a `suffix` field, which is set to null in the response)
+
+#### Example response
+```json
+{
+    "id": "qwert",
+    "name": "Craig Peterson",
+    "color": null,
+    "avatar_url": "https://path/to/new/image.png",
+    "birthday": "1997-07-14",
+    "pronouns": "they/them",
+    "description": "I am Craig, cooler example user extraordinaire.",
+    "prefix": "[",
+    "suffix": null,
+    "created": "2019-01-01T15:00:00.654321Z"
+}
+```
+
+### PATCH /m/\<id>
+**Requires authentication.**
+
+Edits a member's information. Missing fields will be set to `null`. Will return the new member object. Member must (obviously) belong to your own system.
+
+#### Example request
+    PATCH https://api.pluralkit.me/v1/m/qwert
+
+```json
+{
+    "name": "Craig Peterson",
+    "color": null,
+    "avatar_url": "https://path/to/new/image.png",
+    "birthday": "1997-07-14",
+    "pronouns": "they/them",
+    "description": "I am Craig, cooler example user extraordinaire.",
+    "prefix": "["
+}
+```
+(note the absence of a `suffix` field, which is set to null in the response)
 
 #### Example response
 ```json
