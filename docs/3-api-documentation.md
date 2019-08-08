@@ -326,6 +326,17 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
 }
 ```
 
+### DELETE /m/\<id>
+**Requires authentication.**
+
+Deletes a member from the database. Be careful as there is no confirmation and the member will be deleted immediately. Member must (obviously) belong to your own system.
+
+#### Example request
+    DELETE https://api.pluralkit.me/v1/m/qwert
+
+#### Example response
+(`204 No Content`)
+
 ### GET /a/\<id>
 Queries a system by its linked Discord account ID (17/18-digit numeric snowflake). Returns `404 Not Found` if the account doesn't have a system linked.
 
