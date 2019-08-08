@@ -119,7 +119,7 @@ namespace PluralKit.API.Controllers
             
             if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
             
-            _members.Delete(member);
+            await _members.Delete(member);
 
             return Ok();
         }
