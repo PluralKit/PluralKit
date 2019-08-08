@@ -6,7 +6,7 @@ using Serilog;
 namespace PluralKit.Bot {
     public class ServerDefinition {
         public ulong Id { get; set; }
-        public ulong? LogChannel { get; set; } 
+        public ulong? LogChannel { get; set; }
     }
 
     public class LogChannelService {
@@ -23,11 +23,11 @@ namespace PluralKit.Bot {
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async Task LogMessage(PKSystem system, PKMember member, ulong messageId, IGuildChannel originalChannel, IUser sender, string content) {
+        public async Task LogMessage(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, IGuildChannel originalChannel, IUser sender, string content) {
             var logChannel = await GetLogChannel(originalChannel.Guild);
             if (logChannel == null) return;
 
-            var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, sender, content, originalChannel);
+            var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, originalMsgId, sender, content, originalChannel);
 
             var url = $"https://discordapp.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
             await logChannel.SendMessageAsync(text: url, embed: embed);
@@ -56,7 +56,7 @@ namespace PluralKit.Bot {
                     "insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel",
                     def);
             }
-            
+
             _logger.Information("Set guild {Guild} log channel to {Channel}", guild.Id, newLogChannel?.Id);
         }
     }

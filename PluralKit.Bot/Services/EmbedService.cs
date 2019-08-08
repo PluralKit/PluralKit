@@ -53,13 +53,13 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, IUser sender, string content, IGuildChannel channel) {
+        public Embed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, IUser sender, string content, IGuildChannel channel) {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = SnowflakeUtils.FromSnowflake(messageId);
             return new EmbedBuilder()
                 .WithAuthor($"#{channel.Name}: {member.Name}", member.AvatarUrl)
                 .WithDescription(content)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId}")
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
                 .WithTimestamp(timestamp)
                 .Build();
         }
