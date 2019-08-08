@@ -39,7 +39,7 @@ namespace PluralKit.Bot
         private ILogger _logger;
 
         private HttpClient _httpClient;
-        
+
         public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, IMetrics metrics, ILogger logger)
         {
             _client = client;
@@ -50,7 +50,7 @@ namespace PluralKit.Bot
             _embeds = embeds;
             _metrics = metrics;
             _logger = logger.ForContext<ProxyService>();
-            
+
             _httpClient = new HttpClient();
         }
 
@@ -72,7 +72,7 @@ namespace PluralKit.Bot
             foreach (var potential in ordered)
             {
                 if (potential.Member.Prefix == null && potential.Member.Suffix == null) continue;
-                
+
                 var prefix = potential.Member.Prefix ?? "";
                 var suffix = potential.Member.Suffix ?? "";
 
@@ -82,7 +82,7 @@ namespace PluralKit.Bot
                     return new ProxyMatch { Member = potential.Member, System = potential.System, InnerText = inner };
                 }
             }
-            
+
             return null;
         }
 
@@ -90,7 +90,7 @@ namespace PluralKit.Bot
         {
             // Bail early if this isn't in a guild channel
             if (!(message.Channel is IGuildChannel)) return;
-            
+
             IEnumerable<ProxyDatabaseResult> results;
             using (var conn = await _conn.Obtain())
             {
@@ -103,11 +103,11 @@ namespace PluralKit.Bot
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, results);
             if (match == null) return;
-            
+
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
             if (!await EnsureBotPermissions(message.Channel as ITextChannel)) return;
-            
+
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
@@ -122,7 +122,7 @@ namespace PluralKit.Bot
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
-            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Channel as IGuildChannel, message.Author, match.InnerText);
+            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText);
 
             // Wait a second or so before deleting the original message
             await Task.Delay(1000);
@@ -151,7 +151,7 @@ namespace PluralKit.Bot
                     $"{Emojis.Error} PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages. Please contact a server administrator to remedy this.");
                 return false;
             }
-            
+
             if (!permissions.ManageMessages)
             {
                 await channel.SendMessageAsync(
@@ -165,7 +165,7 @@ namespace PluralKit.Bot
         private async Task<ulong> ExecuteWebhook(IWebhook webhook, string text, string username, string avatarUrl, IAttachment attachment)
         {
             username = FixClyde(username);
-            
+
             // TODO: DiscordWebhookClient's ctor does a call to GetWebhook that may be unnecessary, see if there's a way to do this The Hard Way :tm:
             // TODO: this will probably crash if there are multiple consecutive failures, perhaps have a loop instead?
             DiscordWebhookClient client;
@@ -176,7 +176,7 @@ namespace PluralKit.Bot
             catch (InvalidOperationException)
             {
                 // TODO: does this leak internal stuff in the (now-invalid) client?
-                
+
                 // webhook was deleted or invalid
                 webhook = await _webhookCache.InvalidateAndRefreshWebhook(webhook);
                 client = new DiscordWebhookClient(webhook);
@@ -217,7 +217,7 @@ namespace PluralKit.Bot
                     _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
                     throw;
                 }
-                
+
                 // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
                 // doesn't work if there's no permission to)
                 return messageId;
@@ -248,10 +248,10 @@ namespace PluralKit.Bot
             // Find the message in the DB
             var msg = await _messageStorage.Get(message.Id);
             if (msg == null) return;
-            
+
             // DM them the message card
             await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
-            
+
             // And finally remove the original reaction (if we can)
             var msgObj = await message.GetOrDownloadAsync();
             if (await msgObj.Channel.HasPermission(ChannelPermission.ManageMessages))
@@ -295,7 +295,7 @@ namespace PluralKit.Bot
         {
             var match = Regex.Match(name, "clyde", RegexOptions.IgnoreCase);
             if (!match.Success) return name;
-            
+
             // Put a hair space (\u200A) between the "c" and the "lyde" in the match to avoid Discord matching it
             // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
             return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
