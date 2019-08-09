@@ -80,7 +80,8 @@ namespace PluralKit.Bot {
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid}");
 
             if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
-            
+
+            if (member.DisplayName != null) eb.AddField("Display Name", member.DisplayName, true);
             if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
             if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns, true);
             if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
