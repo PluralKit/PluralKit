@@ -48,7 +48,7 @@ namespace PluralKit.Bot
                 var coreConfig = services.GetRequiredService<CoreConfig>();
                 var botConfig = services.GetRequiredService<BotConfig>();
 
-                using (SentrySdk.Init(coreConfig.SentryUrl))
+                using (Sentry.SentrySdk.Init(coreConfig.SentryUrl))
                 {
 
                     logger.Information("Connecting to database");
@@ -88,7 +88,7 @@ namespace PluralKit.Bot
             }))
             .AddSingleton<Bot>()
 
-            .AddTransient<CommandService>(_ => new CommandService(new CommandServiceConfig
+            .AddSingleton(_ => new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
                 QuotationMarkAliasMap = new Dictionary<char, char>
@@ -99,7 +99,10 @@ namespace PluralKit.Bot
                     {'“', '”'},
                     {'„', '‟'},
                 },
-                DefaultRunMode = RunMode.Async
+                // We're already asyncing stuff by forking off at the client event handlers
+                // So adding an additional layer of forking is pointless
+                // and leads to the service scope being disposed of prematurely
+                DefaultRunMode = RunMode.Sync
             }))
             .AddTransient<EmbedService>()
             .AddTransient<ProxyService>()
@@ -122,6 +125,9 @@ namespace PluralKit.Bot
                 return builder.Build();
             })
             .AddSingleton<PeriodicStatCollector>()
+            
+            .AddScoped(_ => new Sentry.Scope(null))
+            .AddTransient<PKEventHandler>()
 
             .AddSingleton(svc => InitUtils.InitLogger(svc.GetRequiredService<CoreConfig>(), "bot"))
             .BuildServiceProvider();
@@ -139,10 +145,10 @@ namespace PluralKit.Bot
 
         public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
-            this._services = services;
-            this._client = client as DiscordShardedClient;
-            this._commands = commands;
-            this._proxy = proxy;
+            _services = services;
+            _client = client as DiscordShardedClient;
+            _commands = commands;
+            _proxy = proxy;
             _metrics = metrics;
             _collector = collector;
             _logger = logger.ForContext<Bot>();
@@ -156,42 +162,30 @@ namespace PluralKit.Bot
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
             _client.ShardReady += ShardReady;
-
-            // Deliberately wrapping in a fake-"async" function *without* awaiting, we don't want to "block" since this'd hold up the main loop
-            // These handlers return Task so we gotta be careful not to return the Task itself (which would then be awaited) - kinda weird design but eh
-            _client.MessageReceived += (msg) => { var _ = MessageReceived(msg).CatchException(HandleRuntimeError); return Task.CompletedTask; };
-            _client.ReactionAdded += (message, channel, reaction) => { var _ = _proxy.HandleReactionAddedAsync(message, channel, reaction).CatchException(HandleRuntimeError); return Task.CompletedTask; };
-            _client.MessageDeleted += (message, channel) => { var _ = _proxy.HandleMessageDeletedAsync(message, channel).CatchException(HandleRuntimeError); return Task.CompletedTask; };
-            _client.MessagesBulkDeleted += (messages, channel) => { var _ = _proxy.HandleMessageBulkDeleteAsync(messages, channel).CatchException(HandleRuntimeError); return Task.CompletedTask; };
-
             _client.Log += FrameworkLog;
+            
+            _client.MessageReceived += (msg) => HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
+            _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(s => s.AddReactionAddedBreadcrumb(msg, channel, reaction), eh => eh.HandleReactionAdded(msg, channel, reaction));
+            _client.MessageDeleted += (msg, channel) => HandleEvent(s => s.AddMessageDeleteBreadcrumb(msg, channel), eh => eh.HandleMessageDeleted(msg, channel));
+            _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(s => s.AddMessageBulkDeleteBreadcrumb(msgs, channel), eh => eh.HandleMessagesBulkDelete(msgs, channel));
         }
 
         private Task FrameworkLog(LogMessage msg)
         {
             // Bridge D.NET logging to Serilog
             LogEventLevel level = LogEventLevel.Verbose;
-            switch (msg.Severity)
-            {
-                case LogSeverity.Critical:
-                    level = LogEventLevel.Fatal;
-                    break;
-                case LogSeverity.Debug:
-                    level = LogEventLevel.Debug;
-                    break;
-                case LogSeverity.Error:
-                    level = LogEventLevel.Error;
-                    break;
-                case LogSeverity.Info:
-                    level = LogEventLevel.Information;
-                    break;
-                case LogSeverity.Verbose:
-                    level = LogEventLevel.Verbose;
-                    break;
-                case LogSeverity.Warning:
-                    level = LogEventLevel.Warning;
-                    break;
-            }
+            if (msg.Severity == LogSeverity.Critical)
+                level = LogEventLevel.Fatal;
+            else if (msg.Severity == LogSeverity.Debug)
+                level = LogEventLevel.Debug;
+            else if (msg.Severity == LogSeverity.Error)
+                level = LogEventLevel.Error;
+            else if (msg.Severity == LogSeverity.Info)
+                level = LogEventLevel.Information;
+            else if (msg.Severity == LogSeverity.Verbose)
+                level = LogEventLevel.Verbose;
+            else if (msg.Severity == LogSeverity.Warning)
+                level = LogEventLevel.Warning;
 
             _logger.Write(level, msg.Exception, "Discord.Net {Source}: {Message}", msg.Source, msg.Message);
             return Task.CompletedTask;
@@ -216,7 +210,9 @@ namespace PluralKit.Bot
 
             if (shardClient.ShardId == 0)
             {
-                _updateTimer = new Timer((_) => UpdatePeriodic().CatchException(HandleRuntimeError), null, 0, 60*1000);
+                _updateTimer = new Timer((_) => {
+                    HandleEvent(s => s.AddPeriodicBreadcrumb(), __ => UpdatePeriodic()); 
+                }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
                 Console.WriteLine(
                     $"PluralKit started as {_client.CurrentUser.Username}#{_client.CurrentUser.Discriminator} ({_client.CurrentUser.Id}).");
@@ -243,7 +239,7 @@ namespace PluralKit.Bot
                     {
                         await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
                     } else {
-                        HandleRuntimeError((_result as ExecuteResult?)?.Exception);
+                        HandleRuntimeError((_result as ExecuteResult?)?.Exception, ((PKCommandContext) ctx).ServiceProvider.GetRequiredService<Scope>());
                     }
                 } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
                     await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}\n**Usage: **pk;{cmd.Value.Remarks}");
@@ -253,7 +249,68 @@ namespace PluralKit.Bot
             }
         }
 
-        private async Task MessageReceived(SocketMessage _arg)
+        private Task HandleEvent(Action<Scope> breadcrumbFactory, Func<PKEventHandler, Task> handler)
+        {
+            // Inner function so we can await the handler without stalling the entire pipeline
+            async Task Inner()
+            {
+                // Create a DI scope for this event
+                // and log the breadcrumb to the newly created (in-svc-scope) Sentry scope
+                using (var scope = _services.CreateScope())
+                {
+                    var sentryScope = scope.ServiceProvider.GetRequiredService<Scope>();
+                    breadcrumbFactory(sentryScope);
+                
+                    try
+                    {
+                        await handler(scope.ServiceProvider.GetRequiredService<PKEventHandler>());
+                    }
+                    catch (Exception e)
+                    {
+                        HandleRuntimeError(e, sentryScope);
+                    }
+                }
+
+            }
+
+#pragma warning disable 4014
+            Inner();
+#pragma warning restore 4014
+            return Task.CompletedTask;
+        }
+
+        private void HandleRuntimeError(Exception e, Scope scope = null)
+        {
+            _logger.Error(e, "Exception in bot event handler");
+            
+            var evt = new SentryEvent(e);
+            SentrySdk.CaptureEvent(evt, scope);
+            
+            Console.Error.WriteLine(e);
+        }
+    }
+    
+    class PKEventHandler {
+        private CommandService _commands;
+        private ProxyService _proxy;
+        private ILogger _logger;
+        private IMetrics _metrics;
+        private DiscordShardedClient _client;
+        private DbConnectionFactory _connectionFactory;
+        private IServiceProvider _services;
+
+        public PKEventHandler(CommandService commands, ProxyService proxy, ILogger logger, IMetrics metrics, IDiscordClient client, DbConnectionFactory connectionFactory, IServiceProvider services)
+        {
+            _commands = commands;
+            _proxy = proxy;
+            _logger = logger;
+            _metrics = metrics;
+            _client = (DiscordShardedClient) client;
+            _connectionFactory = connectionFactory;
+            _services = services;
+        }
+
+        public async Task HandleMessage(SocketMessage msg)
         {
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
             
@@ -261,58 +318,50 @@ namespace PluralKit.Bot
             // This will cause an error in WebhookCacheServices so we just workaround and don't process any messages
             // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
             if (_client.CurrentUser == null) return;
+            
+            // Ignore system messages (member joined, message pinned, etc)
+            var arg = msg as SocketUserMessage;
+            if (arg == null) return;
 
-            using (var serviceScope = _services.CreateScope())
+            // Ignore bot messages
+            if (arg.Author.IsBot || arg.Author.IsWebhook) return;
+
+            int argPos = 0;
+            // Check if message starts with the command prefix
+            if (arg.HasStringPrefix("pk;", ref argPos, StringComparison.OrdinalIgnoreCase) ||
+                arg.HasStringPrefix("pk!", ref argPos, StringComparison.OrdinalIgnoreCase) ||
+                arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
-                SentrySdk.AddBreadcrumb(message: _arg.Content, category: "event.message", data: new Dictionary<string, string>()
-                {
-                    {"user", _arg.Author.Id.ToString()},
-                    {"channel", _arg.Channel.Id.ToString()},
-                    {"guild", ((_arg.Channel as IGuildChannel)?.GuildId ?? 0).ToString()}
-                });
+                // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
+                var trimStartLengthDiff = arg.Content.Substring(argPos).Length -
+                                          arg.Content.Substring(argPos).TrimStart().Length;
+                argPos += trimStartLengthDiff;
 
-                // Ignore system messages (member joined, message pinned, etc)
-                var arg = _arg as SocketUserMessage;
-                if (arg == null) return;
-                
-                // Ignore bot messages
-                if (arg.Author.IsBot || arg.Author.IsWebhook) return;
-
-                int argPos = 0;
-                // Check if message starts with the command prefix
-                if (arg.HasStringPrefix("pk;", ref argPos, StringComparison.OrdinalIgnoreCase) ||
-                    arg.HasStringPrefix("pk!", ref argPos, StringComparison.OrdinalIgnoreCase) ||
-                    arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
-                {
-                    // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
-                    var trimStartLengthDiff = arg.Content.Substring(argPos).Length -
-                                              arg.Content.Substring(argPos).TrimStart().Length;
-                    argPos += trimStartLengthDiff;
-
-                    // If it does, fetch the sender's system (because most commands need that) into the context,
-                    // and start command execution
-                    // Note system may be null if user has no system, hence `OrDefault`
-                    PKSystem system;
-                    using (var conn = await serviceScope.ServiceProvider.GetService<DbConnectionFactory>().Obtain())
-                        system = await conn.QueryFirstOrDefaultAsync<PKSystem>(
-                            "select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system",
-                            new {Id = arg.Author.Id});
-                    await _commands.ExecuteAsync(new PKCommandContext(_client, arg, system), argPos,
-                        serviceScope.ServiceProvider);
-                }
-                else
-                {
-                    // If not, try proxying anyway
-                    await _proxy.HandleMessageAsync(arg);
-                }
+                // If it does, fetch the sender's system (because most commands need that) into the context,
+                // and start command execution
+                // Note system may be null if user has no system, hence `OrDefault`
+                PKSystem system;
+                using (var conn = await _connectionFactory.Obtain())
+                    system = await conn.QueryFirstOrDefaultAsync<PKSystem>(
+                        "select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system",
+                        new {Id = arg.Author.Id});
+                await _commands.ExecuteAsync(new PKCommandContext(_client, arg, system, _services), argPos,
+                    _services);
+            }
+            else
+            {
+                // If not, try proxying anyway
+                await _proxy.HandleMessageAsync(arg);
             }
         }
 
-        private void HandleRuntimeError(Exception e)
-        {
-            _logger.Error(e, "Exception in bot event handler");
-            SentrySdk.CaptureException(e);
-            Console.Error.WriteLine(e);
-        }
+        public Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,
+            SocketReaction reaction) => _proxy.HandleReactionAddedAsync(message, channel, reaction);
+
+        public Task HandleMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel) =>
+            _proxy.HandleMessageDeletedAsync(message, channel);
+
+        public Task HandleMessagesBulkDelete(IReadOnlyCollection<Cacheable<IMessage, ulong>> messages,
+            IMessageChannel channel) => _proxy.HandleMessageBulkDeleteAsync(messages, channel);
     }
 }

@@ -171,12 +171,14 @@ namespace PluralKit.Bot
     public class PKCommandContext : ShardedCommandContext
     {
         public PKSystem SenderSystem { get; }
-        
+        public IServiceProvider ServiceProvider { get; }
+
         private object _entity;
 
-        public PKCommandContext(DiscordShardedClient client, SocketUserMessage msg, PKSystem system) : base(client, msg)
+        public PKCommandContext(DiscordShardedClient client, SocketUserMessage msg, PKSystem system, IServiceProvider serviceProvider) : base(client, msg)
         {
             SenderSystem = system;
+            ServiceProvider = serviceProvider;
         }
 
         public T GetContextEntity<T>() where T: class  {
