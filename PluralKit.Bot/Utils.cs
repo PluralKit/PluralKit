@@ -49,7 +49,7 @@ namespace PluralKit.Bot
                 {
                     throw Errors.InvalidUrl(url);
                 }
-                
+
                 var response = await client.GetAsync(uri);
                 if (!response.IsSuccessStatusCode) // Check status code
                     throw Errors.AvatarServerError(response.StatusCode);
@@ -63,11 +63,11 @@ namespace PluralKit.Bot
                 // Parse the image header in a worker
                 var stream = await response.Content.ReadAsStreamAsync();
                 var image = await Task.Run(() => Image.Identify(stream));
-                if (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit) // Check image size 
+                if (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit) // Check image size
                     throw Errors.AvatarDimensionsTooLarge(image.Width, image.Height);
             }
         }
-        
+
         public static bool HasMentionPrefix(string content, ref int argPos)
         {
             // Roughly ported from Discord.Commands.MessageExtensions.HasMentionPrefix
@@ -82,9 +82,16 @@ namespace PluralKit.Bot
 
         public static string Sanitize(this string input) =>
             Regex.Replace(Regex.Replace(input, "<@[!&]?(\\d{17,19})>", "<\\@$1>"), "@(everyone|here)", "@\u200B$1");
-        
-        public static string SanitizeEveryone(this string input) => 
+
+        public static string SanitizeEveryone(this string input) =>
             Regex.Replace(input, "@(everyone|here)", "@\u200B$1");
+
+        public static string EscapeMarkdown(this string input)
+        {
+            Regex pattern = new Regex(@"[*_~>`(||)\\]", RegexOptions.Multiline);
+            if (input != null) return pattern.Replace(input, @"\$&");
+            else return input;
+        }
 
         public static async Task<ChannelPermissions> PermissionsIn(this IChannel channel)
         {

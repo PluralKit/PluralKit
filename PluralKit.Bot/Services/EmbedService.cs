@@ -34,13 +34,13 @@ namespace PluralKit.Bot {
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid}");
-            
+
             var latestSwitch = await _switches.GetLatestSwitch(system);
             if (latestSwitch != null)
             {
                 var switchMembers = (await _switches.GetSwitchMembers(latestSwitch)).ToList();
                 if (switchMembers.Count > 0)
-                    eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None), 
+                    eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
                         string.Join(", ", switchMembers.Select(m => m.Name)));
             }
 
@@ -49,7 +49,7 @@ namespace PluralKit.Bot {
             eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
 
             if (system.Description != null) eb.AddField("Description", system.Description.Truncate(1024), false);
-            
+
             return eb.Build();
         }
 
@@ -68,7 +68,7 @@ namespace PluralKit.Bot {
         {
             var name = member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
-            
+
             var color = member.Color?.ToDiscordColor() ?? Color.Default;
 
             var messageCount = await _members.MessageCount(member);
@@ -85,7 +85,7 @@ namespace PluralKit.Bot {
             if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
             if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns, true);
             if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix}text{member.Suffix}", true);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix.EscapeMarkdown()}text{member.Suffix.EscapeMarkdown()}", true);
             if (member.Color != null) eb.AddField("Color", $"#{member.Color}", true);
             if (member.Description != null) eb.AddField("Description", member.Description, false);
 
@@ -115,7 +115,7 @@ namespace PluralKit.Bot {
                 var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
 
                 var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
-                
+
                 // If this isn't the latest switch, we also show duration
                 if (lastSw != null)
                 {
@@ -130,7 +130,7 @@ namespace PluralKit.Bot {
 
                 lastSw = sw;
             }
-            
+
             return new EmbedBuilder()
                 .WithTitle("Past switches")
                 .WithDescription(outputStr)
@@ -147,7 +147,7 @@ namespace PluralKit.Bot {
 
             var user = await _client.GetUserAsync(msg.Message.Sender);
             var userStr = user.NameAndMention() ?? $"*(deleted user {msg.Message.Sender})*";
-            
+
             return new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
@@ -170,9 +170,9 @@ namespace PluralKit.Bot {
             // We convert to a list of pairs so we can add the no-fronter value
             // Dictionary doesn't allow for null keys so we instead have a pair with a null key ;)
             var pairs = frontpercent.MemberSwitchDurations.ToList();
-            if (frontpercent.NoFronterDuration != Duration.Zero) 
+            if (frontpercent.NoFronterDuration != Duration.Zero)
                 pairs.Add(new KeyValuePair<PKMember, Duration>(null, frontpercent.NoFronterDuration));
-            
+
             var membersOrdered = pairs.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)
             {
