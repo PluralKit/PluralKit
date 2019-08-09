@@ -29,7 +29,7 @@ namespace PluralKit.Bot.Commands
 
             // Warn if member name will be unproxyable (with/without tag)
             if (memberName.Length > Context.SenderSystem.MaxMemberNameLength) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Member name too long ({memberName.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to create it anyway? (You can change the name later)");
+                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Member name too long ({memberName.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to create it anyway? (You can change the name later, or set a member display name)");
                 if (!await Context.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
@@ -58,9 +58,9 @@ namespace PluralKit.Bot.Commands
             // Hard name length cap
             if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
 
-            // Warn if member name will be unproxyable (with/without tag)
-            if (newName.Length > Context.SenderSystem.MaxMemberNameLength) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} New member name too long ({newName.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to change it anyway?");
+            // Warn if member name will be unproxyable (with/without tag), only if member doesn't have a display name
+            if (ContextEntity.DisplayName == null && newName.Length > Context.SenderSystem.MaxMemberNameLength) {
+                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} New member name too long ({newName.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to change it anyway? (You can set a member display name instead)");
                 if (!await Context.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
@@ -77,6 +77,7 @@ namespace PluralKit.Bot.Commands
 
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
+            if (ContextEntity.DisplayName != null) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member has a display name set (`{ContextEntity.DisplayName}`), and will be proxied using that name instead.");
         }
 
         [Command("description")]
@@ -212,6 +213,39 @@ namespace PluralKit.Bot.Commands
 
             var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
+        }
+        
+        [Command("displayname")]
+        [Alias("nick", "nickname", "displayname")]
+        [Remarks("member <member> displayname <displayname>")]
+        [MustPassOwnMember]
+        public async Task MemberDisplayName([Remainder] string newDisplayName = null)
+        {            
+            // Refuse if proxy name will be unproxyable (with/without tag)
+            if (newDisplayName != null && newDisplayName.Length > Context.SenderSystem.MaxMemberNameLength)
+                throw Errors.DisplayNameTooLong(newDisplayName, Context.SenderSystem.MaxMemberNameLength);
+            
+            ContextEntity.DisplayName = newDisplayName;
+            await Members.Save(ContextEntity);
+
+            var successStr = $"{Emojis.Success} ";
+            if (newDisplayName != null)
+            {
+                successStr +=
+                    $"Member display name changed. This member will now be proxied using the name `{newDisplayName}`.";
+            }
+            else
+            {
+                successStr += $"Member display name cleared. ";
+                
+                // If we're removing display name and the *real* name will be unproxyable, warn.
+                if (ContextEntity.Name.Length > Context.SenderSystem.MaxMemberNameLength)
+                    successStr +=
+                        $" {Emojis.Warn} This member's actual name is too long ({ContextEntity.Name.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), and thus cannot be proxied.";
+                else
+                    successStr += $"This member will now be proxied using their member name `{ContextEntity.Name}.";
+            }
+            await Context.Channel.SendMessageAsync(successStr);
         }
 
         [Command]

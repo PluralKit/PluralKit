@@ -13,18 +13,19 @@ create table if not exists systems
 
 create table if not exists members
 (
-    id          serial primary key,
-    hid         char(5) unique not null,
-    system      serial         not null references systems (id) on delete cascade,
-    color       char(6),
-    avatar_url  text,
-    name        text           not null,
-    birthday    date,
-    pronouns    text,
-    description text,
-    prefix      text,
-    suffix      text,
-    created     timestamp      not null default (current_timestamp at time zone 'utc')
+    id           serial primary key,
+    hid          char(5) unique not null,
+    system       serial         not null references systems (id) on delete cascade,
+    color        char(6),
+    avatar_url   text,
+    name         text           not null,
+    display_name text,
+    birthday     date,
+    pronouns     text,
+    description  text,
+    prefix       text,
+    suffix       text,
+    created      timestamp      not null default (current_timestamp at time zone 'utc')
 );
 
 create table if not exists accounts

@@ -150,7 +150,7 @@ namespace PluralKit {
 
         public async Task Save(PKMember member) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update members set name = @Name, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
+                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
         }

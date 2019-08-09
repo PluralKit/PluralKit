@@ -7,6 +7,7 @@ namespace PluralKit
 {
     public class PKSystem
     {
+        // Additions here should be mirrored in SystemStore::Save
         [Key] [JsonIgnore] public int Id { get; set; }
         [JsonProperty("id")] public string Hid { get; set; }
         [JsonProperty("name")] public string Name { get; set; }
@@ -24,12 +25,14 @@ namespace PluralKit
 
     public class PKMember
     {
+        // Additions here should be mirrored in MemberStore::Save
         [JsonIgnore] public int Id { get; set; }
         [JsonProperty("id")] public string Hid { get; set; }
         [JsonIgnore] public int System { get; set; }
         [JsonProperty("color")] public string Color { get; set; }
         [JsonProperty("avatar_url")] public string AvatarUrl { get; set; }
         [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("display_name")] public string DisplayName { get; set; }
         [JsonProperty("birthday")] public LocalDate? Birthday { get; set; }
         [JsonProperty("pronouns")] public string Pronouns { get; set; }
         [JsonProperty("description")] public string Description { get; set; }
@@ -52,6 +55,12 @@ namespace PluralKit
 
         [JsonIgnore] public bool HasProxyTags => Prefix != null || Suffix != null;
         [JsonIgnore] public string ProxyString => $"{Prefix ?? ""}text{Suffix ?? ""}";
+        
+        public string ProxyName(string systemTag)
+        {
+            if (systemTag == null) return DisplayName ?? Name;
+            return $"{DisplayName ?? Name} {systemTag}";
+        }
     }
 
     public class PKSwitch

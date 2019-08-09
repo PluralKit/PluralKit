@@ -24,8 +24,6 @@ namespace PluralKit.Bot
         public PKMember Member;
         public PKSystem System;
         public string InnerText;
-
-        public string ProxyName => Member.Name + (System.Tag != null ? " " + System.Tag : "");
     }
 
     class ProxyService: IDisposable {
@@ -118,7 +116,8 @@ namespace PluralKit.Bot
             // Fetch a webhook for this channel, and send the proxied message
             var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
-            var hookMessageId = await ExecuteWebhook(webhook, messageContents, match.ProxyName, avatarUrl, message.Attachments.FirstOrDefault());
+            var proxyName = match.Member.ProxyName(match.System.Tag);
+            var hookMessageId = await ExecuteWebhook(webhook, messageContents, proxyName, avatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);

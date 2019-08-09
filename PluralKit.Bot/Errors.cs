@@ -73,5 +73,8 @@ namespace PluralKit.Bot {
         public static PKError FrontPercentTimeInFuture => new PKError("Cannot get the front percent between now and a time in the future.");
 
         public static PKError GuildNotFound(ulong guildId) => new PKError($"Guild with ID {guildId} not found.");
+
+        public static PKError DisplayNameTooLong(string displayName, int maxLength) => new PKError(
+            $"Display name too long ({displayName.Length} > {maxLength} characters). Use a shorter display name, or shorten your system tag.");
     }
 }
