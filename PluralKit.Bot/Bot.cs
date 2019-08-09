@@ -195,7 +195,7 @@ namespace PluralKit.Bot
         private async Task UpdatePeriodic()
         {
             // Change bot status
-            await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
+            await _client.SetGameAsync($"{_services.GetRequiredService<BotConfig>().Prefix}help | in {_client.Guilds.Count} servers");
             
             await _collector.CollectStats();
             
@@ -327,9 +327,9 @@ namespace PluralKit.Bot
             if (arg.Author.IsBot || arg.Author.IsWebhook) return;
 
             int argPos = 0;
+            var botConfig = _services.GetRequiredService<BotConfig>();
             // Check if message starts with the command prefix
-            if (arg.HasStringPrefix("pk;", ref argPos, StringComparison.OrdinalIgnoreCase) ||
-                arg.HasStringPrefix("pk!", ref argPos, StringComparison.OrdinalIgnoreCase) ||
+            if (arg.HasStringPrefix(botConfig.Prefix, ref argPos, StringComparison.OrdinalIgnoreCase) ||
                 arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
                 // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
