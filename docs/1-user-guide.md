@@ -159,6 +159,23 @@ If you want to change the name of a member, you can use the `pk;member rename` c
     pk;member John rename Joanne
     pk;member "Craig Smith" rename "Craig Johnson"
     
+### Member display names
+Normally, when proxying a member, the name displayed in the proxied message will the the member's name. However, in some cases
+you may want to display a different name. For example, you may want to include a member's pronouns inside the proxied name,
+indicate a subsystem, include emojis or symbols that don't play nice with the command syntax, or just in general show a different name from the member's "canonical" name.
+
+In such cases you can set the member's *display name*. Which will, well, display that name instead. You can set
+a display name using the `pk;member displayname` command, like so:
+
+    pk;member John displayname Jonathan
+    pk;member Robert displayname Bob (he/him)
+    
+To remove a display name, just use the same command with no last parameter, eg:
+
+    pk;member John displayname
+    
+This will remove the display name, and thus the member will be proxied with their canonical name.
+    
 ### Member description
 In the same way as a system can have a description, so can a member. You can set a description using the `pk;member description` command, like so:
 
