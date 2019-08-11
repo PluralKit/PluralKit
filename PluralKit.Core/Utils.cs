@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using App.Metrics;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -13,6 +15,7 @@ using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using NodaTime.Text;
 using Npgsql;
+using PluralKit.Core;
 using Serilog;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -349,18 +352,109 @@ namespace PluralKit
     
     public class DbConnectionFactory
     {
-        private string _connectionString;
+        private CoreConfig _config;
+        private IMetrics _metrics;
+        private DbConnectionCountHolder _countHolder;
 
-        public DbConnectionFactory(string connectionString)
+        public DbConnectionFactory(CoreConfig config, DbConnectionCountHolder countHolder, IMetrics metrics)
         {
-            _connectionString = connectionString;
+            _config = config;
+            _countHolder = countHolder;
+            _metrics = metrics;
         }
 
         public async Task<IDbConnection> Obtain()
         {
-            var conn = new NpgsqlConnection(_connectionString);
+            // Mark the request (for a handle, I guess) in the metrics
+            _metrics.Measure.Meter.Mark(CoreMetrics.DatabaseRequests);
+            
+            // Actually create and try to open the connection
+            var conn = new NpgsqlConnection(_config.Database);
             await conn.OpenAsync();
-            return conn;
+            
+            // Increment the count
+            _countHolder.Increment();
+            // Return a wrapped connection which will decrement the counter on dispose
+            return new DbConnectionTrackingConnection(conn, _countHolder);
         }
+    }
+
+    public class DbConnectionCountHolder
+    {
+        private int _connectionCount;
+        public int ConnectionCount => _connectionCount;
+
+        public void Increment()
+        {
+            Interlocked.Increment(ref _connectionCount);
+        }
+
+        public void Decrement()
+        {
+            Interlocked.Decrement(ref _connectionCount);
+        }
+    } 
+    
+    public class DbConnectionTrackingConnection: IDbConnection
+    {
+        // Simple delegation of everything.
+        private IDbConnection _impl;
+
+        private DbConnectionCountHolder _countHolder;
+
+        public DbConnectionTrackingConnection(IDbConnection impl, DbConnectionCountHolder countHolder)
+        {
+            _impl = impl;
+            _countHolder = countHolder;
+        }
+
+        public void Dispose()
+        {
+            _impl.Dispose();
+            
+            _countHolder.Decrement();
+        }
+
+        public IDbTransaction BeginTransaction()
+        {
+            return _impl.BeginTransaction();
+        }
+
+        public IDbTransaction BeginTransaction(IsolationLevel il)
+        {
+            return _impl.BeginTransaction(il);
+        }
+
+        public void ChangeDatabase(string databaseName)
+        {
+            _impl.ChangeDatabase(databaseName);
+        }
+
+        public void Close()
+        {
+            _impl.Close();
+        }
+
+        public IDbCommand CreateCommand()
+        {
+            return _impl.CreateCommand();
+        }
+
+        public void Open()
+        {
+            _impl.Open();
+        }
+
+        public string ConnectionString
+        {
+            get => _impl.ConnectionString;
+            set => _impl.ConnectionString = value;
+        }
+
+        public int ConnectionTimeout => _impl.ConnectionTimeout;
+
+        public string Database => _impl.Database;
+
+        public ConnectionState State => _impl.State;
     }
 }

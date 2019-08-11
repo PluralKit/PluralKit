@@ -79,7 +79,8 @@ namespace PluralKit.Bot
             .AddTransient(_ => _config.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
             .AddTransient(_ => _config.GetSection("PluralKit").GetSection("Bot").Get<BotConfig>() ?? new BotConfig())
 
-            .AddTransient(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database))
+            .AddSingleton<DbConnectionCountHolder>()
+            .AddTransient<DbConnectionFactory>()
 
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {
