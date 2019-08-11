@@ -49,6 +49,7 @@ namespace PluralKit.Bot
             // Aggregate guild/channel stats
             _metrics.Measure.Gauge.SetValue(BotMetrics.Guilds, _client.Guilds.Count);
             _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, _client.Guilds.Sum(g => g.TextChannels.Count));
+            _metrics.Measure.Gauge.SetValue(BotMetrics.ShardsConnected, _client.Shards.Count(shard => shard.ConnectionState == ConnectionState.Connected));
 
             // Aggregate member stats
             var usersKnown = new HashSet<ulong>();

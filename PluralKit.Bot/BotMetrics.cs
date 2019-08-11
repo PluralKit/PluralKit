@@ -13,6 +13,7 @@ namespace PluralKit.Bot
         public static GaugeOptions MembersOnline => new GaugeOptions {Name = "Members online", MeasurementUnit = Unit.None, Context = "Bot"};
         public static GaugeOptions Guilds => new GaugeOptions {Name = "Guilds", MeasurementUnit = Unit.None, Context = "Bot"};
         public static GaugeOptions Channels => new GaugeOptions {Name = "Channels", MeasurementUnit = Unit.None, Context = "Bot"};
+        public static GaugeOptions ShardsConnected => new GaugeOptions { Name = "Shards Connected", Context = "Bot" };
         public static GaugeOptions WebhookCacheSize => new GaugeOptions { Name = "Webhook Cache Size", Context = "Bot" };
     }
 }
