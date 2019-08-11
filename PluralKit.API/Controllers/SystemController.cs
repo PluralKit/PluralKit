@@ -48,10 +48,7 @@ namespace PluralKit.API.Controllers
 
         [HttpGet]
         [RequiresSystem]
-        public async Task<ActionResult<PKSystem>> GetOwnSystem()
-        {
-            return Ok(_auth.CurrentSystem);
-        }
+        public Task<ActionResult<PKSystem>> GetOwnSystem() => Task.FromResult<ActionResult<PKSystem>>(Ok(_auth.CurrentSystem));
 
         [HttpGet("{hid}")]
         public async Task<ActionResult<PKSystem>> GetSystem(string hid)
@@ -75,7 +72,7 @@ namespace PluralKit.API.Controllers
         public async Task<ActionResult<IEnumerable<SwitchesReturn>>> GetSwitches(string hid, [FromQuery(Name = "before")] Instant? before)
         {
             if (before == null) before = SystemClock.Instance.GetCurrentInstant();
-            
+
             var system = await _systems.GetByHid(hid);
             if (system == null) return NotFound("System not found.");
 
@@ -98,10 +95,10 @@ namespace PluralKit.API.Controllers
         {
             var system = await _systems.GetByHid(hid);
             if (system == null) return NotFound("System not found.");
-            
+
             var sw = await _switches.GetLatestSwitch(system);
-            if (sw == null) return NotFound("System has no registered switches."); 
-                
+            if (sw == null) return NotFound("System has no registered switches.");
+
             var members = await _switches.GetSwitchMembers(sw);
             return Ok(new FrontersReturn
             {
@@ -115,7 +112,7 @@ namespace PluralKit.API.Controllers
         public async Task<ActionResult<PKSystem>> EditSystem([FromBody] PKSystem newSystem)
         {
             var system = _auth.CurrentSystem;
-            
+
             // Bounds checks
             if (newSystem.Name.Length > Limits.MaxSystemNameLength)
                 return BadRequest($"System name too long ({newSystem.Name.Length} > {Limits.MaxSystemNameLength}.");
@@ -129,7 +126,7 @@ namespace PluralKit.API.Controllers
             system.Tag = newSystem.Tag;
             system.AvatarUrl = newSystem.AvatarUrl;
             system.UiTz = newSystem.UiTz ?? "UTC";
-            
+
             await _systems.Save(system);
             return Ok(system);
         }
@@ -140,7 +137,7 @@ namespace PluralKit.API.Controllers
         {
             if (param.Members.Distinct().Count() != param.Members.Count())
                 return BadRequest("Duplicate members in member list.");
-            
+
             // We get the current switch, if it exists
             var latestSwitch = await _switches.GetLatestSwitch(_auth.CurrentSystem);
             if (latestSwitch != null)
@@ -156,7 +153,7 @@ namespace PluralKit.API.Controllers
             IEnumerable<PKMember> membersList;
             using (var conn = await _conn.Obtain())
                 membersList = (await conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new {Hids = param.Members})).ToList();
-            
+
             foreach (var member in membersList)
                 if (member.System != _auth.CurrentSystem.Id)
                     return BadRequest($"Cannot switch to member '{member.Hid}' not in system.");
@@ -164,7 +161,7 @@ namespace PluralKit.API.Controllers
             // membersList is in DB order, and we want it in actual input order
             // so we go through a dict and map the original input appropriately
             var membersDict = membersList.ToDictionary(m => m.Hid);
-            
+
             var membersInOrder = new List<PKMember>();
             // We do this without .Select() since we want to have the early return bail if it doesn't find the member
             foreach (var givenMemberId in param.Members)
