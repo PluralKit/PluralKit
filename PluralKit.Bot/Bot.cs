@@ -254,6 +254,10 @@ namespace PluralKit.Bot
             // Inner function so we can await the handler without stalling the entire pipeline
             async Task Inner()
             {
+                // "Fork" this task off by ~~yeeting~~ yielding it at the back of the task queue
+                // This prevents any synchronous nonsense from also stalling the pipeline before the first await point
+                await Task.Yield();
+                
                 // Create a DI scope for this event
                 // and log the breadcrumb to the newly created (in-svc-scope) Sentry scope
                 using (var scope = _services.CreateScope())
