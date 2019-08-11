@@ -33,7 +33,9 @@ namespace PluralKit.API
 
                 .AddTransient(_ => Configuration.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
                 .AddSingleton(svc => InitUtils.InitLogger(svc.GetRequiredService<CoreConfig>(), "api"))
-                .AddSingleton(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database));
+                
+                .AddTransient<DbConnectionCountHolder>()
+                .AddTransient<DbConnectionFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
