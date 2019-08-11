@@ -117,7 +117,10 @@ namespace PluralKit.Bot
             var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
             var proxyName = match.Member.ProxyName(match.System.Tag);
-            var hookMessageId = await ExecuteWebhook(webhook, messageContents, proxyName, avatarUrl, message.Attachments.FirstOrDefault());
+
+            ulong hookMessageId;
+            using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
+                hookMessageId = await ExecuteWebhook(webhook, messageContents, proxyName, avatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);

@@ -312,8 +312,8 @@ namespace PluralKit.Bot
 
         public async Task HandleMessage(SocketMessage msg)
         {
-            _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
-            
+            RegisterMessageMetrics(msg);
+
             // _client.CurrentUser will be null if we've connected *some* shards but not shard #0 yet
             // This will cause an error in WebhookCacheServices so we just workaround and don't process any messages
             // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
@@ -347,6 +347,7 @@ namespace PluralKit.Bot
                     system = await conn.QueryFirstOrDefaultAsync<PKSystem>(
                         "select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system",
                         new {Id = arg.Author.Id});
+                    
                 await _commands.ExecuteAsync(new PKCommandContext(_client, arg, system, _services), argPos,
                     _services);
             }
@@ -355,6 +356,21 @@ namespace PluralKit.Bot
                 // If not, try proxying anyway
                 await _proxy.HandleMessageAsync(arg);
             }
+        }
+
+        private void RegisterMessageMetrics(SocketMessage msg)
+        {
+            var guild = (msg.Channel as IGuildChannel)?.Guild;
+            if (guild != null)
+            {
+                var shard = _client.GetShardFor(guild);
+                var latencyMillis = shard.Latency;
+                
+                _metrics.Provider.Timer.Instance(BotMetrics.GatewayLatency, new MetricTags("shard", shard.ShardId.ToString()))
+                    .Record(latencyMillis, TimeUnit.Milliseconds);
+            }
+
+            _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
         }
 
         public Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,
