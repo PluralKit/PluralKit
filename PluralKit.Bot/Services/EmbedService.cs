@@ -77,7 +77,7 @@ namespace PluralKit.Bot {
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
                 .WithColor(color)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid}");
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {member.Created.ToString("MMMM dd, yyyy", null)}");
 
             if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
 
