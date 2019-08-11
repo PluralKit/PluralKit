@@ -17,7 +17,11 @@ using NodaTime.Text;
 using Npgsql;
 using PluralKit.Core;
 using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using Serilog.Formatting.Compact;
+using Serilog.Formatting.Display;
+using Serilog.Formatting.Json;
 using Serilog.Sinks.SystemConsole.Themes;
 
 
@@ -300,17 +304,19 @@ namespace PluralKit
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
         }
 
-        public static ILogger  InitLogger(CoreConfig config, string component)
+        public static ILogger InitLogger(CoreConfig config, string component)
         {
             return new LoggerConfiguration()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
+                .MinimumLevel.Debug()
                 .WriteTo.File(
-                    new CompactJsonFormatter(),
+                    new RenderedCompactJsonFormatter(),
                     (config.LogDir ?? "logs") + $"/pluralkit.{component}.log",
                     rollingInterval: RollingInterval.Day,
                     flushToDiskInterval: TimeSpan.FromSeconds(10),
+                    restrictedToMinimumLevel: LogEventLevel.Information,
                     buffered: true)
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate:"[{Timestamp:HH:mm:ss}] [{EventId}] {Level:u3} {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
         }
 
@@ -322,7 +328,19 @@ namespace PluralKit
             return settings;
         }
     }
-    
+
+    public class LoggerProvider
+    {
+        private CoreConfig _config;
+        public ILogger RootLogger { get; }
+
+        public LoggerProvider(CoreConfig config, string component)
+        {
+            _config = config;
+            RootLogger = InitUtils.InitLogger(_config, component);
+        }
+    }
+
     public class UlongEncodeAsLongHandler : SqlMapper.TypeHandler<ulong>
     {
         public override ulong Parse(object value)
@@ -456,5 +474,15 @@ namespace PluralKit
         public string Database => _impl.Database;
 
         public ConnectionState State => _impl.State;
+    }
+
+    public class EventIdProvider
+    {
+        public Guid EventId { get; }
+
+        public EventIdProvider()
+        {
+            EventId = Guid.NewGuid();
+        }
     }
 }

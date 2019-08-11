@@ -11,13 +11,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NodaTime;
 using Sentry;
 using Serilog;
-using Serilog.Core;
 using Serilog.Events;
-using Serilog.Formatting.Compact;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PluralKit.Bot
 {
@@ -130,7 +126,10 @@ namespace PluralKit.Bot
             .AddScoped(_ => new Sentry.Scope(null))
             .AddTransient<PKEventHandler>()
 
-            .AddSingleton(svc => InitUtils.InitLogger(svc.GetRequiredService<CoreConfig>(), "bot"))
+            .AddScoped<EventIdProvider>()
+            .AddSingleton(svc => new LoggerProvider(svc.GetRequiredService<CoreConfig>(), "bot"))
+            .AddScoped(svc => svc.GetRequiredService<LoggerProvider>().RootLogger.ForContext("EventId", svc.GetRequiredService<EventIdProvider>().EventId))
+            
             .BuildServiceProvider();
     }
     class Bot
@@ -333,6 +332,8 @@ namespace PluralKit.Bot
                 arg.HasStringPrefix("pk!", ref argPos, StringComparison.OrdinalIgnoreCase) ||
                 arg.HasMentionPrefix(_client.CurrentUser, ref argPos))
             {
+                _logger.Debug("Parsing command {Command} from message {Channel}-{Message}", msg.Content, msg.Channel.Id, msg.Id);
+                
                 // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
                 var trimStartLengthDiff = arg.Content.Substring(argPos).Length -
                                           arg.Content.Substring(argPos).TrimStart().Length;
