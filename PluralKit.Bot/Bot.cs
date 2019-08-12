@@ -105,8 +105,8 @@ namespace PluralKit.Bot
             .AddTransient<ProxyService>()
             .AddTransient<LogChannelService>()
             .AddTransient<DataFileService>()
-
-            .AddSingleton<ProxyCacheService>()
+            
+            .AddTransient<ProxyCacheService>()
             .AddSingleton<WebhookCacheService>()
 
             .AddTransient<SystemStore>()
@@ -368,6 +368,9 @@ namespace PluralKit.Bot
         private void RegisterMessageMetrics(SocketMessage msg)
         {
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
+
+            var gatewayLatency = DateTimeOffset.Now - msg.CreatedAt;
+            _logger.Debug("Message received with latency {Latency}", gatewayLatency);
         }
 
         public Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,
