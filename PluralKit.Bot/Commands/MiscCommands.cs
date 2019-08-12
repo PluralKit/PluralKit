@@ -43,7 +43,6 @@ namespace PluralKit.Bot.Commands {
         {
             var messagesReceived = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name).Value;
             var messagesProxied = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name).Value;
-            var proxySuccessRate = messagesProxied.Items.First(i => i.Item == "success");
             
             var commandsRun = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name).Value;
             
@@ -51,7 +50,6 @@ namespace PluralKit.Bot.Commands {
                 .AddField("Messages processed", $"{messagesReceived.OneMinuteRate:F1}/s ({messagesReceived.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Messages proxied", $"{messagesProxied.OneMinuteRate:F1}/s ({messagesProxied.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Commands executed", $"{commandsRun.OneMinuteRate:F1}/s ({commandsRun.FifteenMinuteRate:F1}/s over 15m)")
-                .AddField("Proxy success rate", $"{proxySuccessRate.Percent/100:P1}")
                 .Build());
         }
 
