@@ -48,6 +48,8 @@ namespace PluralKit.Bot.Commands
             // Send confirmation and space hint
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member \"{memberName.Sanitize()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
             if (memberName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command("rename")]
@@ -80,6 +82,8 @@ namespace PluralKit.Bot.Commands
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
             if (ContextEntity.DisplayName != null) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member has a display name set (`{ContextEntity.DisplayName}`), and will be proxied using that name instead.");
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command("description")]
@@ -173,7 +177,7 @@ namespace PluralKit.Bot.Commands
             await Members.Save(ContextEntity);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags changed to `{ContextEntity.ProxyString.Sanitize()}`. Try proxying now!");
             
-            ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command("delete")]
@@ -186,6 +190,8 @@ namespace PluralKit.Bot.Commands
             if (!await Context.ConfirmWithReply(ContextEntity.Hid)) throw Errors.MemberDeleteCancelled;
             await Members.Delete(ContextEntity);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member deleted.");
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command("avatar")]
@@ -201,6 +207,8 @@ namespace PluralKit.Bot.Commands
             var embed = new EmbedBuilder().WithImageUrl(ContextEntity.AvatarUrl).Build();
             await Context.Channel.SendMessageAsync(
                 $"{Emojis.Success} Member avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the webhook's avatar will need to be re-set.", embed: embed);
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command("avatar")]
@@ -217,6 +225,8 @@ namespace PluralKit.Bot.Commands
 
             var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
         
         [Command("displayname")]
@@ -250,6 +260,8 @@ namespace PluralKit.Bot.Commands
                     successStr += $"This member will now be proxied using their member name `{ContextEntity.Name}.";
             }
             await Context.Channel.SendMessageAsync(successStr);
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command]

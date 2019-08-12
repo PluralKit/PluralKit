@@ -24,6 +24,8 @@ namespace PluralKit.Bot.Commands
         public SwitchStore Switches {get; set;}
         public EmbedService EmbedService {get; set;}
         
+        public ProxyCacheService ProxyCache { get; set; }
+        
 
         [Command]
         [Remarks("system <name>")]
@@ -94,6 +96,8 @@ namespace PluralKit.Bot.Commands
 
             await Systems.Save(Context.SenderSystem);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
         
         [Command("avatar")]
@@ -109,6 +113,8 @@ namespace PluralKit.Bot.Commands
             var embed = new EmbedBuilder().WithImageUrl(Context.SenderSystem.AvatarUrl).Build();
             await Context.Channel.SendMessageAsync(
                 $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
         
         [Command("avatar")]
@@ -125,6 +131,8 @@ namespace PluralKit.Bot.Commands
 
             var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
             await Context.Channel.SendMessageAsync($"{Emojis.Success} System avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command("delete")]
@@ -138,6 +146,8 @@ namespace PluralKit.Bot.Commands
 
             await Systems.Delete(Context.SenderSystem);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} System deleted.");
+            
+            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Group("list")]
