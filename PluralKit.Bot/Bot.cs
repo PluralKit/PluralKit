@@ -115,14 +115,7 @@ namespace PluralKit.Bot
             .AddTransient<MessageStore>()
             .AddTransient<SwitchStore>()
 
-            .AddSingleton<IMetrics>(svc =>
-            {
-                var cfg = svc.GetRequiredService<CoreConfig>();
-                var builder = AppMetrics.CreateDefaultBuilder();
-                if (cfg.InfluxUrl != null && cfg.InfluxDb != null)
-                    builder.Report.ToInfluxDb(cfg.InfluxUrl, cfg.InfluxDb);
-                return builder.Build();
-            })
+            .AddSingleton(svc => InitUtils.InitMetrics(svc.GetRequiredService<CoreConfig>()))
             .AddSingleton<PeriodicStatCollector>()
             
             .AddScoped(_ => new Sentry.Scope(null))

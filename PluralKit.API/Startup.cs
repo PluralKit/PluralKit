@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using App.Metrics;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +29,8 @@ namespace PluralKit.API
                 .AddTransient<MemberStore>()
                 .AddTransient<SwitchStore>()
                 .AddTransient<MessageStore>()
+                
+                .AddSingleton(svc => InitUtils.InitMetrics(svc.GetRequiredService<CoreConfig>(), "API"))
 
                 .AddScoped<TokenAuthService>()
 

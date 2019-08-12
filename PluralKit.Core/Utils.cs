@@ -323,6 +323,16 @@ namespace PluralKit
                 .CreateLogger();
         }
 
+        public static IMetrics InitMetrics(CoreConfig config, string onlyContext = null)
+        {
+            var builder = AppMetrics.CreateDefaultBuilder();
+            if (config.InfluxUrl != null && config.InfluxDb != null)
+                builder.Report.ToInfluxDb(config.InfluxUrl, config.InfluxDb);
+            if (onlyContext != null)
+                builder.Filter.ByIncludingOnlyContext(onlyContext);
+            return builder.Build();
+        }
+
         public static JsonSerializerSettings BuildSerializerSettings() => new JsonSerializerSettings().BuildSerializerSettings();
 
         public static JsonSerializerSettings BuildSerializerSettings(this JsonSerializerSettings settings)
