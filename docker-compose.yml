@@ -4,7 +4,7 @@ services:
     build: .
     command: ["--project", "PluralKit.Bot"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
       - "PluralKit:InfluxUrl=http://influx:8086"
       - "PluralKit:InfluxDb=pluralkit"
       - "PluralKit:LogDir=/var/log/pluralkit"
@@ -19,7 +19,7 @@ services:
     build: .
     command: ["--project", "PluralKit.Web"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
     links: 
       - db
     ports:
@@ -29,7 +29,7 @@ services:
     build: .
     command: ["--project", "PluralKit.API"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
     links:
       - db
     ports:
