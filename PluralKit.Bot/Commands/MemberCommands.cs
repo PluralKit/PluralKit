@@ -42,7 +42,7 @@ namespace PluralKit.Bot.Commands
 
             // Create the member
             var member = await Members.Create(Context.SenderSystem, memberName);
-            
+
             // Send confirmation and space hint
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member \"{memberName.Sanitize()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
             if (memberName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
@@ -139,7 +139,7 @@ namespace PluralKit.Bot.Commands
 
             ContextEntity.Birthday = date;
             await Members.Save(ContextEntity);
-            
+
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {ContextEntity.BirthdayString}")}.");
         }
 
@@ -159,7 +159,7 @@ namespace PluralKit.Bot.Commands
                 await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags cleared.");
                 return;
             }
-            
+
             // Make sure there's one and only one instance of "text" in the example proxy given
             var prefixAndSuffix = exampleProxy.Split("text");
             if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
@@ -193,7 +193,7 @@ namespace PluralKit.Bot.Commands
             if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
             ContextEntity.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
             await Members.Save(ContextEntity);
-            
+
             var embed = new EmbedBuilder().WithImageUrl(ContextEntity.AvatarUrl).Build();
             await Context.Channel.SendMessageAsync(
                 $"{Emojis.Success} Member avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the webhook's avatar will need to be re-set.", embed: embed);
@@ -214,17 +214,17 @@ namespace PluralKit.Bot.Commands
             var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
         }
-        
+
         [Command("displayname")]
         [Alias("nick", "nickname", "displayname")]
         [Remarks("member <member> displayname <displayname>")]
         [MustPassOwnMember]
         public async Task MemberDisplayName([Remainder] string newDisplayName = null)
-        {            
+        {
             // Refuse if proxy name will be unproxyable (with/without tag)
             if (newDisplayName != null && newDisplayName.Length > Context.SenderSystem.MaxMemberNameLength)
                 throw Errors.DisplayNameTooLong(newDisplayName, Context.SenderSystem.MaxMemberNameLength);
-            
+
             ContextEntity.DisplayName = newDisplayName;
             await Members.Save(ContextEntity);
 
@@ -237,13 +237,13 @@ namespace PluralKit.Bot.Commands
             else
             {
                 successStr += $"Member display name cleared. ";
-                
+
                 // If we're removing display name and the *real* name will be unproxyable, warn.
                 if (ContextEntity.Name.Length > Context.SenderSystem.MaxMemberNameLength)
                     successStr +=
                         $" {Emojis.Warn} This member's actual name is too long ({ContextEntity.Name.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), and thus cannot be proxied.";
                 else
-                    successStr += $"This member will now be proxied using their member name `{ContextEntity.Name}.";
+                    successStr += $"This member will now be proxied using their member name `{ContextEntity.Name}`.";
             }
             await Context.Channel.SendMessageAsync(successStr);
         }
@@ -256,11 +256,11 @@ namespace PluralKit.Bot.Commands
             var system = await Systems.GetById(member.System);
             await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMemberEmbed(system, member));
         }
-        
+
         public override async Task<PKMember> ReadContextParameterAsync(string value)
         {
             var res = await new PKMemberTypeReader().ReadAsync(Context, value, _services);
-            return res.IsSuccess ? res.BestMatch as PKMember : null;        
+            return res.IsSuccess ? res.BestMatch as PKMember : null;
         }
     }
 }
