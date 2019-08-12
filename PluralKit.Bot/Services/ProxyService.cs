@@ -23,27 +23,23 @@ namespace PluralKit.Bot
 
     class ProxyService: IDisposable {
         private IDiscordClient _client;
-        private DbConnectionFactory _conn;
         private LogChannelService _logChannel;
-        private WebhookCacheService _webhookCache;
         private MessageStore _messageStorage;
         private EmbedService _embeds;
-        private IMetrics _metrics;
         private ILogger _logger;
+        private WebhookExecutorService _webhookExecutor;
         private ProxyCacheService _cache;
 
         private HttpClient _httpClient;
 
-        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, IMetrics metrics, ILogger logger, ProxyCacheService cache)
+        public ProxyService(IDiscordClient client, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor)
         {
             _client = client;
-            _webhookCache = webhookCache;
-            _conn = conn;
             _logChannel = logChannel;
             _messageStorage = messageStorage;
             _embeds = embeds;
-            _metrics = metrics;
             _cache = cache;
+            _webhookExecutor = webhookExecutor;
             _logger = logger.ForContext<ProxyService>();
 
             _httpClient = new HttpClient();
@@ -84,7 +80,7 @@ namespace PluralKit.Bot
         public async Task HandleMessageAsync(IMessage message)
         {
             // Bail early if this isn't in a guild channel
-            if (!(message.Channel is IGuildChannel)) return;
+            if (!(message.Channel is ITextChannel)) return;
 
             var results = await _cache.GetResultsFor(message.Author.Id);
 
@@ -99,16 +95,21 @@ namespace PluralKit.Bot
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
-
+            
+            // Get variables in order and all
+            var proxyName = match.Member.ProxyName(match.System.Tag);
+            var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
+            
             // Sanitize @everyone, but only if the original user wouldn't have permission to
             var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
-
-            // Fetch a webhook for this channel, and send the proxied message
-            var webhookCacheEntry = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
-            var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
-            var proxyName = match.Member.ProxyName(match.System.Tag);
-
-            var hookMessageId = await ExecuteWebhookRetrying(message, webhookCacheEntry, messageContents, proxyName, avatarUrl);
+            
+            // Execute the webhook itself
+            var hookMessageId = await _webhookExecutor.ExecuteWebhook(
+                (ITextChannel) message.Channel,
+                proxyName, avatarUrl,
+                messageContents,
+                message.Attachments.FirstOrDefault()
+            );
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
@@ -120,37 +121,12 @@ namespace PluralKit.Bot
             try
             {
                 await message.DeleteAsync();
-            } catch (HttpException) {} // If it's already deleted, we just swallow the exception
-        }
-
-        private async Task<ulong> ExecuteWebhookRetrying(IMessage message, WebhookCacheService.WebhookCacheEntry webhookCacheEntry, string messageContents,
-            string proxyName, string avatarUrl)
-        {
-            // In the case where the webhook is deleted, we'll only actually notice that
-            // when we try to execute the webhook. Therefore we try it once, and
-            // if Discord returns error 10015 ("Unknown Webhook"), we remake it and try again.
-            ulong hookMessageId;
-            try
-            {
-                using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
-                    hookMessageId = await ExecuteWebhook(webhookCacheEntry, messageContents, proxyName, avatarUrl,
-                    message.Attachments.FirstOrDefault());
             }
-            catch (HttpException e)
+            catch (HttpException)
             {
-                if (e.DiscordCode == 10015)
-                {
-                    _logger.Warning("Webhook {Webhook} not found, recreating one", webhookCacheEntry.Webhook.Id);
-                    
-                    webhookCacheEntry = await _webhookCache.InvalidateAndRefreshWebhook(webhookCacheEntry);
-                    using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
-                        hookMessageId = await ExecuteWebhook(webhookCacheEntry, messageContents, proxyName, avatarUrl,
-                            message.Attachments.FirstOrDefault());
-                }
-                else throw;
+                // If it's already deleted, we just log and swallow the exception
+                _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", message.Id);
             }
-
-            return hookMessageId;
         }
 
         private static string SanitizeEveryoneMaybe(IMessage message, string messageContents)
@@ -180,51 +156,6 @@ namespace PluralKit.Bot
             }
 
             return true;
-        }
-
-        private async Task<ulong> ExecuteWebhook(WebhookCacheService.WebhookCacheEntry cacheEntry, string text, string username, string avatarUrl, IAttachment attachment)
-        {
-            _logger.Debug("Invoking webhook");
-            username = FixClyde(username);
-
-            // TODO: clean this entire block up
-            ulong messageId;
-
-            try
-            {
-                var client = cacheEntry.Client;
-                if (attachment != null)
-                {
-                    using (var stream = await _httpClient.GetStreamAsync(attachment.Url))
-                    {
-                        messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text,
-                            username: username, avatarUrl: avatarUrl);
-                    }
-                }
-                else
-                {
-                    messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
-                }
-
-                _logger.Information("Invoked webhook {Webhook} in channel {Channel}", cacheEntry.Webhook.Id,
-                    cacheEntry.Webhook.ChannelId);
-
-                // Log it in the metrics
-                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
-            }
-            catch (HttpException e)
-            {
-                _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", cacheEntry.Webhook.Id,
-                    cacheEntry.Webhook.ChannelId);
-
-                // Log failure in metrics and rethrow (we still need to cancel everything else)
-                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
-                throw;
-            }
-
-            // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
-            // doesn't work if there's no permission to)
-            return messageId;
         }
 
         public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
@@ -296,16 +227,6 @@ namespace PluralKit.Bot
         {
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}", messages.Count, channel.Id);
             await _messageStorage.BulkDelete(messages.Select(m => m.Id).ToList());
-        }
-
-        private string FixClyde(string name)
-        {
-            var match = Regex.Match(name, "clyde", RegexOptions.IgnoreCase);
-            if (!match.Success) return name;
-
-            // Put a hair space (\u200A) between the "c" and the "lyde" in the match to avoid Discord matching it
-            // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
-            return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
         }
 
         public void Dispose()

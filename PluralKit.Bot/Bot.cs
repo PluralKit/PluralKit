@@ -104,6 +104,7 @@ namespace PluralKit.Bot
             .AddTransient<ProxyService>()
             .AddTransient<LogChannelService>()
             .AddTransient<DataFileService>()
+            .AddTransient<WebhookExecutorService>()
             
             .AddTransient<ProxyCacheService>()
             .AddSingleton<WebhookCacheService>()
