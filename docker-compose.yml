@@ -2,7 +2,7 @@ version: "3"
 services:
   bot:
     build: .
-    entrypoint: ["dotnet", "run", "--project", "PluralKit.Bot"]
+    command: ["--project", "PluralKit.Bot"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
       - "PluralKit:InfluxUrl=http://influx:8086"
@@ -17,7 +17,7 @@ services:
     restart: always
   web:
     build: .
-    entrypoint: ["dotnet", "run", "--project", "PluralKit.Web"]
+    command: ["--project", "PluralKit.Web"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
     links: 
@@ -27,7 +27,7 @@ services:
     restart: always
   api:
     build: .
-    entrypoint: ["dotnet", "run", "--project", "PluralKit.API"]
+    command: ["--project", "PluralKit.API"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
     links:
