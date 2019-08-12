@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
+using App.Metrics.Logging;
 using Dapper;
 using Discord;
 using Discord.Commands;
@@ -226,6 +227,9 @@ namespace PluralKit.Bot
 
         private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
         {
+            var svc = ((PKCommandContext) ctx).ServiceProvider;
+            var id = svc.GetService<EventIdProvider>();
+            
             _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
             
             // TODO: refactor this entire block, it's fugly.
@@ -241,8 +245,11 @@ namespace PluralKit.Bot
                     } else if (_result is PreconditionResult)
                     {
                         await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
-                    } else {
-                        HandleRuntimeError((_result as ExecuteResult?)?.Exception, ((PKCommandContext) ctx).ServiceProvider.GetRequiredService<Scope>());
+                    } else
+                    {
+                        await ctx.Message.Channel.SendMessageAsync(
+                            $"{Emojis.Error} Internal error occurred. Please join the support server (see `pk;help`), and send the developer this ID: `{id.EventId}`.");
+                        HandleRuntimeError((_result as ExecuteResult?)?.Exception, svc);
                     }
                 } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
                     await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}\n**Usage: **pk;{cmd.Value.Remarks}");
@@ -274,7 +281,7 @@ namespace PluralKit.Bot
                     }
                     catch (Exception e)
                     {
-                        HandleRuntimeError(e, sentryScope);
+                        HandleRuntimeError(e, scope.ServiceProvider);
                     }
                 }
 
@@ -286,9 +293,12 @@ namespace PluralKit.Bot
             return Task.CompletedTask;
         }
 
-        private void HandleRuntimeError(Exception e, Scope scope = null)
+        private void HandleRuntimeError(Exception e, IServiceProvider services)
         {
-            _logger.Error(e, "Exception in bot event handler");
+            var logger = services.GetRequiredService<ILogger>();
+            var scope = services.GetRequiredService<Scope>();
+            
+            logger.Error(e, "Exception in bot event handler");
             
             var evt = new SentryEvent(e);
             SentrySdk.CaptureEvent(evt, scope);
