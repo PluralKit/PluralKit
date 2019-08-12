@@ -159,6 +159,8 @@ namespace PluralKit.Bot
 
             // TODO: DiscordWebhookClient's ctor does a call to GetWebhook that may be unnecessary, see if there's a way to do this The Hard Way :tm:
             // TODO: this will probably crash if there are multiple consecutive failures, perhaps have a loop instead?
+            
+            _logger.Debug("Instantiating webhook client");
             DiscordWebhookClient client;
             try
             {
@@ -172,6 +174,8 @@ namespace PluralKit.Bot
                 webhook = await _webhookCache.InvalidateAndRefreshWebhook(webhook);
                 client = new DiscordWebhookClient(webhook);
             }
+            
+            _logger.Debug("Invoking webhook");
 
             // TODO: clean this entire block up
             using (client)
