@@ -248,7 +248,7 @@ namespace PluralKit.Bot
                     } else
                     {
                         await ctx.Message.Channel.SendMessageAsync(
-                            $"{Emojis.Error} Internal error occurred. Please join the support server (see `pk;help`), and send the developer this ID: `{id.EventId}`.");
+                            $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{id.EventId}`.");
                         HandleRuntimeError((_result as ExecuteResult?)?.Exception, svc);
                     }
                 } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
