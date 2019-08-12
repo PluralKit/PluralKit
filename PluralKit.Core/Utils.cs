@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -8,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
+using App.Metrics.Timer;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -371,14 +374,16 @@ namespace PluralKit
     public class DbConnectionFactory
     {
         private CoreConfig _config;
+        private ILogger _logger;
         private IMetrics _metrics;
         private DbConnectionCountHolder _countHolder;
 
-        public DbConnectionFactory(CoreConfig config, DbConnectionCountHolder countHolder, IMetrics metrics)
+        public DbConnectionFactory(CoreConfig config, DbConnectionCountHolder countHolder, ILogger logger, IMetrics metrics)
         {
             _config = config;
             _countHolder = countHolder;
             _metrics = metrics;
+            _logger = logger;
         }
 
         public async Task<IDbConnection> Obtain()
@@ -393,7 +398,7 @@ namespace PluralKit
             // Increment the count
             _countHolder.Increment();
             // Return a wrapped connection which will decrement the counter on dispose
-            return new DbConnectionTrackingConnection(conn, _countHolder);
+            return new PerformanceTrackingConnection(conn, _countHolder, _logger, _metrics);
         }
     }
 
@@ -413,17 +418,22 @@ namespace PluralKit
         }
     } 
     
-    public class DbConnectionTrackingConnection: IDbConnection
+    public class PerformanceTrackingConnection: IDbConnection
     {
         // Simple delegation of everything.
-        private IDbConnection _impl;
+        private NpgsqlConnection _impl;
 
         private DbConnectionCountHolder _countHolder;
+        private ILogger _logger;
+        private IMetrics _metrics;
 
-        public DbConnectionTrackingConnection(IDbConnection impl, DbConnectionCountHolder countHolder)
+        public PerformanceTrackingConnection(NpgsqlConnection impl, DbConnectionCountHolder countHolder,
+            ILogger logger, IMetrics metrics)
         {
             _impl = impl;
             _countHolder = countHolder;
+            _logger = logger;
+            _metrics = metrics;
         }
 
         public void Dispose()
@@ -455,7 +465,7 @@ namespace PluralKit
 
         public IDbCommand CreateCommand()
         {
-            return _impl.CreateCommand();
+            return new PerformanceTrackingCommand(_impl.CreateCommand(), _logger, _metrics);
         }
 
         public void Open()
@@ -474,6 +484,144 @@ namespace PluralKit
         public string Database => _impl.Database;
 
         public ConnectionState State => _impl.State;
+    }
+
+    public class PerformanceTrackingCommand : DbCommand
+    {
+        private NpgsqlCommand _impl;
+        private ILogger _logger;
+        private IMetrics _metrics;
+
+        public PerformanceTrackingCommand(NpgsqlCommand impl, ILogger logger, IMetrics metrics)
+        {
+            _impl = impl;
+            _metrics = metrics;
+            _logger = logger;
+        }
+
+        public override void Cancel()
+        {
+            _impl.Cancel();
+        }
+
+        public override int ExecuteNonQuery()
+        {
+            return _impl.ExecuteNonQuery();
+        }
+
+        public override object ExecuteScalar()
+        {
+            return _impl.ExecuteScalar();
+        }
+
+        public override void Prepare()
+        {
+            _impl.Prepare();
+        }
+
+        public override string CommandText
+        {
+            get => _impl.CommandText;
+            set => _impl.CommandText = value;
+        }
+
+        public override int CommandTimeout
+        {
+            get => _impl.CommandTimeout;
+            set => _impl.CommandTimeout = value;
+        }
+
+        public override CommandType CommandType
+        {
+            get => _impl.CommandType;
+            set => _impl.CommandType = value;
+        }
+
+        public override UpdateRowSource UpdatedRowSource
+        {
+            get => _impl.UpdatedRowSource;
+            set => _impl.UpdatedRowSource = value;
+        }
+
+        protected override DbConnection DbConnection
+        {
+            get => _impl.Connection;
+            set => _impl.Connection = (NpgsqlConnection) value;
+        }
+
+        protected override DbParameterCollection DbParameterCollection => _impl.Parameters;
+
+        protected override DbTransaction DbTransaction
+        {
+            get => _impl.Transaction;
+            set => _impl.Transaction = (NpgsqlTransaction) value;
+        }
+
+        public override bool DesignTimeVisible
+        {
+            get => _impl.DesignTimeVisible;
+            set => _impl.DesignTimeVisible = value;
+        }
+
+        protected override DbParameter CreateDbParameter()
+        {
+            return _impl.CreateParameter();
+        }
+
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        {
+            return _impl.ExecuteReader(behavior);
+        }
+        
+        private IDisposable LogQuery()
+        {
+            return new QueryLogger(_logger, _metrics, CommandText);
+        }
+
+        protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+        {
+            using (LogQuery())
+                return await _impl.ExecuteReaderAsync(behavior, cancellationToken);
+        }
+
+        public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+        {
+            using (LogQuery())
+                return await _impl.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+        {
+            using (LogQuery())
+                return await _impl.ExecuteScalarAsync(cancellationToken);
+        }
+    }
+
+    public class QueryLogger : IDisposable
+    {
+        private ILogger _logger;
+        private IMetrics _metrics;
+        private string _commandText;
+        private Stopwatch _stopwatch;
+
+        public QueryLogger(ILogger logger, IMetrics metrics, string commandText)
+        {
+            _metrics = metrics;
+            _commandText = commandText;
+            _logger = logger;
+            
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+        }
+
+        public void Dispose()
+        {
+            _stopwatch.Stop();
+            _logger.Debug("Executed query {Query} in {ElapsedTime}", _commandText, _stopwatch.Elapsed);
+            
+            // One tick is 100 nanoseconds
+            _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery).Record(_stopwatch.ElapsedTicks / 10, TimeUnit.Microseconds, _commandText);
+        }
     }
 
     public class EventIdProvider

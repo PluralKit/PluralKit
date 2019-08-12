@@ -1,6 +1,7 @@
 using App.Metrics;
 using App.Metrics.Gauge;
 using App.Metrics.Meter;
+using App.Metrics.Timer;
 
 namespace PluralKit.Core
 {
@@ -18,7 +19,8 @@ namespace PluralKit.Core
         public static GaugeOptions ProcessHandles => new GaugeOptions { Name = "Process Handle Count", MeasurementUnit = Unit.Items, Context = "Process" };
         public static GaugeOptions CpuUsage => new GaugeOptions { Name = "CPU Usage", MeasurementUnit = Unit.Percent, Context = "Process" };
         
-        public static MeterOptions DatabaseRequests => new MeterOptions() { Name = "Database Requests", MeasurementUnit = Unit.Requests, Context = "Database" };
+        public static MeterOptions DatabaseRequests => new MeterOptions() { Name = "Database Requests", MeasurementUnit = Unit.Requests, Context = "Database", RateUnit = TimeUnit.Seconds};
+        public static TimerOptions DatabaseQuery => new TimerOptions() { Name = "Database Query", MeasurementUnit = Unit.Requests, DurationUnit = TimeUnit.Seconds, RateUnit = TimeUnit.Seconds, Context = "Database" };
         public static GaugeOptions DatabaseConnections => new GaugeOptions() { Name = "Database Connections", MeasurementUnit = Unit.Connections, Context = "Database" };
     }
 }

@@ -364,16 +364,6 @@ namespace PluralKit.Bot
 
         private void RegisterMessageMetrics(SocketMessage msg)
         {
-            var guild = (msg.Channel as IGuildChannel)?.Guild;
-            if (guild != null)
-            {
-                var shard = _client.GetShardFor(guild);
-                var latencyMillis = shard.Latency;
-                
-                _metrics.Provider.Timer.Instance(BotMetrics.GatewayLatency, new MetricTags("shard", shard.ShardId.ToString()))
-                    .Record(latencyMillis, TimeUnit.Milliseconds);
-            }
-
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
         }
 
