@@ -205,6 +205,9 @@ namespace PluralKit.Bot {
         {
             var task = f();
 
+            // If we don't have permission to add reactions, don't bother, and just await the task normally.
+            if (!await ctx.HasPermission(ChannelPermission.AddReactions)) return await task;
+
             try
             {
                 await Task.WhenAll(ctx.Message.AddReactionAsync(new Emoji(emoji)), task);
