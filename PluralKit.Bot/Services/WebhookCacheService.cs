@@ -91,7 +91,7 @@ namespace PluralKit.Bot
             });
         }
 
-        private bool IsWebhookMine(IWebhook arg) => arg.Id == _client.CurrentUser.Id && arg.Name == WebhookName;
+        private bool IsWebhookMine(IWebhook arg) => arg.Creator.Id == _client.CurrentUser.Id && arg.Name == WebhookName;
 
         public int CacheSize => _webhooks.Count;
 

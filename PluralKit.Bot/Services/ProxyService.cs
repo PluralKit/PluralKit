@@ -108,9 +108,7 @@ namespace PluralKit.Bot
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
             var proxyName = match.Member.ProxyName(match.System.Tag);
 
-            ulong hookMessageId;
-            using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
-                hookMessageId = await ExecuteWebhook(webhookCacheEntry, messageContents, proxyName, avatarUrl, message.Attachments.FirstOrDefault());
+            var hookMessageId = await ExecuteWebhookRetrying(message, webhookCacheEntry, messageContents, proxyName, avatarUrl);
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
@@ -124,6 +122,37 @@ namespace PluralKit.Bot
                 await message.DeleteAsync();
             } catch (HttpException) {} // If it's already deleted, we just swallow the exception
         }
+
+        private async Task<ulong> ExecuteWebhookRetrying(IMessage message, WebhookCacheService.WebhookCacheEntry webhookCacheEntry, string messageContents,
+            string proxyName, string avatarUrl)
+        {
+            // In the case where the webhook is deleted, we'll only actually notice that
+            // when we try to execute the webhook. Therefore we try it once, and
+            // if Discord returns error 10015 ("Unknown Webhook"), we remake it and try again.
+            ulong hookMessageId;
+            try
+            {
+                using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
+                    hookMessageId = await ExecuteWebhook(webhookCacheEntry, messageContents, proxyName, avatarUrl,
+                    message.Attachments.FirstOrDefault());
+            }
+            catch (HttpException e)
+            {
+                if (e.DiscordCode == 10015)
+                {
+                    _logger.Warning("Webhook {Webhook} not found, recreating one", webhookCacheEntry.Webhook.Id);
+                    
+                    webhookCacheEntry = await _webhookCache.InvalidateAndRefreshWebhook(webhookCacheEntry);
+                    using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
+                        hookMessageId = await ExecuteWebhook(webhookCacheEntry, messageContents, proxyName, avatarUrl,
+                            message.Attachments.FirstOrDefault());
+                }
+                else throw;
+            }
+
+            return hookMessageId;
+        }
+
         private static string SanitizeEveryoneMaybe(IMessage message, string messageContents)
         {
             var senderPermissions = ((IGuildUser) message.Author).GetPermissions(message.Channel as IGuildChannel);
@@ -155,12 +184,8 @@ namespace PluralKit.Bot
 
         private async Task<ulong> ExecuteWebhook(WebhookCacheService.WebhookCacheEntry cacheEntry, string text, string username, string avatarUrl, IAttachment attachment)
         {
-            username = FixClyde(username);
-
-            // TODO: DiscordWebhookClient's ctor does a call to GetWebhook that may be unnecessary, see if there's a way to do this The Hard Way :tm:
-            // TODO: this will probably crash if there are multiple consecutive failures, perhaps have a loop instead?
-
             _logger.Debug("Invoking webhook");
+            username = FixClyde(username);
 
             // TODO: clean this entire block up
             ulong messageId;
