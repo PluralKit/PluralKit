@@ -168,7 +168,15 @@ namespace PluralKit.Bot
             _client.ShardReady += ShardReady;
             _client.Log += FrameworkLog;
             
-            _client.MessageReceived += (msg) => HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
+            _client.MessageReceived += (msg) =>
+            {
+                // _client.CurrentUser will be null if we've connected *some* shards but not shard #0 yet
+                // This will cause an error in WebhookCacheService so we just workaround and don't process any messages
+                // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
+                if (_client.CurrentUser == null) return Task.CompletedTask;
+                
+                return HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
+            };
             _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(s => s.AddReactionAddedBreadcrumb(msg, channel, reaction), eh => eh.HandleReactionAdded(msg, channel, reaction));
             _client.MessageDeleted += (msg, channel) => HandleEvent(s => s.AddMessageDeleteBreadcrumb(msg, channel), eh => eh.HandleMessageDeleted(msg, channel));
             _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(s => s.AddMessageBulkDeleteBreadcrumb(msgs, channel), eh => eh.HandleMessagesBulkDelete(msgs, channel));
@@ -331,11 +339,6 @@ namespace PluralKit.Bot
         {
             RegisterMessageMetrics(msg);
 
-            // _client.CurrentUser will be null if we've connected *some* shards but not shard #0 yet
-            // This will cause an error in WebhookCacheServices so we just workaround and don't process any messages
-            // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
-            if (_client.CurrentUser == null) return;
-            
             // Ignore system messages (member joined, message pinned, etc)
             var arg = msg as SocketUserMessage;
             if (arg == null) return;
