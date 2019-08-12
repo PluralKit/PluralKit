@@ -273,6 +273,10 @@ namespace PluralKit.Bot
 
         public async Task HandleMessageDeletedAsync(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
+            // Don't delete messages from the store if they aren't webhooks
+            // Non-webhook messages will never be stored anyway.
+            // If we're not sure (eg. message outside of cache), delete just to be sure.
+            if (message.HasValue && !message.Value.Author.IsWebhook) return;
             await _messageStorage.Delete(message.Id);
         }
 

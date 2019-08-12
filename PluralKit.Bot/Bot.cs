@@ -80,7 +80,7 @@ namespace PluralKit.Bot
 
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {
-                MessageCacheSize = 0,
+                MessageCacheSize = 10,
                 ExclusiveBulkDelete = true
             }))
             .AddSingleton<Bot>()
