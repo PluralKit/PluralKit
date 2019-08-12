@@ -620,7 +620,8 @@ namespace PluralKit
             _logger.Debug("Executed query {Query} in {ElapsedTime}", _commandText, _stopwatch.Elapsed);
             
             // One tick is 100 nanoseconds
-            _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery).Record(_stopwatch.ElapsedTicks / 10, TimeUnit.Microseconds, _commandText);
+            _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", _commandText))
+                .Record(_stopwatch.ElapsedTicks / 10, TimeUnit.Microseconds, _commandText);
         }
     }
 
