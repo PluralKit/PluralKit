@@ -57,7 +57,6 @@ namespace PluralKit.Bot
 
                     logger.Information("Initializing bot");
                     await services.GetRequiredService<Bot>().Init();
-
                     
                     await client.StartAsync();
 
@@ -80,7 +79,7 @@ namespace PluralKit.Bot
 
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {
-                MessageCacheSize = 10,
+                MessageCacheSize = 5,
                 ExclusiveBulkDelete = true
             }))
             .AddSingleton<Bot>()
