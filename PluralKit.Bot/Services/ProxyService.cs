@@ -104,13 +104,13 @@ namespace PluralKit.Bot
             var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
 
             // Fetch a webhook for this channel, and send the proxied message
-            var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
+            var webhookCacheEntry = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
             var proxyName = match.Member.ProxyName(match.System.Tag);
 
             ulong hookMessageId;
             using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
-                hookMessageId = await ExecuteWebhook(webhook, messageContents, proxyName, avatarUrl, message.Attachments.FirstOrDefault());
+                hookMessageId = await ExecuteWebhook(webhookCacheEntry, messageContents, proxyName, avatarUrl, message.Attachments.FirstOrDefault());
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
@@ -153,70 +153,53 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task<ulong> ExecuteWebhook(IWebhook webhook, string text, string username, string avatarUrl, IAttachment attachment)
+        private async Task<ulong> ExecuteWebhook(WebhookCacheService.WebhookCacheEntry cacheEntry, string text, string username, string avatarUrl, IAttachment attachment)
         {
             username = FixClyde(username);
 
             // TODO: DiscordWebhookClient's ctor does a call to GetWebhook that may be unnecessary, see if there's a way to do this The Hard Way :tm:
             // TODO: this will probably crash if there are multiple consecutive failures, perhaps have a loop instead?
-            
-            _logger.Debug("Instantiating webhook client");
-            DiscordWebhookClient client;
-            try
-            {
-                client = new DiscordWebhookClient(webhook);
-            }
-            catch (InvalidOperationException)
-            {
-                // TODO: does this leak internal stuff in the (now-invalid) client?
 
-                // webhook was deleted or invalid
-                webhook = await _webhookCache.InvalidateAndRefreshWebhook(webhook);
-                client = new DiscordWebhookClient(webhook);
-            }
-            
             _logger.Debug("Invoking webhook");
 
             // TODO: clean this entire block up
-            using (client)
+            ulong messageId;
+
+            try
             {
-                ulong messageId;
-
-                try
+                var client = cacheEntry.Client;
+                if (attachment != null)
                 {
-                    if (attachment != null)
+                    using (var stream = await _httpClient.GetStreamAsync(attachment.Url))
                     {
-                        using (var stream = await _httpClient.GetStreamAsync(attachment.Url))
-                        {
-                            messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text,
-                                username: username, avatarUrl: avatarUrl);
-                        }
+                        messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text,
+                            username: username, avatarUrl: avatarUrl);
                     }
-                    else
-                    {
-                        messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
-                    }
-
-                    _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id,
-                        webhook.ChannelId);
-
-                    // Log it in the metrics
-                    _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
                 }
-                catch (HttpException e)
+                else
                 {
-                    _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", webhook.Id,
-                        webhook.ChannelId);
-
-                    // Log failure in metrics and rethrow (we still need to cancel everything else)
-                    _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
-                    throw;
+                    messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
                 }
 
-                // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
-                // doesn't work if there's no permission to)
-                return messageId;
+                _logger.Information("Invoked webhook {Webhook} in channel {Channel}", cacheEntry.Webhook.Id,
+                    cacheEntry.Webhook.ChannelId);
+
+                // Log it in the metrics
+                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
             }
+            catch (HttpException e)
+            {
+                _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", cacheEntry.Webhook.Id,
+                    cacheEntry.Webhook.ChannelId);
+
+                // Log failure in metrics and rethrow (we still need to cancel everything else)
+                _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
+                throw;
+            }
+
+            // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
+            // doesn't work if there's no permission to)
+            return messageId;
         }
 
         public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
