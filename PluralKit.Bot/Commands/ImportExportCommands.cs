@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -25,7 +26,17 @@ namespace PluralKit.Bot.Commands
             {
                 using (var client = new HttpClient())
                 {
-                    var response = await client.GetAsync(url);
+                    HttpResponseMessage response;
+                    try
+                    {
+                         response = await client.GetAsync(url);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Invalid URL throws this, we just error back out
+                        throw Errors.InvalidImportFile;
+                    }
+
                     if (!response.IsSuccessStatusCode) throw Errors.InvalidImportFile;
                     var json = await response.Content.ReadAsStringAsync();
 
