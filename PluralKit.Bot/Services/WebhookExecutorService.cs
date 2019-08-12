@@ -96,7 +96,22 @@ namespace PluralKit.Bot
             
             // DiscordWebhookClient has a sync network call in its constructor (!!!)
             // and we want to punt that onto a task queue, so we do that.
-            return Task.Run(() => new DiscordWebhookClient(webhook));
+            return Task.Run(async () =>
+            {
+                try
+                {
+                    return new DiscordWebhookClient(webhook);
+                }
+                catch (InvalidOperationException)
+                {
+                    // TODO: does this leak stuff inside the DiscordWebhookClient created above?
+                    
+                    // Webhook itself was found in cache, but has been deleted on the channel
+                    // We request a new webhook instead
+                    return new DiscordWebhookClient(await _webhookCache.InvalidateAndRefreshWebhook(webhook));
+                }
+
+            });
         }
         
         private string FixClyde(string name)

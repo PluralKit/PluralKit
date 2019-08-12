@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Webhook;
@@ -54,13 +55,26 @@ namespace PluralKit.Bot
             return await GetWebhook(webhook.Channel);
         }
 
-        private async Task<IWebhook> GetOrCreateWebhook(ITextChannel channel) => 
-            await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
+        private async Task<IWebhook> GetOrCreateWebhook(ITextChannel channel)
+        {
+            _logger.Debug("Webhook for channel {Channel} not found in cache, trying to fetch", channel.Id);
+            return await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
+        }
 
         private async Task<IWebhook> FindExistingWebhook(ITextChannel channel)
         {
             _logger.Debug("Finding webhook for channel {Channel}", channel.Id);
-            return (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
+            try
+            {
+                return (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
+            }
+            catch (HttpRequestException e)
+            {
+                _logger.Warning(e, "Error occurred while fetching webhook list");
+                // This happens sometimes when Discord returns a malformed request for the webhook list
+                // Nothing we can do than just assume that none exist and return null.
+                return null;
+            }
         }
 
         private Task<IWebhook> DoCreateWebhook(ITextChannel channel)
