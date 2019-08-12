@@ -15,6 +15,8 @@ namespace PluralKit.Bot.Commands
         public SystemStore Systems { get; set; }
         public MemberStore Members { get; set; }
         public EmbedService Embeds { get; set;  }
+        
+        public ProxyCacheService ProxyCache { get; set; }
 
         public override string Prefix => "member";
         public override string ContextNoun => "member";
@@ -170,6 +172,8 @@ namespace PluralKit.Bot.Commands
             ContextEntity.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
             await Members.Save(ContextEntity);
             await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags changed to `{ContextEntity.ProxyString.Sanitize()}`. Try proxying now!");
+            
+            ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
         }
 
         [Command("delete")]

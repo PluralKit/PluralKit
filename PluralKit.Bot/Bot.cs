@@ -106,6 +106,7 @@ namespace PluralKit.Bot
             .AddTransient<LogChannelService>()
             .AddTransient<DataFileService>()
 
+            .AddSingleton<ProxyCacheService>()
             .AddSingleton<WebhookCacheService>()
 
             .AddTransient<SystemStore>()
@@ -129,6 +130,8 @@ namespace PluralKit.Bot
             .AddScoped<EventIdProvider>()
             .AddSingleton(svc => new LoggerProvider(svc.GetRequiredService<CoreConfig>(), "bot"))
             .AddScoped(svc => svc.GetRequiredService<LoggerProvider>().RootLogger.ForContext("EventId", svc.GetRequiredService<EventIdProvider>().EventId))
+            
+            .AddMemoryCache()
             
             .BuildServiceProvider();
     }

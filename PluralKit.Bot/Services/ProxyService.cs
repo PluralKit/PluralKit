@@ -10,16 +10,11 @@ using Discord;
 using Discord.Net;
 using Discord.Webhook;
 using Discord.WebSocket;
+using Microsoft.Extensions.Caching.Memory;
 using Serilog;
 
 namespace PluralKit.Bot
 {
-    class ProxyDatabaseResult
-    {
-        public PKSystem System;
-        public PKMember Member;
-    }
-
     class ProxyMatch {
         public PKMember Member;
         public PKSystem System;
@@ -35,10 +30,11 @@ namespace PluralKit.Bot
         private EmbedService _embeds;
         private IMetrics _metrics;
         private ILogger _logger;
+        private ProxyCacheService _cache;
 
         private HttpClient _httpClient;
 
-        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, IMetrics metrics, ILogger logger)
+        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, IMetrics metrics, ILogger logger, ProxyCacheService cache)
         {
             _client = client;
             _webhookCache = webhookCache;
@@ -47,12 +43,13 @@ namespace PluralKit.Bot
             _messageStorage = messageStorage;
             _embeds = embeds;
             _metrics = metrics;
+            _cache = cache;
             _logger = logger.ForContext<ProxyService>();
 
             _httpClient = new HttpClient();
         }
 
-        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials)
+        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentials)
         {
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message
@@ -89,14 +86,7 @@ namespace PluralKit.Bot
             // Bail early if this isn't in a guild channel
             if (!(message.Channel is IGuildChannel)) return;
 
-            IEnumerable<ProxyDatabaseResult> results;
-            using (var conn = await _conn.Obtain())
-            {
-                results = await conn.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>(
-                    "select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid",
-                    (member, system) =>
-                        new ProxyDatabaseResult {Member = member, System = system}, new {Uid = message.Author.Id});
-            }
+            var results = await _cache.GetResultsFor(message.Author.Id);
 
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, results);
@@ -134,7 +124,6 @@ namespace PluralKit.Bot
                 await message.DeleteAsync();
             } catch (HttpException) {} // If it's already deleted, we just swallow the exception
         }
-
         private static string SanitizeEveryoneMaybe(IMessage message, string messageContents)
         {
             var senderPermissions = ((IGuildUser) message.Author).GetPermissions(message.Channel as IGuildChannel);
