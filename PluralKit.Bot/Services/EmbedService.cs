@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -69,7 +70,18 @@ namespace PluralKit.Bot {
             var name = member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
 
-            var color = member.Color?.ToDiscordColor() ?? Color.Default;
+            Color color;
+            try
+            {
+                color = member.Color?.ToDiscordColor() ?? Color.Default;
+            }
+            catch (ArgumentException)
+            {
+                // Bad API use can cause an invalid color string
+                // TODO: fix that in the API
+                // for now we just default to a blank color, yolo
+                color = Color.Default;
+            }
 
             var messageCount = await _members.MessageCount(member);
 
