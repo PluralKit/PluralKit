@@ -76,5 +76,7 @@ namespace PluralKit.Bot {
 
         public static PKError DisplayNameTooLong(string displayName, int maxLength) => new PKError(
             $"Display name too long ({displayName.Length} > {maxLength} characters). Use a shorter display name, or shorten your system tag.");
+        public static PKError ProxyNameTooShort(string name) => new PKError($"The webhook's name, `{name}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.");
+        public static PKError ProxyNameTooLong(string name) => new PKError($"The webhook's name, `{name}`, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name or use a shorter system tag.");
     }
 }

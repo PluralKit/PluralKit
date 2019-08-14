@@ -89,7 +89,7 @@ namespace PluralKit.Bot.Commands
                 if (unproxyableMembers.Count > 0)
                 {
                     var msg = await Context.Channel.SendMessageAsync(
-                        $"{Emojis.Warn} Changing your system tag to '{newTag}' will result in the following members being unproxyable, since the tag would bring their name over 32 characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name))}**\nDo you want to continue anyway?");
+                        $"{Emojis.Warn} Changing your system tag to '{newTag}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name))}**\nDo you want to continue anyway?");
                     if (!await Context.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
                 }
             }

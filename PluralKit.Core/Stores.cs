@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using App.Metrics.Logging;
 using Dapper;
 using NodaTime;
+
+using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit {
@@ -139,7 +142,7 @@ namespace PluralKit {
             return (await GetBySystem(system))
                 .Where((m) => {
                     var proxiedName = $"{m.Name} {system.Tag}";
-                    return proxiedName.Length > 32 || proxiedName.Length < 2;
+                    return proxiedName.Length > Limits.MaxProxyNameLength || proxiedName.Length < 2;
                 }).ToList();
         }
 

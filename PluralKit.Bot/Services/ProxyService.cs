@@ -2,15 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using App.Metrics;
-using Dapper;
+
 using Discord;
 using Discord.Net;
-using Discord.Webhook;
 using Discord.WebSocket;
-using Microsoft.Extensions.Caching.Memory;
+
+using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit.Bot
@@ -100,6 +99,10 @@ namespace PluralKit.Bot
             var proxyName = match.Member.ProxyName(match.System.Tag);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
             
+            // If the name's too long (or short), bail
+            if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
+            if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+            
             // Sanitize @everyone, but only if the original user wouldn't have permission to
             var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
             
@@ -143,6 +146,7 @@ namespace PluralKit.Bot
 
             if (!permissions.ManageWebhooks)
             {
+                // todo: PKError-ify these
                 await channel.SendMessageAsync(
                     $"{Emojis.Error} PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages. Please contact a server administrator to remedy this.");
                 return false;

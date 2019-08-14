@@ -134,18 +134,16 @@ namespace PluralKit.Bot
         private IServiceProvider _services;
         private DiscordShardedClient _client;
         private CommandService _commands;
-        private ProxyService _proxy;
         private Timer _updateTimer;
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
 
-        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, ProxyService proxy, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
+        public Bot(IServiceProvider services, IDiscordClient client, CommandService commands, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
             _services = services;
             _client = client as DiscordShardedClient;
             _commands = commands;
-            _proxy = proxy;
             _metrics = metrics;
             _collector = collector;
             _logger = logger.ForContext<Bot>();
@@ -367,7 +365,14 @@ namespace PluralKit.Bot
             else
             {
                 // If not, try proxying anyway
-                await _proxy.HandleMessageAsync(arg);
+                try
+                {
+                    await _proxy.HandleMessageAsync(arg);
+                }
+                catch (PKError e)
+                {
+                    await msg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
+                }
             }
         }
 
