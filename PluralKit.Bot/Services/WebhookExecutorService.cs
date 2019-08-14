@@ -61,7 +61,7 @@ namespace PluralKit.Bot
                             avatarUrl: avatarUrl);
 
                 // Otherwise, send normally
-                return await client.SendMessageAsync(content, username: name, avatarUrl: avatarUrl);
+                return await client.SendMessageAsync(content, username: FixClyde(name), avatarUrl: avatarUrl);
             }
             catch (HttpException e)
             {
