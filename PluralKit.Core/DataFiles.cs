@@ -70,7 +70,7 @@ namespace PluralKit.Bot
         {
             // TODO: make atomic, somehow - we'd need to obtain one IDbConnection and reuse it
             // which probably means refactoring SystemStore.Save and friends etc
-            
+
             var result = new ImportResult {AddedNames = new List<string>(), ModifiedNames = new List<string>()};
 
             // If we don't already have a system to save to, create one
@@ -83,7 +83,7 @@ namespace PluralKit.Bot
             if (data.AvatarUrl != null) system.AvatarUrl = data.AvatarUrl;
             if (data.TimeZone != null) system.UiTz = data.TimeZone ?? "UTC";
             await _systems.Save(system);
-            
+
             // Make sure to link the sender account, too
             await _systems.Link(system, accountId);
 
@@ -134,7 +134,7 @@ namespace PluralKit.Bot
 
                 await _members.Save(member);
             }
-            
+
             _logger.Information("Imported system {System}", system.Id);
 
             // TODO: import switches, too?
@@ -211,14 +211,14 @@ namespace PluralKit.Bot
         {
             // Set by member conversion function
             string lastSetTag = null;
-            
+
             TupperboxConversionResult output = default(TupperboxConversionResult);
-            
+
             output.System = new DataFileSystem
             {
                 Members = Tuppers.Select(t => t.ToPluralKit(ref lastSetTag, ref output.HadMultibrackets,
                     ref output.HadGroups, ref output.HadMultibrackets)).ToList(),
-                
+
                 // If we haven't had multiple tags set, use the last (and only) one we set as the system tag
                 Tag = !output.HadIndividualTags ? lastSetTag : null
             };
@@ -262,8 +262,8 @@ namespace PluralKit.Bot
                 AvatarUrl = AvatarUrl,
                 Birthday = Birthday,
                 Description = Description,
-                Prefix = Brackets.FirstOrDefault(),
-                Suffix = Brackets.Skip(1).FirstOrDefault() // TODO: can Tupperbox members have no proxies at all?
+                Prefix = Brackets.FirstOrDefault() == "" ? null : Brackets.First(),
+                Suffix = Brackets.Skip(1).FirstOrDefault() == "" ? null : Brackets.Skip(1).First()  // TODO: can Tupperbox members have no proxies at all?
             };
         }
     }
