@@ -154,7 +154,7 @@ namespace PluralKit.Bot.Commands
                 var members = await Members.GetBySystem(system);
                 var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
                 await Context.Paginate<PKMember>(
-                    members.OrderBy(m => m.Name).ToList(),
+                    members.OrderBy(m => m.Name.toLower()).ToList(),
                     25,
                     embedTitle,
                     (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
