@@ -52,6 +52,7 @@ To build the docs locally, run:
 $ cd docs/
 $ bundle install --path vendor/bundle
 $ bundle exec jekyll build
+```
 
 To run an auto-reloading server, substitute the last command with:
     $ bundle exec jekyll serve 
