@@ -56,7 +56,7 @@ The following three models (usually represented in JSON format) represent the va
 
 ### Message model
 |Key|Type|Notes|
-|---|---|---
+|---|---|---|
 |timestamp|datetime||
 |id|snowflake|The ID of the message sent by the webhook. Encoded as string for precision reasons.|
 |sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
