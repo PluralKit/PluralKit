@@ -271,7 +271,9 @@ namespace PluralKit.Bot
                 // and log the breadcrumb to the newly created (in-svc-scope) Sentry scope
                 using (var scope = _services.CreateScope())
                 {
+                    var evtid = scope.ServiceProvider.GetService<EventIdProvider>().EventId;
                     var sentryScope = scope.ServiceProvider.GetRequiredService<Scope>();
+                    sentryScope.SetTag("evtid", evtid.ToString());
                     breadcrumbFactory(sentryScope);
                 
                     try
