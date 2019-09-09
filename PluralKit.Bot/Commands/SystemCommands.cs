@@ -184,7 +184,7 @@ namespace PluralKit.Bot.Commands
                             if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                             if (m.Prefix != null || m.Suffix != null) profile += $"\n**Proxy tags**: {m.ProxyString}";
                             if (m.Description != null) profile += $"\n\n{m.Description}";
-                            eb.AddField(m.Name, profile.Truncate(1024));
+                            eb.AddField($"{m.Name} ({m.DisplayName})", profile.Truncate(1024));
                         }
                     }
                 );
