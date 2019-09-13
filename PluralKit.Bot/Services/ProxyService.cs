@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 using Discord;
 using Discord.Net;
@@ -105,6 +106,9 @@ namespace PluralKit.Bot
             
             // Sanitize @everyone, but only if the original user wouldn't have permission to
             var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
+
+            //Convert emotes that are not on the guild to inline links
+            messageContents = ConvertEmotesToInlineLinks((message.Channel as ITextChannel), messageContents);
             
             // Execute the webhook itself
             var hookMessageId = await _webhookExecutor.ExecuteWebhook(
@@ -137,6 +141,39 @@ namespace PluralKit.Bot
             var senderPermissions = ((IGuildUser) message.Author).GetPermissions(message.Channel as IGuildChannel);
             if (!senderPermissions.MentionEveryone) return messageContents.SanitizeEveryone();
             return messageContents;
+        }
+
+        private static string ConvertEmotesToInlineLinks(ITextChannel channel, string sanitizedMessageContents)
+        {
+            MatchCollection emote_matches = Regex.Matches(sanitizedMessageContents, @"<(a?):([a-zA-Z0-9_]+):(\d+)>");
+            string convertedEmoteMessageContents = sanitizedMessageContents;
+            if(emote_matches.Count > 0){
+                IReadOnlyCollection<GuildEmote> emotes = channel.Guild.Emotes;
+                foreach (Match emote_match in emote_matches){
+                    Emote parsed_emote;
+                    bool ifParsed = Emote.TryParse(emote_match.Value, out parsed_emote);
+                    if (ifParsed && IsEmoteNotPresent(emotes, parsed_emote)){
+                        convertedEmoteMessageContents = convertedEmoteMessageContents.Replace(parsed_emote.ToString(), $"[:{parsed_emote.Name}:]({parsed_emote.Url})");
+                        
+                        //Since an inlink link version of an emote is MUCH longer than a normal emote, we run the risk of exceeding the 2000 char limit.
+                        if (convertedEmoteMessageContents.Length > 2000){
+                            //We went over 2000 char. Abort conversion proccess and return the original message contents
+                            return sanitizedMessageContents;
+                        }
+                    }   
+                }
+            }
+            return convertedEmoteMessageContents;
+        }
+
+        private static bool IsEmoteNotPresent(IReadOnlyCollection<GuildEmote> server_emotes, Emote message_emote)
+        {
+            foreach (var server_emote in server_emotes){
+                if (server_emote.Equals(message_emote)){
+                    return false;
+                }
+            }
+            return true;
         }
 
         private async Task<bool> EnsureBotPermissions(ITextChannel channel)
