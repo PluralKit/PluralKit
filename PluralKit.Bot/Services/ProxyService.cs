@@ -156,7 +156,7 @@ namespace PluralKit.Bot
                         convertedEmoteMessageContents = convertedEmoteMessageContents.Replace(parsed_emote.ToString(), $"[:{parsed_emote.Name}:]({parsed_emote.Url})");
                         
                         //Since an inlink link version of an emote is MUCH longer than a normal emote, we run the risk of exceeding the 2000 char limit.
-                        if (convertedEmoteMessageContents.Length > 2000){
+                        if (convertedEmoteMessageContents.Length > Limits.MaxMessageLength){
                             //We went over 2000 char. Abort conversion proccess and return the original message contents
                             return sanitizedMessageContents;
                         }
