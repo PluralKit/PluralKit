@@ -11,7 +11,7 @@ namespace PluralKit.Bot.Commands {
     public class MiscCommands: ModuleBase<PKCommandContext> {
         public BotConfig BotConfig { get; set; }
         public IMetrics Metrics { get; set; }
-        
+
         [Command("invite")]
         [Alias("inv")]
         [Remarks("invite")]
@@ -43,10 +43,11 @@ namespace PluralKit.Bot.Commands {
         {
             var messagesReceived = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name).Value;
             var messagesProxied = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name).Value;
-            
+
             var commandsRun = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name).Value;
-            
+
             await Context.Channel.SendMessageAsync(embed: new EmbedBuilder()
+                .AddField("Connection latency", $"{Context.Client.Latency}ms")
                 .AddField("Messages processed", $"{messagesReceived.OneMinuteRate:F1}/s ({messagesReceived.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Messages proxied", $"{messagesProxied.OneMinuteRate:F1}/s ({messagesProxied.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Commands executed", $"{commandsRun.OneMinuteRate:F1}/s ({commandsRun.FifteenMinuteRate:F1}/s over 15m)")
@@ -61,7 +62,7 @@ namespace PluralKit.Bot.Commands {
             var guild = Context.Client.GetGuild(guildId) as IGuild;
             if (guild == null)
                 throw Errors.GuildNotFound(guildId);
-            
+
             var requiredPermissions = new []
             {
                 ChannelPermission.ViewChannel, // Manage Messages automatically grants Send and Add Reactions, but not Read
@@ -90,7 +91,7 @@ namespace PluralKit.Bot.Commands {
                     permissionsMissing[missingPermissionField].Add(channel);
                 }
             }
-            
+
             // Generate the output embed
             var eb = new EmbedBuilder()
                 .WithTitle($"Permission check for **{guild.Name}**");
@@ -108,7 +109,7 @@ namespace PluralKit.Bot.Commands {
                     var missingPermissionNames = string.Join(", ", new ChannelPermissions(missingPermissionField)
                         .ToList()
                         .Select(perm => perm.Humanize().Transform(To.TitleCase)));
-                    
+
                     var channelsList = string.Join("\n", channels
                         .OrderBy(c => c.Position)
                         .Select(c => $"#{c.Name}"));
