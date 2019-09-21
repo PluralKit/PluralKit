@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.Metrics;
 using Discord;
+using Discord.WebSocket;
 using Discord.Commands;
 using Humanizer;
 
@@ -46,8 +47,12 @@ namespace PluralKit.Bot.Commands {
 
             var commandsRun = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name).Value;
 
+            DiscordSocketClient shard = null;
+            if (Context.Channel is ITextChannel)
+                shard = Context.Client.GetShardFor(Context.Guild);
+
             await Context.Channel.SendMessageAsync(embed: new EmbedBuilder()
-                .AddField("Connection latency", $"{Context.Client.Latency}ms")
+                .AddField($"Connection Latency", shard != null ? $"{shard.Latency}ms (shard #{shard.ShardId})" : $"{Context.Client.Latency}ms")
                 .AddField("Messages processed", $"{messagesReceived.OneMinuteRate:F1}/s ({messagesReceived.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Messages proxied", $"{messagesProxied.OneMinuteRate:F1}/s ({messagesProxied.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Commands executed", $"{commandsRun.OneMinuteRate:F1}/s ({commandsRun.FifteenMinuteRate:F1}/s over 15m)")
