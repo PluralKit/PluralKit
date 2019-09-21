@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Discord.WebSocket;
+
 using Humanizer;
 using NodaTime;
 
@@ -151,23 +153,44 @@ namespace PluralKit.Bot {
 
         public async Task<Embed> CreateMessageInfoEmbed(MessageStore.StoredMessage msg)
         {
-            var channel = (ITextChannel) await _client.GetChannelAsync(msg.Message.Channel);
-            var serverMsg = await channel.GetMessageAsync(msg.Message.Mid);
+            var channel = await _client.GetChannelAsync(msg.Message.Channel) as ITextChannel;
+            var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
 
             var memberStr = $"{msg.Member.Name} (`{msg.Member.Hid}`)";
-            if (msg.Member.Pronouns != null) memberStr += $"\n*(pronouns: **{msg.Member.Pronouns}**)*";
 
-            var user = await _client.GetUserAsync(msg.Message.Sender);
-            var userStr = user.NameAndMention() ?? $"*(deleted user {msg.Message.Sender})*";
+            var userStr = $"*(deleted user {msg.Message.Sender})*";
+            ICollection<IRole> roles = null;
 
-            return new EmbedBuilder()
+            if (channel != null)
+            {
+                // Look up the user with the REST client
+                // this ensures we'll still get the information even if the user's not cached,
+                // even if this means an extra API request (meh, it'll be fine)
+                var shard = ((DiscordShardedClient) _client).GetShardFor(channel.Guild);
+                var guildUser = await shard.Rest.GetGuildUserAsync(channel.Guild.Id, msg.Message.Sender);
+                if (guildUser != null)
+                {
+                    roles = guildUser.RoleIds
+                        .Select(roleId => channel.Guild.GetRole(roleId))
+                        .Where(role => role.Name != "@everyone")
+                        .OrderByDescending(role => role.Position)
+                        .ToList();
+
+                    userStr = guildUser?.NameAndMention();
+                }
+            }
+
+            var eb = new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
-                .AddField("System", msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
+                .AddField("System",
+                    msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)
                 .AddField("Sent by", userStr, inline: true)
-                .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid))
-                .Build();
+                .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid));
+
+            if (roles != null) eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
+            return eb.Build();
         }
 
         public Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, DateTimeZone tz)
