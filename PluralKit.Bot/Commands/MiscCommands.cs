@@ -47,9 +47,7 @@ namespace PluralKit.Bot.Commands {
 
             var commandsRun = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name).Value;
 
-            DiscordSocketClient shard = null;
-            if (Context.Channel is ITextChannel)
-                shard = Context.Client.GetShardFor(Context.Guild);
+            DiscordSocketClient shard = Context.Channel is ITextChannel ? Context.Client.GetShardFor(Context.Guild) : null;
 
             await Context.Channel.SendMessageAsync(embed: new EmbedBuilder()
                 .AddField($"Connection Latency", shard != null ? $"{shard.Latency}ms (shard #{shard.ShardId})" : $"{Context.Client.Latency}ms")
