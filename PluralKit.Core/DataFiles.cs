@@ -49,6 +49,7 @@ namespace PluralKit.Bot
         {
             Id = member.Hid,
             Name = member.Name,
+            DisplayName = member.DisplayName,
             Description = member.Description,
             Birthday = member.Birthday != null ? Formats.DateExportFormat.Format(member.Birthday.Value) : null,
             Pronouns = member.Pronouns,
@@ -117,6 +118,7 @@ namespace PluralKit.Bot
 
                 // Apply member info
                 member.Name = dataMember.Name;
+                if (dataMember.DisplayName != null) member.DisplayName = dataMember.DisplayName;
                 if (dataMember.Description != null) member.Description = dataMember.Description;
                 if (dataMember.Color != null) member.Color = dataMember.Color;
                 if (dataMember.AvatarUrl != null) member.AvatarUrl = dataMember.AvatarUrl;
@@ -173,6 +175,7 @@ namespace PluralKit.Bot
     {
         [JsonProperty("id")] public string Id;
         [JsonProperty("name")] public string Name;
+        [JsonProperty("display_name")] public string DisplayName;
         [JsonProperty("description")] public string Description;
         [JsonProperty("birthday")] public string Birthday;
         [JsonProperty("pronouns")] public string Pronouns;
