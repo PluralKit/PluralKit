@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using NodaTime;
+using NodaTime.Text;
 using Serilog;
 
 namespace PluralKit.Bot
@@ -73,6 +75,7 @@ namespace PluralKit.Bot
             // which probably means refactoring SystemStore.Save and friends etc
             
             var result = new ImportResult {AddedNames = new List<string>(), ModifiedNames = new List<string>()};
+            var hidMapping = new Dictionary<string, PKMember>();
 
             // If we don't already have a system to save to, create one
             if (system == null) system = await _systems.Create(data.Name);
@@ -116,6 +119,10 @@ namespace PluralKit.Bot
                     result.ModifiedNames.Add(dataMember.Name);
                 }
 
+                // Keep track of what the data file's member ID maps to for switch import
+                if (!hidMapping.ContainsKey(dataMember.Id))
+                    hidMapping.Add(dataMember.Id, member);
+
                 // Apply member info
                 member.Name = dataMember.Name;
                 if (dataMember.DisplayName != null) member.DisplayName = dataMember.DisplayName;
@@ -136,10 +143,22 @@ namespace PluralKit.Bot
 
                 await _members.Save(member);
             }
-            
-            _logger.Information("Imported system {System}", system.Id);
 
-            // TODO: import switches, too?
+            // Re-map the switch members in the likely case IDs have changed
+            var mappedSwitches = new List<Tuple<Instant, ICollection<PKMember>>>();
+            foreach (var sw in data.Switches)
+            {
+                var timestamp = InstantPattern.ExtendedIso.Parse(sw.Timestamp).Value;
+                var swMembers = new List<PKMember>();
+                swMembers.AddRange(sw.Members.Select(x =>
+                    hidMapping.FirstOrDefault(y => y.Key.Equals(x)).Value));
+                var mapped = new Tuple<Instant, ICollection<PKMember>>(timestamp, swMembers);
+                mappedSwitches.Add(mapped);
+            }
+            // Import switches
+            await _switches.RegisterSwitches(system, mappedSwitches);
+
+            _logger.Information("Imported system {System}", system.Id);
 
             result.System = system;
             return result;
