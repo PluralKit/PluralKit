@@ -9,6 +9,7 @@ using PluralKit.Core;
 namespace PluralKit.Bot {
     public static class Errors {
         // TODO: is returning constructed errors and throwing them at call site a good idea, or should these be methods that insta-throw instead?
+        // or should we just like... go back to inlining them? at least for the one-time-use commands
 
         public static PKError NotOwnSystemError => new PKError($"You can only run this command on your own system.");
         public static PKError NotOwnMemberError => new PKError($"You can only run this command on your own member.");
@@ -38,7 +39,7 @@ namespace PluralKit.Bot {
         public static PKError AccountAlreadyLinked => new PKError("That account is already linked to your system.");
         public static PKError AccountNotLinked => new PKError("That account isn't linked to your system.");
         public static PKError AccountInOtherSystem(PKSystem system) => new PKError($"The mentioned account is already linked to another system (see `pk;system {system.Hid}`).");
-        public static PKError UnlinkingLastAccount => new PKError("Since this is the only account linked to this system, you cannot unlink it (as that would leave your system account-less).");
+        public static PKError UnlinkingLastAccount => new PKError("Since this is the only account linked to this system, you cannot unlink it (as that would leave your system account-less). If you would like to delete your system, use `pk;system delete`.");
         public static PKError MemberLinkCancelled => new PKError("Member link cancelled.");
         public static PKError MemberUnlinkCancelled => new PKError("Member unlink cancelled.");
 

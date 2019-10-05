@@ -1,44 +1,56 @@
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
+
+using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class ModCommands: ModuleBase<PKCommandContext>
+    public class ModCommands
     {
-        public LogChannelService LogChannels { get; set; }
-        public MessageStore Messages { get; set; }
-        
-        public EmbedService Embeds { get; set; }
-        
-        [Command("log")]
-        [Remarks("log <channel>")]
-        [RequireUserPermission(GuildPermission.ManageGuild, ErrorMessage = "You must have the Manage Server permission to use this command.")]
-        [RequireContext(ContextType.Guild, ErrorMessage = "This command can not be run in a DM.")]
-        public async Task SetLogChannel(ITextChannel channel = null)
+        private LogChannelService _logChannels;
+        private MessageStore _messages;
+
+        private EmbedService _embeds;
+
+        public ModCommands(LogChannelService logChannels, MessageStore messages, EmbedService embeds)
         {
-            await LogChannels.SetLogChannel(Context.Guild, channel);
+            _logChannels = logChannels;
+            _messages = messages;
+            _embeds = embeds;
+        }
+
+        public async Task SetLogChannel(Context ctx)
+        {
+            ctx.CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server").CheckGuildContext();
+            
+            ITextChannel channel = null;
+            if (ctx.HasNext())
+                channel = ctx.MatchChannel() ?? throw new PKSyntaxError("You must pass a #channel to set.");
+            
+            await _logChannels.SetLogChannel(ctx.Guild, channel);
 
             if (channel != null)
-                await Context.Channel.SendMessageAsync($"{Emojis.Success} Proxy logging channel set to #{channel.Name.Sanitize()}.");
+                await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name.Sanitize()}.");
             else
-                await Context.Channel.SendMessageAsync($"{Emojis.Success} Proxy logging channel cleared.");
+                await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
         }
-
-        [Command("message")]
-        [Remarks("message <messageid>")]
-        [Alias("msg")]
-        public async Task GetMessage(ulong messageId)
+        
+        public async Task GetMessage(Context ctx)
         {
-            var message = await Messages.Get(messageId);
+            var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a message ID or link.");
+
+            ulong messageId;
+            if (ulong.TryParse(word, out var id))
+                messageId = id;
+            else if (Regex.Match(word, "https://discordapp.com/channels/\\d+/(\\d+)") is Match match && match.Success)
+                messageId = ulong.Parse(match.Groups[1].Value);
+            else throw new PKSyntaxError($"Could not parse `{word}` as a message ID or link.");
+
+            var message = await _messages.Get(messageId);
             if (message == null) throw Errors.MessageNotFound(messageId);
 
-            await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMessageInfoEmbed(message));
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
         }
-
-        [Command("message")]
-        [Remarks("message <messageid>")]
-        [Alias("msg")]
-        public async Task GetMessage(IMessage msg) => await GetMessage(msg.Id);
     }
 }
