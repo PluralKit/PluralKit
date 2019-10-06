@@ -26,11 +26,34 @@ namespace PluralKit.Bot
 
         public async Task<DataFileSystem> ExportSystem(PKSystem system)
         {
+            // Export members
             var members = new List<DataFileMember>();
-            foreach (var member in await _members.GetBySystem(system)) members.Add(await ExportMember(member));
+            var pkMembers = await _members.GetBySystem(system); // Read all members in the system
+            var messageCounts = await _members.MessageCountsPerMember(system); // Count messages proxied by all members in the system
+            members.AddRange(pkMembers.Select(m => new DataFileMember
+            {
+                Id = m.Hid,
+                Name = m.Name,
+                DisplayName = m.DisplayName,
+                Description = m.Description,
+                Birthday = m.Birthday != null ? Formats.DateExportFormat.Format(m.Birthday.Value) : null,
+                Pronouns = m.Pronouns,
+                Color = m.Color,
+                AvatarUrl = m.AvatarUrl,
+                Prefix = m.Prefix,
+                Suffix = m.Suffix,
+                Created = Formats.TimestampExportFormat.Format(m.Created),
+                MessageCount = messageCounts.Where(x => x.Member.Equals(m.Id)).Select(x => x.MessageCount).FirstOrDefault()
+            }));
 
+            // Export switches
             var switches = new List<DataFileSwitch>();
-            foreach (var sw in await _switches.GetSwitches(system, 999999)) switches.Add(await ExportSwitch(sw));
+            var switchList = await _switches.GetTruncatedSwitchList(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
+            switches.AddRange(switchList.Select(x => new DataFileSwitch
+            {
+                Timestamp = Formats.TimestampExportFormat.Format(x.TimespanStart),
+                Members = x.Members.Select(m => m.Hid).ToList() // Look up member's HID using the member export from above
+            }));
 
             return new DataFileSystem
             {
@@ -46,28 +69,6 @@ namespace PluralKit.Bot
                 LinkedAccounts = (await _systems.GetLinkedAccountIds(system)).ToList()
             };
         }
-
-        private async Task<DataFileMember> ExportMember(PKMember member) => new DataFileMember
-        {
-            Id = member.Hid,
-            Name = member.Name,
-            DisplayName = member.DisplayName,
-            Description = member.Description,
-            Birthday = member.Birthday != null ? Formats.DateExportFormat.Format(member.Birthday.Value) : null,
-            Pronouns = member.Pronouns,
-            Color = member.Color,
-            AvatarUrl = member.AvatarUrl,
-            Prefix = member.Prefix,
-            Suffix = member.Suffix,
-            Created = Formats.TimestampExportFormat.Format(member.Created),
-            MessageCount = await _members.MessageCount(member)
-        };
-
-        private async Task<DataFileSwitch> ExportSwitch(PKSwitch sw) => new DataFileSwitch
-        {
-            Members = (await _switches.GetSwitchMembers(sw)).Select(m => m.Hid).ToList(),
-            Timestamp = Formats.TimestampExportFormat.Format(sw.Timestamp)
-        };
 
         public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system, ulong accountId)
         {

@@ -172,6 +172,25 @@ namespace PluralKit {
                 return await conn.QuerySingleAsync<int>("select count(*) from messages where member = @Id", member);
         }
 
+        public struct MessageBreakdownListEntry
+        {
+            public int Member;
+            public int MessageCount;
+        }
+
+        public async Task<IEnumerable<MessageBreakdownListEntry>> MessageCountsPerMember(PKSystem system)
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.QueryAsync<MessageBreakdownListEntry>(
+                    @"SELECT messages.member, COUNT(messages.member) messagecount
+                        FROM members
+                        JOIN messages
+                        ON members.id = messages.member
+                        WHERE members.system = @System
+                        GROUP BY messages.member",
+                    new { System = system.Id });
+        }
+
         public async Task<int> MemberCount(PKSystem system)
         {
             using (var conn = await _conn.Obtain())
@@ -362,7 +381,7 @@ namespace PluralKit {
                 var switchMembersEntries = await conn.QueryAsync<SwitchMembersListEntry>(
                     @"SELECT switch_members.member, switches.timestamp
                         FROM switches
-                        JOIN switch_members
+                        LEFT JOIN switch_members
                         ON switches.id = switch_members.switch
                         WHERE switches.system = @System
                         AND (
@@ -451,7 +470,7 @@ namespace PluralKit {
                 select new SwitchListEntry
                 {
                     TimespanStart = g.Key,
-                    Members = g.Select(x => memberObjects[x.Member]).ToList()
+                    Members = g.Where(x => x.Member != 0).Select(x => memberObjects[x.Member]).ToList()
                 };
 
             // Loop through every switch that overlaps the range and add it to the output list
