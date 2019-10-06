@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -291,6 +292,40 @@ namespace PluralKit {
                 tx.Commit();
 
                 _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system.Id, members.Select(m => m.Id));
+            }
+        }
+
+        public async Task RegisterSwitches(PKSystem system, ICollection<Tuple<Instant, ICollection<PKMember>>> switches)
+        {
+            // Use a transaction here since we're doing multiple executed commands in one
+            using (var conn = await _conn.Obtain())
+            using (var tx = conn.BeginTransaction())
+            {
+                foreach (var s in switches)
+                {
+                    // First, we insert the switch itself
+                    var sw = await conn.QueryFirstOrDefaultAsync<PKSwitch>(
+                            @"insert into switches(system, timestamp)
+                            select @System, @Timestamp
+                            where not exists (
+                                select * from switches
+                                where system = @System and timestamp::timestamp(0) = @Timestamp
+                                limit 1
+                            )
+                            returning *",
+                        new { System = system.Id, Timestamp = s.Item1 });
+
+                    // If we inserted a switch, also insert each member in the switch in the switch_members table
+                    if (sw != null && s.Item2.Any())
+                        await conn.ExecuteAsync(
+                            "insert into switch_members(switch, member) select @Switch, * FROM unnest(@Members)",
+                            new { Switch = sw.Id, Members = s.Item2.Select(x => x.Id).ToArray() });
+                }
+
+                // Finally we commit the tx, since the using block will otherwise rollback it
+                tx.Commit();
+
+                _logger.Information("Registered {SwitchCount} switches in system {System}", switches.Count, system.Id);
             }
         }
 
