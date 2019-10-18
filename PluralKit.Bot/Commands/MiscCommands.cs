@@ -59,7 +59,7 @@ namespace PluralKit.Bot.Commands {
         public async Task PermCheckGuild(Context ctx)
         {
             var guildIdStr = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a server ID.");
-            if (!ulong.TryParse(guildIdStr, out var guildId)) throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
+            if (!ulong.TryParse(guildIdStr, out var guildId)) throw new PKSyntaxError($"Could not parse `{guildIdStr.SanitizeMentions()}` as an ID.");
             
             // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
             var guild = ctx.Client.GetGuild(guildId) as IGuild;
@@ -97,7 +97,7 @@ namespace PluralKit.Bot.Commands {
             
             // Generate the output embed
             var eb = new EmbedBuilder()
-                .WithTitle($"Permission check for **{guild.Name}**");
+                .WithTitle($"Permission check for **{guild.Name.SanitizeMentions()}**");
 
             if (permissionsMissing.Count == 0)
             {

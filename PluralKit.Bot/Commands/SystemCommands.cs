@@ -85,7 +85,7 @@ namespace PluralKit.Bot.Commands
                 if (unproxyableMembers.Count > 0)
                 {
                     var msg = await ctx.Reply(
-                        $"{Emojis.Warn} Changing your system tag to '{newTag}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name))}**\nDo you want to continue anyway?");
+                        $"{Emojis.Warn} Changing your system tag to '{newTag.SanitizeMentions()}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name.SanitizeMentions()))}**\nDo you want to continue anyway?");
                     if (!await ctx.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
                 }
             }
@@ -143,14 +143,14 @@ namespace PluralKit.Bot.Commands
             if (system == null) throw Errors.NoSystemError;
 
             var members = await _members.GetBySystem(system);
-            var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
+            var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             await ctx.Paginate<PKMember>(
                 members.OrderBy(m => m.Name).ToList(),
                 25,
                 embedTitle,
                 (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
-                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name}** *({m.ProxyString})*";
-                    return $"[`{m.Hid}`] **{m.Name}**";
+                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyString.SanitizeMentions()})*";
+                    return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
                 }))
             );
         }

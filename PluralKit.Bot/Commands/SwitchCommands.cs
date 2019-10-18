@@ -69,7 +69,7 @@ namespace PluralKit.Bot.Commands
             if (members.Count == 0)
                 await ctx.Reply($"{Emojis.Success} Switch-out registered.");
             else
-                await ctx.Reply($"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.Name)).Sanitize()}.");
+                await ctx.Reply($"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.Name)).SanitizeMentions()}.");
         }
         
         public async Task SwitchMove(Context ctx)
@@ -108,7 +108,7 @@ namespace PluralKit.Bot.Commands
             var newSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - time.ToInstant());
             
             // yeet
-            var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr.Sanitize()}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
+            var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr.SanitizeMentions()}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
@@ -132,7 +132,7 @@ namespace PluralKit.Bot.Commands
             if (lastTwoSwitches.Length == 1)
             {
                 msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.Sanitize()}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
             }
             else
             {
@@ -140,7 +140,7 @@ namespace PluralKit.Bot.Commands
                 var secondSwitchMemberStr = string.Join(", ", secondSwitchMembers.Select(m => m.Name));
                 var secondSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
                 msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.Sanitize()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.Sanitize()} ({secondSwitchDeltaStr} ago). Is this okay?");
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.SanitizeMentions()} ({secondSwitchDeltaStr} ago). Is this okay?");
             }
 
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;

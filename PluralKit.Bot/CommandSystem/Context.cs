@@ -166,12 +166,12 @@ namespace PluralKit.Bot.CommandSystem
             if (input.Length == 5)
             {
                 if (_senderSystem != null)
-                    return $"Member with ID or name `{input}` not found.";
-                return $"Member with ID `{input}` not found."; // Accounts without systems can't query by name
+                    return $"Member with ID or name \"{input.SanitizeMentions()}\" not found.";
+                return $"Member with ID \"{input.SanitizeMentions()}\" not found."; // Accounts without systems can't query by name
             }
 
             if (_senderSystem != null)
-                return $"Member with name `{input}` not found. Note that a member ID is 5 characters long.";
+                return $"Member with name \"{input.SanitizeMentions()}\" not found. Note that a member ID is 5 characters long.";
             return $"Member not found. Note that a member ID is 5 characters long.";
         }
 

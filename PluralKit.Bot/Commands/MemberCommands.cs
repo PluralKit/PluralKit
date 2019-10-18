@@ -41,7 +41,7 @@ namespace PluralKit.Bot.Commands
             // Warn if there's already a member by this name
             var existingMember = await _members.GetByName(ctx.System, memberName);
             if (existingMember != null) {
-                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.Sanitize()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
@@ -49,7 +49,7 @@ namespace PluralKit.Bot.Commands
             var member = await _members.Create(ctx.System, memberName);
             
             // Send confirmation and space hint
-            await ctx.Reply($"{Emojis.Success} Member \"{memberName.Sanitize()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
+            await ctx.Reply($"{Emojis.Success} Member \"{memberName.SanitizeMentions()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
             if (memberName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
@@ -74,7 +74,7 @@ namespace PluralKit.Bot.Commands
             // Warn if there's already a member by this name
             var existingMember = await _members.GetByName(ctx.System, newName);
             if (existingMember != null) {
-                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.Sanitize()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
@@ -84,7 +84,7 @@ namespace PluralKit.Bot.Commands
 
             await ctx.Reply($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
-            if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set (`{target.DisplayName}`), and will be proxied using that name instead.");
+            if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set ({target.DisplayName.SanitizeMentions()}), and will be proxied using that name instead.");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
@@ -178,7 +178,7 @@ namespace PluralKit.Bot.Commands
             target.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
             target.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
             await _members.Save(target);
-            await ctx.Reply($"{Emojis.Success} Member proxy tags changed to `{target.ProxyString.Sanitize()}`. Try proxying now!");
+            await ctx.Reply($"{Emojis.Success} Member proxy tags changed to `{target.ProxyString.SanitizeMentions()}`. Try proxying now!");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
@@ -188,7 +188,7 @@ namespace PluralKit.Bot.Commands
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             
-            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.Name.Sanitize()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
+            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.Name.SanitizeMentions()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
             await _members.Delete(target);
             await ctx.Reply($"{Emojis.Success} Member deleted.");
@@ -257,7 +257,7 @@ namespace PluralKit.Bot.Commands
             if (newDisplayName != null)
             {
                 successStr +=
-                    $"Member display name changed. This member will now be proxied using the name `{newDisplayName}`.";
+                    $"Member display name changed. This member will now be proxied using the name \"{newDisplayName.SanitizeMentions()}\".";
             }
             else
             {
@@ -268,7 +268,7 @@ namespace PluralKit.Bot.Commands
                     successStr +=
                         $" {Emojis.Warn} This member's actual name is too long ({target.Name.Length} > {ctx.System.MaxMemberNameLength} characters), and thus cannot be proxied.";
                 else
-                    successStr += $"This member will now be proxied using their member name `{target.Name}.";
+                    successStr += $"This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
             }
             await ctx.Reply(successStr);
             

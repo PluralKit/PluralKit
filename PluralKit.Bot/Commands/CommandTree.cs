@@ -101,7 +101,7 @@ namespace PluralKit.Bot.Commands
                 return ctx.Execute<MiscCommands>(PermCheck, m => m.PermCheckGuild(ctx));
 
             ctx.Reply(
-                $"{Emojis.Error} Unknown command `{ctx.PeekArgument().Sanitize()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
+                $"{Emojis.Error} Unknown command `{ctx.PeekArgument().SanitizeMentions()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
             return Task.CompletedTask;
         }
 
