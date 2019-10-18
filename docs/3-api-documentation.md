@@ -39,6 +39,7 @@ The following three models (usually represented in JSON format) represent the va
 |---|---|---|---|
 |id|string|No||
 |name|string?|Yes|50-character limit.|
+|display name|string?|Yes|50-character limit.|
 |description|string?|Yes|1000-character limit.|
 |color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.|
 |avatar_url|url?|Yes|Not validated server-side.|
@@ -264,6 +265,7 @@ Creates a new member with the information given. Missing fields (except for name
 ```json
 {
     "name": "Craig Peterson",
+    "display_name": "Craig Peterson [he/they]",
     "color": null,
     "avatar_url": "https://path/to/new/image.png",
     "birthday": "1997-07-14",
@@ -279,6 +281,7 @@ Creates a new member with the information given. Missing fields (except for name
 {
     "id": "qwert",
     "name": "Craig Peterson",
+    "display_name": "Craig Peterson [he/they]",
     "color": null,
     "avatar_url": "https://path/to/new/image.png",
     "birthday": "1997-07-14",
@@ -301,6 +304,7 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
 ```json
 {
     "name": "Craig Peterson",
+    "display_name": "Craig Peterson [he/they]",
     "color": null,
     "avatar_url": "https://path/to/new/image.png",
     "birthday": "1997-07-14",
@@ -316,6 +320,7 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
 {
     "id": "qwert",
     "name": "Craig Peterson",
+    "display_name": "Craig Peterson [he/they]",
     "color": null,
     "avatar_url": "https://path/to/new/image.png",
     "birthday": "1997-07-14",
