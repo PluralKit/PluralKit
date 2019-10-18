@@ -39,7 +39,7 @@ The following three models (usually represented in JSON format) represent the va
 |---|---|---|---|
 |id|string|No||
 |name|string?|Yes|50-character limit.|
-|display name|string?|Yes|50-character limit.|
+|display_name|string?|Yes|50-character limit.|
 |description|string?|Yes|1000-character limit.|
 |color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.|
 |avatar_url|url?|Yes|Not validated server-side.|
