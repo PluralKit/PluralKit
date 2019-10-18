@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Webhook;
 using Serilog;
 
 namespace PluralKit.Bot
@@ -41,7 +43,7 @@ namespace PluralKit.Bot
             // It's possible to "move" a webhook to a different channel after creation
             // Here, we ensure it's actually still pointing towards the proper channel, and if not, wipe and refetch one.
             var webhook = await lazyWebhookValue.Value;
-            if (webhook.Channel.Id != channel.Id) return await InvalidateAndRefreshWebhook(webhook);
+            if (webhook.ChannelId != channel.Id) return await InvalidateAndRefreshWebhook(webhook);
             return webhook;
         }
 
@@ -50,22 +52,35 @@ namespace PluralKit.Bot
             _logger.Information("Refreshing webhook for channel {Channel}", webhook.ChannelId);
             
             _webhooks.TryRemove(webhook.ChannelId, out _);
-            return await GetWebhook(webhook.ChannelId);
+            return await GetWebhook(webhook.Channel);
         }
 
-        private async Task<IWebhook> GetOrCreateWebhook(ITextChannel channel) =>
-            await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
+        private async Task<IWebhook> GetOrCreateWebhook(ITextChannel channel)
+        {
+            _logger.Debug("Webhook for channel {Channel} not found in cache, trying to fetch", channel.Id);
+            return await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
+        }
 
         private async Task<IWebhook> FindExistingWebhook(ITextChannel channel)
         {
             _logger.Debug("Finding webhook for channel {Channel}", channel.Id);
-            return (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
+            try
+            {
+                return (await channel.GetWebhooksAsync()).FirstOrDefault(IsWebhookMine);
+            }
+            catch (HttpRequestException e)
+            {
+                _logger.Warning(e, "Error occurred while fetching webhook list");
+                // This happens sometimes when Discord returns a malformed request for the webhook list
+                // Nothing we can do than just assume that none exist and return null.
+                return null;
+            }
         }
 
-        private async Task<IWebhook> DoCreateWebhook(ITextChannel channel)
+        private Task<IWebhook> DoCreateWebhook(ITextChannel channel)
         {
             _logger.Information("Creating new webhook for channel {Channel}", channel.Id);
-            return await channel.CreateWebhookAsync(WebhookName);
+            return channel.CreateWebhookAsync(WebhookName);
         }
 
         private bool IsWebhookMine(IWebhook arg) => arg.Creator.Id == _client.CurrentUser.Id && arg.Name == WebhookName;

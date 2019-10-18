@@ -44,6 +44,18 @@ $ docker-compose up -d
 * Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`
 
+# Building the docs
+The website and documentation are automatically built by GitHub Pages when pushed to the `master` branch. They use [Jekyll 3](https://jekyllrb.com), which requires [Ruby](https://www.ruby-lang.org) and [Bundler](https://bundler.io/).
+
+To build the docs locally, run:
+```
+$ cd docs/
+$ bundle install --path vendor/bundle
+$ bundle exec jekyll build
+```
+
+To run an auto-reloading server, substitute the last command with:
+    $ bundle exec jekyll serve 
 
 # License
 This project is under the Apache License, Version 2.0. It is available at the following link: https://www.apache.org/licenses/LICENSE-2.0

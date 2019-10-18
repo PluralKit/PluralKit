@@ -2,24 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using App.Metrics;
-using Dapper;
+
 using Discord;
 using Discord.Net;
-using Discord.Webhook;
 using Discord.WebSocket;
+
+using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit.Bot
 {
-    class ProxyDatabaseResult
-    {
-        public PKSystem System;
-        public PKMember Member;
-    }
-
     class ProxyMatch {
         public PKMember Member;
         public PKSystem System;
@@ -28,38 +22,36 @@ namespace PluralKit.Bot
 
     class ProxyService: IDisposable {
         private IDiscordClient _client;
-        private DbConnectionFactory _conn;
         private LogChannelService _logChannel;
-        private WebhookCacheService _webhookCache;
         private MessageStore _messageStorage;
         private EmbedService _embeds;
-        private IMetrics _metrics;
         private ILogger _logger;
+        private WebhookExecutorService _webhookExecutor;
+        private ProxyCacheService _cache;
 
         private HttpClient _httpClient;
 
-        public ProxyService(IDiscordClient client, WebhookCacheService webhookCache, DbConnectionFactory conn, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, IMetrics metrics, ILogger logger)
+        public ProxyService(IDiscordClient client, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor)
         {
             _client = client;
-            _webhookCache = webhookCache;
-            _conn = conn;
             _logChannel = logChannel;
             _messageStorage = messageStorage;
             _embeds = embeds;
-            _metrics = metrics;
+            _cache = cache;
+            _webhookExecutor = webhookExecutor;
             _logger = logger.ForContext<ProxyService>();
 
             _httpClient = new HttpClient();
         }
 
-        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyDatabaseResult> potentials)
+        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentials)
         {
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message
             // eg. @Ske [text] => [@Ske text]
             int matchStartPosition = 0;
             string leadingMention = null;
-            if (Utils.HasMentionPrefix(message, ref matchStartPosition))
+            if (Utils.HasMentionPrefix(message, ref matchStartPosition, out _))
             {
                 leadingMention = message.Substring(0, matchStartPosition);
                 message = message.Substring(matchStartPosition);
@@ -87,16 +79,9 @@ namespace PluralKit.Bot
         public async Task HandleMessageAsync(IMessage message)
         {
             // Bail early if this isn't in a guild channel
-            if (!(message.Channel is IGuildChannel)) return;
+            if (!(message.Channel is ITextChannel)) return;
 
-            IEnumerable<ProxyDatabaseResult> results;
-            using (var conn = await _conn.Obtain())
-            {
-                results = await conn.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>(
-                    "select members.*, systems.* from members, systems, accounts where members.system = systems.id and accounts.system = systems.id and accounts.uid = @Uid",
-                    (member, system) =>
-                        new ProxyDatabaseResult {Member = member, System = system}, new {Uid = message.Author.Id});
-            }
+            var results = await _cache.GetResultsFor(message.Author.Id);
 
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, results);
@@ -109,15 +94,25 @@ namespace PluralKit.Bot
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
-
+            
+            // Get variables in order and all
+            var proxyName = match.Member.ProxyName(match.System.Tag);
+            var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
+            
+            // If the name's too long (or short), bail
+            if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
+            if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+            
             // Sanitize @everyone, but only if the original user wouldn't have permission to
             var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
-
-            // Fetch a webhook for this channel, and send the proxied message
-            var webhook = await _webhookCache.GetWebhook(message.Channel as ITextChannel);
-            var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
-            var proxyName = match.Member.ProxyName(match.System.Tag);
-            var hookMessageId = await ExecuteWebhook(webhook, messageContents, proxyName, avatarUrl, message.Attachments.FirstOrDefault());
+            
+            // Execute the webhook itself
+            var hookMessageId = await _webhookExecutor.ExecuteWebhook(
+                (ITextChannel) message.Channel,
+                proxyName, avatarUrl,
+                messageContents,
+                message.Attachments.FirstOrDefault()
+            );
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
@@ -129,7 +124,12 @@ namespace PluralKit.Bot
             try
             {
                 await message.DeleteAsync();
-            } catch (HttpException) {} // If it's already deleted, we just swallow the exception
+            }
+            catch (HttpException)
+            {
+                // If it's already deleted, we just log and swallow the exception
+                _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", message.Id);
+            }
         }
 
         private static string SanitizeEveryoneMaybe(IMessage message, string messageContents)
@@ -146,6 +146,7 @@ namespace PluralKit.Bot
 
             if (!permissions.ManageWebhooks)
             {
+                // todo: PKError-ify these
                 await channel.SendMessageAsync(
                     $"{Emojis.Error} PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages. Please contact a server administrator to remedy this.");
                 return false;
@@ -159,68 +160,6 @@ namespace PluralKit.Bot
             }
 
             return true;
-        }
-
-        private async Task<ulong> ExecuteWebhook(IWebhook webhook, string text, string username, string avatarUrl, IAttachment attachment)
-        {
-            username = FixClyde(username);
-
-            // TODO: DiscordWebhookClient's ctor does a call to GetWebhook that may be unnecessary, see if there's a way to do this The Hard Way :tm:
-            // TODO: this will probably crash if there are multiple consecutive failures, perhaps have a loop instead?
-            DiscordWebhookClient client;
-            try
-            {
-                client = new DiscordWebhookClient(webhook);
-            }
-            catch (InvalidOperationException)
-            {
-                // TODO: does this leak internal stuff in the (now-invalid) client?
-
-                // webhook was deleted or invalid
-                webhook = await _webhookCache.InvalidateAndRefreshWebhook(webhook);
-                client = new DiscordWebhookClient(webhook);
-            }
-
-            // TODO: clean this entire block up
-            using (client)
-            {
-                ulong messageId;
-
-                try
-                {
-                    if (attachment != null)
-                    {
-                        using (var stream = await _httpClient.GetStreamAsync(attachment.Url))
-                        {
-                            messageId = await client.SendFileAsync(stream, filename: attachment.Filename, text: text,
-                                username: username, avatarUrl: avatarUrl);
-                        }
-                    }
-                    else
-                    {
-                        messageId = await client.SendMessageAsync(text, username: username, avatarUrl: avatarUrl);
-                    }
-
-                    _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id,
-                        webhook.ChannelId);
-
-                    // Log it in the metrics
-                    _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "success");
-                }
-                catch (HttpException e)
-                {
-                    _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", webhook.Id,
-                        webhook.ChannelId);
-
-                    // Log failure in metrics and rethrow (we still need to cancel everything else)
-                    _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied, "failure");
-                    throw;
-                }
-
-                // TODO: figure out a way to return the full message object (without doing a GetMessageAsync call, which
-                // doesn't work if there's no permission to)
-                return messageId;
-            }
         }
 
         public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
@@ -281,6 +220,10 @@ namespace PluralKit.Bot
 
         public async Task HandleMessageDeletedAsync(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
+            // Don't delete messages from the store if they aren't webhooks
+            // Non-webhook messages will never be stored anyway.
+            // If we're not sure (eg. message outside of cache), delete just to be sure.
+            if (message.HasValue && !message.Value.Author.IsWebhook) return;
             await _messageStorage.Delete(message.Id);
         }
 
@@ -288,16 +231,6 @@ namespace PluralKit.Bot
         {
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}", messages.Count, channel.Id);
             await _messageStorage.BulkDelete(messages.Select(m => m.Id).ToList());
-        }
-
-        private string FixClyde(string name)
-        {
-            var match = Regex.Match(name, "clyde", RegexOptions.IgnoreCase);
-            if (!match.Success) return name;
-
-            // Put a hair space (\u200A) between the "c" and the "lyde" in the match to avoid Discord matching it
-            // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
-            return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
         }
 
         public void Dispose()

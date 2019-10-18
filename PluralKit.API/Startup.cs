@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using App.Metrics;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -28,12 +29,16 @@ namespace PluralKit.API
                 .AddTransient<MemberStore>()
                 .AddTransient<SwitchStore>()
                 .AddTransient<MessageStore>()
+                
+                .AddSingleton(svc => InitUtils.InitMetrics(svc.GetRequiredService<CoreConfig>(), "API"))
 
                 .AddScoped<TokenAuthService>()
 
                 .AddTransient(_ => Configuration.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
                 .AddSingleton(svc => InitUtils.InitLogger(svc.GetRequiredService<CoreConfig>(), "api"))
-                .AddSingleton(svc => new DbConnectionFactory(svc.GetRequiredService<CoreConfig>().Database));
+                
+                .AddTransient<DbConnectionCountHolder>()
+                .AddTransient<DbConnectionFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

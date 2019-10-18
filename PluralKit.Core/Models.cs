@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using NodaTime;
 using NodaTime.Text;
 
+using PluralKit.Core;
+
 namespace PluralKit
 {
     public class PKSystem
@@ -18,7 +20,7 @@ namespace PluralKit
         [JsonProperty("created")] public Instant Created { get; set; }
         [JsonProperty("tz")] public string UiTz { get; set; }
 
-        [JsonIgnore] public int MaxMemberNameLength => Tag != null ? 32 - Tag.Length - 1 : 32;
+        [JsonIgnore] public int MaxMemberNameLength => Tag != null ? Limits.MaxProxyNameLength - Tag.Length - 1 : Limits.MaxProxyNameLength;
 
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }

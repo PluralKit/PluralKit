@@ -1,10 +1,11 @@
 version: "3"
 services:
   bot:
-    build: .
-    entrypoint: ["dotnet", "run", "--project", "PluralKit.Bot"]
+    image: pluralkit # This image is reused in the other containers due to the
+    build: .         # build instruction right here
+    command: ["PluralKit.Bot.dll"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
       - "PluralKit:InfluxUrl=http://influx:8086"
       - "PluralKit:InfluxDb=pluralkit"
       - "PluralKit:LogDir=/var/log/pluralkit"
@@ -16,20 +17,20 @@ services:
       - influx
     restart: always
   web:
-    build: .
-    entrypoint: ["dotnet", "run", "--project", "PluralKit.Web"]
+    image: pluralkit
+    command: ["PluralKit.Web.dll"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
     links: 
       - db
     ports:
       - 2837:5000
     restart: always
   api:
-    build: .
-    entrypoint: ["dotnet", "run", "--project", "PluralKit.API"]
+    image: pluralkit
+    command: ["PluralKit.API.dll"]
     environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres"
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
     links:
       - db
     ports:

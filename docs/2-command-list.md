@@ -2,10 +2,11 @@
 layout: default
 title: Command List
 permalink: /commands
+description: The full list of all commands in PluralKit, and a short description of what they do.
 ---
 
 # How to read this
-Words in \<angle brackets> are *required parameters*. Words in [square brackets] are *optional parameters*. Words with ellipses... indicate multiple repeating parameters.
+Words in \<angle brackets> are *required parameters*. Words in [square brackets] are *optional parameters*. Words with ellipses... indicate multiple repeating parameters. Note that **you should not include the brackets in the actual command**.
 
 # Commands
 ## System commands

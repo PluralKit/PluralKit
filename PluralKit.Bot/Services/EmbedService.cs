@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Discord.WebSocket;
+
 using Humanizer;
 using NodaTime;
 
@@ -33,8 +36,8 @@ namespace PluralKit.Bot {
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
-                .WithFooter($"System ID: {system.Hid}");
-
+                .WithFooter($"System ID: {system.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
+ 
             var latestSwitch = await _switches.GetLatestSwitch(system);
             if (latestSwitch != null)
             {
@@ -69,7 +72,18 @@ namespace PluralKit.Bot {
             var name = member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
 
-            var color = member.Color?.ToDiscordColor() ?? Color.Default;
+            Color color;
+            try
+            {
+                color = member.Color?.ToDiscordColor() ?? Color.Default;
+            }
+            catch (ArgumentException)
+            {
+                // Bad API use can cause an invalid color string
+                // TODO: fix that in the API
+                // for now we just default to a blank color, yolo
+                color = Color.Default;
+            }
 
             var messageCount = await _members.MessageCount(member);
 
@@ -77,7 +91,7 @@ namespace PluralKit.Bot {
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
                 .WithColor(color)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid}");
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
             if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
 
@@ -139,23 +153,44 @@ namespace PluralKit.Bot {
 
         public async Task<Embed> CreateMessageInfoEmbed(MessageStore.StoredMessage msg)
         {
-            var channel = (ITextChannel) await _client.GetChannelAsync(msg.Message.Channel);
-            var serverMsg = await channel.GetMessageAsync(msg.Message.Mid);
+            var channel = await _client.GetChannelAsync(msg.Message.Channel) as ITextChannel;
+            var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
 
             var memberStr = $"{msg.Member.Name} (`{msg.Member.Hid}`)";
-            if (msg.Member.Pronouns != null) memberStr += $"\n*(pronouns: **{msg.Member.Pronouns}**)*";
 
-            var user = await _client.GetUserAsync(msg.Message.Sender);
-            var userStr = user.NameAndMention() ?? $"*(deleted user {msg.Message.Sender})*";
+            var userStr = $"*(deleted user {msg.Message.Sender})*";
+            ICollection<IRole> roles = null;
 
-            return new EmbedBuilder()
+            if (channel != null)
+            {
+                // Look up the user with the REST client
+                // this ensures we'll still get the information even if the user's not cached,
+                // even if this means an extra API request (meh, it'll be fine)
+                var shard = ((DiscordShardedClient) _client).GetShardFor(channel.Guild);
+                var guildUser = await shard.Rest.GetGuildUserAsync(channel.Guild.Id, msg.Message.Sender);
+                if (guildUser != null)
+                {
+                    roles = guildUser.RoleIds
+                        .Select(roleId => channel.Guild.GetRole(roleId))
+                        .Where(role => role.Name != "@everyone")
+                        .OrderByDescending(role => role.Position)
+                        .ToList();
+
+                    userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser?.NameAndMention();
+                }
+            }
+
+            var eb = new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
-                .AddField("System", msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
+                .AddField("System",
+                    msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)
                 .AddField("Sent by", userStr, inline: true)
-                .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid))
-                .Build();
+                .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid));
+
+            if (roles != null) eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
+            return eb.Build();
         }
 
         public Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, DateTimeZone tz)

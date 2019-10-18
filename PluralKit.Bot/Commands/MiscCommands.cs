@@ -1,23 +1,27 @@
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using App.Metrics;
 using Discord;
-using Discord.Commands;
 using Humanizer;
 
+using PluralKit.Bot.CommandSystem;
+
 namespace PluralKit.Bot.Commands {
-    public class MiscCommands: ModuleBase<PKCommandContext> {
-        public BotConfig BotConfig { get; set; }
-        public IMetrics Metrics { get; set; }
-        
-        [Command("invite")]
-        [Alias("inv")]
-        [Remarks("invite")]
-        public async Task Invite()
+    public class MiscCommands
+    {
+        private BotConfig _botConfig;
+        private IMetrics _metrics;
+
+        public MiscCommands(BotConfig botConfig, IMetrics metrics)
         {
-            var clientId = BotConfig.ClientId ?? (await Context.Client.GetApplicationInfoAsync()).Id;
+            _botConfig = botConfig;
+            _metrics = metrics;
+        }
+        
+        public async Task Invite(Context ctx)
+        {
+            var clientId = _botConfig.ClientId ?? (await ctx.Client.GetApplicationInfoAsync()).Id;
             var permissions = new GuildPermissions(
                 addReactions: true,
                 attachFiles: true,
@@ -29,38 +33,36 @@ namespace PluralKit.Bot.Commands {
             );
 
             var invite = $"https://discordapp.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={permissions.RawValue}";
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
+            await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }
+        
+        public Task Mn(Context ctx) => ctx.Reply("Gotta catch 'em all!");
+        public Task Fire(Context ctx) => ctx.Reply("*A giant lightning bolt promptly erupts into a pillar of fire as it hits your opponent.*");
+        public Task Thunder(Context ctx) => ctx.Reply("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*");
+        public Task Freeze(Context ctx) => ctx.Reply("*A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact.*");
+        public Task Starstorm(Context ctx) => ctx.Reply("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*");
 
-        [Command("mn")] public Task Mn() => Context.Channel.SendMessageAsync("Gotta catch 'em all!");
-        [Command("fire")] public Task Fire() => Context.Channel.SendMessageAsync("*A giant lightning bolt promptly erupts into a pillar of fire as it hits your opponent.*");
-        [Command("thunder")] public Task Thunder() => Context.Channel.SendMessageAsync("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*");
-        [Command("freeze")] public Task Freeze() => Context.Channel.SendMessageAsync("*A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact.*");
-        [Command("starstorm")] public Task Starstorm() => Context.Channel.SendMessageAsync("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*");
-
-        [Command("stats")]
-        public async Task Stats()
+        public async Task Stats(Context ctx)
         {
-            var messagesReceived = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name).Value;
-            var messagesProxied = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name).Value;
-            var proxySuccessRate = messagesProxied.Items.First(i => i.Item == "success");
+            var messagesReceived = _metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name).Value;
+            var messagesProxied = _metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name).Value;
             
-            var commandsRun = Metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name).Value;
+            var commandsRun = _metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name).Value;
             
-            await Context.Channel.SendMessageAsync(embed: new EmbedBuilder()
+            await ctx.Reply(embed: new EmbedBuilder()
                 .AddField("Messages processed", $"{messagesReceived.OneMinuteRate:F1}/s ({messagesReceived.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Messages proxied", $"{messagesProxied.OneMinuteRate:F1}/s ({messagesProxied.FifteenMinuteRate:F1}/s over 15m)")
                 .AddField("Commands executed", $"{commandsRun.OneMinuteRate:F1}/s ({commandsRun.FifteenMinuteRate:F1}/s over 15m)")
-                .AddField("Proxy success rate", $"{proxySuccessRate.Percent/100:P1}")
                 .Build());
         }
-
-        [Command("permcheck")]
-        [Summary("permcheck [guild]")]
-        public async Task PermCheckGuild(ulong guildId)
+        
+        public async Task PermCheckGuild(Context ctx)
         {
+            var guildIdStr = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a server ID.");
+            if (!ulong.TryParse(guildIdStr, out var guildId)) throw new PKSyntaxError($"Could not parse `{guildIdStr.SanitizeMentions()}` as an ID.");
+            
             // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
-            var guild = Context.Client.GetGuild(guildId) as IGuild;
+            var guild = ctx.Client.GetGuild(guildId) as IGuild;
             if (guild == null)
                 throw Errors.GuildNotFound(guildId);
             
@@ -95,7 +97,7 @@ namespace PluralKit.Bot.Commands {
             
             // Generate the output embed
             var eb = new EmbedBuilder()
-                .WithTitle($"Permission check for **{guild.Name}**");
+                .WithTitle($"Permission check for **{guild.Name.SanitizeMentions()}**");
 
             if (permissionsMissing.Count == 0)
             {
@@ -120,13 +122,7 @@ namespace PluralKit.Bot.Commands {
             }
 
             // Send! :)
-            await Context.Channel.SendMessageAsync(embed: eb.Build());
+            await ctx.Reply(embed: eb.Build());
         }
-
-        [Command("permcheck")]
-        [Summary("permcheck [guild]")]
-        [RequireContext(ContextType.Guild, ErrorMessage =
-            "When running this command in DMs, you must pass a guild ID.")]
-        public Task PermCheckGuild() => PermCheckGuild(Context.Guild.Id);
     }
 }

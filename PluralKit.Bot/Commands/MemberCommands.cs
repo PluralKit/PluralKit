@@ -2,161 +2,170 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
 using NodaTime;
+
+using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
 namespace PluralKit.Bot.Commands
 {
-    [Group("member")]
-    [Alias("m")]
-    public class MemberCommands : ContextParameterModuleBase<PKMember>
+    public class MemberCommands
     {
-        public SystemStore Systems { get; set; }
-        public MemberStore Members { get; set; }
-        public EmbedService Embeds { get; set;  }
+        private SystemStore _systems;
+        private MemberStore _members;
+        private EmbedService _embeds;
 
-        public override string Prefix => "member";
-        public override string ContextNoun => "member";
+        private ProxyCacheService _proxyCache;
 
-        [Command("new")]
-        [Alias("n", "add", "create", "register")]
-        [Remarks("member new <name>")]
-        [MustHaveSystem]
-        public async Task NewMember([Remainder] string memberName) {
+        public MemberCommands(SystemStore systems, MemberStore members, EmbedService embeds, ProxyCacheService proxyCache)
+        {
+            _systems = systems;
+            _members = members;
+            _embeds = embeds;
+            _proxyCache = proxyCache;
+        }
+
+        public async Task NewMember(Context ctx) {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
+            
             // Hard name length cap
             if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
 
             // Warn if member name will be unproxyable (with/without tag)
-            if (memberName.Length > Context.SenderSystem.MaxMemberNameLength) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Member name too long ({memberName.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to create it anyway? (You can change the name later, or set a member display name)");
-                if (!await Context.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
+            if (memberName.Length > ctx.System.MaxMemberNameLength) {
+                var msg = await ctx.Reply($"{Emojis.Warn} Member name too long ({memberName.Length} > {ctx.System.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to create it anyway? (You can change the name later, or set a member display name)");
+                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
             // Warn if there's already a member by this name
-            var existingMember = await Members.GetByName(Context.SenderSystem, memberName);
+            var existingMember = await _members.GetByName(ctx.System, memberName);
             if (existingMember != null) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.Sanitize()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
-                if (!await Context.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
+                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
             // Create the member
-            var member = await Members.Create(Context.SenderSystem, memberName);
+            var member = await _members.Create(ctx.System, memberName);
             
             // Send confirmation and space hint
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member \"{memberName.Sanitize()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
-            if (memberName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+            await ctx.Reply($"{Emojis.Success} Member \"{memberName.SanitizeMentions()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
+            if (memberName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-
-        [Command("rename")]
-        [Alias("name", "changename", "setname")]
-        [Remarks("member <member> rename <newname>")]
-        [MustPassOwnMember]
-        public async Task RenameMember([Remainder] string newName) {
+        
+        public async Task RenameMember(Context ctx, PKMember target) {
             // TODO: this method is pretty much a 1:1 copy/paste of the above creation method, find a way to clean?
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            
+            var newName = ctx.RemainderOrNull();
 
             // Hard name length cap
             if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
 
             // Warn if member name will be unproxyable (with/without tag), only if member doesn't have a display name
-            if (ContextEntity.DisplayName == null && newName.Length > Context.SenderSystem.MaxMemberNameLength) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} New member name too long ({newName.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to change it anyway? (You can set a member display name instead)");
-                if (!await Context.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
+            if (target.DisplayName == null && newName.Length > ctx.System.MaxMemberNameLength) {
+                var msg = await ctx.Reply($"{Emojis.Warn} New member name too long ({newName.Length} > {ctx.System.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to change it anyway? (You can set a member display name instead)");
+                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
             // Warn if there's already a member by this name
-            var existingMember = await Members.GetByName(Context.SenderSystem, newName);
+            var existingMember = await _members.GetByName(ctx.System, newName);
             if (existingMember != null) {
-                var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.Sanitize()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
-                if (!await Context.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
+                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
             // Rename the member
-            ContextEntity.Name = newName;
-            await Members.Save(ContextEntity);
+            target.Name = newName;
+            await _members.Save(target);
 
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member renamed.");
-            if (newName.Contains(" ")) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
-            if (ContextEntity.DisplayName != null) await Context.Channel.SendMessageAsync($"{Emojis.Note} Note that this member has a display name set (`{ContextEntity.DisplayName}`), and will be proxied using that name instead.");
+            await ctx.Reply($"{Emojis.Success} Member renamed.");
+            if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
+            if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set ({target.DisplayName.SanitizeMentions()}), and will be proxied using that name instead.");
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
+        
+        public async Task MemberDescription(Context ctx, PKMember target) {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-        [Command("description")]
-        [Alias("info", "bio", "text", "desc")]
-        [Remarks("member <member> description <description>")]
-        [MustPassOwnMember]
-        public async Task MemberDescription([Remainder] string description = null) {
+            var description = ctx.RemainderOrNull();
             if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
 
-            ContextEntity.Description = description;
-            await Members.Save(ContextEntity);
+            target.Description = description;
+            await _members.Save(target);
 
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member description {(description == null ? "cleared" : "changed")}.");
+            await ctx.Reply($"{Emojis.Success} Member description {(description == null ? "cleared" : "changed")}.");
         }
+        
+        public async Task MemberPronouns(Context ctx, PKMember target) {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-        [Command("pronouns")]
-        [Alias("pronoun")]
-        [Remarks("member <member> pronouns <pronouns>")]
-        [MustPassOwnMember]
-        public async Task MemberPronouns([Remainder] string pronouns = null) {
+            var pronouns = ctx.RemainderOrNull();
             if (pronouns.IsLongerThan(Limits.MaxPronounsLength)) throw Errors.MemberPronounsTooLongError(pronouns.Length);
 
-            ContextEntity.Pronouns = pronouns;
-            await Members.Save(ContextEntity);
+            target.Pronouns = pronouns;
+            await _members.Save(target);
 
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member pronouns {(pronouns == null ? "cleared" : "changed")}.");
+            await ctx.Reply($"{Emojis.Success} Member pronouns {(pronouns == null ? "cleared" : "changed")}.");
         }
 
-        [Command("color")]
-        [Alias("colour")]
-        [Remarks("member <member> color <color>")]
-        [MustPassOwnMember]
-        public async Task MemberColor([Remainder] string color = null)
+        public async Task MemberColor(Context ctx, PKMember target)
         {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+
+            var color = ctx.RemainderOrNull();
             if (color != null)
             {
                 if (color.StartsWith("#")) color = color.Substring(1);
                 if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
             }
 
-            ContextEntity.Color = color;
-            await Members.Save(ContextEntity);
+            target.Color = color;
+            await _members.Save(target);
 
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");
+            await ctx.Reply($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");
         }
 
-        [Command("birthday")]
-        [Alias("birthdate", "bday", "cakeday", "bdate")]
-        [Remarks("member <member> birthday <birthday>")]
-        [MustPassOwnMember]
-        public async Task MemberBirthday([Remainder] string birthday = null)
+        public async Task MemberBirthday(Context ctx, PKMember target)
         {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            
             LocalDate? date = null;
+            var birthday = ctx.RemainderOrNull();
             if (birthday != null)
             {
                 date = PluralKit.Utils.ParseDate(birthday, true);
                 if (date == null) throw Errors.BirthdayParseError(birthday);
             }
 
-            ContextEntity.Birthday = date;
-            await Members.Save(ContextEntity);
+            target.Birthday = date;
+            await _members.Save(target);
             
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {ContextEntity.BirthdayString}")}.");
+            await ctx.Reply($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {target.BirthdayString}")}.");
         }
 
-        [Command("proxy")]
-        [Alias("proxy", "tags", "proxytags", "brackets")]
-        [Remarks("member <member> proxy <proxy tags>")]
-        [MustPassOwnMember]
-        public async Task MemberProxy([Remainder] string exampleProxy = null)
+        public async Task MemberProxy(Context ctx, PKMember target)
         {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            
             // Handling the clear case in an if here to keep the body dedented
+            var exampleProxy = ctx.RemainderOrNull();
             if (exampleProxy == null)
             {
                 // Just reset and send OK message
-                ContextEntity.Prefix = null;
-                ContextEntity.Suffix = null;
-                await Members.Save(ContextEntity);
-                await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags cleared.");
+                target.Prefix = null;
+                target.Suffix = null;
+                await _members.Save(target);
+                await ctx.Reply($"{Emojis.Success} Member proxy tags cleared.");
                 return;
             }
             
@@ -166,101 +175,110 @@ namespace PluralKit.Bot.Commands
             if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
 
             // If the prefix/suffix is empty, use "null" instead (for DB)
-            ContextEntity.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
-            ContextEntity.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
-            await Members.Save(ContextEntity);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member proxy tags changed to `{ContextEntity.ProxyString.Sanitize()}`. Try proxying now!");
-        }
-
-        [Command("delete")]
-        [Alias("remove", "destroy", "erase", "yeet")]
-        [Remarks("member <member> delete")]
-        [MustPassOwnMember]
-        public async Task MemberDelete()
-        {
-            await Context.Channel.SendMessageAsync($"{Emojis.Warn} Are you sure you want to delete \"{ContextEntity.Name.Sanitize()}\"? If so, reply to this message with the member's ID (`{ContextEntity.Hid}`). __***This cannot be undone!***__");
-            if (!await Context.ConfirmWithReply(ContextEntity.Hid)) throw Errors.MemberDeleteCancelled;
-            await Members.Delete(ContextEntity);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member deleted.");
-        }
-
-        [Command("avatar")]
-        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
-        [Remarks("member <member> avatar <avatar url>")]
-        [MustPassOwnMember]
-        public async Task MemberAvatarByMention(IUser member)
-        {
-            if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
-            ContextEntity.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
-            await Members.Save(ContextEntity);
+            target.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
+            target.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
+            await _members.Save(target);
+            await ctx.Reply($"{Emojis.Success} Member proxy tags changed to `{target.ProxyString.SanitizeMentions()}`. Try proxying now!");
             
-            var embed = new EmbedBuilder().WithImageUrl(ContextEntity.AvatarUrl).Build();
-            await Context.Channel.SendMessageAsync(
-                $"{Emojis.Success} Member avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the webhook's avatar will need to be re-set.", embed: embed);
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
 
-        [Command("avatar")]
-        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
-        [Remarks("member <member> avatar <avatar url>")]
-        [MustPassOwnMember]
-        public async Task MemberAvatar([Remainder] string avatarUrl = null)
+        public async Task MemberDelete(Context ctx, PKMember target)
         {
-            string url = avatarUrl ?? Context.Message.Attachments.FirstOrDefault()?.ProxyUrl;
-            if (url != null) await Context.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
-
-            ContextEntity.AvatarUrl = url;
-            await Members.Save(ContextEntity);
-
-            var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Member avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            
+            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.Name.SanitizeMentions()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
+            if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
+            await _members.Delete(target);
+            await ctx.Reply($"{Emojis.Success} Member deleted.");
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
-        [Command("displayname")]
-        [Alias("nick", "nickname", "displayname")]
-        [Remarks("member <member> displayname <displayname>")]
-        [MustPassOwnMember]
-        public async Task MemberDisplayName([Remainder] string newDisplayName = null)
-        {            
-            // Refuse if proxy name will be unproxyable (with/without tag)
-            if (newDisplayName != null && newDisplayName.Length > Context.SenderSystem.MaxMemberNameLength)
-                throw Errors.DisplayNameTooLong(newDisplayName, Context.SenderSystem.MaxMemberNameLength);
+        public async Task MemberAvatar(Context ctx, PKMember target)
+        {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             
-            ContextEntity.DisplayName = newDisplayName;
-            await Members.Save(ContextEntity);
+            if (await ctx.MatchUser() is IUser user)
+            {
+                if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
+                target.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
+                
+                await _members.Save(target);
+            
+                var embed = new EmbedBuilder().WithImageUrl(target.AvatarUrl).Build();
+                await ctx.Reply(
+                    $"{Emojis.Success} Member avatar changed to {user.Username}'s avatar! {Emojis.Warn} Please note that if {user.Username} changes their avatar, the webhook's avatar will need to be re-set.", embed: embed);
+
+            }
+            else if (ctx.RemainderOrNull() is string url)
+            {
+                await Utils.VerifyAvatarOrThrow(url);
+                target.AvatarUrl = url;
+                await _members.Save(target);
+
+                var embed = new EmbedBuilder().WithImageUrl(url).Build();
+                await ctx.Reply($"{Emojis.Success} Member avatar changed.", embed: embed);
+            }
+            else if (ctx.Message.Attachments.FirstOrDefault() is Attachment attachment)
+            {
+                await Utils.VerifyAvatarOrThrow(attachment.Url);
+                target.AvatarUrl = attachment.Url;
+                await _members.Save(target);
+
+                await ctx.Reply($"{Emojis.Success} Member avatar changed to attached image. Please note that if you delete the message containing the attachment, the avatar will stop working.");
+            }
+            else
+            {
+                target.AvatarUrl = null;
+                await _members.Save(target);
+                await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
+            }
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
+        }
+
+        public async Task MemberDisplayName(Context ctx, PKMember target)
+        {            
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+
+            var newDisplayName = ctx.RemainderOrNull();
+            // Refuse if proxy name will be unproxyable (with/without tag)
+            if (newDisplayName != null && newDisplayName.Length > ctx.System.MaxMemberNameLength)
+                throw Errors.DisplayNameTooLong(newDisplayName, ctx.System.MaxMemberNameLength);
+            
+            target.DisplayName = newDisplayName;
+            await _members.Save(target);
 
             var successStr = $"{Emojis.Success} ";
             if (newDisplayName != null)
             {
                 successStr +=
-                    $"Member display name changed. This member will now be proxied using the name `{newDisplayName}`.";
+                    $"Member display name changed. This member will now be proxied using the name \"{newDisplayName.SanitizeMentions()}\".";
             }
             else
             {
                 successStr += $"Member display name cleared. ";
                 
                 // If we're removing display name and the *real* name will be unproxyable, warn.
-                if (ContextEntity.Name.Length > Context.SenderSystem.MaxMemberNameLength)
+                if (target.Name.Length > ctx.System.MaxMemberNameLength)
                     successStr +=
-                        $" {Emojis.Warn} This member's actual name is too long ({ContextEntity.Name.Length} > {Context.SenderSystem.MaxMemberNameLength} characters), and thus cannot be proxied.";
+                        $" {Emojis.Warn} This member's actual name is too long ({target.Name.Length} > {ctx.System.MaxMemberNameLength} characters), and thus cannot be proxied.";
                 else
-                    successStr += $"This member will now be proxied using their member name `{ContextEntity.Name}.";
+                    successStr += $"This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
             }
-            await Context.Channel.SendMessageAsync(successStr);
-        }
-
-        [Command]
-        [Alias("view", "show", "info")]
-        [Remarks("member <member>")]
-        public async Task ViewMember(PKMember member)
-        {
-            var system = await Systems.GetById(member.System);
-            await Context.Channel.SendMessageAsync(embed: await Embeds.CreateMemberEmbed(system, member));
+            await ctx.Reply(successStr);
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
-        public override async Task<PKMember> ReadContextParameterAsync(string value)
+        public async Task ViewMember(Context ctx, PKMember target)
         {
-            var res = await new PKMemberTypeReader().ReadAsync(Context, value, _services);
-            return res.IsSuccess ? res.BestMatch as PKMember : null;        
+            var system = await _systems.GetById(target.System);
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target));
         }
     }
 }

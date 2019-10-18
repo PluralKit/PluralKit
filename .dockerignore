@@ -1,0 +1,15 @@
+/.git/
+/.github/
+/.idea/
+/docs/
+/logs/
+/scripts/
+
+bin/
+obj/
+
+*.conf
+*.md
+
+Dockerfile
+docker-compose.yml
