@@ -48,9 +48,9 @@ namespace PluralKit.API.Controllers
 
         [HttpGet]
         [RequiresSystem]
-        public async Task<ActionResult<PKSystem>> GetOwnSystem()
+        public Task<ActionResult<PKSystem>> GetOwnSystem()
         {
-            return Ok(_auth.CurrentSystem);
+            return Task.FromResult<ActionResult<PKSystem>>(Ok(_auth.CurrentSystem));
         }
 
         [HttpGet("{hid}")]

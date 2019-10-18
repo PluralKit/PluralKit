@@ -70,6 +70,28 @@ namespace PluralKit.Bot
             };
         }
 
+        private async Task<DataFileMember> ExportMember(PKMember member) => new DataFileMember
+        {
+            Id = member.Hid,
+            Name = member.Name,
+            DisplayName = member.DisplayName,
+            Description = member.Description,
+            Birthday = member.Birthday != null ? Formats.DateExportFormat.Format(member.Birthday.Value) : null,
+            Pronouns = member.Pronouns,
+            Color = member.Color,
+            AvatarUrl = member.AvatarUrl,
+            Prefix = member.Prefix,
+            Suffix = member.Suffix,
+            Created = Formats.TimestampExportFormat.Format(member.Created),
+            MessageCount = await _members.MessageCount(member)
+        };
+
+        private async Task<DataFileSwitch> ExportSwitch(PKSwitch sw) => new DataFileSwitch
+        {
+            Members = (await _switches.GetSwitchMembers(sw)).Select(m => m.Hid).ToList(),
+            Timestamp = Formats.TimestampExportFormat.Format(sw.Timestamp)
+        };
+
         public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system, ulong accountId)
         {
             // TODO: make atomic, somehow - we'd need to obtain one IDbConnection and reuse it

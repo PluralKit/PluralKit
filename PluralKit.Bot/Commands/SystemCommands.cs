@@ -2,240 +2,206 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
 using Humanizer;
 using NodaTime;
 using NodaTime.Text;
 using NodaTime.TimeZones;
+
+using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
 namespace PluralKit.Bot.Commands
 {
-    [Group("system")]
-    [Alias("s")]
-    public class SystemCommands : ContextParameterModuleBase<PKSystem>
+    public class SystemCommands
     {
-        public override string Prefix => "system";
-        public override string ContextNoun => "system";
+        private SystemStore _systems;
+        private MemberStore _members;
 
-        public SystemStore Systems {get; set;}
-        public MemberStore Members {get; set;}
-        
-        public SwitchStore Switches {get; set;}
-        public EmbedService EmbedService {get; set;}
-        
-        public ProxyCacheService ProxyCache { get; set; }
-        
+        private SwitchStore _switches;
+        private EmbedService _embeds;
 
-        [Command]
-        [Remarks("system <name>")]
-        public async Task Query(PKSystem system = null) {
-            if (system == null) system = Context.SenderSystem;
+        private ProxyCacheService _proxyCache;
+
+        public SystemCommands(SystemStore systems, MemberStore members, SwitchStore switches, EmbedService embeds, ProxyCacheService proxyCache)
+        {
+            _systems = systems;
+            _members = members;
+            _switches = switches;
+            _embeds = embeds;
+            _proxyCache = proxyCache;
+        }
+        
+        public async Task Query(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
-            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateSystemEmbed(system));
+            await ctx.Reply(embed: await _embeds.CreateSystemEmbed(system));
         }
-
-        [Command("new")]
-        [Alias("register", "create", "init", "add", "make")]
-        [Remarks("system new <name>")]
-        public async Task New([Remainder] string systemName = null)
+        
+        public async Task New(Context ctx)
         {
-            if (ContextEntity != null) throw Errors.NotOwnSystemError;
-            if (Context.SenderSystem != null) throw Errors.ExistingSystemError;
+            ctx.CheckNoSystem();
 
-            var system = await Systems.Create(systemName);
-            await Systems.Link(system, Context.User.Id);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now.");
+            var system = await _systems.Create(ctx.RemainderOrNull());
+            await _systems.Link(system, ctx.Author.Id);
+            await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now.");
         }
+        
+        public async Task Name(Context ctx)
+        {
+            ctx.CheckSystem();
 
-        [Command("name")]
-        [Alias("rename", "changename")]
-        [Remarks("system name <name>")]
-        [MustHaveSystem]
-        public async Task Name([Remainder] string newSystemName = null) {
+            var newSystemName = ctx.RemainderOrNull();
             if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
 
-            Context.SenderSystem.Name = newSystemName;
-            await Systems.Save(Context.SenderSystem);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} System name {(newSystemName != null ? "changed" : "cleared")}.");
+            ctx.System.Name = newSystemName;
+            await _systems.Save(ctx.System);
+            await ctx.Reply($"{Emojis.Success} System name {(newSystemName != null ? "changed" : "cleared")}.");
         }
+        
+        public async Task Description(Context ctx) {
+            ctx.CheckSystem();
 
-        [Command("description")]
-        [Alias("desc")]
-        [Remarks("system description <description>")]
-        [MustHaveSystem]
-        public async Task Description([Remainder] string newDescription = null) {
+            var newDescription = ctx.RemainderOrNull();
             if (newDescription != null && newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
 
-            Context.SenderSystem.Description = newDescription;
-            await Systems.Save(Context.SenderSystem);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} System description {(newDescription != null ? "changed" : "cleared")}.");
+            ctx.System.Description = newDescription;
+            await _systems.Save(ctx.System);
+            await ctx.Reply($"{Emojis.Success} System description {(newDescription != null ? "changed" : "cleared")}.");
         }
+        
+        public async Task Tag(Context ctx)
+        {
+            ctx.CheckSystem();
 
-        [Command("tag")]
-        [Remarks("system tag <tag>")]
-        [MustHaveSystem]
-        public async Task Tag([Remainder] string newTag = null) {
-
-            Context.SenderSystem.Tag = newTag;
+            var newTag = ctx.RemainderOrNull();
+            ctx.System.Tag = newTag;
 
             if (newTag != null)
             {
                 if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
 
                 // Check unproxyable messages *after* changing the tag (so it's seen in the method) but *before* we save to DB (so we can cancel)
-                var unproxyableMembers = await Members.GetUnproxyableMembers(Context.SenderSystem);
+                var unproxyableMembers = await _members.GetUnproxyableMembers(ctx.System);
                 if (unproxyableMembers.Count > 0)
                 {
-                    var msg = await Context.Channel.SendMessageAsync(
-                        $"{Emojis.Warn} Changing your system tag to '{newTag}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name))}**\nDo you want to continue anyway?");
-                    if (!await Context.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
+                    var msg = await ctx.Reply(
+                        $"{Emojis.Warn} Changing your system tag to '{newTag.SanitizeMentions()}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name.SanitizeMentions()))}**\nDo you want to continue anyway?");
+                    if (!await ctx.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
                 }
             }
 
-            await Systems.Save(Context.SenderSystem);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
+            await _systems.Save(ctx.System);
+            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
             
-            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
-        [Command("avatar")]
-        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
-        [Remarks("system avatar <avatar url>")]
-        [MustHaveSystem]
-        public async Task SystemAvatar(IUser member)
+        public async Task SystemAvatar(Context ctx)
         {
-            if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
-            Context.SenderSystem.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
-            await Systems.Save(Context.SenderSystem);
+            ctx.CheckSystem();
+
+            var member = await ctx.MatchUser();
+            if (member != null)
+            {
+                if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
+                ctx.System.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
+                await _systems.Save(ctx.System);
             
-            var embed = new EmbedBuilder().WithImageUrl(Context.SenderSystem.AvatarUrl).Build();
-            await Context.Channel.SendMessageAsync(
-                $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
-            
-            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
-        }
-        
-        [Command("avatar")]
-        [Alias("profile", "picture", "icon", "image", "pic", "pfp")]
-        [Remarks("system avatar <avatar url>")]
-        [MustHaveSystem]
-        public async Task SystemAvatar([Remainder] string avatarUrl = null)
-        {
-            string url = avatarUrl ?? Context.Message.Attachments.FirstOrDefault()?.ProxyUrl;
-            if (url != null) await Context.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
-
-            Context.SenderSystem.AvatarUrl = url;
-            await Systems.Save(Context.SenderSystem);
-
-            var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} System avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
-            
-            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
-        }
-
-        [Command("delete")]
-        [Alias("remove", "destroy", "erase", "yeet")]
-        [Remarks("system delete")]
-        [MustHaveSystem]
-        public async Task Delete() {
-            var msg = await Context.Channel.SendMessageAsync($"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{Context.SenderSystem.Hid}`).\n**Note: this action is permanent.**");
-            var reply = await Context.AwaitMessage(Context.Channel, Context.User, timeout: TimeSpan.FromMinutes(1));
-            if (reply.Content != Context.SenderSystem.Hid) throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{Context.SenderSystem.Hid}`) *verbatim*.");
-
-            await Systems.Delete(Context.SenderSystem);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} System deleted.");
-            
-            await ProxyCache.InvalidateResultsForSystem(Context.SenderSystem);
-        }
-
-        [Group("list")]
-        [Alias("l", "members")]
-        public class SystemListCommands: ModuleBase<PKCommandContext> {
-            public MemberStore Members { get; set; }
-
-            [Command]
-            [Remarks("system [system] list")]
-            public async Task MemberShortList() {
-                var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
-                if (system == null) throw Errors.NoSystemError;
-
-                var members = await Members.GetBySystem(system);
-                var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
-                await Context.Paginate<PKMember>(
-                    members.OrderBy(m => m.Name).ToList(),
-                    25,
-                    embedTitle,
-                    (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
-                        if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name}** *({m.ProxyString})*";
-                        return $"[`{m.Hid}`] **{m.Name}**";
-                    }))
-                );
+                var embed = new EmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
+                await ctx.Reply(
+                    $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
             }
+            else
+            {
+                string url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.ProxyUrl;
+                if (url != null) await ctx.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
 
-            [Command("full")]
-            [Alias("big", "details", "long")]
-            [Remarks("system [system] list full")]
-            public async Task MemberLongList() {
-                var system = Context.GetContextEntity<PKSystem>() ?? Context.SenderSystem;
-                if (system == null) throw Errors.NoSystemError;
+                ctx.System.AvatarUrl = url;
+                await _systems.Save(ctx.System);
 
-                var members = await Members.GetBySystem(system);
-                var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
-                await Context.Paginate<PKMember>(
-                    members.OrderBy(m => m.Name).ToList(),
-                    5,
-                    embedTitle,
-                    (eb, ms) => {
-                        foreach (var m in ms) {
-                            var profile = $"**ID**: {m.Hid}";
-                            if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
-                            if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
-                            if (m.Prefix != null || m.Suffix != null) profile += $"\n**Proxy tags**: {m.ProxyString}";
-                            if (m.Description != null) profile += $"\n\n{m.Description}";
-                            eb.AddField(m.Name, profile.Truncate(1024));
-                        }
+                var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
+                await ctx.Reply($"{Emojis.Success} System avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
+            }
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
+        }
+        
+        public async Task Delete(Context ctx) {
+            ctx.CheckSystem();
+
+            var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{ctx.System.Hid}`).\n**Note: this action is permanent.**");
+            var reply = await ctx.AwaitMessage(ctx.Channel, ctx.Author, timeout: TimeSpan.FromMinutes(1));
+            if (reply.Content != ctx.System.Hid) throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{ctx.System.Hid}`) *verbatim*.");
+
+            await _systems.Delete(ctx.System);
+            await ctx.Reply($"{Emojis.Success} System deleted.");
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
+        }
+        
+        public async Task MemberShortList(Context ctx, PKSystem system) {
+            if (system == null) throw Errors.NoSystemError;
+
+            var members = await _members.GetBySystem(system);
+            var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
+            await ctx.Paginate<PKMember>(
+                members.OrderBy(m => m.Name).ToList(),
+                25,
+                embedTitle,
+                (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
+                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyString.SanitizeMentions()})*";
+                    return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
+                }))
+            );
+        }
+
+        public async Task MemberLongList(Context ctx, PKSystem system) {
+            if (system == null) throw Errors.NoSystemError;
+
+            var members = await _members.GetBySystem(system);
+            var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
+            await ctx.Paginate<PKMember>(
+                members.OrderBy(m => m.Name).ToList(),
+                5,
+                embedTitle,
+                (eb, ms) => {
+                    foreach (var m in ms) {
+                        var profile = $"**ID**: {m.Hid}";
+                        if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
+                        if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
+                        if (m.Prefix != null || m.Suffix != null) profile += $"\n**Proxy tags**: {m.ProxyString}";
+                        if (m.Description != null) profile += $"\n\n{m.Description}";
+                        eb.AddField(m.Name, profile.Truncate(1024));
                     }
-                );
-            }
+                }
+            );
         }
-
-        [Command("fronter")]
-        [Alias("f", "front", "fronters")]
-        [Remarks("system [system] fronter")]
-        public async Task SystemFronter()
+        
+        public async Task SystemFronter(Context ctx, PKSystem system)
         {
-            var system = ContextEntity ?? Context.SenderSystem;
             if (system == null) throw Errors.NoSystemError;
             
-            var sw = await Switches.GetLatestSwitch(system);
+            var sw = await _switches.GetLatestSwitch(system);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
-            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFronterEmbed(sw, system.Zone));
+            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
         }
-
-        [Command("fronthistory")]
-        [Alias("fh", "history", "switches")]
-        [Remarks("system [system] fronthistory")]
-        public async Task SystemFrontHistory()
+        
+        public async Task SystemFrontHistory(Context ctx, PKSystem system)
         {
-            var system = ContextEntity ?? Context.SenderSystem;
             if (system == null) throw Errors.NoSystemError;
 
-            var sws = (await Switches.GetSwitches(system, 10)).ToList();
+            var sws = (await _switches.GetSwitches(system, 10)).ToList();
             if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
             
-            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFrontHistoryEmbed(sws, system.Zone));
+            await ctx.Reply(embed: await _embeds.CreateFrontHistoryEmbed(sws, system.Zone));
         }
-
-        [Command("frontpercent")]
-        [Alias("frontbreakdown", "frontpercent", "front%", "fp")]
-        [Remarks("system [system] frontpercent [duration]")]
-        public async Task SystemFrontPercent([Remainder] string durationStr = "30d")
+        
+        public async Task SystemFrontPercent(Context ctx, PKSystem system)
         {
-            var system = ContextEntity ?? Context.SenderSystem;
             if (system == null) throw Errors.NoSystemError;
+
+            string durationStr = ctx.RemainderOrNull() ?? "30d";
             
             var now = SystemClock.Instance.GetCurrentInstant();
 
@@ -243,38 +209,37 @@ namespace PluralKit.Bot.Commands
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
-            var frontpercent = await Switches.GetPerMemberSwitchDuration(system, rangeStart.Value.ToInstant(), now);
-            await Context.Channel.SendMessageAsync(embed: await EmbedService.CreateFrontPercentEmbed(frontpercent, system.Zone));
+            var frontpercent = await _switches.GetPerMemberSwitchDuration(system, rangeStart.Value.ToInstant(), now);
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
         }
-
-        [Command("timezone")]
-        [Alias("tz")]
-        [Remarks("system timezone [timezone]")]
-        [MustHaveSystem]
-        public async Task SystemTimezone([Remainder] string zoneStr = null)
+        
+        public async Task SystemTimezone(Context ctx)
         {
+            if (ctx.System == null) throw Errors.NoSystemError;
+
+            var zoneStr = ctx.RemainderOrNull();
             if (zoneStr == null)
             {
-                Context.SenderSystem.UiTz = "UTC";
-                await Systems.Save(Context.SenderSystem);
-                await Context.Channel.SendMessageAsync($"{Emojis.Success} System time zone cleared.");
+                ctx.System.UiTz = "UTC";
+                await _systems.Save(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System time zone cleared.");
                 return;
             }
 
-            var zone = await FindTimeZone(zoneStr);
+            var zone = await FindTimeZone(ctx, zoneStr);
             if (zone == null) throw Errors.InvalidTimeZone(zoneStr);
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
-            var msg = await Context.Channel.SendMessageAsync(
+            var msg = await ctx.Reply(
                 $"This will change the system time zone to {zone.Id}. The current time is {Formats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?");
-            if (!await Context.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
-            Context.SenderSystem.UiTz = zone.Id;
-            await Systems.Save(Context.SenderSystem);
+            if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
+            ctx.System.UiTz = zone.Id;
+            await _systems.Save(ctx.System);
 
-            await Context.Channel.SendMessageAsync($"System time zone changed to {zone.Id}.");
+            await ctx.Reply($"System time zone changed to {zone.Id}.");
         }
 
-        public async Task<DateTimeZone> FindTimeZone(string zoneStr) {
+        public async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr) {
             // First, if we're given a flag emoji, we extract the flag emoji code from it.
             zoneStr = PluralKit.Utils.ExtractCountryFlag(zoneStr) ?? zoneStr;
             
@@ -322,7 +287,7 @@ namespace PluralKit.Bot.Commands
                 return matchingZones.First();
             
             // Otherwise, prompt and return!
-            return await Context.Choose("There were multiple matches for your time zone query. Please select the region that matches you the closest:", matchingZones,
+            return await ctx.Choose("There were multiple matches for your time zone query. Please select the region that matches you the closest:", matchingZones,
                 z =>
                 {
                     if (TzdbDateTimeZoneSource.Default.Aliases.Contains(z.Id))
@@ -330,12 +295,6 @@ namespace PluralKit.Bot.Commands
 
                     return $"**{z.Id}**";
                 });
-        } 
-
-        public override async Task<PKSystem> ReadContextParameterAsync(string value)
-        {
-            var res = await new PKSystemTypeReader().ReadAsync(Context, value, _services);
-            return res.IsSuccess ? res.BestMatch as PKSystem : null;
         }
     }
 }
