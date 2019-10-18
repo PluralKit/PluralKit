@@ -176,7 +176,7 @@ namespace PluralKit.Bot {
                         .OrderByDescending(role => role.Position)
                         .ToList();
 
-                    userStr = guildUser?.NameAndMention();
+                    userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser?.NameAndMention();
                 }
             }
 
