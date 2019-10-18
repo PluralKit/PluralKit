@@ -307,8 +307,8 @@ namespace PluralKit.Bot
                 AvatarUrl = AvatarUrl,
                 Birthday = Birthday,
                 Description = Description,
-                Prefix = Brackets.FirstOrDefault(),
-                Suffix = Brackets.Skip(1).FirstOrDefault() // TODO: can Tupperbox members have no proxies at all?
+                Prefix = Brackets.FirstOrDefault().NullIfEmpty(),
+                Suffix = Brackets.Skip(1).FirstOrDefault().NullIfEmpty() // TODO: can Tupperbox members have no proxies at all?
             };
         }
     }
