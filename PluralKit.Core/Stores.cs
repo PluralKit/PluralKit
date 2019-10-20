@@ -128,6 +128,37 @@ namespace PluralKit {
             return member;
         }
 
+        public async Task<Dictionary<string,PKMember>> CreateMultiple(PKSystem system, Dictionary<string,string> names)
+        {
+            using (var conn = await _conn.Obtain())
+            using (var tx = conn.BeginTransaction())
+            {
+                var results = new Dictionary<string, PKMember>();
+                foreach (var name in names)
+                {
+                    string hid;
+                    do
+                    {
+                        hid = await conn.QuerySingleOrDefaultAsync<string>("SELECT @Hid WHERE NOT EXISTS (SELECT id FROM members WHERE hid = @Hid LIMIT 1)", new
+                        {
+                            Hid = Utils.GenerateHid()
+                        });
+                    } while (hid == null);
+                    var member = await conn.QuerySingleAsync<PKMember>("INSERT INTO members (hid, system, name) VALUES (@Hid, @SystemId, @Name) RETURNING *", new
+                    {
+                        Hid = hid,
+                        SystemID = system.Id,
+                        Name = name.Value
+                    });
+                    results.Add(name.Key, member);
+                }
+
+                tx.Commit();
+                _logger.Information("Created {MemberCount} members for system {SystemID}", names.Count(), system.Hid);
+                return results;
+            }
+        }
+
         public async Task<PKMember> GetByHid(string hid) {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where hid = @Hid", new { Hid = hid.ToLower() });
