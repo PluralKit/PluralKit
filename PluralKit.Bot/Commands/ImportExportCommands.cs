@@ -103,12 +103,14 @@ namespace PluralKit.Bot.Commands
                     var result = await _dataFiles.ImportSystem(data, ctx.System, ctx.Author.Id);
                     if (!result.Success)
                         await ctx.Reply($"{Emojis.Error} The provided system profile could not be imported. {result.Message}");
-                    else if (ctx.System != null)
+                    else if (ctx.System == null)
                     {
+                        // We didn't have a system prior to importing, so give them the new system's ID
                         await ctx.Reply($"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.System.Hid}`. Type `pk;system` for more information.");
                     }
                     else
                     {
+                        // We already had a system, so show them what changed
                         await ctx.Reply($"{Emojis.Success} Updated {result.ModifiedNames.Count} members, created {result.AddedNames.Count} members. Type `pk;system list` to check!");
                     }
                 }
