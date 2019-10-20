@@ -488,6 +488,11 @@ namespace PluralKit
             _impl.Open();
         }
 
+        public NpgsqlBinaryImporter BeginBinaryImport(string copyFromCommand)
+        {
+            return _impl.BeginBinaryImport(copyFromCommand);
+        }
+
         public string ConnectionString
         {
             get => _impl.ConnectionString;

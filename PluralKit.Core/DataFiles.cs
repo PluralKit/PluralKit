@@ -179,9 +179,10 @@ namespace PluralKit.Bot
                 mappedSwitches.Add(mapped);
             }
             // Import switches
-            await _switches.RegisterSwitches(system, mappedSwitches);
+            if (mappedSwitches.Any())
+                await _switches.BulkImportSwitches(system, mappedSwitches);
 
-            _logger.Information("Imported system {System}", system.Id);
+            _logger.Information("Imported system {System}", system.Hid);
             return result;
         }
     }
