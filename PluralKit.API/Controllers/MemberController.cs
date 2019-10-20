@@ -38,6 +38,11 @@ namespace PluralKit.API.Controllers
             if (newMember.Name == null)
             return BadRequest("Member name cannot be null.");
 
+            // Enforce per-system member limit
+            var memberCount = await _members.MemberCount(system);
+            if (memberCount >= Limits.MaxMemberCount)
+                return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
+
             // Explicit bounds checks
             if (newMember.Name != null && newMember.Name.Length > Limits.MaxMemberNameLength)
                 return BadRequest($"Member name too long ({newMember.Name.Length} > {Limits.MaxMemberNameLength}.");

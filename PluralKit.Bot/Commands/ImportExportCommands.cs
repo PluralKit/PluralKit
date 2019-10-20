@@ -101,8 +101,9 @@ namespace PluralKit.Bot.Commands
                     // If passed system is null, it'll create a new one
                     // (and that's okay!)
                     var result = await _dataFiles.ImportSystem(data, ctx.System, ctx.Author.Id);
-                    
-                    if (ctx.System != null)
+                    if (!result.Success)
+                        await ctx.Reply($"{Emojis.Error} The provided system profile could not be imported. {result.Message}");
+                    else if (ctx.System != null)
                     {
                         await ctx.Reply($"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.System.Hid}`. Type `pk;system` for more information.");
                     }
