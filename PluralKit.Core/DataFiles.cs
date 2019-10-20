@@ -121,7 +121,7 @@ namespace PluralKit.Bot
 
             // If creating the unmatched members would put us over the member limit, abort before creating any members
             // new total: # in the system + (# in the file - # in the file that already exist)
-            if (data.Members.Count - dataFileToMemberMapping.Count + existingMembers.Count() >= Limits.MaxMemberCount)
+            if (data.Members.Count - dataFileToMemberMapping.Count + existingMembers.Count() > Limits.MaxMemberCount)
             {
                 result.Success = false;
                 result.Message = $"Import would exceed the maximum number of members ({Limits.MaxMemberCount}).";
