@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using NodaTime;
+using NodaTime.Text;
 using Serilog;
 
 namespace PluralKit.Bot
@@ -24,11 +26,34 @@ namespace PluralKit.Bot
 
         public async Task<DataFileSystem> ExportSystem(PKSystem system)
         {
+            // Export members
             var members = new List<DataFileMember>();
-            foreach (var member in await _members.GetBySystem(system)) members.Add(await ExportMember(member));
+            var pkMembers = await _members.GetBySystem(system); // Read all members in the system
+            var messageCounts = await _members.MessageCountsPerMember(system); // Count messages proxied by all members in the system
+            members.AddRange(pkMembers.Select(m => new DataFileMember
+            {
+                Id = m.Hid,
+                Name = m.Name,
+                DisplayName = m.DisplayName,
+                Description = m.Description,
+                Birthday = m.Birthday != null ? Formats.DateExportFormat.Format(m.Birthday.Value) : null,
+                Pronouns = m.Pronouns,
+                Color = m.Color,
+                AvatarUrl = m.AvatarUrl,
+                Prefix = m.Prefix,
+                Suffix = m.Suffix,
+                Created = Formats.TimestampExportFormat.Format(m.Created),
+                MessageCount = messageCounts.Where(x => x.Member.Equals(m.Id)).Select(x => x.MessageCount).FirstOrDefault()
+            }));
 
+            // Export switches
             var switches = new List<DataFileSwitch>();
-            foreach (var sw in await _switches.GetSwitches(system, 999999)) switches.Add(await ExportSwitch(sw));
+            var switchList = await _switches.GetTruncatedSwitchList(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
+            switches.AddRange(switchList.Select(x => new DataFileSwitch
+            {
+                Timestamp = Formats.TimestampExportFormat.Format(x.TimespanStart),
+                Members = x.Members.Select(m => m.Hid).ToList() // Look up member's HID using the member export from above
+            }));
 
             return new DataFileSystem
             {
@@ -49,6 +74,7 @@ namespace PluralKit.Bot
         {
             Id = member.Hid,
             Name = member.Name,
+            DisplayName = member.DisplayName,
             Description = member.Description,
             Birthday = member.Birthday != null ? Formats.DateExportFormat.Format(member.Birthday.Value) : null,
             Pronouns = member.Pronouns,
@@ -72,6 +98,7 @@ namespace PluralKit.Bot
             // which probably means refactoring SystemStore.Save and friends etc
             
             var result = new ImportResult {AddedNames = new List<string>(), ModifiedNames = new List<string>()};
+            var hidMapping = new Dictionary<string, PKMember>();
 
             // If we don't already have a system to save to, create one
             if (system == null) system = await _systems.Create(data.Name);
@@ -115,8 +142,13 @@ namespace PluralKit.Bot
                     result.ModifiedNames.Add(dataMember.Name);
                 }
 
+                // Keep track of what the data file's member ID maps to for switch import
+                if (!hidMapping.ContainsKey(dataMember.Id))
+                    hidMapping.Add(dataMember.Id, member);
+
                 // Apply member info
                 member.Name = dataMember.Name;
+                if (dataMember.DisplayName != null) member.DisplayName = dataMember.DisplayName;
                 if (dataMember.Description != null) member.Description = dataMember.Description;
                 if (dataMember.Color != null) member.Color = dataMember.Color;
                 if (dataMember.AvatarUrl != null) member.AvatarUrl = dataMember.AvatarUrl;
@@ -134,10 +166,22 @@ namespace PluralKit.Bot
 
                 await _members.Save(member);
             }
-            
-            _logger.Information("Imported system {System}", system.Id);
 
-            // TODO: import switches, too?
+            // Re-map the switch members in the likely case IDs have changed
+            var mappedSwitches = new List<Tuple<Instant, ICollection<PKMember>>>();
+            foreach (var sw in data.Switches)
+            {
+                var timestamp = InstantPattern.ExtendedIso.Parse(sw.Timestamp).Value;
+                var swMembers = new List<PKMember>();
+                swMembers.AddRange(sw.Members.Select(x =>
+                    hidMapping.FirstOrDefault(y => y.Key.Equals(x)).Value));
+                var mapped = new Tuple<Instant, ICollection<PKMember>>(timestamp, swMembers);
+                mappedSwitches.Add(mapped);
+            }
+            // Import switches
+            await _switches.RegisterSwitches(system, mappedSwitches);
+
+            _logger.Information("Imported system {System}", system.Id);
 
             result.System = system;
             return result;
@@ -173,6 +217,7 @@ namespace PluralKit.Bot
     {
         [JsonProperty("id")] public string Id;
         [JsonProperty("name")] public string Name;
+        [JsonProperty("display_name")] public string DisplayName;
         [JsonProperty("description")] public string Description;
         [JsonProperty("birthday")] public string Birthday;
         [JsonProperty("pronouns")] public string Pronouns;
@@ -262,8 +307,8 @@ namespace PluralKit.Bot
                 AvatarUrl = AvatarUrl,
                 Birthday = Birthday,
                 Description = Description,
-                Prefix = Brackets.FirstOrDefault(),
-                Suffix = Brackets.Skip(1).FirstOrDefault() // TODO: can Tupperbox members have no proxies at all?
+                Prefix = Brackets.FirstOrDefault().NullIfEmpty(),
+                Suffix = Brackets.Skip(1).FirstOrDefault().NullIfEmpty() // TODO: can Tupperbox members have no proxies at all?
             };
         }
     }

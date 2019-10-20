@@ -49,6 +49,10 @@ create table if not exists switches
     system    serial    not null references systems (id) on delete cascade,
     timestamp timestamp not null default (current_timestamp at time zone 'utc')
 );
+CREATE INDEX IF NOT EXISTS idx_switches_system
+ON switches USING btree (
+	system ASC NULLS LAST
+) INCLUDE ("timestamp");
 
 create table if not exists switch_members
 (
@@ -56,6 +60,10 @@ create table if not exists switch_members
     switch serial not null references switches (id) on delete cascade,
     member serial not null references members (id) on delete cascade
 );
+CREATE INDEX IF NOT EXISTS idx_switch_members_switch
+ON switch_members USING btree (
+	switch ASC NULLS LAST
+) INCLUDE (member);
 
 create table if not exists webhooks
 (

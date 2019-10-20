@@ -246,6 +246,11 @@ namespace PluralKit
                     yield break;
             }
         }
+
+        public static string NullIfEmpty(this string input)
+        {
+            return input.Trim().Length == 0 ? null : input;
+        }
     }
 
     public static class Emojis {

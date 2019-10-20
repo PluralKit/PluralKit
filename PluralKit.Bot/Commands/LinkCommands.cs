@@ -1,50 +1,57 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
+
+using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class LinkCommands: ModuleBase<PKCommandContext>
+    public class LinkCommands
     {
-        public SystemStore Systems { get; set; }
+        private SystemStore _systems;
 
-
-        [Command("link")]
-        [Remarks("link <account>")]
-        [MustHaveSystem]
-        public async Task LinkSystem(IUser account)
+        public LinkCommands(SystemStore systems)
         {
-            var accountIds = await Systems.GetLinkedAccountIds(Context.SenderSystem);
+            _systems = systems;
+        }
+        
+        public async Task LinkSystem(Context ctx)
+        {
+            ctx.CheckSystem();
+            
+            var account = await ctx.MatchUser() ?? throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
+            var accountIds = await _systems.GetLinkedAccountIds(ctx.System);
             if (accountIds.Contains(account.Id)) throw Errors.AccountAlreadyLinked;
 
-            var existingAccount = await Systems.GetByAccount(account.Id);
+            var existingAccount = await _systems.GetByAccount(account.Id);
             if (existingAccount != null) throw Errors.AccountInOtherSystem(existingAccount); 
 
-            var msg = await Context.Channel.SendMessageAsync(
-                $"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.");
-            if (!await Context.PromptYesNo(msg, user: account)) throw Errors.MemberLinkCancelled;
-            await Systems.Link(Context.SenderSystem, account.Id);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Account linked to system.");
+            var msg = await ctx.Reply($"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.");
+            if (!await ctx.PromptYesNo(msg, user: account)) throw Errors.MemberLinkCancelled;
+            await _systems.Link(ctx.System, account.Id);
+            await ctx.Reply($"{Emojis.Success} Account linked to system.");
         }
 
-        [Command("unlink")]
-        [Remarks("unlink [account]")]
-        [MustHaveSystem]
-        public async Task UnlinkAccount(IUser account = null)
+        public async Task UnlinkAccount(Context ctx)
         {
-            if (account == null) account = Context.User;
+            ctx.CheckSystem();
             
-            var accountIds = (await Systems.GetLinkedAccountIds(Context.SenderSystem)).ToList();
+            IUser account;
+            if (!ctx.HasNext())
+                account = ctx.Author;
+            else           
+                account = await ctx.MatchUser() ?? throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
+
+            var accountIds = (await _systems.GetLinkedAccountIds(ctx.System)).ToList();
             if (!accountIds.Contains(account.Id)) throw Errors.AccountNotLinked;
             if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount;
             
-            var msg = await Context.Channel.SendMessageAsync(
+            var msg = await ctx.Reply(
                 $"Are you sure you want to unlink {account.Mention} from your system?");
-            if (!await Context.PromptYesNo(msg)) throw Errors.MemberUnlinkCancelled;
+            if (!await ctx.PromptYesNo(msg)) throw Errors.MemberUnlinkCancelled;
 
-            await Systems.Unlink(Context.SenderSystem, account.Id);
-            await Context.Channel.SendMessageAsync($"{Emojis.Success} Account unlinked.");
+            await _systems.Unlink(ctx.System, account.Id);
+            await ctx.Reply($"{Emojis.Success} Account unlinked.");
         }
     }
 }

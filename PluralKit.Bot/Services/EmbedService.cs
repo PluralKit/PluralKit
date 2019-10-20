@@ -36,8 +36,8 @@ namespace PluralKit.Bot {
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
-                .WithFooter($"System ID: {system.Hid}");
-
+                .WithFooter($"System ID: {system.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
+ 
             var latestSwitch = await _switches.GetLatestSwitch(system);
             if (latestSwitch != null)
             {
@@ -91,7 +91,7 @@ namespace PluralKit.Bot {
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
                 .WithColor(color)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid}");
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
             if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
 
@@ -176,7 +176,7 @@ namespace PluralKit.Bot {
                         .OrderByDescending(role => role.Position)
                         .ToList();
 
-                    userStr = guildUser?.NameAndMention();
+                    userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser?.NameAndMention();
                 }
             }
 

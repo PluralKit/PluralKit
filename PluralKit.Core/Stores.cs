@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -171,6 +172,25 @@ namespace PluralKit {
                 return await conn.QuerySingleAsync<int>("select count(*) from messages where member = @Id", member);
         }
 
+        public struct MessageBreakdownListEntry
+        {
+            public int Member;
+            public int MessageCount;
+        }
+
+        public async Task<IEnumerable<MessageBreakdownListEntry>> MessageCountsPerMember(PKSystem system)
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.QueryAsync<MessageBreakdownListEntry>(
+                    @"SELECT messages.member, COUNT(messages.member) messagecount
+                        FROM members
+                        JOIN messages
+                        ON members.id = messages.member
+                        WHERE members.system = @System
+                        GROUP BY messages.member",
+                    new { System = system.Id });
+        }
+
         public async Task<int> MemberCount(PKSystem system)
         {
             using (var conn = await _conn.Obtain())
@@ -294,12 +314,88 @@ namespace PluralKit {
             }
         }
 
+        public async Task RegisterSwitches(PKSystem system, ICollection<Tuple<Instant, ICollection<PKMember>>> switches)
+        {
+            // Use a transaction here since we're doing multiple executed commands in one
+            using (var conn = await _conn.Obtain())
+            using (var tx = conn.BeginTransaction())
+            {
+                foreach (var s in switches)
+                {
+                    // First, we insert the switch itself
+                    var sw = await conn.QueryFirstOrDefaultAsync<PKSwitch>(
+                            @"insert into switches(system, timestamp)
+                            select @System, @Timestamp
+                            where not exists (
+                                select * from switches
+                                where system = @System and timestamp::timestamp(0) = @Timestamp
+                                limit 1
+                            )
+                            returning *",
+                        new { System = system.Id, Timestamp = s.Item1 });
+
+                    // If we inserted a switch, also insert each member in the switch in the switch_members table
+                    if (sw != null && s.Item2.Any())
+                        await conn.ExecuteAsync(
+                            "insert into switch_members(switch, member) select @Switch, * FROM unnest(@Members)",
+                            new { Switch = sw.Id, Members = s.Item2.Select(x => x.Id).ToArray() });
+                }
+
+                // Finally we commit the tx, since the using block will otherwise rollback it
+                tx.Commit();
+
+                _logger.Information("Registered {SwitchCount} switches in system {System}", switches.Count, system.Id);
+            }
+        }
+
         public async Task<IEnumerable<PKSwitch>> GetSwitches(PKSystem system, int count = 9999999)
         {
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
             // (maybe when we get caching in?)
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKSwitch>("select * from switches where system = @System order by timestamp desc limit @Count", new {System = system.Id, Count = count});
+        }
+
+        public struct SwitchMembersListEntry
+        {
+            public int Member;
+            public Instant Timestamp;
+        }
+
+        public async Task<IEnumerable<SwitchMembersListEntry>> GetSwitchMembersList(PKSystem system, Instant start, Instant end)
+        {
+            // Wrap multiple commands in a single transaction for performance
+            using (var conn = await _conn.Obtain())
+            using (var tx = conn.BeginTransaction())
+            {
+                // Find the time of the last switch outside the range as it overlaps the range
+                // If no prior switch exists, the lower bound of the range remains the start time
+                var lastSwitch = await conn.QuerySingleOrDefaultAsync<Instant>(
+                    @"SELECT COALESCE(MAX(timestamp), @Start)
+                        FROM switches
+                        WHERE switches.system = @System
+                        AND switches.timestamp < @Start",
+                    new { System = system.Id, Start = start });
+
+                // Then collect the time and members of all switches that overlap the range
+                var switchMembersEntries = await conn.QueryAsync<SwitchMembersListEntry>(
+                    @"SELECT switch_members.member, switches.timestamp
+                        FROM switches
+                        LEFT JOIN switch_members
+                        ON switches.id = switch_members.switch
+                        WHERE switches.system = @System
+                        AND (
+	                        switches.timestamp >= @Start
+	                        OR switches.timestamp = @LastSwitch
+                        )
+                        AND switches.timestamp < @End
+                        ORDER BY switches.timestamp DESC",
+                    new { System = system.Id, Start = start, End = end, LastSwitch = lastSwitch });
+
+                // Commit and return the list
+                tx.Commit();
+                return switchMembersEntries;
+            }
         }
 
         public async Task<IEnumerable<int>> GetSwitchMemberIds(PKSwitch sw)
@@ -351,14 +447,8 @@ namespace PluralKit {
 
         public async Task<IEnumerable<SwitchListEntry>> GetTruncatedSwitchList(PKSystem system, Instant periodStart, Instant periodEnd)
         {
-            // TODO: only fetch the necessary switches here
-            // todo: this is in general not very efficient LOL
-            // returns switches in chronological (newest first) order
-            var switches = await GetSwitches(system);
-
-            // we skip all switches that happened later than the range end, and taking all the ones that happened after the range start
-            // *BUT ALSO INCLUDING* the last switch *before* the range (that partially overlaps the range period)
-            var switchesInRange = switches.SkipWhile(sw => sw.Timestamp >= periodEnd).TakeWhileIncluding(sw => sw.Timestamp > periodStart).ToList();
+            // Returns the timestamps and member IDs of switches overlapping the range, in chronological (newest first) order
+            var switchMembers = await GetSwitchMembersList(system, periodStart, periodEnd);
 
             // query DB for all members involved in any of the switches above and collect into a dictionary for future use
             // this makes sure the return list has the same instances of PKMember throughout, which is important for the dictionary
@@ -366,34 +456,43 @@ namespace PluralKit {
             Dictionary<int, PKMember> memberObjects;
             using (var conn = await _conn.Obtain())
             {
-                memberObjects = (await conn.QueryAsync<PKMember>(
-                        "select distinct members.* from members, switch_members where switch_members.switch = any(@Switches) and switch_members.member = members.id", // lol postgres specific `= any()` syntax
-                        new {Switches = switchesInRange.Select(sw => sw.Id).ToList()}))
-                    .ToDictionary(m => m.Id);
+                memberObjects = (
+                    await conn.QueryAsync<PKMember>(
+                        "select * from members where id = any(@Switches)", // lol postgres specific `= any()` syntax
+                        new { Switches = switchMembers.Select(m => m.Member).Distinct().ToList() })
+                    ).ToDictionary(m => m.Id);
             }
 
+            // Initialize entries - still need to loop to determine the TimespanEnd below
+            var entries =
+                from item in switchMembers
+                group item by item.Timestamp into g
+                select new SwitchListEntry
+                {
+                    TimespanStart = g.Key,
+                    Members = g.Where(x => x.Member != 0).Select(x => memberObjects[x.Member]).ToList()
+                };
 
-            // we create the entry objects
-            var outList = new List<SwitchListEntry>();
-
-            // loop through every switch that *occurred* in-range and add it to the list
-            // end time is the switch *after*'s timestamp - we cheat and start it out at the range end so the first switch in-range "ends" there instead of the one after's start point
+            // Loop through every switch that overlaps the range and add it to the output list
+            // end time is the *FOLLOWING* switch's timestamp - we cheat by working backwards from the range end, so no dates need to be compared
             var endTime = periodEnd;
-            foreach (var switchInRange in switchesInRange)
+            var outList = new List<SwitchListEntry>();
+            foreach (var e in entries)
             {
-                // find the start time of the switch, but clamp it to the range (only applicable to the Last Switch Before Range we include in the TakeWhileIncluding call above)
-                var switchStartClamped = switchInRange.Timestamp;
-                if (switchStartClamped < periodStart) switchStartClamped = periodStart;
+                // Override the start time of the switch if it's outside the range (only true for the "out of range" switch we included above)
+                var switchStartClamped = e.TimespanStart < periodStart
+                    ? periodStart
+                    : e.TimespanStart;
 
                 outList.Add(new SwitchListEntry
                 {
-                    Members = (await GetSwitchMemberIds(switchInRange)).Select(id => memberObjects[id]).ToList(),
+                    Members = e.Members,
                     TimespanStart = switchStartClamped,
                     TimespanEnd = endTime
                 });
 
-                // next switch's end is this switch's start
-                endTime = switchInRange.Timestamp;
+                // next switch's end is this switch's start (we're working backward in time)
+                endTime = e.TimespanStart;
             }
 
             return outList;
