@@ -45,13 +45,24 @@ namespace PluralKit.Bot.Commands
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
+            // Enforce per-system member limit
+            var memberCount = await _members.MemberCount(ctx.System);
+            if (memberCount >= Limits.MaxMemberCount)
+                throw Errors.MemberLimitReachedError;
+
             // Create the member
             var member = await _members.Create(ctx.System, memberName);
+            memberCount++;
             
             // Send confirmation and space hint
             await ctx.Reply($"{Emojis.Success} Member \"{memberName.SanitizeMentions()}\" (`{member.Hid}`) registered! See the user guide for commands for editing this member: https://pluralkit.me/guide#member-management");
-            if (memberName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
-            
+            if (memberName.Contains(" "))
+                await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+            if (memberCount >= Limits.MaxMemberCount)
+                await ctx.Reply($"{Emojis.Warn} You have reached the per-system member limit ({Limits.MaxMemberCount}). You will be unable to create additional members until existing members are deleted.");
+            else if (memberCount >= Limits.MaxMembersWarnThreshold)
+                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {Limits.MaxMemberCount} members). Please review your member list for unused or duplicate members.");
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         

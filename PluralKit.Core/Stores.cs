@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using App.Metrics.Logging;
 using Dapper;
 using NodaTime;
-
+using Npgsql;
 using PluralKit.Core;
 
 using Serilog;
@@ -126,6 +126,37 @@ namespace PluralKit {
 
             _logger.Information("Created member {Member}", member.Id);
             return member;
+        }
+
+        public async Task<Dictionary<string,PKMember>> CreateMultiple(PKSystem system, Dictionary<string,string> names)
+        {
+            using (var conn = await _conn.Obtain())
+            using (var tx = conn.BeginTransaction())
+            {
+                var results = new Dictionary<string, PKMember>();
+                foreach (var name in names)
+                {
+                    string hid;
+                    do
+                    {
+                        hid = await conn.QuerySingleOrDefaultAsync<string>("SELECT @Hid WHERE NOT EXISTS (SELECT id FROM members WHERE hid = @Hid LIMIT 1)", new
+                        {
+                            Hid = Utils.GenerateHid()
+                        });
+                    } while (hid == null);
+                    var member = await conn.QuerySingleAsync<PKMember>("INSERT INTO members (hid, system, name) VALUES (@Hid, @SystemId, @Name) RETURNING *", new
+                    {
+                        Hid = hid,
+                        SystemID = system.Id,
+                        Name = name.Value
+                    });
+                    results.Add(name.Key, member);
+                }
+
+                tx.Commit();
+                _logger.Information("Created {MemberCount} members for system {SystemID}", names.Count(), system.Hid);
+                return results;
+            }
         }
 
         public async Task<PKMember> GetByHid(string hid) {
@@ -314,6 +345,77 @@ namespace PluralKit {
             }
         }
 
+        public async Task BulkImportSwitches(PKSystem system, ICollection<Tuple<Instant, ICollection<PKMember>>> switches)
+        {
+            // Read existing switches to enforce unique timestamps
+            var priorSwitches = await GetSwitches(system);
+            var lastSwitchId = priorSwitches.Any()
+                ? priorSwitches.Max(x => x.Id)
+                : 0;
+            
+            using (var conn = (PerformanceTrackingConnection) await _conn.Obtain())
+            {
+                using (var tx = conn.BeginTransaction())
+                {
+                    // Import switches in bulk
+                    using (var importer = conn.BeginBinaryImport("COPY switches (system, timestamp) FROM STDIN (FORMAT BINARY)"))
+                    {
+                        foreach (var sw in switches)
+                        {
+                            // If there's already a switch at this time, move on
+                            if (priorSwitches.Any(x => x.Timestamp.Equals(sw.Item1)))
+                                continue;
+
+                            // Otherwise, add it to the importer
+                            importer.StartRow();
+                            importer.Write(system.Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                            importer.Write(sw.Item1, NpgsqlTypes.NpgsqlDbType.Timestamp);
+                        }
+                        importer.Complete(); // Commits the copy operation so dispose won't roll it back
+                    }
+
+                    // Get all switches that were created above and don't have members for ID lookup
+                    var switchesWithoutMembers =
+                        await conn.QueryAsync<PKSwitch>(@"
+                        SELECT switches.*
+                        FROM switches
+                        LEFT JOIN switch_members
+                        ON switch_members.switch = switches.id
+                        WHERE switches.id > @LastSwitchId
+                        AND switches.system = @System
+                        AND switch_members.id IS NULL", new { LastSwitchId = lastSwitchId, System = system.Id });
+
+                    // Import switch_members in bulk
+                    using (var importer = conn.BeginBinaryImport("COPY switch_members (switch, member) FROM STDIN (FORMAT BINARY)"))
+                    {
+                        // Iterate over the switches we created above and set their members
+                        foreach (var pkSwitch in switchesWithoutMembers)
+                        {
+                            // If this isn't in our import set, move on
+                            var sw = switches.FirstOrDefault(x => x.Item1.Equals(pkSwitch.Timestamp));
+                            if (sw == null)
+                                continue;
+
+                            // Loop through associated members to add each to the switch
+                            foreach (var m in sw.Item2)
+                            {
+                                // Skip switch-outs - these don't have switch_members
+                                if (m == null)
+                                    continue;
+                                importer.StartRow();
+                                importer.Write(pkSwitch.Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                                importer.Write(m.Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                            }
+                        }
+                        importer.Complete(); // Commits the copy operation so dispose won't roll it back
+                    }
+                    tx.Commit();
+                }
+            }
+
+            _logger.Information("Completed bulk import of switches for system {0}", system.Hid);
+        }
+        
         public async Task RegisterSwitches(PKSystem system, ICollection<Tuple<Instant, ICollection<PKMember>>> switches)
         {
             // Use a transaction here since we're doing multiple executed commands in one
