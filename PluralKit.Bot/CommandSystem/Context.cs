@@ -86,6 +86,11 @@ namespace PluralKit.Bot.CommandSystem
             {
                 await Reply($"{Emojis.Error} {e.Message}");
             }
+            catch (TimeoutException e)
+            {
+                // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
+                await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
+            }
         }
 
         public async Task<IUser> MatchUser()
