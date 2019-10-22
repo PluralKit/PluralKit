@@ -30,13 +30,13 @@ namespace PluralKit.Bot.Commands
             _embeds = embeds;
             _proxyCache = proxyCache;
         }
-        
+
         public async Task Query(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
             await ctx.Reply(embed: await _embeds.CreateSystemEmbed(system));
         }
-        
+
         public async Task New(Context ctx)
         {
             ctx.CheckNoSystem();
@@ -45,30 +45,42 @@ namespace PluralKit.Bot.Commands
             await _systems.Link(system, ctx.Author.Id);
             await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now.");
         }
-        
+
         public async Task Name(Context ctx)
         {
             ctx.CheckSystem();
 
             var newSystemName = ctx.RemainderOrNull();
-            if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
+
+            if (newSystemName == null)
+            {
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear your system name?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+            }
+            else if (newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
 
             ctx.System.Name = newSystemName;
             await _systems.Save(ctx.System);
             await ctx.Reply($"{Emojis.Success} System name {(newSystemName != null ? "changed" : "cleared")}.");
         }
-        
+
         public async Task Description(Context ctx) {
             ctx.CheckSystem();
 
             var newDescription = ctx.RemainderOrNull();
-            if (newDescription != null && newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
+
+            if (newDescription == null)
+            {
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear your system description?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+            }
+            else if (newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
 
             ctx.System.Description = newDescription;
             await _systems.Save(ctx.System);
             await ctx.Reply($"{Emojis.Success} System description {(newDescription != null ? "changed" : "cleared")}.");
         }
-        
+
         public async Task Tag(Context ctx)
         {
             ctx.CheckSystem();
@@ -76,7 +88,12 @@ namespace PluralKit.Bot.Commands
             var newTag = ctx.RemainderOrNull();
             ctx.System.Tag = newTag;
 
-            if (newTag != null)
+            if (newTag == null)
+            {
+                var prompt = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear your system tag?");
+                if (!await ctx.PromptYesNo(prompt)) throw Errors.GenericActionCancelled;
+            }
+            else
             {
                 if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
 
@@ -92,10 +109,10 @@ namespace PluralKit.Bot.Commands
 
             await _systems.Save(ctx.System);
             await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
         public async Task SystemAvatar(Context ctx)
         {
             ctx.CheckSystem();
@@ -106,7 +123,7 @@ namespace PluralKit.Bot.Commands
                 if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
                 ctx.System.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
                 await _systems.Save(ctx.System);
-            
+
                 var embed = new EmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
                 await ctx.Reply(
                     $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
@@ -114,7 +131,17 @@ namespace PluralKit.Bot.Commands
             else
             {
                 string url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.ProxyUrl;
-                if (url != null) await ctx.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
+
+                if (url == null)
+                {
+                    var prompt = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear your system avatar?");
+                    if (!await ctx.PromptYesNo(prompt)) throw Errors.GenericActionCancelled;
+                }
+                else
+                {
+                    url = url.TrimUrl();
+                    await ctx.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
+                }
 
                 ctx.System.AvatarUrl = url;
                 await _systems.Save(ctx.System);
@@ -122,10 +149,10 @@ namespace PluralKit.Bot.Commands
                 var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
                 await ctx.Reply($"{Emojis.Success} System avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
             }
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
         public async Task Delete(Context ctx) {
             ctx.CheckSystem();
 
@@ -135,10 +162,10 @@ namespace PluralKit.Bot.Commands
 
             await _systems.Delete(ctx.System);
             await ctx.Reply($"{Emojis.Success} System deleted.");
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
         public async Task MemberShortList(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
@@ -176,43 +203,43 @@ namespace PluralKit.Bot.Commands
                 }
             );
         }
-        
+
         public async Task SystemFronter(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
-            
+
             var sw = await _switches.GetLatestSwitch(system);
             if (sw == null) throw Errors.NoRegisteredSwitches;
-            
+
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
         }
-        
+
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
 
             var sws = (await _switches.GetSwitches(system, 10)).ToList();
             if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
-            
+
             await ctx.Reply(embed: await _embeds.CreateFrontHistoryEmbed(sws, system.Zone));
         }
-        
+
         public async Task SystemFrontPercent(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
 
             string durationStr = ctx.RemainderOrNull() ?? "30d";
-            
+
             var now = SystemClock.Instance.GetCurrentInstant();
 
             var rangeStart = PluralKit.Utils.ParseDateTime(durationStr);
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
-            
+
             var frontpercent = await _switches.GetPerMemberSwitchDuration(system, rangeStart.Value.ToInstant(), now);
             await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
         }
-        
+
         public async Task SystemTimezone(Context ctx)
         {
             if (ctx.System == null) throw Errors.NoSystemError;
@@ -242,17 +269,17 @@ namespace PluralKit.Bot.Commands
         public async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr) {
             // First, if we're given a flag emoji, we extract the flag emoji code from it.
             zoneStr = PluralKit.Utils.ExtractCountryFlag(zoneStr) ?? zoneStr;
-            
+
             // Then, we find all *locations* matching either the given country code or the country name.
             var locations = TzdbDateTimeZoneSource.Default.Zone1970Locations;
             var matchingLocations = locations.Where(l => l.Countries.Any(c =>
                 string.Equals(c.Code, zoneStr, StringComparison.InvariantCultureIgnoreCase) ||
                 string.Equals(c.Name, zoneStr, StringComparison.InvariantCultureIgnoreCase)));
-            
+
             // Then, we find all (unique) time zone IDs that match.
             var matchingZones = matchingLocations.Select(l => DateTimeZoneProviders.Tzdb.GetZoneOrNull(l.ZoneId))
                 .Distinct().ToList();
-            
+
             // If the set of matching zones is empty (ie. we didn't find anything), we try a few other things.
             if (matchingZones.Count == 0)
             {
@@ -279,13 +306,13 @@ namespace PluralKit.Bot.Commands
                 matchingZones = allZones.Select(z => DateTimeZoneProviders.Tzdb.GetZoneOrNull(z))
                     .Where(z => z.GetUtcOffset(SystemClock.Instance.GetCurrentInstant()) == offset).ToList();
             }
-            
+
             // If we have a list of viable time zones, we ask the user which is correct.
-            
+
             // If we only have one, return that one.
             if (matchingZones.Count == 1)
                 return matchingZones.First();
-            
+
             // Otherwise, prompt and return!
             return await ctx.Choose("There were multiple matches for your time zone query. Please select the region that matches you the closest:", matchingZones,
                 z =>

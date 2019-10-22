@@ -28,7 +28,7 @@ namespace PluralKit.Bot.Commands
         public async Task NewMember(Context ctx) {
             if (ctx.System == null) throw Errors.NoSystemError;
             var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
-            
+
             // Hard name length cap
             if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
 
@@ -65,12 +65,13 @@ namespace PluralKit.Bot.Commands
 
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
+
         public async Task RenameMember(Context ctx, PKMember target) {
             // TODO: this method is pretty much a 1:1 copy/paste of the above creation method, find a way to clean?
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
+
             var newName = ctx.RemainderOrNull();
 
             // Hard name length cap
@@ -96,29 +97,43 @@ namespace PluralKit.Bot.Commands
             await ctx.Reply($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
             if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set ({target.DisplayName.SanitizeMentions()}), and will be proxied using that name instead.");
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
         public async Task MemberDescription(Context ctx, PKMember target) {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             var description = ctx.RemainderOrNull();
-            if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
+
+            if (description == null)
+            {
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear {target.Name.SanitizeMentions()}'s description?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+            }
+
+            else if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
 
             target.Description = description;
             await _members.Save(target);
 
             await ctx.Reply($"{Emojis.Success} Member description {(description == null ? "cleared" : "changed")}.");
         }
-        
+
         public async Task MemberPronouns(Context ctx, PKMember target) {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             var pronouns = ctx.RemainderOrNull();
-            if (pronouns.IsLongerThan(Limits.MaxPronounsLength)) throw Errors.MemberPronounsTooLongError(pronouns.Length);
+
+            if (pronouns == null)
+            {
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear {target.Name.SanitizeMentions()}'s pronouns?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+            }
+
+            else if (pronouns.IsLongerThan(Limits.MaxPronounsLength)) throw Errors.MemberPronounsTooLongError(pronouns.Length);
 
             target.Pronouns = pronouns;
             await _members.Save(target);
@@ -132,7 +147,12 @@ namespace PluralKit.Bot.Commands
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             var color = ctx.RemainderOrNull();
-            if (color != null)
+            if (color == null)
+            {
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear {target.Name.SanitizeMentions()}'s color?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+            }
+            else
             {
                 if (color.StartsWith("#")) color = color.Substring(1);
                 if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
@@ -148,10 +168,15 @@ namespace PluralKit.Bot.Commands
         {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
+
             LocalDate? date = null;
             var birthday = ctx.RemainderOrNull();
-            if (birthday != null)
+            if (birthday == null)
+            {
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear {target.Name.SanitizeMentions()}'s birthdate?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+            }
+            else
             {
                 date = PluralKit.Utils.ParseDate(birthday, true);
                 if (date == null) throw Errors.BirthdayParseError(birthday);
@@ -159,7 +184,7 @@ namespace PluralKit.Bot.Commands
 
             target.Birthday = date;
             await _members.Save(target);
-            
+
             await ctx.Reply($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {target.BirthdayString}")}.");
         }
 
@@ -167,19 +192,23 @@ namespace PluralKit.Bot.Commands
         {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
+
             // Handling the clear case in an if here to keep the body dedented
             var exampleProxy = ctx.RemainderOrNull();
             if (exampleProxy == null)
             {
-                // Just reset and send OK message
+                // Ask for confirmation
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear {target.Name.SanitizeMentions()}'s proxy tags?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+
+                // If confirmed, reset and send OK message
                 target.Prefix = null;
                 target.Suffix = null;
                 await _members.Save(target);
                 await ctx.Reply($"{Emojis.Success} Member proxy tags cleared.");
                 return;
             }
-            
+
             // Make sure there's one and only one instance of "text" in the example proxy given
             var prefixAndSuffix = exampleProxy.Split("text");
             if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
@@ -190,7 +219,7 @@ namespace PluralKit.Bot.Commands
             target.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
             await _members.Save(target);
             await ctx.Reply($"{Emojis.Success} Member proxy tags changed to `{target.ProxyString.SanitizeMentions()}`. Try proxying now!");
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
 
@@ -198,27 +227,27 @@ namespace PluralKit.Bot.Commands
         {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
+
             await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.Name.SanitizeMentions()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
             await _members.Delete(target);
             await ctx.Reply($"{Emojis.Success} Member deleted.");
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
         public async Task MemberAvatar(Context ctx, PKMember target)
         {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
+
             if (await ctx.MatchUser() is IUser user)
             {
                 if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
                 target.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
-                
+
                 await _members.Save(target);
-            
+
                 var embed = new EmbedBuilder().WithImageUrl(target.AvatarUrl).Build();
                 await ctx.Reply(
                     $"{Emojis.Success} Member avatar changed to {user.Username}'s avatar! {Emojis.Warn} Please note that if {user.Username} changes their avatar, the webhook's avatar will need to be re-set.", embed: embed);
@@ -226,6 +255,7 @@ namespace PluralKit.Bot.Commands
             }
             else if (ctx.RemainderOrNull() is string url)
             {
+                url = url.TrimUrl();
                 await Utils.VerifyAvatarOrThrow(url);
                 target.AvatarUrl = url;
                 await _members.Save(target);
@@ -247,20 +277,27 @@ namespace PluralKit.Bot.Commands
                 await _members.Save(target);
                 await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
             }
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
 
         public async Task MemberDisplayName(Context ctx, PKMember target)
-        {            
+        {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             var newDisplayName = ctx.RemainderOrNull();
+
+            if (newDisplayName == null)
+            {
+                var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to clear {target.Name.SanitizeMentions()}'s display name?");
+                if (!await ctx.PromptYesNo(msg)) throw Errors.GenericActionCancelled;
+            }
+
             // Refuse if proxy name will be unproxyable (with/without tag)
-            if (newDisplayName != null && newDisplayName.Length > ctx.System.MaxMemberNameLength)
+            else if (newDisplayName.Length > ctx.System.MaxMemberNameLength)
                 throw Errors.DisplayNameTooLong(newDisplayName, ctx.System.MaxMemberNameLength);
-            
+
             target.DisplayName = newDisplayName;
             await _members.Save(target);
 
@@ -272,8 +309,8 @@ namespace PluralKit.Bot.Commands
             }
             else
             {
-                successStr += $"Member display name cleared. ";
-                
+                successStr += $"Member display name cleared.";
+
                 // If we're removing display name and the *real* name will be unproxyable, warn.
                 if (target.Name.Length > ctx.System.MaxMemberNameLength)
                     successStr +=
@@ -282,10 +319,10 @@ namespace PluralKit.Bot.Commands
                     successStr += $"This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
             }
             await ctx.Reply(successStr);
-            
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _systems.GetById(target.System);

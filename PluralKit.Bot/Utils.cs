@@ -25,8 +25,18 @@ namespace PluralKit.Bot
             throw new ArgumentException($"Invalid color string '{color}'.");
         }
 
+        public static string TrimUrl(this string url)
+        {
+            // Remove <> tags from URL if present (these are used to prevent embed previews in Discord)
+            if (url.StartsWith("<") && url.EndsWith(">")) return url.Substring(1, url.Length - 2);
+            else return url;
+        }
+
         public static async Task VerifyAvatarOrThrow(string url)
         {
+            // Trim "<" and ">" from URL if present
+            url = TrimUrl(url);
+
             // List of MIME types we consider acceptable
             var acceptableMimeTypes = new[]
             {
@@ -70,7 +80,7 @@ namespace PluralKit.Bot
         public static bool HasMentionPrefix(string content, ref int argPos, out ulong mentionId)
         {
             mentionId = 0;
-            
+
             // Roughly ported from Discord.Commands.MessageExtensions.HasMentionPrefix
             if (string.IsNullOrEmpty(content) || content.Length <= 3 || (content[0] != '<' || content[1] != '@'))
                 return false;
