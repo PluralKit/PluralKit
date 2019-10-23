@@ -85,7 +85,8 @@ namespace PluralKit.Bot
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {
                 MessageCacheSize = 5,
-                ExclusiveBulkDelete = true
+                ExclusiveBulkDelete = true,
+                DefaultRetryMode = RetryMode.AlwaysRetry
             }))
             .AddSingleton<Bot>()
             .AddTransient<CommandTree>()
@@ -296,9 +297,10 @@ namespace PluralKit.Bot
             logger.Error(e, "Exception in bot event handler");
             
             var evt = new SentryEvent(e);
-            SentrySdk.CaptureEvent(evt, scope);
             
-            Console.Error.WriteLine(e);
+            // Don't blow out our Sentry budget on sporadic not-our-problem erorrs
+            if (e.IsOurProblem())
+                SentrySdk.CaptureEvent(evt, scope);
         }
     }
     
@@ -359,7 +361,17 @@ namespace PluralKit.Bot
                         "select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system",
                         new {Id = msg.Author.Id});
 
-                await _tree.ExecuteCommand(new Context(_services, msg, argPos, system));
+                try
+                {
+                    await _tree.ExecuteCommand(new Context(_services, msg, argPos, system));
+                }
+                catch (Exception e)
+                {
+                    await HandleCommandError(msg, e);
+                    // HandleCommandError only *reports* the error, we gotta pass it through to the parent
+                    // error handler by rethrowing:
+                    throw;
+                }
             }
             else
             {
@@ -373,6 +385,22 @@ namespace PluralKit.Bot
                     await arg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
                 }
             }
+        }
+
+        private async Task HandleCommandError(SocketUserMessage msg, Exception exception)
+        {
+            // This function *specifically* handles reporting a command execution error to the user.
+            // We'll fetch the event ID and send a user-facing error message.
+            // ONLY IF this error's actually our problem. As for what defines an error as "our problem",
+            // check the extension method :)
+            if (exception.IsOurProblem())
+            {
+                var eid = _services.GetService<EventIdProvider>().EventId;
+                await msg.Channel.SendMessageAsync(
+                    $"{Emojis.Error} Internal error occurred. Please join the support server (https://discord.gg/PczBt78), and send the developer this ID: `{eid}`");
+            }
+            
+            // If not, don't care. lol.
         }
 
         private void RegisterMessageMetrics(SocketMessage msg)
