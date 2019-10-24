@@ -246,6 +246,11 @@ namespace PluralKit
                     yield break;
             }
         }
+
+        public static string NullIfEmpty(this string input)
+        {
+            return input.Trim().Length == 0 ? null : input;
+        }
     }
 
     public static class Emojis {
@@ -481,6 +486,11 @@ namespace PluralKit
         public void Open()
         {
             _impl.Open();
+        }
+
+        public NpgsqlBinaryImporter BeginBinaryImport(string copyFromCommand)
+        {
+            return _impl.BeginBinaryImport(copyFromCommand);
         }
 
         public string ConnectionString

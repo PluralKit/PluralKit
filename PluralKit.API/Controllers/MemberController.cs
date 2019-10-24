@@ -38,9 +38,16 @@ namespace PluralKit.API.Controllers
             if (newMember.Name == null)
             return BadRequest("Member name cannot be null.");
 
+            // Enforce per-system member limit
+            var memberCount = await _members.MemberCount(system);
+            if (memberCount >= Limits.MaxMemberCount)
+                return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
+
             // Explicit bounds checks
             if (newMember.Name != null && newMember.Name.Length > Limits.MaxMemberNameLength)
                 return BadRequest($"Member name too long ({newMember.Name.Length} > {Limits.MaxMemberNameLength}.");
+            if (newMember.DisplayName != null && newMember.DisplayName.Length > Limits.MaxMemberNameLength)
+                return BadRequest($"Member display name too long ({newMember.DisplayName.Length} > {Limits.MaxMemberNameLength}.");
             if (newMember.Pronouns != null && newMember.Pronouns.Length > Limits.MaxPronounsLength)
                 return BadRequest($"Member pronouns too long ({newMember.Pronouns.Length} > {Limits.MaxPronounsLength}.");
             if (newMember.Description != null && newMember.Description.Length > Limits.MaxDescriptionLength)
@@ -57,6 +64,7 @@ namespace PluralKit.API.Controllers
             var member = await _members.Create(system, newMember.Name);
 
             member.Name = newMember.Name;
+            member.DisplayName = newMember.DisplayName;
             member.Color = newMember.Color;
             member.AvatarUrl = newMember.AvatarUrl;
             member.Birthday = newMember.Birthday;
@@ -84,6 +92,8 @@ namespace PluralKit.API.Controllers
             // Explicit bounds checks
             if (newMember.Name != null && newMember.Name.Length > Limits.MaxMemberNameLength)
                 return BadRequest($"Member name too long ({newMember.Name.Length} > {Limits.MaxMemberNameLength}.");
+            if (newMember.DisplayName != null && newMember.DisplayName.Length > Limits.MaxMemberNameLength)
+                return BadRequest($"Member display name too long ({newMember.DisplayName.Length} > {Limits.MaxMemberNameLength}.");
             if (newMember.Pronouns != null && newMember.Pronouns.Length > Limits.MaxPronounsLength)
                 return BadRequest($"Member pronouns too long ({newMember.Pronouns.Length} > {Limits.MaxPronounsLength}.");
             if (newMember.Description != null && newMember.Description.Length > Limits.MaxDescriptionLength)
@@ -98,6 +108,7 @@ namespace PluralKit.API.Controllers
                 return BadRequest();
 
             member.Name = newMember.Name;
+            member.DisplayName = newMember.DisplayName;
             member.Color = newMember.Color;
             member.AvatarUrl = newMember.AvatarUrl;
             member.Birthday = newMember.Birthday;

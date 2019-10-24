@@ -6,15 +6,17 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 
+using PluralKit.Bot.CommandSystem;
+
 namespace PluralKit.Bot {
     public static class ContextUtils {
-                public static async Task<bool> PromptYesNo(this ICommandContext ctx, IUserMessage message, IUser user = null, TimeSpan? timeout = null) {
+        public static async Task<bool> PromptYesNo(this Context ctx, IUserMessage message, IUser user = null, TimeSpan? timeout = null) {
             await message.AddReactionsAsync(new[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
-            var reaction = await ctx.AwaitReaction(message, user ?? ctx.User, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
+            var reaction = await ctx.AwaitReaction(message, user ?? ctx.Author, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
             return reaction.Emote.Name == Emojis.Success;
         }
 
-        public static async Task<SocketReaction> AwaitReaction(this ICommandContext ctx, IUserMessage message, IUser user = null, Func<SocketReaction, bool> predicate = null, TimeSpan? timeout = null) {
+        public static async Task<SocketReaction> AwaitReaction(this Context ctx, IUserMessage message, IUser user = null, Func<SocketReaction, bool> predicate = null, TimeSpan? timeout = null) {
             var tcs = new TaskCompletionSource<SocketReaction>();
             Task Inner(Cacheable<IUserMessage, ulong> _message, ISocketMessageChannel _channel, SocketReaction reaction) {
                 if (message.Id != _message.Id) return Task.CompletedTask; // Ignore reactions for different messages
@@ -24,38 +26,38 @@ namespace PluralKit.Bot {
                 return Task.CompletedTask;
             }
 
-            (ctx.Client as BaseSocketClient).ReactionAdded += Inner;
+            ((BaseSocketClient) ctx.Shard).ReactionAdded += Inner;
             try {
                 return await (tcs.Task.TimeoutAfter(timeout));
             } finally {
-                (ctx.Client as BaseSocketClient).ReactionAdded -= Inner;
+                ((BaseSocketClient) ctx.Shard).ReactionAdded -= Inner;
             }
         }
 
-        public static async Task<IUserMessage> AwaitMessage(this ICommandContext ctx, IMessageChannel channel, IUser user = null, Func<SocketMessage, bool> predicate = null, TimeSpan? timeout = null) {
+        public static async Task<IUserMessage> AwaitMessage(this Context ctx, IMessageChannel channel, IUser user = null, Func<SocketMessage, bool> predicate = null, TimeSpan? timeout = null) {
             var tcs = new TaskCompletionSource<IUserMessage>();
             Task Inner(SocketMessage msg) {
                 if (channel != msg.Channel) return Task.CompletedTask; // Ignore messages in a different channel
                 if (user != null && user != msg.Author) return Task.CompletedTask; // Ignore messages from other users
                 if (predicate != null && !predicate.Invoke(msg)) return Task.CompletedTask; // Check predicate
 
-                (ctx.Client as BaseSocketClient).MessageReceived -= Inner;
+                ((BaseSocketClient) ctx.Shard).MessageReceived -= Inner;
                 tcs.SetResult(msg as IUserMessage);
                 
                 return Task.CompletedTask;
             }
 
-            (ctx.Client as BaseSocketClient).MessageReceived += Inner;
+            ((BaseSocketClient) ctx.Shard).MessageReceived += Inner;
             return await (tcs.Task.TimeoutAfter(timeout));
         }
         
-        public static async Task<bool> ConfirmWithReply(this ICommandContext ctx, string expectedReply)
+        public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply)
         {
-            var msg = await ctx.AwaitMessage(ctx.Channel, ctx.User, timeout: TimeSpan.FromMinutes(1));
+            var msg = await ctx.AwaitMessage(ctx.Channel, ctx.Author, timeout: TimeSpan.FromMinutes(1));
             return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        public static async Task Paginate<T>(this ICommandContext ctx, ICollection<T> items, int itemsPerPage, string title, Action<EmbedBuilder, IEnumerable<T>> renderer) {
+        public static async Task Paginate<T>(this Context ctx, ICollection<T> items, int itemsPerPage, string title, Action<EmbedBuilder, IEnumerable<T>> renderer) {
             // TODO: make this generic enough we can use it in Choose<T> below
             
             var pageCount = (items.Count / itemsPerPage) + 1;
@@ -74,7 +76,7 @@ namespace PluralKit.Bot {
             try {
                 var currentPage = 0;
                 while (true) {
-                    var reaction = await ctx.AwaitReaction(msg, ctx.User, timeout: TimeSpan.FromMinutes(5));
+                    var reaction = await ctx.AwaitReaction(msg, ctx.Author, timeout: TimeSpan.FromMinutes(5));
 
                     // Increment/decrement page counter based on which reaction was clicked
                     if (reaction.Emote.Name == "\u23EA") currentPage = 0; // <<
@@ -97,10 +99,10 @@ namespace PluralKit.Bot {
             }
 
             if (await ctx.HasPermission(ChannelPermission.ManageMessages)) await msg.RemoveAllReactionsAsync();
-            else await msg.RemoveReactionsAsync(ctx.Client.CurrentUser, botEmojis);
+            else await msg.RemoveReactionsAsync(ctx.Shard.CurrentUser, botEmojis);
         }
         
-        public static async Task<T> Choose<T>(this ICommandContext ctx, string description, IList<T> items, Func<T, string> display = null)
+        public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items, Func<T, string> display = null)
         {
             // Generate a list of :regional_indicator_?: emoji surrogate pairs (starting at codepoint 0x1F1E6)
             // We just do 7 (ABCDEFG), this amount is arbitrary (although sending a lot of emojis takes a while)
@@ -143,7 +145,7 @@ namespace PluralKit.Bot {
                 while (true)
                 {
                     // Wait for a reaction
-                    var reaction = await ctx.AwaitReaction(msg, ctx.User);
+                    var reaction = await ctx.AwaitReaction(msg, ctx.Author);
                     
                     // If it's a movement reaction, inc/dec the page index
                     if (reaction.Emote.Name == "\u2B05") currPage -= 1; // <
@@ -160,7 +162,7 @@ namespace PluralKit.Bot {
                         if (idx < items.Count) return items[idx];
                     }
 
-                    var __ = msg.RemoveReactionAsync(reaction.Emote, ctx.User); // don't care about awaiting
+                    var __ = msg.RemoveReactionAsync(reaction.Emote, ctx.Author); // don't care about awaiting
                     await msg.ModifyAsync(mp => mp.Content = $"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
                 }
             }
@@ -177,12 +179,12 @@ namespace PluralKit.Bot {
                 var _ = AddEmojis();
 
                 // Then wait for a reaction and return whichever one we found
-                var reaction = await ctx.AwaitReaction(msg, ctx.User,rx => indicators.Contains(rx.Emote.Name));
+                var reaction = await ctx.AwaitReaction(msg, ctx.Author,rx => indicators.Contains(rx.Emote.Name));
                 return items[Array.IndexOf(indicators, reaction.Emote.Name)];
             }
         }
 
-        public static async Task<ChannelPermissions> Permissions(this ICommandContext ctx) {
+        public static async Task<ChannelPermissions> Permissions(this Context ctx) {
             if (ctx.Channel is IGuildChannel) {
                 var gu = await ctx.Guild.GetCurrentUserAsync();
                 return gu.GetPermissions(ctx.Channel as IGuildChannel);
@@ -190,9 +192,9 @@ namespace PluralKit.Bot {
             return ChannelPermissions.DM;
         }
 
-        public static async Task<bool> HasPermission(this ICommandContext ctx, ChannelPermission permission) => (await Permissions(ctx)).Has(permission);
+        public static async Task<bool> HasPermission(this Context ctx, ChannelPermission permission) => (await Permissions(ctx)).Has(permission);
 
-        public static async Task BusyIndicator(this ICommandContext ctx, Func<Task> f, string emoji = "\u23f3" /* hourglass */)
+        public static async Task BusyIndicator(this Context ctx, Func<Task> f, string emoji = "\u23f3" /* hourglass */)
         {
             await ctx.BusyIndicator<object>(async () =>
             {
@@ -201,7 +203,7 @@ namespace PluralKit.Bot {
             }, emoji);
         }
 
-        public static async Task<T> BusyIndicator<T>(this ICommandContext ctx, Func<Task<T>> f, string emoji = "\u23f3" /* hourglass */)
+        public static async Task<T> BusyIndicator<T>(this Context ctx, Func<Task<T>> f, string emoji = "\u23f3" /* hourglass */)
         {
             var task = f();
 
@@ -215,8 +217,8 @@ namespace PluralKit.Bot {
             }
             finally
             {
-                var _ = ctx.Message.RemoveReactionAsync(new Emoji(emoji), ctx.Client.CurrentUser);
+                var _ = ctx.Message.RemoveReactionAsync(new Emoji(emoji), ctx.Shard.CurrentUser);
             }
-        }
+        } 
     }
 }
