@@ -205,7 +205,7 @@ namespace PluralKit.Bot.Commands
             
             var now = SystemClock.Instance.GetCurrentInstant();
 
-            var rangeStart = PluralKit.Utils.ParseDateTime(durationStr);
+            var rangeStart = PluralKit.Utils.ParseDateTime(durationStr, true, system.Zone);
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
