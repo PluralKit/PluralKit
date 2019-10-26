@@ -17,8 +17,7 @@ namespace PluralKit.Bot.CommandSystem
         private readonly SocketUserMessage _message;
         private readonly Parameters _parameters;
 
-        private readonly SystemStore _systems;
-        private readonly MemberStore _members;
+        private readonly IDataStore _data;
         private readonly PKSystem _senderSystem;
 
         private Command _currentCommand;
@@ -28,8 +27,7 @@ namespace PluralKit.Bot.CommandSystem
         {
             _client = provider.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
             _message = message;
-            _systems = provider.GetRequiredService<SystemStore>();
-            _members = provider.GetRequiredService<MemberStore>();
+            _data = provider.GetRequiredService<IDataStore>();
             _senderSystem = senderSystem;
             _provider = provider;
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
@@ -86,7 +84,7 @@ namespace PluralKit.Bot.CommandSystem
             {
                 await Reply($"{Emojis.Error} {e.Message}");
             }
-            catch (TimeoutException e)
+            catch (TimeoutException)
             {
                 // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
                 await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
@@ -121,10 +119,10 @@ namespace PluralKit.Bot.CommandSystem
 
             // Direct IDs and mentions are both handled by the below method:
             if (input.TryParseMention(out var id))
-                return await _systems.GetByAccount(id);
+                return await _data.GetSystemByAccount(id);
 
             // Finally, try HID parsing
-            var system = await _systems.GetByHid(input);
+            var system = await _data.GetSystemByHid(input);
             return system;
         }
 
@@ -138,11 +136,11 @@ namespace PluralKit.Bot.CommandSystem
             // - A textual name of a member *in your own system*
 
             // First, try member HID parsing:
-            if (await _members.GetByHid(input) is PKMember memberByHid)
+            if (await _data.GetMemberByHid(input) is PKMember memberByHid)
                 return memberByHid;
 
             // Then, if we have a system, try finding by member name in system
-            if (_senderSystem != null && await _members.GetByName(_senderSystem, input) is PKMember memberByName)
+            if (_senderSystem != null && await _data.GetMemberByName(_senderSystem, input) is PKMember memberByName)
                 return memberByName;
 
             // We didn't find anything, so we return null.

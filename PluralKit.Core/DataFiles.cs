@@ -12,16 +12,12 @@ namespace PluralKit.Bot
 {
     public class DataFileService
     {
-        private SystemStore _systems;
-        private MemberStore _members;
-        private SwitchStore _switches;
+        private IDataStore _data;
         private ILogger _logger;
 
-        public DataFileService(SystemStore systems, MemberStore members, SwitchStore switches, ILogger logger)
+        public DataFileService(ILogger logger, IDataStore data)
         {
-            _systems = systems;
-            _members = members;
-            _switches = switches;
+            _data = data;
             _logger = logger.ForContext<DataFileService>();
         }
 
@@ -29,8 +25,8 @@ namespace PluralKit.Bot
         {
             // Export members
             var members = new List<DataFileMember>();
-            var pkMembers = await _members.GetBySystem(system); // Read all members in the system
-            var messageCounts = await _members.MessageCountsPerMember(system); // Count messages proxied by all members in the system
+            var pkMembers = await _data.GetSystemMembers(system); // Read all members in the system
+            var messageCounts = await _data.GetMemberMessageCountBulk(system); // Count messages proxied by all members in the system
             members.AddRange(pkMembers.Select(m => new DataFileMember
             {
                 Id = m.Hid,
@@ -49,7 +45,7 @@ namespace PluralKit.Bot
 
             // Export switches
             var switches = new List<DataFileSwitch>();
-            var switchList = await _switches.GetTruncatedSwitchList(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
+            var switchList = await _data.GetPeriodFronters(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
             switches.AddRange(switchList.Select(x => new DataFileSwitch
             {
                 Timestamp = Formats.TimestampExportFormat.Format(x.TimespanStart),
@@ -67,7 +63,7 @@ namespace PluralKit.Bot
                 Members = members,
                 Switches = switches,
                 Created = Formats.TimestampExportFormat.Format(system.Created),
-                LinkedAccounts = (await _systems.GetLinkedAccountIds(system)).ToList()
+                LinkedAccounts = (await _data.GetSystemAccounts(system)).ToList()
             };
         }
 
@@ -85,7 +81,7 @@ namespace PluralKit.Bot
 
             // If we don't already have a system to save to, create one
             if (system == null)
-                system = await _systems.Create(data.Name);
+                system = await _data.CreateSystem(data.Name);
             result.System = system;
 
             // Apply system info
@@ -94,13 +90,13 @@ namespace PluralKit.Bot
             if (data.Tag != null) system.Tag = data.Tag;
             if (data.AvatarUrl != null) system.AvatarUrl = data.AvatarUrl;
             if (data.TimeZone != null) system.UiTz = data.TimeZone ?? "UTC";
-            await _systems.Save(system);
+            await _data.SaveSystem(system);
 
             // Make sure to link the sender account, too
-            await _systems.Link(system, accountId);
+            await _data.AddAccount(system, accountId);
 
             // Determine which members already exist and which ones need to be created
-            var existingMembers = await _members.GetBySystem(system);
+            var existingMembers = await _data.GetSystemMembers(system);
             foreach (var d in data.Members)
             {
                 // Try to look up the member with the given ID
@@ -134,7 +130,7 @@ namespace PluralKit.Bot
             // These consist of members from another PluralKit system or another framework (e.g. Tupperbox)
             var membersToCreate = new Dictionary<string, string>();
             unmappedMembers.ForEach(x => membersToCreate.Add(x.Id, x.Name));
-            var newMembers = await _members.CreateMultiple(system, membersToCreate);
+            var newMembers = await _data.CreateMembersBulk(system, membersToCreate);
             foreach (var member in newMembers)
                 dataFileToMemberMapping.Add(member.Key, member.Value);
 
@@ -164,23 +160,26 @@ namespace PluralKit.Bot
                     member.Birthday = birthdayParse.Success ? (LocalDate?)birthdayParse.Value : null;
                 }
 
-                await _members.Save(member);
+                await _data.SaveMember(member);
             }
 
             // Re-map the switch members in the likely case IDs have changed
-            var mappedSwitches = new List<Tuple<Instant, ICollection<PKMember>>>();
+            var mappedSwitches = new List<ImportedSwitch>();
             foreach (var sw in data.Switches)
             {
                 var timestamp = InstantPattern.ExtendedIso.Parse(sw.Timestamp).Value;
                 var swMembers = new List<PKMember>();
                 swMembers.AddRange(sw.Members.Select(x =>
                     dataFileToMemberMapping.FirstOrDefault(y => y.Key.Equals(x)).Value));
-                var mapped = new Tuple<Instant, ICollection<PKMember>>(timestamp, swMembers);
-                mappedSwitches.Add(mapped);
+                mappedSwitches.Add(new ImportedSwitch
+                {
+                    Timestamp = timestamp,
+                    Members = swMembers
+                });
             }
             // Import switches
             if (mappedSwitches.Any())
-                await _switches.BulkImportSwitches(system, mappedSwitches);
+                await _data.AddSwitchesBulk(system, mappedSwitches);
 
             _logger.Information("Imported system {System}", system.Hid);
             return result;

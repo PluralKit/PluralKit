@@ -21,17 +21,17 @@ namespace PluralKit.API.Controllers
     [Route("msg")]
     public class MessageController: ControllerBase
     {
-        private MessageStore _messages;
+        private IDataStore _data;
 
-        public MessageController(MessageStore messages)
+        public MessageController(IDataStore _data)
         {
-            _messages = messages;
+            this._data = _data;
         }
 
         [HttpGet("{mid}")]
         public async Task<ActionResult<MessageReturn>> GetMessage(ulong mid)
         {
-            var msg = await _messages.Get(mid);
+            var msg = await _data.GetMessage(mid);
             if (msg == null) return NotFound("Message not found.");
 
             return new MessageReturn

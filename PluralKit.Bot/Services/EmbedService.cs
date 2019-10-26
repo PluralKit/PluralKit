@@ -9,39 +9,34 @@ using Humanizer;
 using NodaTime;
 
 namespace PluralKit.Bot {
-    public class EmbedService {
-        private SystemStore _systems;
-        private MemberStore _members;
-        private SwitchStore _switches;
-        private MessageStore _messages;
+    public class EmbedService
+    {
+        private IDataStore _data;
         private IDiscordClient _client;
 
-        public EmbedService(SystemStore systems, MemberStore members, IDiscordClient client, SwitchStore switches, MessageStore messages)
+        public EmbedService(IDiscordClient client, IDataStore data)
         {
-            _systems = systems;
-            _members = members;
             _client = client;
-            _switches = switches;
-            _messages = messages;
+            _data = data;
         }
 
         public async Task<Embed> CreateSystemEmbed(PKSystem system) {
-            var accounts = await _systems.GetLinkedAccountIds(system);
+            var accounts = await _data.GetSystemAccounts(system);
 
             // Fetch/render info for all accounts simultaneously
             var users = await Task.WhenAll(accounts.Select(async uid => (await _client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
-            var memberCount = await _members.MemberCount(system);
+            var memberCount = await _data.GetSystemMemberCount(system);
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
  
-            var latestSwitch = await _switches.GetLatestSwitch(system);
+            var latestSwitch = await _data.GetLatestSwitch(system);
             if (latestSwitch != null)
             {
-                var switchMembers = (await _switches.GetSwitchMembers(latestSwitch)).ToList();
+                var switchMembers = (await _data.GetSwitchMembers(latestSwitch)).ToList();
                 if (switchMembers.Count > 0)
                     eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
                         string.Join(", ", switchMembers.Select(m => m.Name)));
@@ -85,7 +80,7 @@ namespace PluralKit.Bot {
                 color = Color.Default;
             }
 
-            var messageCount = await _members.MessageCount(member);
+            var messageCount = await _data.GetMemberMessageCount(member);
 
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
@@ -108,7 +103,7 @@ namespace PluralKit.Bot {
 
         public async Task<Embed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone)
         {
-            var members = (await _switches.GetSwitchMembers(sw)).ToList();
+            var members = (await _data.GetSwitchMembers(sw)).ToList();
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new EmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
@@ -125,7 +120,7 @@ namespace PluralKit.Bot {
             foreach (var sw in sws)
             {
                 // Fetch member list and format
-                var members = (await _switches.GetSwitchMembers(sw)).ToList();
+                var members = (await _data.GetSwitchMembers(sw)).ToList();
                 var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
 
                 var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
@@ -151,7 +146,7 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateMessageInfoEmbed(MessageStore.StoredMessage msg)
+        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
         {
             var channel = await _client.GetChannelAsync(msg.Message.Channel) as ITextChannel;
             var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
@@ -193,20 +188,20 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(SwitchStore.PerMemberSwitchDuration frontpercent, DateTimeZone tz)
+        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, DateTimeZone tz)
         {
-            var actualPeriod = frontpercent.RangeEnd - frontpercent.RangeStart;
+            var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
-                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(frontpercent.RangeStart.InZone(tz))} ({Formats.DurationFormat.Format(actualPeriod)} ago)");
+                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({Formats.DurationFormat.Format(actualPeriod)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
             // We convert to a list of pairs so we can add the no-fronter value
             // Dictionary doesn't allow for null keys so we instead have a pair with a null key ;)
-            var pairs = frontpercent.MemberSwitchDurations.ToList();
-            if (frontpercent.NoFronterDuration != Duration.Zero)
-                pairs.Add(new KeyValuePair<PKMember, Duration>(null, frontpercent.NoFronterDuration));
+            var pairs = breakdown.MemberSwitchDurations.ToList();
+            if (breakdown.NoFronterDuration != Duration.Zero)
+                pairs.Add(new KeyValuePair<PKMember, Duration>(null, breakdown.NoFronterDuration));
 
             var membersOrdered = pairs.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)

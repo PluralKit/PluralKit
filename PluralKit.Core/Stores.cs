@@ -11,22 +11,324 @@ using PluralKit.Core;
 using Serilog;
 
 namespace PluralKit {
-    public class SystemStore {
+    public class FullMessage
+    {
+        public PKMessage Message;
+        public PKMember Member;
+        public PKSystem System;
+    }
+    
+    public struct PKMessage
+    {
+        public ulong Mid;
+        public ulong Channel;
+        public ulong Sender;
+        public ulong? OriginalMid;
+    }
+
+    public struct ImportedSwitch
+    {
+        public Instant Timestamp;
+        public IReadOnlyCollection<PKMember> Members;
+    }
+
+    public struct SwitchListEntry
+    {
+        public ICollection<PKMember> Members;
+        public Instant TimespanStart;
+        public Instant TimespanEnd;
+    }
+
+    public struct MemberMessageCount
+    {
+        public PKMember Member;
+        public int MessageCount;
+    }
+    
+    public struct FrontBreakdown
+    {
+        public Dictionary<PKMember, Duration> MemberSwitchDurations;
+        public Duration NoFronterDuration;
+        public Instant RangeStart;
+        public Instant RangeEnd;
+    }
+
+    public interface IDataStore
+    {
+        /// <summary>
+        /// Gets a system by its internal system ID.
+        /// </summary>
+        /// <returns>The <see cref="PKSystem"/> with the given internal ID, or null if no system was found.</returns>
+        Task<PKSystem> GetSystemById(int systemId);
+        
+        /// <summary>
+        /// Gets a system by its user-facing human ID.
+        /// </summary>
+        /// <returns>The <see cref="PKSystem"/> with the given human ID, or null if no system was found.</returns>
+        Task<PKSystem> GetSystemByHid(string systemHid);
+        
+        /// <summary>
+        /// Gets a system by one of its linked Discord account IDs. Multiple IDs can return the same system.
+        /// </summary>
+        /// <returns>The <see cref="PKSystem"/> with the given linked account, or null if no system was found.</returns>
+        Task<PKSystem> GetSystemByAccount(ulong linkedAccount);
+        
+        /// <summary>
+        /// Gets a system by its API token. 
+        /// </summary>
+        /// <returns>The <see cref="PKSystem"/> with the given API token, or null if no corresponding system was found.</returns> 
+        Task<PKSystem> GetSystemByToken(string apiToken);
+        
+        /// <summary>
+        /// Gets the Discord account IDs linked to a system.
+        /// </summary>
+        /// <returns>An enumerable of Discord account IDs linked to this system.</returns>
+        Task<IEnumerable<ulong>> GetSystemAccounts(PKSystem system);
+
+        /// <summary>
+        /// Gets the member count of a system.
+        /// </summary>
+        Task<int> GetSystemMemberCount(PKSystem system);
+        
+        /// <summary>
+        /// Creates a system, auto-generating its corresponding IDs.
+        /// </summary>
+        /// <param name="systemName">An optional system name to set. If `null`, will not set a system name.</param>
+        /// <returns>The created system model.</returns>
+        Task<PKSystem> CreateSystem(string systemName);
+        // TODO: throw exception if account is present (when adding) or account isn't present (when removing)
+        
+        /// <summary>
+        /// Links a Discord account to a system.
+        /// </summary>
+        /// <exception>Throws an exception (TODO: which?) if the given account is already linked to a system.</exception>
+        Task AddAccount(PKSystem system, ulong accountToAdd);
+        
+        /// <summary>
+        /// Unlinks a Discord account from a system.
+        ///
+        /// Will *not* throw if this results in an orphaned system - this is the caller's responsibility to ensure.
+        /// </summary>
+        /// <exception>Throws an exception (TODO: which?) if the given account is not linked to the given system.</exception>
+        Task RemoveAccount(PKSystem system, ulong accountToRemove);
+        
+        /// <summary>
+        /// Saves the information within the given <see cref="PKSystem"/> struct to the data store.
+        /// </summary>
+        Task SaveSystem(PKSystem system);
+        
+        /// <summary>
+        /// Deletes the given system from the database.
+        /// </summary>
+        /// <para>
+        /// This will also delete all the system's members, all system switches, and every message that has been proxied
+        /// by members in the system.
+        /// </para>
+        Task DeleteSystem(PKSystem system);
+
+        /// <summary>
+        /// Gets a system by its internal member ID.
+        /// </summary>
+        /// <returns>The <see cref="PKMember"/> with the given internal ID, or null if no member was found.</returns>
+        Task<PKMember> GetMemberById(int memberId);
+        
+        /// <summary>
+        /// Gets a member by its user-facing human ID.
+        /// </summary>
+        /// <returns>The <see cref="PKMember"/> with the given human ID, or null if no member was found.</returns>
+        Task<PKMember> GetMemberByHid(string memberHid);
+        
+        /// <summary>
+        /// Gets a member by its member name within one system.
+        /// </summary>
+        /// <para>
+        /// Member names are *usually* unique within a system (but not always), whereas member names
+        /// are almost certainly *not* unique globally - therefore only intra-system lookup is
+        /// allowed.
+        /// </para> 
+        /// <returns>The <see cref="PKMember"/> with the given name, or null if no member was found.</returns>
+        Task<PKMember> GetMemberByName(PKSystem system, string name);
+        
+        /// <summary>
+        /// Gets all members inside a given system.
+        /// </summary>
+        /// <returns>An enumerable of <see cref="PKMember"/> structs representing each member in the system, in no particular order.</returns>
+        Task<IEnumerable<PKMember>> GetSystemMembers(PKSystem system);
+        /// <summary>
+        /// Gets the amount of messages proxied by a given member. 
+        /// </summary>
+        /// <returns>The message count of the given member.</returns>
+        Task<ulong> GetMemberMessageCount(PKMember member);
+        
+        /// <summary>
+        /// Collects a breakdown of each member in a system's message count.
+        /// </summary>
+        /// <returns>An enumerable of members along with their message counts.</returns>
+        Task<IEnumerable<MemberMessageCount>> GetMemberMessageCountBulk(PKSystem system);
+        
+        /// <summary>
+        /// Creates a member, auto-generating its corresponding IDs.
+        /// </summary>
+        /// <param name="system">The system in which to create the member.</param>
+        /// <param name="name">The name of the member to create.</param>
+        /// <returns>The created system model.</returns>
+        Task<PKMember> CreateMember(PKSystem system, string name);
+        
+        /// <summary>
+        /// Creates multiple members, auto-generating each corresponding ID.
+        /// </summary>
+        /// <param name="system">The system to create the member in.</param>
+        /// <param name="memberNames">A dictionary containing a mapping from an arbitrary key to the member's name.</param>
+        /// <returns>A dictionary containing the resulting member structs, each mapped to the key given in the argument dictionary.</returns>
+        Task<Dictionary<string, PKMember>> CreateMembersBulk(PKSystem system, Dictionary<string, string> memberNames);
+        
+        /// <summary>
+        /// Saves the information within the given <see cref="PKMember"/> struct to the data store.
+        /// </summary>
+        Task SaveMember(PKMember member);
+        
+        /// <summary>
+        /// Deletes the given member from the database.
+        /// </summary>
+        /// <para>
+        /// This will remove this member from any switches it's involved in, as well as all the messages
+        /// proxied by this member.
+        /// </para>
+        Task DeleteMember(PKMember member);
+        
+        /// <summary>
+        /// Gets a message and its information by its ID.
+        /// </summary>
+        /// <param name="id">The message ID to look up. This can be either the ID of the trigger message containing the proxy tags or the resulting proxied webhook message.</param>
+        /// <returns>An extended message object, containing not only the message data itself but the associated system and member structs.</returns>
+        Task<FullMessage> GetMessage(ulong id); // id is both original and trigger, also add return type struct
+
+        /// <summary>
+        /// Saves a posted message to the database.
+        /// </summary>
+        /// <param name="senderAccount">The ID of the account that sent the original trigger message.</param>
+        /// <param name="channelId">The ID of the channel the message was posted to.</param>
+        /// <param name="postedMessageId">The ID of the message posted by the webhook.</param>
+        /// <param name="triggerMessageId">The ID of the original trigger message containing the proxy tags.</param>
+        /// <param name="proxiedMember">The member (and by extension system) that was proxied.</param>
+        /// <returns></returns>
+        Task AddMessage(ulong senderAccount, ulong channelId, ulong postedMessageId, ulong triggerMessageId, PKMember proxiedMember);
+        
+        /// <summary>
+        /// Deletes a message from the data store.
+        /// </summary>
+        /// <param name="postedMessageId">The ID of the webhook message to delete.</param>
+        Task DeleteMessage(ulong postedMessageId);
+
+        /// <summary>
+        /// Deletes messages from the data store in bulk.
+        /// </summary>
+        /// <param name="postedMessageIds">The IDs of the webhook messages to delete.</param>
+        Task DeleteMessagesBulk(IEnumerable<ulong> postedMessageIds);
+        
+        /// <summary>
+        /// Gets switches from a system.
+        /// </summary>
+        /// <returns>An enumerable of the *count* latest switches in the system, in latest-first order. May contain fewer elements than requested.</returns>
+        Task<IEnumerable<PKSwitch>> GetSwitches(PKSystem system, int count);
+
+        /// <summary>
+        /// Gets the latest (temporally; closest to now) switch of a given system.
+        /// </summary>
+        Task<PKSwitch> GetLatestSwitch(PKSystem system);
+
+        /// <summary>
+        /// Gets the members a given switch consists of.
+        /// </summary>
+        Task<IEnumerable<PKMember>> GetSwitchMembers(PKSwitch sw);
+
+        /// <summary>
+        /// Gets a list of fronters over a given period of time.
+        /// </summary>
+        /// <para>
+        /// This list is returned as an enumerable of "switch members", each containing a timestamp
+        /// and a member ID. <seealso cref="GetMemberById"/>
+        ///
+        /// Switches containing multiple members will be returned as multiple switch members each with the same
+        /// timestamp, and a change in timestamp should be interpreted as the start of a new switch.
+        /// </para>
+        /// <returns>An enumerable of the aforementioned "switch members".</returns>
+        Task<IEnumerable<SwitchListEntry>> GetPeriodFronters(PKSystem system, Instant periodStart, Instant periodEnd);
+
+        /// <summary>
+        /// Calculates a breakdown of a system's fronters over a given period, including how long each member has
+        /// been fronting, and how long *no* member has been fronting. 
+        /// </summary>
+        /// <para>
+        /// Switches containing multiple members will count the full switch duration for all members, meaning
+        /// the total duration may add up to longer than the breakdown period.
+        /// </para>
+        /// <param name="system"></param>
+        /// <param name="periodStart"></param>
+        /// <param name="periodEnd"></param>
+        /// <returns></returns>
+        Task<FrontBreakdown> GetFrontBreakdown(PKSystem system, Instant periodStart, Instant periodEnd);
+        
+        /// <summary>
+        /// Registers a switch with the given members in the given system.
+        /// </summary>
+        /// <exception>Throws an exception (TODO: which?) if any of the members are not in the given system.</exception>
+        Task AddSwitch(PKSystem system, IEnumerable<PKMember> switchMembers);
+        
+        /// <summary>
+        /// Registers switches in bulk.
+        /// </summary>
+        /// <param name="switches">A list of switch structs, each containing a timestamp and a list of members.</param>
+        /// <exception>Throws an exception (TODO: which?) if any of the given members are not in the given system.</exception>
+        Task AddSwitchesBulk(PKSystem system, IEnumerable<ImportedSwitch> switches);
+        
+        /// <summary>
+        /// Updates the timestamp of a given switch. 
+        /// </summary>
+        Task MoveSwitch(PKSwitch sw, Instant time);
+        
+        /// <summary>
+        /// Deletes a given switch from the data store.
+        /// </summary>
+        Task DeleteSwitch(PKSwitch sw);
+
+        /// <summary>
+        /// Gets the total amount of systems in the data store.
+        /// </summary>
+        Task<ulong> GetTotalSystems();
+        
+        /// <summary>
+        /// Gets the total amount of members in the data store.
+        /// </summary>
+        Task<ulong> GetTotalMembers();
+        
+        /// <summary>
+        /// Gets the total amount of switches in the data store.
+        /// </summary>
+        Task<ulong> GetTotalSwitches();
+        
+        /// <summary>
+        /// Gets the total amount of messages in the data store.
+        /// </summary>
+        Task<ulong> GetTotalMessages();
+    }
+    
+    public class PostgresDataStore: IDataStore {
         private DbConnectionFactory _conn;
         private ILogger _logger;
 
-        public SystemStore(DbConnectionFactory conn, ILogger logger)
+        public PostgresDataStore(DbConnectionFactory conn, ILogger logger)
         {
-            this._conn = conn;
-            _logger = logger.ForContext<SystemStore>();
+            _conn = conn;
+            _logger = logger;
         }
 
-        public async Task<PKSystem> Create(string systemName = null) {
+        public async Task<PKSystem> CreateSystem(string systemName = null) {
             string hid;
             do
             {
                 hid = Utils.GenerateHid();
-            } while (await GetByHid(hid) != null);
+            } while (await GetSystemByHid(hid) != null);
 
             PKSystem system;
             using (var conn = await _conn.Obtain())
@@ -36,7 +338,7 @@ namespace PluralKit {
             return system;
         }
 
-        public async Task Link(PKSystem system, ulong accountId) {
+        public async Task AddAccount(PKSystem system, ulong accountId) {
             // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
             // This is used in import/export, although the pk;link command checks for this case beforehand
             using (var conn = await _conn.Obtain())
@@ -45,76 +347,65 @@ namespace PluralKit {
             _logger.Information("Linked system {System} to account {Account}", system.Id, accountId);
         }
 
-        public async Task Unlink(PKSystem system, ulong accountId) {
+        public async Task RemoveAccount(PKSystem system, ulong accountId) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
 
             _logger.Information("Unlinked system {System} from account {Account}", system.Id, accountId);
         }
 
-        public async Task<PKSystem> GetByAccount(ulong accountId) {
+        public async Task<PKSystem> GetSystemByAccount(ulong accountId) {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select systems.* from systems, accounts where accounts.system = systems.id and accounts.uid = @Id", new { Id = accountId });
         }
 
-        public async Task<PKSystem> GetByHid(string hid) {
+        public async Task<PKSystem> GetSystemByHid(string hid) {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where systems.hid = @Hid", new { Hid = hid.ToLower() });
         }
 
-        public async Task<PKSystem> GetByToken(string token) {
+        public async Task<PKSystem> GetSystemByToken(string token) {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where token = @Token", new { Token = token });
         }
 
-        public async Task<PKSystem> GetById(int id)
+        public async Task<PKSystem> GetSystemById(int id)
         {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where id = @Id", new { Id = id });
         }
 
-        public async Task Save(PKSystem system) {
+        public async Task SaveSystem(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz where id = @Id", system);
 
             _logger.Information("Updated system {@System}", system);
         }
 
-        public async Task Delete(PKSystem system) {
+        public async Task DeleteSystem(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from systems where id = @Id", system);
             _logger.Information("Deleted system {System}", system.Id);
         }
 
-        public async Task<IEnumerable<ulong>> GetLinkedAccountIds(PKSystem system)
+        public async Task<IEnumerable<ulong>> GetSystemAccounts(PKSystem system)
         {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new { Id = system.Id });
         }
 
-        public async Task<ulong> Count()
+        public async Task<ulong> GetTotalSystems()
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from systems");
         }
-    }
 
-    public class MemberStore {
-        private DbConnectionFactory _conn;
-        private ILogger _logger;
-
-        public MemberStore(DbConnectionFactory conn, ILogger logger)
-        {
-            this._conn = conn;
-            _logger = logger.ForContext<MemberStore>();
-        }
-
-        public async Task<PKMember> Create(PKSystem system, string name) {
+        public async Task<PKMember> CreateMember(PKSystem system, string name) {
             string hid;
             do
             {
                 hid = Utils.GenerateHid();
-            } while (await GetByHid(hid) != null);
+            } while (await GetMemberByHid(hid) != null);
 
             PKMember member;
             using (var conn = await _conn.Obtain())
@@ -128,7 +419,7 @@ namespace PluralKit {
             return member;
         }
 
-        public async Task<Dictionary<string,PKMember>> CreateMultiple(PKSystem system, Dictionary<string,string> names)
+        public async Task<Dictionary<string,PKMember>> CreateMembersBulk(PKSystem system, Dictionary<string,string> names)
         {
             using (var conn = await _conn.Obtain())
             using (var tx = conn.BeginTransaction())
@@ -159,60 +450,59 @@ namespace PluralKit {
             }
         }
 
-        public async Task<PKMember> GetByHid(string hid) {
+        public async Task<PKMember> GetMemberById(int id) {
+            using (var conn = await _conn.Obtain())
+                return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where id = @Id", new { Id = id });
+        }
+        
+        public async Task<PKMember> GetMemberByHid(string hid) {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where hid = @Hid", new { Hid = hid.ToLower() });
         }
 
-        public async Task<PKMember> GetByName(PKSystem system, string name) {
+        public async Task<PKMember> GetMemberByName(PKSystem system, string name) {
             // QueryFirst, since members can (in rare cases) share names
             using (var conn = await _conn.Obtain())
                 return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
         public async Task<ICollection<PKMember>> GetUnproxyableMembers(PKSystem system) {
-            return (await GetBySystem(system))
+            return (await GetSystemMembers(system))
                 .Where((m) => {
                     var proxiedName = $"{m.Name} {system.Tag}";
                     return proxiedName.Length > Limits.MaxProxyNameLength || proxiedName.Length < 2;
                 }).ToList();
         }
 
-        public async Task<IEnumerable<PKMember>> GetBySystem(PKSystem system) {
+        public async Task<IEnumerable<PKMember>> GetSystemMembers(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKMember>("select * from members where system = @SystemID", new { SystemID = system.Id });
         }
 
-        public async Task Save(PKMember member) {
+        public async Task SaveMember(PKMember member) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
         }
 
-        public async Task Delete(PKMember member) {
+        public async Task DeleteMember(PKMember member) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
 
             _logger.Information("Deleted member {@Member}", member);
         }
 
-        public async Task<int> MessageCount(PKMember member)
+        public async Task<ulong> GetMemberMessageCount(PKMember member)
         {
             using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleAsync<int>("select count(*) from messages where member = @Id", member);
+                return await conn.QuerySingleAsync<ulong>("select count(*) from messages where member = @Id", member);
         }
 
-        public struct MessageBreakdownListEntry
-        {
-            public int Member;
-            public int MessageCount;
-        }
-
-        public async Task<IEnumerable<MessageBreakdownListEntry>> MessageCountsPerMember(PKSystem system)
+        public async Task<IEnumerable<MemberMessageCount>> GetMemberMessageCountBulk(PKSystem system)
         {
             using (var conn = await _conn.Obtain())
-                return await conn.QueryAsync<MessageBreakdownListEntry>(
+                return await conn.QueryAsync<MemberMessageCount>(
                     @"SELECT messages.member, COUNT(messages.member) messagecount
                         FROM members
                         JOIN messages
@@ -222,44 +512,18 @@ namespace PluralKit {
                     new { System = system.Id });
         }
 
-        public async Task<int> MemberCount(PKSystem system)
+        public async Task<int> GetSystemMemberCount(PKSystem system)
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<int>("select count(*) from members where system = @Id", system);
         }
 
-        public async Task<ulong> Count()
+        public async Task<ulong> GetTotalMembers()
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from members");
         }
-    }
-
-    public class MessageStore {
-        public struct PKMessage
-        {
-            public ulong Mid;
-            public ulong Channel;
-            public ulong Sender;
-            public ulong? OriginalMid;
-        }
-        public class StoredMessage
-        {
-            public PKMessage Message;
-            public PKMember Member;
-            public PKSystem System;
-        }
-
-        private DbConnectionFactory _conn;
-        private ILogger _logger;
-
-        public MessageStore(DbConnectionFactory conn, ILogger logger)
-        {
-            this._conn = conn;
-            _logger = logger.ForContext<MessageStore>();
-        }
-
-        public async Task Store(ulong senderId, ulong messageId, ulong channelId, ulong originalMessage, PKMember member) {
+        public async Task AddMessage(ulong senderId, ulong messageId, ulong channelId, ulong originalMessage, PKMember member) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into messages(mid, channel, member, sender, original_mid) values(@MessageId, @ChannelId, @MemberId, @SenderId, @OriginalMid)", new {
                     MessageId = messageId,
@@ -272,10 +536,10 @@ namespace PluralKit {
             _logger.Information("Stored message {Message} in channel {Channel}", messageId, channelId);
         }
 
-        public async Task<StoredMessage> Get(ulong id)
+        public async Task<FullMessage> GetMessage(ulong id)
         {
             using (var conn = await _conn.Obtain())
-                return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, StoredMessage>("select messages.*, members.*, systems.* from messages, members, systems where (mid = @Id or original_mid = @Id) and messages.member = members.id and systems.id = members.system", (msg, member, system) => new StoredMessage
+                return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, FullMessage>("select messages.*, members.*, systems.* from messages, members, systems where (mid = @Id or original_mid = @Id) and messages.member = members.id and systems.id = members.system", (msg, member, system) => new FullMessage
                 {
                     Message = msg,
                     System = system,
@@ -283,13 +547,13 @@ namespace PluralKit {
                 }, new { Id = id })).FirstOrDefault();
         }
 
-        public async Task Delete(ulong id) {
+        public async Task DeleteMessage(ulong id) {
             using (var conn = await _conn.Obtain())
                 if (await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id }) > 0)
                     _logger.Information("Deleted message {Message}", id);
         }
 
-        public async Task BulkDelete(IReadOnlyCollection<ulong> ids)
+        public async Task DeleteMessagesBulk(IEnumerable<ulong> ids)
         {
             using (var conn = await _conn.Obtain())
             {
@@ -301,25 +565,13 @@ namespace PluralKit {
             }
         }
 
-        public async Task<ulong> Count()
+        public async Task<ulong> GetTotalMessages()
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(mid) from messages");
         }
-    }
 
-    public class SwitchStore
-    {
-        private DbConnectionFactory _conn;
-        private ILogger _logger;
-
-        public SwitchStore(DbConnectionFactory conn, ILogger logger)
-        {
-            _conn = conn;
-            _logger = logger.ForContext<SwitchStore>();
-        }
-
-        public async Task RegisterSwitch(PKSystem system, ICollection<PKMember> members)
+        public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
             using (var conn = await _conn.Obtain())
@@ -345,7 +597,7 @@ namespace PluralKit {
             }
         }
 
-        public async Task BulkImportSwitches(PKSystem system, ICollection<Tuple<Instant, ICollection<PKMember>>> switches)
+        public async Task AddSwitchesBulk(PKSystem system, IEnumerable<ImportedSwitch> switches)
         {
             // Read existing switches to enforce unique timestamps
             var priorSwitches = await GetSwitches(system);
@@ -363,13 +615,13 @@ namespace PluralKit {
                         foreach (var sw in switches)
                         {
                             // If there's already a switch at this time, move on
-                            if (priorSwitches.Any(x => x.Timestamp.Equals(sw.Item1)))
+                            if (priorSwitches.Any(x => x.Timestamp.Equals(sw.Timestamp)))
                                 continue;
 
                             // Otherwise, add it to the importer
                             importer.StartRow();
                             importer.Write(system.Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                            importer.Write(sw.Item1, NpgsqlTypes.NpgsqlDbType.Timestamp);
+                            importer.Write(sw.Members, NpgsqlTypes.NpgsqlDbType.Timestamp);
                         }
                         importer.Complete(); // Commits the copy operation so dispose won't roll it back
                     }
@@ -392,12 +644,12 @@ namespace PluralKit {
                         foreach (var pkSwitch in switchesWithoutMembers)
                         {
                             // If this isn't in our import set, move on
-                            var sw = switches.FirstOrDefault(x => x.Item1.Equals(pkSwitch.Timestamp));
+                            var sw = switches.Select(x => (ImportedSwitch?) x).FirstOrDefault(x => x.Value.Timestamp.Equals(pkSwitch.Timestamp));
                             if (sw == null)
                                 continue;
 
                             // Loop through associated members to add each to the switch
-                            foreach (var m in sw.Item2)
+                            foreach (var m in sw.Value.Members)
                             {
                                 // Skip switch-outs - these don't have switch_members
                                 if (m == null)
@@ -534,20 +786,13 @@ namespace PluralKit {
             _logger.Information("Deleted switch {Switch}");
         }
 
-        public async Task<ulong> Count()
+        public async Task<ulong> GetTotalSwitches()
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from switches");
         }
 
-        public struct SwitchListEntry
-        {
-            public ICollection<PKMember> Members;
-            public Instant TimespanStart;
-            public Instant TimespanEnd;
-        }
-
-        public async Task<IEnumerable<SwitchListEntry>> GetTruncatedSwitchList(PKSystem system, Instant periodStart, Instant periodEnd)
+        public async Task<IEnumerable<SwitchListEntry>> GetPeriodFronters(PKSystem system, Instant periodStart, Instant periodEnd)
         {
             // Returns the timestamps and member IDs of switches overlapping the range, in chronological (newest first) order
             var switchMembers = await GetSwitchMembersList(system, periodStart, periodEnd);
@@ -599,17 +844,7 @@ namespace PluralKit {
 
             return outList;
         }
-
-        public struct PerMemberSwitchDuration
-        {
-            public Dictionary<PKMember, Duration> MemberSwitchDurations;
-            public Duration NoFronterDuration;
-            public Instant RangeStart;
-            public Instant RangeEnd;
-        }
-
-        public async Task<PerMemberSwitchDuration> GetPerMemberSwitchDuration(PKSystem system, Instant periodStart,
-            Instant periodEnd)
+        public async Task<FrontBreakdown> GetFrontBreakdown(PKSystem system, Instant periodStart, Instant periodEnd)
         {
             var dict = new Dictionary<PKMember, Duration>();
 
@@ -621,7 +856,7 @@ namespace PluralKit {
             var actualStart = periodEnd; // will be "pulled" down
             var actualEnd = periodStart; // will be "pulled" up
 
-            foreach (var sw in await GetTruncatedSwitchList(system, periodStart, periodEnd))
+            foreach (var sw in await GetPeriodFronters(system, periodStart, periodEnd))
             {
                 var span = sw.TimespanEnd - sw.TimespanStart;
                 foreach (var member in sw.Members)
@@ -636,7 +871,7 @@ namespace PluralKit {
                 if (sw.TimespanEnd > actualEnd) actualEnd = sw.TimespanEnd;
             }
 
-            return new PerMemberSwitchDuration
+            return new FrontBreakdown
             {
                 MemberSwitchDurations = dict,
                 NoFronterDuration = noFronterDuration,

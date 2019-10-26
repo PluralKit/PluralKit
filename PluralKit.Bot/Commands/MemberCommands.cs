@@ -11,16 +11,14 @@ namespace PluralKit.Bot.Commands
 {
     public class MemberCommands
     {
-        private SystemStore _systems;
-        private MemberStore _members;
+        private IDataStore _data;
         private EmbedService _embeds;
 
         private ProxyCacheService _proxyCache;
 
-        public MemberCommands(SystemStore systems, MemberStore members, EmbedService embeds, ProxyCacheService proxyCache)
+        public MemberCommands(IDataStore data, EmbedService embeds, ProxyCacheService proxyCache)
         {
-            _systems = systems;
-            _members = members;
+            _data = data;
             _embeds = embeds;
             _proxyCache = proxyCache;
         }
@@ -39,19 +37,19 @@ namespace PluralKit.Bot.Commands
             }
 
             // Warn if there's already a member by this name
-            var existingMember = await _members.GetByName(ctx.System, memberName);
+            var existingMember = await _data.GetMemberByName(ctx.System, memberName);
             if (existingMember != null) {
                 var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
             // Enforce per-system member limit
-            var memberCount = await _members.MemberCount(ctx.System);
+            var memberCount = await _data.GetSystemMemberCount(ctx.System);
             if (memberCount >= Limits.MaxMemberCount)
                 throw Errors.MemberLimitReachedError;
 
             // Create the member
-            var member = await _members.Create(ctx.System, memberName);
+            var member = await _data.CreateMember(ctx.System, memberName);
             memberCount++;
             
             // Send confirmation and space hint
@@ -83,7 +81,7 @@ namespace PluralKit.Bot.Commands
             }
 
             // Warn if there's already a member by this name
-            var existingMember = await _members.GetByName(ctx.System, newName);
+            var existingMember = await _data.GetMemberByName(ctx.System, newName);
             if (existingMember != null) {
                 var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
@@ -91,7 +89,7 @@ namespace PluralKit.Bot.Commands
 
             // Rename the member
             target.Name = newName;
-            await _members.Save(target);
+            await _data.SaveMember(target);
 
             await ctx.Reply($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
@@ -108,7 +106,7 @@ namespace PluralKit.Bot.Commands
             if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
 
             target.Description = description;
-            await _members.Save(target);
+            await _data.SaveMember(target);
 
             await ctx.Reply($"{Emojis.Success} Member description {(description == null ? "cleared" : "changed")}.");
         }
@@ -121,7 +119,7 @@ namespace PluralKit.Bot.Commands
             if (pronouns.IsLongerThan(Limits.MaxPronounsLength)) throw Errors.MemberPronounsTooLongError(pronouns.Length);
 
             target.Pronouns = pronouns;
-            await _members.Save(target);
+            await _data.SaveMember(target);
 
             await ctx.Reply($"{Emojis.Success} Member pronouns {(pronouns == null ? "cleared" : "changed")}.");
         }
@@ -139,7 +137,7 @@ namespace PluralKit.Bot.Commands
             }
 
             target.Color = color;
-            await _members.Save(target);
+            await _data.SaveMember(target);
 
             await ctx.Reply($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");
         }
@@ -158,7 +156,7 @@ namespace PluralKit.Bot.Commands
             }
 
             target.Birthday = date;
-            await _members.Save(target);
+            await _data.SaveMember(target);
             
             await ctx.Reply($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {target.BirthdayString}")}.");
         }
@@ -175,7 +173,7 @@ namespace PluralKit.Bot.Commands
                 // Just reset and send OK message
                 target.Prefix = null;
                 target.Suffix = null;
-                await _members.Save(target);
+                await _data.SaveMember(target);
                 await ctx.Reply($"{Emojis.Success} Member proxy tags cleared.");
                 return;
             }
@@ -188,7 +186,7 @@ namespace PluralKit.Bot.Commands
             // If the prefix/suffix is empty, use "null" instead (for DB)
             target.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
             target.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
-            await _members.Save(target);
+            await _data.SaveMember(target);
             await ctx.Reply($"{Emojis.Success} Member proxy tags changed to `{target.ProxyString.SanitizeMentions()}`. Try proxying now!");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
@@ -201,7 +199,7 @@ namespace PluralKit.Bot.Commands
             
             await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.Name.SanitizeMentions()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
-            await _members.Delete(target);
+            await _data.DeleteMember(target);
             await ctx.Reply($"{Emojis.Success} Member deleted.");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
@@ -217,7 +215,7 @@ namespace PluralKit.Bot.Commands
                 if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
                 target.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
                 
-                await _members.Save(target);
+                await _data.SaveMember(target);
             
                 var embed = new EmbedBuilder().WithImageUrl(target.AvatarUrl).Build();
                 await ctx.Reply(
@@ -228,7 +226,7 @@ namespace PluralKit.Bot.Commands
             {
                 await Utils.VerifyAvatarOrThrow(url);
                 target.AvatarUrl = url;
-                await _members.Save(target);
+                await _data.SaveMember(target);
 
                 var embed = new EmbedBuilder().WithImageUrl(url).Build();
                 await ctx.Reply($"{Emojis.Success} Member avatar changed.", embed: embed);
@@ -237,14 +235,14 @@ namespace PluralKit.Bot.Commands
             {
                 await Utils.VerifyAvatarOrThrow(attachment.Url);
                 target.AvatarUrl = attachment.Url;
-                await _members.Save(target);
+                await _data.SaveMember(target);
 
                 await ctx.Reply($"{Emojis.Success} Member avatar changed to attached image. Please note that if you delete the message containing the attachment, the avatar will stop working.");
             }
             else
             {
                 target.AvatarUrl = null;
-                await _members.Save(target);
+                await _data.SaveMember(target);
                 await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
             }
             
@@ -262,7 +260,7 @@ namespace PluralKit.Bot.Commands
                 throw Errors.DisplayNameTooLong(newDisplayName, ctx.System.MaxMemberNameLength);
             
             target.DisplayName = newDisplayName;
-            await _members.Save(target);
+            await _data.SaveMember(target);
 
             var successStr = $"{Emojis.Success} ";
             if (newDisplayName != null)
@@ -288,7 +286,7 @@ namespace PluralKit.Bot.Commands
         
         public async Task ViewMember(Context ctx, PKMember target)
         {
-            var system = await _systems.GetById(target.System);
+            var system = await _data.GetSystemById(target.System);
             await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target));
         }
     }
