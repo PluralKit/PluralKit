@@ -16,16 +16,6 @@ services:
       - db
       - influx
     restart: always
-  web:
-    image: pluralkit
-    command: ["PluralKit.Web.dll"]
-    environment:
-      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
-    links: 
-      - db
-    ports:
-      - 2837:5000
-    restart: always
   api:
     image: pluralkit
     command: ["PluralKit.API.dll"]

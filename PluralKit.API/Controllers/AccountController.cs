@@ -8,17 +8,17 @@ namespace PluralKit.API.Controllers
     [Route("v1/a")]
     public class AccountController: ControllerBase
     {
-        private SystemStore _systems;
+        private IDataStore _data;
 
-        public AccountController(SystemStore systems)
+        public AccountController(IDataStore data)
         {
-            _systems = systems;
+            _data = data;
         }
 
         [HttpGet("{aid}")]
         public async Task<ActionResult<PKSystem>> GetSystemByAccount(ulong aid)
         {
-            var system = await _systems.GetByAccount(aid);
+            var system = await _data.GetSystemByAccount(aid);
             if (system == null) return NotFound("Account not found.");
             
             return Ok(system);

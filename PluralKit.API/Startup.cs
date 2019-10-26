@@ -25,11 +25,8 @@ namespace PluralKit.API
                 .AddJsonOptions(opts => { opts.SerializerSettings.BuildSerializerSettings(); });
 
             services
-                .AddTransient<SystemStore>()
-                .AddTransient<MemberStore>()
-                .AddTransient<SwitchStore>()
-                .AddTransient<MessageStore>()
-                
+                .AddTransient<IDataStore, PostgresDataStore>()
+
                 .AddSingleton(svc => InitUtils.InitMetrics(svc.GetRequiredService<CoreConfig>(), "API"))
 
                 .AddScoped<TokenAuthService>()

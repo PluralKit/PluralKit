@@ -24,7 +24,7 @@ namespace PluralKit.Bot
     class ProxyService: IDisposable {
         private IDiscordClient _client;
         private LogChannelService _logChannel;
-        private MessageStore _messageStorage;
+        private IDataStore _data;
         private EmbedService _embeds;
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
@@ -32,11 +32,11 @@ namespace PluralKit.Bot
 
         private HttpClient _httpClient;
 
-        public ProxyService(IDiscordClient client, LogChannelService logChannel, MessageStore messageStorage, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor)
+        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor)
         {
             _client = client;
             _logChannel = logChannel;
-            _messageStorage = messageStorage;
+            _data = data;
             _embeds = embeds;
             _cache = cache;
             _webhookExecutor = webhookExecutor;
@@ -119,7 +119,7 @@ namespace PluralKit.Bot
             );
 
             // Store the message in the database, and log it in the log channel (if applicable)
-            await _messageStorage.Store(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
+            await _data.AddMessage(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
             await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText);
 
             // Wait a second or so before deleting the original message
@@ -221,7 +221,7 @@ namespace PluralKit.Bot
             if (user == null) return;
 
             // Find the message in the DB
-            var msg = await _messageStorage.Get(message.Id);
+            var msg = await _data.GetMessage(message.Id);
             if (msg == null) return;
 
             // DM them the message card
@@ -236,7 +236,7 @@ namespace PluralKit.Bot
         public async Task HandleMessageDeletionByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted)
         {
             // Find the message in the database
-            var storedMessage = await _messageStorage.Get(message.Id);
+            var storedMessage = await _data.GetMessage(message.Id);
             if (storedMessage == null) return; // (if we can't, that's ok, no worries)
 
             // Make sure it's the actual sender of that message deleting the message
@@ -252,7 +252,7 @@ namespace PluralKit.Bot
             }
 
             // Finally, delete it from our database.
-            await _messageStorage.Delete(message.Id);
+            await _data.DeleteMessage(message.Id);
         }
 
         public async Task HandleMessageDeletedAsync(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
@@ -261,13 +261,13 @@ namespace PluralKit.Bot
             // Non-webhook messages will never be stored anyway.
             // If we're not sure (eg. message outside of cache), delete just to be sure.
             if (message.HasValue && !message.Value.Author.IsWebhook) return;
-            await _messageStorage.Delete(message.Id);
+            await _data.DeleteMessage(message.Id);
         }
 
         public async Task HandleMessageBulkDeleteAsync(IReadOnlyCollection<Cacheable<IMessage, ulong>> messages, IMessageChannel channel)
         {
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}", messages.Count, channel.Id);
-            await _messageStorage.BulkDelete(messages.Select(m => m.Id).ToList());
+            await _data.DeleteMessagesBulk(messages.Select(m => m.Id).ToList());
         }
 
         public void Dispose()

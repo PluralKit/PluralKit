@@ -7,10 +7,10 @@ namespace PluralKit.Bot.Commands
 {
     public class APICommands
     {
-        private SystemStore _systems;
-        public APICommands(SystemStore systems)
+        private IDataStore _data;
+        public APICommands(IDataStore data)
         {
-            _systems = systems;
+            _data = data;
         }
 
         public async Task GetToken(Context ctx)
@@ -34,7 +34,7 @@ namespace PluralKit.Bot.Commands
         private async Task<string> MakeAndSetNewToken(PKSystem system)
         {
             system.Token = PluralKit.Utils.GenerateToken();
-            await _systems.Save(system);
+            await _data.SaveSystem(system);
             return system.Token;
         }
         

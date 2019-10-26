@@ -31,17 +31,13 @@ namespace PluralKit.API.Controllers
     [Route("v1/s")]
     public class SystemController : ControllerBase
     {
-        private SystemStore _systems;
-        private MemberStore _members;
-        private SwitchStore _switches;
+        private IDataStore _data;
         private DbConnectionFactory _conn;
         private TokenAuthService _auth;
 
-        public SystemController(SystemStore systems, MemberStore members, SwitchStore switches, DbConnectionFactory conn, TokenAuthService auth)
+        public SystemController(IDataStore data, DbConnectionFactory conn, TokenAuthService auth)
         {
-            _systems = systems;
-            _members = members;
-            _switches = switches;
+            _data = data;
             _conn = conn;
             _auth = auth;
         }
@@ -56,7 +52,7 @@ namespace PluralKit.API.Controllers
         [HttpGet("{hid}")]
         public async Task<ActionResult<PKSystem>> GetSystem(string hid)
         {
-            var system = await _systems.GetByHid(hid);
+            var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
             return Ok(system);
         }
@@ -64,10 +60,10 @@ namespace PluralKit.API.Controllers
         [HttpGet("{hid}/members")]
         public async Task<ActionResult<IEnumerable<PKMember>>> GetMembers(string hid)
         {
-            var system = await _systems.GetByHid(hid);
+            var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
 
-            var members = await _members.GetBySystem(system);
+            var members = await _data.GetSystemMembers(system);
             return Ok(members);
         }
 
@@ -76,7 +72,7 @@ namespace PluralKit.API.Controllers
         {
             if (before == null) before = SystemClock.Instance.GetCurrentInstant();
             
-            var system = await _systems.GetByHid(hid);
+            var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
 
             using (var conn = await _conn.Obtain())
@@ -96,13 +92,13 @@ namespace PluralKit.API.Controllers
         [HttpGet("{hid}/fronters")]
         public async Task<ActionResult<FrontersReturn>> GetFronters(string hid)
         {
-            var system = await _systems.GetByHid(hid);
+            var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
             
-            var sw = await _switches.GetLatestSwitch(system);
+            var sw = await _data.GetLatestSwitch(system);
             if (sw == null) return NotFound("System has no registered switches."); 
                 
-            var members = await _switches.GetSwitchMembers(sw);
+            var members = await _data.GetSwitchMembers(sw);
             return Ok(new FrontersReturn
             {
                 Timestamp = sw.Timestamp,
@@ -130,7 +126,7 @@ namespace PluralKit.API.Controllers
             system.AvatarUrl = newSystem.AvatarUrl;
             system.UiTz = newSystem.UiTz ?? "UTC";
             
-            await _systems.Save(system);
+            await _data.SaveSystem(system);
             return Ok(system);
         }
 
@@ -142,10 +138,10 @@ namespace PluralKit.API.Controllers
                 return BadRequest("Duplicate members in member list.");
             
             // We get the current switch, if it exists
-            var latestSwitch = await _switches.GetLatestSwitch(_auth.CurrentSystem);
+            var latestSwitch = await _data.GetLatestSwitch(_auth.CurrentSystem);
             if (latestSwitch != null)
             {
-                var latestSwitchMembers = await _switches.GetSwitchMembers(latestSwitch);
+                var latestSwitchMembers = await _data.GetSwitchMembers(latestSwitch);
 
                 // Bail if this switch is identical to the latest one
                 if (latestSwitchMembers.Select(m => m.Hid).SequenceEqual(param.Members))
@@ -174,7 +170,7 @@ namespace PluralKit.API.Controllers
             }
 
             // Finally, log the switch (yay!)
-            await _switches.RegisterSwitch(_auth.CurrentSystem, membersInOrder);
+            await _data.AddSwitch(_auth.CurrentSystem, membersInOrder);
             return NoContent();
         }
     }
