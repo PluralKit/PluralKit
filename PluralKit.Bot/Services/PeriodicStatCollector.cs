@@ -17,10 +17,7 @@ namespace PluralKit.Bot
         private DiscordShardedClient _client;
         private IMetrics _metrics;
 
-        private SystemStore _systems;
-        private MemberStore _members;
-        private SwitchStore _switches;
-        private MessageStore _messages;
+        private IDataStore _data;
 
         private WebhookCacheService _webhookCache;
 
@@ -28,16 +25,13 @@ namespace PluralKit.Bot
 
         private ILogger _logger;
 
-        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, SystemStore systems, MemberStore members, SwitchStore switches, MessageStore messages, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder)
+        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, IDataStore data)
         {
             _client = (DiscordShardedClient) client;
             _metrics = metrics;
-            _systems = systems;
-            _members = members;
-            _switches = switches;
-            _messages = messages;
             _webhookCache = webhookCache;
             _countHolder = countHolder;
+            _data = data;
             _logger = logger.ForContext<PeriodicStatCollector>();
         }
 
@@ -65,10 +59,10 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(BotMetrics.MembersOnline, usersOnline.Count);
             
             // Aggregate DB stats
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, await _systems.Count());
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, await _members.Count());
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, await _switches.Count());
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, await _messages.Count());
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, await _data.GetTotalSystems());
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, await _data.GetTotalMembers());
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, await _data.GetTotalSwitches());
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, await _data.GetTotalMessages());
             
             // Process info
             var process = Process.GetCurrentProcess();

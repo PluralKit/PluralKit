@@ -9,13 +9,13 @@ namespace PluralKit.API.Controllers
     [Route("v1/m")]
     public class MemberController: ControllerBase
     {
-        private MemberStore _members;
+        private IDataStore _data;
         private DbConnectionFactory _conn;
         private TokenAuthService _auth;
 
-        public MemberController(MemberStore members, DbConnectionFactory conn, TokenAuthService auth)
+        public MemberController(IDataStore data, DbConnectionFactory conn, TokenAuthService auth)
         {
-            _members = members;
+            _data = data;
             _conn = conn;
             _auth = auth;
         }
@@ -23,7 +23,7 @@ namespace PluralKit.API.Controllers
         [HttpGet("{hid}")]
         public async Task<ActionResult<PKMember>> GetMember(string hid)
         {
-            var member = await _members.GetByHid(hid);
+            var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
             return Ok(member);
@@ -39,7 +39,7 @@ namespace PluralKit.API.Controllers
             return BadRequest("Member name cannot be null.");
 
             // Enforce per-system member limit
-            var memberCount = await _members.MemberCount(system);
+            var memberCount = await _data.GetSystemMemberCount(system);
             if (memberCount >= Limits.MaxMemberCount)
                 return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
 
@@ -61,7 +61,7 @@ namespace PluralKit.API.Controllers
             if (newMember.Suffix != null && newMember.Suffix.Length > 1000)
                 return BadRequest();
 
-            var member = await _members.Create(system, newMember.Name);
+            var member = await _data.CreateMember(system, newMember.Name);
 
             member.Name = newMember.Name;
             member.DisplayName = newMember.DisplayName;
@@ -72,7 +72,7 @@ namespace PluralKit.API.Controllers
             member.Description = newMember.Description;
             member.Prefix = newMember.Prefix;
             member.Suffix = newMember.Suffix;
-            await _members.Save(member);
+            await _data.SaveMember(member);
 
             return Ok(member);
         }
@@ -81,7 +81,7 @@ namespace PluralKit.API.Controllers
         [RequiresSystem]
         public async Task<ActionResult<PKMember>> PatchMember(string hid, [FromBody] PKMember newMember)
         {
-            var member = await _members.GetByHid(hid);
+            var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
             if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
@@ -116,7 +116,7 @@ namespace PluralKit.API.Controllers
             member.Description = newMember.Description;
             member.Prefix = newMember.Prefix;
             member.Suffix = newMember.Suffix;
-            await _members.Save(member);
+            await _data.SaveMember(member);
 
             return Ok(member);
         }
@@ -125,12 +125,12 @@ namespace PluralKit.API.Controllers
         [RequiresSystem]
         public async Task<ActionResult<PKMember>> DeleteMember(string hid)
         {
-            var member = await _members.GetByHid(hid);
+            var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
             
             if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
             
-            await _members.Delete(member);
+            await _data.DeleteMember(member);
 
             return Ok();
         }

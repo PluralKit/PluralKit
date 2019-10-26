@@ -110,10 +110,7 @@ namespace PluralKit.Bot
             .AddTransient<ProxyCacheService>()
             .AddSingleton<WebhookCacheService>()
 
-            .AddTransient<SystemStore>()
-            .AddTransient<MemberStore>()
-            .AddTransient<MessageStore>()
-            .AddTransient<SwitchStore>()
+            .AddTransient<IDataStore, PostgresDataStore>()
 
             .AddSingleton(svc => InitUtils.InitMetrics(svc.GetRequiredService<CoreConfig>()))
             .AddSingleton<PeriodicStatCollector>()

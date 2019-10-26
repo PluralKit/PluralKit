@@ -12,11 +12,11 @@ namespace PluralKit.Bot.Commands
 {
     public class SwitchCommands
     {
-        private SwitchStore _switches;
+        private IDataStore _data;
 
-        public SwitchCommands(SwitchStore switches)
+        public SwitchCommands(IDataStore data)
         {
-            _switches = switches;
+            _data = data;
         }
 
         public async Task Switch(Context ctx)
@@ -55,16 +55,16 @@ namespace PluralKit.Bot.Commands
             if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
 
             // Find the last switch and its members if applicable
-            var lastSwitch = await _switches.GetLatestSwitch(ctx.System);
+            var lastSwitch = await _data.GetLatestSwitch(ctx.System);
             if (lastSwitch != null)
             {
-                var lastSwitchMembers = await _switches.GetSwitchMembers(lastSwitch);
+                var lastSwitchMembers = await _data.GetSwitchMembers(lastSwitch);
                 // Make sure the requested switch isn't identical to the last one
                 if (lastSwitchMembers.Select(m => m.Id).SequenceEqual(members.Select(m => m.Id)))
                     throw Errors.SameSwitch(members);
             }
 
-            await _switches.RegisterSwitch(ctx.System, members);
+            await _data.AddSwitch(ctx.System, members);
 
             if (members.Count == 0)
                 await ctx.Reply($"{Emojis.Success} Switch-out registered.");
@@ -86,7 +86,7 @@ namespace PluralKit.Bot.Commands
             if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = (await _switches.GetSwitches(ctx.System, 2)).ToArray();
+            var lastTwoSwitches = (await _data.GetSwitches(ctx.System, 2)).ToArray();
             
             // If we don't have a switch to move, don't bother
             if (lastTwoSwitches.Length == 0) throw Errors.NoRegisteredSwitches;
@@ -100,7 +100,7 @@ namespace PluralKit.Bot.Commands
             
             // Now we can actually do the move, yay!
             // But, we do a prompt to confirm.
-            var lastSwitchMembers = await _switches.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMembers = await _data.GetSwitchMembers(lastTwoSwitches[0]);
             var lastSwitchMemberStr = string.Join(", ", lastSwitchMembers.Select(m => m.Name));
             var lastSwitchTimeStr = Formats.ZonedDateTimeFormat.Format(lastTwoSwitches[0].Timestamp.InZone(ctx.System.Zone));
             var lastSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
@@ -112,7 +112,7 @@ namespace PluralKit.Bot.Commands
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
-            await _switches.MoveSwitch(lastTwoSwitches[0], time.ToInstant());
+            await _data.MoveSwitch(lastTwoSwitches[0], time.ToInstant());
             await ctx.Reply($"{Emojis.Success} Switch moved.");
         }
         
@@ -121,10 +121,10 @@ namespace PluralKit.Bot.Commands
             ctx.CheckSystem();
             
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = (await _switches.GetSwitches(ctx.System, 2)).ToArray();
+            var lastTwoSwitches = (await _data.GetSwitches(ctx.System, 2)).ToArray();
             if (lastTwoSwitches.Length == 0) throw Errors.NoRegisteredSwitches;
 
-            var lastSwitchMembers = await _switches.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMembers = await _data.GetSwitchMembers(lastTwoSwitches[0]);
             var lastSwitchMemberStr = string.Join(", ", lastSwitchMembers.Select(m => m.Name));
             var lastSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
 
@@ -136,7 +136,7 @@ namespace PluralKit.Bot.Commands
             }
             else
             {
-                var secondSwitchMembers = await _switches.GetSwitchMembers(lastTwoSwitches[1]);
+                var secondSwitchMembers = await _data.GetSwitchMembers(lastTwoSwitches[1]);
                 var secondSwitchMemberStr = string.Join(", ", secondSwitchMembers.Select(m => m.Name));
                 var secondSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
                 msg = await ctx.Reply(
@@ -144,7 +144,7 @@ namespace PluralKit.Bot.Commands
             }
 
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;
-            await _switches.DeleteSwitch(lastTwoSwitches[0]);
+            await _data.DeleteSwitch(lastTwoSwitches[0]);
             
             await ctx.Reply($"{Emojis.Success} Switch deleted.");
         }

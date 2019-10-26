@@ -9,14 +9,14 @@ namespace PluralKit.Bot.Commands
     public class ModCommands
     {
         private LogChannelService _logChannels;
-        private MessageStore _messages;
+        private IDataStore _data;
 
         private EmbedService _embeds;
 
-        public ModCommands(LogChannelService logChannels, MessageStore messages, EmbedService embeds)
+        public ModCommands(LogChannelService logChannels, IDataStore data, EmbedService embeds)
         {
             _logChannels = logChannels;
-            _messages = messages;
+            _data = data;
             _embeds = embeds;
         }
 
@@ -47,7 +47,7 @@ namespace PluralKit.Bot.Commands
                 messageId = ulong.Parse(match.Groups[1].Value);
             else throw new PKSyntaxError($"Could not parse `{word}` as a message ID or link.");
 
-            var message = await _messages.Get(messageId);
+            var message = await _data.GetMessage(messageId);
             if (message == null) throw Errors.MessageNotFound(messageId);
 
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));

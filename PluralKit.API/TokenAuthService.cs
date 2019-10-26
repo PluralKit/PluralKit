@@ -8,11 +8,11 @@ namespace PluralKit.API
     {
         public PKSystem CurrentSystem { get; set; }
 
-        private SystemStore _systems;
+        private IDataStore _data;
 
-        public TokenAuthService(SystemStore systems)
+        public TokenAuthService(IDataStore data)
         {
-            _systems = systems;
+            _data = data;
         }
 
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -20,7 +20,7 @@ namespace PluralKit.API
             var token = context.Request.Headers["Authorization"].FirstOrDefault();
             if (token != null)
             {
-                CurrentSystem = await _systems.GetByToken(token);
+                CurrentSystem = await _data.GetSystemByToken(token);
             }
             
             await next.Invoke(context);

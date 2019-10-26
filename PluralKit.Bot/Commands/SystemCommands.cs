@@ -14,21 +14,16 @@ namespace PluralKit.Bot.Commands
 {
     public class SystemCommands
     {
-        private SystemStore _systems;
-        private MemberStore _members;
-
-        private SwitchStore _switches;
+        private IDataStore _data;
         private EmbedService _embeds;
 
         private ProxyCacheService _proxyCache;
 
-        public SystemCommands(SystemStore systems, MemberStore members, SwitchStore switches, EmbedService embeds, ProxyCacheService proxyCache)
+        public SystemCommands(EmbedService embeds, ProxyCacheService proxyCache, IDataStore data)
         {
-            _systems = systems;
-            _members = members;
-            _switches = switches;
             _embeds = embeds;
             _proxyCache = proxyCache;
+            _data = data;
         }
         
         public async Task Query(Context ctx, PKSystem system) {
@@ -41,8 +36,8 @@ namespace PluralKit.Bot.Commands
         {
             ctx.CheckNoSystem();
 
-            var system = await _systems.Create(ctx.RemainderOrNull());
-            await _systems.Link(system, ctx.Author.Id);
+            var system = await _data.CreateSystem(ctx.RemainderOrNull());
+            await _data.AddAccount(system, ctx.Author.Id);
             await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now.");
         }
         
@@ -54,7 +49,7 @@ namespace PluralKit.Bot.Commands
             if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
 
             ctx.System.Name = newSystemName;
-            await _systems.Save(ctx.System);
+            await _data.SaveSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System name {(newSystemName != null ? "changed" : "cleared")}.");
         }
         
@@ -65,7 +60,7 @@ namespace PluralKit.Bot.Commands
             if (newDescription != null && newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
 
             ctx.System.Description = newDescription;
-            await _systems.Save(ctx.System);
+            await _data.SaveSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System description {(newDescription != null ? "changed" : "cleared")}.");
         }
         
@@ -80,17 +75,18 @@ namespace PluralKit.Bot.Commands
             {
                 if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
 
-                // Check unproxyable messages *after* changing the tag (so it's seen in the method) but *before* we save to DB (so we can cancel)
-                var unproxyableMembers = await _members.GetUnproxyableMembers(ctx.System);
-                if (unproxyableMembers.Count > 0)
-                {
-                    var msg = await ctx.Reply(
-                        $"{Emojis.Warn} Changing your system tag to '{newTag.SanitizeMentions()}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name.SanitizeMentions()))}**\nDo you want to continue anyway?");
-                    if (!await ctx.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
-                }
+                // TODO: The proxy name limit is long enough now that this probably doesn't matter much.
+                // // Check unproxyable messages *after* changing the tag (so it's seen in the method) but *before* we save to DB (so we can cancel)
+                // var unproxyableMembers = await _data.GetUnproxyableMembers(ctx.System);
+                // if (unproxyableMembers.Count > 0)
+                // {
+                //     var msg = await ctx.Reply(
+                //         $"{Emojis.Warn} Changing your system tag to '{newTag.SanitizeMentions()}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name.SanitizeMentions()))}**\nDo you want to continue anyway?");
+                //     if (!await ctx.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
+                // }
             }
 
-            await _systems.Save(ctx.System);
+            await _data.SaveSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
@@ -105,7 +101,7 @@ namespace PluralKit.Bot.Commands
             {
                 if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
                 ctx.System.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
-                await _systems.Save(ctx.System);
+                await _data.SaveSystem(ctx.System);
             
                 var embed = new EmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
                 await ctx.Reply(
@@ -117,7 +113,7 @@ namespace PluralKit.Bot.Commands
                 if (url != null) await ctx.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
 
                 ctx.System.AvatarUrl = url;
-                await _systems.Save(ctx.System);
+                await _data.SaveSystem(ctx.System);
 
                 var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
                 await ctx.Reply($"{Emojis.Success} System avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
@@ -133,7 +129,7 @@ namespace PluralKit.Bot.Commands
             var reply = await ctx.AwaitMessage(ctx.Channel, ctx.Author, timeout: TimeSpan.FromMinutes(1));
             if (reply.Content != ctx.System.Hid) throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{ctx.System.Hid}`) *verbatim*.");
 
-            await _systems.Delete(ctx.System);
+            await _data.DeleteSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System deleted.");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
@@ -142,7 +138,7 @@ namespace PluralKit.Bot.Commands
         public async Task MemberShortList(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
-            var members = await _members.GetBySystem(system);
+            var members = await _data.GetSystemMembers(system);
             var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             await ctx.Paginate<PKMember>(
                 members.OrderBy(m => m.Name.ToLower()).ToList(),
@@ -158,7 +154,7 @@ namespace PluralKit.Bot.Commands
         public async Task MemberLongList(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
-            var members = await _members.GetBySystem(system);
+            var members = await _data.GetSystemMembers(system);
             var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             await ctx.Paginate<PKMember>(
                 members.OrderBy(m => m.Name.ToLower()).ToList(),
@@ -181,7 +177,7 @@ namespace PluralKit.Bot.Commands
         {
             if (system == null) throw Errors.NoSystemError;
             
-            var sw = await _switches.GetLatestSwitch(system);
+            var sw = await _data.GetLatestSwitch(system);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
@@ -191,7 +187,7 @@ namespace PluralKit.Bot.Commands
         {
             if (system == null) throw Errors.NoSystemError;
 
-            var sws = (await _switches.GetSwitches(system, 10)).ToList();
+            var sws = (await _data.GetSwitches(system, 10)).ToList();
             if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
             
             await ctx.Reply(embed: await _embeds.CreateFrontHistoryEmbed(sws, system.Zone));
@@ -209,7 +205,7 @@ namespace PluralKit.Bot.Commands
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
-            var frontpercent = await _switches.GetPerMemberSwitchDuration(system, rangeStart.Value.ToInstant(), now);
+            var frontpercent = await _data.GetFrontBreakdown(system, rangeStart.Value.ToInstant(), now);
             await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
         }
         
@@ -221,7 +217,7 @@ namespace PluralKit.Bot.Commands
             if (zoneStr == null)
             {
                 ctx.System.UiTz = "UTC";
-                await _systems.Save(ctx.System);
+                await _data.SaveSystem(ctx.System);
                 await ctx.Reply($"{Emojis.Success} System time zone cleared.");
                 return;
             }
@@ -234,7 +230,7 @@ namespace PluralKit.Bot.Commands
                 $"This will change the system time zone to {zone.Id}. The current time is {Formats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             ctx.System.UiTz = zone.Id;
-            await _systems.Save(ctx.System);
+            await _data.SaveSystem(ctx.System);
 
             await ctx.Reply($"System time zone changed to {zone.Id}.");
         }

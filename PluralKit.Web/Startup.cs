@@ -28,8 +28,7 @@ namespace PluralKit.Web
             
             services
                 .AddScoped<IDbConnection, NpgsqlConnection>(_ => new NpgsqlConnection(config.Database))
-                .AddTransient<SystemStore>()
-                .AddTransient<MemberStore>()
+                .AddTransient<IDataStore, PostgresDataStore>()
                 .AddSingleton(config);
         }
 

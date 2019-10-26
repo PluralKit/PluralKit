@@ -8,11 +8,11 @@ namespace PluralKit.Bot.Commands
 {
     public class LinkCommands
     {
-        private SystemStore _systems;
+        private IDataStore _data;
 
-        public LinkCommands(SystemStore systems)
+        public LinkCommands(IDataStore data)
         {
-            _systems = systems;
+            _data = data;
         }
         
         public async Task LinkSystem(Context ctx)
@@ -20,15 +20,15 @@ namespace PluralKit.Bot.Commands
             ctx.CheckSystem();
             
             var account = await ctx.MatchUser() ?? throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
-            var accountIds = await _systems.GetLinkedAccountIds(ctx.System);
+            var accountIds = await _data.GetSystemAccounts(ctx.System);
             if (accountIds.Contains(account.Id)) throw Errors.AccountAlreadyLinked;
 
-            var existingAccount = await _systems.GetByAccount(account.Id);
+            var existingAccount = await _data.GetSystemByAccount(account.Id);
             if (existingAccount != null) throw Errors.AccountInOtherSystem(existingAccount); 
 
             var msg = await ctx.Reply($"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.");
             if (!await ctx.PromptYesNo(msg, user: account)) throw Errors.MemberLinkCancelled;
-            await _systems.Link(ctx.System, account.Id);
+            await _data.AddAccount(ctx.System, account.Id);
             await ctx.Reply($"{Emojis.Success} Account linked to system.");
         }
 
@@ -42,7 +42,7 @@ namespace PluralKit.Bot.Commands
             else           
                 account = await ctx.MatchUser() ?? throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
 
-            var accountIds = (await _systems.GetLinkedAccountIds(ctx.System)).ToList();
+            var accountIds = (await _data.GetSystemAccounts(ctx.System)).ToList();
             if (!accountIds.Contains(account.Id)) throw Errors.AccountNotLinked;
             if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount;
             
@@ -50,7 +50,7 @@ namespace PluralKit.Bot.Commands
                 $"Are you sure you want to unlink {account.Mention} from your system?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.MemberUnlinkCancelled;
 
-            await _systems.Unlink(ctx.System, account.Id);
+            await _data.RemoveAccount(ctx.System, account.Id);
             await ctx.Reply($"{Emojis.Success} Account unlinked.");
         }
     }

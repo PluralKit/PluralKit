@@ -7,13 +7,11 @@ namespace PluralKit.Web.Pages
 {
     public class ViewSystem : PageModel
     {
-        private SystemStore _systems;
-        private MemberStore _members;
+        private IDataStore _data;
 
-        public ViewSystem(SystemStore systems, MemberStore members)
+        public ViewSystem(IDataStore data)
         {
-            _systems = systems;
-            _members = members;
+            _data = data;
         }
         
         public PKSystem System { get; set; }
@@ -21,10 +19,10 @@ namespace PluralKit.Web.Pages
 
         public async Task<IActionResult> OnGet(string systemId)
         {
-            System = await _systems.GetByHid(systemId);
+            System = await _data.GetSystemByHid(systemId);
             if (System == null) return NotFound();
 
-            Members = await _members.GetBySystem(System);
+            Members = await _data.GetSystemMembers(System);
 
             return Page();
         }
