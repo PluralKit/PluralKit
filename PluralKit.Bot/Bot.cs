@@ -151,11 +151,6 @@ namespace PluralKit.Bot
             
             _client.MessageReceived += (msg) =>
             {
-                // _client.CurrentUser will be null if we've connected *some* shards but not shard #0 yet
-                // This will cause an error in WebhookCacheService so we just workaround and don't process any messages
-                // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
-                if (_client.CurrentUser == null) return Task.CompletedTask;
-                
                 return HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
             };
             _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(s => s.AddReactionAddedBreadcrumb(msg, channel, reaction), eh => eh.HandleReactionAdded(msg, channel, reaction));
