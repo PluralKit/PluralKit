@@ -27,7 +27,7 @@ services:
       - 2838:5000
     restart: always
   db:
-    image: postgres:alpine
+    image: postgres:11-alpine
     volumes:
       - "db_data:/var/lib/postgresql/data"
     restart: always
