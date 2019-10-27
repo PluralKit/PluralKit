@@ -135,14 +135,14 @@ namespace PluralKit.Bot.CommandSystem
             // - A member hid
             // - A textual name of a member *in your own system*
 
-            // First, try member HID parsing:
-            if (await _data.GetMemberByHid(input) is PKMember memberByHid)
-                return memberByHid;
-
-            // Then, if we have a system, try finding by member name in system
+            // First, if we have a system, try finding by member name in system
             if (_senderSystem != null && await _data.GetMemberByName(_senderSystem, input) is PKMember memberByName)
                 return memberByName;
 
+            // Then, try member HID parsing:
+            if (await _data.GetMemberByHid(input) is PKMember memberByHid)
+                return memberByHid;
+            
             // We didn't find anything, so we return null.
             return null;
         }
