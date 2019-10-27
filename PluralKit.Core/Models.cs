@@ -19,9 +19,6 @@ namespace PluralKit
         [JsonIgnore] public string Token { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
         [JsonProperty("tz")] public string UiTz { get; set; }
-
-        [JsonIgnore] public int MaxMemberNameLength => Tag != null ? Limits.MaxProxyNameLength - Tag.Length - 1 : Limits.MaxProxyNameLength;
-
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }
 

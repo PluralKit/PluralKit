@@ -72,19 +72,8 @@ namespace PluralKit.Bot.Commands
             ctx.System.Tag = newTag;
 
             if (newTag != null)
-            {
-                if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
-
-                // TODO: The proxy name limit is long enough now that this probably doesn't matter much.
-                // // Check unproxyable messages *after* changing the tag (so it's seen in the method) but *before* we save to DB (so we can cancel)
-                // var unproxyableMembers = await _data.GetUnproxyableMembers(ctx.System);
-                // if (unproxyableMembers.Count > 0)
-                // {
-                //     var msg = await ctx.Reply(
-                //         $"{Emojis.Warn} Changing your system tag to '{newTag.SanitizeMentions()}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name.SanitizeMentions()))}**\nDo you want to continue anyway?");
-                //     if (!await ctx.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
-                // }
-            }
+                if (newTag.Length > Limits.MaxSystemTagLength)
+                    throw Errors.SystemNameTooLongError(newTag.Length);
 
             await _data.SaveSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
