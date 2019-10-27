@@ -389,7 +389,7 @@ namespace PluralKit.Bot
             {
                 var eid = _services.GetService<EventIdProvider>().EventId;
                 await msg.Channel.SendMessageAsync(
-                    $"{Emojis.Error} Internal error occurred. Please join the support server (https://discord.gg/PczBt78), and send the developer this ID: `{eid}`");
+                    $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{eid}`");
             }
             
             // If not, don't care. lol.
