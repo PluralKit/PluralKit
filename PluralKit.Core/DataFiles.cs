@@ -40,7 +40,7 @@ namespace PluralKit.Bot
                 Prefix = m.Prefix,
                 Suffix = m.Suffix,
                 Created = Formats.TimestampExportFormat.Format(m.Created),
-                MessageCount = messageCounts.Where(x => x.Member.Equals(m.Id)).Select(x => x.MessageCount).FirstOrDefault()
+                MessageCount = messageCounts.Where(x => x.Member == m.Id).Select(x => x.MessageCount).FirstOrDefault()
             }));
 
             // Export switches

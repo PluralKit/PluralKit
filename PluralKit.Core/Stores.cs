@@ -41,7 +41,7 @@ namespace PluralKit {
 
     public struct MemberMessageCount
     {
-        public PKMember Member;
+        public int Member;
         public int MessageCount;
     }
     
