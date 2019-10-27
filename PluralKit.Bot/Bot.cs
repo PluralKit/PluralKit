@@ -337,7 +337,7 @@ namespace PluralKit.Bot
             
             if (argPos > -1)
             {
-                _logger.Debug("Parsing command {Command} from message {Channel}-{Message}", msg.Content, msg.Channel.Id, msg.Id);
+                _logger.Verbose("Parsing command {Command} from message {Channel}-{Message}", msg.Content, msg.Channel.Id, msg.Id);
                 
                 // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
                 var trimStartLengthDiff = msg.Content.Substring(argPos).Length -
@@ -400,7 +400,7 @@ namespace PluralKit.Bot
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
 
             var gatewayLatency = DateTimeOffset.Now - msg.CreatedAt;
-            _logger.Debug("Message received with latency {Latency}", gatewayLatency);
+            _logger.Verbose("Message received with latency {Latency}", gatewayLatency);
         }
 
         public Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,

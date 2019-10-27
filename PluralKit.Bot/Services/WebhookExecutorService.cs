@@ -78,7 +78,7 @@ namespace PluralKit.Bot
         
         private async Task<DiscordWebhookClient> GetClientFor(IWebhook webhook)
         {
-            _logger.Debug("Looking for client for webhook {Webhook} in cache", webhook.Id);
+            _logger.Verbose("Looking for client for webhook {Webhook} in cache", webhook.Id);
             return await _cache.GetOrCreateAsync($"_webhook_client_{webhook.Id}",
                 (entry) => MakeCachedClientFor(entry, webhook));
         }

@@ -637,7 +637,7 @@ namespace PluralKit
         public void Dispose()
         {
             _stopwatch.Stop();
-            _logger.Debug("Executed query {Query} in {ElapsedTime}", _commandText, _stopwatch.Elapsed);
+            _logger.Verbose("Executed query {Query} in {ElapsedTime}", _commandText, _stopwatch.Elapsed);
             
             // One tick is 100 nanoseconds
             _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", _commandText))
