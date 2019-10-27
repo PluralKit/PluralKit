@@ -329,8 +329,8 @@ namespace PluralKit.Bot
 
             int argPos = -1;
             // Check if message starts with the command prefix
-            if (msg.Content.StartsWith("pk;")) argPos = 3;
-            else if (msg.Content.StartsWith("pk!")) argPos = 3;
+            if (msg.Content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
+            else if (msg.Content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
             else if (Utils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
                 if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
                     argPos = -1;
