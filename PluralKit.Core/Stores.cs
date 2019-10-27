@@ -58,6 +58,12 @@ namespace PluralKit {
         public Instant Timestamp;
     }
 
+    public struct GuildConfig
+    {
+        public ulong Id { get; set; }
+        public ulong? LogChannel { get; set; }
+    }
+
     public interface IDataStore
     {
         /// <summary>
@@ -316,6 +322,17 @@ namespace PluralKit {
         /// Gets the total amount of messages in the data store.
         /// </summary>
         Task<ulong> GetTotalMessages();
+
+        /// <summary>
+        /// Gets the guild configuration struct for a given guild.
+        /// </summary>
+        /// <returns>The guild's configuration struct, or a default struct if no guild was found in the data store.</returns>
+        Task<GuildConfig> GetGuildConfig(ulong guild);
+        
+        /// <summary>
+        /// Saves the given guild configuration struct to the data store.
+        /// </summary>
+        Task SaveGuildConfig(GuildConfig cfg);
     }
     
     public class PostgresDataStore: IDataStore {
@@ -566,6 +583,28 @@ namespace PluralKit {
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(mid) from messages");
+        }
+
+        public async Task<GuildConfig> GetGuildConfig(ulong guild)
+        {
+            using (var conn = await _conn.Obtain())
+            {
+                var cfg = await conn.QuerySingleOrDefaultAsync<GuildConfig>("select * from servers where id = @Id",
+                    new {Id = guild});
+
+                if (cfg.Id == 0)
+                    // No entry was found in the db, this is the default entry returned
+                    cfg.Id = guild;
+                
+                return cfg;
+            }
+        }
+
+        public async Task SaveGuildConfig(GuildConfig cfg)
+        {
+            using (var conn = await _conn.Obtain())
+                await conn.ExecuteAsync("insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel", cfg);
+            _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
         }
 
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
