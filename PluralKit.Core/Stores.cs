@@ -621,7 +621,7 @@ namespace PluralKit {
                             // Otherwise, add it to the importer
                             importer.StartRow();
                             importer.Write(system.Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                            importer.Write(sw.Members, NpgsqlTypes.NpgsqlDbType.Timestamp);
+                            importer.Write(sw.Timestamp, NpgsqlTypes.NpgsqlDbType.Timestamp);
                         }
                         importer.Complete(); // Commits the copy operation so dispose won't roll it back
                     }
@@ -668,40 +668,6 @@ namespace PluralKit {
             _logger.Information("Completed bulk import of switches for system {0}", system.Hid);
         }
         
-        public async Task RegisterSwitches(PKSystem system, ICollection<Tuple<Instant, ICollection<PKMember>>> switches)
-        {
-            // Use a transaction here since we're doing multiple executed commands in one
-            using (var conn = await _conn.Obtain())
-            using (var tx = conn.BeginTransaction())
-            {
-                foreach (var s in switches)
-                {
-                    // First, we insert the switch itself
-                    var sw = await conn.QueryFirstOrDefaultAsync<PKSwitch>(
-                            @"insert into switches(system, timestamp)
-                            select @System, @Timestamp
-                            where not exists (
-                                select * from switches
-                                where system = @System and timestamp::timestamp(0) = @Timestamp
-                                limit 1
-                            )
-                            returning *",
-                        new { System = system.Id, Timestamp = s.Item1 });
-
-                    // If we inserted a switch, also insert each member in the switch in the switch_members table
-                    if (sw != null && s.Item2.Any())
-                        await conn.ExecuteAsync(
-                            "insert into switch_members(switch, member) select @Switch, * FROM unnest(@Members)",
-                            new { Switch = sw.Id, Members = s.Item2.Select(x => x.Id).ToArray() });
-                }
-
-                // Finally we commit the tx, since the using block will otherwise rollback it
-                tx.Commit();
-
-                _logger.Information("Registered {SwitchCount} switches in system {System}", switches.Count, system.Id);
-            }
-        }
-
         public async Task<IEnumerable<PKSwitch>> GetSwitches(PKSystem system, int count = 9999999)
         {
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
