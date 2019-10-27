@@ -163,6 +163,8 @@ namespace PluralKit.Bot.Commands
                 target.Suffix = null;
                 await _data.SaveMember(target);
                 await ctx.Reply($"{Emojis.Success} Member proxy tags cleared.");
+                
+                await _proxyCache.InvalidateResultsForSystem(ctx.System);
                 return;
             }
             
