@@ -31,7 +31,7 @@ namespace PluralKit.Bot
 
         public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IAttachment attachment)
         {
-            _logger.Debug("Invoking webhook in channel {Channel}", channel.Id);
+            _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
             
             // Get a webhook, execute it
             var webhook = await _webhookCache.GetWebhook(channel);
