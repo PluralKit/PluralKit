@@ -255,6 +255,19 @@ You can now type a message enclosed in your proxy tags, and it'll be deleted by 
 **NB:** If you want `<angle brackets>` as proxy tags, there is currently a bug where custom server emojis will (wrongly)
 be interpreted as proxying with that member (see [issue #37](https://github.com/xSke/PluralKit/issues/37)). The current workaround is to use different proxy tags.
 
+### Using multiple distinct proxy tag pairs
+If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc), you can add multiple tag pairs.
+When proxying, you may then use any of the tags to proxy for that specific member.
+
+To add a proxy tag to a member, use the `pk;member proxy add` command:
+    pk;member John proxy add {text}
+    pk;member Craig proxy add C:text
+    
+To remove a proxy tag from a member, use the `pk;member proxy remove` command:
+    pk;member John proxy remove {text}
+    pk;member Craig proxy remove C:text
+   
+
 ### Querying message information
 If you want information about a proxied message (eg. for moderation reasons), you can query the message for its sender account, system, member, etc.
 

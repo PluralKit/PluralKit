@@ -44,7 +44,7 @@ namespace PluralKit.Bot
             _httpClient = new HttpClient();
         }
 
-        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentials)
+        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentialMembers)
         {
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message
@@ -57,19 +57,19 @@ namespace PluralKit.Bot
                 message = message.Substring(matchStartPosition);
             }
 
-            // Sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
-            var ordered = potentials.OrderByDescending(p => p.Member.ProxyString.Length);
-            foreach (var potential in ordered)
+            // Flatten and sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
+            var ordered = potentialMembers.SelectMany(m => m.Member.ProxyTags.Select(tag => (tag, m))).OrderByDescending(p => p.Item1.ProxyString);
+            foreach (var (tag, match) in ordered)
             {
-                if (potential.Member.Prefix == null && potential.Member.Suffix == null) continue;
+                if (tag.Prefix == null && tag.Suffix == null) continue;
 
-                var prefix = potential.Member.Prefix ?? "";
-                var suffix = potential.Member.Suffix ?? "";
+                var prefix = tag.Prefix ?? "";
+                var suffix = tag.Suffix ?? "";
 
                 if (message.Length >= prefix.Length + suffix.Length && message.StartsWith(prefix) && message.EndsWith(suffix)) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
                     if (leadingMention != null) inner = $"{leadingMention} {inner}";
-                    return new ProxyMatch { Member = potential.Member, System = potential.System, InnerText = inner };
+                    return new ProxyMatch { Member = match.Member, System = match.System, InnerText = inner };
                 }
             }
 

@@ -44,9 +44,15 @@ The following three models (usually represented in JSON format) represent the va
 |color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.|
 |avatar_url|url?|Yes|Not validated server-side.|
 |birthday|date?|Yes|ISO-8601 (`YYYY-MM-DD`) format, year of `0001` means hidden year.|
-|prefix|string?|Yes||
-|suffix|string?|Yes||
+|prefix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
+|suffix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
+|proxy_tags|ProxyTag[]|Yes (entire array)|An array of ProxyTag (see below) objects, each representing a single prefix/suffix pair.|
 |created|datetime|No||
+
+#### ProxyTag object
+|Key|Type|
+|prefix|string?|
+|suffix|string?|
 
 ### Switch model
 
