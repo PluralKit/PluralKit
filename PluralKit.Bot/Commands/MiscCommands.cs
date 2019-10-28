@@ -41,6 +41,7 @@ namespace PluralKit.Bot.Commands {
         public Task Thunder(Context ctx) => ctx.Reply("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*");
         public Task Freeze(Context ctx) => ctx.Reply("*A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact.*");
         public Task Starstorm(Context ctx) => ctx.Reply("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*");
+        public Task Flash(Context ctx) => ctx.Reply("*A ball of green light appears above your head and flies towards your enemy, exploding on contact.*");
 
         public async Task Stats(Context ctx)
         {
@@ -58,17 +59,31 @@ namespace PluralKit.Bot.Commands {
         
         public async Task PermCheckGuild(Context ctx)
         {
-            var guildIdStr = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a server ID.");
-            if (!ulong.TryParse(guildIdStr, out var guildId)) throw new PKSyntaxError($"Could not parse `{guildIdStr.SanitizeMentions()}` as an ID.");
-            
-            // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
-            var guild = ctx.Client.GetGuild(guildId) as IGuild;
-            if (guild == null)
-                throw Errors.GuildNotFound(guildId);
-            
+            IGuild guild;
+
+            if (ctx.Guild != null && !ctx.HasNext())
+            {
+                guild = ctx.Guild;
+            }
+            else
+            {
+                var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command as .");
+                if (!ulong.TryParse(guildIdStr, out var guildId))
+                    throw new PKSyntaxError($"Could not parse `{guildIdStr.SanitizeMentions()}` as an ID.");
+
+                // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
+                guild = ctx.Client.GetGuild(guildId);
+                if (guild == null)
+                    throw Errors.GuildNotFound(guildId);
+            }
+
             var requiredPermissions = new []
             {
-                ChannelPermission.ViewChannel, // Manage Messages automatically grants Send and Add Reactions, but not Read
+                ChannelPermission.ViewChannel,
+                ChannelPermission.SendMessages,
+                ChannelPermission.AddReactions,
+                ChannelPermission.AttachFiles,
+                ChannelPermission.EmbedLinks,
                 ChannelPermission.ManageMessages,
                 ChannelPermission.ManageWebhooks
             };
@@ -116,7 +131,7 @@ namespace PluralKit.Bot.Commands {
                     var channelsList = string.Join("\n", channels
                         .OrderBy(c => c.Position)
                         .Select(c => $"#{c.Name}"));
-                    eb.AddField($"Missing *{missingPermissionNames}*", channelsList);
+                    eb.AddField($"Missing *{missingPermissionNames}*", channelsList.Truncate(1000));
                     eb.WithColor(Color.Red);
                 }
             }

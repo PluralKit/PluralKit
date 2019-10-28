@@ -22,14 +22,16 @@ namespace PluralKit.Bot.Commands
 
         public async Task SetLogChannel(Context ctx)
         {
-            ctx.CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server").CheckGuildContext();
+            ctx.CheckGuildContext().CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server");
             
             ITextChannel channel = null;
             if (ctx.HasNext())
                 channel = ctx.MatchChannel() ?? throw new PKSyntaxError("You must pass a #channel to set.");
-            
-            await _logChannels.SetLogChannel(ctx.Guild, channel);
 
+            var cfg = await _data.GetGuildConfig(ctx.Guild.Id);
+            cfg.LogChannel = channel?.Id;
+            await _data.SaveGuildConfig(cfg);
+            
             if (channel != null)
                 await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name.SanitizeMentions()}.");
             else

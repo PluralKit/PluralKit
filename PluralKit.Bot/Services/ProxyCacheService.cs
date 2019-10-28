@@ -29,7 +29,7 @@ namespace PluralKit.Bot
 
         public Task<IEnumerable<ProxyDatabaseResult>> GetResultsFor(ulong account)
         {
-            _logger.Debug("Looking up members for account {Account} in cache...", account);
+            _logger.Verbose("Looking up members for account {Account} in cache...", account);
             return _cache.GetOrCreateAsync(GetKey(account), (entry) => FetchResults(account, entry));
         }
 

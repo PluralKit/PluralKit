@@ -6,7 +6,6 @@ using App.Metrics.Logging;
 using Dapper;
 using NodaTime;
 using Npgsql;
-using PluralKit.Core;
 
 using Serilog;
 
@@ -51,6 +50,18 @@ namespace PluralKit {
         public Duration NoFronterDuration;
         public Instant RangeStart;
         public Instant RangeEnd;
+    }
+    
+    public struct SwitchMembersListEntry
+    {
+        public int Member;
+        public Instant Timestamp;
+    }
+
+    public struct GuildConfig
+    {
+        public ulong Id { get; set; }
+        public ulong? LogChannel { get; set; }
     }
 
     public interface IDataStore
@@ -311,6 +322,17 @@ namespace PluralKit {
         /// Gets the total amount of messages in the data store.
         /// </summary>
         Task<ulong> GetTotalMessages();
+
+        /// <summary>
+        /// Gets the guild configuration struct for a given guild.
+        /// </summary>
+        /// <returns>The guild's configuration struct, or a default struct if no guild was found in the data store.</returns>
+        Task<GuildConfig> GetGuildConfig(ulong guild);
+        
+        /// <summary>
+        /// Saves the given guild configuration struct to the data store.
+        /// </summary>
+        Task SaveGuildConfig(GuildConfig cfg);
     }
     
     public class PostgresDataStore: IDataStore {
@@ -466,14 +488,6 @@ namespace PluralKit {
                 return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
-        public async Task<ICollection<PKMember>> GetUnproxyableMembers(PKSystem system) {
-            return (await GetSystemMembers(system))
-                .Where((m) => {
-                    var proxiedName = $"{m.Name} {system.Tag}";
-                    return proxiedName.Length > Limits.MaxProxyNameLength || proxiedName.Length < 2;
-                }).ToList();
-        }
-
         public async Task<IEnumerable<PKMember>> GetSystemMembers(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKMember>("select * from members where system = @SystemID", new { SystemID = system.Id });
@@ -569,6 +583,28 @@ namespace PluralKit {
         {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(mid) from messages");
+        }
+
+        public async Task<GuildConfig> GetGuildConfig(ulong guild)
+        {
+            using (var conn = await _conn.Obtain())
+            {
+                var cfg = await conn.QuerySingleOrDefaultAsync<GuildConfig>("select * from servers where id = @Id",
+                    new {Id = guild});
+
+                if (cfg.Id == 0)
+                    // No entry was found in the db, this is the default entry returned
+                    cfg.Id = guild;
+                
+                return cfg;
+            }
+        }
+
+        public async Task SaveGuildConfig(GuildConfig cfg)
+        {
+            using (var conn = await _conn.Obtain())
+                await conn.ExecuteAsync("insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel", cfg);
+            _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
         }
 
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
@@ -676,12 +712,6 @@ namespace PluralKit {
                 return await conn.QueryAsync<PKSwitch>("select * from switches where system = @System order by timestamp desc limit @Count", new {System = system.Id, Count = count});
         }
 
-        public struct SwitchMembersListEntry
-        {
-            public int Member;
-            public Instant Timestamp;
-        }
-
         public async Task<IEnumerable<SwitchMembersListEntry>> GetSwitchMembersList(PKSystem system, Instant start, Instant end)
         {
             // Wrap multiple commands in a single transaction for performance
@@ -716,13 +746,6 @@ namespace PluralKit {
                 tx.Commit();
                 return switchMembersEntries;
             }
-        }
-
-        public async Task<IEnumerable<int>> GetSwitchMemberIds(PKSwitch sw)
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.QueryAsync<int>("select member from switch_members where switch = @Switch order by switch_members.id",
-                    new {Switch = sw.Id});
         }
 
         public async Task<IEnumerable<PKMember>> GetSwitchMembers(PKSwitch sw)

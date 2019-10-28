@@ -30,12 +30,6 @@ namespace PluralKit.Bot.Commands
             // Hard name length cap
             if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
 
-            // Warn if member name will be unproxyable (with/without tag)
-            if (memberName.Length > ctx.System.MaxMemberNameLength) {
-                var msg = await ctx.Reply($"{Emojis.Warn} Member name too long ({memberName.Length} > {ctx.System.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to create it anyway? (You can change the name later, or set a member display name)");
-                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
-            }
-
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, memberName);
             if (existingMember != null) {
@@ -73,12 +67,6 @@ namespace PluralKit.Bot.Commands
 
             // Hard name length cap
             if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
-
-            // Warn if member name will be unproxyable (with/without tag), only if member doesn't have a display name
-            if (target.DisplayName == null && newName.Length > ctx.System.MaxMemberNameLength) {
-                var msg = await ctx.Reply($"{Emojis.Warn} New member name too long ({newName.Length} > {ctx.System.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to change it anyway? (You can set a member display name instead)");
-                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
-            }
 
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, newName);
@@ -175,6 +163,8 @@ namespace PluralKit.Bot.Commands
                 target.Suffix = null;
                 await _data.SaveMember(target);
                 await ctx.Reply($"{Emojis.Success} Member proxy tags cleared.");
+                
+                await _proxyCache.InvalidateResultsForSystem(ctx.System);
                 return;
             }
             
@@ -255,10 +245,7 @@ namespace PluralKit.Bot.Commands
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             var newDisplayName = ctx.RemainderOrNull();
-            // Refuse if proxy name will be unproxyable (with/without tag)
-            if (newDisplayName != null && newDisplayName.Length > ctx.System.MaxMemberNameLength)
-                throw Errors.DisplayNameTooLong(newDisplayName, ctx.System.MaxMemberNameLength);
-            
+
             target.DisplayName = newDisplayName;
             await _data.SaveMember(target);
 
@@ -270,14 +257,7 @@ namespace PluralKit.Bot.Commands
             }
             else
             {
-                successStr += $"Member display name cleared. ";
-                
-                // If we're removing display name and the *real* name will be unproxyable, warn.
-                if (target.Name.Length > ctx.System.MaxMemberNameLength)
-                    successStr +=
-                        $" {Emojis.Warn} This member's actual name is too long ({target.Name.Length} > {ctx.System.MaxMemberNameLength} characters), and thus cannot be proxied.";
-                else
-                    successStr += $"This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
+                successStr += $"Member display name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
             }
             await ctx.Reply(successStr);
             

@@ -4,22 +4,17 @@ using Discord;
 using Serilog;
 
 namespace PluralKit.Bot {
-    public class ServerDefinition {
-        public ulong Id { get; set; }
-        public ulong? LogChannel { get; set; }
-    }
-
     public class LogChannelService {
         private IDiscordClient _client;
-        private DbConnectionFactory _conn;
         private EmbedService _embed;
+        private IDataStore _data;
         private ILogger _logger;
 
-        public LogChannelService(IDiscordClient client, DbConnectionFactory conn, EmbedService embed, ILogger logger)
+        public LogChannelService(IDiscordClient client, EmbedService embed, ILogger logger, IDataStore data)
         {
-            this._client = client;
-            this._conn = conn;
-            this._embed = embed;
+            _client = client;
+            _embed = embed;
+            _data = data;
             _logger = logger.ForContext<LogChannelService>();
         }
 
@@ -33,31 +28,11 @@ namespace PluralKit.Bot {
             await logChannel.SendMessageAsync(text: url, embed: embed);
         }
 
-        public async Task<ITextChannel> GetLogChannel(IGuild guild) {
-            using (var conn = await _conn.Obtain())
-            {
-                var server =
-                    await conn.QueryFirstOrDefaultAsync<ServerDefinition>("select * from servers where id = @Id",
-                        new {Id = guild.Id});
-                if (server?.LogChannel == null) return null;
-                return await _client.GetChannelAsync(server.LogChannel.Value) as ITextChannel;
-            }
-        }
-
-        public async Task SetLogChannel(IGuild guild, ITextChannel newLogChannel) {
-            var def = new ServerDefinition {
-                Id = guild.Id,
-                LogChannel = newLogChannel?.Id
-            };
-
-            using (var conn = await _conn.Obtain())
-            {
-                await conn.QueryAsync(
-                    "insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel",
-                    def);
-            }
-
-            _logger.Information("Set guild {Guild} log channel to {Channel}", guild.Id, newLogChannel?.Id);
+        private async Task<ITextChannel> GetLogChannel(IGuild guild)
+        {
+            var guildCfg = await _data.GetGuildConfig(guild.Id);
+            if (guildCfg.LogChannel == null) return null;
+            return await _client.GetChannelAsync(guildCfg.LogChannel.Value) as ITextChannel;
         }
     }
 }

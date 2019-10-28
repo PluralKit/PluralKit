@@ -7,7 +7,7 @@ namespace PluralKit.Bot.CommandSystem
     {
         private static readonly Dictionary<char, char> _quotePairs = new Dictionary<char, char>()
         {
-            {'\'', '\''}, {'"', '"'}
+            {'\'', '\''}, {'"', '"'}, {'“', '”'}
         };
 
         private readonly string _cmd;

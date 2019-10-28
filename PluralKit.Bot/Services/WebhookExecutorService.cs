@@ -31,7 +31,7 @@ namespace PluralKit.Bot
 
         public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IAttachment attachment)
         {
-            _logger.Debug("Invoking webhook in channel {Channel}", channel.Id);
+            _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
             
             // Get a webhook, execute it
             var webhook = await _webhookCache.GetWebhook(channel);
@@ -78,7 +78,7 @@ namespace PluralKit.Bot
         
         private async Task<DiscordWebhookClient> GetClientFor(IWebhook webhook)
         {
-            _logger.Debug("Looking for client for webhook {Webhook} in cache", webhook.Id);
+            _logger.Verbose("Looking for client for webhook {Webhook} in cache", webhook.Id);
             return await _cache.GetOrCreateAsync($"_webhook_client_{webhook.Id}",
                 (entry) => MakeCachedClientFor(entry, webhook));
         }

@@ -178,13 +178,15 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
+                .WithImageUrl(serverMsg?.Attachments?.First()?.Url)
                 .AddField("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)
                 .AddField("Sent by", userStr, inline: true)
                 .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid));
 
-            if (roles != null) eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
+            if (roles != null && roles.Count > 0)
+                eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
             return eb.Build();
         }
 

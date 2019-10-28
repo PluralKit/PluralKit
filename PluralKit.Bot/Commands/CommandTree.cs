@@ -96,6 +96,7 @@ namespace PluralKit.Bot.Commands
             if (ctx.Match("thunder")) return ctx.Execute<MiscCommands>(null, m => m.Thunder(ctx));
             if (ctx.Match("freeze")) return ctx.Execute<MiscCommands>(null, m => m.Freeze(ctx));
             if (ctx.Match("starstorm")) return ctx.Execute<MiscCommands>(null, m => m.Starstorm(ctx));
+            if (ctx.Match("flash")) return ctx.Execute<MiscCommands>(null, m => m.Flash(ctx));
             if (ctx.Match("stats")) return ctx.Execute<MiscCommands>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
                 return ctx.Execute<MiscCommands>(PermCheck, m => m.PermCheckGuild(ctx));
