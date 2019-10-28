@@ -184,7 +184,8 @@ namespace PluralKit.Bot {
                 .AddField("Sent by", userStr, inline: true)
                 .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid));
 
-            if (roles != null) eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
+            if (roles != null && roles.Count > 0)
+                eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
             return eb.Build();
         }
 
