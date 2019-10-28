@@ -82,6 +82,8 @@ namespace PluralKit.Bot {
 
             var messageCount = await _data.GetMemberMessageCount(member);
 
+            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
+
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
@@ -94,7 +96,7 @@ namespace PluralKit.Bot {
             if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
             if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns, true);
             if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix.EscapeMarkdown()}text{member.Suffix.EscapeMarkdown()}", true);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr), true);
             if (member.Color != null) eb.AddField("Color", $"#{member.Color}", true);
             if (member.Description != null) eb.AddField("Description", member.Description, false);
 

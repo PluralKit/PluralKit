@@ -37,8 +37,7 @@ namespace PluralKit.Bot
                 Pronouns = m.Pronouns,
                 Color = m.Color,
                 AvatarUrl = m.AvatarUrl,
-                Prefix = m.Prefix,
-                Suffix = m.Suffix,
+                ProxyTags = m.ProxyTags,
                 Created = Formats.TimestampExportFormat.Format(m.Created),
                 MessageCount = messageCounts.Where(x => x.Member == m.Id).Select(x => x.MessageCount).FirstOrDefault()
             }));
@@ -150,8 +149,7 @@ namespace PluralKit.Bot
                 if (dataMember.AvatarUrl != null) member.AvatarUrl = dataMember.AvatarUrl;
                 if (dataMember.Prefix != null || dataMember.Suffix != null)
                 {
-                    member.Prefix = dataMember.Prefix;
-                    member.Suffix = dataMember.Suffix;
+                    member.ProxyTags = new List<ProxyTag> { new ProxyTag(dataMember.Prefix, dataMember.Suffix) };
                 }
 
                 if (dataMember.Birthday != null)
@@ -223,8 +221,14 @@ namespace PluralKit.Bot
         [JsonProperty("pronouns")] public string Pronouns;
         [JsonProperty("color")] public string Color;
         [JsonProperty("avatar_url")] public string AvatarUrl;
-        [JsonProperty("prefix")] public string Prefix;
-        [JsonProperty("suffix")] public string Suffix;
+        
+        // For legacy single-tag imports
+        [JsonProperty("prefix")] [JsonIgnore] public string Prefix;
+        [JsonProperty("suffix")] [JsonIgnore] public string Suffix;
+        
+        // ^ is superseded by v
+        [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags;
+        
         [JsonProperty("message_count")] public int MessageCount;
         [JsonProperty("created")] public string Created;
 

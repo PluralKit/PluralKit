@@ -28,7 +28,7 @@ namespace PluralKit.Bot.Commands
         public static Command MemberPronouns = new Command("member pronouns", "member <member> pronouns [pronouns]", "uwu");
         public static Command MemberColor = new Command("member color", "member <member> color [color]", "uwu");
         public static Command MemberBirthday = new Command("member birthday", "member <member> birthday [birthday]", "uwu");
-        public static Command MemberProxy = new Command("member proxy", "member <member> proxy [example proxy]", "uwu");
+        public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "uwu");
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "uwu");
         public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "uwu");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "uwu");

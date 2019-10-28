@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -153,32 +154,74 @@ namespace PluralKit.Bot.Commands
         {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
-            // Handling the clear case in an if here to keep the body dedented
-            var exampleProxy = ctx.RemainderOrNull();
-            if (exampleProxy == null)
+
+            ProxyTag ParseProxyTags(string exampleProxy)
             {
-                // Just reset and send OK message
-                target.Prefix = null;
-                target.Suffix = null;
-                await _data.SaveMember(target);
-                await ctx.Reply($"{Emojis.Success} Member proxy tags cleared.");
-                
-                await _proxyCache.InvalidateResultsForSystem(ctx.System);
-                return;
+                // // Make sure there's one and only one instance of "text" in the example proxy given
+                var prefixAndSuffix = exampleProxy.Split("text");
+                if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
+                if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
+                return new ProxyTag(prefixAndSuffix[0], prefixAndSuffix[1]);
             }
             
-            // Make sure there's one and only one instance of "text" in the example proxy given
-            var prefixAndSuffix = exampleProxy.Split("text");
-            if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
-            if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
+            // "Sub"command: no arguments clearing
+            if (!ctx.HasNext())
+            {
+                // If we already have multiple tags, this would clear everything, so prompt that
+                var msg = await ctx.Reply(
+                    $"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?");
+                if (!await ctx.PromptYesNo(msg))
+                    throw Errors.GenericCancelled();
 
-            // If the prefix/suffix is empty, use "null" instead (for DB)
-            target.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
-            target.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
-            await _data.SaveMember(target);
-            await ctx.Reply($"{Emojis.Success} Member proxy tags changed to `{target.ProxyString.SanitizeMentions()}`. Try proxying now!");
-            
+                target.ProxyTags = new ProxyTag[] { };
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
+            }
+            // Subcommand: "add"
+            else if (ctx.Match("add"))
+            {
+                var tagToAdd = ParseProxyTags(ctx.RemainderOrNull());
+                if (target.ProxyTags.Contains(tagToAdd))
+                    throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
+                
+                // It's not guaranteed the list's mutable, so we force it to be
+                target.ProxyTags = target.ProxyTags.ToList();
+                target.ProxyTags.Add(tagToAdd);
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Added proxy tags `{tagToAdd.ProxyString.SanitizeMentions()}`.");
+            }
+            // Subcommand: "remove"
+            else if (ctx.Match("remove"))
+            {
+                var tagToRemove = ParseProxyTags(ctx.RemainderOrNull());
+                if (!target.ProxyTags.Contains(tagToRemove))
+                    throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
+
+                // It's not guaranteed the list's mutable, so we force it to be
+                target.ProxyTags = target.ProxyTags.ToList();
+                target.ProxyTags.Remove(tagToRemove);
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Removed proxy tags `{tagToRemove.ProxyString.SanitizeMentions()}`.");
+            }
+            // Subcommand: bare proxy tag given
+            else
+            {
+                var requestedTag = ParseProxyTags(ctx.RemainderOrNull());
+                
+                // This is mostly a legacy command, so it's gonna error out if there's
+                // already more than one proxy tag.
+                if (target.ProxyTags.Count > 1)
+                    throw Errors.LegacyAlreadyHasProxyTag(requestedTag, target);
+
+                target.ProxyTags = new[] {requestedTag};
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member proxy tags set to `{requestedTag.ProxyString.SanitizeMentions()}`.");
+            }
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
 
