@@ -171,17 +171,39 @@ namespace PluralKit.Bot.Commands
             
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
         }
-        
+
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
 
-            var sws = (await _data.GetSwitches(system, 10)).ToList();
+            // Get all of this system's switches and their members
+            var sws = (await _data.GetPeriodFronters(ctx.System, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant())).ToList();
             if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
-            
-            await ctx.Reply(embed: await _embeds.CreateFrontHistoryEmbed(sws, system.Zone));
+            var lastSwitchTime = sws.Max(x => x.TimespanStart); // Determine when the last switch occurred for conditional display of duration
+            var embedTitle = system.Name != null
+                ? $"Past switches of {system.Name} (`{system.Hid}`)"
+                : $"Past switches of `{system.Hid}`";
+
+            await ctx.Paginate<SwitchListEntry>(
+                sws.OrderByDescending(m => m.TimespanStart).ToList(),
+                10,
+                embedTitle,
+                (eb, fh) =>
+                    eb.Description = string.Join("\n", fh.Select((sw) =>
+                        {
+                            // Display switch members, when the switch occurred, the time since the switch, and the switch duration (if known - the last switch is still active)
+                            // e.g. Members (timestamp, time since switch occurred, switch duration)
+                            var membersStr = sw.Members.Any() ? string.Join(", ", sw.Members.Select(m => m.Name)) : "no fronter";
+                            var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.TimespanStart;
+                            var switchDuration = sw.TimespanEnd - sw.TimespanStart;
+                            
+                            return sw.TimespanStart.Equals(lastSwitchTime)
+                                ? $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.TimespanStart.InZone(ctx.System.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago)"
+                                : $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.TimespanStart.InZone(ctx.System.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})";
+                        }))
+            );
         }
-        
+
         public async Task SystemFrontPercent(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;

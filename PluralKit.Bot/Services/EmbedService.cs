@@ -32,7 +32,7 @@ namespace PluralKit.Bot {
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
- 
+
             var latestSwitch = await _data.GetLatestSwitch(system);
             if (latestSwitch != null)
             {
@@ -109,40 +109,6 @@ namespace PluralKit.Bot {
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
                 .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
                 .AddField("Since", $"{Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({Formats.DurationFormat.Format(timeSinceSwitch)} ago)")
-                .Build();
-        }
-
-        public async Task<Embed> CreateFrontHistoryEmbed(IEnumerable<PKSwitch> sws, DateTimeZone zone)
-        {
-            var outputStr = "";
-
-            PKSwitch lastSw = null;
-            foreach (var sw in sws)
-            {
-                // Fetch member list and format
-                var members = (await _data.GetSwitchMembers(sw)).ToList();
-                var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
-
-                var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
-
-                // If this isn't the latest switch, we also show duration
-                if (lastSw != null)
-                {
-                    // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
-                    var switchDuration = lastSw.Timestamp - sw.Timestamp;
-                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
-                }
-                else
-                {
-                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
-                }
-
-                lastSw = sw;
-            }
-
-            return new EmbedBuilder()
-                .WithTitle("Past switches")
-                .WithDescription(outputStr)
                 .Build();
         }
 
