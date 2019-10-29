@@ -263,7 +263,7 @@ namespace PluralKit.Bot
             {
                 Members = Tuppers.Select(t => t.ToPluralKit(ref lastSetTag, ref output.HadMultibrackets,
                     ref output.HadGroups, ref output.HadMultibrackets)).ToList(),
-                
+                Switches = new List<DataFileSwitch>(),
                 // If we haven't had multiple tags set, use the last (and only) one we set as the system tag
                 Tag = !output.HadIndividualTags ? lastSetTag : null
             };
@@ -303,6 +303,7 @@ namespace PluralKit.Bot
 
             return new DataFileMember
             {
+                Id = Guid.NewGuid().ToString(), // Note: this is only ever used for lookup purposes
                 Name = Name,
                 AvatarUrl = AvatarUrl,
                 Birthday = Birthday,
