@@ -303,7 +303,7 @@ namespace PluralKit.Bot
 
             return new DataFileMember
             {
-                Id = Name,
+                Id = Guid.NewGuid().ToString(), // Note: this is only ever used for lookup purposes
                 Name = Name,
                 AvatarUrl = AvatarUrl,
                 Birthday = Birthday,
