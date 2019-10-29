@@ -1,3 +1,4 @@
+/* TABLES */
 create table if not exists systems
 (
     id          serial primary key,
@@ -77,3 +78,50 @@ create table if not exists servers
     id          bigint primary key,
     log_channel bigint
 );
+
+/* FUNCTIONS */
+CREATE OR REPLACE FUNCTION generate_hid() RETURNS text AS $$
+BEGIN
+	/* Generate HID (calling function must enforce uniqueness) */
+    RETURN (
+		SELECT array_to_string(ARRAY(
+			SELECT substring('abcdefghijklmnopqrstuvwxyz' --Set of eligible characters
+			FROM (floor(random()*26)+1)::int FOR 1) --Take one random character from the string
+		FROM generate_series(1, 5) ), '') --Expand to a series of 5 characters
+	);
+END;
+$$ LANGUAGE PLPGSQL VOLATILE;
+
+CREATE OR REPLACE FUNCTION new_system_hid() RETURNS text AS $$
+DECLARE
+    newHid text;
+    isUnique bool;
+BEGIN
+	--Loop until generated HID is unique across systems
+    isUnique := false;
+    WHILE NOT isUnique LOOP
+        newHid := generate_hid();
+        isUnique := NOT EXISTS(SELECT 1 FROM systems WHERE hid = newHid LIMIT 1);
+    END LOOP;
+    RETURN newHid;
+END;
+$$ LANGUAGE PLPGSQL VOLATILE;
+
+CREATE OR REPLACE FUNCTION new_member_hid() RETURNS text AS $$
+DECLARE
+    newHid text;
+    isUnique bool;
+BEGIN
+	--Loop until generated HID is unique across members
+    isUnique := false;
+    WHILE NOT isUnique LOOP
+        newHid := generate_hid();
+        isUnique := NOT EXISTS(SELECT 1 FROM members WHERE hid = newHid LIMIT 1);
+    END LOOP;
+    RETURN newHid;
+END;
+$$ LANGUAGE PLPGSQL VOLATILE;
+
+/* ALTER */
+ALTER TABLE systems ALTER COLUMN hid SET DEFAULT new_system_hid();
+ALTER TABLE members ALTER COLUMN hid SET DEFAULT new_member_hid();
