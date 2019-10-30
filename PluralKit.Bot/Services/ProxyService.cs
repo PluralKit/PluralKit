@@ -58,7 +58,7 @@ namespace PluralKit.Bot
             }
 
             // Flatten and sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
-            var ordered = potentialMembers.SelectMany(m => m.Member.ProxyTags.Select(tag => (tag, m))).OrderByDescending(p => p.Item1.ProxyString);
+            var ordered = potentialMembers.SelectMany(m => m.Member.ProxyTags.Select(tag => (tag, m))).OrderByDescending(p => p.Item1.ProxyString.Length);
             foreach (var (tag, match) in ordered)
             {
                 if (tag.Prefix == null && tag.Suffix == null) continue;
