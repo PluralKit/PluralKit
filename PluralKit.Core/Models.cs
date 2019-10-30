@@ -78,8 +78,8 @@ namespace PluralKit
 
         [JsonProperty("suffix")] [Obsolete("Use PKMember.ProxyTags")] public string Suffix
         {
-            get => ProxyTags?.FirstOrDefault().Prefix;
-            set => ProxyTags = new[] {new ProxyTag(Prefix, value)};
+            get => ProxyTags?.FirstOrDefault().Suffix;
+            set => ProxyTags = new[] {new ProxyTag(Suffix, value)};
         }
 
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" is hidden
