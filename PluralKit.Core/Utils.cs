@@ -298,6 +298,9 @@ namespace PluralKit
             // So we add a custom type handler that literally just passes the type through to Npgsql
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
+
+            // Add global type mapper for ProxyTag compound type in Postgres
+            NpgsqlConnection.GlobalTypeMapper.MapComposite<ProxyTag>("proxy_tag");
         }
 
         public static ILogger InitLogger(CoreConfig config, string component)

@@ -32,7 +32,10 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;member <name> displayname <new display name>` - Changes the display name of a member.
 - `pk;member <name> description [description]` - Changes the description of a member.
 - `pk;member <name> avatar [avatar url]` - Changes the avatar of a member.
-- `pk;member <name> proxy [tags]` - Changes the proxy tags of a member.
+- `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
+- `pk;member <name> proxy add [tags]` - Adds a proxy tag pair to a member.
+- `pk;member <name> proxy remove [tags]` - Removes a proxy tag from a member.
+- `pk;member <name> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
 - `pk;member <name> pronouns [pronouns]` - Changes the pronouns of a member.
 - `pk;member <name> color [color]` - Changes the color of a member.
 - `pk;member <name> birthdate [birthdate]` - Changes the birthday of a member.

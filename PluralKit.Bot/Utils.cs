@@ -100,6 +100,8 @@ namespace PluralKit.Bot
             if (input != null) return pattern.Replace(input, @"\$&");
             else return input;
         }
+        
+        public static string ProxyTagsString(this PKMember member) => string.Join(", ", member.ProxyTags.Select(t => $"`{t.ProxyString.EscapeMarkdown()}`"));
 
         public static async Task<ChannelPermissions> PermissionsIn(this IChannel channel)
         {

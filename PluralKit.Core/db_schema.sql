@@ -1,3 +1,13 @@
+/* TYPES */
+-- Create proxy_tag compound type if it doesn't exist
+do $$ begin
+    create type proxy_tag as (
+        prefix text,
+        suffix text
+    );
+exception when duplicate_object then null;
+end $$;
+
 /* TABLES */
 create table if not exists systems
 (
@@ -24,8 +34,8 @@ create table if not exists members
     birthday     date,
     pronouns     text,
     description  text,
-    prefix       text,
-    suffix       text,
+    proxy_tags   proxy_tag[]    not null default array[], -- Rationale on making this an array rather than a separate table - we never need to query them individually, only access them as part of a selected Member struct
+    keep_proxy   bool           not null default false, 
     created      timestamp      not null default (current_timestamp at time zone 'utc')
 );
 
