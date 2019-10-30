@@ -14,8 +14,8 @@ namespace PluralKit
         public ProxyTag(string prefix, string suffix)
         {
             // Normalize empty strings to null for DB
-            Prefix = prefix.Length == 0 ? null : prefix;
-            Suffix = suffix.Length == 0 ? null : suffix;
+            Prefix = prefix?.Length == 0 ? null : prefix;
+            Suffix = suffix?.Length == 0 ? null : suffix;
         }
 
         [JsonProperty("prefix")] public string Prefix { get; set; }
@@ -72,13 +72,13 @@ namespace PluralKit
         // Don't use, unless you're the API's serialization library
         [JsonProperty("prefix")] [Obsolete("Use PKMember.ProxyTags")] public string Prefix
         {
-            get => ProxyTags.FirstOrDefault().Prefix;
+            get => ProxyTags?.FirstOrDefault().Prefix;
             set => ProxyTags = new[] {new ProxyTag(Prefix, value)};
         }
 
         [JsonProperty("suffix")] [Obsolete("Use PKMember.ProxyTags")] public string Suffix
         {
-            get => ProxyTags.FirstOrDefault().Prefix;
+            get => ProxyTags?.FirstOrDefault().Prefix;
             set => ProxyTags = new[] {new ProxyTag(Prefix, value)};
         }
 
