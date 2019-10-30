@@ -47,6 +47,7 @@ The following three models (usually represented in JSON format) represent the va
 |prefix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
 |suffix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
 |proxy_tags|ProxyTag[]|Yes (entire array)|An array of ProxyTag (see below) objects, each representing a single prefix/suffix pair.|
+|keep_proxy|bool|Yes|Whether to display a member's proxy tags in the proxied message.|
 |created|datetime|No||
 
 #### ProxyTag object

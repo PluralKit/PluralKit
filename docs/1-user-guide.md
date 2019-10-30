@@ -266,7 +266,18 @@ To add a proxy tag to a member, use the `pk;member proxy add` command:
 To remove a proxy tag from a member, use the `pk;member proxy remove` command:
     pk;member John proxy remove {text}
     pk;member Craig proxy remove C:text
-   
+
+### Keeping your proxy tags
+If you'd like your proxied messages to include the proxy tags, you can enable the "keep proxy tags" option for a given member, like so:
+
+    pk;member John keepproxy on
+
+Turning the option off is similar - replace "on" with "off" in the command. The default value for every member is off. When proxying
+a member with multiple proxy tags, the proxy tag used to trigger a given proxy will be included.
+
+The practical effect of this is:
+* **Keep proxy tags on:** `[Message goes here]` -> [Message goes here]
+* **Keep proxy tags off:** `[Message goes here]` -> Message goes here 
 
 ### Querying message information
 If you want information about a proxied message (eg. for moderation reasons), you can query the message for its sender account, system, member, etc.
