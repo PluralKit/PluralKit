@@ -66,6 +66,7 @@ namespace PluralKit
         [JsonProperty("pronouns")] public string Pronouns { get; set; }
         [JsonProperty("description")] public string Description { get; set; }
         [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags { get; set; }
+        [JsonProperty("keep_proxy")] public bool KeepProxy { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
         
         // These are deprecated as fuck, and are kinda hacky

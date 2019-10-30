@@ -17,6 +17,7 @@ namespace PluralKit.Bot
     class ProxyMatch {
         public PKMember Member;
         public PKSystem System;
+        public ProxyTag ProxyTags;
         public string InnerText;
     }
 
@@ -69,7 +70,7 @@ namespace PluralKit.Bot
                 if (message.Length >= prefix.Length + suffix.Length && message.StartsWith(prefix) && message.EndsWith(suffix)) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
                     if (leadingMention != null) inner = $"{leadingMention} {inner}";
-                    return new ProxyMatch { Member = match.Member, System = match.System, InnerText = inner };
+                    return new ProxyMatch { Member = match.Member, System = match.System, InnerText = inner, ProxyTags = tag};
                 }
             }
 
@@ -102,9 +103,14 @@ namespace PluralKit.Bot
             // If the name's too long (or short), bail
             if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+
+            // Add the proxy tags into the proxied message if that option is enabled
+            var messageContents = match.Member.KeepProxy
+                ? $"{match.ProxyTags.Prefix}{match.InnerText}{match.ProxyTags.Suffix}"
+                : match.InnerText;
             
             // Sanitize @everyone, but only if the original user wouldn't have permission to
-            var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
+            messageContents = SanitizeEveryoneMaybe(message, messageContents);
             
             // Execute the webhook itself
             var hookMessageId = await _webhookExecutor.ExecuteWebhook(

@@ -310,6 +310,27 @@ namespace PluralKit.Bot.Commands
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
+        public async Task MemberKeepProxy(Context ctx, PKMember target)
+        {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+
+            bool newValue;
+            if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
+            else if (ctx.Match("off", "disabled", "false", "no")) newValue = false;
+            else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else newValue = !target.KeepProxy;
+
+            target.KeepProxy = newValue;
+            await _data.SaveMember(target);
+            
+            if (newValue)
+                await ctx.Reply($"{Emojis.Success} Member proxy tags will now be included in the resulting message when proxying.");
+            else
+                await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
+        }
+        
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _data.GetSystemById(target.System);

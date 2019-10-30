@@ -68,6 +68,7 @@ namespace PluralKit.API.Controllers
             member.Pronouns = newMember.Pronouns;
             member.Description = newMember.Description;
             member.ProxyTags = newMember.ProxyTags;
+            member.KeepProxy = newMember.KeepProxy;
             await _data.SaveMember(member);
 
             return Ok(member);
@@ -107,6 +108,7 @@ namespace PluralKit.API.Controllers
             member.Pronouns = newMember.Pronouns;
             member.Description = newMember.Description;
             member.ProxyTags = newMember.ProxyTags;
+            member.KeepProxy = newMember.KeepProxy;
             await _data.SaveMember(member);
 
             return Ok(member);

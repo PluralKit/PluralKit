@@ -32,6 +32,7 @@ namespace PluralKit.Bot.Commands
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "uwu");
         public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "uwu");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "uwu");
+        public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "uwu");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "uwu");
         public static Command SwitchOut = new Command("switch out", "switch out", "uwu");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "uwu");
@@ -226,6 +227,8 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<MemberCommands>(MemberAvatar, m => m.MemberAvatar(ctx, target));
             else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname"))
                 await ctx.Execute<MemberCommands>(MemberDisplayName, m => m.MemberDisplayName(ctx, target));
+            else if (ctx.Match("keepproxy", "keeptags", "showtags"))
+                await ctx.Execute<MemberCommands>(MemberKeepProxy, m => m.MemberKeepProxy(ctx, target));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<MemberCommands>(MemberInfo, m => m.ViewMember(ctx, target));
             else 
