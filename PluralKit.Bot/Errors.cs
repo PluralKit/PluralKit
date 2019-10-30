@@ -28,7 +28,7 @@ namespace PluralKit.Bot {
         public static PKError BirthdayParseError(string birthday) => new PKError($"\"{birthday.SanitizeMentions()}\" could not be parsed as a valid date. Try a format like \"2016-12-24\" or \"May 3 1996\".");
         public static PKError ProxyMustHaveText => new PKSyntaxError("Example proxy message must contain the string 'text'.");
         public static PKError ProxyMultipleText => new PKSyntaxError("Example proxy message must contain the string 'text' exactly once.");
-        
+        public static PKError NoProxyTags => new PKError("Example proxy message must include the proxy tags! See the guide linked below.\n<https://pluralkit.me/guide#setting-up-proxy-tags>\nPerhaps you were trying to clear the proxy tags? The syntax for that is:\n-`pk;member <member> proxy`");
         public static PKError MemberDeleteCancelled => new PKError($"Member deletion cancelled. Stay safe! {Emojis.ThumbsUp}");
         public static PKError AvatarServerError(HttpStatusCode statusCode) => new PKError($"Server responded with status code {(int) statusCode}, are you sure your link is working?");
         public static PKError AvatarFileSizeLimit(long size) => new PKError($"File size too large ({size.Bytes().ToString("#.#")} > {Limits.AvatarFileSizeLimit.Bytes().ToString("#.#")}), try shrinking or compressing the image.");

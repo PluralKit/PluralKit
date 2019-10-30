@@ -173,6 +173,9 @@ namespace PluralKit.Bot.Commands
             if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
             if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
 
+            // If the prefix and suffix are *both* empty, send an error.
+            if (prefixAndSuffix[0].Length == 0 && prefixAndSuffix[1].Length == 0) throw Errors.NoProxyTags; 
+
             // If the prefix/suffix is empty, use "null" instead (for DB)
             target.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
             target.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
