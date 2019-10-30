@@ -168,10 +168,13 @@ namespace PluralKit.Bot.Commands
             if (!ctx.HasNext())
             {
                 // If we already have multiple tags, this would clear everything, so prompt that
-                var msg = await ctx.Reply(
-                    $"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?");
-                if (!await ctx.PromptYesNo(msg))
-                    throw Errors.GenericCancelled();
+                if (target.ProxyTags.Count > 1)
+                {
+                    var msg = await ctx.Reply(
+                        $"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?");
+                    if (!await ctx.PromptYesNo(msg))
+                        throw Errors.GenericCancelled();
+                }
 
                 target.ProxyTags = new ProxyTag[] { };
                 
