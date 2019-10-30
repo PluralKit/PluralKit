@@ -64,15 +64,13 @@ namespace PluralKit.Bot.Commands
                             if (!tupperbox.Valid) throw Errors.InvalidImportFile;
                             
                             var res = tupperbox.ToPluralKit();
-                            if (res.HadGroups || res.HadMultibrackets || res.HadIndividualTags)
+                            if (res.HadGroups || res.HadIndividualTags)
                             {
                                 var issueStr =
                                     $"{Emojis.Warn} The following potential issues were detected converting your Tupperbox input file:";
                                 if (res.HadGroups)
                                     issueStr +=
                                         "\n- PluralKit does not support member groups. Members will be imported without groups.";
-                                if (res.HadMultibrackets)
-                                    issueStr += "\n- PluralKit does not support members with multiple proxy tags. Only the first pair will be imported.";
                                 if (res.HadIndividualTags)
                                     issueStr +=
                                         "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, tags will not be imported. You can set your system tag using the `pk;system tag <tag>` command later.";
