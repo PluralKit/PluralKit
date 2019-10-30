@@ -86,3 +86,34 @@ create table if not exists servers
     id          bigint primary key,
     log_channel bigint
 );
+
+/* UPDATES */
+
+--Add proxy_tags column to members
+ALTER TABLE members ADD COLUMN IF NOT EXISTS proxy_tags proxy_tag[] NOT NULL DEFAULT array[]::proxy_tag[];
+
+--Migrate legacy proxy tags to proxy_tags array
+DO $$ BEGIN
+	IF EXISTS (
+		SELECT column_name 
+		FROM information_schema.columns 
+		WHERE table_schema = 'public' AND table_name = 'members' and column_name = 'prefix'
+	)
+	AND EXISTS (
+		SELECT column_name 
+		FROM information_schema.columns 
+		WHERE table_schema = 'public' AND table_name = 'members' and column_name = 'suffix'
+	)
+	THEN
+		UPDATE members
+		SET proxy_tags = ARRAY[(prefix, suffix)]::proxy_tag[]
+		WHERE prefix IS NOT NULL
+		OR suffix IS NOT NULL;
+
+		ALTER TABLE members DROP COLUMN prefix;
+		ALTER TABLE members DROP COLUMN suffix;
+	END IF;
+END $$;
+
+--Add keep_proxy column to members
+ALTER TABLE members ADD COLUMN IF NOT EXISTS keep_proxy bool NOT NULL DEFAULT false;
