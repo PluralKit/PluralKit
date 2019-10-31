@@ -167,11 +167,12 @@ namespace PluralKit.Bot {
                 var guildUser = await shard.Rest.GetGuildUserAsync(channel.Guild.Id, msg.Message.Sender);
                 if (guildUser != null)
                 {
-                    roles = guildUser.RoleIds
-                        .Select(roleId => channel.Guild.GetRole(roleId))
-                        .Where(role => role.Name != "@everyone")
-                        .OrderByDescending(role => role.Position)
-                        .ToList();
+                    if (guildUser.RoleIds.Count > 0)
+                        roles = guildUser.RoleIds
+                            .Select(roleId => channel.Guild.GetRole(roleId))
+                            .Where(role => role.Name != "@everyone")
+                            .OrderByDescending(role => role.Position)
+                            .ToList();
 
                     userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser?.NameAndMention();
                 }
