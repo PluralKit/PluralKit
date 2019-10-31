@@ -86,7 +86,10 @@ namespace PluralKit.Bot
             {
                 MessageCacheSize = 5,
                 ExclusiveBulkDelete = true,
-                DefaultRetryMode = RetryMode.AlwaysRetry
+                DefaultRetryMode = RetryMode.AlwaysRetry,
+                // Commented this out since Debug actually sends, uh, quite a lot that's not necessary in production
+                // but leaving it here in case I (or someone else) get[s] confused about why logging isn't working again :p
+                // LogLevel = LogSeverity.Debug // We filter log levels in Serilog, so just pass everything through (Debug is lower than Verbose)
             }))
             .AddSingleton<Bot>()
             .AddTransient<CommandTree>()
@@ -172,10 +175,10 @@ namespace PluralKit.Bot
                 level = LogEventLevel.Error;
             else if (msg.Severity == LogSeverity.Info)
                 level = LogEventLevel.Information;
-            else if (msg.Severity == LogSeverity.Verbose)
+            else if (msg.Severity == LogSeverity.Debug) // D.NET's lowest level is Debug and Verbose is greater, Serilog's is the other way around
                 level = LogEventLevel.Verbose;
-            else if (msg.Severity == LogSeverity.Warning)
-                level = LogEventLevel.Warning;
+            else if (msg.Severity == LogSeverity.Verbose)
+                level = LogEventLevel.Debug;
 
             _logger.Write(level, msg.Exception, "Discord.Net {Source}: {Message}", msg.Source, msg.Message);
             return Task.CompletedTask;
@@ -318,6 +321,9 @@ namespace PluralKit.Bot
 
         public async Task HandleMessage(SocketMessage arg)
         {
+            if (_client.GetShardFor((arg.Channel as IGuildChannel)?.Guild).ConnectionState != ConnectionState.Connected)
+                return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
+            
             RegisterMessageMetrics(arg);
 
             // Ignore system messages (member joined, message pinned, etc)
