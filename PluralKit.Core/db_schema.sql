@@ -32,7 +32,7 @@ create table if not exists members
     birthday     date,
     pronouns     text,
     description  text,
-    proxy_tags   proxy_tag[]    not null default array[], -- Rationale on making this an array rather than a separate table - we never need to query them individually, only access them as part of a selected Member struct
+    proxy_tags   proxy_tag[]    not null default array[]::proxy_tag[], -- Rationale on making this an array rather than a separate table - we never need to query them individually, only access them as part of a selected Member struct
     keep_proxy   bool           not null default false, 
     created      timestamp      not null default (current_timestamp at time zone 'utc')
 );
