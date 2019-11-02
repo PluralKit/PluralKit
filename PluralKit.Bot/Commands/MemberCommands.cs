@@ -184,6 +184,8 @@ namespace PluralKit.Bot.Commands
             // Subcommand: "add"
             else if (ctx.Match("add"))
             {
+                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
+                
                 var tagToAdd = ParseProxyTags(ctx.RemainderOrNull());
                 if (target.ProxyTags.Contains(tagToAdd))
                     throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
@@ -198,6 +200,8 @@ namespace PluralKit.Bot.Commands
             // Subcommand: "remove"
             else if (ctx.Match("remove"))
             {
+                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass a proxy tag to remove (eg. `[text]` or `J:text`).");
+
                 var tagToRemove = ParseProxyTags(ctx.RemainderOrNull());
                 if (!target.ProxyTags.Contains(tagToRemove))
                     throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
@@ -212,6 +216,8 @@ namespace PluralKit.Bot.Commands
             // Subcommand: bare proxy tag given
             else
             {
+                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass an example proxy to set (eg. `[text]` or `J:text`).");
+
                 var requestedTag = ParseProxyTags(ctx.RemainderOrNull());
                 
                 // This is mostly a legacy command, so it's gonna error out if there's
