@@ -154,7 +154,7 @@ namespace PluralKit.Bot
                 }
                 else
                 {
-                    member.ProxyTags = dataMember.ProxyTags;
+                    member.ProxyTags = dataMember.ProxyTags ?? new ProxyTag[] { };
                 }
 
                 member.KeepProxy = dataMember.KeepProxy;
