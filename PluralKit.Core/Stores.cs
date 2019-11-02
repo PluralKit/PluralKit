@@ -304,6 +304,11 @@ namespace PluralKit {
         Task DeleteSwitch(PKSwitch sw);
 
         /// <summary>
+        /// Deletes all switches in a given system from the data store.
+        /// </summary>
+        Task DeleteAllSwitches(PKSystem system);
+
+        /// <summary>
         /// Gets the total amount of systems in the data store.
         /// </summary>
         Task<ulong> GetTotalSystems();
@@ -414,6 +419,12 @@ namespace PluralKit {
         {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new { Id = system.Id });
+        }
+
+        public async Task DeleteAllSwitches(PKSystem system)
+        {
+            using (var conn = await _conn.Obtain())
+                await conn.ExecuteAsync("delete from switches where system = @Id", system);
         }
 
         public async Task<ulong> GetTotalSystems()

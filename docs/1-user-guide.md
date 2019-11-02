@@ -334,6 +334,8 @@ Note that you can't move a switch *before* the *previous switch*, to avoid break
 If you'd like to delete the most recent switch, use the `pk;switch delete` command. You'll need to confirm
 the deletion by clicking a reaction.
 
+If you'd like to clear your system's entire switch history, use the `pk;switch delete all` command. This isn't reversible!
+
 ### Querying fronter
 To see the current fronter in a system, use the `pk;system fronter` command. You can use this on your current system, or on other systems. For example:
 

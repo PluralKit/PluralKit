@@ -44,6 +44,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
 - `pk;switch delete` - Deletes the latest switch.
+- `pk;switch delete all` - Deletes every logged switch.
 - `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
 ## Utility
 - `pk;log <channel>` - Sets the channel to log all proxied messages.
