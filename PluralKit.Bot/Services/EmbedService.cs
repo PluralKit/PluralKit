@@ -128,17 +128,21 @@ namespace PluralKit.Bot {
                 var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
 
                 // If this isn't the latest switch, we also show duration
+                string stringToAdd;
                 if (lastSw != null)
                 {
                     // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
                     var switchDuration = lastSw.Timestamp - sw.Timestamp;
-                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
+                    stringToAdd = $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
                 }
                 else
                 {
-                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
+                    stringToAdd = $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
                 }
 
+                if (outputStr.Length + stringToAdd.Length > EmbedBuilder.MaxDescriptionLength) break;
+                outputStr += stringToAdd;
+                
                 lastSw = sw;
             }
 
