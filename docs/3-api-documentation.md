@@ -407,9 +407,13 @@ Looks up a proxied message by its message ID. Returns `404 Not Found` if the mes
 ```
 
 ## Version history
+* 2019-10-31
+  * Added `proxy_tags` field to members
+  * Added `keep_proxy` field to members
+  * Deprecated `prefix` and `suffix` member fields, will be removed at some point (tm)
 * 2019-07-17
-  * Add endpoint for querying system by account
-  * Add endpoint for querying message contents
+  * Added endpoint for querying system by account
+  * Added endpoint for querying message contents
 * 2019-07-10 **(v1)**
   * First specified version
 * (prehistory)
