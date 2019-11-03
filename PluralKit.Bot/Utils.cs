@@ -62,6 +62,7 @@ namespace PluralKit.Bot
                 // Parse the image header in a worker
                 var stream = await response.Content.ReadAsStreamAsync();
                 var image = await Task.Run(() => Image.Identify(stream));
+                if (image == null) throw Errors.AvatarInvalid;
                 if (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit) // Check image size
                     throw Errors.AvatarDimensionsTooLarge(image.Width, image.Height);
             }
