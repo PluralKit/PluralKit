@@ -131,8 +131,8 @@ Queries a system's member list by its 5-character ID. If the system doesn't exis
         "birthday": "1997-07-14",
         "pronouns": "he/him or they/them",
         "description": "I am Craig, example user extraordinaire.",
-        "prefix": "[",
-        "suffix": "]",
+        "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+        "keep_proxy": false,
         "created": "2019-01-01T15:00:00.654321Z"
     }
 ]
@@ -183,8 +183,8 @@ Returns a system's current fronter(s), with fully hydrated member objects. If th
             "birthday": "1997-07-14",
             "pronouns": "he/him or they/them",
             "description": "I am Craig, example user extraordinaire.",
-            "prefix": "[",
-            "suffix": "]",
+            "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+            "keep_proxy": false,
             "created": "2019-01-01T15:00:00.654321Z"
         }
     ]
@@ -203,7 +203,7 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
 {
     "name": "New System Name",
     "tag": "{Sys}",
-    "avatar_url": "https://path/to/new/avatar.png"
+    "avatar_url": "https://path/to/new/avatar.png",
     "tz": "America/New_York"
 }
 ```
@@ -255,8 +255,8 @@ Queries a member's information by its 5-character member ID. If the member does 
     "birthday": "1997-07-14",
     "pronouns": "he/him or they/them",
     "description": "I am Craig, example user extraordinaire.",
-    "prefix": "[",
-    "suffix": "]",
+    "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+    "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z"
 }
 ```
@@ -278,10 +278,10 @@ Creates a new member with the information given. Missing fields (except for name
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "["
+    "keep_proxy": false
 }
 ```
-(note the absence of a `suffix` field, which is set to null in the response)
+(note the absence of a `proxy_tags` field, which is cleared in the response)
 
 #### Example response
 ```json
@@ -294,8 +294,8 @@ Creates a new member with the information given. Missing fields (except for name
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "[",
-    "suffix": null,
+    "proxy_tags": [],
+    "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z"
 }
 ```
@@ -317,10 +317,10 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "["
+    "keep_proxy": false
 }
 ```
-(note the absence of a `suffix` field, which is set to null in the response)
+(note the absence of a `proxy_tags` field, which is cleared in the response)
 
 #### Example response
 ```json
@@ -333,8 +333,8 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "[",
-    "suffix": null,
+    "proxy_tags": [],
+    "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z"
 }
 ```
@@ -399,8 +399,8 @@ Looks up a proxied message by its message ID. Returns `404 Not Found` if the mes
         "birthday": "1997-07-14",
         "pronouns": "he/him or they/them",
         "description": "I am Craig, example user extraordinaire.",
-        "prefix": "[",
-        "suffix": "]",
+        "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+        "keep_proxy": false,
         "created": "2019-01-01T15:00:00.654321Z"
     }
 }
