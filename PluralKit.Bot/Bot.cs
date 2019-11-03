@@ -214,40 +214,6 @@ namespace PluralKit.Bot
             return Task.CompletedTask;
         }
 
-        // private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
-        // {
-        //     var svc = ((PKCommandContext) ctx).ServiceProvider;
-        //     var id = svc.GetService<EventIdProvider>();
-        //     
-        //     _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
-        //     
-        //     // TODO: refactor this entire block, it's fugly.
-        //     if (!_result.IsSuccess) {
-        //         if (_result.Error == CommandError.Unsuccessful || _result.Error == CommandError.Exception) {
-        //             // If this is a PKError (ie. thrown deliberately), show user facing message
-        //             // If not, log as error
-        //             var exception = (_result as ExecuteResult?)?.Exception;
-        //             if (exception is PKError) {
-        //                 await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {exception.Message}");
-        //             } else if (exception is TimeoutException) {
-        //                 await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} Operation timed out. Try being faster next time :)");
-        //             } else if (_result is PreconditionResult)
-        //             {
-        //                 await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
-        //             } else
-        //             {
-        //                 await ctx.Message.Channel.SendMessageAsync(
-        //                     $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{id.EventId}`.");
-        //                 HandleRuntimeError((_result as ExecuteResult?)?.Exception, svc);
-        //             }
-        //         } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
-        //             await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}\n**Usage: **pk;{cmd.Value.Remarks}");
-        //         } else if (_result.Error == CommandError.UnknownCommand || _result.Error == CommandError.UnmetPrecondition || _result.Error == CommandError.ObjectNotFound) {
-        //             await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
-        //         }
-        //     }
-        // }
-
         private Task HandleEvent(Action<Scope> breadcrumbFactory, Func<PKEventHandler, Task> handler)
         {
             // Inner function so we can await the handler without stalling the entire pipeline
