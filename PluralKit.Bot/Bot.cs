@@ -273,8 +273,9 @@ namespace PluralKit.Bot
         private DbConnectionFactory _connectionFactory;
         private IServiceProvider _services;
         private CommandTree _tree;
+        private IDataStore _data;
 
-        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, IDiscordClient client, DbConnectionFactory connectionFactory, IServiceProvider services, CommandTree tree)
+        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, IDiscordClient client, DbConnectionFactory connectionFactory, IServiceProvider services, CommandTree tree, IDataStore data)
         {
             _proxy = proxy;
             _logger = logger;
@@ -283,6 +284,7 @@ namespace PluralKit.Bot
             _connectionFactory = connectionFactory;
             _services = services;
             _tree = tree;
+            _data = data;
         }
 
         public async Task HandleMessage(SocketMessage arg)
@@ -298,7 +300,7 @@ namespace PluralKit.Bot
 
             // Ignore bot messages
             if (msg.Author.IsBot || msg.Author.IsWebhook) return;
-
+            
             int argPos = -1;
             // Check if message starts with the command prefix
             if (msg.Content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
@@ -307,6 +309,7 @@ namespace PluralKit.Bot
                 if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
                     argPos = -1;
             
+            // If it does, try executing a command
             if (argPos > -1)
             {
                 _logger.Verbose("Parsing command {Command} from message {Channel}-{Message}", msg.Content, msg.Channel.Id, msg.Id);

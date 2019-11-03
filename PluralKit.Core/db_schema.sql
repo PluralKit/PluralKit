@@ -83,6 +83,8 @@ create table if not exists webhooks
 
 create table if not exists servers
 (
-    id          bigint primary key,
-    log_channel bigint
+    id            bigint primary key,
+    log_channel   bigint,
+    log_blacklist bigint[] not null default array[]::bigint[],
+    blacklist     bigint[] not null default array[]::bigint[] 
 );

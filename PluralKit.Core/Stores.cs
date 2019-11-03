@@ -62,6 +62,15 @@ namespace PluralKit {
     {
         public ulong Id { get; set; }
         public ulong? LogChannel { get; set; }
+        public ISet<ulong> LogBlacklist { get; set; }
+        public ISet<ulong> Blacklist { get; set; }
+    }
+
+    public struct ChannelConfig
+    {
+        public ulong Id { get; set; }
+        public bool OnList { get; set; }
+        public bool LogMessages { get; set; }
     }
 
     public interface IDataStore
@@ -329,10 +338,10 @@ namespace PluralKit {
         Task<ulong> GetTotalMessages();
 
         /// <summary>
-        /// Gets the guild configuration struct for a given guild.
+        /// Gets the guild configuration struct for a given guild, creating and saving one if none was found.
         /// </summary>
-        /// <returns>The guild's configuration struct, or a default struct if no guild was found in the data store.</returns>
-        Task<GuildConfig> GetGuildConfig(ulong guild);
+        /// <returns>The guild's configuration struct.</returns>
+        Task<GuildConfig> GetOrCreateGuildConfig(ulong guild);
         
         /// <summary>
         /// Saves the given guild configuration struct to the data store.
@@ -596,28 +605,45 @@ namespace PluralKit {
                 return await conn.ExecuteScalarAsync<ulong>("select count(mid) from messages");
         }
 
-        public async Task<GuildConfig> GetGuildConfig(ulong guild)
+        // Same as GuildConfig, but with ISet<ulong> as long[] instead.
+        private struct DatabaseCompatibleGuildConfig
+        {
+            public ulong Id { get; set; }
+            public ulong? LogChannel { get; set; }
+            public long[] LogBlacklist { get; set; }
+            public long[] Blacklist { get; set; }
+        }
+
+        public async Task<GuildConfig> GetOrCreateGuildConfig(ulong guild)
         {
             using (var conn = await _conn.Obtain())
             {
-                var cfg = await conn.QuerySingleOrDefaultAsync<GuildConfig>("select * from servers where id = @Id",
+                var compat = await conn.QuerySingleOrDefaultAsync<DatabaseCompatibleGuildConfig>(
+                    "insert into servers (id) values (@Id) on conflict do nothing; select * from servers where id = @Id",
                     new {Id = guild});
-
-                if (cfg.Id == 0)
-                    // No entry was found in the db, this is the default entry returned
-                    cfg.Id = guild;
-                
-                return cfg;
+                return new GuildConfig
+                {
+                    Id = compat.Id,
+                    LogChannel = compat.LogChannel,
+                    LogBlacklist = new HashSet<ulong>(compat.LogBlacklist.Select(c => (ulong) c)),
+                    Blacklist = new HashSet<ulong>(compat.Blacklist.Select(c => (ulong) c)),
+                };
             }
         }
 
         public async Task SaveGuildConfig(GuildConfig cfg)
         {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("insert into servers (id, log_channel) values (@Id, @LogChannel) on conflict (id) do update set log_channel = @LogChannel", cfg);
+                await conn.ExecuteAsync("insert into servers (id, log_channel, log_blacklist, blacklist) values (@Id, @LogChannel, @LogBlacklist, @Blacklist) on conflict (id) do update set log_channel = @LogChannel, log_blacklist = @LogBlacklist, blacklist = @Blacklist", new
+                {
+                    cfg.Id,
+                    cfg.LogChannel,
+                    LogBlacklist = cfg.LogBlacklist.Select(c => (long) c).ToList(),
+                    Blacklist = cfg.Blacklist.Select(c  => (long) c).ToList()
+                });
             _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
         }
-
+        
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one

@@ -80,17 +80,20 @@ namespace PluralKit.Bot
         public async Task HandleMessageAsync(IMessage message)
         {
             // Bail early if this isn't in a guild channel
-            if (!(message.Channel is ITextChannel)) return;
-
-            var results = await _cache.GetResultsFor(message.Author.Id);
-
+            if (!(message.Channel is ITextChannel channel)) return;
+            
             // Find a member with proxy tags matching the message
+            var results = await _cache.GetResultsFor(message.Author.Id);
             var match = GetProxyTagMatch(message.Content, results);
             if (match == null) return;
+            
+            // And make sure the channel's not blacklisted from proxying.
+            var guildCfg = await _data.GetOrCreateGuildConfig(channel.GuildId);
+            if (guildCfg.Blacklist.Contains(channel.Id)) return;
 
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
-            if (!await EnsureBotPermissions(message.Channel as ITextChannel)) return;
+            if (!await EnsureBotPermissions(channel)) return;
 
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
@@ -114,7 +117,7 @@ namespace PluralKit.Bot
             
             // Execute the webhook itself
             var hookMessageId = await _webhookExecutor.ExecuteWebhook(
-                (ITextChannel) message.Channel,
+                channel,
                 proxyName, avatarUrl,
                 messageContents,
                 message.Attachments.FirstOrDefault()

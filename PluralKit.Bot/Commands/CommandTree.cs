@@ -45,7 +45,11 @@ namespace PluralKit.Bot.Commands
         public static Command Export = new Command("export", "export", "Exports system information to a data file");
         public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
         public static Command Message = new Command("message", "message <id|link>", "Looks up a proxied message");
-        public static Command Log = new Command("log", "log <channel>", "Designates a channel to post proxied messages to");
+        public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
+        public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
+        public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
+        public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
+        public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
         public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
         public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
 
@@ -60,6 +64,8 @@ namespace PluralKit.Bot.Commands
         };
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
+
+        public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
         
         private IDiscordClient _client;
 
@@ -100,7 +106,19 @@ namespace PluralKit.Bot.Commands
             if (ctx.Match("message", "msg"))
                 return ctx.Execute<ModCommands>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("log"))
-                return ctx.Execute<ModCommands>(Log, m => m.SetLogChannel(ctx));
+                if (ctx.Match("channel"))
+                    return ctx.Execute<ModCommands>(LogChannel, m => m.SetLogChannel(ctx));
+                else if (ctx.Match("enable", "on"))
+                    return ctx.Execute<ModCommands>(LogEnable, m => m.SetLogEnabled(ctx, true));
+                else if (ctx.Match("disable", "off"))
+                    return ctx.Execute<ModCommands>(LogDisable, m => m.SetLogEnabled(ctx, false));
+                else return PrintCommandExpectedError(ctx, LogCommands);
+            if (ctx.Match("blacklist", "bl"))
+                if (ctx.Match("enable", "on", "add", "deny"))
+                    return ctx.Execute<ModCommands>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
+                else if (ctx.Match("disable", "off", "remove", "allow"))
+                    return ctx.Execute<ModCommands>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
+                else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove);
             if (ctx.Match("invite")) return ctx.Execute<MiscCommands>(Invite, m => m.Invite(ctx));
             if (ctx.Match("mn")) return ctx.Execute<MiscCommands>(null, m => m.Mn(ctx));
             if (ctx.Match("fire")) return ctx.Execute<MiscCommands>(null, m => m.Fire(ctx));
