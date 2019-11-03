@@ -97,7 +97,7 @@ namespace PluralKit.API.Controllers
                 return BadRequest($"Member descriptions too long ({newMember.Description.Length} > {Limits.MaxDescriptionLength}.");
 
             // Sanity bounds checks
-            if (newMember.ProxyTags?.Any(tag => tag.Prefix.Length > 1000 || tag.Suffix.Length > 1000) ?? false)
+            if (newMember.ProxyTags?.Any(tag => (tag.Prefix?.Length ?? 0) > 1000 || (tag.Suffix?.Length ?? 0) > 1000) ?? false)
                 return BadRequest();
 
             member.Name = newMember.Name;
