@@ -19,7 +19,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;system timezone [location]` - Changes the time zone of your system.
 - `pk;system delete` - Deletes your system.
 - `pk;system [id] fronter` - Shows the current fronter of a system.
-- `pk;system [id] fronthistory` - Shows a paginated list of the most recent fronters of a system.
+- `pk;system [id] fronthistory [items per page]` - Shows a paginated list of the most recent fronters of a system.
 - `pk;system [id] frontpercent [timeframe]` - Shows the aggregated front history of a system within a given time frame.
 - `pk;system [id] list` - Shows a paginated list of a system's members.
 - `pk;system [id] list full` - Shows a paginated list of a system's members, with increased detail.
