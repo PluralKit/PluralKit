@@ -176,6 +176,16 @@ namespace PluralKit.Bot.Commands
         {
             if (system == null) throw Errors.NoSystemError;
 
+            // Determine page size
+            string pageSizeStr = ctx.RemainderOrNull();
+            int.TryParse(pageSizeStr, out int itemsPerPage);
+            // null or negative page size inputs default to 10 items per page
+            if (itemsPerPage <= 0)
+                itemsPerPage = 10;
+            // cap the items per page at 25 - this is an arbitrary value, but past this point the headroom for actual content is pretty small
+            if (itemsPerPage > 25)
+                itemsPerPage = 25;
+
             // Get all of this system's switches and their members
             var sws = (await _data.GetPeriodFronters(ctx.System, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant())).ToList();
             if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
@@ -184,9 +194,12 @@ namespace PluralKit.Bot.Commands
                 ? $"Past switches of {system.Name} (`{system.Hid}`)"
                 : $"Past switches of `{system.Hid}`";
 
+            // Specify items per page and how long each line can be to keep within embed limits
+            // e.g. If we're doing 10 items per page, give each line 1/10 of the max description length, minus one character for line breaks
+            var embedLineMaxLength = (EmbedBuilder.MaxDescriptionLength / itemsPerPage) - 1;
             await ctx.Paginate<SwitchListEntry>(
                 sws.OrderByDescending(m => m.TimespanStart).ToList(),
-                10,
+                itemsPerPage,
                 embedTitle,
                 (eb, fh) =>
                     eb.Description = string.Join("\n", fh.Select((sw) =>
@@ -196,10 +209,16 @@ namespace PluralKit.Bot.Commands
                             var membersStr = sw.Members.Any() ? string.Join(", ", sw.Members.Select(m => m.Name)) : "no fronter";
                             var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.TimespanStart;
                             var switchDuration = sw.TimespanEnd - sw.TimespanStart;
-                            
-                            return sw.TimespanStart.Equals(lastSwitchTime)
-                                ? $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.TimespanStart.InZone(ctx.System.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago)"
-                                : $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.TimespanStart.InZone(ctx.System.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})";
+
+                            // Construct the time/duration portion
+                            var switchInfo = sw.TimespanStart.Equals(lastSwitchTime)
+                                ? $"({Formats.ZonedDateTimeFormat.Format(sw.TimespanStart.InZone(ctx.System.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago)"
+                                : $"({Formats.ZonedDateTimeFormat.Format(sw.TimespanStart.InZone(ctx.System.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})";
+                            // Construct the switch members portion, truncating if it's too long
+                            var memberInfo = (membersStr.Length + switchInfo.Length + 5 > embedLineMaxLength) // Check the combined length of the member list, time/duration, and formatting characters
+                                ? $"**{membersStr.Truncate(embedLineMaxLength - switchInfo.Length - 5)}** " // Resulting string is too long - truncate the member list to make it fit
+                                : $"**{membersStr}** "; // Resulting string is short enough, use the full member list
+                            return memberInfo + switchInfo;
                         }))
             );
         }
