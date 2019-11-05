@@ -7,18 +7,6 @@ namespace PluralKit.Bot.Commands
 {
     public class HelpCommands
     {
-    public async Task HelpProxy(Context ctx)
-        {
-            await ctx.Reply(
-                "The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
-        }
-        
-        public async Task HelpMember(Context ctx)
-        {
-            await ctx.Reply(
-                "The member help page has been moved! See the website: https://pluralkit.me/guide#member-management");
-        }
-        
         public async Task HelpRoot(Context ctx)
         {
             await ctx.Reply(embed: new EmbedBuilder()
@@ -33,12 +21,6 @@ namespace PluralKit.Bot.Commands
                 .WithFooter("By @Ske#6201 | GitHub: https://github.com/xSke/PluralKit/ | Website: https://pluralkit.me/")
                 .WithColor(Color.Blue)
                 .Build());
-        }
-        
-        public async Task CommandList(Context ctx)
-        {
-            await ctx.Reply(
-                "The command list has been moved! See the website: https://pluralkit.me/commands");
         }
     }
 }

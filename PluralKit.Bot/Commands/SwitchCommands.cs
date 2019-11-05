@@ -119,6 +119,17 @@ namespace PluralKit.Bot.Commands
         public async Task SwitchDelete(Context ctx)
         {
             ctx.CheckSystem();
+
+            if (ctx.Match("all", "clear"))
+            {
+                // Subcommand: "delete all"
+                var purgeMsg = await ctx.Reply($"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?");
+                if (!await ctx.PromptYesNo(purgeMsg))
+                    throw Errors.GenericCancelled();
+                await _data.DeleteAllSwitches(ctx.System);
+                await ctx.Reply($"{Emojis.Success} Cleared system switches!");
+                return;
+            }
             
             // Fetch the last two switches for the system to do bounds checking on
             var lastTwoSwitches = (await _data.GetSwitches(ctx.System, 2)).ToArray();

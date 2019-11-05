@@ -76,7 +76,7 @@ namespace PluralKit.Bot.Commands
                     throw Errors.SystemNameTooLongError(newTag.Length);
 
             await _data.SaveSystem(ctx.System);
-            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
+            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? $"changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied." : "cleared")}.");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
@@ -134,7 +134,7 @@ namespace PluralKit.Bot.Commands
                 25,
                 embedTitle,
                 (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
-                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyString.SanitizeMentions()})*";
+                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyTagsString().SanitizeMentions()})*";
                     return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
                 }))
             );
@@ -154,7 +154,7 @@ namespace PluralKit.Bot.Commands
                         var profile = $"**ID**: {m.Hid}";
                         if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
                         if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
-                        if (m.Prefix != null || m.Suffix != null) profile += $"\n**Proxy tags**: {m.ProxyString}";
+                        if (m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
                         if (m.Description != null) profile += $"\n\n{m.Description}";
                         eb.AddField(m.Name, profile.Truncate(1024));
                     }

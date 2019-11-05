@@ -82,6 +82,8 @@ namespace PluralKit.Bot {
 
             var messageCount = await _data.GetMemberMessageCount(member);
 
+            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
+
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
@@ -94,7 +96,7 @@ namespace PluralKit.Bot {
             if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
             if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns, true);
             if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix.EscapeMarkdown()}text{member.Suffix.EscapeMarkdown()}", true);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr), true);
             if (member.Color != null) eb.AddField("Color", $"#{member.Color}", true);
             if (member.Description != null) eb.AddField("Description", member.Description, false);
 
@@ -131,11 +133,12 @@ namespace PluralKit.Bot {
                 var guildUser = await shard.Rest.GetGuildUserAsync(channel.Guild.Id, msg.Message.Sender);
                 if (guildUser != null)
                 {
-                    roles = guildUser.RoleIds
-                        .Select(roleId => channel.Guild.GetRole(roleId))
-                        .Where(role => role.Name != "@everyone")
-                        .OrderByDescending(role => role.Position)
-                        .ToList();
+                    if (guildUser.RoleIds.Count > 0)
+                        roles = guildUser.RoleIds
+                            .Select(roleId => channel.Guild.GetRole(roleId))
+                            .Where(role => role.Name != "@everyone")
+                            .OrderByDescending(role => role.Position)
+                            .ToList();
 
                     userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser?.NameAndMention();
                 }
@@ -144,7 +147,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
-                .WithImageUrl(serverMsg?.Attachments?.First()?.Url)
+                .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)

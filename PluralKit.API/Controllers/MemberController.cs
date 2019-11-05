@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PluralKit.Core;
@@ -10,13 +11,11 @@ namespace PluralKit.API.Controllers
     public class MemberController: ControllerBase
     {
         private IDataStore _data;
-        private DbConnectionFactory _conn;
         private TokenAuthService _auth;
 
-        public MemberController(IDataStore data, DbConnectionFactory conn, TokenAuthService auth)
+        public MemberController(IDataStore data, TokenAuthService auth)
         {
             _data = data;
-            _conn = conn;
             _auth = auth;
         }
 
@@ -36,7 +35,7 @@ namespace PluralKit.API.Controllers
             var system = _auth.CurrentSystem;
 
             if (newMember.Name == null)
-            return BadRequest("Member name cannot be null.");
+                return BadRequest("Member name cannot be null.");
 
             // Enforce per-system member limit
             var memberCount = await _data.GetSystemMemberCount(system);
@@ -56,9 +55,7 @@ namespace PluralKit.API.Controllers
             // Sanity bounds checks
             if (newMember.AvatarUrl != null && newMember.AvatarUrl.Length > 1000)
                 return BadRequest();
-            if (newMember.Prefix != null && newMember.Prefix.Length > 1000)
-                return BadRequest();
-            if (newMember.Suffix != null && newMember.Suffix.Length > 1000)
+            if (newMember.ProxyTags?.Any(tag => tag.Prefix.Length > 1000 || tag.Suffix.Length > 1000) ?? false)
                 return BadRequest();
 
             var member = await _data.CreateMember(system, newMember.Name);
@@ -70,8 +67,8 @@ namespace PluralKit.API.Controllers
             member.Birthday = newMember.Birthday;
             member.Pronouns = newMember.Pronouns;
             member.Description = newMember.Description;
-            member.Prefix = newMember.Prefix;
-            member.Suffix = newMember.Suffix;
+            member.ProxyTags = newMember.ProxyTags;
+            member.KeepProxy = newMember.KeepProxy;
             await _data.SaveMember(member);
 
             return Ok(member);
@@ -100,11 +97,7 @@ namespace PluralKit.API.Controllers
                 return BadRequest($"Member descriptions too long ({newMember.Description.Length} > {Limits.MaxDescriptionLength}.");
 
             // Sanity bounds checks
-            if (newMember.AvatarUrl != null && newMember.AvatarUrl.Length > 1000)
-                return BadRequest();
-            if (newMember.Prefix != null && newMember.Prefix.Length > 1000)
-                return BadRequest();
-            if (newMember.Suffix != null && newMember.Suffix.Length > 1000)
+            if (newMember.ProxyTags?.Any(tag => (tag.Prefix?.Length ?? 0) > 1000 || (tag.Suffix?.Length ?? 0) > 1000) ?? false)
                 return BadRequest();
 
             member.Name = newMember.Name;
@@ -114,8 +107,8 @@ namespace PluralKit.API.Controllers
             member.Birthday = newMember.Birthday;
             member.Pronouns = newMember.Pronouns;
             member.Description = newMember.Description;
-            member.Prefix = newMember.Prefix;
-            member.Suffix = newMember.Suffix;
+            member.ProxyTags = newMember.ProxyTags;
+            member.KeepProxy = newMember.KeepProxy;
             await _data.SaveMember(member);
 
             return Ok(member);

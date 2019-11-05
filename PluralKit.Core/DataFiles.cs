@@ -37,8 +37,8 @@ namespace PluralKit.Bot
                 Pronouns = m.Pronouns,
                 Color = m.Color,
                 AvatarUrl = m.AvatarUrl,
-                Prefix = m.Prefix,
-                Suffix = m.Suffix,
+                ProxyTags = m.ProxyTags,
+                KeepProxy = m.KeepProxy,
                 Created = Formats.TimestampExportFormat.Format(m.Created),
                 MessageCount = messageCounts.Where(x => x.Member == m.Id).Select(x => x.MessageCount).FirstOrDefault()
             }));
@@ -150,9 +150,14 @@ namespace PluralKit.Bot
                 if (dataMember.AvatarUrl != null) member.AvatarUrl = dataMember.AvatarUrl;
                 if (dataMember.Prefix != null || dataMember.Suffix != null)
                 {
-                    member.Prefix = dataMember.Prefix;
-                    member.Suffix = dataMember.Suffix;
+                    member.ProxyTags = new List<ProxyTag> { new ProxyTag(dataMember.Prefix, dataMember.Suffix) };
                 }
+                else
+                {
+                    member.ProxyTags = dataMember.ProxyTags ?? new ProxyTag[] { };
+                }
+
+                member.KeepProxy = dataMember.KeepProxy;
 
                 if (dataMember.Birthday != null)
                 {
@@ -223,8 +228,15 @@ namespace PluralKit.Bot
         [JsonProperty("pronouns")] public string Pronouns;
         [JsonProperty("color")] public string Color;
         [JsonProperty("avatar_url")] public string AvatarUrl;
-        [JsonProperty("prefix")] public string Prefix;
-        [JsonProperty("suffix")] public string Suffix;
+        
+        // For legacy single-tag imports
+        [JsonProperty("prefix")] [JsonIgnore] public string Prefix;
+        [JsonProperty("suffix")] [JsonIgnore] public string Suffix;
+        
+        // ^ is superseded by v
+        [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags;
+
+        [JsonProperty("keep_proxy")] public bool KeepProxy;
         [JsonProperty("message_count")] public int MessageCount;
         [JsonProperty("created")] public string Created;
 
@@ -241,7 +253,6 @@ namespace PluralKit.Bot
     {
         public bool HadGroups;
         public bool HadIndividualTags;
-        public bool HadMultibrackets;
         public DataFileSystem System;
     }
 
@@ -261,8 +272,8 @@ namespace PluralKit.Bot
             
             output.System = new DataFileSystem
             {
-                Members = Tuppers.Select(t => t.ToPluralKit(ref lastSetTag, ref output.HadMultibrackets,
-                    ref output.HadGroups, ref output.HadMultibrackets)).ToList(),
+                Members = Tuppers.Select(t => t.ToPluralKit(ref lastSetTag, ref output.HadIndividualTags,
+                    ref output.HadGroups)).ToList(),
                 Switches = new List<DataFileSwitch>(),
                 // If we haven't had multiple tags set, use the last (and only) one we set as the system tag
                 Tag = !output.HadIndividualTags ? lastSetTag : null
@@ -275,9 +286,9 @@ namespace PluralKit.Bot
     {
         [JsonProperty("name")] public string Name;
         [JsonProperty("avatar_url")] public string AvatarUrl;
-        [JsonProperty("brackets")] public ICollection<string> Brackets;
+        [JsonProperty("brackets")] public IList<string> Brackets;
         [JsonProperty("posts")] public int Posts; // Not supported by PK
-        [JsonProperty("show_brackets")] public bool ShowBrackets; // Not supported by PK
+        [JsonProperty("show_brackets")] public bool ShowBrackets;
         [JsonProperty("birthday")] public string Birthday;
         [JsonProperty("description")] public string Description;
         [JsonProperty("tag")] public string Tag; // Not supported by PK
@@ -286,7 +297,7 @@ namespace PluralKit.Bot
 
         [JsonIgnore] public bool Valid => Name != null && Brackets != null && Brackets.Count % 2 == 0;
 
-        public DataFileMember ToPluralKit(ref string lastSetTag, ref bool multipleTags, ref bool hasGroup, ref bool hasMultiBrackets)
+        public DataFileMember ToPluralKit(ref string lastSetTag, ref bool multipleTags, ref bool hasGroup)
         {
             // If we've set a tag before and it's not the same as this one,
             // then we have multiple unique tags and we pass that flag back to the caller
@@ -298,8 +309,9 @@ namespace PluralKit.Bot
 
             // Brackets in Tupperbox format are arranged as a single array
             // [prefix1, suffix1, prefix2, suffix2, prefix3... etc]
-            // If there are more than two entries this member has multiple brackets and we flag that
-            if (Brackets.Count > 2) hasMultiBrackets = true;
+            var tags = new List<ProxyTag>();
+            for (var i = 0; i < Brackets.Count / 2; i++) 
+                tags.Add(new ProxyTag(Brackets[i * 2], Brackets[i * 2 + 1]));
 
             return new DataFileMember
             {
@@ -308,8 +320,8 @@ namespace PluralKit.Bot
                 AvatarUrl = AvatarUrl,
                 Birthday = Birthday,
                 Description = Description,
-                Prefix = Brackets.FirstOrDefault().NullIfEmpty(),
-                Suffix = Brackets.Skip(1).FirstOrDefault().NullIfEmpty() // TODO: can Tupperbox members have no proxies at all?
+                ProxyTags = tags,
+                KeepProxy = ShowBrackets
             };
         }
     }
