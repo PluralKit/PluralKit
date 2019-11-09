@@ -55,7 +55,7 @@ namespace PluralKit.API.Controllers
             // Sanity bounds checks
             if (newMember.AvatarUrl != null && newMember.AvatarUrl.Length > 1000)
                 return BadRequest();
-            if (newMember.ProxyTags?.Any(tag => tag.Prefix.Length > 1000 || tag.Suffix.Length > 1000) ?? false)
+            if (newMember.ProxyTags?.Any(tag => (tag.Prefix?.Length ?? 0) > 1000 || (tag.Suffix?.Length ?? 0) > 1000) ?? false)
                 return BadRequest();
 
             var member = await _data.CreateMember(system, newMember.Name);
