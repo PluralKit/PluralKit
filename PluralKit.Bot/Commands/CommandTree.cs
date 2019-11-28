@@ -52,6 +52,7 @@ namespace PluralKit.Bot.Commands
         public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
         public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
         public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
+        public static Command MemberRandom = new Command("random", "random", "Gets a random member from your system");
 
         public static Command[] SystemCommands = {
             SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemDelete, SystemTimezone,
@@ -60,7 +61,7 @@ namespace PluralKit.Bot.Commands
 
         public static Command[] MemberCommands = {
             MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberDesc, MemberPronouns, MemberColor,
-            MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar,
+            MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar
         };
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
@@ -129,7 +130,8 @@ namespace PluralKit.Bot.Commands
             if (ctx.Match("stats")) return ctx.Execute<MiscCommands>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
                 return ctx.Execute<MiscCommands>(PermCheck, m => m.PermCheckGuild(ctx));
-
+            if (ctx.Match("random", "r"))
+                return ctx.Execute<MemberCommands>(MemberRandom, m => m.MemberRandom(ctx));
             ctx.Reply(
                 $"{Emojis.Error} Unknown command `{ctx.PeekArgument().SanitizeMentions()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
             return Task.CompletedTask;
