@@ -113,17 +113,17 @@ namespace PluralKit.API.Controllers
             var system = _auth.CurrentSystem;
             
             // Bounds checks
-            if (newSystem.Name.Length > Limits.MaxSystemNameLength)
+            if (newSystem.Name != null && newSystem.Name.Length > Limits.MaxSystemNameLength)
                 return BadRequest($"System name too long ({newSystem.Name.Length} > {Limits.MaxSystemNameLength}.");
-            if (newSystem.Tag.Length > Limits.MaxSystemTagLength)
+            if (newSystem.Tag != null && newSystem.Tag.Length > Limits.MaxSystemTagLength)
                 return BadRequest($"System tag too long ({newSystem.Tag.Length} > {Limits.MaxSystemTagLength}.");
-            if (newSystem.Description.Length > Limits.MaxDescriptionLength)
+            if (newSystem.Description != null && newSystem.Description.Length > Limits.MaxDescriptionLength)
                 return BadRequest($"System description too long ({newSystem.Description.Length} > {Limits.MaxDescriptionLength}.");
 
-            system.Name = newSystem.Name;
-            system.Description = newSystem.Description;
-            system.Tag = newSystem.Tag;
-            system.AvatarUrl = newSystem.AvatarUrl;
+            system.Name = newSystem.Name.NullIfEmpty();
+            system.Description = newSystem.Description.NullIfEmpty();
+            system.Tag = newSystem.Tag.NullIfEmpty();
+            system.AvatarUrl = newSystem.AvatarUrl.NullIfEmpty();
             system.UiTz = newSystem.UiTz ?? "UTC";
             
             await _data.SaveSystem(system);
