@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using App.Metrics.Logging;
+
 using Dapper;
 using NodaTime;
-using Npgsql;
 
 using Serilog;
 
@@ -109,7 +107,17 @@ namespace PluralKit {
         /// Gets the member count of a system.
         /// </summary>
         Task<int> GetSystemMemberCount(PKSystem system);
-        
+
+        /// <summary>
+        /// Gets a list of members with proxy tags that conflict with the given tags.
+        ///
+        /// A set of proxy tags A conflict with proxy tags B if both A's prefix and suffix
+        /// are a "subset" of B's. In other words, if A's prefix *starts* with B's prefix
+        /// and A's suffix *ends* with B's suffix, the tag pairs are considered conflicting.
+        /// </summary>
+        /// <param name="system">The system to check in.</param>
+        Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag);
+
         /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
         /// </summary>
@@ -357,6 +365,23 @@ namespace PluralKit {
         {
             _conn = conn;
             _logger = logger;
+        }
+
+        public async Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag)
+        {
+            using (var conn = await _conn.Obtain())
+                // return await conn.QueryAsync<PKMember>("select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix ilike @Prefix and suffix ilike @Suffix", new
+                // {
+                //     System = system.Id,
+                //     Prefix = tag.Prefix.Replace("%", "\\%") + "%",
+                //     Suffix = "%" + tag.Suffix.Replace("%", "\\%")
+                // });
+                return await conn.QueryAsync<PKMember>("select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix = @Prefix and suffix = @Suffix", new
+                {
+                    System = system.Id,
+                    Prefix = tag.Prefix,
+                    Suffix = tag.Suffix
+                });
         }
 
         public async Task<PKSystem> CreateSystem(string systemName = null) {

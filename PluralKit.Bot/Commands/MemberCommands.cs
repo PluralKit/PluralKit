@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -164,6 +163,20 @@ namespace PluralKit.Bot.Commands
                 return new ProxyTag(prefixAndSuffix[0], prefixAndSuffix[1]);
             }
             
+            async Task<bool> WarnOnConflict(ProxyTag newTag)
+            {
+                var conflicts = (await _data.GetConflictingProxies(ctx.System, newTag))
+                    .Where(m => m.Id != target.Id)
+                    .ToList();
+
+                if (conflicts.Count <= 0) return true;
+
+                var conflictList = conflicts.Select(m => $"- **{m.Name}**");
+                var msg = await ctx.Reply(
+                    $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?");
+                return await ctx.PromptYesNo(msg);
+            }
+            
             // "Sub"command: no arguments clearing
             if (!ctx.HasNext())
             {
@@ -175,7 +188,7 @@ namespace PluralKit.Bot.Commands
                     if (!await ctx.PromptYesNo(msg))
                         throw Errors.GenericCancelled();
                 }
-
+                
                 target.ProxyTags = new ProxyTag[] { };
                 
                 await _data.SaveMember(target);
@@ -190,6 +203,9 @@ namespace PluralKit.Bot.Commands
                 if (target.ProxyTags.Contains(tagToAdd))
                     throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
                 
+                if (!await WarnOnConflict(tagToAdd))
+                    throw Errors.GenericCancelled();
+
                 // It's not guaranteed the list's mutable, so we force it to be
                 target.ProxyTags = target.ProxyTags.ToList();
                 target.ProxyTags.Add(tagToAdd);
@@ -224,6 +240,9 @@ namespace PluralKit.Bot.Commands
                 // already more than one proxy tag.
                 if (target.ProxyTags.Count > 1)
                     throw Errors.LegacyAlreadyHasProxyTag(requestedTag, target);
+                
+                if (!await WarnOnConflict(requestedTag))
+                    throw Errors.GenericCancelled();
 
                 target.ProxyTags = new[] {requestedTag};
                 
