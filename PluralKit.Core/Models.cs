@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 using Dapper.Contrib.Extensions;
 using Newtonsoft.Json;
@@ -50,6 +51,18 @@ namespace PluralKit
         [JsonProperty("created")] public Instant Created { get; set; }
         [JsonProperty("tz")] public string UiTz { get; set; }
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
+
+        public void ToJson(System.Text.Json.Utf8JsonWriter w)
+        {
+            w.WriteStartObject();
+            w.WriteString("id", Hid);
+            w.WriteString("description", Description);
+            w.WriteString("tag", Tag);
+            w.WriteString("avatar_url", AvatarUrl);
+            w.WriteString("created", Formats.TimestampExportFormat.Format(Created));
+            w.WriteString("tz", UiTz);
+            w.WriteEndObject();
+        }
     }
 
     public class PKMember
@@ -101,6 +114,38 @@ namespace PluralKit
         {
             if (systemTag == null) return DisplayName ?? Name;
             return $"{DisplayName ?? Name} {systemTag}";
+        }
+
+        public void ToJson(Utf8JsonWriter w)
+        {
+            w.WriteStartObject();
+            w.WriteString("id", Hid);
+            w.WriteString("name", Name);
+            w.WriteString("color", Color);
+            w.WriteString("display_name", DisplayName);
+            w.WriteString("birthday", Birthday.HasValue ? Formats.DateExportFormat.Format(Birthday.Value) : null);
+            w.WriteString("pronouns", Pronouns);
+            w.WriteString("description", Description);
+            w.WriteStartArray("proxy_tags");
+            foreach (var tag in ProxyTags)
+            {
+                w.WriteStartObject();
+                w.WriteString("prefix", tag.Prefix);
+                w.WriteString("suffix", tag.Suffix);
+                w.WriteEndObject();
+            }
+            w.WriteEndArray();
+            w.WriteBoolean("keep_proxy", KeepProxy);
+            w.WriteString("created", Formats.TimestampExportFormat.Format(Created));
+
+            if (ProxyTags.Count > 0)
+            {
+                // Legacy compatibility only, TODO: remove at some point
+                w.WriteString("prefix", ProxyTags?.FirstOrDefault().Prefix);
+                w.WriteString("suffix", ProxyTags?.FirstOrDefault().Suffix);
+            }
+
+            w.WriteEndObject();
         }
     }
 
