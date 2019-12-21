@@ -1,13 +1,19 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using App.Metrics;
-using App.Metrics.Logging;
+
 using Discord;
-using Discord.Net;
-using Discord.Webhook;
-using Microsoft.Extensions.Caching.Memory;
+
+using Humanizer;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using Serilog;
 
 namespace PluralKit.Bot
@@ -15,27 +21,25 @@ namespace PluralKit.Bot
     public class WebhookExecutorService: IDisposable
     {
         private WebhookCacheService _webhookCache;
-        private IMemoryCache _cache;
         private ILogger _logger;
         private IMetrics _metrics;
         private HttpClient _client;
 
-        public WebhookExecutorService(IMemoryCache cache, IMetrics metrics, WebhookCacheService webhookCache, ILogger logger)
+        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger)
         {
-            _cache = cache;
             _metrics = metrics;
             _webhookCache = webhookCache;
             _logger = logger.ForContext<WebhookExecutorService>();
             _client = new HttpClient();
         }
 
-        public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IAttachment attachment)
+        public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IReadOnlyCollection<IAttachment> attachments)
         {
             _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
             
             // Get a webhook, execute it
             var webhook = await _webhookCache.GetWebhook(channel);
-            var id = await ExecuteWebhookInner(webhook, name, avatarUrl, content, attachment);
+            var id = await ExecuteWebhookInner(webhook, name, avatarUrl, content, attachments);
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
@@ -46,74 +50,103 @@ namespace PluralKit.Bot
         }
 
         private async Task<ulong> ExecuteWebhookInner(IWebhook webhook, string name, string avatarUrl, string content,
-            IAttachment attachment, bool hasRetried = false)
+            IReadOnlyCollection<IAttachment> attachments, bool hasRetried = false)
         {
-            var client = await GetClientFor(webhook);
 
-            try
-            {
-                // If we have an attachment, use the special SendFileAsync method
-                if (attachment != null)
-                    using (var attachmentStream = await _client.GetStreamAsync(attachment.Url))
-                    using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
-                        return await client.SendFileAsync(attachmentStream, attachment.Filename, content,
-                            username: FixClyde(name),
-                            avatarUrl: avatarUrl);
+            var mfd = new MultipartFormDataContent();
+            mfd.Add(new StringContent(content.Truncate(2000)), "content");
+            mfd.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
+            if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
+            
+            var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
+            if (attachmentChunks.Count > 0)
+                await AddAttachmentsToMultipart(mfd, attachmentChunks.First());
 
-                // Otherwise, send normally
-                return await client.SendMessageAsync(content, username: FixClyde(name), avatarUrl: avatarUrl);
-            }
-            catch (HttpException e)
+            HttpResponseMessage response;
+            using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
+                response = await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}?wait=true", mfd);
+
+            // TODO: are there cases where an error won't also return a parseable JSON object?
+            var responseJson = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync());
+            if (responseJson.ContainsKey("code"))
             {
-                // If we hit an error, just retry (if we haven't already)
-                if (e.DiscordCode == 10015 && !hasRetried) // Error 10015 = "Unknown Webhook"
+                var errorCode = responseJson["code"].Value<int>();
+                if (errorCode == 10015 && !hasRetried)
                 {
-                    _logger.Warning(e, "Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
-                    return await ExecuteWebhookInner(await _webhookCache.InvalidateAndRefreshWebhook(webhook), name, avatarUrl, content, attachment, hasRetried: true);
+                    // Error 10015 = "Unknown Webhook" - this likely means the webhook was deleted
+                    // but is still in our cache. Invalidate, refresh, try again
+                    _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
+                    return await ExecuteWebhookInner(await _webhookCache.InvalidateAndRefreshWebhook(webhook), name, avatarUrl, content, attachments, hasRetried: true);
                 }
 
-                throw;
+                if (errorCode == 40005)
+                    throw Errors.AttachmentTooLarge; // should be caught by the check above but just makin' sure
+
+                // TODO: look into what this actually throws, and if this is the correct handling
+                response.EnsureSuccessStatusCode();
             }
-        }
-        
-        private async Task<DiscordWebhookClient> GetClientFor(IWebhook webhook)
-        {
-            _logger.Verbose("Looking for client for webhook {Webhook} in cache", webhook.Id);
-            return await _cache.GetOrCreateAsync($"_webhook_client_{webhook.Id}",
-                (entry) => MakeCachedClientFor(entry, webhook));
-        }
-
-        private Task<DiscordWebhookClient> MakeCachedClientFor(ICacheEntry entry, IWebhook webhook) {
-            _logger.Information("Client for {Webhook} not found in cache, creating", webhook.Id);
             
-            // Define expiration for the client cache
-            // 10 minutes *without a query* and it gets yoten
-            entry.SlidingExpiration = TimeSpan.FromMinutes(10);
-
-            // IMemoryCache won't automatically dispose of its values when the cache gets evicted
-            // so we register a hook to do so here.
-            entry.RegisterPostEvictionCallback((key, value, reason, state) => (value as IDisposable)?.Dispose());
-            
-            // DiscordWebhookClient has a sync network call in its constructor (!!!)
-            // and we want to punt that onto a task queue, so we do that.
-            return Task.Run(async () =>
+            // If we have any leftover attachment chunks, send those
+            if (attachmentChunks.Count > 1)
             {
-                try
+                // Deliberately not adding a content, just the remaining files
+                foreach (var chunk in attachmentChunks.Skip(1))
                 {
-                    return new DiscordWebhookClient(webhook);
-                }
-                catch (InvalidOperationException)
-                {
-                    // TODO: does this leak stuff inside the DiscordWebhookClient created above?
+                    mfd = new MultipartFormDataContent();
+                    mfd.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
+                    if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
+                    await AddAttachmentsToMultipart(mfd, chunk);
                     
-                    // Webhook itself was found in cache, but has been deleted on the channel
-                    // We request a new webhook instead
-                    return new DiscordWebhookClient(await _webhookCache.InvalidateAndRefreshWebhook(webhook));
+                    // Don't bother with ?wait, we're just kinda firehosing this stuff
+                    // also don't error check, the real message itself is already sent
+                    await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}", mfd);
                 }
-
-            });
+            }
+            
+            // At this point we're sure we have a 2xx status code, so just assume success
+            // TODO: can we do this without a round-trip to a string?
+            return responseJson["id"].Value<ulong>();
         }
-        
+
+        private IReadOnlyCollection<IReadOnlyCollection<IAttachment>> ChunkAttachmentsOrThrow(
+            IReadOnlyCollection<IAttachment> attachments, int sizeThreshold)
+        {
+            // Splits a list of attachments into "chunks" of at most 8MB each
+            // If any individual attachment is larger than 8MB, will throw an error
+            var chunks = new List<List<IAttachment>>();
+            var list = new List<IAttachment>();
+            
+            foreach (var attachment in attachments)
+            {
+                if (attachment.Size >= sizeThreshold) throw Errors.AttachmentTooLarge;
+
+                if (list.Sum(a => a.Size) + attachment.Size >= sizeThreshold)
+                {
+                    chunks.Add(list);
+                    list = new List<IAttachment>();
+                }
+                
+                list.Add(attachment);
+            }
+
+            if (list.Count > 0) chunks.Add(list);
+            return chunks;
+        }
+
+        private async Task AddAttachmentsToMultipart(MultipartFormDataContent content,
+                                               IReadOnlyCollection<IAttachment> attachments)
+        {
+            async Task<(IAttachment, Stream)> GetStream(IAttachment attachment)
+            {
+                var attachmentResponse = await _client.GetAsync(attachment.Url);
+                return (attachment, await attachmentResponse.Content.ReadAsStreamAsync());
+            }
+            
+            var attachmentId = 0;
+            foreach (var (attachment, attachmentStream) in await Task.WhenAll(attachments.Select(GetStream)))
+                content.Add(new StreamContent(attachmentStream), $"file{attachmentId++}", attachment.Filename);
+        }
+
         private string FixClyde(string name)
         {
             // Check if the name contains "Clyde" - if not, do nothing

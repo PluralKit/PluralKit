@@ -249,7 +249,9 @@ namespace PluralKit
 
         public static string NullIfEmpty(this string input)
         {
-            return input.Trim().Length == 0 ? null : input;
+            if (input == null) return null;
+            if (input.Trim().Length == 0) return null;
+            return input;
         }
     }
 

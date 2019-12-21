@@ -10,7 +10,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Discord.Net.Webhook" Version="2.1.1" />
       <PackageReference Include="Discord.Net.WebSocket" Version="2.1.1" />
       <PackageReference Include="Humanizer.Core" Version="2.6.2" />
       <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.2.0" />

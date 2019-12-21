@@ -101,12 +101,12 @@ namespace PluralKit.API.Controllers
                 return BadRequest();
 
             member.Name = newMember.Name;
-            member.DisplayName = newMember.DisplayName;
-            member.Color = newMember.Color;
-            member.AvatarUrl = newMember.AvatarUrl;
+            member.DisplayName = newMember.DisplayName.NullIfEmpty();
+            member.Color = newMember.Color.NullIfEmpty();
+            member.AvatarUrl = newMember.AvatarUrl.NullIfEmpty();
             member.Birthday = newMember.Birthday;
-            member.Pronouns = newMember.Pronouns;
-            member.Description = newMember.Description;
+            member.Pronouns = newMember.Pronouns.NullIfEmpty();
+            member.Description = newMember.Description.NullIfEmpty();
             member.ProxyTags = newMember.ProxyTags;
             member.KeepProxy = newMember.KeepProxy;
             await _data.SaveMember(member);
