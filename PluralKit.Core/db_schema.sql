@@ -74,6 +74,8 @@ ON switch_members USING btree (
 	switch ASC NULLS LAST
 ) INCLUDE (member);
 
+create index if not exists idx_message_member on messages (member);
+
 create table if not exists webhooks
 (
     channel bigint primary key,
