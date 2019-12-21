@@ -120,7 +120,7 @@ namespace PluralKit.Bot
                 channel,
                 proxyName, avatarUrl,
                 messageContents,
-                message.Attachments.FirstOrDefault()
+                message.Attachments
             );
 
             // Store the message in the database, and log it in the log channel (if applicable)

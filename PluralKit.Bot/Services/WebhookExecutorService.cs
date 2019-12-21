@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -30,13 +33,13 @@ namespace PluralKit.Bot
             _client = new HttpClient();
         }
 
-        public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IAttachment attachment)
+        public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IReadOnlyCollection<IAttachment> attachments)
         {
             _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
             
             // Get a webhook, execute it
             var webhook = await _webhookCache.GetWebhook(channel);
-            var id = await ExecuteWebhookInner(webhook, name, avatarUrl, content, attachment);
+            var id = await ExecuteWebhookInner(webhook, name, avatarUrl, content, attachments);
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
@@ -47,20 +50,17 @@ namespace PluralKit.Bot
         }
 
         private async Task<ulong> ExecuteWebhookInner(IWebhook webhook, string name, string avatarUrl, string content,
-            IAttachment attachment, bool hasRetried = false)
+            IReadOnlyCollection<IAttachment> attachments, bool hasRetried = false)
         {
 
             var mfd = new MultipartFormDataContent();
             mfd.Add(new StringContent(content.Truncate(2000)), "content");
             mfd.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
             if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
-
-            if (attachment != null)
-            {
-                var attachmentResponse = await _client.GetAsync(attachment.Url);
-                var attachmentStream = await attachmentResponse.Content.ReadAsStreamAsync();
-                mfd.Add(new StreamContent(attachmentStream), "file", attachment.Filename);
-            }
+            
+            var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
+            if (attachmentChunks.Count > 0)
+                await AddAttachmentsToMultipart(mfd, attachmentChunks.First());
 
             HttpResponseMessage response;
             using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
@@ -70,21 +70,81 @@ namespace PluralKit.Bot
             var responseJson = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync());
             if (responseJson.ContainsKey("code"))
             {
-                if (responseJson["code"].Value<int>() == 10015 && !hasRetried)
+                var errorCode = responseJson["code"].Value<int>();
+                if (errorCode == 10015 && !hasRetried)
                 {
                     // Error 10015 = "Unknown Webhook" - this likely means the webhook was deleted
                     // but is still in our cache. Invalidate, refresh, try again
                     _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
-                    return await ExecuteWebhookInner(await _webhookCache.InvalidateAndRefreshWebhook(webhook), name, avatarUrl, content, attachment, hasRetried: true);
+                    return await ExecuteWebhookInner(await _webhookCache.InvalidateAndRefreshWebhook(webhook), name, avatarUrl, content, attachments, hasRetried: true);
                 }
-                
+
+                if (errorCode == 40005)
+                    throw Errors.AttachmentTooLarge; // should be caught by the check above but just makin' sure
+
                 // TODO: look into what this actually throws, and if this is the correct handling
                 response.EnsureSuccessStatusCode();
+            }
+            
+            // If we have any leftover attachment chunks, send those
+            if (attachmentChunks.Count > 1)
+            {
+                // Deliberately not adding a content, just the remaining files
+                foreach (var chunk in attachmentChunks.Skip(1))
+                {
+                    mfd = new MultipartFormDataContent();
+                    mfd.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
+                    if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
+                    await AddAttachmentsToMultipart(mfd, chunk);
+                    
+                    // Don't bother with ?wait, we're just kinda firehosing this stuff
+                    // also don't error check, the real message itself is already sent
+                    await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}", mfd);
+                }
             }
             
             // At this point we're sure we have a 2xx status code, so just assume success
             // TODO: can we do this without a round-trip to a string?
             return responseJson["id"].Value<ulong>();
+        }
+
+        private IReadOnlyCollection<IReadOnlyCollection<IAttachment>> ChunkAttachmentsOrThrow(
+            IReadOnlyCollection<IAttachment> attachments, int sizeThreshold)
+        {
+            // Splits a list of attachments into "chunks" of at most 8MB each
+            // If any individual attachment is larger than 8MB, will throw an error
+            var chunks = new List<List<IAttachment>>();
+            var list = new List<IAttachment>();
+            
+            foreach (var attachment in attachments)
+            {
+                if (attachment.Size >= sizeThreshold) throw Errors.AttachmentTooLarge;
+
+                if (list.Sum(a => a.Size) + attachment.Size >= sizeThreshold)
+                {
+                    chunks.Add(list);
+                    list = new List<IAttachment>();
+                }
+                
+                list.Add(attachment);
+            }
+
+            if (list.Count > 0) chunks.Add(list);
+            return chunks;
+        }
+
+        private async Task AddAttachmentsToMultipart(MultipartFormDataContent content,
+                                               IReadOnlyCollection<IAttachment> attachments)
+        {
+            async Task<(IAttachment, Stream)> GetStream(IAttachment attachment)
+            {
+                var attachmentResponse = await _client.GetAsync(attachment.Url);
+                return (attachment, await attachmentResponse.Content.ReadAsStreamAsync());
+            }
+            
+            var attachmentId = 0;
+            foreach (var (attachment, attachmentStream) in await Task.WhenAll(attachments.Select(GetStream)))
+                content.Add(new StreamContent(attachmentStream), $"file{attachmentId++}", attachment.Filename);
         }
 
         private string FixClyde(string name)

@@ -87,5 +87,7 @@ namespace PluralKit.Bot {
         public static PKError LegacyAlreadyHasProxyTag(ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString().SanitizeMentions()}\nConsider using the `pk;member {member.Hid} proxy add {requested.ProxyString.SanitizeMentions()}` command instead.");
 
         public static PKError GenericCancelled() => new PKError("Operation cancelled.");
+
+        public static PKError AttachmentTooLarge => new PKError("PluralKit cannot proxy attachments over 8 megabytes (as webhooks aren't considered as having Discord Nitro) :(");
     }
 }
