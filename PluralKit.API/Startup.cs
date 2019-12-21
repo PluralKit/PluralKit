@@ -1,9 +1,9 @@
-﻿using App.Metrics;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace PluralKit.API
 {
@@ -20,9 +20,10 @@ namespace PluralKit.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            services.AddMvc(opts => { })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                .AddJsonOptions(opts => { opts.SerializerSettings.BuildSerializerSettings(); });
+            services.AddControllers()
+                .SetCompatibilityVersion(CompatibilityVersion.Latest)
+                .AddNewtonsoftJson();
+                // .AddJsonOptions(opts => { opts.SerializerSettings.BuildSerializerSettings(); });
 
             services
                 .AddTransient<IDataStore, PostgresDataStore>()
@@ -39,7 +40,7 @@ namespace PluralKit.API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -54,7 +55,9 @@ namespace PluralKit.API
             //app.UseHttpsRedirection();
             app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization"));
             app.UseMiddleware<TokenAuthService>();
-            app.UseMvc();
+            
+            app.UseRouting();
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
 }

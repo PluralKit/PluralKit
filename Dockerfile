@@ -1,12 +1,13 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:2.2-alpine AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build
 
 WORKDIR /app
 COPY . /app
 RUN dotnet publish -c Release -o out
 
-FROM mcr.microsoft.com/dotnet/core/runtime:2.2-alpine
+# TODO: is using aspnet correct here? Required for API but might break Bot
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
 WORKDIR /app
-COPY --from=build /app/PluralKit.*/out ./
+COPY --from=build /app/PluralKit.*/bin/Release/netcoreapp3.1 ./
 
 ENTRYPOINT ["dotnet"]
 CMD ["PluralKit.Bot.dll"]
