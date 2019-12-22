@@ -82,10 +82,10 @@ namespace PluralKit.Bot.Commands {
                 .AddField("Commands executed", $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)", true)
                 .AddField("Current shard", $"Shard #{shardId} (of {shardTotal} total, {shardUpTotal} are up)", true)
                 .AddField("Shard uptime", $"{Formats.DurationFormat.Format(shardUptime)} ({shardInfo.DisconnectionCount} disconnections)", true)
-                .AddField("CPU usage", $"{_cpu.LastCpuMeasure * 100:P1}", true)
+                .AddField("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true)
                 .AddField("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true)
                 .AddField("Latency", $"API: {(msg.Timestamp - ctx.Message.Timestamp).TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency} ms", true)
-                .AddField("Total numbers", $"{totalSystems} systems, {totalMembers} members, {totalSwitches} switches, {totalMessages} messages");
+                .AddField("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalSwitches:N0} switches, {totalMessages:N0} messages");
 
             await msg.ModifyAsync(f =>
             {
