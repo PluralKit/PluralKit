@@ -304,6 +304,9 @@ namespace PluralKit.Bot
             if (_client.GetShardFor((arg.Channel as IGuildChannel)?.Guild).ConnectionState != ConnectionState.Connected)
                 return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
             
+            
+            _logger.Debug("ThreadPool pending count: {PendingCount}, completed: {CompletedCount}, {ThreadCount} threads", ThreadPool.PendingWorkItemCount, ThreadPool.CompletedWorkItemCount, ThreadPool.ThreadCount);
+            
             RegisterMessageMetrics(arg);
 
             // Ignore system messages (member joined, message pinned, etc)
