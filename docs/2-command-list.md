@@ -17,6 +17,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;system avatar [avatar url]` - Changes the avatar of your system.
 - `pk;system tag [tag]` - Changes the system tag of your system.
 - `pk;system timezone [location]` - Changes the time zone of your system.
+- `pk;system proxy [on|off]` - Toggles message proxying for a specific server. 
 - `pk;system delete` - Deletes your system.
 - `pk;system [id] fronter` - Shows the current fronter of a system.
 - `pk;system [id] fronthistory` - Shows the last 10 fronters of a system.

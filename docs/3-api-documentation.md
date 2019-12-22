@@ -67,6 +67,7 @@ The following three models (usually represented in JSON format) represent the va
 |---|---|---|
 |timestamp|datetime||
 |id|snowflake|The ID of the message sent by the webhook. Encoded as string for precision reasons.|
+|original|snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.|
 |sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
 |channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
 |system|full System object|The system that proxied the message.|
@@ -371,6 +372,7 @@ Queries a system by its linked Discord account ID (17/18-digit numeric snowflake
 
 ### GET /msg/\<id>
 Looks up a proxied message by its message ID. Returns `404 Not Found` if the message ID is invalid or wasn't found (eg. was deleted or not proxied by PK).
+You can also look messages up by their *trigger* message ID (useful for, say, logging bot integration).
 
 #### Example request
     GET https://api.pluralkit.me/v1/msg/601014599386398700
@@ -380,6 +382,7 @@ Looks up a proxied message by its message ID. Returns `404 Not Found` if the mes
 {
     "timestamp": "2019-07-17T11:37:26.805Z",
     "id": "601014599386398700",
+    "original": "601014598168435600",
     "sender": "466378653216014359",
     "channel": "471388251102380000",
     "system": {

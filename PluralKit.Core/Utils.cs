@@ -262,6 +262,7 @@ namespace PluralKit
         public static readonly string Note = "\U0001f4dd";
         public static readonly string ThumbsUp = "\U0001f44d";
         public static readonly string RedQuestion = "\u2753";
+        public static readonly string Bell = "\U0001F514";
     }
 
     public static class Formats
