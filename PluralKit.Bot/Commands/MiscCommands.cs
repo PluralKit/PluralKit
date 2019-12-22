@@ -89,7 +89,7 @@ namespace PluralKit.Bot.Commands {
 
             await msg.ModifyAsync(f =>
             {
-                f.Content = Optional<string>.Unspecified;
+                f.Content = "";
                 f.Embed = embed.Build();
             });
         }
