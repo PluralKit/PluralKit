@@ -9,6 +9,7 @@ namespace PluralKit.API.Controllers
     {
         [JsonProperty("timestamp")] public Instant Timestamp;
         [JsonProperty("id")] public string Id;
+        [JsonProperty("original")] public string Original;
         [JsonProperty("sender")] public string Sender;
         [JsonProperty("channel")] public string Channel;
 
@@ -41,7 +42,8 @@ namespace PluralKit.API.Controllers
                 Channel = msg.Message.Channel.ToString(),
                 Sender = msg.Message.Sender.ToString(),
                 Member = msg.Member,
-                System = msg.System
+                System = msg.System,
+                Original = msg.Message.OriginalMid?.ToString()
             };
         } 
     }
