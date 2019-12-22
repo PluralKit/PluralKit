@@ -16,6 +16,7 @@ namespace PluralKit.Bot
     {
         private DiscordShardedClient _client;
         private IMetrics _metrics;
+        private CpuStatService _cpu;
 
         private IDataStore _data;
 
@@ -25,13 +26,14 @@ namespace PluralKit.Bot
 
         private ILogger _logger;
 
-        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, IDataStore data)
+        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, IDataStore data, CpuStatService cpu)
         {
             _client = (DiscordShardedClient) client;
             _metrics = metrics;
             _webhookCache = webhookCache;
             _countHolder = countHolder;
             _data = data;
+            _cpu = cpu;
             _logger = logger.ForContext<PeriodicStatCollector>();
         }
 
@@ -71,7 +73,7 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessPrivateMemory, process.PrivateMemorySize64);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessThreads, process.Threads.Count);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessHandles, process.HandleCount);
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.CpuUsage, await EstimateCpuUsage());
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.CpuUsage, await _cpu.EstimateCpuUsage());
             
             // Database info
             _metrics.Measure.Gauge.SetValue(CoreMetrics.DatabaseConnections, _countHolder.ConnectionCount);
@@ -81,30 +83,6 @@ namespace PluralKit.Bot
 
             stopwatch.Stop();
             _logger.Information("Updated metrics in {Time}", stopwatch.ElapsedDuration());
-        }
-
-        private async Task<double> EstimateCpuUsage()
-        {
-            // We get the current processor time, wait 5 seconds, then compare
-            // https://medium.com/@jackwild/getting-cpu-usage-in-net-core-7ef825831b8b
-            
-            _logger.Information("Estimating CPU usage...");
-            var stopwatch = new Stopwatch();
-            
-            stopwatch.Start();
-            var cpuTimeBefore = Process.GetCurrentProcess().TotalProcessorTime;
-            
-            await Task.Delay(5000);
-            
-            stopwatch.Stop();
-            var cpuTimeAfter = Process.GetCurrentProcess().TotalProcessorTime;
-
-            var cpuTimePassed = cpuTimeAfter - cpuTimeBefore;
-            var timePassed = stopwatch.Elapsed;
-
-            var percent = cpuTimePassed / timePassed;
-            _logger.Information("CPU usage measured as {Percent:P}", percent);
-            return percent;
         }
     }
 }

@@ -110,9 +110,11 @@ namespace PluralKit.Bot
             .AddTransient<LogChannelService>()
             .AddTransient<DataFileService>()
             .AddTransient<WebhookExecutorService>()
-            
+
             .AddTransient<ProxyCacheService>()
             .AddSingleton<WebhookCacheService>()
+            .AddSingleton<ShardInfoService>()
+            .AddSingleton<CpuStatService>()
 
             .AddTransient<IDataStore, PostgresDataStore>()
 
@@ -161,6 +163,8 @@ namespace PluralKit.Bot
             _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(s => s.AddReactionAddedBreadcrumb(msg, channel, reaction), eh => eh.HandleReactionAdded(msg, channel, reaction));
             _client.MessageDeleted += (msg, channel) => HandleEvent(s => s.AddMessageDeleteBreadcrumb(msg, channel), eh => eh.HandleMessageDeleted(msg, channel));
             _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(s => s.AddMessageBulkDeleteBreadcrumb(msgs, channel), eh => eh.HandleMessagesBulkDelete(msgs, channel));
+            
+            _services.GetService<ShardInfoService>().Init(_client);
 
             return Task.CompletedTask;
         }
