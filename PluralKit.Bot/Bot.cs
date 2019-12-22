@@ -150,6 +150,7 @@ namespace PluralKit.Bot
 
         public Task Init()
         {
+            _client.ShardDisconnected += ShardDisconnected;
             _client.ShardReady += ShardReady;
             _client.Log += FrameworkLog;
             
@@ -161,6 +162,12 @@ namespace PluralKit.Bot
             _client.MessageDeleted += (msg, channel) => HandleEvent(s => s.AddMessageDeleteBreadcrumb(msg, channel), eh => eh.HandleMessageDeleted(msg, channel));
             _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(s => s.AddMessageBulkDeleteBreadcrumb(msgs, channel), eh => eh.HandleMessagesBulkDelete(msgs, channel));
 
+            return Task.CompletedTask;
+        }
+
+        private Task ShardDisconnected(Exception ex, DiscordSocketClient shard)
+        {
+            _logger.Warning(ex, $"Shard #{shard.ShardId} disconnected");
             return Task.CompletedTask;
         }
 
