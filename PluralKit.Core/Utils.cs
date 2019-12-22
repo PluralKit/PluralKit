@@ -323,14 +323,16 @@ namespace PluralKit
             return new LoggerConfiguration()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
                 .MinimumLevel.Debug()
-                .WriteTo.File(
-                    new RenderedCompactJsonFormatter(),
-                    (config.LogDir ?? "logs") + $"/pluralkit.{component}.log",
-                    rollingInterval: RollingInterval.Day,
-                    flushToDiskInterval: TimeSpan.FromSeconds(10),
-                    restrictedToMinimumLevel: LogEventLevel.Information,
-                    buffered: true)
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate:"[{Timestamp:HH:mm:ss}] [{EventId}] {Level:u3} {Message:lj}{NewLine}{Exception}")
+                .WriteTo.Async(a =>
+                    a.File(
+                        new RenderedCompactJsonFormatter(),
+                        (config.LogDir ?? "logs") + $"/pluralkit.{component}.log",
+                        rollingInterval: RollingInterval.Day,
+                        flushToDiskInterval: TimeSpan.FromSeconds(10),
+                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        buffered: true))
+                .WriteTo.Async(a => 
+                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate:"[{Timestamp:HH:mm:ss}] [{EventId}] {Level:u3} {Message:lj}{NewLine}{Exception}"))
                 .CreateLogger();
         }
 
