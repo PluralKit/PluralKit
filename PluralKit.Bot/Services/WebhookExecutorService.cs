@@ -160,10 +160,5 @@ namespace PluralKit.Bot
             // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
             return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
         }
-
-        public void Dispose()
-        {
-            _client.Dispose();
-        }
     }
 }
