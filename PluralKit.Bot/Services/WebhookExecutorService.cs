@@ -30,7 +30,7 @@ namespace PluralKit.Bot
             _metrics = metrics;
             _webhookCache = webhookCache;
             _logger = logger.ForContext<WebhookExecutorService>();
-            _client = new HttpClient();
+            _client = new HttpClient {Timeout = TimeSpan.FromSeconds(5)};
         }
 
         public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IReadOnlyCollection<IAttachment> attachments)
@@ -60,7 +60,10 @@ namespace PluralKit.Bot
             
             var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)
+            {
+                _logger.Information($"Invoking webhook with {attachments.Count} attachments totalling {attachments.Select(a => a.Size).Sum() / 1024 / 1024} MiB in {attachmentChunks.Count} chunks");
                 await AddAttachmentsToMultipart(mfd, attachmentChunks.First());
+            }
 
             HttpResponseMessage response;
             using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
@@ -138,7 +141,7 @@ namespace PluralKit.Bot
         {
             async Task<(IAttachment, Stream)> GetStream(IAttachment attachment)
             {
-                var attachmentResponse = await _client.GetAsync(attachment.Url);
+                var attachmentResponse = await _client.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead);
                 return (attachment, await attachmentResponse.Content.ReadAsStreamAsync());
             }
             
