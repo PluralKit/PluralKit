@@ -181,9 +181,29 @@ namespace PluralKit.Bot
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
                     return HandleMessageQueryByReaction(message, reaction.UserId, reaction.Emote);
+                case "\U0001F514": // Bell
+                case "\U0001F6CE": // Bellhop bell
+                case "\U0001F3D3": // Ping pong paddle (lol)
+                case "\u23F0": // Alarm clock
+                case "\u2757": // Exclamation mark
+                    return HandleMessagePingByReaction(message, channel, reaction.UserId);
                 default:
                     return Task.CompletedTask;
             }
+        }
+
+        private async Task HandleMessagePingByReaction(Cacheable<IUserMessage, ulong> message,
+                                                       ISocketMessageChannel channel, ulong userWhoReacted)
+        {
+            // Find the message in the DB
+            var msg = await _data.GetMessage(message.Id);
+            if (msg == null) return;
+
+            var realMessage = await message.GetOrDownloadAsync();
+            var embed = new EmbedBuilder()
+                .WithDescription($"[Jump to pinged message]({realMessage.GetJumpUrl()})");
+
+            await channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{userWhoReacted}>.", embed: embed.Build());
         }
 
         private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted, IEmote reactedEmote)
