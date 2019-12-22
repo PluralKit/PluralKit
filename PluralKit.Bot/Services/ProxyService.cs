@@ -190,15 +190,17 @@ namespace PluralKit.Bot
                 case "\U0001F3D3": // Ping pong paddle (lol)
                 case "\u23F0": // Alarm clock
                 case "\u2757": // Exclamation mark
-                    return HandleMessagePingByReaction(message, channel, reaction.UserId);
+                    return HandleMessagePingByReaction(message, channel, reaction.UserId, reaction.Emote);
                 default:
                     return Task.CompletedTask;
             }
         }
 
         private async Task HandleMessagePingByReaction(Cacheable<IUserMessage, ulong> message,
-                                                       ISocketMessageChannel channel, ulong userWhoReacted)
+                                                       ISocketMessageChannel channel, ulong userWhoReacted,
+                                                       IEmote reactedEmote)
         {
+
             // Find the message in the DB
             var msg = await _data.GetMessage(message.Id);
             if (msg == null) return;
@@ -208,6 +210,11 @@ namespace PluralKit.Bot
                 .WithDescription($"[Jump to pinged message]({realMessage.GetJumpUrl()})");
 
             await channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{userWhoReacted}>.", embed: embed.Build());
+            
+            // Finally remove the original reaction (if we can)
+            var user = await _client.GetUserAsync(userWhoReacted);
+            if (user != null && await realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
+                await realMessage.RemoveReactionAsync(reactedEmote, user);
         }
 
         private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted, IEmote reactedEmote)
