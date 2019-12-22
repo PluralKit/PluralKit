@@ -30,6 +30,9 @@ namespace PluralKit.Bot
 
         private async Task MainAsync()
         {
+            ThreadPool.SetMinThreads(32, 32);
+            ThreadPool.SetMaxThreads(128, 128);
+            
             Console.WriteLine("Starting PluralKit...");
             
             InitUtils.Init();
