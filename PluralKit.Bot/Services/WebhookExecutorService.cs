@@ -18,7 +18,7 @@ using Serilog;
 
 namespace PluralKit.Bot
 {
-    public class WebhookExecutorService: IDisposable
+    public class WebhookExecutorService
     {
         private WebhookCacheService _webhookCache;
         private ILogger _logger;
