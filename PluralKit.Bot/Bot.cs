@@ -96,6 +96,7 @@ namespace PluralKit.Bot
                 // LogLevel = LogSeverity.Debug // We filter log levels in Serilog, so just pass everything through (Debug is lower than Verbose)
             }))
             .AddSingleton<Bot>()
+            .AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
             .AddTransient<CommandTree>()
             
             .AddTransient<SystemCommands>()

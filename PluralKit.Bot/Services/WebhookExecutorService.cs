@@ -25,12 +25,12 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private HttpClient _client;
 
-        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger)
+        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client)
         {
             _metrics = metrics;
             _webhookCache = webhookCache;
+            _client = client;
             _logger = logger.ForContext<WebhookExecutorService>();
-            _client = new HttpClient {Timeout = TimeSpan.FromSeconds(5)};
         }
 
         public async Task<ulong> ExecuteWebhook(ITextChannel channel, string name, string avatarUrl, string content, IReadOnlyCollection<IAttachment> attachments)

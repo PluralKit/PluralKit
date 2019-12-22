@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 using Discord;
@@ -21,7 +20,7 @@ namespace PluralKit.Bot
         public string InnerText;
     }
 
-    class ProxyService: IDisposable {
+    class ProxyService {
         private IDiscordClient _client;
         private LogChannelService _logChannel;
         private IDataStore _data;
@@ -29,9 +28,7 @@ namespace PluralKit.Bot
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
         private ProxyCacheService _cache;
-
-        private HttpClient _httpClient;
-
+        
         public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor)
         {
             _client = client;
@@ -41,8 +38,6 @@ namespace PluralKit.Bot
             _cache = cache;
             _webhookExecutor = webhookExecutor;
             _logger = logger.ForContext<ProxyService>();
-
-            _httpClient = new HttpClient();
         }
 
         private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentialMembers)
@@ -271,11 +266,6 @@ namespace PluralKit.Bot
         {
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}", messages.Count, channel.Id);
             await _data.DeleteMessagesBulk(messages.Select(m => m.Id).ToList());
-        }
-
-        public void Dispose()
-        {
-            _httpClient.Dispose();
         }
     }
 }
