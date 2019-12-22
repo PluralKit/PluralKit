@@ -84,7 +84,8 @@ namespace PluralKit.Bot
 
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {
-                MessageCacheSize = 5,
+                MessageCacheSize = 0,
+                ConnectionTimeout = 2*60*1000,
                 ExclusiveBulkDelete = true,
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 // Commented this out since Debug actually sends, uh, quite a lot that's not necessary in production
