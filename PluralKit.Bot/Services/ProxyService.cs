@@ -90,11 +90,15 @@ namespace PluralKit.Bot
             // And make sure the channel's not blacklisted from proxying.
             var guildCfg = await _data.GetOrCreateGuildConfig(channel.GuildId);
             if (guildCfg.Blacklist.Contains(channel.Id)) return;
+            
+            // Make sure the system hasn't blacklisted the guild either
+            var systemGuildCfg = await _data.GetSystemGuildSettings(match.System, channel.GuildId);
+            if (!systemGuildCfg.ProxyEnabled) return;
 
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
             if (!await EnsureBotPermissions(channel)) return;
-
+            
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;

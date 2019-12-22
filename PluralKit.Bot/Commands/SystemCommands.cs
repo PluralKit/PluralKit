@@ -197,6 +197,26 @@ namespace PluralKit.Bot.Commands
             var frontpercent = await _data.GetFrontBreakdown(system, rangeStart.Value.ToInstant(), now);
             await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
         }
+
+        public async Task SystemProxy(Context ctx)
+        {
+            ctx.CheckSystem().CheckGuildContext();
+            var gs = await _data.GetSystemGuildSettings(ctx.System, ctx.Guild.Id);
+
+            bool newValue;
+            if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
+            else if (ctx.Match("off", "disabled", "false", "no")) newValue = false;
+            else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else newValue = !gs.ProxyEnabled;
+
+            gs.ProxyEnabled = newValue;
+            await _data.SetGuildSystemSettings(ctx.System, ctx.Guild.Id, gs);
+
+            if (newValue)
+                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");
+            else
+                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **disabled** for your system.");
+        }
         
         public async Task SystemTimezone(Context ctx)
         {

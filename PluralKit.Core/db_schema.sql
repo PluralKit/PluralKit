@@ -20,6 +20,16 @@ create table if not exists systems
     ui_tz       text           not null default 'UTC'
 );
 
+create table if not exists system_guild
+(
+    system serial not null references systems (id) on delete cascade,
+    guild bigint not null,
+    
+    proxy_enabled bool not null default true,
+    
+    primary key (system, guild)
+);
+
 create table if not exists members
 (
     id           serial primary key,

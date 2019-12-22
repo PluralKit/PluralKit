@@ -64,11 +64,9 @@ namespace PluralKit {
         public ISet<ulong> Blacklist { get; set; }
     }
 
-    public struct ChannelConfig
+    public class SystemGuildSettings
     {
-        public ulong Id { get; set; }
-        public bool OnList { get; set; }
-        public bool LogMessages { get; set; }
+        public bool ProxyEnabled { get; set; } = true;
     }
 
     public interface IDataStore
@@ -117,6 +115,9 @@ namespace PluralKit {
         /// </summary>
         /// <param name="system">The system to check in.</param>
         Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag);
+
+        Task<SystemGuildSettings> GetSystemGuildSettings(PKSystem system, ulong guild);
+        Task SetGuildSystemSettings(PKSystem system, ulong guild, SystemGuildSettings settings);
 
         /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
@@ -381,6 +382,25 @@ namespace PluralKit {
                     System = system.Id,
                     Prefix = tag.Prefix,
                     Suffix = tag.Suffix
+                });
+        }
+
+        public async Task<SystemGuildSettings> GetSystemGuildSettings(PKSystem system, ulong guild)
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.QuerySingleOrDefaultAsync<SystemGuildSettings>(
+                    "select * from system_guild where system = @System and guild = @Guild",
+                    new {System = system.Id, Guild = guild}) ?? new SystemGuildSettings();
+        }
+
+        public async Task SetGuildSystemSettings(PKSystem system, ulong guild, SystemGuildSettings settings)
+        {
+            using (var conn = await _conn.Obtain())
+                await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled) values (@System, @Guild, @ProxyEnabled) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled", new
+                {
+                    System = system.Id,
+                    Guild = guild,
+                    ProxyEnabled = settings.ProxyEnabled
                 });
         }
 

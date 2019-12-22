@@ -17,6 +17,7 @@ namespace PluralKit.Bot.Commands
         public static Command SystemAvatar = new Command("system avatar", "system avatar [url|@mention]", "Changes your system's avatar");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
+        public static Command SystemProxy = new Command("system proxy", "system proxy [on|off]", "Enables or disables message proxying in a specific server");
         public static Command SystemList = new Command("system list", "system [system] list [full]", "Lists a system's members");
         public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
         public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
@@ -156,6 +157,8 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<SystemCommands>(SystemDelete, m => m.Delete(ctx));
             else if (ctx.Match("timezone", "tz"))
                 await ctx.Execute<SystemCommands>(SystemTimezone, m => m.SystemTimezone(ctx));
+            else if (ctx.Match("proxy"))
+                await ctx.Execute<SystemCommands>(SystemProxy, m => m.SystemProxy(ctx));
             else if (ctx.Match("list", "l", "members"))
             {
                 if (ctx.Match("f", "full", "big", "details", "long"))
