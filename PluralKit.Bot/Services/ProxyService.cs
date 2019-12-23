@@ -95,7 +95,7 @@ namespace PluralKit.Bot
             if (!await EnsureBotPermissions(channel)) return;
             
             // Can't proxy a message with no content and no attachment
-            if (match.InnerText.Trim().Length == 0/* && message.Attachments.Count == 0*/) // TODO: undo when adding attachments back
+            if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
             
             // Get variables in order and all

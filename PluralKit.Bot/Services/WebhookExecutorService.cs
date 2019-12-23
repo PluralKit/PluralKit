@@ -60,13 +60,12 @@ namespace PluralKit.Bot
             };
             if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
 
-            /*var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
+            var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)
             {
                 _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks", attachments.Count, attachments.Select(a => a.Size).Sum() / 1024 / 1024, attachmentChunks.Count);
                 await AddAttachmentsToMultipart(mfd, attachmentChunks.First());
-            }*/
-
+            }
 
             var timerCtx = _metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime);
             using var response = await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}?wait=true", mfd);
@@ -93,21 +92,21 @@ namespace PluralKit.Bot
             }
             
             // If we have any leftover attachment chunks, send those
-            /*if (attachmentChunks.Count > 1)
+            if (attachmentChunks.Count > 1)
             {
                 // Deliberately not adding a content, just the remaining files
                 foreach (var chunk in attachmentChunks.Skip(1))
                 {
-                    mfd = new MultipartFormDataContent();
-                    mfd.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
-                    if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
-                    await AddAttachmentsToMultipart(mfd, chunk);
+                    using var mfd2 = new MultipartFormDataContent();
+                    mfd2.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
+                    if (avatarUrl != null) mfd2.Add(new StringContent(avatarUrl), "avatar_url");
+                    await AddAttachmentsToMultipart(mfd2, chunk);
                     
                     // Don't bother with ?wait, we're just kinda firehosing this stuff
                     // also don't error check, the real message itself is already sent
-                    await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}", mfd);
+                    await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}", mfd2);
                 }
-            }*/
+            }
             
             // At this point we're sure we have a 2xx status code, so just assume success
             // TODO: can we do this without a round-trip to a string?
