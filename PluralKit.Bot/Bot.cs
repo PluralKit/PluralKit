@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -89,7 +90,7 @@ namespace PluralKit.Bot
                 ConnectionTimeout = 2*60*1000,
                 ExclusiveBulkDelete = true,
                 LargeThreshold = 50,
-                DefaultRetryMode = RetryMode.AlwaysFail
+                DefaultRetryMode = RetryMode.RetryTimeouts | RetryMode.RetryRatelimit
                 // Commented this out since Debug actually sends, uh, quite a lot that's not necessary in production
                 // but leaving it here in case I (or someone else) get[s] confused about why logging isn't working again :p
                 // LogLevel = LogSeverity.Debug // We filter log levels in Serilog, so just pass everything through (Debug is lower than Verbose)
@@ -307,7 +308,6 @@ namespace PluralKit.Bot
             if (_client.GetShardFor((arg.Channel as IGuildChannel)?.Guild).ConnectionState != ConnectionState.Connected)
                 return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
             
-            _logger.Debug("ThreadPool pending count: {PendingCount}, completed: {CompletedCount}, {ThreadCount} threads", ThreadPool.PendingWorkItemCount, ThreadPool.CompletedWorkItemCount, ThreadPool.ThreadCount);
             
             RegisterMessageMetrics(arg);
 
