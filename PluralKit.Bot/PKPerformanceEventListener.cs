@@ -14,7 +14,7 @@ namespace PluralKit.Bot {
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
             base.OnEventWritten(eventData);
-            Console.WriteLine($"{eventData.EventSource.Name}/{eventData.EventName}: {string.Join(", ", eventData.PayloadNames.Zip(eventData.Payload).Select(v => $"{v.First}={v.Second}" ))}");
+            // Console.WriteLine($"{eventData.EventSource.Name}/{eventData.EventName}: {string.Join(", ", eventData.PayloadNames.Zip(eventData.Payload).Select(v => $"{v.First}={v.Second}" ))}");
         }
     }
 }
