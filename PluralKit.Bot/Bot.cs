@@ -53,7 +53,6 @@ namespace PluralKit.Bot
 
                 using (Sentry.SentrySdk.Init(coreConfig.SentryUrl))
                 {
-
                     logger.Information("Connecting to database");
                     using (var conn = await services.GetRequiredService<DbConnectionFactory>().Obtain())
                         await Schema.CreateTables(conn);
@@ -144,9 +143,11 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
+        private PKPerformanceEventListener _pl;
 
         public Bot(IServiceProvider services, IDiscordClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
+            _pl = new PKPerformanceEventListener();
             _services = services;
             _client = client as DiscordShardedClient;
             _metrics = metrics;
