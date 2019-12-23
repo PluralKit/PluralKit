@@ -10,6 +10,9 @@ obj/
 
 *.conf
 *.md
+*.sql
+*.gz
+*.tar
 
 Dockerfile
 docker-compose.yml
