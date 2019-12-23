@@ -201,7 +201,8 @@ namespace PluralKit.Bot
         private async Task UpdatePeriodic()
         {
             // Change bot status
-            await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
+            // await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
+            await _client.SetGameAsync($"Attachments disabled for tonight, sorry | in {_client.Guilds.Count} servers");
             
             await _collector.CollectStats();
             

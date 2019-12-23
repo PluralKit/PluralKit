@@ -58,12 +58,12 @@ namespace PluralKit.Bot
             mfd.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
             if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
             
-            var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
+            /*var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)
             {
-                _logger.Information($"Invoking webhook with {attachments.Count} attachments totalling {attachments.Select(a => a.Size).Sum() / 1024 / 1024} MiB in {attachmentChunks.Count} chunks");
+                _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks", attachments.Count, attachments.Select(a => a.Size).Sum() / 1024 / 1024, attachmentChunks.Count);
                 await AddAttachmentsToMultipart(mfd, attachmentChunks.First());
-            }
+            }*/
 
             HttpResponseMessage response;
             using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
@@ -90,7 +90,7 @@ namespace PluralKit.Bot
             }
             
             // If we have any leftover attachment chunks, send those
-            if (attachmentChunks.Count > 1)
+            /*if (attachmentChunks.Count > 1)
             {
                 // Deliberately not adding a content, just the remaining files
                 foreach (var chunk in attachmentChunks.Skip(1))
@@ -104,7 +104,7 @@ namespace PluralKit.Bot
                     // also don't error check, the real message itself is already sent
                     await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}", mfd);
                 }
-            }
+            }*/
             
             // At this point we're sure we have a 2xx status code, so just assume success
             // TODO: can we do this without a round-trip to a string?
