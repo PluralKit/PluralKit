@@ -53,11 +53,13 @@ namespace PluralKit.Bot
             IReadOnlyCollection<IAttachment> attachments, bool hasRetried = false)
         {
 
-            var mfd = new MultipartFormDataContent();
-            mfd.Add(new StringContent(content.Truncate(2000)), "content");
-            mfd.Add(new StringContent(FixClyde(name).Truncate(80)), "username");
+            using var mfd = new MultipartFormDataContent
+            {
+                {new StringContent(content.Truncate(2000)), "content"},
+                {new StringContent(FixClyde(name).Truncate(80)), "username"}
+            };
             if (avatarUrl != null) mfd.Add(new StringContent(avatarUrl), "avatar_url");
-            
+
             /*var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)
             {
@@ -65,9 +67,10 @@ namespace PluralKit.Bot
                 await AddAttachmentsToMultipart(mfd, attachmentChunks.First());
             }*/
 
-            HttpResponseMessage response;
-            using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime))
-                response = await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}?wait=true", mfd);
+
+            var timerCtx = _metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime);
+            using var response = await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}?wait=true", mfd);
+            timerCtx.Dispose();
 
             // TODO: are there cases where an error won't also return a parseable JSON object?
             var responseJson = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync());
