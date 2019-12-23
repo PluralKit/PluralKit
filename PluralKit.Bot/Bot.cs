@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
-using App.Metrics.Logging;
+
 using Dapper;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,7 +89,8 @@ namespace PluralKit.Bot
                 MessageCacheSize = 0,
                 ConnectionTimeout = 2*60*1000,
                 ExclusiveBulkDelete = true,
-                DefaultRetryMode = RetryMode.AlwaysRetry,
+                LargeThreshold = 50,
+                DefaultRetryMode = RetryMode.AlwaysFail
                 // Commented this out since Debug actually sends, uh, quite a lot that's not necessary in production
                 // but leaving it here in case I (or someone else) get[s] confused about why logging isn't working again :p
                 // LogLevel = LogSeverity.Debug // We filter log levels in Serilog, so just pass everything through (Debug is lower than Verbose)
@@ -161,10 +160,7 @@ namespace PluralKit.Bot
             _client.ShardReady += ShardReady;
             _client.Log += FrameworkLog;
             
-            _client.MessageReceived += (msg) =>
-            {
-                return HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
-            };
+            _client.MessageReceived += (msg) => HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
             _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(s => s.AddReactionAddedBreadcrumb(msg, channel, reaction), eh => eh.HandleReactionAdded(msg, channel, reaction));
             _client.MessageDeleted += (msg, channel) => HandleEvent(s => s.AddMessageDeleteBreadcrumb(msg, channel), eh => eh.HandleMessageDeleted(msg, channel));
             _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(s => s.AddMessageBulkDeleteBreadcrumb(msgs, channel), eh => eh.HandleMessagesBulkDelete(msgs, channel));
@@ -245,16 +241,17 @@ namespace PluralKit.Bot
                 using (var scope = _services.CreateScope())
                 {
                     var evtid = scope.ServiceProvider.GetService<EventIdProvider>().EventId;
-                    var sentryScope = scope.ServiceProvider.GetRequiredService<Scope>();
-                    sentryScope.SetTag("evtid", evtid.ToString());
-                    breadcrumbFactory(sentryScope);
-                
+                    
                     try
                     {
                         await handler(scope.ServiceProvider.GetRequiredService<PKEventHandler>());
                     }
                     catch (Exception e)
                     {
+                        var sentryScope = scope.ServiceProvider.GetRequiredService<Scope>();
+                        sentryScope.SetTag("evtid", evtid.ToString());
+                        breadcrumbFactory(sentryScope);
+                        
                         HandleRuntimeError(e, scope.ServiceProvider);
                     }
                 }
@@ -308,7 +305,6 @@ namespace PluralKit.Bot
         {
             if (_client.GetShardFor((arg.Channel as IGuildChannel)?.Guild).ConnectionState != ConnectionState.Connected)
                 return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
-            
             
             _logger.Debug("ThreadPool pending count: {PendingCount}, completed: {CompletedCount}, {ThreadCount} threads", ThreadPool.PendingWorkItemCount, ThreadPool.CompletedWorkItemCount, ThreadPool.ThreadCount);
             
