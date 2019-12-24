@@ -130,7 +130,7 @@ namespace PluralKit.Bot.Commands
             var members = await _data.GetSystemMembers(system);
             var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             await ctx.Paginate<PKMember>(
-                members.OrderBy(m => m.Name.ToLower()).ToList(),
+                members.OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList(),
                 25,
                 embedTitle,
                 (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
@@ -146,7 +146,7 @@ namespace PluralKit.Bot.Commands
             var members = await _data.GetSystemMembers(system);
             var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             await ctx.Paginate<PKMember>(
-                members.OrderBy(m => m.Name.ToLower()).ToList(),
+                members.OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList(),
                 5,
                 embedTitle,
                 (eb, ms) => {
