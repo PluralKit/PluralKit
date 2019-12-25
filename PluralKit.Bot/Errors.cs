@@ -34,6 +34,7 @@ namespace PluralKit.Bot {
         public static PKError AvatarFileSizeLimit(long size) => new PKError($"File size too large ({size.Bytes().ToString("#.#")} > {Limits.AvatarFileSizeLimit.Bytes().ToString("#.#")}), try shrinking or compressing the image.");
         public static PKError AvatarNotAnImage(string mimeType) => new PKError($"The given link does not point to an image{(mimeType != null ? $" ({mimeType.SanitizeMentions()})" : "")}. Make sure you're using a direct link (ending in .jpg, .png, .gif).");
         public static PKError AvatarDimensionsTooLarge(int width, int height) => new PKError($"Image too large ({width}x{height} > {Limits.AvatarDimensionLimit}x{Limits.AvatarDimensionLimit}), try resizing the image.");
+        public static PKError AvatarInvalid => new PKError($"Could not read image file - perhaps it's corrupted or the wrong format. Try a different image.");
         public static PKError UserHasNoAvatar => new PKError("The given user has no avatar set.");
         public static PKError InvalidUrl(string url) => new PKError($"The given URL is invalid.");
         
@@ -80,5 +81,13 @@ namespace PluralKit.Bot {
             $"Display name too long ({displayName.Length} > {maxLength} characters). Use a shorter display name, or shorten your system tag.");
         public static PKError ProxyNameTooShort(string name) => new PKError($"The webhook's name, `{name.SanitizeMentions()}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.");
         public static PKError ProxyNameTooLong(string name) => new PKError($"The webhook's name, {name.SanitizeMentions()}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name or use a shorter system tag.");
+
+        public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag `{tagToAdd.ProxyString.SanitizeMentions()}`. The member currently has these tags: {member.ProxyTagsString().SanitizeMentions()}");
+        public static PKError ProxyTagDoesNotExist(ProxyTag tagToRemove, PKMember member) => new PKError($"That member does not have the proxy tag `{tagToRemove.ProxyString.SanitizeMentions()}`. The member currently has these tags: {member.ProxyTagsString().SanitizeMentions()}");
+        public static PKError LegacyAlreadyHasProxyTag(ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString().SanitizeMentions()}\nConsider using the `pk;member {member.Hid} proxy add {requested.ProxyString.SanitizeMentions()}` command instead.");
+
+        public static PKError GenericCancelled() => new PKError("Operation cancelled.");
+
+        public static PKError AttachmentTooLarge => new PKError("PluralKit cannot proxy attachments over 8 megabytes (as webhooks aren't considered as having Discord Nitro) :(");
     }
 }

@@ -30,12 +30,6 @@ namespace PluralKit.Bot.Commands
             // Hard name length cap
             if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
 
-            // Warn if member name will be unproxyable (with/without tag)
-            if (memberName.Length > ctx.System.MaxMemberNameLength) {
-                var msg = await ctx.Reply($"{Emojis.Warn} Member name too long ({memberName.Length} > {ctx.System.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to create it anyway? (You can change the name later, or set a member display name)");
-                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
-            }
-
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, memberName);
             if (existingMember != null) {
@@ -73,12 +67,6 @@ namespace PluralKit.Bot.Commands
 
             // Hard name length cap
             if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
-
-            // Warn if member name will be unproxyable (with/without tag), only if member doesn't have a display name
-            if (target.DisplayName == null && newName.Length > ctx.System.MaxMemberNameLength) {
-                var msg = await ctx.Reply($"{Emojis.Warn} New member name too long ({newName.Length} > {ctx.System.MaxMemberNameLength} characters), this member will be unproxyable. Do you want to change it anyway? (You can set a member display name instead)");
-                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
-            }
 
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, newName);
@@ -165,30 +153,103 @@ namespace PluralKit.Bot.Commands
         {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
-            // Handling the clear case in an if here to keep the body dedented
-            var exampleProxy = ctx.RemainderOrNull();
-            if (exampleProxy == null)
+
+            ProxyTag ParseProxyTags(string exampleProxy)
             {
-                // Just reset and send OK message
-                target.Prefix = null;
-                target.Suffix = null;
-                await _data.SaveMember(target);
-                await ctx.Reply($"{Emojis.Success} Member proxy tags cleared.");
-                return;
+                // // Make sure there's one and only one instance of "text" in the example proxy given
+                var prefixAndSuffix = exampleProxy.Split("text");
+                if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
+                if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
+                return new ProxyTag(prefixAndSuffix[0], prefixAndSuffix[1]);
             }
             
-            // Make sure there's one and only one instance of "text" in the example proxy given
-            var prefixAndSuffix = exampleProxy.Split("text");
-            if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
-            if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
+            async Task<bool> WarnOnConflict(ProxyTag newTag)
+            {
+                var conflicts = (await _data.GetConflictingProxies(ctx.System, newTag))
+                    .Where(m => m.Id != target.Id)
+                    .ToList();
 
-            // If the prefix/suffix is empty, use "null" instead (for DB)
-            target.Prefix = prefixAndSuffix[0].Length > 0 ? prefixAndSuffix[0] : null;
-            target.Suffix = prefixAndSuffix[1].Length > 0 ? prefixAndSuffix[1] : null;
-            await _data.SaveMember(target);
-            await ctx.Reply($"{Emojis.Success} Member proxy tags changed to `{target.ProxyString.SanitizeMentions()}`. Try proxying now!");
+                if (conflicts.Count <= 0) return true;
+
+                var conflictList = conflicts.Select(m => $"- **{m.Name}**");
+                var msg = await ctx.Reply(
+                    $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?");
+                return await ctx.PromptYesNo(msg);
+            }
             
+            // "Sub"command: no arguments clearing
+            if (!ctx.HasNext())
+            {
+                // If we already have multiple tags, this would clear everything, so prompt that
+                if (target.ProxyTags.Count > 1)
+                {
+                    var msg = await ctx.Reply(
+                        $"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?");
+                    if (!await ctx.PromptYesNo(msg))
+                        throw Errors.GenericCancelled();
+                }
+                
+                target.ProxyTags = new ProxyTag[] { };
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
+            }
+            // Subcommand: "add"
+            else if (ctx.Match("add"))
+            {
+                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
+                
+                var tagToAdd = ParseProxyTags(ctx.RemainderOrNull());
+                if (target.ProxyTags.Contains(tagToAdd))
+                    throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
+                
+                if (!await WarnOnConflict(tagToAdd))
+                    throw Errors.GenericCancelled();
+
+                // It's not guaranteed the list's mutable, so we force it to be
+                target.ProxyTags = target.ProxyTags.ToList();
+                target.ProxyTags.Add(tagToAdd);
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Added proxy tags `{tagToAdd.ProxyString.SanitizeMentions()}`.");
+            }
+            // Subcommand: "remove"
+            else if (ctx.Match("remove"))
+            {
+                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass a proxy tag to remove (eg. `[text]` or `J:text`).");
+
+                var tagToRemove = ParseProxyTags(ctx.RemainderOrNull());
+                if (!target.ProxyTags.Contains(tagToRemove))
+                    throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
+
+                // It's not guaranteed the list's mutable, so we force it to be
+                target.ProxyTags = target.ProxyTags.ToList();
+                target.ProxyTags.Remove(tagToRemove);
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Removed proxy tags `{tagToRemove.ProxyString.SanitizeMentions()}`.");
+            }
+            // Subcommand: bare proxy tag given
+            else
+            {
+                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass an example proxy to set (eg. `[text]` or `J:text`).");
+
+                var requestedTag = ParseProxyTags(ctx.RemainderOrNull());
+                
+                // This is mostly a legacy command, so it's gonna error out if there's
+                // already more than one proxy tag.
+                if (target.ProxyTags.Count > 1)
+                    throw Errors.LegacyAlreadyHasProxyTag(requestedTag, target);
+                
+                if (!await WarnOnConflict(requestedTag))
+                    throw Errors.GenericCancelled();
+
+                target.ProxyTags = new[] {requestedTag};
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member proxy tags set to `{requestedTag.ProxyString.SanitizeMentions()}`.");
+            }
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
 
@@ -255,10 +316,7 @@ namespace PluralKit.Bot.Commands
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             var newDisplayName = ctx.RemainderOrNull();
-            // Refuse if proxy name will be unproxyable (with/without tag)
-            if (newDisplayName != null && newDisplayName.Length > ctx.System.MaxMemberNameLength)
-                throw Errors.DisplayNameTooLong(newDisplayName, ctx.System.MaxMemberNameLength);
-            
+
             target.DisplayName = newDisplayName;
             await _data.SaveMember(target);
 
@@ -270,17 +328,31 @@ namespace PluralKit.Bot.Commands
             }
             else
             {
-                successStr += $"Member display name cleared. ";
-                
-                // If we're removing display name and the *real* name will be unproxyable, warn.
-                if (target.Name.Length > ctx.System.MaxMemberNameLength)
-                    successStr +=
-                        $" {Emojis.Warn} This member's actual name is too long ({target.Name.Length} > {ctx.System.MaxMemberNameLength} characters), and thus cannot be proxied.";
-                else
-                    successStr += $"This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
+                successStr += $"Member display name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
             }
             await ctx.Reply(successStr);
             
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
+        }
+        
+        public async Task MemberKeepProxy(Context ctx, PKMember target)
+        {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+
+            bool newValue;
+            if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
+            else if (ctx.Match("off", "disabled", "false", "no")) newValue = false;
+            else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else newValue = !target.KeepProxy;
+
+            target.KeepProxy = newValue;
+            await _data.SaveMember(target);
+            
+            if (newValue)
+                await ctx.Reply($"{Emojis.Success} Member proxy tags will now be included in the resulting message when proxying.");
+            else
+                await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         

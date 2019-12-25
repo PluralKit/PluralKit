@@ -7,7 +7,7 @@ namespace PluralKit.Bot.CommandSystem
     {
         private static readonly Dictionary<char, char> _quotePairs = new Dictionary<char, char>()
         {
-            {'\'', '\''}, {'"', '"'}
+            {'\'', '\''}, {'"', '"'}, {'“', '”'}
         };
 
         private readonly string _cmd;
@@ -38,10 +38,12 @@ namespace PluralKit.Bot.CommandSystem
             return _cmd.Substring(start, end - start).Trim();
         }
 
-        public string Remainder() => _cmd.Substring(_ptr).Trim();
+        public string Remainder() => _cmd.Substring(Math.Min(_ptr, _cmd.Length)).Trim();
         public string FullCommand => _cmd;
 
         // Returns tuple of (startpos, endpos, advanceafter)
+        // advanceafter is how much to move the pointer afterwards to point it
+        // at the start of the next word
         private ValueTuple<int, int, int>? NextWordPosition()
         {
             // Is this the end of the string?
@@ -65,7 +67,7 @@ namespace PluralKit.Bot.CommandSystem
                         return (_ptr, _cmd.Length, 0);
                     }
 
-                    return (_ptr + 1, endQuotePosition, 1);
+                    return (_ptr + 1, endQuotePosition, 2);
                 }
             }
 

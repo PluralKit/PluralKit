@@ -29,7 +29,7 @@ namespace PluralKit.Bot
 
         public Task<IEnumerable<ProxyDatabaseResult>> GetResultsFor(ulong account)
         {
-            _logger.Debug("Looking up members for account {Account} in cache...", account);
+            _logger.Verbose("Looking up members for account {Account} in cache...", account);
             return _cache.GetOrCreateAsync(GetKey(account), (entry) => FetchResults(account, entry));
         }
 
@@ -41,7 +41,7 @@ namespace PluralKit.Bot
         
         public async Task InvalidateResultsForSystem(PKSystem system)
         {
-            _logger.Information("Invalidating proxy cache for system {System}", system.Id);
+            _logger.Debug("Invalidating proxy cache for system {System}", system.Id);
             using (var conn = await _conn.Obtain())
                 foreach (var accountId in await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", system))
                     _cache.Remove(GetKey(accountId));
@@ -49,7 +49,7 @@ namespace PluralKit.Bot
 
         private async Task<IEnumerable<ProxyDatabaseResult>> FetchResults(ulong account, ICacheEntry entry)
         {
-            _logger.Information("Members for account {Account} not in cache, fetching", account);
+            _logger.Debug("Members for account {Account} not in cache, fetching", account);
             using (var conn = await _conn.Obtain())
             {
                 var results = (await conn.QueryAsync<PKMember, PKSystem, ProxyDatabaseResult>(

@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
-using App.Metrics.Logging;
+
 using Dapper;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +30,9 @@ namespace PluralKit.Bot
 
         private async Task MainAsync()
         {
+            ThreadPool.SetMinThreads(32, 32);
+            ThreadPool.SetMaxThreads(128, 128);
+            
             Console.WriteLine("Starting PluralKit...");
             
             InitUtils.Init();
@@ -51,7 +54,6 @@ namespace PluralKit.Bot
 
                 using (Sentry.SentrySdk.Init(coreConfig.SentryUrl))
                 {
-
                     logger.Information("Connecting to database");
                     using (var conn = await services.GetRequiredService<DbConnectionFactory>().Obtain())
                         await Schema.CreateTables(conn);
@@ -84,11 +86,17 @@ namespace PluralKit.Bot
 
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {
-                MessageCacheSize = 5,
+                MessageCacheSize = 0,
+                ConnectionTimeout = 2*60*1000,
                 ExclusiveBulkDelete = true,
-                DefaultRetryMode = RetryMode.AlwaysRetry
+                LargeThreshold = 50,
+                DefaultRetryMode = RetryMode.RetryTimeouts | RetryMode.RetryRatelimit
+                // Commented this out since Debug actually sends, uh, quite a lot that's not necessary in production
+                // but leaving it here in case I (or someone else) get[s] confused about why logging isn't working again :p
+                // LogLevel = LogSeverity.Debug // We filter log levels in Serilog, so just pass everything through (Debug is lower than Verbose)
             }))
             .AddSingleton<Bot>()
+            .AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(5) })
             .AddTransient<CommandTree>()
             
             .AddTransient<SystemCommands>()
@@ -106,9 +114,11 @@ namespace PluralKit.Bot
             .AddTransient<LogChannelService>()
             .AddTransient<DataFileService>()
             .AddTransient<WebhookExecutorService>()
-            
+
             .AddTransient<ProxyCacheService>()
             .AddSingleton<WebhookCacheService>()
+            .AddSingleton<ShardInfoService>()
+            .AddSingleton<CpuStatService>()
 
             .AddTransient<IDataStore, PostgresDataStore>()
 
@@ -134,9 +144,11 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
+        private PKPerformanceEventListener _pl;
 
         public Bot(IServiceProvider services, IDiscordClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
+            _pl = new PKPerformanceEventListener();
             _services = services;
             _client = client as DiscordShardedClient;
             _metrics = metrics;
@@ -146,22 +158,23 @@ namespace PluralKit.Bot
 
         public Task Init()
         {
+            _client.ShardDisconnected += ShardDisconnected;
             _client.ShardReady += ShardReady;
             _client.Log += FrameworkLog;
             
-            _client.MessageReceived += (msg) =>
-            {
-                // _client.CurrentUser will be null if we've connected *some* shards but not shard #0 yet
-                // This will cause an error in WebhookCacheService so we just workaround and don't process any messages
-                // until we properly connect. TODO: can we do this without chucking away a bunch of messages?
-                if (_client.CurrentUser == null) return Task.CompletedTask;
-                
-                return HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
-            };
+            _client.MessageReceived += (msg) => HandleEvent(s => s.AddMessageBreadcrumb(msg), eh => eh.HandleMessage(msg));
             _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(s => s.AddReactionAddedBreadcrumb(msg, channel, reaction), eh => eh.HandleReactionAdded(msg, channel, reaction));
             _client.MessageDeleted += (msg, channel) => HandleEvent(s => s.AddMessageDeleteBreadcrumb(msg, channel), eh => eh.HandleMessageDeleted(msg, channel));
             _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(s => s.AddMessageBulkDeleteBreadcrumb(msgs, channel), eh => eh.HandleMessagesBulkDelete(msgs, channel));
+            
+            _services.GetService<ShardInfoService>().Init(_client);
 
+            return Task.CompletedTask;
+        }
+
+        private Task ShardDisconnected(Exception ex, DiscordSocketClient shard)
+        {
+            _logger.Warning(ex, $"Shard #{shard.ShardId} disconnected");
             return Task.CompletedTask;
         }
 
@@ -177,10 +190,10 @@ namespace PluralKit.Bot
                 level = LogEventLevel.Error;
             else if (msg.Severity == LogSeverity.Info)
                 level = LogEventLevel.Information;
-            else if (msg.Severity == LogSeverity.Verbose)
+            else if (msg.Severity == LogSeverity.Debug) // D.NET's lowest level is Debug and Verbose is greater, Serilog's is the other way around
                 level = LogEventLevel.Verbose;
-            else if (msg.Severity == LogSeverity.Warning)
-                level = LogEventLevel.Warning;
+            else if (msg.Severity == LogSeverity.Verbose)
+                level = LogEventLevel.Debug;
 
             _logger.Write(level, msg.Exception, "Discord.Net {Source}: {Message}", msg.Source, msg.Message);
             return Task.CompletedTask;
@@ -216,40 +229,6 @@ namespace PluralKit.Bot
             return Task.CompletedTask;
         }
 
-        // private async Task CommandExecuted(Optional<CommandInfo> cmd, ICommandContext ctx, IResult _result)
-        // {
-        //     var svc = ((PKCommandContext) ctx).ServiceProvider;
-        //     var id = svc.GetService<EventIdProvider>();
-        //     
-        //     _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
-        //     
-        //     // TODO: refactor this entire block, it's fugly.
-        //     if (!_result.IsSuccess) {
-        //         if (_result.Error == CommandError.Unsuccessful || _result.Error == CommandError.Exception) {
-        //             // If this is a PKError (ie. thrown deliberately), show user facing message
-        //             // If not, log as error
-        //             var exception = (_result as ExecuteResult?)?.Exception;
-        //             if (exception is PKError) {
-        //                 await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {exception.Message}");
-        //             } else if (exception is TimeoutException) {
-        //                 await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} Operation timed out. Try being faster next time :)");
-        //             } else if (_result is PreconditionResult)
-        //             {
-        //                 await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
-        //             } else
-        //             {
-        //                 await ctx.Message.Channel.SendMessageAsync(
-        //                     $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{id.EventId}`.");
-        //                 HandleRuntimeError((_result as ExecuteResult?)?.Exception, svc);
-        //             }
-        //         } else if ((_result.Error == CommandError.BadArgCount || _result.Error == CommandError.MultipleMatches) && cmd.IsSpecified) {
-        //             await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}\n**Usage: **pk;{cmd.Value.Remarks}");
-        //         } else if (_result.Error == CommandError.UnknownCommand || _result.Error == CommandError.UnmetPrecondition || _result.Error == CommandError.ObjectNotFound) {
-        //             await ctx.Message.Channel.SendMessageAsync($"{Emojis.Error} {_result.ErrorReason}");
-        //         }
-        //     }
-        // }
-
         private Task HandleEvent(Action<Scope> breadcrumbFactory, Func<PKEventHandler, Task> handler)
         {
             // Inner function so we can await the handler without stalling the entire pipeline
@@ -264,16 +243,17 @@ namespace PluralKit.Bot
                 using (var scope = _services.CreateScope())
                 {
                     var evtid = scope.ServiceProvider.GetService<EventIdProvider>().EventId;
-                    var sentryScope = scope.ServiceProvider.GetRequiredService<Scope>();
-                    sentryScope.SetTag("evtid", evtid.ToString());
-                    breadcrumbFactory(sentryScope);
-                
+                    
                     try
                     {
                         await handler(scope.ServiceProvider.GetRequiredService<PKEventHandler>());
                     }
                     catch (Exception e)
                     {
+                        var sentryScope = scope.ServiceProvider.GetRequiredService<Scope>();
+                        sentryScope.SetTag("evtid", evtid.ToString());
+                        breadcrumbFactory(sentryScope);
+                        
                         HandleRuntimeError(e, scope.ServiceProvider);
                     }
                 }
@@ -309,8 +289,9 @@ namespace PluralKit.Bot
         private DbConnectionFactory _connectionFactory;
         private IServiceProvider _services;
         private CommandTree _tree;
+        private IDataStore _data;
 
-        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, IDiscordClient client, DbConnectionFactory connectionFactory, IServiceProvider services, CommandTree tree)
+        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, IDiscordClient client, DbConnectionFactory connectionFactory, IServiceProvider services, CommandTree tree, IDataStore data)
         {
             _proxy = proxy;
             _logger = logger;
@@ -319,10 +300,15 @@ namespace PluralKit.Bot
             _connectionFactory = connectionFactory;
             _services = services;
             _tree = tree;
+            _data = data;
         }
 
         public async Task HandleMessage(SocketMessage arg)
         {
+            if (_client.GetShardFor((arg.Channel as IGuildChannel)?.Guild).ConnectionState != ConnectionState.Connected)
+                return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
+            
+            
             RegisterMessageMetrics(arg);
 
             // Ignore system messages (member joined, message pinned, etc)
@@ -331,18 +317,19 @@ namespace PluralKit.Bot
 
             // Ignore bot messages
             if (msg.Author.IsBot || msg.Author.IsWebhook) return;
-
+            
             int argPos = -1;
             // Check if message starts with the command prefix
-            if (msg.Content.StartsWith("pk;")) argPos = 3;
-            else if (msg.Content.StartsWith("pk!")) argPos = 3;
-            else if (Utils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
+            if (msg.Content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
+            else if (msg.Content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
+            else if (msg.Content != null && Utils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
                 if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
                     argPos = -1;
             
+            // If it does, try executing a command
             if (argPos > -1)
             {
-                _logger.Debug("Parsing command {Command} from message {Channel}-{Message}", msg.Content, msg.Channel.Id, msg.Id);
+                _logger.Verbose("Parsing command {Command} from message {Channel}-{Message}", msg.Content, msg.Channel.Id, msg.Id);
                 
                 // Essentially move the argPos pointer by however much whitespace is at the start of the post-argPos string
                 var trimStartLengthDiff = msg.Content.Substring(argPos).Length -
@@ -394,7 +381,7 @@ namespace PluralKit.Bot
             {
                 var eid = _services.GetService<EventIdProvider>().EventId;
                 await msg.Channel.SendMessageAsync(
-                    $"{Emojis.Error} Internal error occurred. Please join the support server (https://discord.gg/PczBt78), and send the developer this ID: `{eid}`");
+                    $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{eid}`");
             }
             
             // If not, don't care. lol.
@@ -405,7 +392,7 @@ namespace PluralKit.Bot
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
 
             var gatewayLatency = DateTimeOffset.Now - msg.CreatedAt;
-            _logger.Debug("Message received with latency {Latency}", gatewayLatency);
+            _logger.Verbose("Message received with latency {Latency}", gatewayLatency);
         }
 
         public Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,

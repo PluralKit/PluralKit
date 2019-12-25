@@ -6,6 +6,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.Core", "PluralKit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.API", "PluralKit.API\PluralKit.API.csproj", "{3420F8A9-125C-4F7F-A444-10DD16945754}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.WebSocket", "Discord.Net\src\Discord.Net.WebSocket\Discord.Net.WebSocket.csproj", "{5FE544F8-310F-410A-8590-7B78469B5B9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.Core", "Discord.Net\src\Discord.Net.Core\Discord.Net.Core.csproj", "{D6376AC6-9BE4-49CE-99CD-061879B400D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Net.Rest", "Discord.Net\src\Discord.Net.Rest\Discord.Net.Rest.csproj", "{4723EEE6-322B-41A1-BD89-03219E181E38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +30,17 @@ Global
 		{3420F8A9-125C-4F7F-A444-10DD16945754}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3420F8A9-125C-4F7F-A444-10DD16945754}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3420F8A9-125C-4F7F-A444-10DD16945754}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FE544F8-310F-410A-8590-7B78469B5B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FE544F8-310F-410A-8590-7B78469B5B9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FE544F8-310F-410A-8590-7B78469B5B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FE544F8-310F-410A-8590-7B78469B5B9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6376AC6-9BE4-49CE-99CD-061879B400D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6376AC6-9BE4-49CE-99CD-061879B400D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6376AC6-9BE4-49CE-99CD-061879B400D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6376AC6-9BE4-49CE-99CD-061879B400D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4723EEE6-322B-41A1-BD89-03219E181E38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4723EEE6-322B-41A1-BD89-03219E181E38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4723EEE6-322B-41A1-BD89-03219E181E38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4723EEE6-322B-41A1-BD89-03219E181E38}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

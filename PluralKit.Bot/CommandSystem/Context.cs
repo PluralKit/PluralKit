@@ -1,8 +1,9 @@
 using System;
 using System.Threading.Tasks;
 
+using App.Metrics;
+
 using Discord;
-using Discord.Net;
 using Discord.WebSocket;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,7 @@ namespace PluralKit.Bot.CommandSystem
 
         private readonly IDataStore _data;
         private readonly PKSystem _senderSystem;
+        private readonly IMetrics _metrics;
 
         private Command _currentCommand;
 
@@ -29,6 +31,7 @@ namespace PluralKit.Bot.CommandSystem
             _message = message;
             _data = provider.GetRequiredService<IDataStore>();
             _senderSystem = senderSystem;
+            _metrics = provider.GetRequiredService<IMetrics>();
             _provider = provider;
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
         }
@@ -75,6 +78,7 @@ namespace PluralKit.Bot.CommandSystem
             try
             {
                 await handler(_provider.GetRequiredService<T>());
+                _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
             }
             catch (PKSyntaxError e)
             {
@@ -135,14 +139,14 @@ namespace PluralKit.Bot.CommandSystem
             // - A member hid
             // - A textual name of a member *in your own system*
 
-            // First, try member HID parsing:
-            if (await _data.GetMemberByHid(input) is PKMember memberByHid)
-                return memberByHid;
-
-            // Then, if we have a system, try finding by member name in system
+            // First, if we have a system, try finding by member name in system
             if (_senderSystem != null && await _data.GetMemberByName(_senderSystem, input) is PKMember memberByName)
                 return memberByName;
 
+            // Then, try member HID parsing:
+            if (await _data.GetMemberByHid(input) is PKMember memberByHid)
+                return memberByHid;
+            
             // We didn't find anything, so we return null.
             return null;
         }

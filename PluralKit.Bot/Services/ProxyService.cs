@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
@@ -18,10 +17,11 @@ namespace PluralKit.Bot
     class ProxyMatch {
         public PKMember Member;
         public PKSystem System;
+        public ProxyTag ProxyTags;
         public string InnerText;
     }
 
-    class ProxyService: IDisposable {
+    class ProxyService {
         private IDiscordClient _client;
         private LogChannelService _logChannel;
         private IDataStore _data;
@@ -29,9 +29,7 @@ namespace PluralKit.Bot
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
         private ProxyCacheService _cache;
-
-        private HttpClient _httpClient;
-
+        
         public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor)
         {
             _client = client;
@@ -41,11 +39,9 @@ namespace PluralKit.Bot
             _cache = cache;
             _webhookExecutor = webhookExecutor;
             _logger = logger.ForContext<ProxyService>();
-
-            _httpClient = new HttpClient();
         }
 
-        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentials)
+        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentialMembers)
         {
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message
@@ -58,19 +54,19 @@ namespace PluralKit.Bot
                 message = message.Substring(matchStartPosition);
             }
 
-            // Sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
-            var ordered = potentials.OrderByDescending(p => p.Member.ProxyString.Length);
-            foreach (var potential in ordered)
+            // Flatten and sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
+            var ordered = potentialMembers.SelectMany(m => m.Member.ProxyTags.Select(tag => (tag, m))).OrderByDescending(p => p.Item1.ProxyString.Length);
+            foreach (var (tag, match) in ordered)
             {
-                if (potential.Member.Prefix == null && potential.Member.Suffix == null) continue;
+                if (tag.Prefix == null && tag.Suffix == null) continue;
 
-                var prefix = potential.Member.Prefix ?? "";
-                var suffix = potential.Member.Suffix ?? "";
+                var prefix = tag.Prefix ?? "";
+                var suffix = tag.Suffix ?? "";
 
                 if (message.Length >= prefix.Length + suffix.Length && message.StartsWith(prefix) && message.EndsWith(suffix)) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
                     if (leadingMention != null) inner = $"{leadingMention} {inner}";
-                    return new ProxyMatch { Member = potential.Member, System = potential.System, InnerText = inner };
+                    return new ProxyMatch { Member = match.Member, System = match.System, InnerText = inner, ProxyTags = tag};
                 }
             }
 
@@ -80,18 +76,25 @@ namespace PluralKit.Bot
         public async Task HandleMessageAsync(IMessage message)
         {
             // Bail early if this isn't in a guild channel
-            if (!(message.Channel is ITextChannel)) return;
-
-            var results = await _cache.GetResultsFor(message.Author.Id);
-
+            if (!(message.Channel is ITextChannel channel)) return;
+            
             // Find a member with proxy tags matching the message
+            var results = await _cache.GetResultsFor(message.Author.Id);
             var match = GetProxyTagMatch(message.Content, results);
             if (match == null) return;
+            
+            // And make sure the channel's not blacklisted from proxying.
+            var guildCfg = await _data.GetOrCreateGuildConfig(channel.GuildId);
+            if (guildCfg.Blacklist.Contains(channel.Id)) return;
+            
+            // Make sure the system hasn't blacklisted the guild either
+            var systemGuildCfg = await _data.GetSystemGuildSettings(match.System, channel.GuildId);
+            if (!systemGuildCfg.ProxyEnabled) return;
 
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
-            if (!await EnsureBotPermissions(message.Channel as ITextChannel)) return;
-
+            if (!await EnsureBotPermissions(channel)) return;
+            
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
@@ -103,19 +106,24 @@ namespace PluralKit.Bot
             // If the name's too long (or short), bail
             if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+
+            // Add the proxy tags into the proxied message if that option is enabled
+            var messageContents = match.Member.KeepProxy
+                ? $"{match.ProxyTags.Prefix}{match.InnerText}{match.ProxyTags.Suffix}"
+                : match.InnerText;
             
             // Sanitize @everyone, but only if the original user wouldn't have permission to
-            var messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
+            messageContents = SanitizeEveryoneMaybe(message, match.InnerText);
 
             //Convert emotes that are not on the guild to inline links
             messageContents = ConvertEmotesToInlineLinks((message.Channel as ITextChannel), messageContents);
             
             // Execute the webhook itself
             var hookMessageId = await _webhookExecutor.ExecuteWebhook(
-                (ITextChannel) message.Channel,
+                channel,
                 proxyName, avatarUrl,
                 messageContents,
-                message.Attachments.FirstOrDefault()
+                message.Attachments
             );
 
             // Store the message in the database, and log it in the log channel (if applicable)
@@ -209,9 +217,36 @@ namespace PluralKit.Bot
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
                     return HandleMessageQueryByReaction(message, reaction.UserId, reaction.Emote);
+                case "\U0001F514": // Bell
+                case "\U0001F6CE": // Bellhop bell
+                case "\U0001F3D3": // Ping pong paddle (lol)
+                case "\u23F0": // Alarm clock
+                case "\u2757": // Exclamation mark
+                    return HandleMessagePingByReaction(message, channel, reaction.UserId, reaction.Emote);
                 default:
                     return Task.CompletedTask;
             }
+        }
+
+        private async Task HandleMessagePingByReaction(Cacheable<IUserMessage, ulong> message,
+                                                       ISocketMessageChannel channel, ulong userWhoReacted,
+                                                       IEmote reactedEmote)
+        {
+
+            // Find the message in the DB
+            var msg = await _data.GetMessage(message.Id);
+            if (msg == null) return;
+
+            var realMessage = await message.GetOrDownloadAsync();
+            var embed = new EmbedBuilder()
+                .WithDescription($"[Jump to pinged message]({realMessage.GetJumpUrl()})");
+
+            await channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{userWhoReacted}>.", embed: embed.Build());
+            
+            // Finally remove the original reaction (if we can)
+            var user = await _client.GetUserAsync(userWhoReacted);
+            if (user != null && await realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
+                await realMessage.RemoveReactionAsync(reactedEmote, user);
         }
 
         private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted, IEmote reactedEmote)
@@ -268,11 +303,6 @@ namespace PluralKit.Bot
         {
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}", messages.Count, channel.Id);
             await _data.DeleteMessagesBulk(messages.Select(m => m.Id).ToList());
-        }
-
-        public void Dispose()
-        {
-            _httpClient.Dispose();
         }
     }
 }

@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using App.Metrics.Logging;
+
 using Dapper;
 using NodaTime;
-using Npgsql;
-using PluralKit.Core;
 
 using Serilog;
 
@@ -41,7 +38,7 @@ namespace PluralKit {
 
     public struct MemberMessageCount
     {
-        public PKMember Member;
+        public int Member;
         public int MessageCount;
     }
     
@@ -51,6 +48,25 @@ namespace PluralKit {
         public Duration NoFronterDuration;
         public Instant RangeStart;
         public Instant RangeEnd;
+    }
+    
+    public struct SwitchMembersListEntry
+    {
+        public int Member;
+        public Instant Timestamp;
+    }
+
+    public struct GuildConfig
+    {
+        public ulong Id { get; set; }
+        public ulong? LogChannel { get; set; }
+        public ISet<ulong> LogBlacklist { get; set; }
+        public ISet<ulong> Blacklist { get; set; }
+    }
+
+    public class SystemGuildSettings
+    {
+        public bool ProxyEnabled { get; set; } = true;
     }
 
     public interface IDataStore
@@ -89,7 +105,20 @@ namespace PluralKit {
         /// Gets the member count of a system.
         /// </summary>
         Task<int> GetSystemMemberCount(PKSystem system);
-        
+
+        /// <summary>
+        /// Gets a list of members with proxy tags that conflict with the given tags.
+        ///
+        /// A set of proxy tags A conflict with proxy tags B if both A's prefix and suffix
+        /// are a "subset" of B's. In other words, if A's prefix *starts* with B's prefix
+        /// and A's suffix *ends* with B's suffix, the tag pairs are considered conflicting.
+        /// </summary>
+        /// <param name="system">The system to check in.</param>
+        Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag);
+
+        Task<SystemGuildSettings> GetSystemGuildSettings(PKSystem system, ulong guild);
+        Task SetGuildSystemSettings(PKSystem system, ulong guild, SystemGuildSettings settings);
+
         /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
         /// </summary>
@@ -293,6 +322,11 @@ namespace PluralKit {
         Task DeleteSwitch(PKSwitch sw);
 
         /// <summary>
+        /// Deletes all switches in a given system from the data store.
+        /// </summary>
+        Task DeleteAllSwitches(PKSystem system);
+
+        /// <summary>
         /// Gets the total amount of systems in the data store.
         /// </summary>
         Task<ulong> GetTotalSystems();
@@ -311,6 +345,17 @@ namespace PluralKit {
         /// Gets the total amount of messages in the data store.
         /// </summary>
         Task<ulong> GetTotalMessages();
+
+        /// <summary>
+        /// Gets the guild configuration struct for a given guild, creating and saving one if none was found.
+        /// </summary>
+        /// <returns>The guild's configuration struct.</returns>
+        Task<GuildConfig> GetOrCreateGuildConfig(ulong guild);
+        
+        /// <summary>
+        /// Saves the given guild configuration struct to the data store.
+        /// </summary>
+        Task SaveGuildConfig(GuildConfig cfg);
     }
     
     public class PostgresDataStore: IDataStore {
@@ -321,6 +366,42 @@ namespace PluralKit {
         {
             _conn = conn;
             _logger = logger;
+        }
+
+        public async Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag)
+        {
+            using (var conn = await _conn.Obtain())
+                // return await conn.QueryAsync<PKMember>("select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix ilike @Prefix and suffix ilike @Suffix", new
+                // {
+                //     System = system.Id,
+                //     Prefix = tag.Prefix.Replace("%", "\\%") + "%",
+                //     Suffix = "%" + tag.Suffix.Replace("%", "\\%")
+                // });
+                return await conn.QueryAsync<PKMember>("select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix = @Prefix and suffix = @Suffix", new
+                {
+                    System = system.Id,
+                    Prefix = tag.Prefix,
+                    Suffix = tag.Suffix
+                });
+        }
+
+        public async Task<SystemGuildSettings> GetSystemGuildSettings(PKSystem system, ulong guild)
+        {
+            using (var conn = await _conn.Obtain())
+                return await conn.QuerySingleOrDefaultAsync<SystemGuildSettings>(
+                    "select * from system_guild where system = @System and guild = @Guild",
+                    new {System = system.Id, Guild = guild}) ?? new SystemGuildSettings();
+        }
+
+        public async Task SetGuildSystemSettings(PKSystem system, ulong guild, SystemGuildSettings settings)
+        {
+            using (var conn = await _conn.Obtain())
+                await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled) values (@System, @Guild, @ProxyEnabled) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled", new
+                {
+                    System = system.Id,
+                    Guild = guild,
+                    ProxyEnabled = settings.ProxyEnabled
+                });
         }
 
         public async Task<PKSystem> CreateSystem(string systemName = null) {
@@ -392,6 +473,12 @@ namespace PluralKit {
         {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new { Id = system.Id });
+        }
+
+        public async Task DeleteAllSwitches(PKSystem system)
+        {
+            using (var conn = await _conn.Obtain())
+                await conn.ExecuteAsync("delete from switches where system = @Id", system);
         }
 
         public async Task<ulong> GetTotalSystems()
@@ -466,14 +553,6 @@ namespace PluralKit {
                 return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
-        public async Task<ICollection<PKMember>> GetUnproxyableMembers(PKSystem system) {
-            return (await GetSystemMembers(system))
-                .Where((m) => {
-                    var proxiedName = $"{m.Name} {system.Tag}";
-                    return proxiedName.Length > Limits.MaxProxyNameLength || proxiedName.Length < 2;
-                }).ToList();
-        }
-
         public async Task<IEnumerable<PKMember>> GetSystemMembers(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKMember>("select * from members where system = @SystemID", new { SystemID = system.Id });
@@ -481,7 +560,7 @@ namespace PluralKit {
 
         public async Task SaveMember(PKMember member) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, prefix = @Prefix, suffix = @Suffix where id = @Id", member);
+                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
         }
@@ -571,6 +650,45 @@ namespace PluralKit {
                 return await conn.ExecuteScalarAsync<ulong>("select count(mid) from messages");
         }
 
+        // Same as GuildConfig, but with ISet<ulong> as long[] instead.
+        private struct DatabaseCompatibleGuildConfig
+        {
+            public ulong Id { get; set; }
+            public ulong? LogChannel { get; set; }
+            public long[] LogBlacklist { get; set; }
+            public long[] Blacklist { get; set; }
+        }
+
+        public async Task<GuildConfig> GetOrCreateGuildConfig(ulong guild)
+        {
+            using (var conn = await _conn.Obtain())
+            {
+                var compat = await conn.QuerySingleOrDefaultAsync<DatabaseCompatibleGuildConfig>(
+                    "insert into servers (id) values (@Id) on conflict do nothing; select * from servers where id = @Id",
+                    new {Id = guild});
+                return new GuildConfig
+                {
+                    Id = compat.Id,
+                    LogChannel = compat.LogChannel,
+                    LogBlacklist = new HashSet<ulong>(compat.LogBlacklist.Select(c => (ulong) c)),
+                    Blacklist = new HashSet<ulong>(compat.Blacklist.Select(c => (ulong) c)),
+                };
+            }
+        }
+
+        public async Task SaveGuildConfig(GuildConfig cfg)
+        {
+            using (var conn = await _conn.Obtain())
+                await conn.ExecuteAsync("insert into servers (id, log_channel, log_blacklist, blacklist) values (@Id, @LogChannel, @LogBlacklist, @Blacklist) on conflict (id) do update set log_channel = @LogChannel, log_blacklist = @LogBlacklist, blacklist = @Blacklist", new
+                {
+                    cfg.Id,
+                    cfg.LogChannel,
+                    LogBlacklist = cfg.LogBlacklist.Select(c => (long) c).ToList(),
+                    Blacklist = cfg.Blacklist.Select(c  => (long) c).ToList()
+                });
+            _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
+        }
+        
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
@@ -621,7 +739,7 @@ namespace PluralKit {
                             // Otherwise, add it to the importer
                             importer.StartRow();
                             importer.Write(system.Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                            importer.Write(sw.Members, NpgsqlTypes.NpgsqlDbType.Timestamp);
+                            importer.Write(sw.Timestamp, NpgsqlTypes.NpgsqlDbType.Timestamp);
                         }
                         importer.Complete(); // Commits the copy operation so dispose won't roll it back
                     }
@@ -668,52 +786,12 @@ namespace PluralKit {
             _logger.Information("Completed bulk import of switches for system {0}", system.Hid);
         }
         
-        public async Task RegisterSwitches(PKSystem system, ICollection<Tuple<Instant, ICollection<PKMember>>> switches)
-        {
-            // Use a transaction here since we're doing multiple executed commands in one
-            using (var conn = await _conn.Obtain())
-            using (var tx = conn.BeginTransaction())
-            {
-                foreach (var s in switches)
-                {
-                    // First, we insert the switch itself
-                    var sw = await conn.QueryFirstOrDefaultAsync<PKSwitch>(
-                            @"insert into switches(system, timestamp)
-                            select @System, @Timestamp
-                            where not exists (
-                                select * from switches
-                                where system = @System and timestamp::timestamp(0) = @Timestamp
-                                limit 1
-                            )
-                            returning *",
-                        new { System = system.Id, Timestamp = s.Item1 });
-
-                    // If we inserted a switch, also insert each member in the switch in the switch_members table
-                    if (sw != null && s.Item2.Any())
-                        await conn.ExecuteAsync(
-                            "insert into switch_members(switch, member) select @Switch, * FROM unnest(@Members)",
-                            new { Switch = sw.Id, Members = s.Item2.Select(x => x.Id).ToArray() });
-                }
-
-                // Finally we commit the tx, since the using block will otherwise rollback it
-                tx.Commit();
-
-                _logger.Information("Registered {SwitchCount} switches in system {System}", switches.Count, system.Id);
-            }
-        }
-
         public async Task<IEnumerable<PKSwitch>> GetSwitches(PKSystem system, int count = 9999999)
         {
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
             // (maybe when we get caching in?)
             using (var conn = await _conn.Obtain())
                 return await conn.QueryAsync<PKSwitch>("select * from switches where system = @System order by timestamp desc limit @Count", new {System = system.Id, Count = count});
-        }
-
-        public struct SwitchMembersListEntry
-        {
-            public int Member;
-            public Instant Timestamp;
         }
 
         public async Task<IEnumerable<SwitchMembersListEntry>> GetSwitchMembersList(PKSystem system, Instant start, Instant end)
@@ -750,13 +828,6 @@ namespace PluralKit {
                 tx.Commit();
                 return switchMembersEntries;
             }
-        }
-
-        public async Task<IEnumerable<int>> GetSwitchMemberIds(PKSwitch sw)
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.QueryAsync<int>("select member from switch_members where switch = @Switch order by switch_members.id",
-                    new {Switch = sw.Id});
         }
 
         public async Task<IEnumerable<PKMember>> GetSwitchMembers(PKSwitch sw)

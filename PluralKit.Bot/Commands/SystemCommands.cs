@@ -72,22 +72,11 @@ namespace PluralKit.Bot.Commands
             ctx.System.Tag = newTag;
 
             if (newTag != null)
-            {
-                if (newTag.Length > Limits.MaxSystemTagLength) throw Errors.SystemNameTooLongError(newTag.Length);
-
-                // TODO: The proxy name limit is long enough now that this probably doesn't matter much.
-                // // Check unproxyable messages *after* changing the tag (so it's seen in the method) but *before* we save to DB (so we can cancel)
-                // var unproxyableMembers = await _data.GetUnproxyableMembers(ctx.System);
-                // if (unproxyableMembers.Count > 0)
-                // {
-                //     var msg = await ctx.Reply(
-                //         $"{Emojis.Warn} Changing your system tag to '{newTag.SanitizeMentions()}' will result in the following members being unproxyable, since the tag would bring their name over {Limits.MaxProxyNameLength} characters:\n**{string.Join(", ", unproxyableMembers.Select((m) => m.Name.SanitizeMentions()))}**\nDo you want to continue anyway?");
-                //     if (!await ctx.PromptYesNo(msg)) throw new PKError("Tag change cancelled.");
-                // }
-            }
+                if (newTag.Length > Limits.MaxSystemTagLength)
+                    throw Errors.SystemNameTooLongError(newTag.Length);
 
             await _data.SaveSystem(ctx.System);
-            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? "changed" : "cleared")}.");
+            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? $"changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied." : "cleared")}.");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
@@ -141,11 +130,11 @@ namespace PluralKit.Bot.Commands
             var members = await _data.GetSystemMembers(system);
             var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             await ctx.Paginate<PKMember>(
-                members.OrderBy(m => m.Name.ToLower()).ToList(),
+                members.OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList(),
                 25,
                 embedTitle,
                 (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
-                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyString.SanitizeMentions()})*";
+                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyTagsString().SanitizeMentions()})*";
                     return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
                 }))
             );
@@ -157,7 +146,7 @@ namespace PluralKit.Bot.Commands
             var members = await _data.GetSystemMembers(system);
             var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             await ctx.Paginate<PKMember>(
-                members.OrderBy(m => m.Name.ToLower()).ToList(),
+                members.OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList(),
                 5,
                 embedTitle,
                 (eb, ms) => {
@@ -165,7 +154,7 @@ namespace PluralKit.Bot.Commands
                         var profile = $"**ID**: {m.Hid}";
                         if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
                         if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
-                        if (m.Prefix != null || m.Suffix != null) profile += $"\n**Proxy tags**: {m.ProxyString}";
+                        if (m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
                         if (m.Description != null) profile += $"\n\n{m.Description}";
                         eb.AddField(m.Name, profile.Truncate(1024));
                     }
@@ -201,12 +190,32 @@ namespace PluralKit.Bot.Commands
             
             var now = SystemClock.Instance.GetCurrentInstant();
 
-            var rangeStart = PluralKit.Utils.ParseDateTime(durationStr);
+            var rangeStart = PluralKit.Utils.ParseDateTime(durationStr, true, system.Zone);
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
             var frontpercent = await _data.GetFrontBreakdown(system, rangeStart.Value.ToInstant(), now);
             await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
+        }
+
+        public async Task SystemProxy(Context ctx)
+        {
+            ctx.CheckSystem().CheckGuildContext();
+            var gs = await _data.GetSystemGuildSettings(ctx.System, ctx.Guild.Id);
+
+            bool newValue;
+            if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
+            else if (ctx.Match("off", "disabled", "false", "no")) newValue = false;
+            else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else newValue = !gs.ProxyEnabled;
+
+            gs.ProxyEnabled = newValue;
+            await _data.SetGuildSystemSettings(ctx.System, ctx.Guild.Id, gs);
+
+            if (newValue)
+                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");
+            else
+                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **disabled** for your system.");
         }
         
         public async Task SystemTimezone(Context ctx)

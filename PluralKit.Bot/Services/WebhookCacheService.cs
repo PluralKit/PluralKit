@@ -4,7 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Webhook;
+using Discord.WebSocket;
+
 using Serilog;
 
 namespace PluralKit.Bot
@@ -13,21 +14,21 @@ namespace PluralKit.Bot
     {
         public static readonly string WebhookName = "PluralKit Proxy Webhook";
             
-        private IDiscordClient _client;
+        private DiscordShardedClient _client;
         private ConcurrentDictionary<ulong, Lazy<Task<IWebhook>>> _webhooks;
 
         private ILogger _logger;
 
         public WebhookCacheService(IDiscordClient client, ILogger logger)
         {
-            _client = client;
+            _client = client as DiscordShardedClient;
             _logger = logger.ForContext<WebhookCacheService>();
             _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<IWebhook>>>();
         }
 
         public async Task<IWebhook> GetWebhook(ulong channelId)
         {
-            var channel = await _client.GetChannelAsync(channelId) as ITextChannel;
+            var channel = _client.GetChannel(channelId) as ITextChannel;
             if (channel == null) return null;
             return await GetWebhook(channel);
         }
@@ -83,7 +84,7 @@ namespace PluralKit.Bot
             return channel.CreateWebhookAsync(WebhookName);
         }
 
-        private bool IsWebhookMine(IWebhook arg) => arg.Creator.Id == _client.CurrentUser.Id && arg.Name == WebhookName;
+        private bool IsWebhookMine(IWebhook arg) => arg.Creator.Id == _client.GetShardFor(arg.Guild).CurrentUser.Id && arg.Name == WebhookName;
 
         public int CacheSize => _webhooks.Count;
     }

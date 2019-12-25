@@ -43,7 +43,7 @@ namespace PluralKit.Bot {
             }
 
             if (system.Tag != null) eb.AddField("Tag", system.Tag);
-            eb.AddField("Linked accounts", string.Join(", ", users), true);
+            eb.AddField("Linked accounts", string.Join(", ", users).Truncate(1000), true);
             eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
 
             if (system.Description != null) eb.AddField("Description", system.Description.Truncate(1024), false);
@@ -82,6 +82,8 @@ namespace PluralKit.Bot {
 
             var messageCount = await _data.GetMemberMessageCount(member);
 
+            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
+
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
@@ -94,7 +96,7 @@ namespace PluralKit.Bot {
             if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
             if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns, true);
             if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", $"{member.Prefix.EscapeMarkdown()}text{member.Suffix.EscapeMarkdown()}", true);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr), true);
             if (member.Color != null) eb.AddField("Color", $"#{member.Color}", true);
             if (member.Description != null) eb.AddField("Description", member.Description, false);
 
@@ -126,17 +128,21 @@ namespace PluralKit.Bot {
                 var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
 
                 // If this isn't the latest switch, we also show duration
+                string stringToAdd;
                 if (lastSw != null)
                 {
                     // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
                     var switchDuration = lastSw.Timestamp - sw.Timestamp;
-                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
+                    stringToAdd = $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
                 }
                 else
                 {
-                    outputStr += $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
+                    stringToAdd = $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
                 }
 
+                if (outputStr.Length + stringToAdd.Length > EmbedBuilder.MaxDescriptionLength) break;
+                outputStr += stringToAdd;
+                
                 lastSw = sw;
             }
 
@@ -165,11 +171,12 @@ namespace PluralKit.Bot {
                 var guildUser = await shard.Rest.GetGuildUserAsync(channel.Guild.Id, msg.Message.Sender);
                 if (guildUser != null)
                 {
-                    roles = guildUser.RoleIds
-                        .Select(roleId => channel.Guild.GetRole(roleId))
-                        .Where(role => role.Name != "@everyone")
-                        .OrderByDescending(role => role.Position)
-                        .ToList();
+                    if (guildUser.RoleIds.Count > 0)
+                        roles = guildUser.RoleIds
+                            .Select(roleId => channel.Guild.GetRole(roleId))
+                            .Where(role => role.Name != "@everyone")
+                            .OrderByDescending(role => role.Position)
+                            .ToList();
 
                     userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser?.NameAndMention();
                 }
@@ -178,13 +185,15 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
+                .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)
                 .AddField("Sent by", userStr, inline: true)
                 .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid));
 
-            if (roles != null) eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
+            if (roles != null && roles.Count > 0)
+                eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
             return eb.Build();
         }
 

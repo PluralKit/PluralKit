@@ -249,7 +249,9 @@ namespace PluralKit
 
         public static string NullIfEmpty(this string input)
         {
-            return input.Trim().Length == 0 ? null : input;
+            if (input == null) return null;
+            if (input.Trim().Length == 0) return null;
+            return input;
         }
     }
 
@@ -260,6 +262,7 @@ namespace PluralKit
         public static readonly string Note = "\U0001f4dd";
         public static readonly string ThumbsUp = "\U0001f44d";
         public static readonly string RedQuestion = "\u2753";
+        public static readonly string Bell = "\U0001F514";
     }
 
     public static class Formats
@@ -310,6 +313,9 @@ namespace PluralKit
             // So we add a custom type handler that literally just passes the type through to Npgsql
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
+
+            // Add global type mapper for ProxyTag compound type in Postgres
+            NpgsqlConnection.GlobalTypeMapper.MapComposite<ProxyTag>("proxy_tag");
         }
 
         public static ILogger InitLogger(CoreConfig config, string component)
@@ -317,14 +323,16 @@ namespace PluralKit
             return new LoggerConfiguration()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
                 .MinimumLevel.Debug()
-                .WriteTo.File(
-                    new RenderedCompactJsonFormatter(),
-                    (config.LogDir ?? "logs") + $"/pluralkit.{component}.log",
-                    rollingInterval: RollingInterval.Day,
-                    flushToDiskInterval: TimeSpan.FromSeconds(10),
-                    restrictedToMinimumLevel: LogEventLevel.Information,
-                    buffered: true)
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code, outputTemplate:"[{Timestamp:HH:mm:ss}] [{EventId}] {Level:u3} {Message:lj}{NewLine}{Exception}")
+                .WriteTo.Async(a =>
+                    a.File(
+                        new RenderedCompactJsonFormatter(),
+                        (config.LogDir ?? "logs") + $"/pluralkit.{component}.log",
+                        rollingInterval: RollingInterval.Day,
+                        flushToDiskInterval: TimeSpan.FromSeconds(10),
+                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        buffered: true))
+                .WriteTo.Async(a => 
+                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate:"[{Timestamp:HH:mm:ss}] [{EventId}] {Level:u3} {Message:lj}{NewLine}{Exception}"))
                 .CreateLogger();
         }
 
@@ -637,7 +645,7 @@ namespace PluralKit
         public void Dispose()
         {
             _stopwatch.Stop();
-            _logger.Debug("Executed query {Query} in {ElapsedTime}", _commandText, _stopwatch.Elapsed);
+            _logger.Verbose("Executed query {Query} in {ElapsedTime}", _commandText, _stopwatch.Elapsed);
             
             // One tick is 100 nanoseconds
             _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", _commandText))

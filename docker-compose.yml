@@ -24,10 +24,10 @@ services:
     links:
       - db
     ports:
-      - 2838:5000
+      - "127.0.0.1:2838:5000"
     restart: always
   db:
-    image: postgres:alpine
+    image: postgres:11-alpine
     volumes:
       - "db_data:/var/lib/postgresql/data"
     restart: always

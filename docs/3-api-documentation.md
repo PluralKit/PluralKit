@@ -44,9 +44,16 @@ The following three models (usually represented in JSON format) represent the va
 |color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.|
 |avatar_url|url?|Yes|Not validated server-side.|
 |birthday|date?|Yes|ISO-8601 (`YYYY-MM-DD`) format, year of `0001` means hidden year.|
-|prefix|string?|Yes||
-|suffix|string?|Yes||
+|prefix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
+|suffix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
+|proxy_tags|ProxyTag[]|Yes (entire array)|An array of ProxyTag (see below) objects, each representing a single prefix/suffix pair.|
+|keep_proxy|bool|Yes|Whether to display a member's proxy tags in the proxied message.|
 |created|datetime|No||
+
+#### ProxyTag object
+|Key|Type|
+|prefix|string?|
+|suffix|string?|
 
 ### Switch model
 
@@ -60,6 +67,7 @@ The following three models (usually represented in JSON format) represent the va
 |---|---|---|
 |timestamp|datetime||
 |id|snowflake|The ID of the message sent by the webhook. Encoded as string for precision reasons.|
+|original|snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.|
 |sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
 |channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
 |system|full System object|The system that proxied the message.|
@@ -124,8 +132,8 @@ Queries a system's member list by its 5-character ID. If the system doesn't exis
         "birthday": "1997-07-14",
         "pronouns": "he/him or they/them",
         "description": "I am Craig, example user extraordinaire.",
-        "prefix": "[",
-        "suffix": "]",
+        "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+        "keep_proxy": false,
         "created": "2019-01-01T15:00:00.654321Z"
     }
 ]
@@ -176,8 +184,8 @@ Returns a system's current fronter(s), with fully hydrated member objects. If th
             "birthday": "1997-07-14",
             "pronouns": "he/him or they/them",
             "description": "I am Craig, example user extraordinaire.",
-            "prefix": "[",
-            "suffix": "]",
+            "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+            "keep_proxy": false,
             "created": "2019-01-01T15:00:00.654321Z"
         }
     ]
@@ -196,7 +204,7 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
 {
     "name": "New System Name",
     "tag": "{Sys}",
-    "avatar_url": "https://path/to/new/avatar.png"
+    "avatar_url": "https://path/to/new/avatar.png",
     "tz": "America/New_York"
 }
 ```
@@ -248,8 +256,8 @@ Queries a member's information by its 5-character member ID. If the member does 
     "birthday": "1997-07-14",
     "pronouns": "he/him or they/them",
     "description": "I am Craig, example user extraordinaire.",
-    "prefix": "[",
-    "suffix": "]",
+    "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+    "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z"
 }
 ```
@@ -271,10 +279,10 @@ Creates a new member with the information given. Missing fields (except for name
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "["
+    "keep_proxy": false
 }
 ```
-(note the absence of a `suffix` field, which is set to null in the response)
+(note the absence of a `proxy_tags` field, which is cleared in the response)
 
 #### Example response
 ```json
@@ -287,8 +295,8 @@ Creates a new member with the information given. Missing fields (except for name
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "[",
-    "suffix": null,
+    "proxy_tags": [],
+    "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z"
 }
 ```
@@ -310,10 +318,10 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "["
+    "keep_proxy": false
 }
 ```
-(note the absence of a `suffix` field, which is set to null in the response)
+(note the absence of a `proxy_tags` field, which is cleared in the response)
 
 #### Example response
 ```json
@@ -326,8 +334,8 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "prefix": "[",
-    "suffix": null,
+    "proxy_tags": [],
+    "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z"
 }
 ```
@@ -364,6 +372,7 @@ Queries a system by its linked Discord account ID (17/18-digit numeric snowflake
 
 ### GET /msg/\<id>
 Looks up a proxied message by its message ID. Returns `404 Not Found` if the message ID is invalid or wasn't found (eg. was deleted or not proxied by PK).
+You can also look messages up by their *trigger* message ID (useful for, say, logging bot integration).
 
 #### Example request
     GET https://api.pluralkit.me/v1/msg/601014599386398700
@@ -373,6 +382,7 @@ Looks up a proxied message by its message ID. Returns `404 Not Found` if the mes
 {
     "timestamp": "2019-07-17T11:37:26.805Z",
     "id": "601014599386398700",
+    "original": "601014598168435600",
     "sender": "466378653216014359",
     "channel": "471388251102380000",
     "system": {
@@ -392,17 +402,21 @@ Looks up a proxied message by its message ID. Returns `404 Not Found` if the mes
         "birthday": "1997-07-14",
         "pronouns": "he/him or they/them",
         "description": "I am Craig, example user extraordinaire.",
-        "prefix": "[",
-        "suffix": "]",
+        "proxy_tags": [{"prefix": "[", "suffix": "]"}],
+        "keep_proxy": false,
         "created": "2019-01-01T15:00:00.654321Z"
     }
 }
 ```
 
 ## Version history
+* 2019-10-31
+  * Added `proxy_tags` field to members
+  * Added `keep_proxy` field to members
+  * Deprecated `prefix` and `suffix` member fields, will be removed at some point (tm)
 * 2019-07-17
-  * Add endpoint for querying system by account
-  * Add endpoint for querying message contents
+  * Added endpoint for querying system by account
+  * Added endpoint for querying message contents
 * 2019-07-10 **(v1)**
   * First specified version
 * (prehistory)

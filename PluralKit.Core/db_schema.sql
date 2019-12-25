@@ -1,3 +1,12 @@
+-- Create proxy_tag compound type if it doesn't exist
+do $$ begin
+    create type proxy_tag as (
+        prefix text,
+        suffix text
+    );
+exception when duplicate_object then null;
+end $$;
+
 create table if not exists systems
 (
     id          serial primary key,
@@ -9,6 +18,16 @@ create table if not exists systems
     token       text,
     created     timestamp      not null default (current_timestamp at time zone 'utc'),
     ui_tz       text           not null default 'UTC'
+);
+
+create table if not exists system_guild
+(
+    system serial not null references systems (id) on delete cascade,
+    guild bigint not null,
+    
+    proxy_enabled bool not null default true,
+    
+    primary key (system, guild)
 );
 
 create table if not exists members
@@ -23,8 +42,8 @@ create table if not exists members
     birthday     date,
     pronouns     text,
     description  text,
-    prefix       text,
-    suffix       text,
+    proxy_tags   proxy_tag[]    not null default array[]::proxy_tag[], -- Rationale on making this an array rather than a separate table - we never need to query them individually, only access them as part of a selected Member struct
+    keep_proxy   bool           not null default false, 
     created      timestamp      not null default (current_timestamp at time zone 'utc')
 );
 
@@ -65,6 +84,8 @@ ON switch_members USING btree (
 	switch ASC NULLS LAST
 ) INCLUDE (member);
 
+create index if not exists idx_message_member on messages (member);
+
 create table if not exists webhooks
 (
     channel bigint primary key,
@@ -74,6 +95,8 @@ create table if not exists webhooks
 
 create table if not exists servers
 (
-    id          bigint primary key,
-    log_channel bigint
+    id            bigint primary key,
+    log_channel   bigint,
+    log_blacklist bigint[] not null default array[]::bigint[],
+    blacklist     bigint[] not null default array[]::bigint[] 
 );

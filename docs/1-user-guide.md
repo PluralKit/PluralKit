@@ -255,11 +255,44 @@ You can now type a message enclosed in your proxy tags, and it'll be deleted by 
 **NB:** If you want `<angle brackets>` as proxy tags, there is currently a bug where custom server emojis will (wrongly)
 be interpreted as proxying with that member (see [issue #37](https://github.com/xSke/PluralKit/issues/37)). The current workaround is to use different proxy tags.
 
+### Using multiple distinct proxy tag pairs
+If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc), you can add multiple tag pairs.
+When proxying, you may then use any of the tags to proxy for that specific member.
+
+To add a proxy tag to a member, use the `pk;member proxy add` command:
+    pk;member John proxy add {text}
+    pk;member Craig proxy add C:text
+    
+To remove a proxy tag from a member, use the `pk;member proxy remove` command:
+    pk;member John proxy remove {text}
+    pk;member Craig proxy remove C:text
+
+### Keeping your proxy tags
+If you'd like your proxied messages to include the proxy tags, you can enable the "keep proxy tags" option for a given member, like so:
+
+    pk;member John keepproxy on
+
+Turning the option off is similar - replace "on" with "off" in the command. The default value for every member is off. When proxying
+a member with multiple proxy tags, the proxy tag used to trigger a given proxy will be included.
+
+The practical effect of this is:
+* **Keep proxy tags on:** `[Message goes here]` -> [Message goes here]
+* **Keep proxy tags off:** `[Message goes here]` -> Message goes here 
+
 ### Querying message information
 If you want information about a proxied message (eg. for moderation reasons), you can query the message for its sender account, system, member, etc.
 
 Either you can react to the message itself with the ❔ or ❓ emoji, which will DM you information about the message in question, 
 or you can use the `pk;message` command followed by [the message's ID](https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).
+
+### Pinging a specific user
+If you'd like to "ping" the account behind a proxied message without having to query the message and ping them yourself,
+you can react to the message with the 🔔 or ❗ emoji, and PluralKit will ping the relevant member and account in the same
+channel on your behalf with a link to the message you reacted to.
+
+### Disabling proxying on a per-server basis
+If you need to disable proxying messages for your system entirely in a specific server (for example, if you'd like to
+use a different proxy bot there), you can type `pk;system proxy on/off` to do that.
 
 ### Deleting messages
 Since the messages will be posted by PluralKit's webhook, there's no way to delete the message as you would a normal user message.
@@ -309,6 +342,8 @@ Note that you can't move a switch *before* the *previous switch*, to avoid break
 ### Delete switches
 If you'd like to delete the most recent switch, use the `pk;switch delete` command. You'll need to confirm
 the deletion by clicking a reaction.
+
+If you'd like to clear your system's entire switch history, use the `pk;switch delete all` command. This isn't reversible!
 
 ### Querying fronter
 To see the current fronter in a system, use the `pk;system fronter` command. You can use this on your current system, or on other systems. For example:
