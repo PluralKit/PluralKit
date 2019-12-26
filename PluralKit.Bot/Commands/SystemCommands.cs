@@ -210,7 +210,7 @@ namespace PluralKit.Bot.Commands
             else newValue = !gs.ProxyEnabled;
 
             gs.ProxyEnabled = newValue;
-            await _data.SetGuildSystemSettings(ctx.System, ctx.Guild.Id, gs);
+            await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, gs);
 
             if (newValue)
                 await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");

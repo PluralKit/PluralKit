@@ -62,7 +62,7 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member)
+        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, IGuild guild)
         {
             var name = member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
@@ -82,6 +82,10 @@ namespace PluralKit.Bot {
 
             var messageCount = await _data.GetMemberMessageCount(member);
 
+            string guildDisplayName = null;
+            if (guild != null)
+                guildDisplayName = (await _data.GetMemberGuildSettings(member, guild.Id)).DisplayName;
+
             var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
 
             var eb = new EmbedBuilder()
@@ -92,11 +96,12 @@ namespace PluralKit.Bot {
 
             if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
 
-            if (member.DisplayName != null) eb.AddField("Display Name", member.DisplayName, true);
+            if (member.DisplayName != null) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
+            if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
             if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
-            if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns, true);
+            if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
             if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr), true);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
             if (member.Color != null) eb.AddField("Color", $"#{member.Color}", true);
             if (member.Description != null) eb.AddField("Description", member.Description, false);
 

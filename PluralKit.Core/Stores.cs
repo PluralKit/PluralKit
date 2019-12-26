@@ -69,6 +69,11 @@ namespace PluralKit {
         public bool ProxyEnabled { get; set; } = true;
     }
 
+    public class MemberGuildSettings
+    {
+        public string DisplayName { get; set; }
+    }
+
     public interface IDataStore
     {
         /// <summary>
@@ -116,8 +121,15 @@ namespace PluralKit {
         /// <param name="system">The system to check in.</param>
         Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag);
 
+        /// <summary>
+        /// Gets a specific system's guild-specific settings for a given guild.
+        /// </summary>
         Task<SystemGuildSettings> GetSystemGuildSettings(PKSystem system, ulong guild);
-        Task SetGuildSystemSettings(PKSystem system, ulong guild, SystemGuildSettings settings);
+        
+        /// <summary>
+        /// Saves a specific system's guild-specific settings.
+        /// </summary>
+        Task SetSystemGuildSettings(PKSystem system, ulong guild, SystemGuildSettings settings);
 
         /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
@@ -225,6 +237,16 @@ namespace PluralKit {
         /// </para>
         Task DeleteMember(PKMember member);
         
+        /// <summary>
+        /// Gets a specific member's guild-specific settings for a given guild.
+        /// </summary>
+        Task<MemberGuildSettings> GetMemberGuildSettings(PKMember member, ulong guild);
+        
+        /// <summary>
+        /// Saves a specific member's guild-specific settings.
+        /// </summary>
+        Task SetMemberGuildSettings(PKMember member, ulong guild, MemberGuildSettings settings);
+
         /// <summary>
         /// Gets a message and its information by its ID.
         /// </summary>
@@ -392,8 +414,7 @@ namespace PluralKit {
                     "select * from system_guild where system = @System and guild = @Guild",
                     new {System = system.Id, Guild = guild}) ?? new SystemGuildSettings();
         }
-
-        public async Task SetGuildSystemSettings(PKSystem system, ulong guild, SystemGuildSettings settings)
+        public async Task SetSystemGuildSettings(PKSystem system, ulong guild, SystemGuildSettings settings)
         {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled) values (@System, @Guild, @ProxyEnabled) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled", new
@@ -570,6 +591,22 @@ namespace PluralKit {
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
 
             _logger.Information("Deleted member {@Member}", member);
+        }
+
+        public async Task<MemberGuildSettings> GetMemberGuildSettings(PKMember member, ulong guild)
+        {
+            using var conn = await _conn.Obtain();
+            return await conn.QuerySingleOrDefaultAsync<MemberGuildSettings>(
+                "select * from member_guild where member = @Member and guild = @Guild", new { Member = member.Id, Guild = guild})
+                ?? new MemberGuildSettings();
+        }
+
+        public async Task SetMemberGuildSettings(PKMember member, ulong guild, MemberGuildSettings settings)
+        {
+            using var conn = await _conn.Obtain();
+            await conn.ExecuteAsync(
+                "insert into member_guild (member, guild, display_name) values (@Member, @Guild, @DisplayName) on conflict (member, guild) do update set display_name = @Displayname",
+                new {Member = member.Id, Guild = guild, DisplayName = settings.DisplayName});
         }
 
         public async Task<ulong> GetMemberMessageCount(PKMember member)

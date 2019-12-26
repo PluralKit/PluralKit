@@ -47,6 +47,16 @@ create table if not exists members
     created      timestamp      not null default (current_timestamp at time zone 'utc')
 );
 
+create table if not exists member_guild
+(
+    member serial not null references members (id) on delete cascade,
+    guild bigint not null,
+    
+    display_name text default null,
+    
+    primary key (member, guild)
+);
+
 create table if not exists accounts
 (
     uid    bigint primary key,

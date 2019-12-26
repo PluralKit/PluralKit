@@ -80,7 +80,7 @@ namespace PluralKit.Bot {
         public static PKError DisplayNameTooLong(string displayName, int maxLength) => new PKError(
             $"Display name too long ({displayName.Length} > {maxLength} characters). Use a shorter display name, or shorten your system tag.");
         public static PKError ProxyNameTooShort(string name) => new PKError($"The webhook's name, `{name.SanitizeMentions()}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.");
-        public static PKError ProxyNameTooLong(string name) => new PKError($"The webhook's name, {name.SanitizeMentions()}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name or use a shorter system tag.");
+        public static PKError ProxyNameTooLong(string name) => new PKError($"The webhook's name, {name.SanitizeMentions()}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name, display name or server display name, or use a shorter system tag.");
 
         public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag `{tagToAdd.ProxyString.SanitizeMentions()}`. The member currently has these tags: {member.ProxyTagsString().SanitizeMentions()}");
         public static PKError ProxyTagDoesNotExist(ProxyTag tagToRemove, PKMember member) => new PKError($"That member does not have the proxy tag `{tagToRemove.ProxyString.SanitizeMentions()}`. The member currently has these tags: {member.ProxyTagsString().SanitizeMentions()}");

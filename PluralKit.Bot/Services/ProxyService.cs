@@ -99,6 +99,10 @@ namespace PluralKit.Bot
             // Make sure the system hasn't blacklisted the guild either
             var systemGuildCfg = await _data.GetSystemGuildSettings(match.System, channel.GuildId);
             if (!systemGuildCfg.ProxyEnabled) return;
+            
+            // Also, check if the member has a guild nickname 
+            // TODO: roll this into the cached results as well as system/guild settings, maybe? Add a separate cache or something.
+            var memberGuildCfg = await _data.GetMemberGuildSettings(match.Member, channel.GuildId);
 
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
@@ -109,7 +113,7 @@ namespace PluralKit.Bot
                 return;
             
             // Get variables in order and all
-            var proxyName = match.Member.ProxyName(match.System.Tag);
+            var proxyName = match.Member.ProxyName(match.System.Tag, memberGuildCfg.DisplayName);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
             
             // If the name's too long (or short), bail

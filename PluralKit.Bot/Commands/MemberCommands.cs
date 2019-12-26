@@ -82,7 +82,14 @@ namespace PluralKit.Bot.Commands
             await ctx.Reply($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
             if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set ({target.DisplayName.SanitizeMentions()}), and will be proxied using that name instead.");
-            
+
+            if (ctx.Guild != null)
+            {
+                var memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+                if (memberGuildConfig.DisplayName != null)
+                    await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName.SanitizeMentions()}) in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name here.");
+            }
+
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
@@ -322,14 +329,44 @@ namespace PluralKit.Bot.Commands
 
             var successStr = $"{Emojis.Success} ";
             if (newDisplayName != null)
-            {
-                successStr +=
-                    $"Member display name changed. This member will now be proxied using the name \"{newDisplayName.SanitizeMentions()}\".";
-            }
+                successStr += $"Member display name changed. This member will now be proxied using the name \"{newDisplayName.SanitizeMentions()}\".";
             else
-            {
                 successStr += $"Member display name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
+
+            if (ctx.Guild != null)
+            {
+                var memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+                if (memberGuildConfig.DisplayName != null)
+                    successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name, \"{memberGuildConfig.DisplayName.SanitizeMentions()}\", here.";
             }
+
+            await ctx.Reply(successStr);
+            
+            await _proxyCache.InvalidateResultsForSystem(ctx.System);
+        }
+
+        public async Task MemberServerName(Context ctx, PKMember target)
+        {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            
+            // TODO: allow setting server names for different servers/in DMs by ID
+            ctx.CheckGuildContext();
+            
+            var newServerName = ctx.RemainderOrNull();
+
+            var guildSettings = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+            guildSettings.DisplayName = newServerName;
+            await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildSettings);
+
+            var successStr = $"{Emojis.Success} ";
+            if (newServerName != null)
+                successStr += $"Member server name changed. This member will now be proxied using the name \"{newServerName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).";
+            else if (target.DisplayName != null)
+                successStr += $"Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).";
+            else
+                successStr += $"Member server name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).";
+
             await ctx.Reply(successStr);
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
@@ -359,7 +396,7 @@ namespace PluralKit.Bot.Commands
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _data.GetSystemById(target.System);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target));
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild));
         }
     }
 }

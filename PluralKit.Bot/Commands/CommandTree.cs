@@ -33,6 +33,7 @@ namespace PluralKit.Bot.Commands
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
         public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "Changes a member's avatar");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
+        public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
@@ -60,8 +61,8 @@ namespace PluralKit.Bot.Commands
         };
 
         public static Command[] MemberCommands = {
-            MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberDesc, MemberPronouns, MemberColor,
-            MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar,
+            MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
+            MemberColor, MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar,
         };
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
@@ -235,7 +236,7 @@ namespace PluralKit.Bot.Commands
             else if (await ctx.MatchMember() is PKMember target)
                 await HandleMemberCommandTargeted(ctx, target);
             else if (!ctx.HasNext())
-                await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName, MemberDesc, MemberPronouns,
+                await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
                     MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
             else
                 await ctx.Reply($"{Emojis.Error} {ctx.CreateMemberNotFoundError(ctx.PopArgument())}");
@@ -262,12 +263,14 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<MemberCommands>(MemberAvatar, m => m.MemberAvatar(ctx, target));
             else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname"))
                 await ctx.Execute<MemberCommands>(MemberDisplayName, m => m.MemberDisplayName(ctx, target));
+            else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname"))
+                await ctx.Execute<MemberCommands>(MemberServerName, m => m.MemberServerName(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberCommands>(MemberKeepProxy, m => m.MemberKeepProxy(ctx, target));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<MemberCommands>(MemberInfo, m => m.ViewMember(ctx, target));
             else 
-                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
+                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName ,MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
         }
 
         private async Task HandleSwitchCommand(Context ctx)
