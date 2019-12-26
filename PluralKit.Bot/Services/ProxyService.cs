@@ -62,7 +62,17 @@ namespace PluralKit.Bot
                 var prefix = tag.Prefix ?? "";
                 var suffix = tag.Suffix ?? "";
 
-                if (message.Length >= prefix.Length + suffix.Length && message.StartsWith(prefix) && message.EndsWith(suffix)) {
+                var isMatch = message.Length >= prefix.Length + suffix.Length 
+                              && message.StartsWith(prefix) && message.EndsWith(suffix);
+                
+                // Special case for image-only proxies and proxy tags with spaces
+                if (!isMatch && message.Trim() == prefix.TrimEnd() + suffix.TrimStart())
+                {
+                    isMatch = true;
+                    message = prefix + suffix; // To get around substring errors
+                }
+
+                if (isMatch) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
                     if (leadingMention != null) inner = $"{leadingMention} {inner}";
                     return new ProxyMatch { Member = match.Member, System = match.System, InnerText = inner, ProxyTags = tag};
