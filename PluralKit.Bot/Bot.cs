@@ -51,12 +51,12 @@ namespace PluralKit.Bot
                 var logger = services.GetRequiredService<ILogger>().ForContext<Initialize>();
                 var coreConfig = services.GetRequiredService<CoreConfig>();
                 var botConfig = services.GetRequiredService<BotConfig>();
+                var schema = services.GetRequiredService<SchemaService>();
 
                 using (Sentry.SentrySdk.Init(coreConfig.SentryUrl))
                 {
                     logger.Information("Connecting to database");
-                    using (var conn = await services.GetRequiredService<DbConnectionFactory>().Obtain())
-                        await Schema.CreateTables(conn);
+                    await schema.ApplyMigrations();
 
                     logger.Information("Connecting to Discord");
                     var client = services.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
@@ -83,6 +83,7 @@ namespace PluralKit.Bot
 
             .AddSingleton<DbConnectionCountHolder>()
             .AddTransient<DbConnectionFactory>()
+            .AddTransient<SchemaService>()
 
             .AddSingleton<IDiscordClient, DiscordShardedClient>(_ => new DiscordShardedClient(new DiscordSocketConfig
             {

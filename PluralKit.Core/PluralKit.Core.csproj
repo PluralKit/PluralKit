@@ -28,8 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="db_schema.sql" />
-      <EmbeddedResource Include="db_schema.sql" />
+      <EmbeddedResource Include="Migrations\*.sql" />
     </ItemGroup>
 
 </Project>

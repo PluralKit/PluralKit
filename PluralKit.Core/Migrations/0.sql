@@ -1,3 +1,9 @@
+-- SCHEMA VERSION 0, 2019-12-26
+-- "initial version", considered a "starting point" for the migrations
+
+-- also the assumed database layout of someone either migrating from an older version of PK or starting a new instance,
+-- so everything here *should* be idempotent given a schema version older than this or nonexistent.
+
 -- Create proxy_tag compound type if it doesn't exist
 do $$ begin
     create type proxy_tag as (
@@ -78,10 +84,6 @@ create table if not exists switches
     system    serial    not null references systems (id) on delete cascade,
     timestamp timestamp not null default (current_timestamp at time zone 'utc')
 );
-CREATE INDEX IF NOT EXISTS idx_switches_system
-ON switches USING btree (
-	system ASC NULLS LAST
-) INCLUDE ("timestamp");
 
 create table if not exists switch_members
 (
@@ -89,12 +91,6 @@ create table if not exists switch_members
     switch serial not null references switches (id) on delete cascade,
     member serial not null references members (id) on delete cascade
 );
-CREATE INDEX IF NOT EXISTS idx_switch_members_switch
-ON switch_members USING btree (
-	switch ASC NULLS LAST
-) INCLUDE (member);
-
-create index if not exists idx_message_member on messages (member);
 
 create table if not exists webhooks
 (
@@ -110,3 +106,7 @@ create table if not exists servers
     log_blacklist bigint[] not null default array[]::bigint[],
     blacklist     bigint[] not null default array[]::bigint[] 
 );
+
+create index if not exists idx_switches_system on switches using btree (system asc nulls last) include ("timestamp");
+create index if not exists idx_switch_members_switch on switch_members using btree (switch asc nulls last) include (member);
+create index if not exists idx_message_member on messages (member);
