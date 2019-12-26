@@ -11,7 +11,10 @@ using PluralKit.Bot.CommandSystem;
 namespace PluralKit.Bot {
     public static class ContextUtils {
         public static async Task<bool> PromptYesNo(this Context ctx, IUserMessage message, IUser user = null, TimeSpan? timeout = null) {
-            await message.AddReactionsAsync(new[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
+            // "Fork" the task adding the reactions off so we don't have to wait for them to be finished to start listening for presses
+#pragma warning disable 4014
+            message.AddReactionsAsync(new IEmote[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
+#pragma warning restore 4014
             var reaction = await ctx.AwaitReaction(message, user ?? ctx.Author, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
             return reaction.Emote.Name == Emojis.Success;
         }
