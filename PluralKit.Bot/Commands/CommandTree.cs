@@ -263,7 +263,7 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<MemberCommands>(MemberAvatar, m => m.MemberAvatar(ctx, target));
             else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname"))
                 await ctx.Execute<MemberCommands>(MemberDisplayName, m => m.MemberDisplayName(ctx, target));
-            else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname"))
+            else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
                 await ctx.Execute<MemberCommands>(MemberServerName, m => m.MemberServerName(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberCommands>(MemberKeepProxy, m => m.MemberKeepProxy(ctx, target));
