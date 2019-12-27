@@ -31,6 +31,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;member new <name>` - Creates a new system member.
 - `pk;member <name> rename <new name>` - Changes the name of a member.
 - `pk;member <name> displayname <new display name>` - Changes the display name of a member.
+- `pk;member <name> servername <new server name>` - Changes the display name of a member, only in the current serve.
 - `pk;member <name> description [description]` - Changes the description of a member.
 - `pk;member <name> avatar [avatar url]` - Changes the avatar of a member.
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
