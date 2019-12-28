@@ -74,6 +74,13 @@ namespace PluralKit {
         public string DisplayName { get; set; }
     }
 
+    public class AuxillaryProxyInformation
+    {
+        public GuildConfig Guild { get; set; }
+        public SystemGuildSettings SystemGuild { get; set; }
+        public MemberGuildSettings MemberGuild { get; set; }
+    }
+
     public interface IDataStore
     {
         /// <summary>
@@ -378,6 +385,8 @@ namespace PluralKit {
         /// Saves the given guild configuration struct to the data store.
         /// </summary>
         Task SaveGuildConfig(GuildConfig cfg);
+
+        Task<AuxillaryProxyInformation> GetAuxillaryProxyInformation(ulong guild, PKSystem system, PKMember member);
     }
     
     public class PostgresDataStore: IDataStore {
@@ -694,22 +703,24 @@ namespace PluralKit {
             public ulong? LogChannel { get; set; }
             public long[] LogBlacklist { get; set; }
             public long[] Blacklist { get; set; }
+
+            public GuildConfig Into() =>
+                new GuildConfig
+                {
+                    Id = Id,
+                    LogChannel = LogChannel,
+                    LogBlacklist = new HashSet<ulong>(LogBlacklist?.Select(c => (ulong) c) ?? new ulong[] {}),
+                    Blacklist = new HashSet<ulong>(Blacklist?.Select(c => (ulong) c) ?? new ulong[]{})
+                };
         }
 
         public async Task<GuildConfig> GetOrCreateGuildConfig(ulong guild)
         {
             using (var conn = await _conn.Obtain())
             {
-                var compat = await conn.QuerySingleOrDefaultAsync<DatabaseCompatibleGuildConfig>(
+                return (await conn.QuerySingleOrDefaultAsync<DatabaseCompatibleGuildConfig>(
                     "insert into servers (id) values (@Id) on conflict do nothing; select * from servers where id = @Id",
-                    new {Id = guild});
-                return new GuildConfig
-                {
-                    Id = compat.Id,
-                    LogChannel = compat.LogChannel,
-                    LogBlacklist = new HashSet<ulong>(compat.LogBlacklist.Select(c => (ulong) c)),
-                    Blacklist = new HashSet<ulong>(compat.Blacklist.Select(c => (ulong) c)),
-                };
+                    new {Id = guild})).Into();
             }
         }
 
@@ -725,7 +736,24 @@ namespace PluralKit {
                 });
             _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
         }
-        
+
+        public async Task<AuxillaryProxyInformation> GetAuxillaryProxyInformation(ulong guild, PKSystem system, PKMember member)
+        {
+            using var conn = await _conn.Obtain();
+            var args = new {Guild = guild, System = system.Id, Member = member.Id};
+            
+            var multi = await conn.QueryMultipleAsync(@"
+            select servers.* from servers where id = @Guild; 
+            select * from system_guild where guild = @Guild and system = @System;
+            select * from member_guild where guild = @Guild and member = @Member", args);
+            return new AuxillaryProxyInformation
+            {
+                Guild = (await multi.ReadSingleOrDefaultAsync<DatabaseCompatibleGuildConfig>()).Into(),
+                SystemGuild = await multi.ReadSingleOrDefaultAsync<SystemGuildSettings>() ?? new SystemGuildSettings(),
+                MemberGuild = await multi.ReadSingleOrDefaultAsync<MemberGuildSettings>() ?? new MemberGuildSettings()
+            };
+        }
+
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one

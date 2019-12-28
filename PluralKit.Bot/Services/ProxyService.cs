@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Dapper;
+
 using Discord;
 using Discord.Net;
 using Discord.WebSocket;
@@ -24,12 +26,13 @@ namespace PluralKit.Bot
         private IDiscordClient _client;
         private LogChannelService _logChannel;
         private IDataStore _data;
+        private DbConnectionFactory _conn;
         private EmbedService _embeds;
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
         private ProxyCacheService _cache;
         
-        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor)
+        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor, DbConnectionFactory conn)
         {
             _client = client;
             _logChannel = logChannel;
@@ -37,6 +40,7 @@ namespace PluralKit.Bot
             _embeds = embeds;
             _cache = cache;
             _webhookExecutor = webhookExecutor;
+            _conn = conn;
             _logger = logger.ForContext<ProxyService>();
         }
 
@@ -91,19 +95,16 @@ namespace PluralKit.Bot
             var results = await _cache.GetResultsFor(message.Author.Id);
             var match = GetProxyTagMatch(message.Content, results);
             if (match == null) return;
+
+            // Gather all "extra" data from DB at once
+            var aux = await _data.GetAuxillaryProxyInformation(channel.GuildId, match.System, match.Member);
             
             // And make sure the channel's not blacklisted from proxying.
-            var guildCfg = await _data.GetOrCreateGuildConfig(channel.GuildId);
-            if (guildCfg.Blacklist.Contains(channel.Id)) return;
+            if (aux.Guild.Blacklist.Contains(channel.Id)) return;
             
             // Make sure the system hasn't blacklisted the guild either
-            var systemGuildCfg = await _data.GetSystemGuildSettings(match.System, channel.GuildId);
-            if (!systemGuildCfg.ProxyEnabled) return;
+            if (!aux.SystemGuild.ProxyEnabled) return;
             
-            // Also, check if the member has a guild nickname 
-            // TODO: roll this into the cached results as well as system/guild settings, maybe? Add a separate cache or something.
-            var memberGuildCfg = await _data.GetMemberGuildSettings(match.Member, channel.GuildId);
-
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
             if (!await EnsureBotPermissions(channel)) return;
@@ -113,7 +114,7 @@ namespace PluralKit.Bot
                 return;
             
             // Get variables in order and all
-            var proxyName = match.Member.ProxyName(match.System.Tag, memberGuildCfg.DisplayName);
+            var proxyName = match.Member.ProxyName(match.System.Tag, aux.MemberGuild.DisplayName);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
             
             // If the name's too long (or short), bail
@@ -138,7 +139,7 @@ namespace PluralKit.Bot
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _data.AddMessage(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
-            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText);
+            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText, aux.Guild);
 
             // Wait a second or so before deleting the original message
             await Task.Delay(1000);

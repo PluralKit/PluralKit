@@ -18,16 +18,17 @@ namespace PluralKit.Bot {
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async Task LogMessage(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, IGuildChannel originalChannel, IUser sender, string content)
+        public async Task LogMessage(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, IGuildChannel originalChannel, IUser sender, string content, GuildConfig? guildCfg = null)
         {
-            var guildCfg = await _data.GetOrCreateGuildConfig(originalChannel.GuildId);
-            
+            if (guildCfg == null) 
+                guildCfg = await _data.GetOrCreateGuildConfig(originalChannel.GuildId);
+
             // Bail if logging is disabled either globally or for this channel
-            if (guildCfg.LogChannel == null) return;
-            if (guildCfg.LogBlacklist.Contains(originalChannel.Id)) return;
+            if (guildCfg.Value.LogChannel == null) return;
+            if (guildCfg.Value.LogBlacklist.Contains(originalChannel.Id)) return;
             
             // Bail if we can't find the channel
-            if (!(await _client.GetChannelAsync(guildCfg.LogChannel.Value) is ITextChannel logChannel)) return;
+            if (!(await _client.GetChannelAsync(guildCfg.Value.LogChannel.Value) is ITextChannel logChannel)) return;
 
             var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, originalMsgId, sender, content, originalChannel);
 
