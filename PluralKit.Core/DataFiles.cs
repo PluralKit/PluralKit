@@ -269,14 +269,15 @@ namespace PluralKit.Bot
             string lastSetTag = null;
             
             TupperboxConversionResult output = default(TupperboxConversionResult);
+
+            var members = Tuppers.Select(t => t.ToPluralKit(ref lastSetTag, ref output.HadIndividualTags,
+                ref output.HadGroups)).ToList();
             
+            // Nowadays we set each member's display name to their name + tag, so we don't set a global system tag
             output.System = new DataFileSystem
             {
-                Members = Tuppers.Select(t => t.ToPluralKit(ref lastSetTag, ref output.HadIndividualTags,
-                    ref output.HadGroups)).ToList(),
-                Switches = new List<DataFileSwitch>(),
-                // If we haven't had multiple tags set, use the last (and only) one we set as the system tag
-                Tag = !output.HadIndividualTags ? lastSetTag : null
+                Members = members,
+                Switches = new List<DataFileSwitch>()
             };
             return output;
         }
@@ -291,7 +292,7 @@ namespace PluralKit.Bot
         [JsonProperty("show_brackets")] public bool ShowBrackets;
         [JsonProperty("birthday")] public string Birthday;
         [JsonProperty("description")] public string Description;
-        [JsonProperty("tag")] public string Tag; // Not supported by PK
+        [JsonProperty("tag")] public string Tag;
         [JsonProperty("group_id")] public string GroupId; // Not supported by PK
         [JsonProperty("group_pos")] public int? GroupPos; // Not supported by PK
 
@@ -321,7 +322,8 @@ namespace PluralKit.Bot
                 Birthday = Birthday,
                 Description = Description,
                 ProxyTags = tags,
-                KeepProxy = ShowBrackets
+                KeepProxy = ShowBrackets,
+                DisplayName = Tag != null ? $"{Name} {Tag}" : null
             };
         }
     }

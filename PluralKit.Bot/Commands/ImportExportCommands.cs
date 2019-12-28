@@ -73,7 +73,7 @@ namespace PluralKit.Bot.Commands
                                         "\n- PluralKit does not support member groups. Members will be imported without groups.";
                                 if (res.HadIndividualTags)
                                     issueStr +=
-                                        "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, tags will not be imported. You can set your system tag using the `pk;system tag <tag>` command later.";
+                                        "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, those tags will be applied to the members' *display names*/nicknames instead.";
 
                                 var msg = await ctx.Reply($"{issueStr}\n\nDo you want to proceed with the import?");
                                 if (!await ctx.PromptYesNo(msg)) throw Errors.ImportCancelled;
