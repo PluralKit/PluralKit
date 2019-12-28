@@ -63,7 +63,7 @@ namespace PluralKit.Bot.Commands
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             
-            var newName = ctx.RemainderOrNull();
+            var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new name for the member.");
 
             // Hard name length cap
             if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
