@@ -82,7 +82,7 @@ namespace PluralKit.Bot.CommandSystem
             }
             catch (PKSyntaxError e)
             {
-                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:** pk;{commandDef.Usage}");
+                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef.Usage}");
             }
             catch (PKError e)
             {
