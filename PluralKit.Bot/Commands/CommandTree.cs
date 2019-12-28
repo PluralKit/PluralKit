@@ -14,7 +14,7 @@ namespace PluralKit.Bot.Commands
         public static Command SystemRename = new Command("system name", "system rename [name]", "Renames your system");
         public static Command SystemDesc = new Command("system description", "system description [description]", "Changes your system's description");
         public static Command SystemTag = new Command("system tag", "system tag [tag]", "Changes your system's tag");
-        public static Command SystemAvatar = new Command("system avatar", "system avatar [url|@mention]", "Changes your system's avatar");
+        public static Command SystemAvatar = new Command("system avatar", "system avatar [url|@mention|clear]", "Changes your system's avatar");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
         public static Command SystemProxy = new Command("system proxy", "system proxy [on|off]", "Enables or disables message proxying in a specific server");
@@ -31,7 +31,7 @@ namespace PluralKit.Bot.Commands
         public static Command MemberBirthday = new Command("member birthday", "member <member> birthday [birthday]", "Changes a member's birthday");
         public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
-        public static Command MemberAvatar = new Command("member avatar", "member <member> avatar <url|@mention|clear>", "Changes a member's avatar");
+        public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention|clear]", "Changes a member's avatar");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");

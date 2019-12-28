@@ -289,7 +289,7 @@ namespace PluralKit.Bot.Commands
                 else
                 {
                     if (target.System == ctx.System?.Id)
-                        throw new PKSyntaxError($"This member does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL.");
+                        throw new PKSyntaxError($"This member does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
                     throw new PKError($"This member does not have an avatar set.");
                 }
 

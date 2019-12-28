@@ -84,6 +84,22 @@ namespace PluralKit.Bot.Commands
         public async Task SystemAvatar(Context ctx)
         {
             ctx.CheckSystem();
+            
+            if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
+            {
+                if ((ctx.System.AvatarUrl?.Trim() ?? "").Length > 0)
+                {
+                    var eb = new EmbedBuilder()
+                        .WithTitle($"System avatar")
+                        .WithImageUrl(ctx.System.AvatarUrl)
+                        .WithDescription($"To clear, use `pk;system avatar clear`.");
+                    await ctx.Reply(embed: eb.Build());
+                }
+                else
+                    throw new PKSyntaxError($"This system does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+
+                return;
+            }
 
             var member = await ctx.MatchUser();
             if (member != null)
@@ -96,16 +112,23 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply(
                     $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
             }
+            else if (ctx.Match("clear"))
+            {
+                ctx.System.AvatarUrl = null;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System avatar cleared.");
+            }
             else
             {
+                // They can't both be null - otherwise we would've hit the conditional at the very top
                 string url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.ProxyUrl;
-                if (url != null) await ctx.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
+                await ctx.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
 
                 ctx.System.AvatarUrl = url;
                 await _data.SaveSystem(ctx.System);
 
                 var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
-                await ctx.Reply($"{Emojis.Success} System avatar {(url == null ? "cleared" : "changed")}.", embed: embed);
+                await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed);
             }
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
