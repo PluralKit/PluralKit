@@ -208,9 +208,13 @@ To clear a member color, use the command with no color code argument (eg. `pk;me
 If you want your member to have an associated avatar to display on the member information card and on proxied messages, you can set the member avatar. To do so, use the `pk;member avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
 
     pk;member John avatar http://placebeard.it/512.jpg
-    pk;member "Craig Johnson" avatar [with attached image]
+    pk;member "Craig Johnson" avatar   (with an attached image)
     
-To clear your avatar, simply use the command with no attachment or link (eg. `pk;member John avatar`).
+To preview the current avatar (if one is set), use the command with no arguments:
+
+    pk;member John avatar
+    
+To clear your avatar, use the subcommand `avatar clear` (eg. `pk;member John avatar clear`).
 
 ### Member pronouns
 If you want to list a member's preferred pronouns, you can use the pronouns field on a member profile. This is a free text field, so you can put whatever you'd like in there (with a 100 character limit), like so:
