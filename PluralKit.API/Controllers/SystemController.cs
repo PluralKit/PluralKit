@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using NodaTime;
 using PluralKit.Core;
 
@@ -18,7 +20,7 @@ namespace PluralKit.API.Controllers
     public struct FrontersReturn
     {
         [JsonProperty("timestamp")] public Instant Timestamp { get; set; }
-        [JsonProperty("members")] public IEnumerable<PKMember> Members { get; set; }
+        [JsonProperty("members")] public IEnumerable<JObject> Members { get; set; }
     }
 
     public struct PostSwitchParams
@@ -44,27 +46,27 @@ namespace PluralKit.API.Controllers
 
         [HttpGet]
         [RequiresSystem]
-        public Task<ActionResult<PKSystem>> GetOwnSystem()
+        public Task<ActionResult<JObject>> GetOwnSystem()
         {
-            return Task.FromResult<ActionResult<PKSystem>>(Ok(_auth.CurrentSystem));
+            return Task.FromResult<ActionResult<JObject>>(Ok(_auth.CurrentSystem.ToJson()));
         }
 
         [HttpGet("{hid}")]
-        public async Task<ActionResult<PKSystem>> GetSystem(string hid)
+        public async Task<ActionResult<JObject>> GetSystem(string hid)
         {
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
-            return Ok(system);
+            return Ok(system.ToJson());
         }
 
         [HttpGet("{hid}/members")]
-        public async Task<ActionResult<IEnumerable<PKMember>>> GetMembers(string hid)
+        public async Task<ActionResult<IEnumerable<JObject>>> GetMembers(string hid)
         {
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
 
             var members = await _data.GetSystemMembers(system);
-            return Ok(members);
+            return Ok(members.Select(m => m.ToJson()));
         }
 
         [HttpGet("{hid}/switches")]
@@ -102,32 +104,27 @@ namespace PluralKit.API.Controllers
             return Ok(new FrontersReturn
             {
                 Timestamp = sw.Timestamp,
-                Members = members
+                Members = members.Select(m => m.ToJson())
             });
         }
 
         [HttpPatch]
         [RequiresSystem]
-        public async Task<ActionResult<PKSystem>> EditSystem([FromBody] PKSystem newSystem)
+        public async Task<ActionResult<JObject>> EditSystem([FromBody] JObject changes)
         {
             var system = _auth.CurrentSystem;
-            
-            // Bounds checks
-            if (newSystem.Name != null && newSystem.Name.Length > Limits.MaxSystemNameLength)
-                return BadRequest($"System name too long ({newSystem.Name.Length} > {Limits.MaxSystemNameLength}.");
-            if (newSystem.Tag != null && newSystem.Tag.Length > Limits.MaxSystemTagLength)
-                return BadRequest($"System tag too long ({newSystem.Tag.Length} > {Limits.MaxSystemTagLength}.");
-            if (newSystem.Description != null && newSystem.Description.Length > Limits.MaxDescriptionLength)
-                return BadRequest($"System description too long ({newSystem.Description.Length} > {Limits.MaxDescriptionLength}.");
 
-            system.Name = newSystem.Name.NullIfEmpty();
-            system.Description = newSystem.Description.NullIfEmpty();
-            system.Tag = newSystem.Tag.NullIfEmpty();
-            system.AvatarUrl = newSystem.AvatarUrl.NullIfEmpty();
-            system.UiTz = newSystem.UiTz ?? "UTC";
-            
+            try
+            {
+                system.Apply(changes);
+            }
+            catch (PKParseError e)
+            {
+                return BadRequest(e.Message);
+            }
+
             await _data.SaveSystem(system);
-            return Ok(system);
+            return Ok(system.ToJson());
         }
 
         [HttpPost("switches")]

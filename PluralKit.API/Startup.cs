@@ -22,8 +22,7 @@ namespace PluralKit.API
             services.AddCors();
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
-                .AddNewtonsoftJson();
-                // .AddJsonOptions(opts => { opts.SerializerSettings.BuildSerializerSettings(); });
+                .AddNewtonsoftJson(); // sorry MS, this just does *more*
 
             services
                 .AddTransient<IDataStore, PostgresDataStore>()

@@ -1,15 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 
 using Dapper.Contrib.Extensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using NodaTime;
 using NodaTime.Text;
 
+using PluralKit.Core;
+
 namespace PluralKit
 {
+    public class PKParseError: Exception
+    {
+        public PKParseError(string message): base(message) { }
+    }
+    
     public struct ProxyTag
     {
         public ProxyTag(string prefix, string suffix)
@@ -52,16 +60,26 @@ namespace PluralKit
         [JsonProperty("tz")] public string UiTz { get; set; }
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
 
-        public void ToJson(System.Text.Json.Utf8JsonWriter w)
+        public JObject ToJson()
         {
-            w.WriteStartObject();
-            w.WriteString("id", Hid);
-            w.WriteString("description", Description);
-            w.WriteString("tag", Tag);
-            w.WriteString("avatar_url", AvatarUrl);
-            w.WriteString("created", Formats.TimestampExportFormat.Format(Created));
-            w.WriteString("tz", UiTz);
-            w.WriteEndObject();
+            var o = new JObject();
+            o.Add("id", Hid);
+            o.Add("name", Name);
+            o.Add("description", Description);
+            o.Add("tag", Tag);
+            o.Add("avatar_url", AvatarUrl);
+            o.Add("created", Formats.TimestampExportFormat.Format(Created));
+            o.Add("tz", UiTz);
+            return o;
+        }
+
+        public void Apply(JObject o)
+        {
+            if (o.ContainsKey("name")) Name = o.Value<string>("name").NullIfEmpty().BoundsCheck(Limits.MaxSystemNameLength, "System name");
+            if (o.ContainsKey("description")) Description = o.Value<string>("description").NullIfEmpty().BoundsCheck(Limits.MaxDescriptionLength, "System description");
+            if (o.ContainsKey("tag")) Tag = o.Value<string>("tag").NullIfEmpty().BoundsCheck(Limits.MaxSystemTagLength, "System tag");
+            if (o.ContainsKey("avatar_url")) AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
+            if (o.ContainsKey("tz")) UiTz = o.Value<string>("tz") ?? "UTC";
         }
     }
 
@@ -81,20 +99,6 @@ namespace PluralKit
         [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags { get; set; }
         [JsonProperty("keep_proxy")] public bool KeepProxy { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
-        
-        // These are deprecated as fuck, and are kinda hacky
-        // Don't use, unless you're the API's serialization library
-        [JsonProperty("prefix")] [Obsolete("Use PKMember.ProxyTags")] public string Prefix
-        {
-            get => ProxyTags?.FirstOrDefault().Prefix;
-            set => ProxyTags = new[] {new ProxyTag(Prefix, value)};
-        }
-
-        [JsonProperty("suffix")] [Obsolete("Use PKMember.ProxyTags")] public string Suffix
-        {
-            get => ProxyTags?.FirstOrDefault().Suffix;
-            set => ProxyTags = new[] {new ProxyTag(Suffix, value)};
-        }
 
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" is hidden
         [JsonIgnore] public string BirthdayString
@@ -116,36 +120,64 @@ namespace PluralKit
             return $"{guildDisplayName ?? DisplayName ?? Name} {systemTag}";
         }
 
-        public void ToJson(Utf8JsonWriter w)
+        public JObject ToJson()
         {
-            w.WriteStartObject();
-            w.WriteString("id", Hid);
-            w.WriteString("name", Name);
-            w.WriteString("color", Color);
-            w.WriteString("display_name", DisplayName);
-            w.WriteString("birthday", Birthday.HasValue ? Formats.DateExportFormat.Format(Birthday.Value) : null);
-            w.WriteString("pronouns", Pronouns);
-            w.WriteString("description", Description);
-            w.WriteStartArray("proxy_tags");
-            foreach (var tag in ProxyTags)
-            {
-                w.WriteStartObject();
-                w.WriteString("prefix", tag.Prefix);
-                w.WriteString("suffix", tag.Suffix);
-                w.WriteEndObject();
-            }
-            w.WriteEndArray();
-            w.WriteBoolean("keep_proxy", KeepProxy);
-            w.WriteString("created", Formats.TimestampExportFormat.Format(Created));
+            var o = new JObject();
+            o.Add("id", Hid);
+            o.Add("name", Name);
+            o.Add("color", Color);
+            o.Add("display_name", DisplayName);
+            o.Add("birthday", Birthday.HasValue ? Formats.DateExportFormat.Format(Birthday.Value) : null);
+            o.Add("pronouns", Pronouns);
+            o.Add("description", Description);
+            
+            var tagArray = new JArray();
+            foreach (var tag in ProxyTags) 
+                tagArray.Add(new JObject {{"prefix", tag.Prefix}, {"suffix", tag.Suffix}});
+            o.Add("proxy_tags", tagArray);
+
+            o.Add("keep_proxy", KeepProxy);
+            o.Add("created", Formats.TimestampExportFormat.Format(Created));
 
             if (ProxyTags.Count > 0)
             {
                 // Legacy compatibility only, TODO: remove at some point
-                w.WriteString("prefix", ProxyTags?.FirstOrDefault().Prefix);
-                w.WriteString("suffix", ProxyTags?.FirstOrDefault().Suffix);
+                o.Add("prefix", ProxyTags?.FirstOrDefault().Prefix);
+                o.Add("suffix", ProxyTags?.FirstOrDefault().Suffix);
             }
 
-            w.WriteEndObject();
+            return o;
+        }
+
+        public void Apply(JObject o)
+        {
+            if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null) 
+                throw new PKParseError("Member name can not be set to null.");
+            
+            if (o.ContainsKey("name")) Name = o.Value<string>("name").BoundsCheck(Limits.MaxMemberNameLength, "Member name");
+            if (o.ContainsKey("color")) Color = o.Value<string>("color").NullIfEmpty();
+            if (o.ContainsKey("display_name")) DisplayName = o.Value<string>("display_name").NullIfEmpty().BoundsCheck(Limits.MaxMemberNameLength, "Member display name");
+            if (o.ContainsKey("birthday"))
+            {
+                var str = o.Value<string>("birthday").NullIfEmpty();
+                var res = Formats.DateExportFormat.Parse(str);
+                if (res.Success) Birthday = res.Value;
+                else if (str == null) Birthday = null;
+                else throw new PKParseError("Could not parse member birthday.");
+            }
+
+            if (o.ContainsKey("pronouns")) Pronouns = o.Value<string>("pronouns").NullIfEmpty().BoundsCheck(Limits.MaxPronounsLength, "Member pronouns");
+            if (o.ContainsKey("description")) Description = o.Value<string>("description").NullIfEmpty().BoundsCheck(Limits.MaxDescriptionLength, "Member descriptoin");
+            if (o.ContainsKey("keep_proxy")) KeepProxy = o.Value<bool>("keep_proxy");
+
+            if (o.ContainsKey("prefix") || o.ContainsKey("suffix") && !o.ContainsKey("proxy_tags"))
+                ProxyTags = new[] {new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix"))};
+            else if (o.ContainsKey("proxy_tags"))
+            {
+                ProxyTags = o.Value<JArray>("proxy_tags")
+                    .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
+                    .ToList();
+            }
         }
     }
 

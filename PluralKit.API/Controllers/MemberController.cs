@@ -1,6 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+
+using Newtonsoft.Json.Linq;
+
 using PluralKit.Core;
 
 namespace PluralKit.API.Controllers
@@ -20,103 +23,67 @@ namespace PluralKit.API.Controllers
         }
 
         [HttpGet("{hid}")]
-        public async Task<ActionResult<PKMember>> GetMember(string hid)
+        public async Task<ActionResult<JObject>> GetMember(string hid)
         {
             var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
-            return Ok(member);
+            return Ok(member.ToJson());
         }
 
         [HttpPost]
         [RequiresSystem]
-        public async Task<ActionResult<PKMember>> PostMember([FromBody] PKMember newMember)
+        public async Task<ActionResult<JObject>> PostMember([FromBody] JObject properties)
         {
             var system = _auth.CurrentSystem;
 
-            if (newMember.Name == null)
-                return BadRequest("Member name cannot be null.");
+            if (!properties.ContainsKey("name"))
+                return BadRequest("Member name must be specified.");
 
             // Enforce per-system member limit
             var memberCount = await _data.GetSystemMemberCount(system);
             if (memberCount >= Limits.MaxMemberCount)
                 return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
 
-            // Explicit bounds checks
-            if (newMember.Name != null && newMember.Name.Length > Limits.MaxMemberNameLength)
-                return BadRequest($"Member name too long ({newMember.Name.Length} > {Limits.MaxMemberNameLength}.");
-            if (newMember.DisplayName != null && newMember.DisplayName.Length > Limits.MaxMemberNameLength)
-                return BadRequest($"Member display name too long ({newMember.DisplayName.Length} > {Limits.MaxMemberNameLength}.");
-            if (newMember.Pronouns != null && newMember.Pronouns.Length > Limits.MaxPronounsLength)
-                return BadRequest($"Member pronouns too long ({newMember.Pronouns.Length} > {Limits.MaxPronounsLength}.");
-            if (newMember.Description != null && newMember.Description.Length > Limits.MaxDescriptionLength)
-                return BadRequest($"Member descriptions too long ({newMember.Description.Length} > {Limits.MaxDescriptionLength}.");
-
-            // Sanity bounds checks
-            if (newMember.AvatarUrl != null && newMember.AvatarUrl.Length > 1000)
-                return BadRequest();
-            if (newMember.ProxyTags?.Any(tag => tag.Prefix.Length > 1000 || tag.Suffix.Length > 1000) ?? false)
-                return BadRequest();
-
-            var member = await _data.CreateMember(system, newMember.Name);
-
-            member.Name = newMember.Name;
-            member.DisplayName = newMember.DisplayName;
-            member.Color = newMember.Color;
-            member.AvatarUrl = newMember.AvatarUrl;
-            member.Birthday = newMember.Birthday;
-            member.Pronouns = newMember.Pronouns;
-            member.Description = newMember.Description;
-            member.ProxyTags = newMember.ProxyTags;
-            member.KeepProxy = newMember.KeepProxy;
+            var member = await _data.CreateMember(system, properties.Value<string>("name"));
+            try
+            {
+                member.Apply(properties);
+            }
+            catch (PKParseError e)
+            {
+                return BadRequest(e.Message);
+            }
+            
             await _data.SaveMember(member);
-
-            return Ok(member);
+            return Ok(member.ToJson());
         }
 
         [HttpPatch("{hid}")]
         [RequiresSystem]
-        public async Task<ActionResult<PKMember>> PatchMember(string hid, [FromBody] PKMember newMember)
+        public async Task<ActionResult<JObject>> PatchMember(string hid, [FromBody] JObject changes)
         {
             var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
             if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
 
-            if (newMember.Name == null)
-                return BadRequest("Member name can not be null.");
-
-            // Explicit bounds checks
-            if (newMember.Name != null && newMember.Name.Length > Limits.MaxMemberNameLength)
-                return BadRequest($"Member name too long ({newMember.Name.Length} > {Limits.MaxMemberNameLength}.");
-            if (newMember.DisplayName != null && newMember.DisplayName.Length > Limits.MaxMemberNameLength)
-                return BadRequest($"Member display name too long ({newMember.DisplayName.Length} > {Limits.MaxMemberNameLength}.");
-            if (newMember.Pronouns != null && newMember.Pronouns.Length > Limits.MaxPronounsLength)
-                return BadRequest($"Member pronouns too long ({newMember.Pronouns.Length} > {Limits.MaxPronounsLength}.");
-            if (newMember.Description != null && newMember.Description.Length > Limits.MaxDescriptionLength)
-                return BadRequest($"Member descriptions too long ({newMember.Description.Length} > {Limits.MaxDescriptionLength}.");
-
-            // Sanity bounds checks
-            if (newMember.ProxyTags?.Any(tag => (tag.Prefix?.Length ?? 0) > 1000 || (tag.Suffix?.Length ?? 0) > 1000) ?? false)
-                return BadRequest();
-
-            member.Name = newMember.Name;
-            member.DisplayName = newMember.DisplayName.NullIfEmpty();
-            member.Color = newMember.Color.NullIfEmpty();
-            member.AvatarUrl = newMember.AvatarUrl.NullIfEmpty();
-            member.Birthday = newMember.Birthday;
-            member.Pronouns = newMember.Pronouns.NullIfEmpty();
-            member.Description = newMember.Description.NullIfEmpty();
-            member.ProxyTags = newMember.ProxyTags;
-            member.KeepProxy = newMember.KeepProxy;
+            try
+            {
+                member.Apply(changes);
+            }
+            catch (PKParseError e)
+            {
+                return BadRequest(e.Message);
+            }
+            
             await _data.SaveMember(member);
-
-            return Ok(member);
+            return Ok(member.ToJson());
         }
         
         [HttpDelete("{hid}")]
         [RequiresSystem]
-        public async Task<ActionResult<PKMember>> DeleteMember(string hid)
+        public async Task<ActionResult> DeleteMember(string hid)
         {
             var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
@@ -124,7 +91,6 @@ namespace PluralKit.API.Controllers
             if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
             
             await _data.DeleteMember(member);
-
             return Ok();
         }
     }

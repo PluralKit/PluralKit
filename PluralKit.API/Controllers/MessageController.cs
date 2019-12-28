@@ -1,6 +1,8 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using NodaTime;
 
 namespace PluralKit.API.Controllers
@@ -13,8 +15,8 @@ namespace PluralKit.API.Controllers
         [JsonProperty("sender")] public string Sender;
         [JsonProperty("channel")] public string Channel;
 
-        [JsonProperty("system")] public PKSystem System;
-        [JsonProperty("member")] public PKMember Member;
+        [JsonProperty("system")] public JObject System;
+        [JsonProperty("member")] public JObject Member;
     }
     
     [ApiController]
@@ -41,8 +43,8 @@ namespace PluralKit.API.Controllers
                 Id = msg.Message.Mid.ToString(),
                 Channel = msg.Message.Channel.ToString(),
                 Sender = msg.Message.Sender.ToString(),
-                Member = msg.Member,
-                System = msg.System,
+                Member = msg.Member.ToJson(),
+                System = msg.System.ToJson(),
                 Original = msg.Message.OriginalMid?.ToString()
             };
         } 

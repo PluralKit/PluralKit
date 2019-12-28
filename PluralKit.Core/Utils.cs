@@ -253,6 +253,13 @@ namespace PluralKit
             if (input.Trim().Length == 0) return null;
             return input;
         }
+
+        public static string BoundsCheck(this string input, int maxLength, string nameInError)
+        {
+            if (input != null && input.Length > maxLength)
+                throw new PKParseError($"{nameInError} too long ({input.Length} > {maxLength}).");
+            return input;
+        }
     }
 
     public static class Emojis {
