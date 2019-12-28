@@ -9,9 +9,9 @@ description: PluralKit's API documentation.
 PluralKit has a basic HTTP REST API for querying and modifying your system.
 The root endpoint of the API is `https://api.pluralkit.me/v1/`.
 
-Endpoints will always return all fields, using `null` when a value is missing. On `PATCH` endpoints, you *must* include
-all fields, too. Missing fields will be interpreted as `null`, and `null` fields will have their value removed. To
-preserve a value, pass the existing value again.
+Endpoints will always return all fields, using `null` when a value is missing. On `PATCH` endpoints,
+missing fields from the JSON request will be ignored and preserved as is, but on `POST` endpoints will
+be set to `null` or cleared.
 
 ## Authentication
 Authentication is done with a simple "system token". You can get your system token by running `pk;token` using the
@@ -52,6 +52,7 @@ The following three models (usually represented in JSON format) represent the va
 
 #### ProxyTag object
 |Key|Type|
+|---|---|
 |prefix|string?|
 |suffix|string?|
 
@@ -208,14 +209,14 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
     "tz": "America/New_York"
 }
 ```
-(note the absence of a `description` field, which is set to null in the response)
+(note the absence of a `description` field, which has its old value preserved in the response)
 
 #### Example response
 ```json
 {
     "id": "abcde",
     "name": "New System Name",
-    "description": null,
+    "description": "The Old Description, Not Updated",
     "tag": "{Sys}",
     "avatar_url": "https://path/to/new/avatar.png",
     "tz": "America/New_York",
@@ -321,7 +322,7 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "keep_proxy": false
 }
 ```
-(note the absence of a `proxy_tags` field, which is cleared in the response)
+(note the absence of a `proxy_tags` field, which keeps its old value in the response)
 
 #### Example response
 ```json
@@ -334,7 +335,7 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "proxy_tags": [],
+    "proxy_tags": [{"prefix": "[", "suffix": "]"}],
     "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z"
 }
@@ -410,6 +411,9 @@ You can also look messages up by their *trigger* message ID (useful for, say, lo
 ```
 
 ## Version history
+* 2019-12-28
+  * Changed behaviour of missing fields in PATCH responses, will now preserve the old value instead of clearing
+  * This is technically a breaking change, but not *significantly* so, so I won't bump the version number.
 * 2019-10-31
   * Added `proxy_tags` field to members
   * Added `keep_proxy` field to members
