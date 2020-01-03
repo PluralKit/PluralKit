@@ -15,7 +15,9 @@ namespace PluralKit.Bot.CommandSystem
 
         public Parameters(string cmd)
         {
-            _cmd = cmd;
+            // This is a SUPER dirty hack to avoid having to match both spaces and newlines in the word detection below
+            // Instead, we just add a space before every newline (which then gets stripped out later).
+            _cmd = cmd.Replace("\n", " \n");
             _ptr = 0;
         }
 
