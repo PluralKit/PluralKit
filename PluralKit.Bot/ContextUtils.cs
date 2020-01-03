@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.Net;
 using Discord.WebSocket;
 
 using PluralKit.Bot.CommandSystem;
@@ -71,38 +73,44 @@ namespace PluralKit.Bot {
                 return eb.Build();
             }
 
-            var msg = await ctx.Channel.SendMessageAsync(embed: MakeEmbedForPage(0));
-            if (pageCount == 1) return; // If we only have one page, don't bother with the reaction/pagination logic, lol
-            var botEmojis = new[] { new Emoji("\u23EA"), new Emoji("\u2B05"), new Emoji("\u27A1"), new Emoji("\u23E9"), new Emoji(Emojis.Error) };
-            await msg.AddReactionsAsync(botEmojis);
+            try
+            {
+                var msg = await ctx.Channel.SendMessageAsync(embed: MakeEmbedForPage(0));
+                if (pageCount == 1) return; // If we only have one page, don't bother with the reaction/pagination logic, lol
+                var botEmojis = new[] { new Emoji("\u23EA"), new Emoji("\u2B05"), new Emoji("\u27A1"), new Emoji("\u23E9"), new Emoji(Emojis.Error) };
+                await msg.AddReactionsAsync(botEmojis);
 
-            try {
-                var currentPage = 0;
-                while (true) {
-                    var reaction = await ctx.AwaitReaction(msg, ctx.Author, timeout: TimeSpan.FromMinutes(5));
+                try {
+                    var currentPage = 0;
+                    while (true) {
+                        var reaction = await ctx.AwaitReaction(msg, ctx.Author, timeout: TimeSpan.FromMinutes(5));
 
-                    // Increment/decrement page counter based on which reaction was clicked
-                    if (reaction.Emote.Name == "\u23EA") currentPage = 0; // <<
-                    if (reaction.Emote.Name == "\u2B05") currentPage = (currentPage - 1) % pageCount; // <
-                    if (reaction.Emote.Name == "\u27A1") currentPage = (currentPage + 1) % pageCount; // >
-                    if (reaction.Emote.Name == "\u23E9") currentPage = pageCount - 1; // >>
-                    if (reaction.Emote.Name == Emojis.Error) break; // X
-                    
-                    // C#'s % operator is dumb and wrong, so we fix negative numbers
-                    if (currentPage < 0) currentPage += pageCount;
-                    
-                    // If we can, remove the user's reaction (so they can press again quickly)
-                    if (await ctx.HasPermission(ChannelPermission.ManageMessages) && reaction.User.IsSpecified) await msg.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
-                    
-                    // Edit the embed with the new page
-                    await msg.ModifyAsync((mp) => mp.Embed = MakeEmbedForPage(currentPage));
+                        // Increment/decrement page counter based on which reaction was clicked
+                        if (reaction.Emote.Name == "\u23EA") currentPage = 0; // <<
+                        if (reaction.Emote.Name == "\u2B05") currentPage = (currentPage - 1) % pageCount; // <
+                        if (reaction.Emote.Name == "\u27A1") currentPage = (currentPage + 1) % pageCount; // >
+                        if (reaction.Emote.Name == "\u23E9") currentPage = pageCount - 1; // >>
+                        if (reaction.Emote.Name == Emojis.Error) break; // X
+                        
+                        // C#'s % operator is dumb and wrong, so we fix negative numbers
+                        if (currentPage < 0) currentPage += pageCount;
+                        
+                        // If we can, remove the user's reaction (so they can press again quickly)
+                        if (await ctx.HasPermission(ChannelPermission.ManageMessages) && reaction.User.IsSpecified) await msg.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                        
+                        // Edit the embed with the new page
+                        await msg.ModifyAsync((mp) => mp.Embed = MakeEmbedForPage(currentPage));
+                    }
+                } catch (TimeoutException) {
+                    // "escape hatch", clean up as if we hit X
                 }
-            } catch (TimeoutException) {
-                // "escape hatch", clean up as if we hit X
-            }
 
-            if (await ctx.HasPermission(ChannelPermission.ManageMessages)) await msg.RemoveAllReactionsAsync();
-            else await msg.RemoveReactionsAsync(ctx.Shard.CurrentUser, botEmojis);
+
+                if (await ctx.HasPermission(ChannelPermission.ManageMessages)) await msg.RemoveAllReactionsAsync();
+                else await msg.RemoveReactionsAsync(ctx.Shard.CurrentUser, botEmojis);
+            }
+            // If we get a "NotFound" error, the message has been deleted and thus not our problem
+            catch (HttpException e) when (e.HttpCode == HttpStatusCode.NotFound) { }
         }
         
         public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items, Func<T, string> display = null)
