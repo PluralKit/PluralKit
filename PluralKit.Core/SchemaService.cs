@@ -57,6 +57,11 @@ namespace PluralKit {
             _logger.Information("Current schema version is {CurrentVersion}, applying migration {MigrationId}", currentVersion, migrationId);
             await conn.ExecuteAsync(migrationQuery, transaction: tx);
             tx.Commit();
+            
+            // If the above migration creates new enum/composite types, we must tell Npgsql to reload the internal type caches
+            // This will propagate to every other connection as well, since it marks the global type mapper collection dirty.
+            // TODO: find a way to get around the cast to our internal tracker wrapper... this could break if that ever changes
+            ((PerformanceTrackingConnection) conn)._impl.ReloadTypes();
         }
     }
 }

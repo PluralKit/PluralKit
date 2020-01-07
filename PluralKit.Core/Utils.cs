@@ -451,7 +451,7 @@ namespace PluralKit
     public class PerformanceTrackingConnection: IDbConnection
     {
         // Simple delegation of everything.
-        private NpgsqlConnection _impl;
+        internal NpgsqlConnection _impl;
 
         private DbConnectionCountHolder _countHolder;
         private ILogger _logger;
