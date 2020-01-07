@@ -129,6 +129,7 @@ namespace PluralKit
             o.Add("display_name", DisplayName);
             o.Add("birthday", Birthday.HasValue ? Formats.DateExportFormat.Format(Birthday.Value) : null);
             o.Add("pronouns", Pronouns);
+            o.Add("avatar_url", AvatarUrl);
             o.Add("description", Description);
             
             var tagArray = new JArray();
