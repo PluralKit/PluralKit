@@ -69,7 +69,7 @@ namespace PluralKit.Bot.Commands
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count)
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt]));
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild));
 
         }
 
