@@ -58,6 +58,21 @@ namespace PluralKit.Bot.Commands
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
+        public async Task MemberRandom(Context ctx)
+        {
+            ctx.CheckSystem();
+
+            var randGen = new System.Random(); 
+            //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
+
+            var members = (await _data.GetSystemMembers(ctx.System)).ToList();
+            if (members == null || !members.Any())
+                throw Errors.NoMembersError;
+            var randInt = randGen.Next(members.Count);
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild));
+
+        }
+
         public async Task RenameMember(Context ctx, PKMember target) {
             // TODO: this method is pretty much a 1:1 copy/paste of the above creation method, find a way to clean?
             if (ctx.System == null) throw Errors.NoSystemError;
