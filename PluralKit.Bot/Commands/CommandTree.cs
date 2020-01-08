@@ -35,6 +35,7 @@ namespace PluralKit.Bot.Commands
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
+        public static Command MemberRandom = new Command("random", "random", "Gets a random member from your system");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -133,6 +134,8 @@ namespace PluralKit.Bot.Commands
             if (ctx.Match("stats")) return ctx.Execute<MiscCommands>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
                 return ctx.Execute<MiscCommands>(PermCheck, m => m.PermCheckGuild(ctx));
+            if (ctx.Match("random", "r"))
+                return ctx.Execute<MemberCommands>(MemberRandom, m => m.MemberRandom(ctx));
 
             ctx.Reply(
                 $"{Emojis.Error} Unknown command `{ctx.PeekArgument().SanitizeMentions()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
