@@ -65,11 +65,11 @@ namespace PluralKit.Bot.Commands
             var randGen = new System.Random(); 
             //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
 
-            var members = await _data.GetSystemMembers(ctx.System);
+            var members = (await _data.GetSystemMembers(ctx.System)).toList();
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
-            var randMember = members.OrderBy(x=> randGen.Next()).First();
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, randMember));
+            var randInt = randGen.Next(members.Count)
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt]));
 
         }
 
