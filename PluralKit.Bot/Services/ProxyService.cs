@@ -167,6 +167,10 @@ namespace PluralKit.Bot
             var guildUser = await channel.Guild.GetCurrentUserAsync();
             var permissions = guildUser.GetPermissions(channel);
 
+            // If we can't send messages at all, just bail immediately.
+            // TODO: can you have ManageMessages and *not* SendMessages? What happens then?
+            if (!permissions.SendMessages && !permissions.ManageMessages) return false;
+
             if (!permissions.ManageWebhooks)
             {
                 // todo: PKError-ify these
