@@ -65,7 +65,7 @@ namespace PluralKit.Bot.Commands
             var randGen = new System.Random(); 
             //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
 
-            var members = (await _data.GetSystemMembers(ctx.System)).toList();
+            var members = (await _data.GetSystemMembers(ctx.System)).ToList();
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count);
