@@ -57,13 +57,13 @@ namespace PluralKit.Bot.CommandSystem
         /// <summary>
         /// Checks if the next parameter is equal to one of the given keywords. Case-insensitive.
         /// </summary>
-        public bool Match(params string[] potentialMatches)
+        public bool Match(ref string used, params string[] potentialMatches)
         {
             foreach (var match in potentialMatches)
             {
                 if (PeekArgument().Equals(match, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    PopArgument();
+                    used = PopArgument();
                     return true;
                 }
             }
@@ -71,6 +71,15 @@ namespace PluralKit.Bot.CommandSystem
             return false;
         }
 
+        /// <summary>
+        /// Checks if the next parameter is equal to one of the given keywords. Case-insensitive.
+        /// </summary>
+        public bool Match(params string[] potentialMatches)
+        {
+            string used = null; // Unused and unreturned, we just yeet it
+            return Match(ref used, potentialMatches);
+        }
+        
         public async Task Execute<T>(Command commandDef, Func<T, Task> handler)
         {
             _currentCommand = commandDef;
@@ -235,6 +244,15 @@ namespace PluralKit.Bot.CommandSystem
         {
             if (Channel is IGuildChannel) return this;
             throw new PKError("This command can not be run in a DM.");
+        }
+
+        public LookupContext LookupContextFor(PKSystem target) => 
+            System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+
+        public Context CheckSystemPrivacy(PKSystem target, PrivacyLevel level)
+        {
+            if (level.CanAccess(LookupContextFor(target))) return this;
+            throw new PKError("You do not have permission to access this information.");
         }
 
         public ITextChannel MatchChannel()

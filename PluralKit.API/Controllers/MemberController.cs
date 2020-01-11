@@ -28,7 +28,7 @@ namespace PluralKit.API.Controllers
             var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
-            return Ok(member.ToJson());
+            return Ok(member.ToJson(_auth.ContextFor(member)));
         }
 
         [HttpPost]
@@ -41,7 +41,7 @@ namespace PluralKit.API.Controllers
                 return BadRequest("Member name must be specified.");
 
             // Enforce per-system member limit
-            var memberCount = await _data.GetSystemMemberCount(system);
+            var memberCount = await _data.GetSystemMemberCount(system, true);
             if (memberCount >= Limits.MaxMemberCount)
                 return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
 
@@ -56,7 +56,7 @@ namespace PluralKit.API.Controllers
             }
             
             await _data.SaveMember(member);
-            return Ok(member.ToJson());
+            return Ok(member.ToJson(_auth.ContextFor(member)));
         }
 
         [HttpPatch("{hid}")]
@@ -78,7 +78,7 @@ namespace PluralKit.API.Controllers
             }
             
             await _data.SaveMember(member);
-            return Ok(member.ToJson());
+            return Ok(member.ToJson(_auth.ContextFor(member)));
         }
         
         [HttpDelete("{hid}")]

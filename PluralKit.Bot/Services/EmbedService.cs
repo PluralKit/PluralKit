@@ -20,13 +20,13 @@ namespace PluralKit.Bot {
             _data = data;
         }
 
-        public async Task<Embed> CreateSystemEmbed(PKSystem system) {
+        public async Task<Embed> CreateSystemEmbed(PKSystem system, LookupContext ctx) {
             var accounts = await _data.GetSystemAccounts(system);
 
             // Fetch/render info for all accounts simultaneously
             var users = await Task.WhenAll(accounts.Select(async uid => (await _client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
-            var memberCount = await _data.GetSystemMemberCount(system);
+            var memberCount = await _data.GetSystemMemberCount(system, false);
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
@@ -34,7 +34,7 @@ namespace PluralKit.Bot {
                 .WithFooter($"System ID: {system.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
  
             var latestSwitch = await _data.GetLatestSwitch(system);
-            if (latestSwitch != null)
+            if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
                 var switchMembers = (await _data.GetSwitchMembers(latestSwitch)).ToList();
                 if (switchMembers.Count > 0)
@@ -44,9 +44,12 @@ namespace PluralKit.Bot {
 
             if (system.Tag != null) eb.AddField("Tag", system.Tag);
             eb.AddField("Linked accounts", string.Join(", ", users).Truncate(1000), true);
-            eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
+            
+            if (system.MemberListPrivacy.CanAccess(ctx))
+                eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
 
-            if (system.Description != null) eb.AddField("Description", system.Description.Truncate(1024), false);
+            if (system.Description != null && system.DescriptionPrivacy.CanAccess(ctx))
+                eb.AddField("Description", system.Description.Truncate(1024), false);
 
             return eb.Build();
         }
@@ -62,7 +65,7 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, IGuild guild)
+        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, IGuild guild, LookupContext ctx)
         {
             var name = member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
@@ -91,19 +94,21 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
-                .WithColor(color)
+                .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : Color.Default)
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
+
+            if (member.MemberPrivacy == PrivacyLevel.Private) eb.WithDescription("*(this member is private)*");
 
             if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
 
             if (member.DisplayName != null) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
-            if (member.Birthday != null) eb.AddField("Birthdate", member.BirthdayString, true);
-            if (member.Pronouns != null) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
-            if (messageCount > 0) eb.AddField("Message Count", messageCount, true);
+            if (member.Birthday != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Birthdate", member.BirthdayString, true);
+            if (member.Pronouns != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
+            if (messageCount > 0 && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Message Count", messageCount, true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
-            if (member.Color != null) eb.AddField("Color", $"#{member.Color}", true);
-            if (member.Description != null) eb.AddField("Description", member.Description, false);
+            if (member.Color != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
+            if (member.Description != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description, false);
 
             return eb.Build();
         }

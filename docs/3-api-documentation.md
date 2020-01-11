@@ -18,6 +18,11 @@ Authentication is done with a simple "system token". You can get your system tok
 Discord bot, either in a channel with the bot or in DMs. Then, pass this token in the `Authorization` HTTP header
 on requests that require it. Failure to do so on endpoints that require authentication will return a `401 Unauthorized`.
 
+Some endpoints show information that a given system may have set to private. If this is a specific field
+(eg. description), the field will simply contain `null` rather than the true value. If this applies to entire endpoint
+responses (eg. fronter, switches, member list), the entire request will return `403 Forbidden`. Authenticating with the
+system's token (as described above) will override these privacy settings and show the full information. 
+
 ## Models
 The following three models (usually represented in JSON format) represent the various objects in PluralKit's API. A `?` after the column type indicates an optional (nullable) parameter.
 
@@ -99,6 +104,7 @@ Returns information about your own system.
 
 ### GET /s/\<id>
 Queries a system by its 5-character ID, and returns information about it. If the system doesn't exist, returns `404 Not Found`.
+Some fields may be set to `null` if unauthenticated and the system has chosen to make those fields private.
 
 #### Example request
     GET https://api.pluralkit.me/v1/s/abcde
@@ -118,6 +124,8 @@ Queries a system by its 5-character ID, and returns information about it. If the
 
 ### GET /s/\<id>/members
 Queries a system's member list by its 5-character ID. If the system doesn't exist, returns `404 Not Found`.
+If the system has chosen to hide its member list, this will return `403 Forbidden`, unless the request is authenticated with the system's token.
+If the request is not authenticated with the system's token, members marked as private will *not* be returned.
 
 #### Example request
     GET https://api.pluralkit.me/v1/s/abcde/members
@@ -145,6 +153,8 @@ Returns a system's switch history in newest-first chronological order, with a ma
 Optionally takes a `?before=` query parameter with an ISO-8601-formatted timestamp, and will only return switches
 that happen before that timestamp.
 
+If the system has chosen to hide its switch history, this will return `403 Forbidden`, unless the request is authenticated with the system's token.
+
 #### Example request
     GET https://api.pluralkit.me/v1/s/abcde/switches?before=2019-03-01T14:00:00Z
 
@@ -168,6 +178,7 @@ that happen before that timestamp.
 
 ### GET /s/\<id>/fronters
 Returns a system's current fronter(s), with fully hydrated member objects. If the system doesn't exist, *or* the system has no registered switches, returns `404 Not Found`.
+If the system has chosen to hide its current fronters, this will return `403 Forbidden`, unless the request is authenticated with the system's token. If a returned member is private, and the request isn't properly authenticated, some fields may be null.
 
 #### Example request
     GET https://api.pluralkit.me/v1/s/abcde/fronters
@@ -243,6 +254,7 @@ Registers a new switch to your own system given a list of member IDs.
 
 ### GET /m/\<id>
 Queries a member's information by its 5-character member ID. If the member does not exist, will return `404 Not Found`.
+If this member is marked private, and the request isn't authenticated with the member's system's token, some fields (currently only `description`) will contain `null` rather than the true value.
 
 #### Example request
     GET https://api.pluralkit.me/v1/m/qwert
@@ -354,6 +366,7 @@ Deletes a member from the database. Be careful as there is no confirmation and t
 
 ### GET /a/\<id>
 Queries a system by its linked Discord account ID (17/18-digit numeric snowflake). Returns `404 Not Found` if the account doesn't have a system linked.
+Some fields may be set to `null` if unauthenticated and the system has chosen to make those fields private.
 
 #### Example request
     GET https://api.pluralkit.me/v1/a/466378653216014359
@@ -374,6 +387,8 @@ Queries a system by its linked Discord account ID (17/18-digit numeric snowflake
 ### GET /msg/\<id>
 Looks up a proxied message by its message ID. Returns `404 Not Found` if the message ID is invalid or wasn't found (eg. was deleted or not proxied by PK).
 You can also look messages up by their *trigger* message ID (useful for, say, logging bot integration).
+
+The returned system and member's privacy settings will be respected, and as such, some fields may be set to null without the proper authentication.
 
 #### Example request
     GET https://api.pluralkit.me/v1/msg/601014599386398700
@@ -411,6 +426,8 @@ You can also look messages up by their *trigger* message ID (useful for, say, lo
 ```
 
 ## Version history
+* 2020-01-08
+  * Added privacy support, meaning some responses will now lack information or return 403s, depending on the specific system and member's privacy settings.
 * 2019-12-28
   * Changed behaviour of missing fields in PATCH responses, will now preserve the old value instead of clearing
   * This is technically a breaking change, but not *significantly* so, so I won't bump the version number.

@@ -26,5 +26,11 @@ namespace PluralKit.API
             await next.Invoke(context);
             CurrentSystem = null;
         }
+
+        public LookupContext ContextFor(PKSystem system) => 
+            system.Id == CurrentSystem?.Id ? LookupContext.ByOwner : LookupContext.API;
+            
+        public LookupContext ContextFor(PKMember member) => 
+            member.System == CurrentSystem?.Id ? LookupContext.ByOwner : LookupContext.API;
     }
 }

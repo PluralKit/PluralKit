@@ -48,6 +48,8 @@ namespace PluralKit.Bot
             
             using (var services = BuildServiceProvider())
             {
+                SchemaService.Initialize();
+                
                 var logger = services.GetRequiredService<ILogger>().ForContext<Initialize>();
                 var coreConfig = services.GetRequiredService<CoreConfig>();
                 var botConfig = services.GetRequiredService<BotConfig>();

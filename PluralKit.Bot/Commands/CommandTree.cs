@@ -22,6 +22,7 @@ namespace PluralKit.Bot.Commands
         public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
         public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
+        public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <description|members|fronter|fronthistory> <public|private>", "Changes your system's privacy settings");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
         public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
@@ -36,6 +37,7 @@ namespace PluralKit.Bot.Commands
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command MemberRandom = new Command("random", "random", "Gets a random member from your system");
+        public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy [on|off]", "Sets whether a member is private or public");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -58,7 +60,7 @@ namespace PluralKit.Bot.Commands
 
         public static Command[] SystemCommands = {
             SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemDelete, SystemTimezone,
-            SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent
+            SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy
         };
 
         public static Command[] MemberCommands = {
@@ -185,6 +187,8 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<SystemCommands>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
             else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
                 await ctx.Execute<SystemCommands>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
+            else if (ctx.Match("privacy"))
+                await ctx.Execute<SystemCommands>(SystemPrivacy, m => m.SystemPrivacy(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
             else if (!ctx.HasNext()) // Bare command
@@ -272,6 +276,8 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<MemberCommands>(MemberServerName, m => m.MemberServerName(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberCommands>(MemberKeepProxy, m => m.MemberKeepProxy(ctx, target));
+            else if (ctx.Match("private", "privacy", "hidden"))
+                await ctx.Execute<MemberCommands>(MemberPrivacy, m => m.MemberPrivacy(ctx, target));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<MemberCommands>(MemberInfo, m => m.ViewMember(ctx, target));
             else 

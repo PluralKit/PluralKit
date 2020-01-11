@@ -116,7 +116,8 @@ namespace PluralKit {
         /// <summary>
         /// Gets the member count of a system.
         /// </summary>
-        Task<int> GetSystemMemberCount(PKSystem system);
+        /// <param name="includePrivate">Whether the returned count should include private members.</param>
+        Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate);
 
         /// <summary>
         /// Gets a list of members with proxy tags that conflict with the given tags.
@@ -488,7 +489,7 @@ namespace PluralKit {
 
         public async Task SaveSystem(PKSystem system) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz where id = @Id", system);
+                await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz, description_privacy = @DescriptionPrivacy, member_list_privacy = @MemberListPrivacy, front_privacy = @FrontPrivacy, front_history_privacy = @FrontHistoryPrivacy where id = @Id", system);
 
             _logger.Information("Updated system {@System}", system);
         }
@@ -590,7 +591,7 @@ namespace PluralKit {
 
         public async Task SaveMember(PKMember member) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy where id = @Id", member);
+                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_privacy = @MemberPrivacy where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
         }
@@ -637,10 +638,13 @@ namespace PluralKit {
                     new { System = system.Id });
         }
 
-        public async Task<int> GetSystemMemberCount(PKSystem system)
+        public async Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate)
         {
+            var query = "select count(*) from members where system = @Id";
+            if (includePrivate) query += " and member_privacy = 1"; // 1 = public
+            
             using (var conn = await _conn.Obtain())
-                return await conn.ExecuteScalarAsync<int>("select count(*) from members where system = @Id", system);
+                return await conn.ExecuteScalarAsync<int>(query, system);
         }
 
         public async Task<ulong> GetTotalMembers()

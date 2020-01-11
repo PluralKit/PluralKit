@@ -38,7 +38,7 @@ namespace PluralKit.Bot.Commands
             }
 
             // Enforce per-system member limit
-            var memberCount = await _data.GetSystemMemberCount(ctx.System);
+            var memberCount = await _data.GetSystemMemberCount(ctx.System, true);
             if (memberCount >= Limits.MaxMemberCount)
                 throw Errors.MemberLimitReachedError;
 
@@ -69,7 +69,7 @@ namespace PluralKit.Bot.Commands
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild));
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
 
         }
 
@@ -429,11 +429,31 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-        
+
+        public async Task MemberPrivacy(Context ctx, PKMember target)
+        {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+
+            bool newValue;
+            if (ctx.Match("private", "hide", "hidden", "on", "enable", "yes")) newValue = true;
+            else if (ctx.Match("public", "show", "shown", "displayed", "off", "disable", "no")) newValue = false;
+            else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"private\" or \"public\".");
+            else newValue = target.MemberPrivacy != PrivacyLevel.Private;
+
+            target.MemberPrivacy = newValue ? PrivacyLevel.Private : PrivacyLevel.Public;
+            await _data.SaveMember(target);
+
+            if (newValue)
+                await ctx.Reply($"{Emojis.Success} Member privacy set to **private**. This member will no longer show up in member lists and will return limited information when queried by other accounts.");
+            else
+                await ctx.Reply($"{Emojis.Success} Member privacy set to **public**. This member will now show up in member lists and will return all information when queried by other accounts.");
+        }
+
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _data.GetSystemById(target.System);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild));
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
         }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Data;
 using System.IO;
 using System.Threading.Tasks;
 using Dapper;
@@ -11,7 +10,7 @@ using Serilog;
 namespace PluralKit {
     public class SchemaService
     {
-        private const int TargetSchemaVersion = 1;
+        private const int TargetSchemaVersion = 2;
 
         private DbConnectionFactory _conn;
         private ILogger _logger;
@@ -20,6 +19,13 @@ namespace PluralKit {
         {
             _conn = conn;
             _logger = logger.ForContext<SchemaService>();
+        }
+
+        public static void Initialize()
+        {
+            // Without these it'll still *work* but break at the first launch + probably cause other small issues
+            NpgsqlConnection.GlobalTypeMapper.MapComposite<ProxyTag>("proxy_tag");
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<PrivacyLevel>("privacy_level");
         }
 
         public async Task ApplyMigrations()

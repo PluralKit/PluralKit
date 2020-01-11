@@ -17,6 +17,25 @@ namespace PluralKit
     {
         public PKParseError(string message): base(message) { }
     }
+
+    public enum PrivacyLevel
+    {
+        Public = 1,
+        Private = 2
+    }
+
+    public static class PrivacyExt
+    {
+        public static bool CanAccess(this PrivacyLevel level, LookupContext ctx) =>
+            level == PrivacyLevel.Public || ctx == LookupContext.ByOwner;
+    }
+
+    public enum LookupContext
+    {
+        ByOwner,
+        ByNonOwner,
+        API
+    }
     
     public struct ProxyTag
     {
@@ -58,14 +77,19 @@ namespace PluralKit
         [JsonIgnore] public string Token { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
         [JsonProperty("tz")] public string UiTz { get; set; }
+        public PrivacyLevel DescriptionPrivacy { get; set; }
+        public PrivacyLevel MemberListPrivacy { get; set; }
+        public PrivacyLevel FrontPrivacy { get; set; }
+        public PrivacyLevel FrontHistoryPrivacy { get; set; }
+        
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
 
-        public JObject ToJson()
+        public JObject ToJson(LookupContext ctx)
         {
             var o = new JObject();
             o.Add("id", Hid);
             o.Add("name", Name);
-            o.Add("description", Description);
+            o.Add("description", DescriptionPrivacy.CanAccess(ctx) ? Description : null);
             o.Add("tag", Tag);
             o.Add("avatar_url", AvatarUrl);
             o.Add("created", Formats.TimestampExportFormat.Format(Created));
@@ -100,6 +124,8 @@ namespace PluralKit
         [JsonProperty("keep_proxy")] public bool KeepProxy { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
 
+        public PrivacyLevel MemberPrivacy { get; set; }
+
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" is hidden
         [JsonIgnore] public string BirthdayString
         {
@@ -120,17 +146,17 @@ namespace PluralKit
             return $"{guildDisplayName ?? DisplayName ?? Name} {systemTag}";
         }
 
-        public JObject ToJson()
+        public JObject ToJson(LookupContext ctx)
         {
             var o = new JObject();
             o.Add("id", Hid);
             o.Add("name", Name);
-            o.Add("color", Color);
+            o.Add("color", MemberPrivacy.CanAccess(ctx) ? Color : null);
             o.Add("display_name", DisplayName);
-            o.Add("birthday", Birthday.HasValue ? Formats.DateExportFormat.Format(Birthday.Value) : null);
-            o.Add("pronouns", Pronouns);
+            o.Add("birthday", MemberPrivacy.CanAccess(ctx) && Birthday.HasValue ? Formats.DateExportFormat.Format(Birthday.Value) : null);
+            o.Add("pronouns", MemberPrivacy.CanAccess(ctx) ? Pronouns : null);
             o.Add("avatar_url", AvatarUrl);
-            o.Add("description", Description);
+            o.Add("description", MemberPrivacy.CanAccess(ctx) ? Description : null);
             
             var tagArray = new JArray();
             foreach (var tag in ProxyTags) 

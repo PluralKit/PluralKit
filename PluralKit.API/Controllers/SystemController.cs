@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -48,7 +50,7 @@ namespace PluralKit.API.Controllers
         [RequiresSystem]
         public Task<ActionResult<JObject>> GetOwnSystem()
         {
-            return Task.FromResult<ActionResult<JObject>>(Ok(_auth.CurrentSystem.ToJson()));
+            return Task.FromResult<ActionResult<JObject>>(Ok(_auth.CurrentSystem.ToJson(_auth.ContextFor(_auth.CurrentSystem))));
         }
 
         [HttpGet("{hid}")]
@@ -56,7 +58,7 @@ namespace PluralKit.API.Controllers
         {
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
-            return Ok(system.ToJson());
+            return Ok(system.ToJson(_auth.ContextFor(system)));
         }
 
         [HttpGet("{hid}/members")]
@@ -65,8 +67,13 @@ namespace PluralKit.API.Controllers
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
 
+            if (!system.MemberListPrivacy.CanAccess(_auth.ContextFor(system)))
+                return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view member list.");
+
             var members = await _data.GetSystemMembers(system);
-            return Ok(members.Select(m => m.ToJson()));
+            return Ok(members
+                .Where(m => m.MemberPrivacy.CanAccess(_auth.ContextFor(system)))
+                .Select(m => m.ToJson(_auth.ContextFor(system))));
         }
 
         [HttpGet("{hid}/switches")]
@@ -76,6 +83,9 @@ namespace PluralKit.API.Controllers
             
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
+            
+            if (!system.FrontHistoryPrivacy.CanAccess(_auth.ContextFor(system)))
+                return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view front history.");
 
             using (var conn = await _conn.Obtain())
             {
@@ -97,6 +107,9 @@ namespace PluralKit.API.Controllers
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
             
+            if (!system.FrontPrivacy.CanAccess(_auth.ContextFor(system)))
+                return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view fronter.");
+            
             var sw = await _data.GetLatestSwitch(system);
             if (sw == null) return NotFound("System has no registered switches."); 
                 
@@ -104,7 +117,7 @@ namespace PluralKit.API.Controllers
             return Ok(new FrontersReturn
             {
                 Timestamp = sw.Timestamp,
-                Members = members.Select(m => m.ToJson())
+                Members = members.Select(m => m.ToJson(_auth.ContextFor(system)))
             });
         }
 
@@ -124,7 +137,7 @@ namespace PluralKit.API.Controllers
             }
 
             await _data.SaveSystem(system);
-            return Ok(system.ToJson());
+            return Ok(system.ToJson(_auth.ContextFor(system)));
         }
 
         [HttpPost("switches")]

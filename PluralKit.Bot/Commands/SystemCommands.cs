@@ -29,7 +29,7 @@ namespace PluralKit.Bot.Commands
         public async Task Query(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
-            await ctx.Reply(embed: await _embeds.CreateSystemEmbed(system));
+            await ctx.Reply(embed: await _embeds.CreateSystemEmbed(system, ctx.LookupContextFor(system)));
         }
         
         public async Task New(Context ctx)
@@ -149,27 +149,57 @@ namespace PluralKit.Bot.Commands
         
         public async Task MemberShortList(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
+            ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
+            
+            var authCtx = ctx.LookupContextFor(system);
+            var shouldShowPrivate = authCtx == LookupContext.ByOwner && ctx.Match("all", "everyone", "private");
 
-            var members = await _data.GetSystemMembers(system);
+            var members = (await _data.GetSystemMembers(system)).ToList();
             var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
-            await ctx.Paginate<PKMember>(
-                members.OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList(),
+
+            var membersToDisplay = members
+                .Where(m => m.MemberPrivacy == PrivacyLevel.Public || shouldShowPrivate)
+                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList();
+            var anyMembersHidden = members.Any(m => m.MemberPrivacy == PrivacyLevel.Private && !shouldShowPrivate);
+                
+            await ctx.Paginate(
+                membersToDisplay,
                 25,
                 embedTitle,
-                (eb, ms) => eb.Description = string.Join("\n", ms.Select((m) => {
-                    if (m.HasProxyTags) return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyTagsString().SanitizeMentions()})*";
-                    return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
-                }))
-            );
+                (eb, ms) =>
+                {
+                    eb.Description = string.Join("\n", ms.Select((m) =>
+                    {
+                        if (m.HasProxyTags)
+                            return
+                                $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyTagsString().SanitizeMentions()})*";
+                        return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
+                    }));
+
+                    var footer = $"{membersToDisplay.Count} total.";
+                    if (anyMembersHidden && authCtx == LookupContext.ByOwner)
+                        footer += "Private members have been hidden. type \"pk;system list all\" to include them.";
+                    eb.WithFooter(footer);
+                });
         }
 
         public async Task MemberLongList(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
+            ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
+            
+            var authCtx = ctx.LookupContextFor(system);
+            var shouldShowPrivate = authCtx == LookupContext.ByOwner && ctx.Match("all", "everyone", "private");
 
-            var members = await _data.GetSystemMembers(system);
+            var members = (await _data.GetSystemMembers(system)).ToList();
             var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
-            await ctx.Paginate<PKMember>(
-                members.OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList(),
+            
+            var membersToDisplay = members
+                .Where(m => m.MemberPrivacy == PrivacyLevel.Public || shouldShowPrivate)
+                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList();
+            var anyMembersHidden = members.Any(m => m.MemberPrivacy == PrivacyLevel.Private && !shouldShowPrivate);
+            
+            await ctx.Paginate(
+                membersToDisplay,
                 5,
                 embedTitle,
                 (eb, ms) => {
@@ -179,8 +209,16 @@ namespace PluralKit.Bot.Commands
                         if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                         if (m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
                         if (m.Description != null) profile += $"\n\n{m.Description}";
+                        if (m.MemberPrivacy == PrivacyLevel.Private)
+                            profile += "*(this member is private)*";
+                        
                         eb.AddField(m.Name, profile.Truncate(1024));
                     }
+
+                    var footer = $"{membersToDisplay.Count} total.";
+                    if (anyMembersHidden && authCtx == LookupContext.ByOwner)
+                        footer += " Private members have been hidden. type \"pk;system list full all\" to include them.";
+                    eb.WithFooter(footer);
                 }
             );
         }
@@ -188,6 +226,7 @@ namespace PluralKit.Bot.Commands
         public async Task SystemFronter(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
+            ctx.CheckSystemPrivacy(system, system.FrontPrivacy);
             
             var sw = await _data.GetLatestSwitch(system);
             if (sw == null) throw Errors.NoRegisteredSwitches;
@@ -198,6 +237,7 @@ namespace PluralKit.Bot.Commands
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
+            ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
             var sws = (await _data.GetSwitches(system, 10)).ToList();
             if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
@@ -208,6 +248,7 @@ namespace PluralKit.Bot.Commands
         public async Task SystemFrontPercent(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
+            ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
             string durationStr = ctx.RemainderOrNull() ?? "30d";
             
@@ -265,6 +306,80 @@ namespace PluralKit.Bot.Commands
             await _data.SaveSystem(ctx.System);
 
             await ctx.Reply($"System time zone changed to {zone.Id}.");
+        }
+
+        public async Task SystemPrivacy(Context ctx)
+        {
+            ctx.CheckSystem();
+
+            if (!ctx.HasNext())
+            {
+                string PrivacyLevelString(PrivacyLevel level) => level switch
+                {
+                    PrivacyLevel.Private => "**Private** (visible only when queried by you)",
+                    PrivacyLevel.Public => "**Public** (visible to everyone)",
+                    _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
+                };
+
+                var eb = new EmbedBuilder()
+                    .WithTitle("Current privacy settings for your system")
+                    .AddField("Description", PrivacyLevelString(ctx.System.DescriptionPrivacy))
+                    .AddField("Member list", PrivacyLevelString(ctx.System.MemberListPrivacy))
+                    .AddField("Current fronter(s)", PrivacyLevelString(ctx.System.FrontPrivacy))
+                    .AddField("Front/switch history", PrivacyLevelString(ctx.System.FrontHistoryPrivacy))
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front` or `fronthistory`\n- `level` is either `public` or `private`.");
+                await ctx.Reply(embed: eb.Build());
+                return;
+            }
+            
+            PrivacyLevel PopPrivacyLevel(string subject, out string levelStr, out string levelExplanation)
+            {
+                if (ctx.Match("public", "show", "shown", "visible"))
+                {
+                    levelStr = "public";
+                    levelExplanation = "be able to query";
+                    return PrivacyLevel.Public;
+                }
+
+                if (ctx.Match("private", "hide", "hidden"))
+                {
+                    levelStr = "private";
+                    levelExplanation = "*not* be able to query";
+                    return PrivacyLevel.Private;
+                }
+
+                if (!ctx.HasNext())
+                    throw new PKSyntaxError($"You must pass a privacy level for `{subject}` (`public` or `private`)");
+                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument().SanitizeMentions()}` (must be `public` or `private`).");
+            }
+
+            string levelStr, levelExplanation, subjectStr;
+            var subjectList = "`description`, `members`, `front` or `fronthistory`";
+            if (ctx.Match("description", "desc", "text", "info"))
+            {
+                subjectStr = "description";
+                ctx.System.DescriptionPrivacy = PopPrivacyLevel("description", out levelStr, out levelExplanation);
+            } 
+            else if (ctx.Match("members", "memberlist", "list", "mlist"))
+            {
+                subjectStr = "member list";
+                ctx.System.MemberListPrivacy = PopPrivacyLevel("members", out levelStr, out levelExplanation);
+            }
+            else if (ctx.Match("front", "fronter"))
+            {
+                subjectStr = "fronter(s)";
+                ctx.System.FrontPrivacy = PopPrivacyLevel("front", out levelStr, out levelExplanation);
+            } 
+            else if (ctx.Match("switch", "switches", "fronthistory", "fh"))
+            {
+                subjectStr = "front history";
+                ctx.System.FrontHistoryPrivacy = PopPrivacyLevel("fronthistory", out levelStr, out levelExplanation);
+            }
+            else
+                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
+
+            await _data.SaveSystem(ctx.System);
+            await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
         }
 
         public async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr) {
