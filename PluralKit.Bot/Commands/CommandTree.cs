@@ -100,12 +100,12 @@ namespace PluralKit.Bot.Commands
                 return ctx.Execute<ImportExportCommands>(Export, m => m.Export(ctx));
             if (ctx.Match("help"))
                 if (ctx.Match("commands"))
-                    return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
+                    return ctx.Reply("For the list of commands, use the `pk;commands` command, or see the website: <https://pluralkit.me/commands>");
                 else if (ctx.Match("proxy"))
                     return ctx.Reply("The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
                 else return ctx.Execute<HelpCommands>(Help, m => m.HelpRoot(ctx));
             if (ctx.Match("commands"))
-                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
+                return HandleCommandHelp(ctx);
             if (ctx.Match("message", "msg"))
                 return ctx.Execute<ModCommands>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("log"))
@@ -292,6 +292,18 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<SwitchCommands>(Switch, m => m.Switch(ctx));
             else
                 await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchDelete, SystemFronter, SystemFrontHistory);
+        }
+
+        private async Task HandleCommandHelp(Context ctx)
+        {
+            if (ctx.Match("member", "m"))
+                await PrintCommandList(ctx, "members", MemberCommands);
+            else if (ctx.Match("system", "s"))
+                await PrintCommandList(ctx, "systems", SystemCommands);
+            else if (ctx.Match("switch", "sw"))
+                await PrintCommandList(ctx, "switches", SwitchCommands);
+            else
+                await ctx.Reply("For a full list of possible commands, see the website: <https://pluralkit.me/commands>\nYou can also use `pk;commands member`, `pk;commands system` or `pk;commands switch` to get a list of available subcommands.");
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)
