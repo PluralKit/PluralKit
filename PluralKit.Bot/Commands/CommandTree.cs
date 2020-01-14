@@ -22,7 +22,7 @@ namespace PluralKit.Bot.Commands
         public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
         public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
-        public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <description|members|fronter|fronthistory> <public|private>", "Changes your system's privacy settings");
+        public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory> <public|private>", "Changes your system's privacy settings");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
         public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
