@@ -274,7 +274,7 @@ namespace PluralKit
 
     public static class Formats
     {
-        public static IPattern<Instant> TimestampExportFormat = InstantPattern.CreateWithInvariantCulture("g");
+        public static IPattern<Instant> TimestampExportFormat = InstantPattern.ExtendedIso;
         public static IPattern<LocalDate> DateExportFormat = LocalDatePattern.CreateWithInvariantCulture("yyyy-MM-dd");
         
         // We create a composite pattern that only shows the two most significant things
