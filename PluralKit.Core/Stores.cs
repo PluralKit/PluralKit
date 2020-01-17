@@ -641,7 +641,7 @@ namespace PluralKit {
         public async Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate)
         {
             var query = "select count(*) from members where system = @Id";
-            if (includePrivate) query += " and member_privacy = 1"; // 1 = public
+            if (!includePrivate) query += " and member_privacy = 1"; // 1 = public
             
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<int>(query, system);
