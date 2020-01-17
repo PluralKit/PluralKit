@@ -70,10 +70,11 @@ namespace PluralKit.API.Controllers
             if (!system.MemberListPrivacy.CanAccess(_auth.ContextFor(system)))
                 return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view member list.");
 
-            var members = await _data.GetSystemMembers(system);
-            return Ok(members
+            var members = _data.GetSystemMembers(system);
+            return Ok(await members
                 .Where(m => m.MemberPrivacy.CanAccess(_auth.ContextFor(system)))
-                .Select(m => m.ToJson(_auth.ContextFor(system))));
+                .Select(m => m.ToJson(_auth.ContextFor(system)))
+                .ToListAsync());
         }
 
         [HttpGet("{hid}/switches")]

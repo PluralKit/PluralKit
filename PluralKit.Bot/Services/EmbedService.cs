@@ -124,47 +124,6 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateFrontHistoryEmbed(IAsyncEnumerable<PKSwitch> sws, DateTimeZone zone)
-        {
-            var outputStr = "";
-
-            PKSwitch lastSw = null;
-            await foreach (var sw in sws)
-            {
-                // Fetch member list and format
-                var members = await _data.GetSwitchMembers(sw).ToListAsync();
-                var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
-
-                var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
-
-                // If this isn't the latest switch, we also show duration
-                string stringToAdd;
-                if (lastSw != null)
-                {
-                    // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
-                    var switchDuration = lastSw.Timestamp - sw.Timestamp;
-                    stringToAdd = $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
-                }
-                else
-                {
-                    stringToAdd = $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
-                }
-
-                if (outputStr.Length + stringToAdd.Length > EmbedBuilder.MaxDescriptionLength) break;
-                outputStr += stringToAdd;
-                
-                lastSw = sw;
-            }
-
-            if (lastSw == null)
-                return null;
-
-            return new EmbedBuilder()
-                .WithTitle("Past switches")
-                .WithDescription(outputStr)
-                .Build();
-        }
-
         public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
         {
             var channel = await _client.GetChannelAsync(msg.Message.Channel) as ITextChannel;

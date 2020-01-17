@@ -154,16 +154,22 @@ namespace PluralKit.Bot.Commands
             var authCtx = ctx.LookupContextFor(system);
             var shouldShowPrivate = authCtx == LookupContext.ByOwner && ctx.Match("all", "everyone", "private");
 
-            var members = (await _data.GetSystemMembers(system)).ToList();
             var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
 
-            var membersToDisplay = members
+            var memberCountPublic = _data.GetSystemMemberCount(system, false);
+            var memberCountAll = _data.GetSystemMemberCount(system, true);
+            await Task.WhenAll(memberCountPublic, memberCountAll);
+
+            var memberCountDisplayed = shouldShowPrivate ? memberCountAll.Result : memberCountPublic.Result;
+
+            var members = _data.GetSystemMembers(system)
                 .Where(m => m.MemberPrivacy == PrivacyLevel.Public || shouldShowPrivate)
-                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList();
-            var anyMembersHidden = members.Any(m => m.MemberPrivacy == PrivacyLevel.Private && !shouldShowPrivate);
+                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase);
+            var anyMembersHidden = !shouldShowPrivate && memberCountPublic.Result != memberCountAll.Result;
                 
             await ctx.Paginate(
-                membersToDisplay,
+                members,
+                memberCountDisplayed,
                 25,
                 embedTitle,
                 (eb, ms) =>
@@ -176,10 +182,12 @@ namespace PluralKit.Bot.Commands
                         return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
                     }));
 
-                    var footer = $"{membersToDisplay.Count} total.";
+                    var footer = $"{memberCountDisplayed} total.";
                     if (anyMembersHidden && authCtx == LookupContext.ByOwner)
                         footer += "Private members have been hidden. type \"pk;system list all\" to include them.";
                     eb.WithFooter(footer);
+                    
+                    return Task.CompletedTask;
                 });
         }
 
@@ -189,17 +197,23 @@ namespace PluralKit.Bot.Commands
             
             var authCtx = ctx.LookupContextFor(system);
             var shouldShowPrivate = authCtx == LookupContext.ByOwner && ctx.Match("all", "everyone", "private");
-
-            var members = (await _data.GetSystemMembers(system)).ToList();
-            var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
             
-            var membersToDisplay = members
+            var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
+
+            var memberCountPublic = _data.GetSystemMemberCount(system, false);
+            var memberCountAll = _data.GetSystemMemberCount(system, true);
+            await Task.WhenAll(memberCountPublic, memberCountAll);
+
+            var memberCountDisplayed = shouldShowPrivate ? memberCountAll.Result : memberCountPublic.Result;
+
+            var members = _data.GetSystemMembers(system)
                 .Where(m => m.MemberPrivacy == PrivacyLevel.Public || shouldShowPrivate)
-                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase).ToList();
-            var anyMembersHidden = members.Any(m => m.MemberPrivacy == PrivacyLevel.Private && !shouldShowPrivate);
+                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase);
+            var anyMembersHidden = !shouldShowPrivate && memberCountPublic.Result != memberCountAll.Result;
             
             await ctx.Paginate(
-                membersToDisplay,
+                members,
+                memberCountDisplayed,
                 5,
                 embedTitle,
                 (eb, ms) => {
@@ -215,10 +229,11 @@ namespace PluralKit.Bot.Commands
                         eb.AddField(m.Name, profile.Truncate(1024));
                     }
 
-                    var footer = $"{membersToDisplay.Count} total.";
+                    var footer = $"{memberCountDisplayed} total.";
                     if (anyMembersHidden && authCtx == LookupContext.ByOwner)
                         footer += " Private members have been hidden. type \"pk;system list full all\" to include them.";
                     eb.WithFooter(footer);
+                    return Task.CompletedTask;
                 }
             );
         }
@@ -233,19 +248,72 @@ namespace PluralKit.Bot.Commands
             
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
         }
+
+        struct FrontHistoryEntry
+        {
+            public Instant? LastTime;
+            public PKSwitch ThisSwitch;
+
+            public FrontHistoryEntry(Instant? lastTime, PKSwitch thisSwitch)
+            {
+                LastTime = lastTime;
+                ThisSwitch = thisSwitch;
+            }
+        }
         
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
-            var sws = _data.GetSwitches(system).Take(10);
-            var embed = await _embeds.CreateFrontHistoryEmbed(sws, system.Zone);
+            var sws = _data.GetSwitches(system)
+                .Scan(new FrontHistoryEntry(null, null), (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
+            var totalSwitches = await _data.GetSwitchCount(system);
+            if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
             
-            // Moving the count check to the CreateFrontHistoryEmbed function to avoid a double-iteration
-            // If embed == null, then there's no switches, so error
-            if (embed == null) throw Errors.NoRegisteredSwitches;
-            await ctx.Reply(embed: embed);
+            var embedTitle = system.Name != null ? $"Front history of {system.Name} (`{system.Hid}`)" : $"Front history of `{system.Hid}`";
+
+            await ctx.Paginate(
+                sws,
+                totalSwitches,
+                10,
+                embedTitle,
+                async (builder, switches) =>
+                {
+                    var outputStr = "";
+                    foreach (var entry in switches)
+                    {
+                        var lastSw = entry.LastTime;
+
+                        var sw = entry.ThisSwitch;
+                        // Fetch member list and format
+                        var members = await _data.GetSwitchMembers(sw).ToListAsync();
+                        var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
+
+                        var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
+
+                        // If this isn't the latest switch, we also show duration
+                        string stringToAdd;
+                        if (lastSw != null)
+                        {
+                            // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
+                            var switchDuration = lastSw.Value - sw.Timestamp;
+                            stringToAdd =
+                                $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
+                        }
+                        else
+                        {
+                            stringToAdd =
+                                $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
+                        }
+
+                        if (outputStr.Length + stringToAdd.Length > EmbedBuilder.MaxDescriptionLength) break;
+                        outputStr += stringToAdd;
+                    }
+
+                    builder.Description = outputStr;
+                }
+            );
         }
         
         public async Task SystemFrontPercent(Context ctx, PKSystem system)

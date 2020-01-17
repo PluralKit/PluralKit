@@ -203,7 +203,7 @@ namespace PluralKit {
         /// Gets all members inside a given system.
         /// </summary>
         /// <returns>An enumerable of <see cref="PKMember"/> structs representing each member in the system, in no particular order.</returns>
-        Task<IEnumerable<PKMember>> GetSystemMembers(PKSystem system);
+        IAsyncEnumerable<PKMember> GetSystemMembers(PKSystem system, bool orderByName = false);
         /// <summary>
         /// Gets the amount of messages proxied by a given member. 
         /// </summary>
@@ -291,6 +291,12 @@ namespace PluralKit {
         /// </summary>
         /// <returns>An enumerable of the *count* latest switches in the system, in latest-first order. May contain fewer elements than requested.</returns>
         IAsyncEnumerable<PKSwitch> GetSwitches(PKSystem system);
+
+        /// <summary>
+        /// Gets the total amount of switches in a given system.
+        /// </summary>
+        Task<int> GetSwitchCount(PKSystem system);
+
 
         /// <summary>
         /// Gets the latest (temporally; closest to now) switch of a given system.
@@ -388,7 +394,7 @@ namespace PluralKit {
         /// </summary>
         Task SaveGuildConfig(GuildConfig cfg);
 
-        Task<AuxillaryProxyInformation> GetAuxillaryProxyInformation(ulong guild, PKSystem system, PKMember member);
+        Task<AuxillaryProxyInformation> GetAuxillaryProxyInformation(ulong guild, PKSystem system, PKMember member); 
     }
     
     public class PostgresDataStore: IDataStore {
@@ -585,9 +591,11 @@ namespace PluralKit {
                 return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
-        public async Task<IEnumerable<PKMember>> GetSystemMembers(PKSystem system) {
-            using (var conn = await _conn.Obtain())
-                return await conn.QueryAsync<PKMember>("select * from members where system = @SystemID", new { SystemID = system.Id });
+        public IAsyncEnumerable<PKMember> GetSystemMembers(PKSystem system, bool orderByName)
+        {
+            var sql = "select * from members where system = @SystemID";
+            if (orderByName) sql += " order by lower(name) asc";
+            return _conn.QueryStreamAsync<PKMember>(sql, new { SystemID = system.Id });
         }
 
         public async Task SaveMember(PKMember member) {
@@ -867,24 +875,30 @@ namespace PluralKit {
                 new {System = system.Id});
         }
 
-        public async Task<IEnumerable<SwitchMembersListEntry>> GetSwitchMembersList(PKSystem system, Instant start, Instant end)
+        public async Task<int> GetSwitchCount(PKSystem system)
+        {
+            using var conn = await _conn.Obtain();
+            return await conn.QuerySingleAsync<int>("select count(*) from switches where system = @Id", system);
+        }
+
+        public async IAsyncEnumerable<SwitchMembersListEntry> GetSwitchMembersList(PKSystem system, Instant start, Instant end)
         {
             // Wrap multiple commands in a single transaction for performance
-            using (var conn = await _conn.Obtain())
-            using (var tx = conn.BeginTransaction())
-            {
-                // Find the time of the last switch outside the range as it overlaps the range
-                // If no prior switch exists, the lower bound of the range remains the start time
-                var lastSwitch = await conn.QuerySingleOrDefaultAsync<Instant>(
-                    @"SELECT COALESCE(MAX(timestamp), @Start)
+            using var conn = await _conn.Obtain();
+            using var tx = conn.BeginTransaction();
+            
+            // Find the time of the last switch outside the range as it overlaps the range
+            // If no prior switch exists, the lower bound of the range remains the start time
+            var lastSwitch = await conn.QuerySingleOrDefaultAsync<Instant>(
+                @"SELECT COALESCE(MAX(timestamp), @Start)
                         FROM switches
                         WHERE switches.system = @System
                         AND switches.timestamp < @Start",
-                    new { System = system.Id, Start = start });
+                new { System = system.Id, Start = start });
 
-                // Then collect the time and members of all switches that overlap the range
-                var switchMembersEntries = await conn.QueryAsync<SwitchMembersListEntry>(
-                    @"SELECT switch_members.member, switches.timestamp
+            // Then collect the time and members of all switches that overlap the range
+            var switchMembersEntries = conn.QueryStreamAsync<SwitchMembersListEntry>(
+                @"SELECT switch_members.member, switches.timestamp
                         FROM switches
                         LEFT JOIN switch_members
                         ON switches.id = switch_members.switch
@@ -895,12 +909,13 @@ namespace PluralKit {
                         )
                         AND switches.timestamp < @End
                         ORDER BY switches.timestamp DESC",
-                    new { System = system.Id, Start = start, End = end, LastSwitch = lastSwitch });
+                new { System = system.Id, Start = start, End = end, LastSwitch = lastSwitch });
 
-                // Commit and return the list
-                tx.Commit();
-                return switchMembersEntries;
-            }
+            // Yield each value here
+            await foreach (var entry in switchMembersEntries)
+                yield return entry;
+            
+            // Don't really need to worry about the transaction here, we're not doing any *writes*
         }
 
         public IAsyncEnumerable<PKMember> GetSwitchMembers(PKSwitch sw)
@@ -938,8 +953,10 @@ namespace PluralKit {
 
         public async Task<IEnumerable<SwitchListEntry>> GetPeriodFronters(PKSystem system, Instant periodStart, Instant periodEnd)
         {
+            // TODO: IAsyncEnumerable-ify this one
+            
             // Returns the timestamps and member IDs of switches overlapping the range, in chronological (newest first) order
-            var switchMembers = await GetSwitchMembersList(system, periodStart, periodEnd);
+            var switchMembers = await GetSwitchMembersList(system, periodStart, periodEnd).ToListAsync();
 
             // query DB for all members involved in any of the switches above and collect into a dictionary for future use
             // this makes sure the return list has the same instances of PKMember throughout, which is important for the dictionary
@@ -950,7 +967,7 @@ namespace PluralKit {
                 memberObjects = (
                     await conn.QueryAsync<PKMember>(
                         "select * from members where id = any(@Switches)", // lol postgres specific `= any()` syntax
-                        new { Switches = switchMembers.Select(m => m.Member).Distinct().ToList() })
+                        new { Switches = switchMembers.Select(m => m.Member).Distinct() })
                     ).ToDictionary(m => m.Id);
             }
 

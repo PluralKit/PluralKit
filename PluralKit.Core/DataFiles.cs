@@ -25,9 +25,10 @@ namespace PluralKit.Bot
         {
             // Export members
             var members = new List<DataFileMember>();
-            var pkMembers = await _data.GetSystemMembers(system); // Read all members in the system
+            var pkMembers = _data.GetSystemMembers(system); // Read all members in the system
             var messageCounts = await _data.GetMemberMessageCountBulk(system); // Count messages proxied by all members in the system
-            members.AddRange(pkMembers.Select(m => new DataFileMember
+            
+            await foreach (var member in pkMembers.Select(m => new DataFileMember
             {
                 Id = m.Hid,
                 Name = m.Name,
@@ -41,7 +42,7 @@ namespace PluralKit.Bot
                 KeepProxy = m.KeepProxy,
                 Created = Formats.TimestampExportFormat.Format(m.Created),
                 MessageCount = messageCounts.Where(x => x.Member == m.Id).Select(x => x.MessageCount).FirstOrDefault()
-            }));
+            })) members.Add(member);
 
             // Export switches
             var switches = new List<DataFileSwitch>();
@@ -96,18 +97,25 @@ namespace PluralKit.Bot
             await _data.AddAccount(system, accountId);
 
             // Determine which members already exist and which ones need to be created
-            var existingMembers = await _data.GetSystemMembers(system);
+            var membersByHid = new Dictionary<string, PKMember>();
+            var membersByName = new Dictionary<string, PKMember>();
+            await foreach (var member in _data.GetSystemMembers(system))
+            {
+                membersByHid[member.Hid] = member;
+                membersByName[member.Name] = member;
+            } 
+
             foreach (var d in data.Members)
             {
-                // Try to look up the member with the given ID
-                var match = existingMembers.FirstOrDefault(m => m.Hid.Equals(d.Id));
-                if (match == null)
-                    match = existingMembers.FirstOrDefault(m => m.Name.Equals(d.Name)); // Try with the name instead
+                PKMember match = null;
+                if (membersByHid.TryGetValue(d.Id, out var matchByHid)) match = matchByHid; // Try to look up the member with the given ID
+                else if (membersByName.TryGetValue(d.Id, out var matchByName)) match = matchByName; // Try with the name instead
+                
                 if (match != null)
                 {
                     dataFileToMemberMapping.Add(d.Id, match); // Relate the data file ID to the PKMember for importing switches
                     result.ModifiedNames.Add(d.Name);
-                }
+                }         
                 else
                 {
                     unmappedMembers.Add(d); // Track members that weren't found so we can create them all
@@ -117,7 +125,7 @@ namespace PluralKit.Bot
 
             // If creating the unmatched members would put us over the member limit, abort before creating any members
             // new total: # in the system + (# in the file - # in the file that already exist)
-            if (data.Members.Count - dataFileToMemberMapping.Count + existingMembers.Count() > Limits.MaxMemberCount)
+            if (data.Members.Count - dataFileToMemberMapping.Count + membersByHid.Count > Limits.MaxMemberCount)
             {
                 result.Success = false;
                 result.Message = $"Import would exceed the maximum number of members ({Limits.MaxMemberCount}).";

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
 
@@ -62,22 +61,30 @@ namespace PluralKit.Bot {
             return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        public static async Task Paginate<T>(this Context ctx, ICollection<T> items, int itemsPerPage, string title, Action<EmbedBuilder, IEnumerable<T>> renderer) {
+        public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, Func<EmbedBuilder, IEnumerable<T>, Task> renderer) {
             // TODO: make this generic enough we can use it in Choose<T> below
+
+            var buffer = new List<T>();
+            await using var enumerator = items.GetAsyncEnumerator();
             
-            var pageCount = (items.Count / itemsPerPage) + 1;
-            Embed MakeEmbedForPage(int page) {
+            var pageCount = (totalCount / itemsPerPage) + 1;
+            async Task<Embed> MakeEmbedForPage(int page)
+            {
+                var bufferedItemsNeeded = (page + 1) * itemsPerPage;
+                while (buffer.Count < bufferedItemsNeeded && await enumerator.MoveNextAsync())
+                    buffer.Add(enumerator.Current);
+
                 var eb = new EmbedBuilder();
                 eb.Title = pageCount > 1 ? $"[{page+1}/{pageCount}] {title}" : title;
-                renderer(eb, items.Skip(page*itemsPerPage).Take(itemsPerPage));
+                await renderer(eb, buffer.Skip(page*itemsPerPage).Take(itemsPerPage));
                 return eb.Build();
             }
 
             try
             {
-                var msg = await ctx.Channel.SendMessageAsync(embed: MakeEmbedForPage(0));
+                var msg = await ctx.Channel.SendMessageAsync(embed: await MakeEmbedForPage(0));
                 if (pageCount == 1) return; // If we only have one page, don't bother with the reaction/pagination logic, lol
-                var botEmojis = new[] { new Emoji("\u23EA"), new Emoji("\u2B05"), new Emoji("\u27A1"), new Emoji("\u23E9"), new Emoji(Emojis.Error) };
+                IEmote[] botEmojis = { new Emoji("\u23EA"), new Emoji("\u2B05"), new Emoji("\u27A1"), new Emoji("\u23E9"), new Emoji(Emojis.Error) };
                 await msg.AddReactionsAsync(botEmojis);
 
                 try {
@@ -99,12 +106,12 @@ namespace PluralKit.Bot {
                         if (await ctx.HasPermission(ChannelPermission.ManageMessages) && reaction.User.IsSpecified) await msg.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                         
                         // Edit the embed with the new page
-                        await msg.ModifyAsync((mp) => mp.Embed = MakeEmbedForPage(currentPage));
+                        var embed = await MakeEmbedForPage(currentPage);
+                        await msg.ModifyAsync((mp) => mp.Embed = embed);
                     }
                 } catch (TimeoutException) {
                     // "escape hatch", clean up as if we hit X
                 }
-
 
                 if (await ctx.HasPermission(ChannelPermission.ManageMessages)) await msg.RemoveAllReactionsAsync();
                 else await msg.RemoveReactionsAsync(ctx.Shard.CurrentUser, botEmojis);
