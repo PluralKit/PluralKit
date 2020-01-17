@@ -36,7 +36,7 @@ namespace PluralKit.Bot {
             var latestSwitch = await _data.GetLatestSwitch(system);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
-                var switchMembers = (await _data.GetSwitchMembers(latestSwitch)).ToList();
+                var switchMembers = await _data.GetSwitchMembers(latestSwitch).ToListAsync();
                 if (switchMembers.Count > 0)
                     eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
                         string.Join(", ", switchMembers.Select(m => m.Name)));
@@ -115,7 +115,7 @@ namespace PluralKit.Bot {
 
         public async Task<Embed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone)
         {
-            var members = (await _data.GetSwitchMembers(sw)).ToList();
+            var members = await _data.GetSwitchMembers(sw).ToListAsync();
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new EmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
@@ -124,15 +124,15 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateFrontHistoryEmbed(IEnumerable<PKSwitch> sws, DateTimeZone zone)
+        public async Task<Embed> CreateFrontHistoryEmbed(IAsyncEnumerable<PKSwitch> sws, DateTimeZone zone)
         {
             var outputStr = "";
 
             PKSwitch lastSw = null;
-            foreach (var sw in sws)
+            await foreach (var sw in sws)
             {
                 // Fetch member list and format
-                var members = (await _data.GetSwitchMembers(sw)).ToList();
+                var members = await _data.GetSwitchMembers(sw).ToListAsync();
                 var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
 
                 var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
@@ -155,6 +155,9 @@ namespace PluralKit.Bot {
                 
                 lastSw = sw;
             }
+
+            if (lastSw == null)
+                return null;
 
             return new EmbedBuilder()
                 .WithTitle("Past switches")

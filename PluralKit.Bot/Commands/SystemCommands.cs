@@ -239,10 +239,13 @@ namespace PluralKit.Bot.Commands
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
-            var sws = (await _data.GetSwitches(system, 10)).ToList();
-            if (sws.Count == 0) throw Errors.NoRegisteredSwitches;
+            var sws = _data.GetSwitches(system).Take(10);
+            var embed = await _embeds.CreateFrontHistoryEmbed(sws, system.Zone);
             
-            await ctx.Reply(embed: await _embeds.CreateFrontHistoryEmbed(sws, system.Zone));
+            // Moving the count check to the CreateFrontHistoryEmbed function to avoid a double-iteration
+            // If embed == null, then there's no switches, so error
+            if (embed == null) throw Errors.NoRegisteredSwitches;
+            await ctx.Reply(embed: embed);
         }
         
         public async Task SystemFrontPercent(Context ctx, PKSystem system)

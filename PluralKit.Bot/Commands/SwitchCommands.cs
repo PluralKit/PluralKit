@@ -58,9 +58,9 @@ namespace PluralKit.Bot.Commands
             var lastSwitch = await _data.GetLatestSwitch(ctx.System);
             if (lastSwitch != null)
             {
-                var lastSwitchMembers = await _data.GetSwitchMembers(lastSwitch);
+                var lastSwitchMembers = _data.GetSwitchMembers(lastSwitch);
                 // Make sure the requested switch isn't identical to the last one
-                if (lastSwitchMembers.Select(m => m.Id).SequenceEqual(members.Select(m => m.Id)))
+                if (await lastSwitchMembers.Select(m => m.Id).SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
                     throw Errors.SameSwitch(members);
             }
 
@@ -86,13 +86,13 @@ namespace PluralKit.Bot.Commands
             if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = (await _data.GetSwitches(ctx.System, 2)).ToArray();
+            var lastTwoSwitches = await _data.GetSwitches(ctx.System).Take(2).ToListAsync();
             
             // If we don't have a switch to move, don't bother
-            if (lastTwoSwitches.Length == 0) throw Errors.NoRegisteredSwitches;
+            if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
             
             // If there's a switch *behind* the one we move, we check to make srue we're not moving the time further back than that
-            if (lastTwoSwitches.Length == 2)
+            if (lastTwoSwitches.Count == 2)
             {
                 if (lastTwoSwitches[1].Timestamp > time.ToInstant())
                     throw Errors.SwitchMoveBeforeSecondLast(lastTwoSwitches[1].Timestamp.InZone(tz));
@@ -100,8 +100,8 @@ namespace PluralKit.Bot.Commands
             
             // Now we can actually do the move, yay!
             // But, we do a prompt to confirm.
-            var lastSwitchMembers = await _data.GetSwitchMembers(lastTwoSwitches[0]);
-            var lastSwitchMemberStr = string.Join(", ", lastSwitchMembers.Select(m => m.Name));
+            var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
             var lastSwitchTimeStr = Formats.ZonedDateTimeFormat.Format(lastTwoSwitches[0].Timestamp.InZone(ctx.System.Zone));
             var lastSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
             var newSwitchTimeStr = Formats.ZonedDateTimeFormat.Format(time);
@@ -132,23 +132,23 @@ namespace PluralKit.Bot.Commands
             }
             
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = (await _data.GetSwitches(ctx.System, 2)).ToArray();
-            if (lastTwoSwitches.Length == 0) throw Errors.NoRegisteredSwitches;
+            var lastTwoSwitches = await _data.GetSwitches(ctx.System).Take(2).ToListAsync();
+            if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
-            var lastSwitchMembers = await _data.GetSwitchMembers(lastTwoSwitches[0]);
-            var lastSwitchMemberStr = string.Join(", ", lastSwitchMembers.Select(m => m.Name));
+            var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
             var lastSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
 
             IUserMessage msg;
-            if (lastTwoSwitches.Length == 1)
+            if (lastTwoSwitches.Count == 1)
             {
                 msg = await ctx.Reply(
                     $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
             }
             else
             {
-                var secondSwitchMembers = await _data.GetSwitchMembers(lastTwoSwitches[1]);
-                var secondSwitchMemberStr = string.Join(", ", secondSwitchMembers.Select(m => m.Name));
+                var secondSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[1]);
+                var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.Name).ToListAsync());
                 var secondSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
                 msg = await ctx.Reply(
                     $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.SanitizeMentions()} ({secondSwitchDeltaStr} ago). Is this okay?");

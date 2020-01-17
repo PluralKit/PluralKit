@@ -113,11 +113,11 @@ namespace PluralKit.API.Controllers
             var sw = await _data.GetLatestSwitch(system);
             if (sw == null) return NotFound("System has no registered switches."); 
                 
-            var members = await _data.GetSwitchMembers(sw);
+            var members = _data.GetSwitchMembers(sw);
             return Ok(new FrontersReturn
             {
                 Timestamp = sw.Timestamp,
-                Members = members.Select(m => m.ToJson(_auth.ContextFor(system)))
+                Members = await members.Select(m => m.ToJson(_auth.ContextFor(system))).ToListAsync()
             });
         }
 
@@ -151,10 +151,10 @@ namespace PluralKit.API.Controllers
             var latestSwitch = await _data.GetLatestSwitch(_auth.CurrentSystem);
             if (latestSwitch != null)
             {
-                var latestSwitchMembers = await _data.GetSwitchMembers(latestSwitch);
+                var latestSwitchMembers = _data.GetSwitchMembers(latestSwitch);
 
                 // Bail if this switch is identical to the latest one
-                if (latestSwitchMembers.Select(m => m.Hid).SequenceEqual(param.Members))
+                if (await latestSwitchMembers.Select(m => m.Hid).SequenceEqualAsync(param.Members.ToAsyncEnumerable()))
                     return BadRequest("New members identical to existing fronters.");
             }
 
