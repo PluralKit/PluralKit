@@ -77,9 +77,9 @@ namespace PluralKit {
     public class SystemGuildSettings
     {
         public bool ProxyEnabled { get; set; } = true;
-        
-        public AutoproxyMode AutoproxyMode { get; set; }
-        public int AutoproxyMember { get; set; }
+
+        public AutoproxyMode AutoproxyMode { get; set; } = AutoproxyMode.Off;
+        public int? AutoproxyMember { get; set; }
     }
 
     public class MemberGuildSettings
@@ -446,11 +446,13 @@ namespace PluralKit {
         public async Task SetSystemGuildSettings(PKSystem system, ulong guild, SystemGuildSettings settings)
         {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled) values (@System, @Guild, @ProxyEnabled) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled", new
+                await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled, autoproxy_mode, autoproxy_member) values (@System, @Guild, @ProxyEnabled, @AutoproxyMode, @AutoproxyMember) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled, autoproxy_mode = @AutoproxyMode, autoproxy_member = @AutoproxyMember", new
                 {
                     System = system.Id,
                     Guild = guild,
-                    ProxyEnabled = settings.ProxyEnabled
+                    settings.ProxyEnabled,
+                    settings.AutoproxyMode,
+                    settings.AutoproxyMember
                 });
         }
 

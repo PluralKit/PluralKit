@@ -111,6 +111,7 @@ namespace PluralKit.Bot
             .AddTransient<HelpCommands>()
             .AddTransient<ModCommands>()
             .AddTransient<MiscCommands>()
+            .AddTransient<AutoproxyCommands>()
             
             .AddTransient<EmbedService>()
             .AddTransient<ProxyService>()
