@@ -72,13 +72,14 @@ namespace PluralKit {
         public ulong? LogChannel { get; set; }
         public ISet<ulong> LogBlacklist { get; set; }
         public ISet<ulong> Blacklist { get; set; }
-        public AutoproxyMode AutoproxyMode { get; set; }
-        public int AutoproxyMember { get; set; }
     }
 
     public class SystemGuildSettings
     {
         public bool ProxyEnabled { get; set; } = true;
+        
+        public AutoproxyMode AutoproxyMode { get; set; }
+        public int AutoproxyMember { get; set; }
     }
 
     public class MemberGuildSettings
