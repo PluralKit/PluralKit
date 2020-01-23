@@ -9,6 +9,14 @@ using NodaTime;
 using Serilog;
 
 namespace PluralKit {
+    public enum AutoproxyMode
+    {
+        Off = 1,
+        Front = 2,
+        Latch = 3,
+        Member = 4
+    }
+    
     public class FullMessage
     {
         public PKMessage Message;
@@ -19,6 +27,7 @@ namespace PluralKit {
     public struct PKMessage
     {
         public ulong Mid;
+        public ulong? Guild; // null value means "no data" (ie. from before this field being added)
         public ulong Channel;
         public ulong Sender;
         public ulong? OriginalMid;
@@ -63,6 +72,8 @@ namespace PluralKit {
         public ulong? LogChannel { get; set; }
         public ISet<ulong> LogBlacklist { get; set; }
         public ISet<ulong> Blacklist { get; set; }
+        public AutoproxyMode AutoproxyMode { get; set; }
+        public int AutoproxyMember { get; set; }
     }
 
     public class SystemGuildSettings
