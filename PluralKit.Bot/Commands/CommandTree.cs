@@ -276,7 +276,7 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<MemberCommands>(MemberServerName, m => m.MemberServerName(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberCommands>(MemberKeepProxy, m => m.MemberKeepProxy(ctx, target));
-            else if (ctx.Match("private", "privacy", "hidden"))
+            else if (ctx.Match("private", "privacy", "hidden", "public"))
                 await ctx.Execute<MemberCommands>(MemberPrivacy, m => m.MemberPrivacy(ctx, target));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<MemberCommands>(MemberInfo, m => m.ViewMember(ctx, target));
