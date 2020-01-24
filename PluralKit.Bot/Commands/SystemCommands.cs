@@ -76,7 +76,7 @@ namespace PluralKit.Bot.Commands
                     throw Errors.SystemNameTooLongError(newTag.Length);
 
             await _data.SaveSystem(ctx.System);
-            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? $"changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied." : "cleared")}.");
+            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? $"changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied" : "cleared")}.");
             
             await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
