@@ -112,6 +112,19 @@ namespace PluralKit.Bot.CommandSystem
             return null;
         }
 
+        public bool MatchUserRaw(out ulong id)
+        {
+            id = 0;
+            
+            var text = PeekArgument();
+            if (MentionUtils.TryParseUser(text, out var mentionId))
+                id = mentionId;
+            else if (ulong.TryParse(text, out var rawId))
+                id = rawId;
+            
+            return id != 0;
+        }
+
         public Task<PKSystem> PeekSystem() => MatchSystemInner();
 
         public async Task<PKSystem> MatchSystem()

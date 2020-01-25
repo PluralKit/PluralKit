@@ -36,21 +36,21 @@ namespace PluralKit.Bot.Commands
         {
             ctx.CheckSystem();
             
-            IUser account;
+            ulong id;
             if (!ctx.HasNext())
-                account = ctx.Author;
-            else           
-                account = await ctx.MatchUser() ?? throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
+                id = ctx.Author.Id;
+            else if (!ctx.MatchUserRaw(out id))
+                throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
 
             var accountIds = (await _data.GetSystemAccounts(ctx.System)).ToList();
-            if (!accountIds.Contains(account.Id)) throw Errors.AccountNotLinked;
+            if (!accountIds.Contains(id)) throw Errors.AccountNotLinked;
             if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount;
             
             var msg = await ctx.Reply(
-                $"Are you sure you want to unlink {account.Mention} from your system?");
+                $"Are you sure you want to unlink <@{id}> from your system?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.MemberUnlinkCancelled;
 
-            await _data.RemoveAccount(ctx.System, account.Id);
+            await _data.RemoveAccount(ctx.System, id);
             await ctx.Reply($"{Emojis.Success} Account unlinked.");
         }
     }
