@@ -169,7 +169,7 @@ namespace PluralKit.Bot
         private async Task<ProxyMatch> GetAutoproxyMatch(IMessage message, IGuildChannel channel)
         {
             // For now we use a backslash as an "escape character", subject to change later
-            if ((message.Content ?? "").TrimStart().StartsWith("\"")) return null; 
+            if ((message.Content ?? "").TrimStart().StartsWith("\\")) return null; 
             
             // Fetch info from the cache, bail if we don't have anything (either no system or no autoproxy settings - AP defaults to off so this works)
             var autoproxyCache = await _autoproxyCache.GetGuildSettings(message.Author.Id, channel.GuildId);
