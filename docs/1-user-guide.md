@@ -311,6 +311,38 @@ Since the messages will be posted by PluralKit's webhook, there's no way to dele
 To delete a PluralKit-proxied message, you can react to it with the ❌ emoji. Note that this only works if the message has
 been sent from your own account.
 
+### Autoproxying
+The bot's *autoproxy* feature allows you to have messages be proxied without directly including the proxy tags. Autoproxy can be set up in various ways. There are three autoproxy modes currently implemented:
+
+To see your system's current autoproxy settings, simply use the command:
+    pk;autoproxy
+    
+To disable autoproxying for the current server, use the command:
+    pk;autoproxy off
+    
+*(hint: `pk;autoproxy` can be shortened to `pk;ap` in all related commands)*
+
+#### Front mode
+This autoproxy mode will proxy messages as the current *first* fronter of the system. If you register a switch with `Alice` and `Bob`, messages without proxy tags will be autoproxied as `Alice`.
+To enable front-mode autoproxying for a given server, use the following command:
+
+    pk;autoproxy front
+    
+#### Latch mode
+This autoproxy mode will essentially "continue" previous proxy tags. If you proxy a message with `Alice`'s proxy tags, messages posted afterwards will be proxied as Alice. Proxying again with someone else's proxy tags, say, `Bob`, will cause messages *from then on* to be proxied as Bob.
+In other words, it means proxy tags become "sticky". This will carry over across all channels in the same server.
+
+To enable latch-mode autoproxying for a given server, use the following command:
+
+    pk;autoproxy latch
+    
+#### Member mode 
+This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
+
+To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words) or 5-letter ID:
+
+    pk;autoproxy <member>
+
 ## Managing switches
 PluralKit allows you to log member switches through the bot.
 Essentially, this means you can mark one or more members as *the current fronter(s)* for the duration until the next switch.

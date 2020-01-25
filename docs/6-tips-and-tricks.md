@@ -21,6 +21,7 @@ PluralKit has a couple of useful command shorthands to reduce the typing:
 |pk;member new|pk;m n|
 |pk;switch|pk;sw|
 |pk;message|pk;msg|
+|pk;autoproxy|pk;ap|
 
 ## Permission checker command
 If you're having issues with PluralKit not proxying, it may be an issue with your server's channel permission setup.
