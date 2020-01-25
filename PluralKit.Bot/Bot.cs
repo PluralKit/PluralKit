@@ -111,6 +111,7 @@ namespace PluralKit.Bot
             .AddTransient<HelpCommands>()
             .AddTransient<ModCommands>()
             .AddTransient<MiscCommands>()
+            .AddTransient<AutoproxyCommands>()
             
             .AddTransient<EmbedService>()
             .AddTransient<ProxyService>()
@@ -120,6 +121,7 @@ namespace PluralKit.Bot
 
             .AddTransient<ProxyCacheService>()
             .AddSingleton<WebhookCacheService>()
+            .AddSingleton<AutoproxyCacheService>()
             .AddSingleton<ShardInfoService>()
             .AddSingleton<CpuStatService>()
 

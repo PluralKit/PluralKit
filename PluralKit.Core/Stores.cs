@@ -9,6 +9,14 @@ using NodaTime;
 using Serilog;
 
 namespace PluralKit {
+    public enum AutoproxyMode
+    {
+        Off = 1,
+        Front = 2,
+        Latch = 3,
+        Member = 4
+    }
+    
     public class FullMessage
     {
         public PKMessage Message;
@@ -19,6 +27,7 @@ namespace PluralKit {
     public struct PKMessage
     {
         public ulong Mid;
+        public ulong? Guild; // null value means "no data" (ie. from before this field being added)
         public ulong Channel;
         public ulong Sender;
         public ulong? OriginalMid;
@@ -68,6 +77,9 @@ namespace PluralKit {
     public class SystemGuildSettings
     {
         public bool ProxyEnabled { get; set; } = true;
+
+        public AutoproxyMode AutoproxyMode { get; set; } = AutoproxyMode.Off;
+        public int? AutoproxyMember { get; set; }
     }
 
     public class MemberGuildSettings
@@ -267,12 +279,13 @@ namespace PluralKit {
         /// Saves a posted message to the database.
         /// </summary>
         /// <param name="senderAccount">The ID of the account that sent the original trigger message.</param>
+        /// <param name="guildId">The ID of the guild the message was posted to.</param>
         /// <param name="channelId">The ID of the channel the message was posted to.</param>
         /// <param name="postedMessageId">The ID of the message posted by the webhook.</param>
         /// <param name="triggerMessageId">The ID of the original trigger message containing the proxy tags.</param>
         /// <param name="proxiedMember">The member (and by extension system) that was proxied.</param>
         /// <returns></returns>
-        Task AddMessage(ulong senderAccount, ulong channelId, ulong postedMessageId, ulong triggerMessageId, PKMember proxiedMember);
+        Task AddMessage(ulong senderAccount, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, PKMember proxiedMember);
         
         /// <summary>
         /// Deletes a message from the data store.
@@ -285,6 +298,12 @@ namespace PluralKit {
         /// </summary>
         /// <param name="postedMessageIds">The IDs of the webhook messages to delete.</param>
         Task DeleteMessagesBulk(IEnumerable<ulong> postedMessageIds);
+        
+        /// <summary>
+        /// Gets the most recent message sent by a given account in a given guild.
+        /// </summary>
+        /// <returns>The full message object, or null if none was found.</returns>
+        Task<FullMessage> GetLastMessageInGuild(ulong account, ulong guild);
         
         /// <summary>
         /// Gets switches from a system.
@@ -334,6 +353,12 @@ namespace PluralKit {
         /// <param name="periodEnd"></param>
         /// <returns></returns>
         Task<FrontBreakdown> GetFrontBreakdown(PKSystem system, Instant periodStart, Instant periodEnd);
+
+        /// <summary>
+        /// Gets the first listed fronter in a system.
+        /// </summary>
+        /// <returns>The first fronter, or null if none are registered.</returns>
+        Task<PKMember> GetFirstFronter(PKSystem system);
         
         /// <summary>
         /// Registers a switch with the given members in the given system.
@@ -434,11 +459,13 @@ namespace PluralKit {
         public async Task SetSystemGuildSettings(PKSystem system, ulong guild, SystemGuildSettings settings)
         {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled) values (@System, @Guild, @ProxyEnabled) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled", new
+                await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled, autoproxy_mode, autoproxy_member) values (@System, @Guild, @ProxyEnabled, @AutoproxyMode, @AutoproxyMember) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled, autoproxy_mode = @AutoproxyMode, autoproxy_member = @AutoproxyMember", new
                 {
                     System = system.Id,
                     Guild = guild,
-                    ProxyEnabled = settings.ProxyEnabled
+                    settings.ProxyEnabled,
+                    settings.AutoproxyMode,
+                    settings.AutoproxyMember
                 });
         }
 
@@ -661,10 +688,11 @@ namespace PluralKit {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from members");
         }
-        public async Task AddMessage(ulong senderId, ulong messageId, ulong channelId, ulong originalMessage, PKMember member) {
+        public async Task AddMessage(ulong senderId, ulong messageId, ulong guildId, ulong channelId, ulong originalMessage, PKMember member) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("insert into messages(mid, channel, member, sender, original_mid) values(@MessageId, @ChannelId, @MemberId, @SenderId, @OriginalMid)", new {
+                await conn.ExecuteAsync("insert into messages(mid, guild, channel, member, sender, original_mid) values(@MessageId, @GuildId, @ChannelId, @MemberId, @SenderId, @OriginalMid)", new {
                     MessageId = messageId,
+                    GuildId = guildId,
                     ChannelId = channelId,
                     MemberId = member.Id,
                     SenderId = senderId,
@@ -701,6 +729,17 @@ namespace PluralKit {
                 if (foundCount > 0)
                     _logger.Information("Bulk deleted messages {Messages}, {FoundCount} found", ids, foundCount);
             }
+        }
+
+        public async Task<FullMessage> GetLastMessageInGuild(ulong account, ulong guild)
+        {
+            using var conn = await _conn.Obtain();
+            return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, FullMessage>("select messages.*, members.*, systems.* from messages, members, systems where messages.guild = @Guild and messages.sender = @Uid and messages.member = members.id and systems.id = members.system order by mid desc limit 1", (msg, member, system) => new FullMessage
+            {
+                Message = msg,
+                System = system,
+                Member = member
+            }, new { Uid = account, Guild = guild })).FirstOrDefault();
         }
 
         public async Task<ulong> GetTotalMessages()
@@ -765,6 +804,15 @@ namespace PluralKit {
                 SystemGuild = await multi.ReadSingleOrDefaultAsync<SystemGuildSettings>() ?? new SystemGuildSettings(),
                 MemberGuild = await multi.ReadSingleOrDefaultAsync<MemberGuildSettings>() ?? new MemberGuildSettings()
             };
+        }
+
+        public async Task<PKMember> GetFirstFronter(PKSystem system)
+        {
+            // TODO: move to extension method since it doesn't rely on internals
+            var lastSwitch = await GetLatestSwitch(system);
+            if (lastSwitch == null) return null;
+
+            return await GetSwitchMembers(lastSwitch).FirstOrDefaultAsync();
         }
 
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)

@@ -9,6 +9,9 @@ using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 
+using NodaTime;
+using NodaTime.Extensions;
+
 using PluralKit.Core;
 
 using Serilog;
@@ -18,7 +21,7 @@ namespace PluralKit.Bot
     class ProxyMatch {
         public PKMember Member;
         public PKSystem System;
-        public ProxyTag ProxyTags;
+        public ProxyTag? ProxyTags;
         public string InnerText;
     }
 
@@ -31,8 +34,9 @@ namespace PluralKit.Bot
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
         private ProxyCacheService _cache;
+        private AutoproxyCacheService _autoproxyCache;
         
-        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor, DbConnectionFactory conn)
+        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor, DbConnectionFactory conn, AutoproxyCacheService autoproxyCache)
         {
             _client = client;
             _logChannel = logChannel;
@@ -41,6 +45,7 @@ namespace PluralKit.Bot
             _cache = cache;
             _webhookExecutor = webhookExecutor;
             _conn = conn;
+            _autoproxyCache = autoproxyCache;
             _logger = logger.ForContext<ProxyService>();
         }
 
@@ -92,8 +97,13 @@ namespace PluralKit.Bot
             if (!(message.Channel is ITextChannel channel)) return;
             
             // Find a member with proxy tags matching the message
-            var results = await _cache.GetResultsFor(message.Author.Id);
+            var results = (await _cache.GetResultsFor(message.Author.Id)).ToList();
             var match = GetProxyTagMatch(message.Content, results);
+            
+            // If we didn't get a match by proxy tags, try to get one by autoproxy
+            if (match == null) match = await GetAutoproxyMatch(message, channel);
+            
+            // If we still haven't found any, just yeet
             if (match == null) return;
 
             // Gather all "extra" data from DB at once
@@ -122,8 +132,9 @@ namespace PluralKit.Bot
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
 
             // Add the proxy tags into the proxied message if that option is enabled
-            var messageContents = match.Member.KeepProxy
-                ? $"{match.ProxyTags.Prefix}{match.InnerText}{match.ProxyTags.Suffix}"
+            // Also check if the member has any proxy tags - some cases autoproxy can return a member with no tags
+            var messageContents = (match.Member.KeepProxy && match.ProxyTags.HasValue)
+                ? $"{match.ProxyTags.Value.Prefix}{match.InnerText}{match.ProxyTags.Value.Suffix}"
                 : match.InnerText;
             
             // Sanitize @everyone, but only if the original user wouldn't have permission to
@@ -138,7 +149,7 @@ namespace PluralKit.Bot
             );
 
             // Store the message in the database, and log it in the log channel (if applicable)
-            await _data.AddMessage(message.Author.Id, hookMessageId, message.Channel.Id, message.Id, match.Member);
+            await _data.AddMessage(message.Author.Id, hookMessageId, channel.GuildId, message.Channel.Id, message.Id, match.Member);
             await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText, aux.Guild);
 
             // Wait a second or so before deleting the original message
@@ -153,6 +164,57 @@ namespace PluralKit.Bot
                 // If it's already deleted, we just log and swallow the exception
                 _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", message.Id);
             }
+        }
+
+        private async Task<ProxyMatch> GetAutoproxyMatch(IMessage message, IGuildChannel channel)
+        {
+            // For now we use a backslash as an "escape character", subject to change later
+            if ((message.Content ?? "").TrimStart().StartsWith("\"")) return null; 
+            
+            // Fetch info from the cache, bail if we don't have anything (either no system or no autoproxy settings - AP defaults to off so this works)
+            var autoproxyCache = await _autoproxyCache.GetGuildSettings(message.Author.Id, channel.GuildId);
+            if (autoproxyCache == null) return null;
+
+            PKMember member = null;
+            // Figure out which member to proxy as
+            switch (autoproxyCache.GuildSettings.AutoproxyMode)
+            {
+                case AutoproxyMode.Off:
+                    // Autoproxy off, bail
+                    return null;
+                case AutoproxyMode.Front:
+                    // Front mode: just use the current first fronter
+                    member = await _data.GetFirstFronter(autoproxyCache.System);
+                    break;
+                case AutoproxyMode.Latch:
+                    // Latch mode: find last proxied message, use *that* member
+                    var msg = await _data.GetLastMessageInGuild(message.Author.Id, channel.GuildId);
+                    if (msg == null) return null; // No message found
+
+                    // If the message is older than 6 hours, ignore it and force the sender to "refresh" a proxy
+                    // This can be revised in the future, it's a preliminary value.
+                    var timestamp = SnowflakeUtils.FromSnowflake(msg.Message.Mid).ToInstant();
+                    var timeSince = SystemClock.Instance.GetCurrentInstant() - timestamp;
+                    if (timeSince > Duration.FromHours(6)) return null;
+                    
+                    member = msg.Member;
+                    break;
+                case AutoproxyMode.Member:
+                    // Member mode: just use that member
+                    member = autoproxyCache.AutoproxyMember;
+                    break;
+            }
+
+            // If we haven't found the member (eg. front mode w/ no fronter), bail again
+            if (member == null) return null;
+            return new ProxyMatch
+            {
+                System = autoproxyCache.System,
+                Member = member,
+                // Autoproxying members with no proxy tags is possible, return the correct result
+                ProxyTags = member.ProxyTags.Count > 0 ? member.ProxyTags.First() : (ProxyTag?) null,
+                InnerText = message.Content
+            };
         }
 
         private static string SanitizeEveryoneMaybe(IMessage message, string messageContents)

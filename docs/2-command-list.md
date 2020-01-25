@@ -24,6 +24,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;system [id] frontpercent [timeframe]` - Shows the aggregated front history of a system within a given time frame.
 - `pk;system [id] list` - Shows a paginated list of a system's members.
 - `pk;system [id] list full` - Shows a paginated list of a system's members, with increased detail.
+- `pk;autoproxy [off|front|latch|member]` - Updates the system's autoproxy settings for a given server.
 - `pk;link <account>` - Links this system to a different account.
 - `pk;unlink [account]` - Unlinks an account from this system.
 ## Member commands
