@@ -43,6 +43,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;member <name> color [color]` - Changes the color of a member.
 - `pk;member <name> birthdate [birthdate]` - Changes the birthday of a member.
 - `pk;member <name> delete` - Deletes a member.
+- `pk;random` - Shows the member card of a randomly selected member in your system.
 ## Switching commands
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
@@ -55,6 +56,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
+- `pk;permcheck [server id]` - [Checks the given server's permission setup](/tips#permission-checker-command) to check if it's compatible with PluralKit.
 ## API
 - `pk;token` - DMs you a token for using the PluralKit API.
 - `pk;token refresh` - Refreshes your API token and invalidates the old one.
