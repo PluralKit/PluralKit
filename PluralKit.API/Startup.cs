@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Autofac;
+
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+using PluralKit.Core;
 
 namespace PluralKit.API
 {
@@ -23,20 +27,16 @@ namespace PluralKit.API
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddNewtonsoftJson(); // sorry MS, this just does *more*
+        }
 
-            services
-                .AddTransient<IDataStore, PostgresDataStore>()
-                .AddSingleton<SchemaService>()
-
-                .AddSingleton(svc => InitUtils.InitMetrics(svc.GetRequiredService<CoreConfig>(), "API"))
-
-                .AddScoped<TokenAuthService>()
-
-                .AddTransient(_ => Configuration.GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig())
-                .AddSingleton(svc => InitUtils.InitLogger(svc.GetRequiredService<CoreConfig>(), "api"))
-                
-                .AddTransient<DbConnectionCountHolder>()
-                .AddTransient<DbConnectionFactory>();
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            builder.RegisterInstance(Configuration);
+            builder.RegisterModule(new ConfigModule<object>());
+            builder.RegisterModule(new LoggingModule("api"));
+            builder.RegisterModule(new MetricsModule("API"));
+            builder.RegisterModule<DataStoreModule>();
+            builder.RegisterModule<APIModule>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

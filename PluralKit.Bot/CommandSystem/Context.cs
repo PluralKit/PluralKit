@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 
 using App.Metrics;
 
+using Autofac;
+using Autofac.Core;
+
 using Discord;
 using Discord.WebSocket;
 
@@ -12,7 +15,7 @@ namespace PluralKit.Bot.CommandSystem
 {
     public class Context
     {
-        private IServiceProvider _provider;
+        private ILifetimeScope _provider;
 
         private readonly DiscordShardedClient _client;
         private readonly SocketUserMessage _message;
@@ -24,14 +27,14 @@ namespace PluralKit.Bot.CommandSystem
 
         private Command _currentCommand;
 
-        public Context(IServiceProvider provider, SocketUserMessage message, int commandParseOffset,
+        public Context(ILifetimeScope provider, SocketUserMessage message, int commandParseOffset,
                        PKSystem senderSystem)
         {
-            _client = provider.GetRequiredService<IDiscordClient>() as DiscordShardedClient;
+            _client = provider.Resolve<DiscordShardedClient>();
             _message = message;
-            _data = provider.GetRequiredService<IDataStore>();
+            _data = provider.Resolve<IDataStore>();
             _senderSystem = senderSystem;
-            _metrics = provider.GetRequiredService<IMetrics>();
+            _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
         }
@@ -86,7 +89,7 @@ namespace PluralKit.Bot.CommandSystem
 
             try
             {
-                await handler(_provider.GetRequiredService<T>());
+                await handler(_provider.Resolve<T>());
                 _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
             }
             catch (PKSyntaxError e)

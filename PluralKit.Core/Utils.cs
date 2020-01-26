@@ -324,53 +324,13 @@ namespace PluralKit
             // Add global type mapper for ProxyTag compound type in Postgres
             NpgsqlConnection.GlobalTypeMapper.MapComposite<ProxyTag>("proxy_tag");
         }
-
-        public static ILogger InitLogger(CoreConfig config, string component)
-        {
-            return new LoggerConfiguration()
-                .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
-                .MinimumLevel.Debug()
-                .WriteTo.Async(a =>
-                    a.File(
-                        new RenderedCompactJsonFormatter(),
-                        (config.LogDir ?? "logs") + $"/pluralkit.{component}.log",
-                        rollingInterval: RollingInterval.Day,
-                        flushToDiskInterval: TimeSpan.FromSeconds(10),
-                        restrictedToMinimumLevel: LogEventLevel.Information,
-                        buffered: true))
-                .WriteTo.Async(a => 
-                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate:"[{Timestamp:HH:mm:ss}] [{EventId}] {Level:u3} {Message:lj}{NewLine}{Exception}"))
-                .CreateLogger();
-        }
-
-        public static IMetrics InitMetrics(CoreConfig config, string onlyContext = null)
-        {
-            var builder = AppMetrics.CreateDefaultBuilder();
-            if (config.InfluxUrl != null && config.InfluxDb != null)
-                builder.Report.ToInfluxDb(config.InfluxUrl, config.InfluxDb);
-            if (onlyContext != null)
-                builder.Filter.ByIncludingOnlyContext(onlyContext);
-            return builder.Build();
-        }
-
+        
         public static JsonSerializerSettings BuildSerializerSettings() => new JsonSerializerSettings().BuildSerializerSettings();
 
         public static JsonSerializerSettings BuildSerializerSettings(this JsonSerializerSettings settings)
         {
             settings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
             return settings;
-        }
-    }
-
-    public class LoggerProvider
-    {
-        private CoreConfig _config;
-        public ILogger RootLogger { get; }
-
-        public LoggerProvider(CoreConfig config, string component)
-        {
-            _config = config;
-            RootLogger = InitUtils.InitLogger(_config, component);
         }
     }
 
@@ -657,16 +617,6 @@ namespace PluralKit
             // One tick is 100 nanoseconds
             _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", _commandText))
                 .Record(_stopwatch.ElapsedTicks / 10, TimeUnit.Microseconds, _commandText);
-        }
-    }
-
-    public class EventIdProvider
-    {
-        public Guid EventId { get; }
-
-        public EventIdProvider()
-        {
-            EventId = Guid.NewGuid();
         }
     }
 
