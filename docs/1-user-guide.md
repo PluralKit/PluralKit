@@ -412,6 +412,43 @@ To look at the per-member breakdown of the front over a given time period, use t
 
 Note that in cases of switches with multiple members, each involved member will have the full length of the switch counted towards it. This means that the percentages may add up to over 100%.
 
+## Privacy
+There are various reasons you may not want information about your system or your members to be public. As such, there are a few controls to manage which information is publicly accessible or not.
+
+### System privacy
+At the moment, there are four aspects of system privacy that can be configured.
+
+- System description
+- Current fronter
+- Front history
+- Member list
+
+Each of these can be set to **public** or **private**. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
+
+To update your system privacy settings, use the following commands:
+
+    pk;system privacy <subject> <level>
+    
+where `<subject>` is either `description`, `fronter`, `fronthistory` or `list`, corresponding to the options above, and `level` is either `public` or `private`.
+
+For example:
+
+    pk;system privacy description private
+    pk;system privacy fronthistory public
+    pk;system privacy list private
+
+When the **member list** is **private**, other users will not be able to view the full member list of your system, but they can still query individual members given their 5-letter ID. If **current fronter** is private, but **front history** isn't, someone can still see the current fronter by looking at the history (this combination doesn't make much sense).
+
+### Member privacy
+There is also an option to mark a specific member as private, using the command:
+
+    pk;member <name> private
+
+A private member will *not* be displayed in member lists (even if the member list is public), and will show only limited information if looked up by others - namely name, display name and avatar. Other information, such as description, pronouns and birthday will be hidden.
+
+All of this can only be accessed using the member's 5-letter ID, which is exposed when proxying. So, if you want to keep a member absolutely private, it's recommended you don't proxy with it publicly - that way the ID isn't exposed.
+
+An example of a private member is `cmpuv` - try looking it up and see what's shown, as well as the corresponding system list (`pk;system exmpl list`).
 ## Moderation commands
 
 ### Log channel
