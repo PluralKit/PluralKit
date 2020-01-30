@@ -201,7 +201,8 @@ namespace PluralKit.Bot.Commands
             }
             
             // "Sub"command: no arguments clearing
-            if (!ctx.HasNext())
+            // Also matches the pseudo-subcommand "text" which is equivalent to emoty proxy tags on both sides.
+            if (!ctx.HasNext() || ctx.Match("text"))
             {
                 // If we already have multiple tags, this would clear everything, so prompt that
                 if (target.ProxyTags.Count > 1)
