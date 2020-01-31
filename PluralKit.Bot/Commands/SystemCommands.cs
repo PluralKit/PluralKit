@@ -177,8 +177,14 @@ namespace PluralKit.Bot.Commands
                     eb.Description = string.Join("\n", ms.Select((m) =>
                     {
                         if (m.HasProxyTags)
-                            return
-                                $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({m.ProxyTagsString().SanitizeMentions()})*";
+                        {
+                            var proxyTagsString = m.ProxyTagsString().SanitizeMentions();
+                            if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
+                                proxyTagsString = "tags too long, see member card";
+                            
+                            return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({proxyTagsString})*";
+                        }
+
                         return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
                     }));
 
