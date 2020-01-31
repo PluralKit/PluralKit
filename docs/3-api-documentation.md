@@ -56,6 +56,7 @@ The following three models (usually represented in JSON format) represent the va
 |created|datetime|No||
 
 #### ProxyTag object
+
 |Key|Type|
 |---|---|
 |prefix|string?|
@@ -69,6 +70,7 @@ The following three models (usually represented in JSON format) represent the va
 |members|list of id/Member|Is sometimes in plain ID list form (eg. `GET /s/<id>/switches`), sometimes includes the full Member model (eg. `GET /s/<id>/fronters`).|
 
 ### Message model
+
 |Key|Type|Notes|
 |---|---|---|
 |timestamp|datetime||
