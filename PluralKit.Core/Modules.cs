@@ -60,7 +60,7 @@ namespace PluralKit.Core
         protected override void Load(ContainerBuilder builder)
         {
             builder.Register(c => InitMetrics(c.Resolve<CoreConfig>()))
-                .AsSelf().As<IMetrics>();
+                .AsSelf().As<IMetrics>().SingleInstance();
         }
 
         private IMetricsRoot InitMetrics(CoreConfig config)
