@@ -12,9 +12,9 @@ namespace PluralKit.Bot {
     public class EmbedService
     {
         private IDataStore _data;
-        private IDiscordClient _client;
+        private DiscordShardedClient _client;
 
-        public EmbedService(IDiscordClient client, IDataStore data)
+        public EmbedService(DiscordShardedClient client, IDataStore data)
         {
             _client = client;
             _data = data;
@@ -24,7 +24,7 @@ namespace PluralKit.Bot {
             var accounts = await _data.GetSystemAccounts(system);
 
             // Fetch/render info for all accounts simultaneously
-            var users = await Task.WhenAll(accounts.Select(async uid => (await _client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var users = await Task.WhenAll(accounts.Select(async uid => (await _client.Rest.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
             var memberCount = await _data.GetSystemMemberCount(system, false);
             var eb = new EmbedBuilder()
@@ -126,7 +126,7 @@ namespace PluralKit.Bot {
 
         public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
         {
-            var channel = await _client.GetChannelAsync(msg.Message.Channel) as ITextChannel;
+            var channel = _client.GetChannel(msg.Message.Channel) as ITextChannel;
             var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
 
             var memberStr = $"{msg.Member.Name} (`{msg.Member.Hid}`)";
@@ -139,7 +139,7 @@ namespace PluralKit.Bot {
                 // Look up the user with the REST client
                 // this ensures we'll still get the information even if the user's not cached,
                 // even if this means an extra API request (meh, it'll be fine)
-                var shard = ((DiscordShardedClient) _client).GetShardFor(channel.Guild);
+                var shard = _client.GetShardFor(channel.Guild);
                 var guildUser = await shard.Rest.GetGuildUserAsync(channel.Guild.Id, msg.Message.Sender);
                 if (guildUser != null)
                 {

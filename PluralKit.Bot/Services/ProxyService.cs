@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Dapper;
-
 using Discord;
 using Discord.Net;
 using Discord.WebSocket;
@@ -26,24 +24,20 @@ namespace PluralKit.Bot
     }
 
     class ProxyService {
-        private IDiscordClient _client;
+        private DiscordShardedClient _client;
         private LogChannelService _logChannel;
         private IDataStore _data;
-        private DbConnectionFactory _conn;
         private EmbedService _embeds;
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
-        private ProxyCache _cache;
         
-        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, WebhookExecutorService webhookExecutor, DbConnectionFactory conn, ProxyCache cache)
+        public ProxyService(DiscordShardedClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, WebhookExecutorService webhookExecutor)
         {
             _client = client;
             _logChannel = logChannel;
             _data = data;
             _embeds = embeds;
             _webhookExecutor = webhookExecutor;
-            _conn = conn;
-            _cache = cache;
             _logger = logger.ForContext<ProxyService>();
         }
 
@@ -284,7 +278,7 @@ namespace PluralKit.Bot
             await channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{userWhoReacted}>.", embed: embed.Build());
             
             // Finally remove the original reaction (if we can)
-            var user = await _client.GetUserAsync(userWhoReacted);
+            var user = await _client.Rest.GetUserAsync(userWhoReacted);
             if (user != null && await realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
                 await realMessage.RemoveReactionAsync(reactedEmote, user);
         }
@@ -292,7 +286,7 @@ namespace PluralKit.Bot
         private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted, IEmote reactedEmote)
         {
             // Find the user who sent the reaction, so we can DM them
-            var user = await _client.GetUserAsync(userWhoReacted);
+            var user = await _client.Rest.GetUserAsync(userWhoReacted);
             if (user == null) return;
 
             // Find the message in the DB

@@ -27,6 +27,7 @@ namespace PluralKit.Bot
                 ConnectionTimeout = 2 * 60 * 1000,
                 ExclusiveBulkDelete = true,
                 LargeThreshold = 50,
+                GuildSubscriptions = false,
                 DefaultRetryMode = RetryMode.RetryTimeouts | RetryMode.RetryRatelimit
                 // Commented this out since Debug actually sends, uh, quite a lot that's not necessary in production
                 // but leaving it here in case I (or someone else) get[s] confused about why logging isn't working again :p

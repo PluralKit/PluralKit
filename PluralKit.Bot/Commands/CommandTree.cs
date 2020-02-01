@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using Discord.WebSocket;
 
 using PluralKit.Bot.CommandSystem;
 
@@ -73,9 +73,9 @@ namespace PluralKit.Bot.Commands
 
         public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
         
-        private IDiscordClient _client;
+        private DiscordShardedClient _client;
 
-        public CommandTree(IDiscordClient client)
+        public CommandTree(DiscordShardedClient client)
         {
             _client = client;
         }
@@ -335,7 +335,7 @@ namespace PluralKit.Bot.Commands
             {
                 // Try to resolve the user ID to find the associated account,
                 // so we can print their username.
-                var user = await _client.GetUserAsync(id);
+                var user = await _client.Rest.GetUserAsync(id);
 
                 // Print descriptive errors based on whether we found the user or not.
                 if (user == null)

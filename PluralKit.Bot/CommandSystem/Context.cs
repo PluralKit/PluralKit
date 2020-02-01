@@ -230,6 +230,8 @@ namespace PluralKit.Bot.CommandSystem
 
         public GuildPermissions GetGuildPermissions(IUser user)
         {
+            if (user is IGuildUser gu)
+                return gu.GuildPermissions;
             if (Channel is SocketGuildChannel gc)
                 return gc.GetUser(user.Id).GuildPermissions;
             return GuildPermissions.None;
@@ -237,6 +239,8 @@ namespace PluralKit.Bot.CommandSystem
 
         public ChannelPermissions GetChannelPermissions(IUser user)
         {
+            if (user is IGuildUser gu && Channel is IGuildChannel igc)
+                return gu.GetPermissions(igc);
             if (Channel is SocketGuildChannel gc)
                 return gc.GetUser(user.Id).GetPermissions(gc);
             return ChannelPermissions.DM;
