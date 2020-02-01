@@ -12,10 +12,10 @@ using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class ImportExportCommands
+    public class ImportExport
     {
         private DataFileService _dataFiles;
-        public ImportExportCommands(DataFileService dataFiles)
+        public ImportExport(DataFileService dataFiles)
         {
             _dataFiles = dataFiles;
         }

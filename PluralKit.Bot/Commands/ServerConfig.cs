@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 
@@ -8,18 +7,12 @@ using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class ModCommands
+    public class ServerConfig
     {
-        private LogChannelService _logChannels;
         private IDataStore _data;
-
-        private EmbedService _embeds;
-
-        public ModCommands(LogChannelService logChannels, IDataStore data, EmbedService embeds)
+        public ServerConfig(IDataStore data)
         {
-            _logChannels = logChannels;
             _data = data;
-            _embeds = embeds;
         }
 
         public async Task SetLogChannel(Context ctx)
@@ -89,24 +82,6 @@ namespace PluralKit.Bot.Commands
 
             await _data.SaveGuildConfig(guildCfg);
             await ctx.Reply($"{Emojis.Success} Channels {(onBlacklist ? "added to" : "removed from")} the proxy blacklist.");
-
-        }
-        
-        public async Task GetMessage(Context ctx)
-        {
-            var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a message ID or link.");
-
-            ulong messageId;
-            if (ulong.TryParse(word, out var id))
-                messageId = id;
-            else if (Regex.Match(word, "https://discordapp.com/channels/\\d+/(\\d+)") is Match match && match.Success)
-                messageId = ulong.Parse(match.Groups[1].Value);
-            else throw new PKSyntaxError($"Could not parse `{word}` as a message ID or link.");
-
-            var message = await _data.GetMessage(messageId);
-            if (message == null) throw Errors.MessageNotFound(messageId);
-
-            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
         }
     }
 }

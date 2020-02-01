@@ -8,18 +8,18 @@ using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class AutoproxyCommands
+    public class Autoproxy
     {
         private IDataStore _data;
         private AutoproxyCacheService _cache;
 
-        public AutoproxyCommands(IDataStore data, AutoproxyCacheService cache)
+        public Autoproxy(IDataStore data, AutoproxyCacheService cache)
         {
             _data = data;
             _cache = cache;
         }
 
-        public async Task Autoproxy(Context ctx)
+        public async Task AutoproxyRoot(Context ctx)
         {
             ctx.CheckSystem().CheckGuildContext();
             

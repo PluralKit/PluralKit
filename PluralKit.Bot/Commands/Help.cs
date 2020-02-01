@@ -5,7 +5,7 @@ using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class HelpCommands
+    public class Help
     {
         public async Task HelpRoot(Context ctx)
         {

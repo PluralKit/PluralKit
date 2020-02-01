@@ -35,16 +35,23 @@ namespace PluralKit.Bot
             
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
-            builder.RegisterType<SystemCommands>().AsSelf();
-            builder.RegisterType<MemberCommands>().AsSelf();
-            builder.RegisterType<SwitchCommands>().AsSelf();
-            builder.RegisterType<LinkCommands>().AsSelf();
-            builder.RegisterType<APICommands>().AsSelf();
-            builder.RegisterType<ImportExportCommands>().AsSelf();
-            builder.RegisterType<HelpCommands>().AsSelf();
-            builder.RegisterType<ModCommands>().AsSelf();
-            builder.RegisterType<MiscCommands>().AsSelf();
-            builder.RegisterType<AutoproxyCommands>().AsSelf();
+            builder.RegisterType<Autoproxy>().AsSelf();
+            builder.RegisterType<Fun>().AsSelf();
+            builder.RegisterType<Help>().AsSelf();
+            builder.RegisterType<ImportExport>().AsSelf();
+            builder.RegisterType<Member>().AsSelf();
+            builder.RegisterType<MemberAvatar>().AsSelf();
+            builder.RegisterType<MemberEdit>().AsSelf();
+            builder.RegisterType<MemberProxy>().AsSelf();
+            builder.RegisterType<Misc>().AsSelf();
+            builder.RegisterType<ServerConfig>().AsSelf();
+            builder.RegisterType<Switch>().AsSelf();
+            builder.RegisterType<Commands.System>().AsSelf();
+            builder.RegisterType<SystemEdit>().AsSelf();
+            builder.RegisterType<SystemFront>().AsSelf();
+            builder.RegisterType<SystemLink>().AsSelf();
+            builder.RegisterType<SystemList>().AsSelf();
+            builder.RegisterType<Token>().AsSelf();
             
             // Bot core
             builder.RegisterType<Bot>().AsSelf().SingleInstance();

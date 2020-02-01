@@ -89,58 +89,58 @@ namespace PluralKit.Bot.Commands
             if (ctx.Match("switch", "sw"))
                 return HandleSwitchCommand(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
-                return ctx.Execute<AutoproxyCommands>(Autoproxy, m => m.Autoproxy(ctx));
+                return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
             if (ctx.Match("link"))
-                return ctx.Execute<LinkCommands>(Link, m => m.LinkSystem(ctx));
+                return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
-                return ctx.Execute<LinkCommands>(Unlink, m => m.UnlinkAccount(ctx));
+                return ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx));
             if (ctx.Match("token"))
                 if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
-                    return ctx.Execute<APICommands>(TokenRefresh, m => m.RefreshToken(ctx));
+                    return ctx.Execute<Token>(TokenRefresh, m => m.RefreshToken(ctx));
                 else
-                    return ctx.Execute<APICommands>(TokenGet, m => m.GetToken(ctx));
+                    return ctx.Execute<Token>(TokenGet, m => m.GetToken(ctx));
             if (ctx.Match("import"))
-                return ctx.Execute<ImportExportCommands>(Import, m => m.Import(ctx));
+                return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
             if (ctx.Match("export"))
-                return ctx.Execute<ImportExportCommands>(Export, m => m.Export(ctx));
+                return ctx.Execute<ImportExport>(Export, m => m.Export(ctx));
             if (ctx.Match("help"))
                 if (ctx.Match("commands"))
                     return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
                 else if (ctx.Match("proxy"))
                     return ctx.Reply("The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
-                else return ctx.Execute<HelpCommands>(Help, m => m.HelpRoot(ctx));
+                else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
             if (ctx.Match("commands"))
                 return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
             if (ctx.Match("message", "msg"))
-                return ctx.Execute<ModCommands>(Message, m => m.GetMessage(ctx));
+                return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("log"))
                 if (ctx.Match("channel"))
-                    return ctx.Execute<ModCommands>(LogChannel, m => m.SetLogChannel(ctx));
+                    return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));
                 else if (ctx.Match("enable", "on"))
-                    return ctx.Execute<ModCommands>(LogEnable, m => m.SetLogEnabled(ctx, true));
+                    return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true));
                 else if (ctx.Match("disable", "off"))
-                    return ctx.Execute<ModCommands>(LogDisable, m => m.SetLogEnabled(ctx, false));
+                    return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
                 else return PrintCommandExpectedError(ctx, LogCommands);
             if (ctx.Match("blacklist", "bl"))
                 if (ctx.Match("enable", "on", "add", "deny"))
-                    return ctx.Execute<ModCommands>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
+                    return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
                 else if (ctx.Match("disable", "off", "remove", "allow"))
-                    return ctx.Execute<ModCommands>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
+                    return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
                 else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove);
             if (ctx.Match("proxy", "enable", "disable"))
-                return ctx.Execute<SystemCommands>(SystemProxy, m => m.SystemProxy(ctx));
-            if (ctx.Match("invite")) return ctx.Execute<MiscCommands>(Invite, m => m.Invite(ctx));
-            if (ctx.Match("mn")) return ctx.Execute<MiscCommands>(null, m => m.Mn(ctx));
-            if (ctx.Match("fire")) return ctx.Execute<MiscCommands>(null, m => m.Fire(ctx));
-            if (ctx.Match("thunder")) return ctx.Execute<MiscCommands>(null, m => m.Thunder(ctx));
-            if (ctx.Match("freeze")) return ctx.Execute<MiscCommands>(null, m => m.Freeze(ctx));
-            if (ctx.Match("starstorm")) return ctx.Execute<MiscCommands>(null, m => m.Starstorm(ctx));
-            if (ctx.Match("flash")) return ctx.Execute<MiscCommands>(null, m => m.Flash(ctx));
-            if (ctx.Match("stats")) return ctx.Execute<MiscCommands>(null, m => m.Stats(ctx));
+                return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
+            if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
+            if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
+            if (ctx.Match("fire")) return ctx.Execute<Fun>(null, m => m.Fire(ctx));
+            if (ctx.Match("thunder")) return ctx.Execute<Fun>(null, m => m.Thunder(ctx));
+            if (ctx.Match("freeze")) return ctx.Execute<Fun>(null, m => m.Freeze(ctx));
+            if (ctx.Match("starstorm")) return ctx.Execute<Fun>(null, m => m.Starstorm(ctx));
+            if (ctx.Match("flash")) return ctx.Execute<Fun>(null, m => m.Flash(ctx));
+            if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
-                return ctx.Execute<MiscCommands>(PermCheck, m => m.PermCheckGuild(ctx));
+                return ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
             if (ctx.Match("random", "r"))
-                return ctx.Execute<MemberCommands>(MemberRandom, m => m.MemberRandom(ctx));
+                return ctx.Execute<Member>(MemberRandom, m => m.MemberRandom(ctx));
 
             ctx.Reply(
                 $"{Emojis.Error} Unknown command `{ctx.PeekArgument().SanitizeMentions()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
@@ -151,51 +151,51 @@ namespace PluralKit.Bot.Commands
         {
             // If we have no parameters, default to self-target
             if (!ctx.HasNext())
-                await ctx.Execute<SystemCommands>(SystemInfo, m => m.Query(ctx, ctx.System));
+                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System));
 
             // First, we match own-system-only commands (ie. no target system parameter)
             else if (ctx.Match("new", "create", "make", "add", "register", "init"))
-                await ctx.Execute<SystemCommands>(SystemNew, m => m.New(ctx));
+                await ctx.Execute<System>(SystemNew, m => m.New(ctx));
             else if (ctx.Match("name", "rename", "changename"))
-                await ctx.Execute<SystemCommands>(SystemRename, m => m.Name(ctx));
+                await ctx.Execute<SystemEdit>(SystemRename, m => m.Name(ctx));
             else if (ctx.Match("tag"))
-                await ctx.Execute<SystemCommands>(SystemTag, m => m.Tag(ctx));
+                await ctx.Execute<SystemEdit>(SystemTag, m => m.Tag(ctx));
             else if (ctx.Match("description", "desc", "bio"))
-                await ctx.Execute<SystemCommands>(SystemDesc, m => m.Description(ctx));
+                await ctx.Execute<SystemEdit>(SystemDesc, m => m.Description(ctx));
             else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-                await ctx.Execute<SystemCommands>(SystemAvatar, m => m.SystemAvatar(ctx));
+                await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx));
             else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-                await ctx.Execute<SystemCommands>(SystemDelete, m => m.Delete(ctx));
+                await ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx));
             else if (ctx.Match("timezone", "tz"))
-                await ctx.Execute<SystemCommands>(SystemTimezone, m => m.SystemTimezone(ctx));
+                await ctx.Execute<SystemEdit>(SystemTimezone, m => m.SystemTimezone(ctx));
             else if (ctx.Match("proxy"))
-                await ctx.Execute<SystemCommands>(SystemProxy, m => m.SystemProxy(ctx));
+                await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             else if (ctx.Match("list", "l", "members"))
             {
                 if (ctx.Match("f", "full", "big", "details", "long"))
-                    await ctx.Execute<SystemCommands>(SystemList, m => m.MemberLongList(ctx, ctx.System));
+                    await ctx.Execute<SystemList>(SystemList, m => m.MemberLongList(ctx, ctx.System));
                 else
-                    await ctx.Execute<SystemCommands>(SystemList, m => m.MemberShortList(ctx, ctx.System));
+                    await ctx.Execute<SystemList>(SystemList, m => m.MemberShortList(ctx, ctx.System));
             }
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
-                    await ctx.Execute<SystemCommands>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
+                    await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
                 else if (ctx.Match("p", "percent", "%"))
-                    await ctx.Execute<SystemCommands>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
+                    await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
                 else
-                    await ctx.Execute<SystemCommands>(SystemFronter, m => m.SystemFronter(ctx, ctx.System));
+                    await ctx.Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, ctx.System));
             }
             else if (ctx.Match("fh", "fronthistory", "history", "switches"))
-                await ctx.Execute<SystemCommands>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
+                await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
             else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-                await ctx.Execute<SystemCommands>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
+                await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
             else if (ctx.Match("privacy"))
-                await ctx.Execute<SystemCommands>(SystemPrivacy, m => m.SystemPrivacy(ctx));
+                await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
             else if (!ctx.HasNext()) // Bare command
-                await ctx.Execute<SystemCommands>(SystemInfo, m => m.Query(ctx, ctx.System));
+                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System));
             else
                 await HandleSystemCommandTargeted(ctx);
         }
@@ -213,27 +213,27 @@ namespace PluralKit.Bot.Commands
             else if (ctx.Match("list", "l", "members"))
             {
                 if (ctx.Match("f", "full", "big", "details", "long"))
-                    await ctx.Execute<SystemCommands>(SystemList, m => m.MemberLongList(ctx, target));
+                    await ctx.Execute<SystemList>(SystemList, m => m.MemberLongList(ctx, target));
                 else
-                    await ctx.Execute<SystemCommands>(SystemList, m => m.MemberShortList(ctx, target));
+                    await ctx.Execute<SystemList>(SystemList, m => m.MemberShortList(ctx, target));
             }
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
-                    await ctx.Execute<SystemCommands>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
+                    await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
                 else if (ctx.Match("p", "percent", "%"))
-                    await ctx.Execute<SystemCommands>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, target));
+                    await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, target));
                 else
-                    await ctx.Execute<SystemCommands>(SystemFronter, m => m.SystemFronter(ctx, target));
+                    await ctx.Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, target));
             }
             else if (ctx.Match("fh", "fronthistory", "history", "switches"))
-                await ctx.Execute<SystemCommands>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
+                await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
             else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-                await ctx.Execute<SystemCommands>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, target));
+                await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, target));
             else if (ctx.Match("info", "view", "show"))
-                await ctx.Execute<SystemCommands>(SystemInfo, m => m.Query(ctx, target));
+                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
             else if (!ctx.HasNext())
-                await ctx.Execute<SystemCommands>(SystemInfo, m => m.Query(ctx, target));
+                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
             else
                 await PrintCommandNotFoundError(ctx, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent,
                     SystemInfo);
@@ -242,7 +242,7 @@ namespace PluralKit.Bot.Commands
         private async Task HandleMemberCommand(Context ctx)
         {
             if (ctx.Match("new", "n", "add", "create", "register"))
-                await ctx.Execute<MemberCommands>(MemberNew, m => m.NewMember(ctx));
+                await ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "members", MemberCommands);
             else if (await ctx.MatchMember() is PKMember target)
@@ -258,31 +258,31 @@ namespace PluralKit.Bot.Commands
         {
             // Commands that have a member target (eg. pk;member <member> delete)
             if (ctx.Match("rename", "name", "changename", "setname"))
-                await ctx.Execute<MemberCommands>(MemberRename, m => m.RenameMember(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
             else if (ctx.Match("description", "info", "bio", "text", "desc"))
-                await ctx.Execute<MemberCommands>(MemberDesc, m => m.MemberDescription(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberDesc, m => m.Description(ctx, target));
             else if (ctx.Match("pronouns", "pronoun"))
-                await ctx.Execute<MemberCommands>(MemberPronouns, m => m.MemberPronouns(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberPronouns, m => m.Pronouns(ctx, target));
             else if (ctx.Match("color", "colour"))
-                await ctx.Execute<MemberCommands>(MemberColor, m => m.MemberColor(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberColor, m => m.Color(ctx, target));
             else if (ctx.Match("birthday", "bday", "birthdate", "cakeday", "bdate"))
-                await ctx.Execute<MemberCommands>(MemberBirthday, m => m.MemberBirthday(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberBirthday, m => m.Birthday(ctx, target));
             else if (ctx.Match("proxy", "tags", "proxytags", "brackets"))
-                await ctx.Execute<MemberCommands>(MemberProxy, m => m.MemberProxy(ctx, target));
+                await ctx.Execute<MemberProxy>(MemberProxy, m => m.Proxy(ctx, target));
             else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-                await ctx.Execute<MemberCommands>(MemberDelete, m => m.MemberDelete(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
             else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
-                await ctx.Execute<MemberCommands>(MemberAvatar, m => m.MemberAvatar(ctx, target));
+                await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
             else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname"))
-                await ctx.Execute<MemberCommands>(MemberDisplayName, m => m.MemberDisplayName(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
             else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
-                await ctx.Execute<MemberCommands>(MemberServerName, m => m.MemberServerName(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
-                await ctx.Execute<MemberCommands>(MemberKeepProxy, m => m.MemberKeepProxy(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
             else if (ctx.Match("private", "privacy", "hidden", "public"))
-                await ctx.Execute<MemberCommands>(MemberPrivacy, m => m.MemberPrivacy(ctx, target));
+                await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target));
             else if (!ctx.HasNext()) // Bare command
-                await ctx.Execute<MemberCommands>(MemberInfo, m => m.ViewMember(ctx, target));
+                await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
             else 
                 await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName ,MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
         }
@@ -290,15 +290,15 @@ namespace PluralKit.Bot.Commands
         private async Task HandleSwitchCommand(Context ctx)
         {
             if (ctx.Match("out"))
-                await ctx.Execute<SwitchCommands>(SwitchOut, m => m.SwitchOut(ctx));
+                await ctx.Execute<Switch>(SwitchOut, m => m.SwitchOut(ctx));
             else if (ctx.Match("move", "shift", "offset"))
-                await ctx.Execute<SwitchCommands>(SwitchMove, m => m.SwitchMove(ctx));
+                await ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx));
             else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
-                await ctx.Execute<SwitchCommands>(SwitchDelete, m => m.SwitchDelete(ctx));
+                await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "switching", SwitchCommands);
             else if (ctx.HasNext()) // there are following arguments
-                await ctx.Execute<SwitchCommands>(Switch, m => m.Switch(ctx));
+                await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
             else
                 await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchDelete, SystemFronter, SystemFrontHistory);
         }

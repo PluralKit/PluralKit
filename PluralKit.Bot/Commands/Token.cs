@@ -5,10 +5,10 @@ using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class APICommands
+    public class Token
     {
         private IDataStore _data;
-        public APICommands(IDataStore data)
+        public Token(IDataStore data)
         {
             _data = data;
         }

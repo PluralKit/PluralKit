@@ -10,16 +10,16 @@ using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class SwitchCommands
+    public class Switch
     {
         private IDataStore _data;
 
-        public SwitchCommands(IDataStore data)
+        public Switch(IDataStore data)
         {
             _data = data;
         }
 
-        public async Task Switch(Context ctx)
+        public async Task SwitchDo(Context ctx)
         {
             ctx.CheckSystem();
             var members = new List<PKMember>();

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using App.Metrics;
 
@@ -14,19 +15,23 @@ using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
 namespace PluralKit.Bot.Commands {
-    public class MiscCommands
+    public class Misc
     {
         private BotConfig _botConfig;
         private IMetrics _metrics;
         private CpuStatService _cpu;
         private ShardInfoService _shards;
+        private IDataStore _data;
+        private EmbedService _embeds;
 
-        public MiscCommands(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards)
+        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, IDataStore data, EmbedService embeds)
         {
             _botConfig = botConfig;
             _metrics = metrics;
             _cpu = cpu;
             _shards = shards;
+            _data = data;
+            _embeds = embeds;
         }
         
         public async Task Invite(Context ctx)
@@ -46,13 +51,6 @@ namespace PluralKit.Bot.Commands {
             await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }
         
-        public Task Mn(Context ctx) => ctx.Reply("Gotta catch 'em all!");
-        public Task Fire(Context ctx) => ctx.Reply("*A giant lightning bolt promptly erupts into a pillar of fire as it hits your opponent.*");
-        public Task Thunder(Context ctx) => ctx.Reply("*A giant ball of lightning is conjured and fired directly at your opponent, vanquishing them.*");
-        public Task Freeze(Context ctx) => ctx.Reply("*A giant crystal ball of ice is charged and hurled toward your opponent, bursting open and freezing them solid on contact.*");
-        public Task Starstorm(Context ctx) => ctx.Reply("*Vibrant colours burst forth from the sky as meteors rain down upon your opponent.*");
-        public Task Flash(Context ctx) => ctx.Reply("*A ball of green light appears above your head and flies towards your enemy, exploding on contact.*");
-
         public async Task Stats(Context ctx)
         {
             var msg = await ctx.Reply($"...");
@@ -175,6 +173,23 @@ namespace PluralKit.Bot.Commands {
 
             // Send! :)
             await ctx.Reply(embed: eb.Build());
+        }
+        
+        public async Task GetMessage(Context ctx)
+        {
+            var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a message ID or link.");
+
+            ulong messageId;
+            if (ulong.TryParse(word, out var id))
+                messageId = id;
+            else if (Regex.Match(word, "https://discordapp.com/channels/\\d+/(\\d+)") is Match match && match.Success)
+                messageId = ulong.Parse(match.Groups[1].Value);
+            else throw new PKSyntaxError($"Could not parse `{word}` as a message ID or link.");
+
+            var message = await _data.GetMessage(messageId);
+            if (message == null) throw Errors.MessageNotFound(messageId);
+
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
         }
     }
 }

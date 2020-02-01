@@ -1,16 +1,15 @@
 using System.Linq;
 using System.Threading.Tasks;
-using Discord;
 
 using PluralKit.Bot.CommandSystem;
 
 namespace PluralKit.Bot.Commands
 {
-    public class LinkCommands
+    public class SystemLink
     {
         private IDataStore _data;
 
-        public LinkCommands(IDataStore data)
+        public SystemLink(IDataStore data)
         {
             _data = data;
         }
