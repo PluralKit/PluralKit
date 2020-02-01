@@ -6,7 +6,8 @@ namespace PluralKit.API
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<TokenAuthService>().AsSelf();
+            // Lifetime scope so the service, RequiresSystem, and handler itself all get the same value
+            builder.RegisterType<TokenAuthService>().AsSelf().InstancePerLifetimeScope();
         }
     }
 }
