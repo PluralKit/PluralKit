@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using PluralKit.Bot.CommandSystem;
@@ -43,8 +44,8 @@ namespace PluralKit.Bot.Commands
             }
             
             // "Sub"command: no arguments clearing
-            // Also matches the pseudo-subcommand "text" which is equivalent to emoty proxy tags on both sides.
-            if (!ctx.HasNext() || ctx.Match("text"))
+            // Also matches the pseudo-subcommand "text" which is equivalent to empty proxy tags on both sides.
+            if (!ctx.HasNext() || ctx.Remainder().Equals("text", StringComparison.InvariantCultureIgnoreCase))
             {
                 // If we already have multiple tags, this would clear everything, so prompt that
                 if (target.ProxyTags.Count > 1)
