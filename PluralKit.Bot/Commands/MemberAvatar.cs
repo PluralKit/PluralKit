@@ -10,12 +10,10 @@ namespace PluralKit.Bot.Commands
     public class MemberAvatar
     {
         private IDataStore _data;
-        private ProxyCacheService _proxyCache;
 
-        public MemberAvatar(IDataStore data, ProxyCacheService proxyCache)
+        public MemberAvatar(IDataStore data)
         {
             _data = data;
-            _proxyCache = proxyCache;
         }
 
         public async Task Avatar(Context ctx, PKMember target)
@@ -80,8 +78,6 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply($"{Emojis.Success} Member avatar changed to attached image. Please note that if you delete the message containing the attachment, the avatar will stop working.");
             }
             // No-arguments no-attachment case covered by conditional at the very top
-
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
     }
 }

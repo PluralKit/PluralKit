@@ -11,12 +11,10 @@ namespace PluralKit.Bot.Commands
     public class Autoproxy
     {
         private IDataStore _data;
-        private AutoproxyCacheService _cache;
 
-        public Autoproxy(IDataStore data, AutoproxyCacheService cache)
+        public Autoproxy(IDataStore data)
         {
             _data = data;
-            _cache = cache;
         }
 
         public async Task AutoproxyRoot(Context ctx)
@@ -51,7 +49,6 @@ namespace PluralKit.Bot.Commands
                 settings.AutoproxyMode = AutoproxyMode.Off;
                 settings.AutoproxyMember = null;
                 await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, settings);
-                await _cache.FlushCacheForSystem(ctx.System, ctx.Guild.Id);
                 await ctx.Reply($"{Emojis.Success} Autoproxy turned off in this server.");
             }
         }
@@ -68,7 +65,6 @@ namespace PluralKit.Bot.Commands
                 settings.AutoproxyMode = AutoproxyMode.Latch;
                 settings.AutoproxyMember = null;
                 await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, settings);
-                await _cache.FlushCacheForSystem(ctx.System, ctx.Guild.Id);
                 await ctx.Reply($"{Emojis.Success} Autoproxy set to latch mode in this server. Messages will now be autoproxied using the *last-proxied member* in this server.");
             }
         }
@@ -85,7 +81,6 @@ namespace PluralKit.Bot.Commands
                 settings.AutoproxyMode = AutoproxyMode.Front;
                 settings.AutoproxyMember = null;
                 await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, settings);
-                await _cache.FlushCacheForSystem(ctx.System, ctx.Guild.Id);
                 await ctx.Reply($"{Emojis.Success} Autoproxy set to front mode in this server. Messages will now be autoproxied using the *current first fronter*, if any.");
             }
         }
@@ -98,7 +93,6 @@ namespace PluralKit.Bot.Commands
             settings.AutoproxyMode = AutoproxyMode.Member;
             settings.AutoproxyMember = member.Id;
             await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, settings);
-            await _cache.FlushCacheForSystem(ctx.System, ctx.Guild.Id);
             await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.Name}** in this server.");
         }
 

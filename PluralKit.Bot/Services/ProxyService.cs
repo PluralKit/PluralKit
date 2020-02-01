@@ -33,23 +33,21 @@ namespace PluralKit.Bot
         private EmbedService _embeds;
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
-        private ProxyCacheService _cache;
-        private AutoproxyCacheService _autoproxyCache;
+        private ProxyCache _cache;
         
-        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, ProxyCacheService cache, WebhookExecutorService webhookExecutor, DbConnectionFactory conn, AutoproxyCacheService autoproxyCache)
+        public ProxyService(IDiscordClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, WebhookExecutorService webhookExecutor, DbConnectionFactory conn, ProxyCache cache)
         {
             _client = client;
             _logChannel = logChannel;
             _data = data;
             _embeds = embeds;
-            _cache = cache;
             _webhookExecutor = webhookExecutor;
             _conn = conn;
-            _autoproxyCache = autoproxyCache;
+            _cache = cache;
             _logger = logger.ForContext<ProxyService>();
         }
 
-        private ProxyMatch GetProxyTagMatch(string message, IEnumerable<ProxyCacheService.ProxyDatabaseResult> potentialMembers)
+        private ProxyMatch GetProxyTagMatch(string message, PKSystem system, IEnumerable<PKMember> potentialMembers)
         {
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message
@@ -63,7 +61,7 @@ namespace PluralKit.Bot
             }
 
             // Flatten and sort by specificity (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first!)
-            var ordered = potentialMembers.SelectMany(m => m.Member.ProxyTags.Select(tag => (tag, m))).OrderByDescending(p => p.Item1.ProxyString.Length);
+            var ordered = potentialMembers.SelectMany(m => m.ProxyTags.Select(tag => (tag, m))).OrderByDescending(p => p.Item1.ProxyString.Length);
             foreach (var (tag, match) in ordered)
             {
                 if (tag.Prefix == null && tag.Suffix == null) continue;
@@ -84,36 +82,35 @@ namespace PluralKit.Bot
                 if (isMatch) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
                     if (leadingMention != null) inner = $"{leadingMention} {inner}";
-                    return new ProxyMatch { Member = match.Member, System = match.System, InnerText = inner, ProxyTags = tag};
+                    return new ProxyMatch { Member = match, System = system, InnerText = inner, ProxyTags = tag};
                 }
             }
 
             return null;
         }
 
-        public async Task HandleMessageAsync(IMessage message)
+        public async Task HandleMessageAsync(GuildConfig guild, CachedAccount account, IMessage message)
         {
             // Bail early if this isn't in a guild channel
             if (!(message.Channel is ITextChannel channel)) return;
             
             // Find a member with proxy tags matching the message
-            var results = (await _cache.GetResultsFor(message.Author.Id)).ToList();
-            var match = GetProxyTagMatch(message.Content, results);
+            var match = GetProxyTagMatch(message.Content, account.System, account.Members);
+
+            // O(n) lookup since n is small (max ~100 in prod) and we're more constrained by memory (for a dictionary) here
+            var systemSettingsForGuild = account.SettingsForGuild(channel.GuildId);
             
             // If we didn't get a match by proxy tags, try to get one by autoproxy
-            if (match == null) match = await GetAutoproxyMatch(message, channel);
+            if (match == null) match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, channel);
             
             // If we still haven't found any, just yeet
             if (match == null) return;
-
-            // Gather all "extra" data from DB at once
-            var aux = await _data.GetAuxillaryProxyInformation(channel.GuildId, match.System, match.Member);
             
             // And make sure the channel's not blacklisted from proxying.
-            if (aux.Guild.Blacklist.Contains(channel.Id)) return;
+            if (guild.Blacklist.Contains(channel.Id)) return;
             
             // Make sure the system hasn't blacklisted the guild either
-            if (!aux.SystemGuild.ProxyEnabled) return;
+            if (!systemSettingsForGuild.ProxyEnabled) return;
             
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
@@ -122,9 +119,11 @@ namespace PluralKit.Bot
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
+
+            var memberSettingsForGuild = account.SettingsForMemberGuild(match.Member.Id, channel.GuildId);
             
             // Get variables in order and all
-            var proxyName = match.Member.ProxyName(match.System.Tag, aux.MemberGuild.DisplayName);
+            var proxyName = match.Member.ProxyName(match.System.Tag, memberSettingsForGuild.DisplayName);
             var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
             
             // If the name's too long (or short), bail
@@ -150,7 +149,7 @@ namespace PluralKit.Bot
 
             // Store the message in the database, and log it in the log channel (if applicable)
             await _data.AddMessage(message.Author.Id, hookMessageId, channel.GuildId, message.Channel.Id, message.Id, match.Member);
-            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText, aux.Guild);
+            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText, guild);
 
             // Wait a second or so before deleting the original message
             await Task.Delay(1000);
@@ -166,25 +165,21 @@ namespace PluralKit.Bot
             }
         }
 
-        private async Task<ProxyMatch> GetAutoproxyMatch(IMessage message, IGuildChannel channel)
+        private async Task<ProxyMatch> GetAutoproxyMatch(CachedAccount account, SystemGuildSettings guildSettings, IMessage message, IGuildChannel channel)
         {
             // For now we use a backslash as an "escape character", subject to change later
             if ((message.Content ?? "").TrimStart().StartsWith("\\")) return null; 
             
-            // Fetch info from the cache, bail if we don't have anything (either no system or no autoproxy settings - AP defaults to off so this works)
-            var autoproxyCache = await _autoproxyCache.GetGuildSettings(message.Author.Id, channel.GuildId);
-            if (autoproxyCache == null) return null;
-
             PKMember member = null;
             // Figure out which member to proxy as
-            switch (autoproxyCache.GuildSettings.AutoproxyMode)
+            switch (guildSettings.AutoproxyMode)
             {
                 case AutoproxyMode.Off:
                     // Autoproxy off, bail
                     return null;
                 case AutoproxyMode.Front:
                     // Front mode: just use the current first fronter
-                    member = await _data.GetFirstFronter(autoproxyCache.System);
+                    member = await _data.GetFirstFronter(account.System);
                     break;
                 case AutoproxyMode.Latch:
                     // Latch mode: find last proxied message, use *that* member
@@ -201,7 +196,8 @@ namespace PluralKit.Bot
                     break;
                 case AutoproxyMode.Member:
                     // Member mode: just use that member
-                    member = autoproxyCache.AutoproxyMember;
+                    // O(n) lookup since n is small (max 1000 de jure) and we're more constrained by memory (for a dictionary) here
+                    member = account.Members.FirstOrDefault(m => m.Id == guildSettings.AutoproxyMember);
                     break;
             }
 
@@ -209,7 +205,7 @@ namespace PluralKit.Bot
             if (member == null) return null;
             return new ProxyMatch
             {
-                System = autoproxyCache.System,
+                System = account.System,
                 Member = member,
                 // Autoproxying members with no proxy tags is possible, return the correct result
                 ProxyTags = member.ProxyTags.Count > 0 ? member.ProxyTags.First() : (ProxyTag?) null,

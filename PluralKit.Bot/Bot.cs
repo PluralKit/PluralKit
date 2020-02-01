@@ -194,8 +194,6 @@ namespace PluralKit.Bot
 
         private Task HandleEvent(Func<PKEventHandler, Task> handler)
         {
-            _logger.Debug("Received event");
-            
             // Inner function so we can await the handler without stalling the entire pipeline
             async Task Inner()
             {
@@ -245,6 +243,7 @@ namespace PluralKit.Bot
         private ILifetimeScope _services;
         private CommandTree _tree;
         private Scope _sentryScope;
+        private ProxyCache _cache;
 
         // We're defining in the Autofac module that this class is instantiated with one instance per event
         // This means that the HandleMessage function will either be called once, or not at all
@@ -252,7 +251,7 @@ namespace PluralKit.Bot
         // hence, we just store it in a local variable, ignoring it entirely if it's null.
         private IUserMessage _msg = null;
 
-        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope)
+        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache)
         {
             _proxy = proxy;
             _logger = logger;
@@ -262,6 +261,7 @@ namespace PluralKit.Bot
             _services = services;
             _tree = tree;
             _sentryScope = sentryScope;
+            _cache = cache;
         }
 
         public async Task HandleMessage(SocketMessage arg)
@@ -288,6 +288,12 @@ namespace PluralKit.Bot
                 {"message", msg.Id.ToString()},
             });
             
+            // We fetch information about the sending account *and* guild from the cache
+            GuildConfig cachedGuild = default; // todo: is this default correct?
+            if (msg.Channel is ITextChannel textChannel) cachedGuild = await _cache.GetGuildDataCached(textChannel.GuildId);
+            var cachedAccount = await _cache.GetAccountDataCached(msg.Author.Id);
+            // this ^ may be null, do remember that down the line
+
             int argPos = -1;
             // Check if message starts with the command prefix
             if (msg.Content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
@@ -306,23 +312,16 @@ namespace PluralKit.Bot
                                           msg.Content.Substring(argPos).TrimStart().Length;
                 argPos += trimStartLengthDiff;
 
-                // If it does, fetch the sender's system (because most commands need that) into the context,
-                // and start command execution
-                // Note system may be null if user has no system, hence `OrDefault`
-                PKSystem system;
-                using (var conn = await _connectionFactory.Obtain())
-                    system = await conn.QueryFirstOrDefaultAsync<PKSystem>(
-                        "select systems.* from systems, accounts where accounts.uid = @Id and systems.id = accounts.system",
-                        new {Id = msg.Author.Id});
-                
-                await _tree.ExecuteCommand(new Context(_services, msg, argPos, system));
+                await _tree.ExecuteCommand(new Context(_services, msg, argPos, cachedAccount?.System));
             }
-            else
+            else if (cachedAccount != null)
             {
                 // If not, try proxying anyway
+                // but only if the account data we got before is present
+                // no data = no account = no system = no proxy!
                 try
                 {
-                    await _proxy.HandleMessageAsync(msg);
+                    await _proxy.HandleMessageAsync(cachedGuild, cachedAccount, msg);
                 }
                 catch (PKError e)
                 {

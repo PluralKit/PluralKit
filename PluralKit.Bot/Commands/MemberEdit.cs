@@ -11,12 +11,10 @@ namespace PluralKit.Bot.Commands
     public class MemberEdit
     {
         private IDataStore _data;
-        private ProxyCacheService _proxyCache;
 
-        public MemberEdit(IDataStore data, ProxyCacheService proxyCache)
+        public MemberEdit(IDataStore data)
         {
             _data = data;
-            _proxyCache = proxyCache;
         }
 
         public async Task Name(Context ctx, PKMember target) {
@@ -50,8 +48,6 @@ namespace PluralKit.Bot.Commands
                 if (memberGuildConfig.DisplayName != null)
                     await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName.SanitizeMentions()}) in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name here.");
             }
-
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
         public async Task Description(Context ctx, PKMember target) {
@@ -141,8 +137,6 @@ namespace PluralKit.Bot.Commands
             }
 
             await ctx.Reply(successStr);
-            
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
 
         public async Task ServerName(Context ctx, PKMember target)
@@ -168,8 +162,6 @@ namespace PluralKit.Bot.Commands
                 successStr += $"Member server name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).";
 
             await ctx.Reply(successStr);
-            
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
         public async Task KeepProxy(Context ctx, PKMember target)
@@ -190,7 +182,6 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now be included in the resulting message when proxying.");
             else
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
 
         public async Task Privacy(Context ctx, PKMember target)
@@ -222,8 +213,6 @@ namespace PluralKit.Bot.Commands
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
             await _data.DeleteMember(target);
             await ctx.Reply($"{Emojis.Success} Member deleted.");
-            
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
     }
 }

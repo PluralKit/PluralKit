@@ -17,13 +17,11 @@ namespace PluralKit.Bot.Commands
     {
         private IDataStore _data;
         private EmbedService _embeds;
-        private ProxyCacheService _proxyCache;
 
-        public SystemEdit(IDataStore data, EmbedService embeds, ProxyCacheService proxyCache)
+        public SystemEdit(IDataStore data, EmbedService embeds)
         {
             _data = data;
             _embeds = embeds;
-            _proxyCache = proxyCache;
         }
 
         public async Task Name(Context ctx)
@@ -62,8 +60,6 @@ namespace PluralKit.Bot.Commands
 
             await _data.SaveSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? $"changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied" : "cleared")}.");
-            
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
         public async Task Avatar(Context ctx)
@@ -115,8 +111,6 @@ namespace PluralKit.Bot.Commands
                 var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
                 await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed);
             }
-            
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
         public async Task Delete(Context ctx) {
@@ -128,8 +122,6 @@ namespace PluralKit.Bot.Commands
 
             await _data.DeleteSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System deleted.");
-            
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
         public async Task SystemProxy(Context ctx)

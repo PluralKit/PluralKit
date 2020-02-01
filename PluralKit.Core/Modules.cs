@@ -3,8 +3,11 @@ using System;
 using App.Metrics;
 
 using Autofac;
+using Autofac.Extensions.DependencyInjection;
 
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 using NodaTime;
 
@@ -23,6 +26,9 @@ namespace PluralKit.Core
             builder.RegisterType<DbConnectionFactory>().AsSelf().SingleInstance();
             builder.RegisterType<PostgresDataStore>().AsSelf().As<IDataStore>();
             builder.RegisterType<SchemaService>().AsSelf();
+            
+            builder.Populate(new ServiceCollection().AddMemoryCache());
+            builder.RegisterType<ProxyCache>().AsSelf().SingleInstance();
         }
     }
 

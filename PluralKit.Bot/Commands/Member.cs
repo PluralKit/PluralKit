@@ -10,14 +10,11 @@ namespace PluralKit.Bot.Commands
     {
         private IDataStore _data;
         private EmbedService _embeds;
-
-        private ProxyCacheService _proxyCache;
-
-        public Member(IDataStore data, EmbedService embeds, ProxyCacheService proxyCache)
+        
+        public Member(IDataStore data, EmbedService embeds)
         {
             _data = data;
             _embeds = embeds;
-            _proxyCache = proxyCache;
         }
 
         public async Task NewMember(Context ctx) {
@@ -51,8 +48,6 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply($"{Emojis.Warn} You have reached the per-system member limit ({Limits.MaxMemberCount}). You will be unable to create additional members until existing members are deleted.");
             else if (memberCount >= Limits.MaxMembersWarnThreshold)
                 await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {Limits.MaxMemberCount} members). Please review your member list for unused or duplicate members.");
-
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
         
         public async Task MemberRandom(Context ctx)
@@ -68,10 +63,7 @@ namespace PluralKit.Bot.Commands
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count);
             await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
-
         }
-
-        
 
         public async Task ViewMember(Context ctx, PKMember target)
         {

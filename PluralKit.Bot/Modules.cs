@@ -63,9 +63,7 @@ namespace PluralKit.Bot
             builder.RegisterType<LogChannelService>().AsSelf().SingleInstance();
             builder.RegisterType<DataFileService>().AsSelf().SingleInstance();
             builder.RegisterType<WebhookExecutorService>().AsSelf().SingleInstance();
-            builder.RegisterType<ProxyCacheService>().AsSelf().SingleInstance();
             builder.RegisterType<WebhookCacheService>().AsSelf().SingleInstance();
-            builder.RegisterType<AutoproxyCacheService>().AsSelf().SingleInstance();
             builder.RegisterType<ShardInfoService>().AsSelf().SingleInstance();
             builder.RegisterType<CpuStatService>().AsSelf().SingleInstance();
             builder.RegisterType<PeriodicStatCollector>().AsSelf().SingleInstance();
@@ -73,9 +71,6 @@ namespace PluralKit.Bot
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
             
-            // .NET stuff
-            builder.Populate(new ServiceCollection()
-                .AddMemoryCache());
             
             // Utils
             builder.Register(c => new HttpClient

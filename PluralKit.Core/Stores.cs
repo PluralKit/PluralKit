@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Dapper;
 using NodaTime;
 
+using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit {
@@ -76,6 +78,7 @@ namespace PluralKit {
 
     public class SystemGuildSettings
     {
+        public ulong Guild { get; set; }
         public bool ProxyEnabled { get; set; } = true;
 
         public AutoproxyMode AutoproxyMode { get; set; } = AutoproxyMode.Off;
@@ -84,6 +87,8 @@ namespace PluralKit {
 
     public class MemberGuildSettings
     {
+        public int Member { get; set; }
+        public ulong Guild { get; set; }
         public string DisplayName { get; set; }
     }
 
@@ -425,11 +430,13 @@ namespace PluralKit {
     public class PostgresDataStore: IDataStore {
         private DbConnectionFactory _conn;
         private ILogger _logger;
+        private ProxyCache _cache;
 
-        public PostgresDataStore(DbConnectionFactory conn, ILogger logger)
+        public PostgresDataStore(DbConnectionFactory conn, ILogger logger, ProxyCache cache)
         {
             _conn = conn;
             _logger = logger;
+            _cache = cache;
         }
 
         public async Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag)
@@ -467,6 +474,7 @@ namespace PluralKit {
                     settings.AutoproxyMode,
                     settings.AutoproxyMember
                 });
+            await _cache.InvalidateSystem(system);
         }
 
         public async Task<PKSystem> CreateSystem(string systemName = null) {
@@ -481,6 +489,7 @@ namespace PluralKit {
                 system = await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (@Hid, @Name) returning *", new { Hid = hid, Name = systemName });
 
             _logger.Information("Created system {System}", system.Id);
+            // New system has no accounts, therefore nothing gets cached, therefore no need to invalidate caches right here
             return system;
         }
 
@@ -491,6 +500,7 @@ namespace PluralKit {
                 await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
 
             _logger.Information("Linked system {System} to account {Account}", system.Id, accountId);
+            await _cache.InvalidateSystem(system);
         }
 
         public async Task RemoveAccount(PKSystem system, ulong accountId) {
@@ -498,6 +508,7 @@ namespace PluralKit {
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
 
             _logger.Information("Unlinked system {System} from account {Account}", system.Id, accountId);
+            await _cache.InvalidateSystem(system);
         }
 
         public async Task<PKSystem> GetSystemByAccount(ulong accountId) {
@@ -526,12 +537,15 @@ namespace PluralKit {
                 await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz, description_privacy = @DescriptionPrivacy, member_list_privacy = @MemberListPrivacy, front_privacy = @FrontPrivacy, front_history_privacy = @FrontHistoryPrivacy where id = @Id", system);
 
             _logger.Information("Updated system {@System}", system);
+            await _cache.InvalidateSystem(system);
         }
 
         public async Task DeleteSystem(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from systems where id = @Id", system);
+            
             _logger.Information("Deleted system {System}", system.Id);
+            await _cache.InvalidateSystem(system);
         }
 
         public async Task<IEnumerable<ulong>> GetSystemAccounts(PKSystem system)
@@ -568,6 +582,7 @@ namespace PluralKit {
                 });
 
             _logger.Information("Created member {Member}", member.Id);
+            await _cache.InvalidateSystem(system);
             return member;
         }
 
@@ -598,6 +613,7 @@ namespace PluralKit {
 
                 tx.Commit();
                 _logger.Information("Created {MemberCount} members for system {SystemID}", names.Count(), system.Hid);
+                await _cache.InvalidateSystem(system);
                 return results;
             }
         }
@@ -630,6 +646,7 @@ namespace PluralKit {
                 await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_privacy = @MemberPrivacy where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
+            await _cache.InvalidateSystem(member.System);
         }
 
         public async Task DeleteMember(PKMember member) {
@@ -637,6 +654,7 @@ namespace PluralKit {
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
 
             _logger.Information("Deleted member {@Member}", member);
+            await _cache.InvalidateSystem(member.System);
         }
 
         public async Task<MemberGuildSettings> GetMemberGuildSettings(PKMember member, ulong guild)
@@ -653,6 +671,7 @@ namespace PluralKit {
             await conn.ExecuteAsync(
                 "insert into member_guild (member, guild, display_name) values (@Member, @Guild, @DisplayName) on conflict (member, guild) do update set display_name = @Displayname",
                 new {Member = member.Id, Guild = guild, DisplayName = settings.DisplayName});
+            await _cache.InvalidateSystem(member.System);
         }
 
         public async Task<ulong> GetMemberMessageCount(PKMember member)
@@ -749,7 +768,7 @@ namespace PluralKit {
         }
 
         // Same as GuildConfig, but with ISet<ulong> as long[] instead.
-        private struct DatabaseCompatibleGuildConfig
+        public struct DatabaseCompatibleGuildConfig
         {
             public ulong Id { get; set; }
             public ulong? LogChannel { get; set; }
@@ -768,6 +787,7 @@ namespace PluralKit {
 
         public async Task<GuildConfig> GetOrCreateGuildConfig(ulong guild)
         {
+            // When changing this, also see ProxyCache::GetGuildDataCached
             using (var conn = await _conn.Obtain())
             {
                 return (await conn.QuerySingleOrDefaultAsync<DatabaseCompatibleGuildConfig>(
@@ -787,6 +807,7 @@ namespace PluralKit {
                     Blacklist = cfg.Blacklist.Select(c  => (long) c).ToList()
                 });
             _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
+            _cache.InvalidateGuild(cfg.Id);
         }
 
         public async Task<AuxillaryProxyInformation> GetAuxillaryProxyInformation(ulong guild, PKSystem system, PKMember member)

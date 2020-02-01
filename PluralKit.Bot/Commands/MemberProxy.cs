@@ -8,12 +8,10 @@ namespace PluralKit.Bot.Commands
     public class MemberProxy
     {
         private IDataStore _data;
-        private ProxyCacheService _proxyCache;
         
-        public MemberProxy(IDataStore data, ProxyCacheService proxyCache)
+        public MemberProxy(IDataStore data)
         {
             _data = data;
-            _proxyCache = proxyCache;
         }
 
         public async Task Proxy(Context ctx, PKMember target)
@@ -117,9 +115,6 @@ namespace PluralKit.Bot.Commands
                 await _data.SaveMember(target);
                 await ctx.Reply($"{Emojis.Success} Member proxy tags set to `{requestedTag.ProxyString.SanitizeMentions()}`.");
             }
-
-            await _proxyCache.InvalidateResultsForSystem(ctx.System);
         }
-
     }
 }
