@@ -13,6 +13,8 @@ Endpoints will always return all fields, using `null` when a value is missing. O
 missing fields from the JSON request will be ignored and preserved as is, but on `POST` endpoints will
 be set to `null` or cleared.
 
+Endpoints taking JSON bodies (eg. most `PATCH` and `PUT` endpoints) require the `Content-Type: application/json` header set.
+
 ## Authentication
 Authentication is done with a simple "system token". You can get your system token by running `pk;token` using the
 Discord bot, either in a channel with the bot or in DMs. Then, pass this token in the `Authorization` HTTP header
