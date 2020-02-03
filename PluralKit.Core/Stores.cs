@@ -509,6 +509,7 @@ namespace PluralKit {
 
             _logger.Information("Unlinked system {System} from account {Account}", system.Id, accountId);
             await _cache.InvalidateSystem(system);
+            _cache.InvalidateAccounts(new [] { accountId });
         }
 
         public async Task<PKSystem> GetSystemByAccount(ulong accountId) {
