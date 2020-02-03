@@ -109,7 +109,7 @@ namespace PluralKit.Bot
             {
                 PKMember match = null;
                 if (membersByHid.TryGetValue(d.Id, out var matchByHid)) match = matchByHid; // Try to look up the member with the given ID
-                else if (membersByName.TryGetValue(d.Id, out var matchByName)) match = matchByName; // Try with the name instead
+                else if (membersByName.TryGetValue(d.Name, out var matchByName)) match = matchByName; // Try with the name instead
                 
                 if (match != null)
                 {
