@@ -95,7 +95,9 @@ namespace PluralKit.Bot
             var systemSettingsForGuild = account.SettingsForGuild(channel.GuildId);
             
             // If we didn't get a match by proxy tags, try to get one by autoproxy
-            if (match == null) match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, channel);
+            // Also try if we *did* get a match, but there's no inner text. This happens if someone sends a message that
+            // is equal to someone else's tags, and messages like these should be autoproxied if possible
+            if (match == null || match.InnerText.Trim().Length == 0) match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, channel);
             
             // If we still haven't found any, just yeet
             if (match == null) return;
