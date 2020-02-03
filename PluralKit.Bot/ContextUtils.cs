@@ -103,7 +103,7 @@ namespace PluralKit.Bot {
                         if (currentPage < 0) currentPage += pageCount;
                         
                         // If we can, remove the user's reaction (so they can press again quickly)
-                        if (await ctx.HasPermission(ChannelPermission.ManageMessages) && reaction.User.IsSpecified) await msg.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                        if (ctx.BotHasPermission(ChannelPermission.ManageMessages) && reaction.User.IsSpecified) await msg.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
                         
                         // Edit the embed with the new page
                         var embed = await MakeEmbedForPage(currentPage);
@@ -113,7 +113,7 @@ namespace PluralKit.Bot {
                     // "escape hatch", clean up as if we hit X
                 }
 
-                if (await ctx.HasPermission(ChannelPermission.ManageMessages)) await msg.RemoveAllReactionsAsync();
+                if (ctx.BotHasPermission(ChannelPermission.ManageMessages)) await msg.RemoveAllReactionsAsync();
                 else await msg.RemoveReactionsAsync(ctx.Shard.CurrentUser, botEmojis);
             }
             // If we get a "NotFound" error, the message has been deleted and thus not our problem
@@ -202,15 +202,15 @@ namespace PluralKit.Bot {
             }
         }
 
-        public static async Task<ChannelPermissions> Permissions(this Context ctx) {
-            if (ctx.Channel is IGuildChannel) {
-                var gu = await ctx.Guild.GetCurrentUserAsync();
-                return gu.GetPermissions(ctx.Channel as IGuildChannel);
+        public static ChannelPermissions BotPermissions(this Context ctx) {
+            if (ctx.Channel is SocketGuildChannel gc) {
+                var gu = gc.Guild.CurrentUser;
+                return gu.GetPermissions(gc);
             }
             return ChannelPermissions.DM;
         }
 
-        public static async Task<bool> HasPermission(this Context ctx, ChannelPermission permission) => (await Permissions(ctx)).Has(permission);
+        public static bool BotHasPermission(this Context ctx, ChannelPermission permission) => BotPermissions(ctx).Has(permission);
 
         public static async Task BusyIndicator(this Context ctx, Func<Task> f, string emoji = "\u23f3" /* hourglass */)
         {
@@ -226,7 +226,8 @@ namespace PluralKit.Bot {
             var task = f();
 
             // If we don't have permission to add reactions, don't bother, and just await the task normally.
-            if (!await ctx.HasPermission(ChannelPermission.AddReactions)) return await task;
+            if (!ctx.BotHasPermission(ChannelPermission.AddReactions)) return await task;
+            if (!ctx.BotHasPermission(ChannelPermission.ReadMessageHistory)) return await task;
 
             try
             {
