@@ -86,6 +86,7 @@ namespace PluralKit.Bot {
         public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag `{tagToAdd.ProxyString.SanitizeMentions()}`. The member currently has these tags: {member.ProxyTagsString().SanitizeMentions()}");
         public static PKError ProxyTagDoesNotExist(ProxyTag tagToRemove, PKMember member) => new PKError($"That member does not have the proxy tag `{tagToRemove.ProxyString.SanitizeMentions()}`. The member currently has these tags: {member.ProxyTagsString().SanitizeMentions()}");
         public static PKError LegacyAlreadyHasProxyTag(ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString().SanitizeMentions()}\nConsider using the `pk;member {member.Hid} proxy add {requested.ProxyString.SanitizeMentions()}` command instead.");
+        public static PKError EmptyProxyTags(PKMember member) => new PKError($"The example proxy `text` is equivalent to having no proxy tags at all, since there are no symbols or brackets on either end. If you'd like to clear your proxy tags, use `pk;member {member.Hid} proxy clear`.");
 
         public static PKError GenericCancelled() => new PKError("Operation cancelled.");
 
