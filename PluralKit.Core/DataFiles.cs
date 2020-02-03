@@ -162,7 +162,8 @@ namespace PluralKit.Bot
                 }
                 else
                 {
-                    member.ProxyTags = dataMember.ProxyTags ?? new ProxyTag[] { };
+                    // Ignore proxy tags where both prefix and suffix are set to null (would be invalid anyway)
+                    member.ProxyTags = (dataMember.ProxyTags ?? new ProxyTag[] { }).Where(tag => !tag.IsEmpty).ToList();
                 }
 
                 member.KeepProxy = dataMember.KeepProxy;
