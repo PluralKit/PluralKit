@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,6 +26,16 @@ namespace PluralKit.Core
         }
 
         public Task InvalidateSystem(PKSystem system) => InvalidateSystem(system.Id);
+
+        public void InvalidateDeletedSystem(int systemId, IEnumerable<ulong> accounts)
+        {
+            // Used when the system's already removed so we can't look up accounts
+            // We assume the account list is saved already somewhere and can be passed here (which is the case in Store)
+            
+            _cache.Remove(KeyForSystem(systemId));
+            foreach (var account in accounts) 
+                _cache.Remove(KeyForAccount(account));
+        }
 
         public async Task InvalidateSystem(int systemId)
         {

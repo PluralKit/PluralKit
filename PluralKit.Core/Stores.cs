@@ -540,12 +540,16 @@ namespace PluralKit {
             await _cache.InvalidateSystem(system);
         }
 
-        public async Task DeleteSystem(PKSystem system) {
-            using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("delete from systems where id = @Id", system);
+        public async Task DeleteSystem(PKSystem system)
+        {
+            using var conn = await _conn.Obtain();
+            
+            // Fetch the list of accounts *before* deletion so we can cache-bust all of those
+            var accounts = (await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", system)).ToArray();
+            await conn.ExecuteAsync("delete from systems where id = @Id", system);
             
             _logger.Information("Deleted system {System}", system.Id);
-            await _cache.InvalidateSystem(system);
+            _cache.InvalidateDeletedSystem(system.Id, accounts);
         }
 
         public async Task<IEnumerable<ulong>> GetSystemAccounts(PKSystem system)
