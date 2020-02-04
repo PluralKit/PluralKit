@@ -60,7 +60,7 @@ namespace PluralKit.Bot.Commands
 
                     var footer = $"{memberCountDisplayed} total.";
                     if (anyMembersHidden && authCtx == LookupContext.ByOwner)
-                        footer += "Private members have been hidden. type \"pk;system list all\" to include them.";
+                        footer += " Private members have been hidden. type \"pk;system list all\" to include them.";
                     eb.WithFooter(footer);
                     
                     return Task.CompletedTask;
