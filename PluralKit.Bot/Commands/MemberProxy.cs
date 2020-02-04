@@ -62,7 +62,7 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
             }
             // Subcommand: "add"
-            else if (ctx.Match("add"))
+            else if (ctx.Match("add", "append"))
             {
                 if (!ctx.HasNext()) throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
                 
@@ -82,7 +82,7 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply($"{Emojis.Success} Added proxy tags `{tagToAdd.ProxyString.SanitizeMentions()}`.");
             }
             // Subcommand: "remove"
-            else if (ctx.Match("remove"))
+            else if (ctx.Match("remove", "delete"))
             {
                 if (!ctx.HasNext()) throw new PKSyntaxError("You must pass a proxy tag to remove (eg. `[text]` or `J:text`).");
 
