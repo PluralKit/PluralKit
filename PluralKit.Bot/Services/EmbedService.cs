@@ -44,9 +44,14 @@ namespace PluralKit.Bot {
 
             if (system.Tag != null) eb.AddField("Tag", system.Tag);
             eb.AddField("Linked accounts", string.Join(", ", users).Truncate(1000), true);
-            
+
             if (system.MemberListPrivacy.CanAccess(ctx))
-                eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
+            {
+                if (memberCount > 0)
+                    eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
+                else
+                    eb.AddField($"Members ({memberCount})", "Add one with `pk;member new`!", true);
+            }
 
             if (system.Description != null && system.DescriptionPrivacy.CanAccess(ctx))
                 eb.AddField("Description", system.Description.Truncate(1024), false);
