@@ -106,10 +106,14 @@ namespace PluralKit.Bot.Commands
                 var requestedTag = ParseProxyTags(ctx.RemainderOrNull());
                 if (requestedTag.IsEmpty) throw Errors.EmptyProxyTags(target);
 
-                // This is mostly a legacy command, so it's gonna error out if there's
+                // This is mostly a legacy command, so it's gonna warn if there's
                 // already more than one proxy tag.
                 if (target.ProxyTags.Count > 1)
-                    throw Errors.LegacyAlreadyHasProxyTag(requestedTag, target);
+                {
+                    var msg = await ctx.Reply($"This member already has more than one proxy tag set: {target.ProxyTagsString().SanitizeMentions()}\nDo you want to replace them?");
+                    if (!await ctx.PromptYesNo(msg))
+                        throw Errors.GenericCancelled();
+                }
                 
                 if (!await WarnOnConflict(requestedTag))
                     throw Errors.GenericCancelled();
