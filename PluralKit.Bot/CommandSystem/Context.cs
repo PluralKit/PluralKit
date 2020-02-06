@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -61,9 +62,10 @@ namespace PluralKit.Bot
         /// </summary>
         public bool Match(ref string used, params string[] potentialMatches)
         {
+            var arg = PeekArgument();
             foreach (var match in potentialMatches)
             {
-                if (PeekArgument().Equals(match, StringComparison.InvariantCultureIgnoreCase))
+                if (arg.Equals(match, StringComparison.InvariantCultureIgnoreCase))
                 {
                     used = PopArgument();
                     return true;
@@ -80,6 +82,15 @@ namespace PluralKit.Bot
         {
             string used = null; // Unused and unreturned, we just yeet it
             return Match(ref used, potentialMatches);
+        }
+
+        public bool MatchFlag(params string[] potentialMatches)
+        {
+            // Flags are *ALWAYS PARSED LOWERCASE*. This means we skip out on a "ToLower" call here.
+            // Can assume the caller array only contains lowercase *and* the set below only contains lowercase
+            
+            var flags = _parameters.Flags();
+            return potentialMatches.Any(potentialMatch => flags.Contains(potentialMatch));
         }
         
         public async Task Execute<T>(Command commandDef, Func<T, Task> handler)
