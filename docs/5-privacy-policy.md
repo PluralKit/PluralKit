@@ -3,6 +3,7 @@ layout: default
 title: Privacy Policy
 permalink: /privacy
 description: I'm not a lawyer. I don't want to write a 50 page document no one wants to (or can) read. It's short, I promise.
+nav_order: 5
 ---
 
 # Privacy Policy

@@ -3,6 +3,7 @@ layout: default
 title: User Guide
 permalink: /guide
 description: PluralKit's user guide contains a walkthrough of the bot's features, as well as how to use them.
+nav_order: 2
 ---
 
 # User Guide
