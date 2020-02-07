@@ -67,10 +67,12 @@ For more info on what you can do with members check out [the member management s
 
 ## Proxies
 Proxies are probably the most important part of PluralKit, they are literally what the bot was made for.
-<!-- insert example proxy -->
+![Example of a proxy message]({% link /assets/ExampleProxy.png %}w)
+
 ### Parts to a proxy message
-1. The Name: This is the members name, display name, or server nickname, depending on the highest priority (Server nickname is higer then display name which is higher then name)
+1. The Name: This is the members name, display name, or server nickname, depending on the highest priority (Server nickname is higher then display name which is higher then name)
 2. The tag: If a system tag is set, that is what will appear right after the name
+3. The Bot Badge: All proxies have this due to how the proxy service works
 3. The message: What you intended to send
 
 ### Parts to a proxy tag
@@ -110,11 +112,11 @@ When you come across a proxied message, or you have proxied a message, there are
 
 ❌: This reaction will cause the message to be deleted but only if you are using the account that sent the message
 
-❓: This reaction will DM you a message containing details on who sent the message, the member that it proxied, and the system it was from
-<!-- insert query example -->
+❓: This reaction will DM you a message containing details on who sent the message, the member that it proxied, and the system it was from. When you react with this you will receive a DM that looks like this:
+![Example of a message query]({% link /assets/ExampleQuery.png %})
 
-❗: This reaction will send a message to the chat the proxied message was sent in, pinging both you and the sender of the message
-<!-- insert ping example -->
+❗: This reaction will send a message to the chat the proxied message was sent in, pinging both you and the sender of the message. That message will look like this:
+![Example of a message query]({% link /assets/ExamplePing.png %})
 
 ### More examples
 How to read these examples: The smaller code block with "Example Message" in it is the message you would like to proxy, the larger code block immediately after it is the command you would need to set the member Myriad to respond to that proxy
