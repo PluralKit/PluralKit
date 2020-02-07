@@ -33,6 +33,8 @@ These are the parts of the system, reading the card top to bottom left to right 
 You need a system to start creating members, but luckily this is relatively simple! All you need to do is run `pk;system new [name]`. So if you wanted your system to be named "Boxes of Foxes" you would run the command `pk;system new Boxes of Foxes`! Super simple!
 If you want to do more with the system, [click here](% link /guide#system-management %)! This page is just a simple setup guide
 
+----
+
 ## Members
 Once you have created a system, the next thing you need to get started is to create a member! Here is an example of a full member card:
 ![Example of a filled out member card]({% link /assets/ExampleMember.png%})
@@ -51,3 +53,84 @@ These are the parts of a member, reading the card top to bottom left to right li
 11. System ID: This is the ID of the system this member is part of, in this case it is the ID for the PluralKit Example System
 12. Member ID: This is the ID for the member
 13. Creation on: This is the date and time the member was created
+
+### Creating a member
+This is just as easy as creating a system, but there are a few more things you will want to do immediately after! First you run `pk;member new [name]`, so if you want to create a member named Myriad, you would run `pk;member new Myriad`.
+Next, for proxying later, you will want to set an avatar for your new member! This is done simply by using `pk;member [member] avatar [link to avatar]`. For example, 
+```
+pk;member Myriad avatar {{ site.url }}{% link /assets/myriad.png%}
+```
+
+----
+
+## Proxies
+Proxies are probably the most important part of PluralKit, they are literally what the bot was made for.
+<!-- insert example proxy -->
+### Parts to a proxy message
+1. The Name: This is the members name, display name, or server nickname, depending on the highest priority (Server nickname is higer then display name which is higher then name)
+2. The tag: If a system tag is set, that is what will appear right after the name
+3. The message: What you intended to send
+
+### Parts to a proxy tag
+A proxy tag is what tells PluralKit how to know to proxy a member. It looks like this:
+```
+pretextpost
+```
+and has 3 parts.
+1. Prefix: In this case, `pre`. This tells PluralKit what to look for at the **start** of the message
+2. Separator: This is always the word `text`. It tells PluralKit where the prefix ends and the suffix
+3. Suffix: In this case, `post`. This tells PluralKit to what to look for at the **end** of a message 
+
+In this example, typing a message such as
+```
+pre This is an example message post
+```
+would result in the message being proxied
+
+### Setting a proxy tag
+To set a proxy tag you need to know 3 things. The member you wish to set the tags for, the prefix for the tag, and the suffix for the tag.
+Once you know these things you can run the command:
+```
+pk;member [member] proxy [prefix]text[suffix]
+```
+For example, if you want messages starting with `{` and ending with `}` to be proxied by Myriad, you could run
+```
+pk;member Myriad proxy {text}
+```
+Now when you type a message such as `{this is an example message}` it will be proxied by Myriad
+
+You do not need both to set it. If you do not set a prefix or a suffix, it will not care what is at the start or end of the message respectively. For more examples [click here](#more-examples)
+
+### Reactions
+When you come across a proxied message, or you have proxied a message, there are a few handy reactions you can add to the message for some more functionality!
+
+❌: This reaction will cause the message to be deleted but only if you are using the account that sent the message
+
+❓: This reaction will DM you a message containing details on who sent the message, the member that it proxied, and the system it was from
+<!-- insert query example -->
+
+🏓: This reaction will send a message to the chat the proxied message was sent in, pinging both you and the sender of the message
+<!-- insert ping example -->
+
+### More examples
+`Example message - Myriad`
+```
+pk;member Myriad proxy text- Myriad
+```
+
+`M. Example message`
+```
+pk;member Myriad proxy M.text
+```
+
+`🎩Example message`
+```
+pk;member Myriad proxy 🎩text
+```
+*Note: Custom emojis do work but look a bit weird in the text form*
+
+`-- Example message --`
+```
+pk;member Myriad proxy -- text --
+```
+*Note: Having a space between the prefix/suffix and `text` will mean that the space is required. In this example `--Example message--` will not proxy*
