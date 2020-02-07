@@ -184,21 +184,22 @@ namespace PluralKit.Bot.Commands
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
         }
 
-        public async Task Privacy(Context ctx, PKMember target)
+        public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
         {
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            bool newValue;
-            if (ctx.Match("private", "hide", "hidden", "on", "enable", "yes")) newValue = true;
-            else if (ctx.Match("public", "show", "shown", "displayed", "off", "disable", "no")) newValue = false;
+            PrivacyLevel newValue;
+            if (ctx.Match("private", "hide", "hidden", "on", "enable", "yes")) newValue = PrivacyLevel.Private;
+            else if (ctx.Match("public", "show", "shown", "displayed", "off", "disable", "no")) newValue = PrivacyLevel.Public;
             else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"private\" or \"public\".");
-            else newValue = target.MemberPrivacy != PrivacyLevel.Private;
+            // If we're getting a value from command (eg. "pk;m <name> private" == always private, "pk;m <name> public == always public"), use that instead of parsing/toggling
+            else newValue = newValueFromCommand ?? (target.MemberPrivacy != PrivacyLevel.Private ? PrivacyLevel.Private : PrivacyLevel.Public); 
 
-            target.MemberPrivacy = newValue ? PrivacyLevel.Private : PrivacyLevel.Public;
+            target.MemberPrivacy = newValue;
             await _data.SaveMember(target);
 
-            if (newValue)
+            if (newValue == PrivacyLevel.Private)
                 await ctx.Reply($"{Emojis.Success} Member privacy set to **private**. This member will no longer show up in member lists and will return limited information when queried by other accounts.");
             else
                 await ctx.Reply($"{Emojis.Success} Member privacy set to **public**. This member will now show up in member lists and will return all information when queried by other accounts.");
