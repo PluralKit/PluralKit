@@ -35,7 +35,7 @@ namespace PluralKit.Bot.Commands
 
             var system = await _data.CreateSystem(ctx.RemainderOrNull());
             await _data.AddAccount(system, ctx.Author.Id);
-            await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now.");
+            await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now. Now that you have that set up, check out [the getting started guide on setting up members and proxies](https://pluralkit.me/start)!");
         }
     }
 }
