@@ -61,6 +61,8 @@ Next, for proxying later, you will want to set an avatar for your new member! Th
 pk;member Myriad avatar {{ site.url }}{% link /assets/myriad.png%}
 ```
 
+For more info on what you can do with members check out [the member management section](/guide#member-management)
+
 ----
 
 ## Proxies
@@ -101,6 +103,8 @@ Now when you type a message such as `{this is an example message}` it will be pr
 
 You do not need both to set it. If you do not set a prefix or a suffix, it will not care what is at the start or end of the message respectively. For more examples [click here](#more-examples)
 
+For a more detailed guide on proxying have a look at the [proxying section](/guide#proxying)
+
 ### Reactions
 When you come across a proxied message, or you have proxied a message, there are a few handy reactions you can add to the message for some more functionality!
 
@@ -109,10 +113,12 @@ When you come across a proxied message, or you have proxied a message, there are
 ❓: This reaction will DM you a message containing details on who sent the message, the member that it proxied, and the system it was from
 <!-- insert query example -->
 
-🏓: This reaction will send a message to the chat the proxied message was sent in, pinging both you and the sender of the message
+❗: This reaction will send a message to the chat the proxied message was sent in, pinging both you and the sender of the message
 <!-- insert ping example -->
 
 ### More examples
+How to read these examples: The smaller code block with "Example Message" in it is the message you would like to proxy, the larger code block immediately after it is the command you would need to set the member Myriad to respond to that proxy
+
 `Example message - Myriad`
 ```
 pk;member Myriad proxy text- Myriad
