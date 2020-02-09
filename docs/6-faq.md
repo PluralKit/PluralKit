@@ -3,6 +3,7 @@ layout: default
 title: FAQ
 permalink: /faq
 description: Frequently asked questions (and the answers to them).
+nav_order: 6
 ---
 
 # Frequently asked questions

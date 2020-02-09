@@ -3,6 +3,7 @@ layout: default
 title: API documentation
 permalink: /api
 description: PluralKit's API documentation.
+nav_order: 4
 ---
 
 # API documentation

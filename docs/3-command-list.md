@@ -3,6 +3,7 @@ layout: default
 title: Command List
 permalink: /commands
 description: The full list of all commands in PluralKit, and a short description of what they do.
+nav_order: 3
 ---
 
 # How to read this
