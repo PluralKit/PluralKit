@@ -51,7 +51,7 @@ The following three models (usually represented in JSON format) represent the va
 |description|string?|Yes|1000-character limit.|
 |color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.|
 |avatar_url|url?|Yes|Not validated server-side.|
-|birthday|date?|Yes|ISO-8601 (`YYYY-MM-DD`) format, year of `0001` means hidden year.|
+|birthday|date?|Yes|ISO-8601 (`YYYY-MM-DD`) format, year of `0001` or `0004` means hidden year. Birthdays set after 2020-02-10 use `0004` as a sentinel year, but both options are recognized as valid.|
 |prefix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
 |suffix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
 |proxy_tags|ProxyTag[]|Yes (entire array)|An array of ProxyTag (see below) objects, each representing a single prefix/suffix pair.|
@@ -431,6 +431,8 @@ The returned system and member's privacy settings will be respected, and as such
 ```
 
 ## Version history
+* 2020-02-10
+  * Birthdates with no year can now be stored using `0004` as a year, for better leap year support. Both options remain valid and either may be returned by the API.
 * 2020-01-08
   * Added privacy support, meaning some responses will now lack information or return 403s, depending on the specific system and member's privacy settings.
 * 2019-12-28

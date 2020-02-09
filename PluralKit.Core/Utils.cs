@@ -105,10 +105,12 @@ namespace PluralKit
                 "MM/dd"         // 01/01
             });
 
-            // Giving a template value so year will be parsed as 0001 if not present
+            // Giving a template value so year will be parsed as 0004 if not present
             // This means we can later disambiguate whether a null year was given
+            // We use the basis year 0004 (rather than, say, 0001) because 0004 is a leap year in the Gregorian calendar
+            // which means the date "Feb 29, 0004" is a valid date. 0001 is still accepted as a null year for legacy reasons.
             // TODO: should we be using invariant culture here?
-            foreach (var pattern in patterns.Select(p => LocalDatePattern.CreateWithInvariantCulture(p).WithTemplateValue(new LocalDate(0001, 1, 1))))
+            foreach (var pattern in patterns.Select(p => LocalDatePattern.CreateWithInvariantCulture(p).WithTemplateValue(new LocalDate(0004, 1, 1))))
             {
                 var result = pattern.Parse(str);
                 if (result.Success) return result.Value;

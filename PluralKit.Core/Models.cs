@@ -128,7 +128,8 @@ namespace PluralKit
 
         public PrivacyLevel MemberPrivacy { get; set; }
 
-        /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" is hidden
+        /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
+        /// Before Feb 10 2020, the sentinel year was 0001, now it is 0004.
         [JsonIgnore] public string BirthdayString
         {
             get
@@ -136,7 +137,7 @@ namespace PluralKit
                 if (Birthday == null) return null;
 
                 var format = LocalDatePattern.CreateWithInvariantCulture("MMM dd, yyyy");
-                if (Birthday?.Year == 1) format = LocalDatePattern.CreateWithInvariantCulture("MMM dd");
+                if (Birthday?.Year == 1 || Birthday?.Year == 4) format = LocalDatePattern.CreateWithInvariantCulture("MMM dd");
                 return format.Format(Birthday.Value);
             }
         }
