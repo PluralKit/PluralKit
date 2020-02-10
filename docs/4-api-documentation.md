@@ -40,6 +40,10 @@ The following three models (usually represented in JSON format) represent the va
 |avatar_url|url?|Yes|Not validated server-side.|
 |tz|string?|Yes|Tzdb identifier. Patching with `null` will store `"UTC"`.|
 |created|datetime|No||
+|description_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|member_list_privacy|string?|Yes|Same as above.|
+|front_privacy|string?|Yes|Same as above.|
+|front_history_privacy|string?|Yes|Same as above.|
 
 ### Member model
 
@@ -57,6 +61,7 @@ The following three models (usually represented in JSON format) represent the va
 |proxy_tags|ProxyTag[]|Yes (entire array)|An array of ProxyTag (see below) objects, each representing a single prefix/suffix pair.|
 |keep_proxy|bool|Yes|Whether to display a member's proxy tags in the proxied message.|
 |created|datetime|No||
+|privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 
 #### ProxyTag object
 
@@ -103,7 +108,11 @@ Returns information about your own system.
     "tag": "[MySys]",
     "avatar_url": "https://path/to/avatar/image.png",
     "tz": "Europe/Copenhagen",
-    "created": "2019-01-01T14:30:00.987654Z"
+    "created": "2019-01-01T14:30:00.987654Z",
+    "description_privacy": "private",
+    "member_list_privacy": "public",
+    "front_privacy": "public",
+    "front_history_privacy": "private"
 }
 ```
 
@@ -123,7 +132,11 @@ Some fields may be set to `null` if unauthenticated and the system has chosen to
     "tag": "[MySys]",
     "avatar_url": "https://path/to/avatar/image.png",
     "tz": "Europe/Copenhagen",
-    "created": "2019-01-01T14:30:00.987654Z"
+    "created": "2019-01-01T14:30:00.987654Z",
+    "description_privacy": null,
+    "member_list_privacy": null,
+    "front_privacy": null,
+    "front_history_privacy": null
 }
 ```
 
@@ -148,7 +161,8 @@ If the request is not authenticated with the system's token, members marked as p
         "description": "I am Craig, example user extraordinaire.",
         "proxy_tags": [{"prefix": "[", "suffix": "]"}],
         "keep_proxy": false,
-        "created": "2019-01-01T15:00:00.654321Z"
+        "created": "2019-01-01T15:00:00.654321Z",
+        "privacy": null
     }
 ]
 ```
@@ -212,7 +226,7 @@ If the system has chosen to hide its current fronters, this will return `403 For
 ### PATCH /s
 **Requires authentication.**
 
-Edits your own system's information. Missing fields will be set to `null`. Will return the new system object.
+Edits your own system's information. Missing fields will keep their current values. Will return the new system object.
 
 #### Example request
     PATCH https://api.pluralkit.me/v1/s
@@ -222,7 +236,11 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
     "name": "New System Name",
     "tag": "{Sys}",
     "avatar_url": "https://path/to/new/avatar.png",
-    "tz": "America/New_York"
+    "tz": "America/New_York",
+    "description_privacy": "private",
+    "member_list_privacy": "public",
+    "front_privacy": "public",
+    "front_history_privacy": "private"
 }
 ```
 (note the absence of a `description` field, which has its old value preserved in the response)
@@ -236,7 +254,11 @@ Edits your own system's information. Missing fields will be set to `null`. Will 
     "tag": "{Sys}",
     "avatar_url": "https://path/to/new/avatar.png",
     "tz": "America/New_York",
-    "created": "2019-01-01T14:30:00.987654Z"
+    "created": "2019-01-01T14:30:00.987654Z",
+    "description_privacy": "private",
+    "member_list_privacy": "public",
+    "front_privacy": "public",
+    "front_history_privacy": "private"
 }
 ```
 
@@ -259,7 +281,7 @@ Registers a new switch to your own system given a list of member IDs.
 
 ### GET /m/\<id>
 Queries a member's information by its 5-character member ID. If the member does not exist, will return `404 Not Found`.
-If this member is marked private, and the request isn't authenticated with the member's system's token, some fields (currently only `description`) will contain `null` rather than the true value.
+If this member is marked private, and the request isn't authenticated with the member's system's token, some fields (currently only `description`) will contain `null` rather than the true value. Regardless of privacy setting, a non-authenticated request will only receive `null` for the `privacy` field.
 
 #### Example request
     GET https://api.pluralkit.me/v1/m/qwert
@@ -276,7 +298,8 @@ If this member is marked private, and the request isn't authenticated with the m
     "description": "I am Craig, example user extraordinaire.",
     "proxy_tags": [{"prefix": "[", "suffix": "]"}],
     "keep_proxy": false,
-    "created": "2019-01-01T15:00:00.654321Z"
+    "created": "2019-01-01T15:00:00.654321Z",
+    "privacy": "public"
 }
 ```
 
@@ -297,7 +320,8 @@ Creates a new member with the information given. Missing fields (except for name
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "keep_proxy": false
+    "keep_proxy": false,
+    "privacy": "public"
 }
 ```
 (note the absence of a `proxy_tags` field, which is cleared in the response)
@@ -315,14 +339,15 @@ Creates a new member with the information given. Missing fields (except for name
     "description": "I am Craig, cooler example user extraordinaire.",
     "proxy_tags": [],
     "keep_proxy": false,
-    "created": "2019-01-01T15:00:00.654321Z"
+    "created": "2019-01-01T15:00:00.654321Z",
+    "privacy": "public"
 }
 ```
 
 ### PATCH /m/\<id>
 **Requires authentication.**
 
-Edits a member's information. Missing fields will be set to `null`. Will return the new member object. Member must (obviously) belong to your own system.
+Edits a member's information. Missing fields will keep their current values. Will return the new member object. Member must (obviously) belong to your own system.
 
 #### Example request
     PATCH https://api.pluralkit.me/v1/m/qwert
@@ -336,7 +361,8 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "birthday": "1997-07-14",
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
-    "keep_proxy": false
+    "keep_proxy": false,
+    "privacy": "public"
 }
 ```
 (note the absence of a `proxy_tags` field, which keeps its old value in the response)
@@ -354,7 +380,8 @@ Edits a member's information. Missing fields will be set to `null`. Will return 
     "description": "I am Craig, cooler example user extraordinaire.",
     "proxy_tags": [{"prefix": "[", "suffix": "]"}],
     "keep_proxy": false,
-    "created": "2019-01-01T15:00:00.654321Z"
+    "created": "2019-01-01T15:00:00.654321Z",
+    "privacy": "public"
 }
 ```
 
@@ -385,7 +412,11 @@ Some fields may be set to `null` if unauthenticated and the system has chosen to
     "tag": "[MySys]",
     "avatar_url": "https://path/to/avatar/image.png",
     "tz": "Europe/Copenhagen",
-    "created": "2019-01-01T14:30:00.987654Z"
+    "created": "2019-01-01T14:30:00.987654Z",
+    "description_privacy": null,
+    "member_list_privacy": null,
+    "front_privacy": null,
+    "front_history_privacy": null
 }
 ```
 
@@ -433,6 +464,7 @@ The returned system and member's privacy settings will be respected, and as such
 ## Version history
 * 2020-02-10
   * Birthdates with no year can now be stored using `0004` as a year, for better leap year support. Both options remain valid and either may be returned by the API.
+  * Added privacy set/get support, meaning you will now see privacy values in authed requests and can set them.
 * 2020-01-08
   * Added privacy support, meaning some responses will now lack information or return 403s, depending on the specific system and member's privacy settings.
 * 2019-12-28

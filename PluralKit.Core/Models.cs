@@ -79,10 +79,10 @@ namespace PluralKit
         [JsonIgnore] public string Token { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
         [JsonProperty("tz")] public string UiTz { get; set; }
-        public PrivacyLevel DescriptionPrivacy { get; set; }
-        public PrivacyLevel MemberListPrivacy { get; set; }
-        public PrivacyLevel FrontPrivacy { get; set; }
-        public PrivacyLevel FrontHistoryPrivacy { get; set; }
+        [JsonProperty("description_privacy")] public PrivacyLevel DescriptionPrivacy { get; set; }
+        [JsonProperty("member_list_privacy")] public PrivacyLevel MemberListPrivacy { get; set; }
+        [JsonProperty("front_privacy")] public PrivacyLevel FrontPrivacy { get; set; }
+        [JsonProperty("front_history_privacy")] public PrivacyLevel FrontHistoryPrivacy { get; set; }
         
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
 
@@ -96,6 +96,10 @@ namespace PluralKit
             o.Add("avatar_url", AvatarUrl);
             o.Add("created", Formats.TimestampExportFormat.Format(Created));
             o.Add("tz", UiTz);
+            o.Add("description_privacy", ctx == LookupContext.ByOwner ? (DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("member_list_privacy", ctx == LookupContext.ByOwner ? (MemberListPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("front_privacy", ctx == LookupContext.ByOwner ? (FrontPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("front_history_privacy", ctx == LookupContext.ByOwner ? (FrontHistoryPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             return o;
         }
 
@@ -106,6 +110,34 @@ namespace PluralKit
             if (o.ContainsKey("tag")) Tag = o.Value<string>("tag").NullIfEmpty().BoundsCheck(Limits.MaxSystemTagLength, "System tag");
             if (o.ContainsKey("avatar_url")) AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
             if (o.ContainsKey("tz")) UiTz = o.Value<string>("tz") ?? "UTC";
+
+            if (o.ContainsKey("description_privacy")) {
+                var val = o.Value<string>("description_privacy").NullIfEmpty();
+                if(val == null || val == "public") DescriptionPrivacy = PrivacyLevel.Public;
+                else if(val == "private") DescriptionPrivacy = PrivacyLevel.Private;
+                else throw new PKParseError("Could not parse description privacy.");
+            }
+
+            if (o.ContainsKey("member_list_privacy")) {
+                var val = o.Value<string>("member_list_privacy").NullIfEmpty();
+                if(val == null || val == "public") MemberListPrivacy = PrivacyLevel.Public;
+                else if(val == "private") MemberListPrivacy = PrivacyLevel.Private;
+                else throw new PKParseError("Could not parse member list privacy.");
+            }
+
+            if (o.ContainsKey("front_privacy")) {
+                var val = o.Value<string>("front_privacy").NullIfEmpty();
+                if(val == null || val == "public") FrontPrivacy = PrivacyLevel.Public;
+                else if(val == "private") FrontPrivacy = PrivacyLevel.Private;
+                else throw new PKParseError("Could not parse front privacy.");
+            }
+
+            if (o.ContainsKey("front_history_privacy")) {
+                var val = o.Value<string>("front_history_privacy").NullIfEmpty();
+                if(val == null || val == "public") FrontHistoryPrivacy = PrivacyLevel.Public;
+                else if(val == "private") FrontHistoryPrivacy = PrivacyLevel.Private;
+                else throw new PKParseError("Could not parse front history privacy.");
+            }
         }
     }
 
@@ -125,8 +157,7 @@ namespace PluralKit
         [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags { get; set; }
         [JsonProperty("keep_proxy")] public bool KeepProxy { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
-
-        public PrivacyLevel MemberPrivacy { get; set; }
+        [JsonProperty("privacy")] public PrivacyLevel MemberPrivacy { get; set; }
 
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
         /// Before Feb 10 2020, the sentinel year was 0001, now it is 0004.
@@ -160,6 +191,7 @@ namespace PluralKit
             o.Add("pronouns", MemberPrivacy.CanAccess(ctx) ? Pronouns : null);
             o.Add("avatar_url", AvatarUrl);
             o.Add("description", MemberPrivacy.CanAccess(ctx) ? Description : null);
+            o.Add("privacy", ctx == LookupContext.ByOwner ? (MemberPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             
             var tagArray = new JArray();
             foreach (var tag in ProxyTags) 
@@ -207,6 +239,13 @@ namespace PluralKit
                 ProxyTags = o.Value<JArray>("proxy_tags")
                     .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
                     .ToList();
+            }
+
+            if (o.ContainsKey("privacy")) {
+                var val = o.Value<string>("privacy").NullIfEmpty();
+                if (val == null || val == "public") MemberPrivacy = PrivacyLevel.Public;
+                else if (val == "private") MemberPrivacy = PrivacyLevel.Private;
+                else throw new PKParseError("Could not parse member privacy.");
             }
         }
     }
