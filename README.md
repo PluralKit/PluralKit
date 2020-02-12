@@ -6,7 +6,7 @@ PluralKit is a Discord bot meant for plural communities. It has features like me
 PluralKit has a Discord server for support, feedback, and discussion: https://discord.gg/PczBt78 
 
 # Requirements
-Running the bot requires [.NET Core](https://dotnet.microsoft.com/download) (v2.2) and a PostgreSQL database.
+Running the bot requires [.NET Core](https://dotnet.microsoft.com/download) (v3.1) and a PostgreSQL database.
 
 # Configuration
 Configuring the bot is done through a JSON configuration file. An example of the configuration format can be seen in [`pluralkit.conf.example`](https://github.com/xSke/PluralKit/blob/master/pluralkit.conf.example).
@@ -39,7 +39,7 @@ $ docker-compose up -d
 ```
 
 ## Manually
-* Install the .NET Core 2.2 SDK (see https://dotnet.microsoft.com/download)
+* Install the .NET Core 3.1 SDK (see https://dotnet.microsoft.com/download)
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
 * Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`
@@ -55,6 +55,7 @@ $ bundle exec jekyll build
 ```
 
 To run an auto-reloading server, substitute the last command with:
+
     $ bundle exec jekyll serve 
 
 # License
