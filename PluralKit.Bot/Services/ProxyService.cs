@@ -121,7 +121,7 @@ namespace PluralKit.Bot
             
             // Get variables in order and all
             var proxyName = match.Member.ProxyName(match.System.Tag, memberSettingsForGuild.DisplayName);
-            var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
+            var avatarUrl = memberSettingsForGuild.AvatarUrl ?? match.Member.AvatarUrl ?? match.System.AvatarUrl;
             
             // If the name's too long (or short), bail
             if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);

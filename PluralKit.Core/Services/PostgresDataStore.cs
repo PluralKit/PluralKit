@@ -249,15 +249,15 @@ namespace PluralKit.Core {
             using var conn = await _conn.Obtain();
             return await conn.QuerySingleOrDefaultAsync<MemberGuildSettings>(
                        "select * from member_guild where member = @Member and guild = @Guild", new { Member = member.Id, Guild = guild})
-                   ?? new MemberGuildSettings();
+                   ?? new MemberGuildSettings { Guild = guild, Member = member.Id };
         }
 
         public async Task SetMemberGuildSettings(PKMember member, ulong guild, MemberGuildSettings settings)
         {
             using var conn = await _conn.Obtain();
             await conn.ExecuteAsync(
-                "insert into member_guild (member, guild, display_name) values (@Member, @Guild, @DisplayName) on conflict (member, guild) do update set display_name = @Displayname",
-                new {Member = member.Id, Guild = guild, DisplayName = settings.DisplayName});
+                "insert into member_guild (member, guild, display_name, avatar_url) values (@Member, @Guild, @DisplayName, @AvatarUrl) on conflict (member, guild) do update set display_name = @DisplayName, avatar_url = @AvatarUrl",
+                settings);
             await _cache.InvalidateSystem(member.System);
         }
 
@@ -395,23 +395,6 @@ namespace PluralKit.Core {
                 });
             _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
             _cache.InvalidateGuild(cfg.Id);
-        }
-
-        public async Task<AuxillaryProxyInformation> GetAuxillaryProxyInformation(ulong guild, PKSystem system, PKMember member)
-        {
-            using var conn = await _conn.Obtain();
-            var args = new {Guild = guild, System = system.Id, Member = member.Id};
-            
-            var multi = await conn.QueryMultipleAsync(@"
-            select servers.* from servers where id = @Guild; 
-            select * from system_guild where guild = @Guild and system = @System;
-            select * from member_guild where guild = @Guild and member = @Member", args);
-            return new AuxillaryProxyInformation
-            {
-                Guild = (await multi.ReadSingleOrDefaultAsync<DatabaseCompatibleGuildConfig>()).Into(),
-                SystemGuild = await multi.ReadSingleOrDefaultAsync<SystemGuildSettings>() ?? new SystemGuildSettings(),
-                MemberGuild = await multi.ReadSingleOrDefaultAsync<MemberGuildSettings>() ?? new MemberGuildSettings()
-            };
         }
 
         public async Task<PKMember> GetFirstFronter(PKSystem system)

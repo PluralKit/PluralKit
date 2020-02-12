@@ -92,21 +92,28 @@ namespace PluralKit.Bot {
 
             var messageCount = await _data.GetMemberMessageCount(member);
 
-            string guildDisplayName = null;
-            if (guild != null)
-                guildDisplayName = (await _data.GetMemberGuildSettings(member, guild.Id)).DisplayName;
+            var guildSettings = guild != null ? await _data.GetMemberGuildSettings(member, guild.Id) : null;
+            var guildDisplayName = guildSettings?.DisplayName;
+            var avatar = guildSettings?.AvatarUrl ?? member.AvatarUrl;
 
             var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
 
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
-                .WithAuthor(name, member.AvatarUrl)
+                .WithAuthor(name, avatar)
                 .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : Color.Default)
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
-            if (member.MemberPrivacy == PrivacyLevel.Private) eb.WithDescription("*(this member is private)*");
+            var description = "";
+            if (member.MemberPrivacy == PrivacyLevel.Private) description += "*(this member is private)*\n";
+            if (guildSettings?.AvatarUrl != null)
+                if (member.AvatarUrl != null) 
+                    description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl}) to see the global avatar)*\n";
+                else
+                    description += "*(this member has a server-specific avatar set)*\n";
+            if (description != "") eb.WithDescription(description);
 
-            if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
+            if (avatar != null) eb.WithThumbnailUrl(avatar);
 
             if (member.DisplayName != null) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);

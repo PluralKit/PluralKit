@@ -83,15 +83,8 @@ namespace PluralKit.Core {
         public int Member { get; set; }
         public ulong Guild { get; set; }
         public string DisplayName { get; set; }
+        public string AvatarUrl { get; set; }
     }
-
-    public class AuxillaryProxyInformation
-    {
-        public GuildConfig Guild { get; set; }
-        public SystemGuildSettings SystemGuild { get; set; }
-        public MemberGuildSettings MemberGuild { get; set; }
-    }
-
     public interface IDataStore
     {
         /// <summary>
@@ -416,7 +409,5 @@ namespace PluralKit.Core {
         /// Saves the given guild configuration struct to the data store.
         /// </summary>
         Task SaveGuildConfig(GuildConfig cfg);
-
-        Task<AuxillaryProxyInformation> GetAuxillaryProxyInformation(ulong guild, PKSystem system, PKMember member); 
     }
 }

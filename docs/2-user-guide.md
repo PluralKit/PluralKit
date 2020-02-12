@@ -217,6 +217,14 @@ To preview the current avatar (if one is set), use the command with no arguments
     
 To clear your avatar, use the subcommand `avatar clear` (eg. `pk;member John avatar clear`).
 
+### Member server avatar
+You can also set an avatar for a specific server. This will "override" the normal avatar, and will be used when proxying messages and looking up member cards in that server. To do so, use the `pk;member serveravatar` command, in the same way as the normal avatar command above:
+
+    pk;member John serveravatar
+    pk;member John serveravatar http://placebeard.it/512.jpg
+    pk;member "Craig Johnson" serveravatar   (with an attached image)
+    pk;member John serveravatar clear
+
 ### Member pronouns
 If you want to list a member's preferred pronouns, you can use the pronouns field on a member profile. This is a free text field, so you can put whatever you'd like in there (with a 100 character limit), like so:
 

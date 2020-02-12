@@ -18,6 +18,8 @@ namespace PluralKit.Bot
 
         public async Task Avatar(Context ctx, PKMember target)
         {
+            var guildData = ctx.Guild != null ? await _data.GetMemberGuildSettings(target, ctx.Guild.Id) : null;
+
             if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
             {
                 if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
@@ -42,11 +44,15 @@ namespace PluralKit.Bot
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            if (ctx.Match("clear", "remove"))
+            if (ctx.Match("clear", "remove", "reset"))
             {
                 target.AvatarUrl = null;
                 await _data.SaveMember(target);
-                await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
+                
+                if (guildData?.AvatarUrl != null)
+                    await ctx.Reply($"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Hid} serveravatar clear` if you wish to clear that too.");
+                else 
+                    await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
             }
             else if (await ctx.MatchUser() is IUser user)
             {
@@ -57,8 +63,7 @@ namespace PluralKit.Bot
             
                 var embed = new EmbedBuilder().WithImageUrl(target.AvatarUrl).Build();
                 await ctx.Reply(
-                    $"{Emojis.Success} Member avatar changed to {user.Username}'s avatar! {Emojis.Warn} Please note that if {user.Username} changes their avatar, the webhook's avatar will need to be re-set.", embed: embed);
-
+                    $"{Emojis.Success} Member avatar changed to {user.Username}'s avatar! {Emojis.Warn} Please note that if {user.Username} changes their avatar, the member's avatar will need to be re-set.", embed: embed);
             }
             else if (ctx.RemainderOrNull() is string url)
             {
@@ -76,6 +81,71 @@ namespace PluralKit.Bot
                 await _data.SaveMember(target);
 
                 await ctx.Reply($"{Emojis.Success} Member avatar changed to attached image. Please note that if you delete the message containing the attachment, the avatar will stop working.");
+            }
+            // No-arguments no-attachment case covered by conditional at the very top
+        }
+        
+        public async Task ServerAvatar(Context ctx, PKMember target)
+        {
+            ctx.CheckGuildContext();
+            var guildData = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+            
+            if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
+            {
+                if ((guildData.AvatarUrl?.Trim() ?? "").Length > 0)
+                {
+                    var eb = new EmbedBuilder()
+                        .WithTitle($"{target.Name.SanitizeMentions()}'s server avatar (for {ctx.Guild.Name})")
+                        .WithImageUrl(guildData.AvatarUrl);
+                    if (target.System == ctx.System?.Id)
+                        eb.WithDescription($"To clear, use `pk;member {target.Hid} serveravatar clear`.");
+                    await ctx.Reply(embed: eb.Build());
+                }
+                else
+                    throw new PKError($"This member does not have a server avatar set. Type `pk;member {target.Hid} avatar` to see their global avatar.");
+
+                return;
+            }
+            
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+
+            if (ctx.Match("clear", "remove", "reset"))
+            {
+                guildData.AvatarUrl = null;
+                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
+                
+                if (target.AvatarUrl != null)
+                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member will now use the global avatar in this server (**{ctx.Guild.Name}**).");
+                else
+                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member now has no avatar.");
+            }
+            else if (await ctx.MatchUser() is IUser user)
+            {
+                if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
+                guildData.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
+                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
+            
+                var embed = new EmbedBuilder().WithImageUrl(guildData.AvatarUrl).Build();
+                await ctx.Reply(
+                    $"{Emojis.Success} Member server avatar changed to {user.Username}'s avatar! This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**). {Emojis.Warn} Please note that if {user.Username} changes their avatar, the member's server avatar will need to be re-set.", embed: embed);
+            }
+            else if (ctx.RemainderOrNull() is string url)
+            {
+                await AvatarUtils.VerifyAvatarOrThrow(url);
+                guildData.AvatarUrl = url;
+                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
+
+                var embed = new EmbedBuilder().WithImageUrl(url).Build();
+                await ctx.Reply($"{Emojis.Success} Member server avatar changed. This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).", embed: embed);
+            }
+            else if (ctx.Message.Attachments.FirstOrDefault() is Attachment attachment)
+            {
+                await AvatarUtils.VerifyAvatarOrThrow(attachment.Url);
+                guildData.AvatarUrl = attachment.Url;
+                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
+
+                await ctx.Reply($"{Emojis.Success} Member server avatar changed to attached image. This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**). Please note that if you delete the message containing the attachment, the avatar will stop working.");
             }
             // No-arguments no-attachment case covered by conditional at the very top
         }
