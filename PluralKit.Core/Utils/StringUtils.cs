@@ -53,5 +53,12 @@ namespace PluralKit.Core
             if (input.Trim().Length == 0) return null;
             return input;
         }
+
+        public static bool EmptyOrNull(this string input)
+        {
+            if (input == null) return true;
+            if (input.Trim().Length == 0) return true;
+            return false;
+        }
     }
 }
