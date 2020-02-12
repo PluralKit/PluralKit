@@ -317,7 +317,7 @@ namespace PluralKit.Bot
                 // no data = no account = no system = no proxy!
                 try
                 {
-                    await _proxy.HandleMessageAsync(cachedGuild, cachedAccount, msg);
+                    await _proxy.HandleMessageAsync(cachedGuild, cachedAccount, msg, doAutoProxy: true);
                 }
                 catch (PKError e)
                 {
@@ -420,7 +420,7 @@ namespace PluralKit.Bot
             var guild = await _cache.GetGuildDataCached(gc.GuildId);
 
             // Just run the normal message handling stuff
-            await _proxy.HandleMessageAsync(guild, account, newMessage);
+            await _proxy.HandleMessageAsync(guild, account, newMessage, doAutoProxy: false);
         }
     }
 }

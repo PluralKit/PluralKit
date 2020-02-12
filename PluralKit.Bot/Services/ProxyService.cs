@@ -83,7 +83,7 @@ namespace PluralKit.Bot
             return null;
         }
 
-        public async Task HandleMessageAsync(GuildConfig guild, CachedAccount account, IMessage message)
+        public async Task HandleMessageAsync(GuildConfig guild, CachedAccount account, IMessage message, bool doAutoProxy)
         {
             // Bail early if this isn't in a guild channel
             if (!(message.Channel is ITextChannel channel)) return;
@@ -97,7 +97,11 @@ namespace PluralKit.Bot
             // If we didn't get a match by proxy tags, try to get one by autoproxy
             // Also try if we *did* get a match, but there's no inner text. This happens if someone sends a message that
             // is equal to someone else's tags, and messages like these should be autoproxied if possible
-            if (match == null || (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0))
+            
+            // All of this should only be done if this call allows autoproxy.
+            // When a normal message is sent, autoproxy is enabled, but if this method is called from a message *edit*
+            // event, then autoproxy is disabled. This is so AP doesn't "retrigger" when the original message was escaped.
+            if (doAutoProxy && (match == null || (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)))
                 match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, channel);
             
             // If we still haven't found any, just yeet
