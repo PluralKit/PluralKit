@@ -57,6 +57,7 @@ namespace PluralKit.Core {
                     settings.AutoproxyMember
                 });
             await _cache.InvalidateSystem(system);
+            _logger.Information("Updated system guild settings {@SystemGuildSettings}", settings);
         }
 
         public async Task<PKSystem> CreateSystem(string systemName = null) {
@@ -258,6 +259,7 @@ namespace PluralKit.Core {
             await conn.ExecuteAsync(
                 "insert into member_guild (member, guild, display_name, avatar_url) values (@Member, @Guild, @DisplayName, @AvatarUrl) on conflict (member, guild) do update set display_name = @DisplayName, avatar_url = @AvatarUrl",
                 settings);
+            _logger.Information("Updated member guild settings {@MemberGuildSettings}", settings);
             await _cache.InvalidateSystem(member.System);
         }
 
