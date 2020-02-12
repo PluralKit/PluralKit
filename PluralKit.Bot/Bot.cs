@@ -269,7 +269,8 @@ namespace PluralKit.Bot
 
         public async Task HandleMessage(SocketMessage arg)
         {
-            if (_client.GetShardFor((arg.Channel as IGuildChannel)?.Guild).ConnectionState != ConnectionState.Connected)
+            var shard = _client.GetShardFor((arg.Channel as IGuildChannel)?.Guild);
+            if (shard.ConnectionState != ConnectionState.Connected)
                 return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
 
             RegisterMessageMetrics(arg);
@@ -290,6 +291,7 @@ namespace PluralKit.Bot
                 {"guild", ((msg.Channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"message", msg.Id.ToString()},
             });
+            _sentryScope.SetTag("shard", shard.ShardId.ToString());
             
             // Add to last message cache
             _lastMessageCache.AddMessage(arg.Channel.Id, arg.Id);
@@ -374,7 +376,8 @@ namespace PluralKit.Bot
                 {"message", message.Id.ToString()},
                 {"reaction", reaction.Emote.Name}
             });
-            
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
             return _proxy.HandleReactionAddedAsync(message, channel, reaction);
         }
 
@@ -386,7 +389,8 @@ namespace PluralKit.Bot
                 {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"message", message.Id.ToString()},
             });
-            
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
             return _proxy.HandleMessageDeletedAsync(message, channel);
         }
 
@@ -399,19 +403,21 @@ namespace PluralKit.Bot
                 {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"messages", string.Join(",", messages.Select(m => m.Id))},
             });
-            
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
             return _proxy.HandleMessageBulkDeleteAsync(messages, channel);
         }
 
         public async Task HandleMessageEdited(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel)
         {
-            _sentryScope.AddBreadcrumb(newMessage.Content ?? "", "event.messageEdit", data: new Dictionary<string, string>()
+            _sentryScope.AddBreadcrumb(newMessage.Content, "event.messageEdit", data: new Dictionary<string, string>()
             {
                 {"channel", channel.Id.ToString()},
                 {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"message", newMessage.Id.ToString()}
             });
-            
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
             // If this isn't a guild, bail
             if (!(channel is IGuildChannel gc)) return;
             
