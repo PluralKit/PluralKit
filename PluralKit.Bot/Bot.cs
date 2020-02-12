@@ -1,32 +1,22 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
 
 using Autofac;
-using Autofac.Core;
 
-using Dapper;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
-using PluralKit.Bot.Commands;
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
 using Sentry;
-using Sentry.Infrastructure;
 
 using Serilog;
 using Serilog.Events;
-
-using SystemClock = NodaTime.SystemClock;
 
 namespace PluralKit.Bot
 {
@@ -109,11 +99,9 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
-        private PKPerformanceEventListener _pl;
 
         public Bot(ILifetimeScope services, IDiscordClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
-            _pl = new PKPerformanceEventListener();
             _services = services;
             _client = client as DiscordShardedClient;
             _metrics = metrics;
@@ -306,7 +294,7 @@ namespace PluralKit.Bot
             // Check if message starts with the command prefix
             if (msg.Content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
             else if (msg.Content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
-            else if (msg.Content != null && Utils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
+            else if (msg.Content != null && StringUtils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
                 if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
                     argPos = -1;
             

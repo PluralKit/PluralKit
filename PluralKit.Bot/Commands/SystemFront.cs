@@ -5,9 +5,9 @@ using Discord;
 
 using NodaTime;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class SystemFront
     {
@@ -81,12 +81,12 @@ namespace PluralKit.Bot.Commands
                             // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
                             var switchDuration = lastSw.Value - sw.Timestamp;
                             stringToAdd =
-                                $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago, for {Formats.DurationFormat.Format(switchDuration)})\n";
+                                $"**{membersStr}** ({DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {DateTimeFormats.DurationFormat.Format(switchSince)} ago, for {DateTimeFormats.DurationFormat.Format(switchDuration)})\n";
                         }
                         else
                         {
                             stringToAdd =
-                                $"**{membersStr}** ({Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {Formats.DurationFormat.Format(switchSince)} ago)\n";
+                                $"**{membersStr}** ({DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {DateTimeFormats.DurationFormat.Format(switchSince)} ago)\n";
                         }
 
                         if (outputStr.Length + stringToAdd.Length > EmbedBuilder.MaxDescriptionLength) break;
@@ -107,7 +107,7 @@ namespace PluralKit.Bot.Commands
             
             var now = SystemClock.Instance.GetCurrentInstant();
 
-            var rangeStart = PluralKit.Utils.ParseDateTime(durationStr, true, system.Zone);
+            var rangeStart = DateUtils.ParseDateTime(durationStr, true, system.Zone);
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             

@@ -1,17 +1,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 using Dapper;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using NodaTime;
+
 using PluralKit.Core;
 
-namespace PluralKit.API.Controllers
+namespace PluralKit.API
 {
     public struct SwitchesReturn
     {
@@ -130,9 +133,9 @@ namespace PluralKit.API.Controllers
 
             try
             {
-                system.Apply(changes);
+                system.ApplyJson(changes);
             }
-            catch (PKParseError e)
+            catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
             }

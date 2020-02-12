@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace PluralKit.Bot.CommandSystem
+namespace PluralKit.Bot
 {
     public class Parameters
     {

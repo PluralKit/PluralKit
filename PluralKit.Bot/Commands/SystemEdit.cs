@@ -8,10 +8,9 @@ using NodaTime;
 using NodaTime.Text;
 using NodaTime.TimeZones;
 
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class SystemEdit
     {
@@ -103,7 +102,7 @@ namespace PluralKit.Bot.Commands
             {
                 // They can't both be null - otherwise we would've hit the conditional at the very top
                 string url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.ProxyUrl;
-                await ctx.BusyIndicator(() => Utils.VerifyAvatarOrThrow(url));
+                await ctx.BusyIndicator(() => AvatarUtils.VerifyAvatarOrThrow(url));
 
                 ctx.System.AvatarUrl = url;
                 await _data.SaveSystem(ctx.System);
@@ -162,7 +161,7 @@ namespace PluralKit.Bot.Commands
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
             var msg = await ctx.Reply(
-                $"This will change the system time zone to {zone.Id}. The current time is {Formats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?");
+                $"This will change the system time zone to {zone.Id}. The current time is {DateTimeFormats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             ctx.System.UiTz = zone.Id;
             await _data.SaveSystem(ctx.System);
@@ -246,7 +245,7 @@ namespace PluralKit.Bot.Commands
 
         public async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr) {
             // First, if we're given a flag emoji, we extract the flag emoji code from it.
-            zoneStr = PluralKit.Utils.ExtractCountryFlag(zoneStr) ?? zoneStr;
+            zoneStr = Core.StringUtils.ExtractCountryFlag(zoneStr) ?? zoneStr;
             
             // Then, we find all *locations* matching either the given country code or the country name.
             var locations = TzdbDateTimeZoneSource.Default.Zone1970Locations;

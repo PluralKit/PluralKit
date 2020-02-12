@@ -7,6 +7,27 @@ using NodaTime;
 using PluralKit.Core;
 
 namespace PluralKit.Bot {
+    /// <summary>
+    /// An exception class representing user-facing errors caused when parsing and executing commands.
+    /// </summary>
+    public class PKError : Exception
+    {
+        public PKError(string message) : base(message)
+        {
+        }
+    }
+
+    /// <summary>
+    /// A subclass of <see cref="PKError"/> that represent command syntax errors, meaning they'll have their command
+    /// usages printed in the message.
+    /// </summary>
+    public class PKSyntaxError : PKError
+    {
+        public PKSyntaxError(string message) : base(message)
+        {
+        }
+    }
+    
     public static class Errors {
         // TODO: is returning constructed errors and throwing them at call site a good idea, or should these be methods that insta-throw instead?
         // or should we just like... go back to inlining them? at least for the one-time-use commands
@@ -60,7 +81,7 @@ namespace PluralKit.Bot {
         public static PKError SwitchTimeInFuture => new PKError("Can't move switch to a time in the future.");
         public static PKError NoRegisteredSwitches => new PKError("There are no registered switches for this system.");
 
-        public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({Formats.ZonedDateTimeFormat.Format(time)}), as it would cause conflicts.");
+        public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({DateTimeFormats.ZonedDateTimeFormat.Format(time)}), as it would cause conflicts.");
         public static PKError SwitchMoveCancelled => new PKError("Switch move cancelled.");
         public static PKError SwitchDeleteCancelled => new PKError("Switch deletion cancelled.");
         public static PKError TimezoneParseError(string timezone) => new PKError($"Could not parse timezone offset {timezone.SanitizeMentions()}. Offset must be a value like 'UTC+5' or 'GMT-4:30'.");

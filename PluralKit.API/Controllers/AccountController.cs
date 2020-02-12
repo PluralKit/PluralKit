@@ -1,9 +1,12 @@
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json.Linq;
 
-namespace PluralKit.API.Controllers
+using PluralKit.Core;
+
+namespace PluralKit.API
 {
     [ApiController]
     [Route("a")]

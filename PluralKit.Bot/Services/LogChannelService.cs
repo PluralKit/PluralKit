@@ -1,6 +1,9 @@
 using System.Threading.Tasks;
-using Dapper;
+
 using Discord;
+
+using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit.Bot {

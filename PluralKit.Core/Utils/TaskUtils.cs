@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PluralKit {
+namespace PluralKit.Core {
     public static class TaskUtils {
         public static async Task CatchException(this Task task, Action<Exception> handler) {
             try {

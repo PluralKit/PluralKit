@@ -1,9 +1,10 @@
 using System.Threading.Tasks;
+
 using Discord;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class Token
     {
@@ -33,7 +34,7 @@ namespace PluralKit.Bot.Commands
 
         private async Task<string> MakeAndSetNewToken(PKSystem system)
         {
-            system.Token = PluralKit.Utils.GenerateToken();
+            system.Token = Core.StringUtils.GenerateToken();
             await _data.SaveSystem(system);
             return system.Token;
         }

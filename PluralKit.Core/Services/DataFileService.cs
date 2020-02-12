@@ -2,13 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 using Newtonsoft.Json;
+
 using NodaTime;
 using NodaTime.Text;
-using PluralKit.Core;
+
 using Serilog;
 
-namespace PluralKit.Bot
+namespace PluralKit.Core
 {
     public class DataFileService
     {
@@ -34,13 +36,13 @@ namespace PluralKit.Bot
                 Name = m.Name,
                 DisplayName = m.DisplayName,
                 Description = m.Description,
-                Birthday = m.Birthday != null ? Formats.DateExportFormat.Format(m.Birthday.Value) : null,
+                Birthday = m.Birthday != null ? DateTimeFormats.DateExportFormat.Format(m.Birthday.Value) : null,
                 Pronouns = m.Pronouns,
                 Color = m.Color,
                 AvatarUrl = m.AvatarUrl,
                 ProxyTags = m.ProxyTags,
                 KeepProxy = m.KeepProxy,
-                Created = Formats.TimestampExportFormat.Format(m.Created),
+                Created = DateTimeFormats.TimestampExportFormat.Format(m.Created),
                 MessageCount = messageCounts.Where(x => x.Member == m.Id).Select(x => x.MessageCount).FirstOrDefault()
             })) members.Add(member);
 
@@ -49,7 +51,7 @@ namespace PluralKit.Bot
             var switchList = await _data.GetPeriodFronters(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
             switches.AddRange(switchList.Select(x => new DataFileSwitch
             {
-                Timestamp = Formats.TimestampExportFormat.Format(x.TimespanStart),
+                Timestamp = DateTimeFormats.TimestampExportFormat.Format(x.TimespanStart),
                 Members = x.Members.Select(m => m.Hid).ToList() // Look up member's HID using the member export from above
             }));
 
@@ -63,7 +65,7 @@ namespace PluralKit.Bot
                 TimeZone = system.UiTz,
                 Members = members,
                 Switches = switches,
-                Created = Formats.TimestampExportFormat.Format(system.Created),
+                Created = DateTimeFormats.TimestampExportFormat.Format(system.Created),
                 LinkedAccounts = (await _data.GetSystemAccounts(system)).ToList()
             };
         }
@@ -170,7 +172,7 @@ namespace PluralKit.Bot
 
                 if (dataMember.Birthday != null)
                 {
-                    var birthdayParse = Formats.DateExportFormat.Parse(dataMember.Birthday);
+                    var birthdayParse = DateTimeFormats.DateExportFormat.Parse(dataMember.Birthday);
                     member.Birthday = birthdayParse.Success ? (LocalDate?)birthdayParse.Value : null;
                 }
 

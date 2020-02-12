@@ -48,7 +48,7 @@ namespace PluralKit.Bot
             // eg. @Ske [text] => [@Ske text]
             int matchStartPosition = 0;
             string leadingMention = null;
-            if (Utils.HasMentionPrefix(message, ref matchStartPosition, out _))
+            if (StringUtils.HasMentionPrefix(message, ref matchStartPosition, out _))
             {
                 leadingMention = message.Substring(0, matchStartPosition);
                 message = message.Substring(matchStartPosition);

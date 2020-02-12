@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 
 using Discord.WebSocket;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class CommandTree
     {

@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 
 using Humanizer;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class SystemList
     {

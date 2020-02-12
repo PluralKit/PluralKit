@@ -1,16 +1,8 @@
-using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Discord;
-using Humanizer;
-using NodaTime;
-using NodaTime.Text;
-using NodaTime.TimeZones;
 
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class System
     {

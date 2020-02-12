@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
 using Discord;
 using Discord.WebSocket;
 using NodaTime.Extensions;
 using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit.Bot

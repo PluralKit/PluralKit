@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 
 using Discord;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class MemberAvatar
     {
@@ -62,7 +62,7 @@ namespace PluralKit.Bot.Commands
             }
             else if (ctx.RemainderOrNull() is string url)
             {
-                await Utils.VerifyAvatarOrThrow(url);
+                await AvatarUtils.VerifyAvatarOrThrow(url);
                 target.AvatarUrl = url;
                 await _data.SaveMember(target);
 
@@ -71,7 +71,7 @@ namespace PluralKit.Bot.Commands
             }
             else if (ctx.Message.Attachments.FirstOrDefault() is Attachment attachment)
             {
-                await Utils.VerifyAvatarOrThrow(attachment.Url);
+                await AvatarUtils.VerifyAvatarOrThrow(attachment.Url);
                 target.AvatarUrl = attachment.Url;
                 await _data.SaveMember(target);
 

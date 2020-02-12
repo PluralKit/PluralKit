@@ -1,9 +1,10 @@
 using System.Threading.Tasks;
+
 using Discord;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class Help
     {

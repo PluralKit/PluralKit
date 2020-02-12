@@ -8,6 +8,8 @@ using Discord.WebSocket;
 using Humanizer;
 using NodaTime;
 
+using PluralKit.Core;
+
 namespace PluralKit.Bot {
     public class EmbedService
     {
@@ -31,7 +33,7 @@ namespace PluralKit.Bot {
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
-                .WithFooter($"System ID: {system.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
+                .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
  
             var latestSwitch = await _data.GetLatestSwitch(system);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
@@ -100,7 +102,7 @@ namespace PluralKit.Bot {
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, member.AvatarUrl)
                 .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : Color.Default)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
             if (member.MemberPrivacy == PrivacyLevel.Private) eb.WithDescription("*(this member is private)*");
 
@@ -125,7 +127,7 @@ namespace PluralKit.Bot {
             return new EmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
                 .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
-                .AddField("Since", $"{Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({Formats.DurationFormat.Format(timeSinceSwitch)} ago)")
+                .AddField("Since", $"{DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({DateTimeFormats.DurationFormat.Format(timeSinceSwitch)} ago)")
                 .Build();
         }
 
@@ -179,7 +181,7 @@ namespace PluralKit.Bot {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
-                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({Formats.DurationFormat.Format(actualPeriod)} ago)");
+                .WithFooter($"Since {DateTimeFormats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({DateTimeFormats.DurationFormat.Format(actualPeriod)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
@@ -193,13 +195,13 @@ namespace PluralKit.Bot {
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / actualPeriod;
-                eb.AddField(pair.Key?.Name ?? "*(no fronter)*", $"{frac*100:F0}% ({Formats.DurationFormat.Format(pair.Value)})");
+                eb.AddField(pair.Key?.Name ?? "*(no fronter)*", $"{frac*100:F0}% ({DateTimeFormats.DurationFormat.Format(pair.Value)})");
             }
 
             if (membersOrdered.Count > maxEntriesToDisplay)
             {
                 eb.AddField("(others)",
-                    Formats.DurationFormat.Format(membersOrdered.Skip(maxEntriesToDisplay)
+                    DateTimeFormats.DurationFormat.Format(membersOrdered.Skip(maxEntriesToDisplay)
                         .Aggregate(Duration.Zero, (prod, next) => prod + next.Value)), true);
             }
 

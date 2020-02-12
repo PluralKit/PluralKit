@@ -4,14 +4,13 @@ using System.Threading.Tasks;
 using App.Metrics;
 
 using Autofac;
-using Autofac.Core;
 
 using Discord;
 using Discord.WebSocket;
 
-using Microsoft.Extensions.DependencyInjection;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.CommandSystem
+namespace PluralKit.Bot
 {
     public class Context
     {

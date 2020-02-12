@@ -7,7 +7,7 @@ using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
