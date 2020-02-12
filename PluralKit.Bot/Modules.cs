@@ -2,13 +2,10 @@ using System;
 using System.Net.Http;
 
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
 
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-
-using Microsoft.Extensions.DependencyInjection;
 
 using PluralKit.Bot.Commands;
 
@@ -68,6 +65,7 @@ namespace PluralKit.Bot
             builder.RegisterType<ShardInfoService>().AsSelf().SingleInstance();
             builder.RegisterType<CpuStatService>().AsSelf().SingleInstance();
             builder.RegisterType<PeriodicStatCollector>().AsSelf().SingleInstance();
+            builder.RegisterType<LastMessageCacheService>().AsSelf().SingleInstance();
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();

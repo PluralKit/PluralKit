@@ -131,6 +131,7 @@ namespace PluralKit.Bot
             _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(eh => eh.HandleReactionAdded(msg, channel, reaction));
             _client.MessageDeleted += (msg, channel) => HandleEvent(eh => eh.HandleMessageDeleted(msg, channel));
             _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(eh => eh.HandleMessagesBulkDelete(msgs, channel));
+            _client.MessageUpdated += (oldMessage, newMessage, channel) => HandleEvent(eh => eh.HandleMessageEdited(oldMessage, newMessage, channel)); 
             
             _services.Resolve<ShardInfoService>().Init(_client);
 
@@ -244,6 +245,7 @@ namespace PluralKit.Bot
         private CommandTree _tree;
         private Scope _sentryScope;
         private ProxyCache _cache;
+        private LastMessageCacheService _lastMessageCache;
 
         // We're defining in the Autofac module that this class is instantiated with one instance per event
         // This means that the HandleMessage function will either be called once, or not at all
@@ -251,7 +253,7 @@ namespace PluralKit.Bot
         // hence, we just store it in a local variable, ignoring it entirely if it's null.
         private IUserMessage _msg = null;
 
-        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache)
+        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache, LastMessageCacheService lastMessageCache)
         {
             _proxy = proxy;
             _logger = logger;
@@ -262,6 +264,7 @@ namespace PluralKit.Bot
             _tree = tree;
             _sentryScope = sentryScope;
             _cache = cache;
+            _lastMessageCache = lastMessageCache;
         }
 
         public async Task HandleMessage(SocketMessage arg)
@@ -287,6 +290,9 @@ namespace PluralKit.Bot
                 {"guild", ((msg.Channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"message", msg.Id.ToString()},
             });
+            
+            // Add to last message cache
+            _lastMessageCache.AddMessage(arg.Channel.Id, arg.Id);
             
             // We fetch information about the sending account *and* guild from the cache
             GuildConfig cachedGuild = default; // todo: is this default correct?
@@ -395,6 +401,32 @@ namespace PluralKit.Bot
             });
             
             return _proxy.HandleMessageBulkDeleteAsync(messages, channel);
+        }
+
+        public async Task HandleMessageEdited(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        {
+            _sentryScope.AddBreadcrumb(newMessage.Content ?? "", "event.messageEdit", data: new Dictionary<string, string>()
+            {
+                {"channel", channel.Id.ToString()},
+                {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
+                {"message", newMessage.Id.ToString()}
+            });
+            
+            // If this isn't a guild, bail
+            if (!(channel is IGuildChannel gc)) return;
+            
+            // If this isn't the last message in the channel, don't do anything
+            if (_lastMessageCache.GetLastMessage(channel.Id) != newMessage.Id) return;
+            
+            // Fetch account from cache if there is any
+            var account = await _cache.GetAccountDataCached(newMessage.Author.Id);
+            if (account == null) return; // Again: no cache = no account = no system = no proxy
+            
+            // Also fetch guild cache
+            var guild = await _cache.GetGuildDataCached(gc.GuildId);
+
+            // Just run the normal message handling stuff
+            await _proxy.HandleMessageAsync(guild, account, newMessage);
         }
     }
 }
