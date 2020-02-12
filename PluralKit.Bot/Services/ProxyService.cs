@@ -297,7 +297,15 @@ namespace PluralKit.Bot
             if (msg == null) return;
 
             // DM them the message card
-            await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
+            try
+            {
+                await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
+            }
+            catch (HttpException e) when (e.DiscordCode == 50007)
+            {
+                // Ignore exception if it means we don't have DM permission to this user
+                // not much else we can do here :/
+            }
 
             // And finally remove the original reaction (if we can)
             var msgObj = await message.GetOrDownloadAsync();
