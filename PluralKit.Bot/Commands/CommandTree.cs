@@ -172,12 +172,7 @@ namespace PluralKit.Bot
             else if (ctx.Match("proxy"))
                 await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             else if (ctx.Match("list", "l", "members"))
-            {
-                if (ctx.Match("f", "full", "big", "details", "long"))
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberLongList(ctx, ctx.System));
-                else
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberShortList(ctx, ctx.System));
-            }
+                await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
@@ -212,12 +207,7 @@ namespace PluralKit.Bot
                     $"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\nPerhaps you meant to use one of the following commands?\n{list}");
             }
             else if (ctx.Match("list", "l", "members"))
-            {
-                if (ctx.Match("f", "full", "big", "details", "long"))
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberLongList(ctx, target));
-                else
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberShortList(ctx, target));
-            }
+                await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
