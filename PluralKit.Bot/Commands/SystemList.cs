@@ -107,5 +107,29 @@ namespace PluralKit.Bot
             else 
                 await RenderMemberList(ctx, system,  canShowPrivate, 25, embedTitle, _ => true, ShortRenderer);
         }
+
+        public async Task MemberFind(Context ctx, PKSystem system)
+        {
+            if (system == null) throw Errors.NoSystemError;
+            ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
+
+            var shouldShowLongList = ctx.Match("f", "full", "big", "details", "long");
+            var canShowPrivate = ctx.Match("a", "all", "everyone", "private");
+
+            var searchTerm = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must specify a search term.");
+            
+            var embedTitle = system.Name != null
+                ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`) **{searchTerm.SanitizeMentions()}**"
+                : $"Members of `{system.Hid}` matching **{searchTerm.SanitizeMentions()}**";
+
+            bool Filter(PKMember member) =>
+                member.Name.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ||
+                (member.DisplayName?.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false);
+            
+            if (shouldShowLongList)
+                await RenderMemberList(ctx, system,  canShowPrivate, 5, embedTitle, Filter, LongRenderer);
+            else 
+                await RenderMemberList(ctx, system,  canShowPrivate, 25, embedTitle, Filter, ShortRenderer);
+        }
     }
 }

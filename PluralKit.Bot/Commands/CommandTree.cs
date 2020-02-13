@@ -19,6 +19,7 @@ namespace PluralKit.Bot
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
         public static Command SystemProxy = new Command("system proxy", "system proxy [on|off]", "Enables or disables message proxying in a specific server");
         public static Command SystemList = new Command("system list", "system [system] list [full]", "Lists a system's members");
+        public static Command SystemFind = new Command("system find", "system [system] find [full] <search term>", "Searches a system's members given a search term");
         public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
         public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
@@ -91,6 +92,10 @@ namespace PluralKit.Bot
                 return HandleSwitchCommand(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
                 return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
+            if (ctx.Match("list", "l", "members"))
+                return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
+            if (ctx.Match("f", "find", "search", "query", "fd"))
+                return ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
             if (ctx.Match("link"))
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
@@ -173,6 +178,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             else if (ctx.Match("list", "l", "members"))
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
+            else if (ctx.Match("find", "search", "query", "fd", "s"))
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
@@ -208,6 +215,8 @@ namespace PluralKit.Bot
             }
             else if (ctx.Match("list", "l", "members"))
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
+            else if (ctx.Match("find", "search", "query", "fd", "s"))
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
