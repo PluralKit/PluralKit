@@ -19,10 +19,10 @@ namespace PluralKit.API
             o.Add("avatar_url", system.AvatarUrl);
             o.Add("created", DateTimeFormats.TimestampExportFormat.Format(system.Created));
             o.Add("tz", system.UiTz);
-            o.Add("description_privacy", ctx == LookupContext.ByOwner ? (system.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("member_list_privacy", ctx == LookupContext.ByOwner ? (system.MemberListPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("front_privacy", ctx == LookupContext.ByOwner ? (system.FrontPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("front_history_privacy", ctx == LookupContext.ByOwner ? (system.FrontHistoryPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("description_privacy", ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
+            o.Add("member_list_privacy", ctx == LookupContext.ByOwner ? system.MemberListPrivacy.ToJsonString() : null);
+            o.Add("front_privacy", ctx == LookupContext.ByOwner ? system.FrontPrivacy.ToJsonString() : null);
+            o.Add("front_history_privacy", ctx == LookupContext.ByOwner ? ctx == LookupContext.ByOwner ? system.FrontHistoryPrivacy.ToJsonString() : null : null);
             return o;
         }
 
@@ -34,33 +34,10 @@ namespace PluralKit.API
             if (o.ContainsKey("avatar_url")) system.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
             if (o.ContainsKey("tz")) system.UiTz = o.Value<string>("tz") ?? "UTC";
             
-            if (o.ContainsKey("description_privacy")) {
-                var val = o.Value<string>("description_privacy").NullIfEmpty();
-                if(val == null || val == "public") system.DescriptionPrivacy = PrivacyLevel.Public;
-                else if(val == "private") system.DescriptionPrivacy = PrivacyLevel.Private;
-                else throw new JsonModelParseError("Could not parse description privacy.");
-            }
-
-            if (o.ContainsKey("member_list_privacy")) {
-                var val = o.Value<string>("member_list_privacy").NullIfEmpty();
-                if(val == null || val == "public") system.MemberListPrivacy = PrivacyLevel.Public;
-                else if(val == "private") system.MemberListPrivacy = PrivacyLevel.Private;
-                else throw new JsonModelParseError("Could not parse member list privacy.");
-            }
-
-            if (o.ContainsKey("front_privacy")) {
-                var val = o.Value<string>("front_privacy").NullIfEmpty();
-                if(val == null || val == "public") system.FrontPrivacy = PrivacyLevel.Public;
-                else if(val == "private") system.FrontPrivacy = PrivacyLevel.Private;
-                else throw new JsonModelParseError("Could not parse front privacy.");
-            }
-
-            if (o.ContainsKey("front_history_privacy")) {
-                var val = o.Value<string>("front_history_privacy").NullIfEmpty();
-                if(val == null || val == "public") system.FrontHistoryPrivacy = PrivacyLevel.Public;
-                else if(val == "private") system.FrontHistoryPrivacy = PrivacyLevel.Private;
-                else throw new JsonModelParseError("Could not parse front history privacy.");
-            }
+            if (o.ContainsKey("description_privacy")) system.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("description");
+            if (o.ContainsKey("member_list_privacy")) system.MemberListPrivacy = o.Value<string>("member_list_privacy").ParsePrivacy("member list");
+            if (o.ContainsKey("front_privacy")) system.FrontPrivacy = o.Value<string>("front_privacy").ParsePrivacy("front");
+            if (o.ContainsKey("front_history_privacy")) system.FrontHistoryPrivacy = o.Value<string>("front_history_privacy").ParsePrivacy("front history");
         }
         
         public static JObject ToJson(this PKMember member, LookupContext ctx)
@@ -124,12 +101,7 @@ namespace PluralKit.API
                     .ToList();
             }
             
-            if (o.ContainsKey("privacy")) {
-                var val = o.Value<string>("privacy").NullIfEmpty();
-                if (val == null || val == "public") member.MemberPrivacy = PrivacyLevel.Public;
-                else if (val == "private") member.MemberPrivacy = PrivacyLevel.Private;
-                else throw new JsonModelParseError("Could not parse member privacy.");
-            }
+            if (o.ContainsKey("privacy")) member.MemberPrivacy = o.Value<string>("privacy").ParsePrivacy("member");
         }
 
         private static string BoundsCheckField(this string input, int maxLength, string nameInError)
@@ -137,6 +109,17 @@ namespace PluralKit.API
             if (input != null && input.Length > maxLength)
                 throw new JsonModelParseError($"{nameInError} too long ({input.Length} > {maxLength}).");
             return input;
+        }
+
+        private static string ToJsonString(this PrivacyLevel level) => level == PrivacyLevel.Private ? "private" : "public";
+
+        private static PrivacyLevel ParsePrivacy(this string input, string errorName)
+        {
+            if (input == null) return PrivacyLevel.Private;
+            if (input == "") return PrivacyLevel.Private;
+            if (input == "private") return PrivacyLevel.Private;
+            if (input == "public") return PrivacyLevel.Public;
+            throw new JsonModelParseError($"Could not parse {errorName} privacy.");
         }
     }
     
