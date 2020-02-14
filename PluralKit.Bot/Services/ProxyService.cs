@@ -257,7 +257,7 @@ namespace PluralKit.Bot
                     return HandleMessageDeletionByReaction(message, reaction.UserId);
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
-                    return HandleMessageQueryByReaction(message, reaction.UserId, reaction.Emote);
+                    return HandleMessageQueryByReaction(message, channel, reaction.UserId, reaction.Emote);
                 case "\U0001F514": // Bell
                 case "\U0001F6CE": // Bellhop bell
                 case "\U0001F3D3": // Ping pong paddle (lol)
@@ -290,7 +290,9 @@ namespace PluralKit.Bot
                 await realMessage.RemoveReactionAsync(reactedEmote, user);
         }
 
-        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted, IEmote reactedEmote)
+        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message,
+                                                        ISocketMessageChannel channel, ulong userWhoReacted,
+                                                        IEmote reactedEmote)
         {
             // Find the user who sent the reaction, so we can DM them
             var user = await _client.Rest.GetUserAsync(userWhoReacted);
@@ -303,6 +305,7 @@ namespace PluralKit.Bot
             // DM them the message card
             try
             {
+                await user.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, (channel as IGuildChannel)?.Guild, LookupContext.ByNonOwner));
                 await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
             }
             catch (HttpException e) when (e.DiscordCode == 50007)
