@@ -234,6 +234,7 @@ namespace PluralKit.Bot
         private Scope _sentryScope;
         private ProxyCache _cache;
         private LastMessageCacheService _lastMessageCache;
+        private LoggerCleanService _loggerClean;
 
         // We're defining in the Autofac module that this class is instantiated with one instance per event
         // This means that the HandleMessage function will either be called once, or not at all
@@ -241,7 +242,7 @@ namespace PluralKit.Bot
         // hence, we just store it in a local variable, ignoring it entirely if it's null.
         private IUserMessage _msg = null;
 
-        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache, LastMessageCacheService lastMessageCache)
+        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache, LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean)
         {
             _proxy = proxy;
             _logger = logger;
@@ -253,6 +254,7 @@ namespace PluralKit.Bot
             _sentryScope = sentryScope;
             _cache = cache;
             _lastMessageCache = lastMessageCache;
+            _loggerClean = loggerClean;
         }
 
         public async Task HandleMessage(SocketMessage arg)
@@ -266,9 +268,17 @@ namespace PluralKit.Bot
             // Ignore system messages (member joined, message pinned, etc)
             var msg = arg as SocketUserMessage;
             if (msg == null) return;
-
-            // Ignore bot messages
-            if (msg.Author.IsBot || msg.Author.IsWebhook) return;
+            
+            // Fetch information about the guild early, as we need it for the logger cleanup
+            GuildConfig cachedGuild = default; // todo: is this default correct?
+            if (msg.Channel is ITextChannel textChannel) cachedGuild = await _cache.GetGuildDataCached(textChannel.GuildId);
+            
+            // Pass guild bot/WH messages onto the logger cleanup service, but otherwise ignore
+            if ((msg.Author.IsBot || msg.Author.IsWebhook) && msg.Channel is ITextChannel)
+            {
+                await _loggerClean.HandleLoggerBotCleanup(arg, cachedGuild);
+                return;
+            }
             
             // Add message info as Sentry breadcrumb
             _msg = msg;
@@ -284,9 +294,7 @@ namespace PluralKit.Bot
             // Add to last message cache
             _lastMessageCache.AddMessage(arg.Channel.Id, arg.Id);
             
-            // We fetch information about the sending account *and* guild from the cache
-            GuildConfig cachedGuild = default; // todo: is this default correct?
-            if (msg.Channel is ITextChannel textChannel) cachedGuild = await _cache.GetGuildDataCached(textChannel.GuildId);
+            // We fetch information about the sending account from the cache
             var cachedAccount = await _cache.GetAccountDataCached(msg.Author.Id);
             // this ^ may be null, do remember that down the line
 

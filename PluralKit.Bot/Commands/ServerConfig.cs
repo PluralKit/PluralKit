@@ -11,9 +11,11 @@ namespace PluralKit.Bot
     public class ServerConfig
     {
         private IDataStore _data;
-        public ServerConfig(IDataStore data)
+        private LoggerCleanService _cleanService;
+        public ServerConfig(IDataStore data, LoggerCleanService cleanService)
         {
             _data = data;
+            _cleanService = cleanService;
         }
 
         public async Task SetLogChannel(Context ctx)
@@ -83,6 +85,39 @@ namespace PluralKit.Bot
 
             await _data.SaveGuildConfig(guildCfg);
             await ctx.Reply($"{Emojis.Success} Channels {(onBlacklist ? "added to" : "removed from")} the proxy blacklist.");
+        }
+
+        public async Task SetLogCleanup(Context ctx)
+        {
+            ctx.CheckGuildContext().CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server");
+
+            var guildCfg = await _data.GetOrCreateGuildConfig(ctx.Guild.Id);
+            var botList = string.Join(", ", _cleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
+            
+            if (ctx.Match("enable", "on", "yes"))
+            {
+                guildCfg.LogCleanupEnabled = true;
+                await _data.SaveGuildConfig(guildCfg);
+                await ctx.Reply($"{Emojis.Success} Log cleanup has been **enabled** for this server. Messages deleted by PluralKit will now be cleaned up from logging channels managed by the following bots:\n- **{botList}**\n\n{Emojis.Note} Make sure PluralKit has the **Manage Messages** permission in the channels in question.\n{Emojis.Note} Also, make sure to blacklist the logging channel itself from the bots in question to prevent conflicts.");
+            }
+            else if (ctx.Match("disable", "off", "no"))
+            {
+                guildCfg.LogCleanupEnabled = false;
+                await _data.SaveGuildConfig(guildCfg);
+                await ctx.Reply($"{Emojis.Success} Log cleanup has been **disabled** for this server.");
+            }
+            else
+            {
+                var eb = new EmbedBuilder()
+                    .WithTitle("Log cleanup settings")
+                    .AddField("Supported bots", botList);
+                
+                if (guildCfg.LogCleanupEnabled)
+                    eb.WithDescription("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
+                else 
+                    eb.WithDescription("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
+                await ctx.Reply(embed: eb.Build());
+            }
         }
     }
 }

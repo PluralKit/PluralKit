@@ -67,6 +67,7 @@ namespace PluralKit.Core {
         public ulong? LogChannel { get; set; }
         public ISet<ulong> LogBlacklist { get; set; }
         public ISet<ulong> Blacklist { get; set; }
+        public bool LogCleanupEnabled { get; set; }
     }
 
     public class SystemGuildSettings

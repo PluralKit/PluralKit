@@ -363,6 +363,8 @@ namespace PluralKit.Core {
             public ulong? LogChannel { get; set; }
             public long[] LogBlacklist { get; set; }
             public long[] Blacklist { get; set; }
+            
+            public bool LogCleanupEnabled { get; set; }
 
             public GuildConfig Into() =>
                 new GuildConfig
@@ -370,7 +372,8 @@ namespace PluralKit.Core {
                     Id = Id,
                     LogChannel = LogChannel,
                     LogBlacklist = new HashSet<ulong>(LogBlacklist?.Select(c => (ulong) c) ?? new ulong[] {}),
-                    Blacklist = new HashSet<ulong>(Blacklist?.Select(c => (ulong) c) ?? new ulong[]{})
+                    Blacklist = new HashSet<ulong>(Blacklist?.Select(c => (ulong) c) ?? new ulong[]{}),
+                    LogCleanupEnabled = LogCleanupEnabled
                 };
         }
 
@@ -388,10 +391,11 @@ namespace PluralKit.Core {
         public async Task SaveGuildConfig(GuildConfig cfg)
         {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("insert into servers (id, log_channel, log_blacklist, blacklist) values (@Id, @LogChannel, @LogBlacklist, @Blacklist) on conflict (id) do update set log_channel = @LogChannel, log_blacklist = @LogBlacklist, blacklist = @Blacklist", new
+                await conn.ExecuteAsync("insert into servers (id, log_channel, log_blacklist, blacklist, log_cleanup_enabled) values (@Id, @LogChannel, @LogBlacklist, @Blacklist, @LogCleanupEnabled) on conflict (id) do update set log_channel = @LogChannel, log_blacklist = @LogBlacklist, blacklist = @Blacklist, log_cleanup_enabled = @LogCleanupEnabled", new
                 {
                     cfg.Id,
                     cfg.LogChannel,
+                    cfg.LogCleanupEnabled,
                     LogBlacklist = cfg.LogBlacklist.Select(c => (long) c).ToList(),
                     Blacklist = cfg.Blacklist.Select(c  => (long) c).ToList()
                 });
