@@ -495,6 +495,7 @@ This requires you to have the *Manage Server* permission on the server. At the m
 - Logger (#6088 and #6278)
 - Mantaro
 - Pancake
+- UnbelievaBoat
 
 If you want support for another logging bot, [let me know on the support server](https://discord.gg/PczBt78).
 

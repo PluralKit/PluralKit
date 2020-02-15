@@ -24,7 +24,8 @@ namespace PluralKit.Bot
         private static Regex _auttajaRegex = new Regex("Message (\\d{17,19}) deleted");
         private static Regex _mantaroRegex = new Regex("Message \\(?ID:? (\\d{17,19})\\)? created by .* in channel .* was deleted\\.");
         private static Regex _pancakeRegex = new Regex("Message from <@(\\d{17,19})> deleted in");
-        
+        private static Regex _unbelievaboatRegex = new Regex("Message ID: (\\d{17,19})");
+
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
             new LoggerBot("Carl-bot", 23514896210395136, fuzzyExtractFunc: ExtractCarlBot, webhookName: "Carl-bot Logging"),
@@ -40,6 +41,7 @@ namespace PluralKit.Bot
             new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot), 
             new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot), 
             new LoggerBot("Mantaro", 213466096718708737, ExtractMantaro), 
+            new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat, webhookName: "UnbelievaBoat"), 
         }.ToDictionary(b => b.Id);
 
         private static readonly Dictionary<string, LoggerBot> _botsByWebhookName = _bots.Values
@@ -222,7 +224,7 @@ namespace PluralKit.Bot
 
         private static FuzzyExtractResult? ExtractPancake(SocketMessage msg)
         {
-            // Embed, title is "Message Deleted", description includes a mention, timestamp is *message send time* (but no ID)
+            // Embed, author is "Message Deleted", description includes a mention, timestamp is *message send time* (but no ID)
             // so we use the message timestamp to get somewhere *after* the message was proxied
             var embed = msg.Embeds.FirstOrDefault();
             if (embed?.Description == null || embed.Author?.Name != "Message Deleted") return null;
@@ -230,6 +232,15 @@ namespace PluralKit.Bot
             return match.Success
                 ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
                 : (FuzzyExtractResult?) null;
+        }
+        
+        private static ulong? ExtractUnbelievaBoat(SocketMessage msg)
+        {
+            // Embed author is "Message Deleted", footer contains message ID per regex
+            var embed = msg.Embeds.FirstOrDefault();
+            if (embed?.Footer == null || embed.Author?.Name != "Message Deleted") return null;
+            var match = _unbelievaboatRegex.Match(embed.Footer.Value.Text ?? "");
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
         public class LoggerBot
