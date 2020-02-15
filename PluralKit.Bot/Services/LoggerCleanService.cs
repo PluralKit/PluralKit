@@ -23,12 +23,13 @@ namespace PluralKit.Bot
         private static Regex _loggerBRegex = new Regex("MessageID:(\\d{17,19})");
         private static Regex _auttajaRegex = new Regex("Message (\\d{17,19}) deleted");
         private static Regex _mantaroRegex = new Regex("Message \\(?ID:? (\\d{17,19})\\)? created by .* in channel .* was deleted\\.");
+        private static Regex _pancakeRegex = new Regex("Message from <@(\\d{17,19})> deleted in");
         
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
-            // These are NOT supported at the moment, since they don't put the deleted message ID in the log
             new LoggerBot("Carl-bot", 23514896210395136, fuzzyExtractFunc: ExtractCarlBot, webhookName: "Carl-bot Logging"),
             new LoggerBot("Circle", 497196352866877441, fuzzyExtractFunc: ExtractCircle),
+            new LoggerBot("Pancake", 239631525350604801, fuzzyExtractFunc: ExtractPancake),
             
             // There are two "Logger"s. They seem to be entirely unrelated. Don't ask.
             new LoggerBot("Logger#6088", 298822483060981760 , ExtractLoggerA, webhookName: "Logger"),
@@ -215,6 +216,18 @@ namespace PluralKit.Bot
             
             var match = _circleRegex.Match(stringWithId);
             return match.Success 
+                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                : (FuzzyExtractResult?) null;
+        }
+
+        private static FuzzyExtractResult? ExtractPancake(SocketMessage msg)
+        {
+            // Embed, title is "Message Deleted", description includes a mention, timestamp is *message send time* (but no ID)
+            // so we use the message timestamp to get somewhere *after* the message was proxied
+            var embed = msg.Embeds.FirstOrDefault();
+            if (embed?.Description == null || embed.Author?.Name != "Message Deleted") return null;
+            var match = _pancakeRegex.Match(embed.Description);
+            return match.Success
                 ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
                 : (FuzzyExtractResult?) null;
         }
