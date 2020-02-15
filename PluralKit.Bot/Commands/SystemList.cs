@@ -119,7 +119,7 @@ namespace PluralKit.Bot
             var searchTerm = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must specify a search term.");
             
             var embedTitle = system.Name != null
-                ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`) **{searchTerm.SanitizeMentions()}**"
+                ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`) matching **{searchTerm.SanitizeMentions()}**"
                 : $"Members of `{system.Hid}` matching **{searchTerm.SanitizeMentions()}**";
 
             bool Filter(PKMember member) =>
