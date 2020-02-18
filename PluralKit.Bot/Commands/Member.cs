@@ -61,13 +61,13 @@ namespace PluralKit.Bot
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the member card")) await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
         }
 
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _data.GetSystemById(target.System);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the member card")) await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
         }
     }
 }

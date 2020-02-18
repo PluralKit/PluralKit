@@ -32,7 +32,7 @@ namespace PluralKit.Bot
             else if (await ctx.MatchMember() is PKMember member)
                 await AutoproxyMember(ctx, member);
             else if (!ctx.HasNext())
-                await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx));
+                if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the autoproxy card")) await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx));
             else
                 throw new PKSyntaxError($"Invalid autoproxy mode `{ctx.PopArgument().EscapeMarkdown()}`.");
         }

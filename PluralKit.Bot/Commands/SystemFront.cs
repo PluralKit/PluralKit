@@ -40,7 +40,7 @@ namespace PluralKit.Bot
             var sw = await _data.GetLatestSwitch(system);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
-            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the fronting card")) await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
         }
 
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
@@ -55,7 +55,7 @@ namespace PluralKit.Bot
             
             var embedTitle = system.Name != null ? $"Front history of {system.Name} (`{system.Hid}`)" : $"Front history of `{system.Hid}`";
 
-            await ctx.Paginate(
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the front history card")) await ctx.Paginate(
                 sws,
                 totalSwitches,
                 10,
@@ -112,7 +112,7 @@ namespace PluralKit.Bot
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
             var frontpercent = await _data.GetFrontBreakdown(system, rangeStart.Value.ToInstant(), now);
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the front percent card")) await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
         }
     }
 }

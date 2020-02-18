@@ -18,7 +18,7 @@ namespace PluralKit.Bot
         public async Task Query(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
-            await ctx.Reply(embed: await _embeds.CreateSystemEmbed(system, ctx.LookupContextFor(system)));
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the system card")) await ctx.Reply(embed: await _embeds.CreateSystemEmbed(system, ctx.LookupContextFor(system)));
         }
         
         public async Task New(Context ctx)

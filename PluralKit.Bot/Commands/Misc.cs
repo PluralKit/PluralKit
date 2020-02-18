@@ -85,7 +85,7 @@ namespace PluralKit.Bot {
                 .AddField("Latency", $"API: {(msg.Timestamp - ctx.Message.Timestamp).TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency} ms", true)
                 .AddField("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalSwitches:N0} switches, {totalMessages:N0} messages");
 
-            await msg.ModifyAsync(f =>
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the stats card")) await msg.ModifyAsync(f =>
             {
                 f.Content = "";
                 f.Embed = embed.Build();

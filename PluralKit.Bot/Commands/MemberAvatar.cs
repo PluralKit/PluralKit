@@ -29,7 +29,7 @@ namespace PluralKit.Bot
                         .WithImageUrl(target.AvatarUrl);
                     if (target.System == ctx.System?.Id)
                         eb.WithDescription($"To clear, use `pk;member {target.Hid} avatar clear`.");
-                    await ctx.Reply(embed: eb.Build());
+                    if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the avatar card")) await ctx.Reply(embed: eb.Build());
                 }
                 else
                 {
@@ -99,7 +99,7 @@ namespace PluralKit.Bot
                         .WithImageUrl(guildData.AvatarUrl);
                     if (target.System == ctx.System?.Id)
                         eb.WithDescription($"To clear, use `pk;member {target.Hid} serveravatar clear`.");
-                    await ctx.Reply(embed: eb.Build());
+                    if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the avatar card")) await ctx.Reply(embed: eb.Build());
                 }
                 else
                     throw new PKError($"This member does not have a server avatar set. Type `pk;member {target.Hid} avatar` to see their global avatar.");

@@ -73,7 +73,7 @@ namespace PluralKit.Bot
                         .WithTitle($"System avatar")
                         .WithImageUrl(ctx.System.AvatarUrl)
                         .WithDescription($"To clear, use `pk;system avatar clear`.");
-                    await ctx.Reply(embed: eb.Build());
+                    if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the system avatar card")) await ctx.Reply(embed: eb.Build());
                 }
                 else
                     throw new PKSyntaxError($"This system does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
@@ -90,7 +90,7 @@ namespace PluralKit.Bot
             
                 var embed = new EmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
                 await ctx.Reply(
-                    $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
+                    $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed); //TODO
             }
             else if (ctx.Match("clear"))
             {
@@ -108,7 +108,7 @@ namespace PluralKit.Bot
                 await _data.SaveSystem(ctx.System);
 
                 var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
-                await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed);
+                await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed); //TODO
             }
         }
         
@@ -189,7 +189,7 @@ namespace PluralKit.Bot
                     .AddField("Current fronter(s)", PrivacyLevelString(ctx.System.FrontPrivacy))
                     .AddField("Front/switch history", PrivacyLevelString(ctx.System.FrontHistoryPrivacy))
                     .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front` or `fronthistory`\n- `level` is either `public` or `private`.");
-                await ctx.Reply(embed: eb.Build());
+                if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the system privacy card")) await ctx.Reply(embed: eb.Build());
                 return;
             }
             

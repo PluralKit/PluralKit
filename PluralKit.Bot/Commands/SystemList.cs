@@ -38,7 +38,7 @@ namespace PluralKit.Bot
             
             var anyMembersHidden = !shouldShowPrivate && membersToShowWithPrivacy.Count != membersToShow.Count;
 
-            await ctx.Paginate(
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the member list card")) await ctx.Paginate(
                 membersToShowWithPrivacy.ToAsyncEnumerable(),
                 membersToShowWithPrivacy.Count,
                 membersPerPage,

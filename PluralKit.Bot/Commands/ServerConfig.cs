@@ -116,7 +116,7 @@ namespace PluralKit.Bot
                     eb.WithDescription("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
                 else 
                     eb.WithDescription("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
-                await ctx.Reply(embed: eb.Build());
+                if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the log cleanup card")) await ctx.Reply(embed: eb.Build());
             }
         }
     }

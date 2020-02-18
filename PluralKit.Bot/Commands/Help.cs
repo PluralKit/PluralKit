@@ -10,7 +10,7 @@ namespace PluralKit.Bot
     {
         public async Task HelpRoot(Context ctx)
         {
-            await ctx.Reply(embed: new EmbedBuilder()
+            if (await MiscUtils.EnsureEmbedPermissions(ctx, "send the help card")) await ctx.Reply(embed: new EmbedBuilder()
                 .WithTitle("PluralKit")
                 .WithDescription("PluralKit is a bot designed for plural communities on Discord. It allows you to register systems, maintain system information, set up message proxying, log switches, and more.")
                 .AddField("What is this for? What are systems?", "This bot detects messages with certain tags associated with a profile, then replaces that message under a \"pseudo-account\" of that profile using webhooks. This is useful for multiple people sharing one body (aka \"systems\"), people who wish to roleplay as different characters without having several accounts, or anyone else who may want to post messages as a different person from the same account.")
