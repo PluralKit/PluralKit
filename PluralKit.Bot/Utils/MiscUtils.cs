@@ -25,6 +25,9 @@ namespace PluralKit.Bot
             
             // Tasks being cancelled for whatver reason are, you guessed it, also not our problem.
             if (e is TaskCanceledException) return false;
+
+            // Sometimes Discord just times everything out.
+            if (e is TimeoutException) return false;
             
             // This may expanded at some point.
             return true;
