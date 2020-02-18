@@ -43,13 +43,11 @@ namespace PluralKit.Bot
             if (!permissions.ManageWebhooks)
             {
                 throw Errors.MissingPermissions("Manage Webhooks", "proxy messages");
-                return false;
             }
 
             if (!permissions.ManageMessages)
             {
                 throw Errors.MissingPermissions("Manage Messages", "delete the original trigger message");
-                return false;
             }
 
             return true;
@@ -57,17 +55,19 @@ namespace PluralKit.Bot
 
         public static async Task<bool> EnsureEmbedPermissions(Context ctx, String usage)
         {
-            if (ctx.Guild == null) return true;
             IGuildChannel channel = ctx.Channel as IGuildChannel;
-            var guildUser = await ctx.Guild.GetCurrentUserAsync();
-            var permissions = guildUser.GetPermissions(channel);
-
-            if (!permissions.EmbedLinks)
+            if (ctx.Guild == null) return true;
+            if (channel != null)
             {
-                throw Errors.MissingPermissions("Embed Links", usage);
-                return false;
-            }
-            return true;
+                var guildUser = await ctx.Guild.GetCurrentUserAsync();
+                var permissions = guildUser.GetPermissions(channel);
+
+                if (!permissions.EmbedLinks)
+                {
+                    throw Errors.MissingPermissions("Embed Links", usage);
+                }
+                return true;
+            } else { return true; }
         }
     }
 }
