@@ -115,7 +115,7 @@ namespace PluralKit.Bot
             
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
-            if (!await EnsureBotPermissions(channel)) return;
+            if (!await MiscUtils.EnsureProxyPermissions(channel)) return;
             
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
@@ -219,33 +219,6 @@ namespace PluralKit.Bot
             var senderPermissions = ((IGuildUser) message.Author).GetPermissions(message.Channel as IGuildChannel);
             if (!senderPermissions.MentionEveryone) return messageContents.SanitizeEveryone();
             return messageContents;
-        }
-
-        private async Task<bool> EnsureBotPermissions(ITextChannel channel)
-        {
-            var guildUser = await channel.Guild.GetCurrentUserAsync();
-            var permissions = guildUser.GetPermissions(channel);
-
-            // If we can't send messages at all, just bail immediately.
-            // TODO: can you have ManageMessages and *not* SendMessages? What happens then?
-            if (!permissions.SendMessages && !permissions.ManageMessages) return false;
-
-            if (!permissions.ManageWebhooks)
-            {
-                // todo: PKError-ify these
-                await channel.SendMessageAsync(
-                    $"{Emojis.Error} PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages. Please contact a server administrator to remedy this.");
-                return false;
-            }
-
-            if (!permissions.ManageMessages)
-            {
-                await channel.SendMessageAsync(
-                    $"{Emojis.Error} PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the original trigger message. Please contact a server administrator to remedy this.");
-                return false;
-            }
-
-            return true;
         }
 
         public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
