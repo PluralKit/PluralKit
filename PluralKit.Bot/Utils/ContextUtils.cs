@@ -13,11 +13,17 @@ namespace PluralKit.Bot {
     public static class ContextUtils {
         public static async Task<bool> PromptYesNo(this Context ctx, IUserMessage message, IUser user = null, TimeSpan? timeout = null) {
             // "Fork" the task adding the reactions off so we don't have to wait for them to be finished to start listening for presses
+            if (await MiscUtils.EnsureReactionPermissions(ctx, "get confirmation")) 
+            {
 #pragma warning disable 4014
-            message.AddReactionsAsync(new IEmote[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
+                message.AddReactionsAsync(new IEmote[] {new Emoji(Emojis.Success), new Emoji(Emojis.Error)});
 #pragma warning restore 4014
-            var reaction = await ctx.AwaitReaction(message, user ?? ctx.Author, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
-            return reaction.Emote.Name == Emojis.Success;
+                var reaction = await ctx.AwaitReaction(message, user ?? ctx.Author, (r) => r.Emote.Name == Emojis.Success || r.Emote.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
+                return reaction.Emote.Name == Emojis.Success; 
+            } else {
+                await ctx.Reply($"{Emojis.Warn} Missing *Add Reactions* permissions - please reply to this message with \"yes\" or \"no\".");
+                return await ConfirmWithReply(ctx, "yes");
+            }
         }
 
         public static async Task<SocketReaction> AwaitReaction(this Context ctx, IUserMessage message, IUser user = null, Func<SocketReaction, bool> predicate = null, TimeSpan? timeout = null) {

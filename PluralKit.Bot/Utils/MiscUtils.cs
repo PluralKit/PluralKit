@@ -69,5 +69,24 @@ namespace PluralKit.Bot
                 return true;
             } else { return true; }
         }
+
+        public static async Task<bool> EnsureReactionPermissions(Context ctx, String usage)
+        {
+            IGuildChannel channel = ctx.Channel as IGuildChannel;
+            if (ctx.Guild == null) return true;
+            if (channel != null)
+            {
+                var guildUser = await ctx.Guild.GetCurrentUserAsync();
+                var permissions = guildUser.GetPermissions(channel);
+
+                if (!permissions.AddReactions)
+                {
+                    //throw Errors.MissingPermissions("Add Reactions", usage);
+                    return false;
+                    //TODO: what should we do here?
+                }
+                return true;
+            } else { return true; }
+        }
     }
 }
