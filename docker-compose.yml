@@ -33,7 +33,7 @@ services:
     restart: always
     command: ["postgres", "-c", "max-connections=1000"]
     environment:
-      - POSTGRES_PASSWORD: postgres
+      - "POSTGRES_PASSWORD=postgres"
   influx:
     image: influxdb:alpine
     volumes:
