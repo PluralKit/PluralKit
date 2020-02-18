@@ -70,7 +70,7 @@ namespace PluralKit.Bot
             } else { return true; }
         }
 
-        public static async Task<bool> EnsureReactionPermissions(Context ctx, String usage)
+        public static async Task<bool> EnsureReactionPermissions(Context ctx, String usage, bool yeet = false) //im sorry i just don't know what else to call it
         {
             IGuildChannel channel = ctx.Channel as IGuildChannel;
             if (ctx.Guild == null) return true;
@@ -81,9 +81,8 @@ namespace PluralKit.Bot
 
                 if (!permissions.AddReactions)
                 {
-                    //throw Errors.MissingPermissions("Add Reactions", usage);
+                    if (yeet) throw Errors.MissingPermissions("Add Reactions", usage);
                     return false;
-                    //TODO: what should we do here?
                 }
                 return true;
             } else { return true; }

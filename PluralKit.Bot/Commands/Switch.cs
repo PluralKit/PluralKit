@@ -109,8 +109,7 @@ namespace PluralKit.Bot
             var newSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - time.ToInstant());
             
             // yeet
-            var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr.SanitizeMentions()}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
-            if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
+            if (!await ctx.PromptYesNo($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr.SanitizeMentions()}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?")) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
             await _data.MoveSwitch(lastTwoSwitches[0], time.ToInstant());
@@ -124,8 +123,7 @@ namespace PluralKit.Bot
             if (ctx.Match("all", "clear"))
             {
                 // Subcommand: "delete all"
-                var purgeMsg = await ctx.Reply($"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?");
-                if (!await ctx.PromptYesNo(purgeMsg))
+                if (!await ctx.PromptYesNo($"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?"))
                     throw Errors.GenericCancelled();
                 await _data.DeleteAllSwitches(ctx.System);
                 await ctx.Reply($"{Emojis.Success} Cleared system switches!");
@@ -140,19 +138,17 @@ namespace PluralKit.Bot
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
             var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
 
-            IUserMessage msg;
+            string msg = "";
             if (lastTwoSwitches.Count == 1)
             {
-                msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
+                msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?";
             }
             else
             {
                 var secondSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[1]);
                 var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.Name).ToListAsync());
                 var secondSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
-                msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.SanitizeMentions()} ({secondSwitchDeltaStr} ago). Is this okay?");
+                msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.SanitizeMentions()} ({secondSwitchDeltaStr} ago). Is this okay?";
             }
 
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;

@@ -25,8 +25,7 @@ namespace PluralKit.Bot
             var existingAccount = await _data.GetSystemByAccount(account.Id);
             if (existingAccount != null) throw Errors.AccountInOtherSystem(existingAccount); 
 
-            var msg = await ctx.Reply($"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.");
-            if (!await ctx.PromptYesNo(msg, user: account)) throw Errors.MemberLinkCancelled;
+            if (await MiscUtils.EnsureReactionPermissions(ctx, "ask for confirmation", true)) if (!await ctx.PromptYesNo($"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.", user: account)) throw Errors.MemberLinkCancelled;
             await _data.AddAccount(ctx.System, account.Id);
             await ctx.Reply($"{Emojis.Success} Account linked to system.");
         }
@@ -45,9 +44,7 @@ namespace PluralKit.Bot
             if (!accountIds.Contains(id)) throw Errors.AccountNotLinked;
             if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount;
             
-            var msg = await ctx.Reply(
-                $"Are you sure you want to unlink <@{id}> from your system?");
-            if (!await ctx.PromptYesNo(msg)) throw Errors.MemberUnlinkCancelled;
+            if (!await ctx.PromptYesNo($"Are you sure you want to unlink <@{id}> from your system?")) throw Errors.MemberUnlinkCancelled;
 
             await _data.RemoveAccount(ctx.System, id);
             await ctx.Reply($"{Emojis.Success} Account unlinked.");

@@ -29,8 +29,7 @@ namespace PluralKit.Bot
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, newName);
             if (existingMember != null) {
-                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
-                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
+                if (!await ctx.PromptYesNo($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?")) throw new PKError("Member renaming cancelled.");
             }
 
             // Rename the member

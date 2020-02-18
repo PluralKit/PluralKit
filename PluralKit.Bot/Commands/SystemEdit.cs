@@ -160,9 +160,7 @@ namespace PluralKit.Bot
             if (zone == null) throw Errors.InvalidTimeZone(zoneStr);
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
-            var msg = await ctx.Reply(
-                $"This will change the system time zone to {zone.Id}. The current time is {DateTimeFormats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?");
-            if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
+            if (!await ctx.PromptYesNo($"This will change the system time zone to {zone.Id}. The current time is {DateTimeFormats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?")) throw Errors.TimezoneChangeCancelled;
             ctx.System.UiTz = zone.Id;
             await _data.SaveSystem(ctx.System);
 

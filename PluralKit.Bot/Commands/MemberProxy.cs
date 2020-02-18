@@ -37,9 +37,7 @@ namespace PluralKit.Bot
                 if (conflicts.Count <= 0) return true;
 
                 var conflictList = conflicts.Select(m => $"- **{m.Name}**");
-                var msg = await ctx.Reply(
-                    $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?");
-                return await ctx.PromptYesNo(msg);
+                return await ctx.PromptYesNo($"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?");
             }
             
             // "Sub"command: no arguments clearing
@@ -49,9 +47,7 @@ namespace PluralKit.Bot
                 // If we already have multiple tags, this would clear everything, so prompt that
                 if (target.ProxyTags.Count > 1)
                 {
-                    var msg = await ctx.Reply(
-                        $"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?");
-                    if (!await ctx.PromptYesNo(msg))
+                    if (!await ctx.PromptYesNo($"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?"))
                         throw Errors.GenericCancelled();
                 }
                 
@@ -109,8 +105,7 @@ namespace PluralKit.Bot
                 // already more than one proxy tag.
                 if (target.ProxyTags.Count > 1)
                 {
-                    var msg = await ctx.Reply($"This member already has more than one proxy tag set: {target.ProxyTagsString().SanitizeMentions()}\nDo you want to replace them?");
-                    if (!await ctx.PromptYesNo(msg))
+                    if (!await ctx.PromptYesNo($"This member already has more than one proxy tag set: {target.ProxyTagsString().SanitizeMentions()}\nDo you want to replace them?"))
                         throw Errors.GenericCancelled();
                 }
                 
