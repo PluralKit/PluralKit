@@ -70,8 +70,12 @@ namespace PluralKit.Bot
             using var response = await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}?wait=true", mfd);
             timerCtx.Dispose();
 
-            // TODO: are there cases where an error won't also return a parseable JSON object?
-            var responseJson = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync());
+            var responseString = await response.Content.ReadAsStringAsync();
+            if (responseString.StartsWith("<"))
+                // if the response starts with a < it's probably a CloudFlare error or similar, so just force-break
+                response.EnsureSuccessStatusCode();
+
+            var responseJson = JsonConvert.DeserializeObject<JObject>(responseString);
             if (responseJson.ContainsKey("code"))
             {
                 var errorCode = responseJson["code"].Value<int>();
