@@ -48,9 +48,8 @@ namespace PluralKit.Bot
         public PKSystem System => _senderSystem;
 
         public string PopArgument() => _parameters.Pop();
-        public string PeekArgument() => _parameters.Peek();
-        public string Remainder() => _parameters.Remainder();
-        public string RemainderOrNull() => Remainder().Trim().Length == 0 ? null : Remainder();
+        public string PeekArgument() => _parameters.Peek(); 
+        public string RemainderOrNull(bool skipFlags = true) => _parameters.Remainder(skipFlags).Length == 0 ? null : _parameters.Remainder(skipFlags);
         public bool HasNext() => RemainderOrNull() != null;
         public string FullCommand => _parameters.FullCommand;
 

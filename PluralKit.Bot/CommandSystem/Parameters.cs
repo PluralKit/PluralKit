@@ -101,15 +101,18 @@ namespace PluralKit.Bot
             return _flags;
         }
 
-        public string Remainder()
+        public string Remainder(bool skipFlags = true)
         {
-            // Skip all *leading* flags when taking the remainder
-            while (NextWordPosition(_ptr) is {} wp)
+            if (skipFlags)
             {
-                if (_cmd[wp.startPos] != '-' || wp.wasQuoted) break;
-                _ptr = wp.endPos + wp.advanceAfterWord;
+                // Skip all *leading* flags when taking the remainder
+                while (NextWordPosition(_ptr) is {} wp)
+                {
+                    if (_cmd[wp.startPos] != '-' || wp.wasQuoted) break;
+                    _ptr = wp.endPos + wp.advanceAfterWord;
+                }
             }
-            
+
             // *Then* get the remainder
             return _cmd.Substring(Math.Min(_ptr, _cmd.Length)).Trim();
         }
