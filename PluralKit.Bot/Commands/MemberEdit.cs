@@ -53,7 +53,7 @@ namespace PluralKit.Bot
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            var description = ctx.RemainderOrNull();
+            var description = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
             if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
 
             target.Description = description;

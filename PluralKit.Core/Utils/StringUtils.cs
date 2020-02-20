@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 namespace PluralKit.Core
 {
@@ -59,6 +60,13 @@ namespace PluralKit.Core
             if (input == null) return true;
             if (input.Trim().Length == 0) return true;
             return false;
+        }
+
+        public static string NormalizeLineEndSpacing(this string input)
+        {
+            // iOS has a weird issue on embeds rendering newlines when there are spaces *just before* it
+            // so we remove 'em all :)
+            return Regex.Replace(input, " *\n", "\n");
         }
     }
 }

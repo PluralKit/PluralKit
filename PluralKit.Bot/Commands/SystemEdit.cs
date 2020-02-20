@@ -38,7 +38,7 @@ namespace PluralKit.Bot
         public async Task Description(Context ctx) {
             ctx.CheckSystem();
 
-            var newDescription = ctx.RemainderOrNull();
+            var newDescription = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
             if (newDescription != null && newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
 
             ctx.System.Description = newDescription;

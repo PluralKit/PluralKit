@@ -56,7 +56,7 @@ namespace PluralKit.Bot {
             }
 
             if (system.Description != null && system.DescriptionPrivacy.CanAccess(ctx))
-                eb.AddField("Description", system.Description.Truncate(1024), false);
+                eb.AddField("Description", system.Description.NormalizeLineEndSpacing().Truncate(1024), false);
 
             return eb.Build();
         }
@@ -66,7 +66,7 @@ namespace PluralKit.Bot {
             var timestamp = SnowflakeUtils.FromSnowflake(messageId);
             return new EmbedBuilder()
                 .WithAuthor($"#{channel.Name}: {member.Name}", member.AvatarUrl)
-                .WithDescription(content)
+                .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
                 .WithTimestamp(timestamp)
                 .Build();
@@ -122,7 +122,7 @@ namespace PluralKit.Bot {
             if (messageCount > 0 && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Message Count", messageCount, true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
             if (!member.Color.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
-            if (!member.Description.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description, false);
+            if (!member.Description.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
 
             return eb.Build();
         }
@@ -170,7 +170,7 @@ namespace PluralKit.Bot {
 
             var eb = new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
-                .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
+                .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
