@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
@@ -226,7 +227,19 @@ namespace PluralKit.Core
 
         private bool TimeZoneValid => TimeZone == null || DateTimeZoneProviders.Tzdb.GetZoneOrNull(TimeZone) != null;
 
-        [JsonIgnore] public bool Valid => TimeZoneValid && Members != null && Members.All(m => m.Valid);
+        [JsonIgnore] public bool Valid =>
+            TimeZoneValid &&
+            Members != null &&
+            Members.Count <= Limits.MaxMemberCount &&
+            Members.All(m => m.Valid) &&
+            Switches != null &&
+            Switches.Count < 10000 &&
+            Switches.All(s => s.Valid) &&
+            !Name.IsLongerThan(Limits.MaxSystemNameLength) &&
+            !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
+            !Tag.IsLongerThan(Limits.MaxSystemTagLength) &&
+            !AvatarUrl.IsLongerThan(1000) &&
+            DateTimeFormats.TimestampExportFormat.Parse(Created).Success;
     }
 
     public struct DataFileMember
@@ -251,13 +264,31 @@ namespace PluralKit.Core
         [JsonProperty("message_count")] public int MessageCount;
         [JsonProperty("created")] public string Created;
 
-        [JsonIgnore] public bool Valid => Name != null;
+        [JsonIgnore] public bool Valid =>
+            Name != null &&
+            !Name.IsLongerThan(Limits.MaxMemberNameLength) &&
+            !DisplayName.IsLongerThan(Limits.MaxMemberNameLength) &&
+            !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
+            !Pronouns.IsLongerThan(Limits.MaxPronounsLength) &&
+            (Color == null || Regex.IsMatch(Color, "[0-9a-f]{6}")) &&
+            (Birthday == null || DateTimeFormats.DateExportFormat.Parse(Birthday).Success) &&
+            
+            // Sanity checks
+            !AvatarUrl.IsLongerThan(1000) &&
+            ProxyTags.Count < 100 &&
+            ProxyTags.All(t => !t.ProxyString.IsLongerThan(100)) &&
+            !Prefix.IsLongerThan(100) && !Suffix.IsLongerThan(100);
     }
 
     public struct DataFileSwitch
     {
         [JsonProperty("timestamp")] public string Timestamp;
         [JsonProperty("members")] public ICollection<string> Members;
+
+        [JsonIgnore] public bool Valid =>
+            Members != null &&
+            Members.Count < 100 &&
+            DateTimeFormats.TimestampExportFormat.Parse(Timestamp).Success;
     }
 
     public struct TupperboxConversionResult
