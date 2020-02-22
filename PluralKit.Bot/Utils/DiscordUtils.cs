@@ -1,6 +1,5 @@
-﻿using System.Threading.Tasks;
-
-using Discord;
+﻿using Discord;
+using Discord.WebSocket;
 
 namespace PluralKit.Bot
 {
@@ -10,7 +9,7 @@ namespace PluralKit.Bot
             return $"{user.Username}#{user.Discriminator} ({user.Mention})";
         }
         
-        public static async Task<ChannelPermissions> PermissionsIn(this IChannel channel)
+        public static ChannelPermissions PermissionsIn(this IChannel channel)
         {
             switch (channel)
             {
@@ -18,15 +17,15 @@ namespace PluralKit.Bot
                     return ChannelPermissions.DM;
                 case IGroupChannel _:
                     return ChannelPermissions.Group;
-                case IGuildChannel gc:
-                    var currentUser = await gc.Guild.GetCurrentUserAsync();
+                case SocketGuildChannel gc:
+                    var currentUser = gc.Guild.CurrentUser;
                     return currentUser.GetPermissions(gc);
                 default:
                     return ChannelPermissions.None;
             }
         }
 
-        public static async Task<bool> HasPermission(this IChannel channel, ChannelPermission permission) =>
-            (await PermissionsIn(channel)).Has(permission);
+        public static bool HasPermission(this IChannel channel, ChannelPermission permission) =>
+            PermissionsIn(channel).Has(permission);
     }
 }

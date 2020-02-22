@@ -128,7 +128,7 @@ namespace PluralKit.Bot {
             foreach (var channel in await guild.GetTextChannelsAsync())
             {
                 // TODO: do we need to hide channels here to prevent info-leaking?
-                var perms = await channel.PermissionsIn();
+                var perms = channel.PermissionsIn();
 
                 // We use a bitfield so we can set individual permission bits in the loop
                 ulong missingPermissionField = 0;

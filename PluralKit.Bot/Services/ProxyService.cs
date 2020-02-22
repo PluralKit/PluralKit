@@ -286,7 +286,7 @@ namespace PluralKit.Bot
             
             // Finally remove the original reaction (if we can)
             var user = await _client.Rest.GetUserAsync(userWhoReacted);
-            if (user != null && await realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
+            if (user != null && realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
                 await realMessage.RemoveReactionAsync(reactedEmote, user);
         }
 
@@ -316,7 +316,7 @@ namespace PluralKit.Bot
 
             // And finally remove the original reaction (if we can)
             var msgObj = await message.GetOrDownloadAsync();
-            if (await msgObj.Channel.HasPermission(ChannelPermission.ManageMessages))
+            if (msgObj.Channel.HasPermission(ChannelPermission.ManageMessages))
                 await msgObj.RemoveReactionAsync(reactedEmote, user);
         }
 
