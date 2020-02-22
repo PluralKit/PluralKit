@@ -89,7 +89,7 @@ namespace PluralKit.Bot
 
                 using var conn = await _db.Obtain();
                 var mid = await conn.QuerySingleOrDefaultAsync<ulong?>(
-                    "select mid from messages where sender = @User and mid > @ApproxID and guild = @Guild",
+                    "select mid from messages where sender = @User and mid > @ApproxID and guild = @Guild limit 1",
                     new
                     {
                         fuzzy.Value.User,
