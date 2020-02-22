@@ -50,15 +50,28 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            var newTag = ctx.RemainderOrNull(skipFlags: false);
-            ctx.System.Tag = newTag;
-
-            if (newTag != null)
-                if (newTag.Length > Limits.MaxSystemTagLength)
-                    throw Errors.SystemNameTooLongError(newTag.Length);
-
-            await _data.SaveSystem(ctx.System);
-            await ctx.Reply($"{Emojis.Success} System tag {(newTag != null ? $"changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied" : "cleared")}.");
+            if (ctx.MatchFlag("c", "clear"))
+            {
+                ctx.System.Tag = null;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System tag cleared.");
+            } else if (!ctx.HasNext(skipFlags: false))
+            {
+                if (ctx.System.Tag == null)
+                    await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
+                else
+                    await ctx.Reply($"Your current system tag is `{ctx.System.Tag.SanitizeMentions()}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+            }
+            else
+            {
+                var newTag = ctx.RemainderOrNull(skipFlags: false);
+                if (newTag != null)
+                    if (newTag.Length > Limits.MaxSystemTagLength)
+                        throw Errors.SystemNameTooLongError(newTag.Length);
+                ctx.System.Tag = newTag;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied.");
+            }
         }
         
         public async Task Avatar(Context ctx)
