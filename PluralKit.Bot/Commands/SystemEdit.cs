@@ -160,12 +160,19 @@ namespace PluralKit.Bot
         {
             if (ctx.System == null) throw Errors.NoSystemError;
 
-            var zoneStr = ctx.RemainderOrNull();
-            if (zoneStr == null)
+            if (ctx.MatchFlag("c", "clear"))
             {
                 ctx.System.UiTz = "UTC";
                 await _data.SaveSystem(ctx.System);
                 await ctx.Reply($"{Emojis.Success} System time zone cleared.");
+                return;
+            }
+            
+            var zoneStr = ctx.RemainderOrNull();
+            if (zoneStr == null)
+            {
+                await ctx.Reply(
+                    $"Your current system time zone is set to **{ctx.System.UiTz}**. It is currently **{DateTimeFormats.ZonedDateTimeFormat.Format(SystemClock.Instance.GetCurrentInstant().InZone(ctx.System.Zone))}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
                 return;
             }
 
@@ -174,12 +181,12 @@ namespace PluralKit.Bot
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
             var msg = await ctx.Reply(
-                $"This will change the system time zone to {zone.Id}. The current time is {DateTimeFormats.ZonedDateTimeFormat.Format(currentTime)}. Is this correct?");
+                $"This will change the system time zone to **{zone.Id}**. The current time is **{DateTimeFormats.ZonedDateTimeFormat.Format(currentTime)}**. Is this correct?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             ctx.System.UiTz = zone.Id;
             await _data.SaveSystem(ctx.System);
 
-            await ctx.Reply($"System time zone changed to {zone.Id}.");
+            await ctx.Reply($"System time zone changed to **{zone.Id}**.");
         }
 
         public async Task SystemPrivacy(Context ctx)
