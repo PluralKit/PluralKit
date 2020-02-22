@@ -50,7 +50,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            var newTag = ctx.RemainderOrNull();
+            var newTag = ctx.RemainderOrNull(skipFlags: false);
             ctx.System.Tag = newTag;
 
             if (newTag != null)
