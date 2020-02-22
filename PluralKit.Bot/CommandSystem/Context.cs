@@ -50,7 +50,7 @@ namespace PluralKit.Bot
         public string PopArgument() => _parameters.Pop();
         public string PeekArgument() => _parameters.Peek(); 
         public string RemainderOrNull(bool skipFlags = true) => _parameters.Remainder(skipFlags).Length == 0 ? null : _parameters.Remainder(skipFlags);
-        public bool HasNext() => RemainderOrNull() != null;
+        public bool HasNext(bool skipFlags = true) => RemainderOrNull(skipFlags) != null;
         public string FullCommand => _parameters.FullCommand;
 
         public Task<IUserMessage> Reply(string text = null, Embed embed = null) =>
