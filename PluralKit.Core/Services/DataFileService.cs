@@ -238,8 +238,7 @@ namespace PluralKit.Core
             !Name.IsLongerThan(Limits.MaxSystemNameLength) &&
             !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
             !Tag.IsLongerThan(Limits.MaxSystemTagLength) &&
-            !AvatarUrl.IsLongerThan(1000) &&
-            DateTimeFormats.TimestampExportFormat.Parse(Created).Success;
+            !AvatarUrl.IsLongerThan(1000);
     }
 
     public struct DataFileMember
