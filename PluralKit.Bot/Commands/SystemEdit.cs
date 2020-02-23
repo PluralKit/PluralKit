@@ -38,12 +38,35 @@ namespace PluralKit.Bot
         public async Task Description(Context ctx) {
             ctx.CheckSystem();
 
+            if (ctx.MatchFlag("c", "clear"))
+            {
+                ctx.System.Description = null;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System description cleared.");
+                return;
+            }
+            
             var newDescription = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
-            if (newDescription != null && newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
-
-            ctx.System.Description = newDescription;
-            await _data.SaveSystem(ctx.System);
-            await ctx.Reply($"{Emojis.Success} System description {(newDescription != null ? "changed" : "cleared")}.");
+            if (newDescription == null)
+            {
+                if (ctx.System.Description == null)
+                    await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
+                else if (ctx.MatchFlag("r", "raw"))
+                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
+                else
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .WithTitle("System description")
+                        .WithDescription(ctx.System.Description)
+                        .WithFooter("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`.")
+                        .Build());
+            }
+            else
+            {
+                if (newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
+                ctx.System.Description = newDescription;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System description changed.");
+            }
         }
         
         public async Task Tag(Context ctx)
