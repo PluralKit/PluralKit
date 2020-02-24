@@ -316,7 +316,15 @@ namespace PluralKit.Bot
                                           msg.Content.Substring(argPos).TrimStart().Length;
                 argPos += trimStartLengthDiff;
 
-                await _tree.ExecuteCommand(new Context(_services, msg, argPos, cachedAccount?.System));
+                try
+                {
+                    await _tree.ExecuteCommand(new Context(_services, msg, argPos, cachedAccount?.System));
+                }
+                catch (PKError)
+                {
+                    // Only permission errors will ever bubble this far and be caught here instead of Context.Execute
+                    // so we just catch and ignore these. TODO: this may need to change.
+                }
             }
             else if (cachedAccount != null)
             {
@@ -329,7 +337,8 @@ namespace PluralKit.Bot
                 }
                 catch (PKError e)
                 {
-                    await arg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
+                    if (arg.Channel.HasPermission(ChannelPermission.SendMessages))
+                        await arg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
                 }
             }
         }
@@ -343,7 +352,7 @@ namespace PluralKit.Bot
             // We'll fetch the event ID and send a user-facing error message.
             // ONLY IF this error's actually our problem. As for what defines an error as "our problem",
             // check the extension method :)
-            if (exc.IsOurProblem())
+            if (exc.IsOurProblem() && _msg.Channel.HasPermission(ChannelPermission.SendMessages))
             {
                 var eid = evt.EventId;
                 await _msg.Channel.SendMessageAsync(

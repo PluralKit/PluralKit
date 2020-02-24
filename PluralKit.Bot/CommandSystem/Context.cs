@@ -53,8 +53,17 @@ namespace PluralKit.Bot
         public bool HasNext(bool skipFlags = true) => RemainderOrNull(skipFlags) != null;
         public string FullCommand => _parameters.FullCommand;
 
-        public Task<IUserMessage> Reply(string text = null, Embed embed = null) =>
-            Channel.SendMessageAsync(text, embed: embed);
+        public Task<IUserMessage> Reply(string text = null, Embed embed = null)
+        {
+            if (!this.BotHasPermission(ChannelPermission.SendMessages))
+                // Will be "swallowed" during the error handler anyway, this message is never shown.
+                throw new PKError("PluralKit does not have permission to send messages in this channel.");
+
+            if (embed != null && !this.BotHasPermission(ChannelPermission.EmbedLinks))
+                throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
+            
+            return Channel.SendMessageAsync(text, embed: embed);
+        }
 
         /// <summary>
         /// Checks if the next parameter is equal to one of the given keywords. Case-insensitive.
