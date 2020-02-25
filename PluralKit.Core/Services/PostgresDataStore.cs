@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -170,7 +170,8 @@ namespace PluralKit.Core {
                 var results = new Dictionary<string, PKMember>();
                 foreach (var name in names)
                 {
-                    var member = await conn.QuerySingleAsync<PKMember>("INSERT INTO members (generatememberhid(), system, name) VALUES (@Hid, @SystemId, @Name) RETURNING *", new
+                    
+                    var member = await conn.QuerySingleAsync<PKMember>("INSERT INTO members (hid, system, name) VALUES (generatememberhid(), @SystemId, @Name) RETURNING *", new
                     {
                         SystemID = system.Id,
                         Name = name.Value
