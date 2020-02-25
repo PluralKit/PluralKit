@@ -48,7 +48,7 @@ namespace PluralKit.Bot
             // eg. @Ske [text] => [@Ske text]
             int matchStartPosition = 0;
             string leadingMention = null;
-            if (Utils.HasMentionPrefix(message, ref matchStartPosition, out _))
+            if (StringUtils.HasMentionPrefix(message, ref matchStartPosition, out _))
             {
                 leadingMention = message.Substring(0, matchStartPosition);
                 message = message.Substring(matchStartPosition);
@@ -83,7 +83,7 @@ namespace PluralKit.Bot
             return null;
         }
 
-        public async Task HandleMessageAsync(GuildConfig guild, CachedAccount account, IMessage message)
+        public async Task HandleMessageAsync(GuildConfig guild, CachedAccount account, IMessage message, bool doAutoProxy)
         {
             // Bail early if this isn't in a guild channel
             if (!(message.Channel is ITextChannel channel)) return;
@@ -97,7 +97,12 @@ namespace PluralKit.Bot
             // If we didn't get a match by proxy tags, try to get one by autoproxy
             // Also try if we *did* get a match, but there's no inner text. This happens if someone sends a message that
             // is equal to someone else's tags, and messages like these should be autoproxied if possible
-            if (match == null || match.InnerText.Trim().Length == 0) match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, channel);
+            
+            // All of this should only be done if this call allows autoproxy.
+            // When a normal message is sent, autoproxy is enabled, but if this method is called from a message *edit*
+            // event, then autoproxy is disabled. This is so AP doesn't "retrigger" when the original message was escaped.
+            if (doAutoProxy && (match == null || (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)))
+                match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, channel);
             
             // If we still haven't found any, just yeet
             if (match == null) return;
@@ -120,7 +125,7 @@ namespace PluralKit.Bot
             
             // Get variables in order and all
             var proxyName = match.Member.ProxyName(match.System.Tag, memberSettingsForGuild.DisplayName);
-            var avatarUrl = match.Member.AvatarUrl ?? match.System.AvatarUrl;
+            var avatarUrl = memberSettingsForGuild.AvatarUrl ?? match.Member.AvatarUrl ?? match.System.AvatarUrl;
             
             // If the name's too long (or short), bail
             if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
@@ -252,7 +257,7 @@ namespace PluralKit.Bot
                     return HandleMessageDeletionByReaction(message, reaction.UserId);
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
-                    return HandleMessageQueryByReaction(message, reaction.UserId, reaction.Emote);
+                    return HandleMessageQueryByReaction(message, channel, reaction.UserId, reaction.Emote);
                 case "\U0001F514": // Bell
                 case "\U0001F6CE": // Bellhop bell
                 case "\U0001F3D3": // Ping pong paddle (lol)
@@ -281,11 +286,13 @@ namespace PluralKit.Bot
             
             // Finally remove the original reaction (if we can)
             var user = await _client.Rest.GetUserAsync(userWhoReacted);
-            if (user != null && await realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
+            if (user != null && realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
                 await realMessage.RemoveReactionAsync(reactedEmote, user);
         }
 
-        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted, IEmote reactedEmote)
+        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message,
+                                                        ISocketMessageChannel channel, ulong userWhoReacted,
+                                                        IEmote reactedEmote)
         {
             // Find the user who sent the reaction, so we can DM them
             var user = await _client.Rest.GetUserAsync(userWhoReacted);
@@ -296,11 +303,20 @@ namespace PluralKit.Bot
             if (msg == null) return;
 
             // DM them the message card
-            await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
+            try
+            {
+                await user.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, (channel as IGuildChannel)?.Guild, LookupContext.ByNonOwner));
+                await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
+            }
+            catch (HttpException e) when (e.DiscordCode == 50007)
+            {
+                // Ignore exception if it means we don't have DM permission to this user
+                // not much else we can do here :/
+            }
 
             // And finally remove the original reaction (if we can)
             var msgObj = await message.GetOrDownloadAsync();
-            if (await msgObj.Channel.HasPermission(ChannelPermission.ManageMessages))
+            if (msgObj.Channel.HasPermission(ChannelPermission.ManageMessages))
                 await msgObj.RemoveReactionAsync(reactedEmote, user);
         }
 

@@ -36,6 +36,7 @@ Words in \<angle brackets> are *required parameters*. Words in [square brackets]
 - `pk;member <name> servername <new server name>` - Changes the display name of a member, only in the current serve.
 - `pk;member <name> description [description]` - Changes the description of a member.
 - `pk;member <name> avatar <avatar url|@mention|clear>` - Changes the avatar of a member.
+- `pk;member <name> serveravatar <avatar url|@mention|clear>` - Changes the avatar of a member in a specific server.
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
 - `pk;member <name> proxy add [tags]` - Adds a proxy tag pair to a member.
 - `pk;member <name> proxy remove [tags]` - Removes a proxy tag from a member.

@@ -1,32 +1,22 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
 
 using Autofac;
-using Autofac.Core;
 
-using Dapper;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
-using PluralKit.Bot.Commands;
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
 using Sentry;
-using Sentry.Infrastructure;
 
 using Serilog;
 using Serilog.Events;
-
-using SystemClock = NodaTime.SystemClock;
 
 namespace PluralKit.Bot
 {
@@ -109,11 +99,9 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
-        private PKPerformanceEventListener _pl;
 
         public Bot(ILifetimeScope services, IDiscordClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
-            _pl = new PKPerformanceEventListener();
             _services = services;
             _client = client as DiscordShardedClient;
             _metrics = metrics;
@@ -131,6 +119,7 @@ namespace PluralKit.Bot
             _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(eh => eh.HandleReactionAdded(msg, channel, reaction));
             _client.MessageDeleted += (msg, channel) => HandleEvent(eh => eh.HandleMessageDeleted(msg, channel));
             _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(eh => eh.HandleMessagesBulkDelete(msgs, channel));
+            _client.MessageUpdated += (oldMessage, newMessage, channel) => HandleEvent(eh => eh.HandleMessageEdited(oldMessage, newMessage, channel)); 
             
             _services.Resolve<ShardInfoService>().Init(_client);
 
@@ -244,6 +233,8 @@ namespace PluralKit.Bot
         private CommandTree _tree;
         private Scope _sentryScope;
         private ProxyCache _cache;
+        private LastMessageCacheService _lastMessageCache;
+        private LoggerCleanService _loggerClean;
 
         // We're defining in the Autofac module that this class is instantiated with one instance per event
         // This means that the HandleMessage function will either be called once, or not at all
@@ -251,7 +242,7 @@ namespace PluralKit.Bot
         // hence, we just store it in a local variable, ignoring it entirely if it's null.
         private IUserMessage _msg = null;
 
-        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache)
+        public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache, LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean)
         {
             _proxy = proxy;
             _logger = logger;
@@ -262,11 +253,14 @@ namespace PluralKit.Bot
             _tree = tree;
             _sentryScope = sentryScope;
             _cache = cache;
+            _lastMessageCache = lastMessageCache;
+            _loggerClean = loggerClean;
         }
 
         public async Task HandleMessage(SocketMessage arg)
         {
-            if (_client.GetShardFor((arg.Channel as IGuildChannel)?.Guild).ConnectionState != ConnectionState.Connected)
+            var shard = _client.GetShardFor((arg.Channel as IGuildChannel)?.Guild);
+            if (shard.ConnectionState != ConnectionState.Connected)
                 return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
 
             RegisterMessageMetrics(arg);
@@ -274,9 +268,17 @@ namespace PluralKit.Bot
             // Ignore system messages (member joined, message pinned, etc)
             var msg = arg as SocketUserMessage;
             if (msg == null) return;
-
-            // Ignore bot messages
-            if (msg.Author.IsBot || msg.Author.IsWebhook) return;
+            
+            // Fetch information about the guild early, as we need it for the logger cleanup
+            GuildConfig cachedGuild = default; // todo: is this default correct?
+            if (msg.Channel is ITextChannel textChannel) cachedGuild = await _cache.GetGuildDataCached(textChannel.GuildId);
+            
+            // Pass guild bot/WH messages onto the logger cleanup service, but otherwise ignore
+            if ((msg.Author.IsBot || msg.Author.IsWebhook) && msg.Channel is ITextChannel)
+            {
+                await _loggerClean.HandleLoggerBotCleanup(arg, cachedGuild);
+                return;
+            }
             
             // Add message info as Sentry breadcrumb
             _msg = msg;
@@ -287,10 +289,12 @@ namespace PluralKit.Bot
                 {"guild", ((msg.Channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"message", msg.Id.ToString()},
             });
+            _sentryScope.SetTag("shard", shard.ShardId.ToString());
             
-            // We fetch information about the sending account *and* guild from the cache
-            GuildConfig cachedGuild = default; // todo: is this default correct?
-            if (msg.Channel is ITextChannel textChannel) cachedGuild = await _cache.GetGuildDataCached(textChannel.GuildId);
+            // Add to last message cache
+            _lastMessageCache.AddMessage(arg.Channel.Id, arg.Id);
+            
+            // We fetch information about the sending account from the cache
             var cachedAccount = await _cache.GetAccountDataCached(msg.Author.Id);
             // this ^ may be null, do remember that down the line
 
@@ -298,7 +302,7 @@ namespace PluralKit.Bot
             // Check if message starts with the command prefix
             if (msg.Content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
             else if (msg.Content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
-            else if (msg.Content != null && Utils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
+            else if (msg.Content != null && StringUtils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
                 if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
                     argPos = -1;
             
@@ -312,7 +316,15 @@ namespace PluralKit.Bot
                                           msg.Content.Substring(argPos).TrimStart().Length;
                 argPos += trimStartLengthDiff;
 
-                await _tree.ExecuteCommand(new Context(_services, msg, argPos, cachedAccount?.System));
+                try
+                {
+                    await _tree.ExecuteCommand(new Context(_services, msg, argPos, cachedAccount?.System));
+                }
+                catch (PKError)
+                {
+                    // Only permission errors will ever bubble this far and be caught here instead of Context.Execute
+                    // so we just catch and ignore these. TODO: this may need to change.
+                }
             }
             else if (cachedAccount != null)
             {
@@ -321,11 +333,12 @@ namespace PluralKit.Bot
                 // no data = no account = no system = no proxy!
                 try
                 {
-                    await _proxy.HandleMessageAsync(cachedGuild, cachedAccount, msg);
+                    await _proxy.HandleMessageAsync(cachedGuild, cachedAccount, msg, doAutoProxy: true);
                 }
                 catch (PKError e)
                 {
-                    await arg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
+                    if (arg.Channel.HasPermission(ChannelPermission.SendMessages))
+                        await arg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
                 }
             }
         }
@@ -339,7 +352,7 @@ namespace PluralKit.Bot
             // We'll fetch the event ID and send a user-facing error message.
             // ONLY IF this error's actually our problem. As for what defines an error as "our problem",
             // check the extension method :)
-            if (exc.IsOurProblem())
+            if (exc.IsOurProblem() && _msg.Channel.HasPermission(ChannelPermission.SendMessages))
             {
                 var eid = evt.EventId;
                 await _msg.Channel.SendMessageAsync(
@@ -368,7 +381,8 @@ namespace PluralKit.Bot
                 {"message", message.Id.ToString()},
                 {"reaction", reaction.Emote.Name}
             });
-            
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
             return _proxy.HandleReactionAddedAsync(message, channel, reaction);
         }
 
@@ -380,7 +394,8 @@ namespace PluralKit.Bot
                 {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"message", message.Id.ToString()},
             });
-            
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
             return _proxy.HandleMessageDeletedAsync(message, channel);
         }
 
@@ -393,8 +408,36 @@ namespace PluralKit.Bot
                 {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
                 {"messages", string.Join(",", messages.Select(m => m.Id))},
             });
-            
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
             return _proxy.HandleMessageBulkDeleteAsync(messages, channel);
+        }
+
+        public async Task HandleMessageEdited(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        {
+            _sentryScope.AddBreadcrumb(newMessage.Content, "event.messageEdit", data: new Dictionary<string, string>()
+            {
+                {"channel", channel.Id.ToString()},
+                {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
+                {"message", newMessage.Id.ToString()}
+            });
+            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+
+            // If this isn't a guild, bail
+            if (!(channel is IGuildChannel gc)) return;
+            
+            // If this isn't the last message in the channel, don't do anything
+            if (_lastMessageCache.GetLastMessage(channel.Id) != newMessage.Id) return;
+            
+            // Fetch account from cache if there is any
+            var account = await _cache.GetAccountDataCached(newMessage.Author.Id);
+            if (account == null) return; // Again: no cache = no account = no system = no proxy
+            
+            // Also fetch guild cache
+            var guild = await _cache.GetGuildDataCached(gc.GuildId);
+
+            // Just run the normal message handling stuff
+            await _proxy.HandleMessageAsync(guild, account, newMessage, doAutoProxy: false);
         }
     }
 }

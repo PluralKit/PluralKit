@@ -1,16 +1,8 @@
-using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Discord;
-using Humanizer;
-using NodaTime;
-using NodaTime.Text;
-using NodaTime.TimeZones;
 
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class System
     {
@@ -35,7 +27,7 @@ namespace PluralKit.Bot.Commands
 
             var system = await _data.CreateSystem(ctx.RemainderOrNull());
             await _data.AddAccount(system, ctx.Author.Id);
-            await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;help` for more information about commands you can use now. Now that you have that set up, check out [the getting started guide on setting up members and proxies](https://pluralkit.me/start)!");
+            await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
         }
     }
 }

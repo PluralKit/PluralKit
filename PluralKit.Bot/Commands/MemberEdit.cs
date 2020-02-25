@@ -3,10 +3,9 @@ using System.Threading.Tasks;
 
 using NodaTime;
 
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class MemberEdit
     {
@@ -54,7 +53,7 @@ namespace PluralKit.Bot.Commands
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            var description = ctx.RemainderOrNull();
+            var description = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
             if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
 
             target.Description = description;
@@ -103,7 +102,7 @@ namespace PluralKit.Bot.Commands
             var birthday = ctx.RemainderOrNull();
             if (birthday != null)
             {
-                date = PluralKit.Utils.ParseDate(birthday, true);
+                date = DateUtils.ParseDate(birthday, true);
                 if (date == null) throw Errors.BirthdayParseError(birthday);
             }
 

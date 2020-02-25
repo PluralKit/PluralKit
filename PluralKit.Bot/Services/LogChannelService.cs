@@ -1,6 +1,9 @@
 using System.Threading.Tasks;
-using Dapper;
+
 using Discord;
+
+using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit.Bot {
@@ -30,9 +33,14 @@ namespace PluralKit.Bot {
             // Bail if we can't find the channel
             if (!(await _client.GetChannelAsync(guildCfg.Value.LogChannel.Value) is ITextChannel logChannel)) return;
 
+            // Bail if we don't have permission to send stuff here
+            if (!logChannel.HasPermission(ChannelPermission.SendMessages) || !logChannel.HasPermission(ChannelPermission.EmbedLinks))
+                return;
+
             var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, originalMsgId, sender, content, originalChannel);
 
             var url = $"https://discordapp.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
+            
             await logChannel.SendMessageAsync(text: url, embed: embed);
         }
     }

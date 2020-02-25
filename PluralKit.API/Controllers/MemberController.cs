@@ -1,12 +1,12 @@
-using System.Linq;
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
 
-namespace PluralKit.API.Controllers
+namespace PluralKit.API
 {
     [ApiController]
     [Route("m")]
@@ -48,9 +48,9 @@ namespace PluralKit.API.Controllers
             var member = await _data.CreateMember(system, properties.Value<string>("name"));
             try
             {
-                member.Apply(properties);
+                member.ApplyJson(properties);
             }
-            catch (PKParseError e)
+            catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
             }
@@ -70,9 +70,9 @@ namespace PluralKit.API.Controllers
 
             try
             {
-                member.Apply(changes);
+                member.ApplyJson(changes);
             }
-            catch (PKParseError e)
+            catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
             }

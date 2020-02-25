@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 
 using Discord.WebSocket;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class CommandTree
     {
@@ -19,6 +19,7 @@ namespace PluralKit.Bot.Commands
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
         public static Command SystemProxy = new Command("system proxy", "system proxy [on|off]", "Enables or disables message proxying in a specific server");
         public static Command SystemList = new Command("system list", "system [system] list [full]", "Lists a system's members");
+        public static Command SystemFind = new Command("system find", "system [system] find [full] <search term>", "Searches a system's members given a search term");
         public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
         public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
@@ -34,6 +35,7 @@ namespace PluralKit.Bot.Commands
         public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
         public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention|clear]", "Changes a member's avatar");
+        public static Command MemberServerAvatar = new Command("member serveravatar", "member <member> serveravatar [url|@mention|clear]", "Changes a member's avatar in the current server");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
@@ -54,6 +56,7 @@ namespace PluralKit.Bot.Commands
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
         public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
+        public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
         public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
         public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
         public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
@@ -90,6 +93,10 @@ namespace PluralKit.Bot.Commands
                 return HandleSwitchCommand(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
                 return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
+            if (ctx.Match("list", "l", "members"))
+                return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
+            if (ctx.Match("f", "find", "search", "query", "fd"))
+                return ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
             if (ctx.Match("link"))
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
@@ -121,6 +128,8 @@ namespace PluralKit.Bot.Commands
                 else if (ctx.Match("disable", "off"))
                     return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
                 else return PrintCommandExpectedError(ctx, LogCommands);
+            if (ctx.Match("logclean"))
+                return ctx.Execute<ServerConfig>(LogClean, m => m.SetLogCleanup(ctx));
             if (ctx.Match("blacklist", "bl"))
                 if (ctx.Match("enable", "on", "add", "deny"))
                     return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
@@ -171,12 +180,9 @@ namespace PluralKit.Bot.Commands
             else if (ctx.Match("proxy"))
                 await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             else if (ctx.Match("list", "l", "members"))
-            {
-                if (ctx.Match("f", "full", "big", "details", "long"))
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberLongList(ctx, ctx.System));
-                else
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberShortList(ctx, ctx.System));
-            }
+                await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
+            else if (ctx.Match("find", "search", "query", "fd", "s"))
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
@@ -211,12 +217,9 @@ namespace PluralKit.Bot.Commands
                     $"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\nPerhaps you meant to use one of the following commands?\n{list}");
             }
             else if (ctx.Match("list", "l", "members"))
-            {
-                if (ctx.Match("f", "full", "big", "details", "long"))
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberLongList(ctx, target));
-                else
-                    await ctx.Execute<SystemList>(SystemList, m => m.MemberShortList(ctx, target));
-            }
+                await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
+            else if (ctx.Match("find", "search", "query", "fd", "s"))
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, target));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
@@ -273,6 +276,8 @@ namespace PluralKit.Bot.Commands
                 await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
             else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
                 await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
+            else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic", "guildavatar", "guildpic", "guildicon", "sicon"))
+                await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
             else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname"))
                 await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
             else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))

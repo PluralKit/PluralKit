@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-using PluralKit.Bot.CommandSystem;
-
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class Fun
     {

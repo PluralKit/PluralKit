@@ -4,13 +4,15 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
 using Discord;
 using Discord.Net;
+
 using Newtonsoft.Json;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class ImportExport
     {

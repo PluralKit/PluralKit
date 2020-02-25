@@ -2,15 +2,12 @@ using System;
 using System.Net.Http;
 
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
 
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
 
-using Microsoft.Extensions.DependencyInjection;
-
-using PluralKit.Bot.Commands;
+using PluralKit.Core;
 
 using Sentry;
 
@@ -47,7 +44,7 @@ namespace PluralKit.Bot
             builder.RegisterType<Misc>().AsSelf();
             builder.RegisterType<ServerConfig>().AsSelf();
             builder.RegisterType<Switch>().AsSelf();
-            builder.RegisterType<Commands.System>().AsSelf();
+            builder.RegisterType<System>().AsSelf();
             builder.RegisterType<SystemEdit>().AsSelf();
             builder.RegisterType<SystemFront>().AsSelf();
             builder.RegisterType<SystemLink>().AsSelf();
@@ -68,6 +65,8 @@ namespace PluralKit.Bot
             builder.RegisterType<ShardInfoService>().AsSelf().SingleInstance();
             builder.RegisterType<CpuStatService>().AsSelf().SingleInstance();
             builder.RegisterType<PeriodicStatCollector>().AsSelf().SingleInstance();
+            builder.RegisterType<LastMessageCacheService>().AsSelf().SingleInstance();
+            builder.RegisterType<LoggerCleanService>().AsSelf().SingleInstance();
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();

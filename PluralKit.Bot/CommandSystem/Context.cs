@@ -1,17 +1,17 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using App.Metrics;
 
 using Autofac;
-using Autofac.Core;
 
 using Discord;
 using Discord.WebSocket;
 
-using Microsoft.Extensions.DependencyInjection;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.CommandSystem
+namespace PluralKit.Bot
 {
     public class Context
     {
@@ -48,23 +48,32 @@ namespace PluralKit.Bot.CommandSystem
         public PKSystem System => _senderSystem;
 
         public string PopArgument() => _parameters.Pop();
-        public string PeekArgument() => _parameters.Peek();
-        public string Remainder() => _parameters.Remainder();
-        public string RemainderOrNull() => Remainder().Trim().Length == 0 ? null : Remainder();
-        public bool HasNext() => RemainderOrNull() != null;
+        public string PeekArgument() => _parameters.Peek(); 
+        public string RemainderOrNull(bool skipFlags = true) => _parameters.Remainder(skipFlags).Length == 0 ? null : _parameters.Remainder(skipFlags);
+        public bool HasNext(bool skipFlags = true) => RemainderOrNull(skipFlags) != null;
         public string FullCommand => _parameters.FullCommand;
 
-        public Task<IUserMessage> Reply(string text = null, Embed embed = null) =>
-            Channel.SendMessageAsync(text, embed: embed);
+        public Task<IUserMessage> Reply(string text = null, Embed embed = null)
+        {
+            if (!this.BotHasPermission(ChannelPermission.SendMessages))
+                // Will be "swallowed" during the error handler anyway, this message is never shown.
+                throw new PKError("PluralKit does not have permission to send messages in this channel.");
+
+            if (embed != null && !this.BotHasPermission(ChannelPermission.EmbedLinks))
+                throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
+            
+            return Channel.SendMessageAsync(text, embed: embed);
+        }
 
         /// <summary>
         /// Checks if the next parameter is equal to one of the given keywords. Case-insensitive.
         /// </summary>
         public bool Match(ref string used, params string[] potentialMatches)
         {
+            var arg = PeekArgument();
             foreach (var match in potentialMatches)
             {
-                if (PeekArgument().Equals(match, StringComparison.InvariantCultureIgnoreCase))
+                if (arg.Equals(match, StringComparison.InvariantCultureIgnoreCase))
                 {
                     used = PopArgument();
                     return true;
@@ -81,6 +90,15 @@ namespace PluralKit.Bot.CommandSystem
         {
             string used = null; // Unused and unreturned, we just yeet it
             return Match(ref used, potentialMatches);
+        }
+
+        public bool MatchFlag(params string[] potentialMatches)
+        {
+            // Flags are *ALWAYS PARSED LOWERCASE*. This means we skip out on a "ToLower" call here.
+            // Can assume the caller array only contains lowercase *and* the set below only contains lowercase
+            
+            var flags = _parameters.Flags();
+            return potentialMatches.Any(potentialMatch => flags.Contains(potentialMatch));
         }
         
         public async Task Execute<T>(Command commandDef, Func<T, Task> handler)

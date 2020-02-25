@@ -1,10 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class Member
     {

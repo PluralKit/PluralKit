@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Discord;
+
 using Humanizer;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class SystemList
     {
@@ -17,101 +20,116 @@ namespace PluralKit.Bot.Commands
             _data = data;
         }
 
-        public async Task MemberShortList(Context ctx, PKSystem system) {
-            if (system == null) throw Errors.NoSystemError;
-            ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
-            
+        private async Task RenderMemberList(Context ctx, PKSystem system, bool canShowPrivate, int membersPerPage, string embedTitle, Func<PKMember, bool> filter,
+                                            Func<EmbedBuilder, IEnumerable<PKMember>, Task>
+                                                renderer)
+        {
             var authCtx = ctx.LookupContextFor(system);
-            var shouldShowPrivate = authCtx == LookupContext.ByOwner && ctx.Match("all", "everyone", "private");
+            var shouldShowPrivate = authCtx == LookupContext.ByOwner && canShowPrivate;
 
-            var embedTitle = system.Name != null ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
+            var membersToShow = await _data.GetSystemMembers(system)
+                .Where(filter)
+                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase)
+                .ToListAsync();
 
-            var memberCountPublic = _data.GetSystemMemberCount(system, false);
-            var memberCountAll = _data.GetSystemMemberCount(system, true);
-            await Task.WhenAll(memberCountPublic, memberCountAll);
-
-            var memberCountDisplayed = shouldShowPrivate ? memberCountAll.Result : memberCountPublic.Result;
-
-            var members = _data.GetSystemMembers(system)
+            var membersToShowWithPrivacy = membersToShow
                 .Where(m => m.MemberPrivacy == PrivacyLevel.Public || shouldShowPrivate)
-                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase);
-            var anyMembersHidden = !shouldShowPrivate && memberCountPublic.Result != memberCountAll.Result;
-                
+                .ToList();
+            
+            var anyMembersHidden = !shouldShowPrivate && membersToShowWithPrivacy.Count != membersToShow.Count;
+
             await ctx.Paginate(
-                members,
-                memberCountDisplayed,
-                25,
+                membersToShowWithPrivacy.ToAsyncEnumerable(),
+                membersToShowWithPrivacy.Count,
+                membersPerPage,
                 embedTitle,
                 (eb, ms) =>
                 {
-                    eb.Description = string.Join("\n", ms.Select((m) =>
-                    {
-                        if (m.HasProxyTags)
-                        {
-                            var proxyTagsString = m.ProxyTagsString().SanitizeMentions();
-                            if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
-                                proxyTagsString = "tags too long, see member card";
-                            
-                            return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({proxyTagsString})*";
-                        }
-
-                        return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
-                    }));
-
-                    var footer = $"{memberCountDisplayed} total.";
+                    var footer = $"{membersToShowWithPrivacy.Count} total.";
                     if (anyMembersHidden && authCtx == LookupContext.ByOwner)
-                        footer += "Private members have been hidden. type \"pk;system list all\" to include them.";
+                        footer += " Private members have been hidden. Add \"all\" to the command to include them.";
                     eb.WithFooter(footer);
                     
-                    return Task.CompletedTask;
+                    return renderer(eb, ms);
                 });
         }
 
-        public async Task MemberLongList(Context ctx, PKSystem system) {
+        private Task ShortRenderer(EmbedBuilder eb, IEnumerable<PKMember> members)
+        {
+            eb.Description = string.Join("\n", members.Select((m) =>
+            {
+                if (m.HasProxyTags)
+                {
+                    var proxyTagsString = m.ProxyTagsString().SanitizeMentions();
+                    if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
+                        proxyTagsString = "tags too long, see member card";
+
+                    return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({proxyTagsString})*";
+                }
+
+                return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
+            }));
+            
+            return Task.CompletedTask;
+        }
+
+        private Task LongRenderer(EmbedBuilder eb, IEnumerable<PKMember> members)
+        {
+            foreach (var m in members)
+            {
+                var profile = $"**ID**: {m.Hid}";
+                if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
+                if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
+                if (m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
+                if (m.Description != null) profile += $"\n\n{m.Description}";
+                if (m.MemberPrivacy == PrivacyLevel.Private)
+                    profile += "\n*(this member is private)*";
+
+                eb.AddField(m.Name, profile.Truncate(1024));
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public async Task MemberList(Context ctx, PKSystem system)
+        {
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
+
+            var embedTitle = system.Name != null
+                ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`)"
+                : $"Members of `{system.Hid}`";
+
+            var shouldShowLongList = ctx.Match("f", "full", "big", "details", "long");
+            var canShowPrivate = ctx.Match("a", "all", "everyone", "private");
+            if (shouldShowLongList)
+                await RenderMemberList(ctx, system,  canShowPrivate, 5, embedTitle, _ => true, LongRenderer);
+            else 
+                await RenderMemberList(ctx, system,  canShowPrivate, 25, embedTitle, _ => true, ShortRenderer);
+        }
+
+        public async Task MemberFind(Context ctx, PKSystem system)
+        {
+            if (system == null) throw Errors.NoSystemError;
+            ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
+
+            var shouldShowLongList = ctx.Match("f", "full", "big", "details", "long");
+            var canShowPrivate = ctx.Match("a", "all", "everyone", "private");
+
+            var searchTerm = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must specify a search term.");
             
-            var authCtx = ctx.LookupContextFor(system);
-            var shouldShowPrivate = authCtx == LookupContext.ByOwner && ctx.Match("all", "everyone", "private");
+            var embedTitle = system.Name != null
+                ? $"Members of {system.Name.SanitizeMentions()} (`{system.Hid}`) matching **{searchTerm.SanitizeMentions()}**"
+                : $"Members of `{system.Hid}` matching **{searchTerm.SanitizeMentions()}**";
+
+            bool Filter(PKMember member) =>
+                member.Name.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ||
+                (member.DisplayName?.Contains(searchTerm, StringComparison.InvariantCultureIgnoreCase) ?? false);
             
-            var embedTitle = system.Name != null ? $"Members of {system.Name} (`{system.Hid}`)" : $"Members of `{system.Hid}`";
-
-            var memberCountPublic = _data.GetSystemMemberCount(system, false);
-            var memberCountAll = _data.GetSystemMemberCount(system, true);
-            await Task.WhenAll(memberCountPublic, memberCountAll);
-
-            var memberCountDisplayed = shouldShowPrivate ? memberCountAll.Result : memberCountPublic.Result;
-
-            var members = _data.GetSystemMembers(system)
-                .Where(m => m.MemberPrivacy == PrivacyLevel.Public || shouldShowPrivate)
-                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase);
-            var anyMembersHidden = !shouldShowPrivate && memberCountPublic.Result != memberCountAll.Result;
-            
-            await ctx.Paginate(
-                members,
-                memberCountDisplayed,
-                5,
-                embedTitle,
-                (eb, ms) => {
-                    foreach (var m in ms) {
-                        var profile = $"**ID**: {m.Hid}";
-                        if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
-                        if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
-                        if (m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
-                        if (m.Description != null) profile += $"\n\n{m.Description}";
-                        if (m.MemberPrivacy == PrivacyLevel.Private)
-                            profile += "*(this member is private)*";
-                        
-                        eb.AddField(m.Name, profile.Truncate(1024));
-                    }
-
-                    var footer = $"{memberCountDisplayed} total.";
-                    if (anyMembersHidden && authCtx == LookupContext.ByOwner)
-                        footer += " Private members have been hidden. type \"pk;system list full all\" to include them.";
-                    eb.WithFooter(footer);
-                    return Task.CompletedTask;
-                }
-            );
+            if (shouldShowLongList)
+                await RenderMemberList(ctx, system,  canShowPrivate, 5, embedTitle, Filter, LongRenderer);
+            else 
+                await RenderMemberList(ctx, system,  canShowPrivate, 25, embedTitle, Filter, ShortRenderer);
         }
     }
 }

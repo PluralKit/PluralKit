@@ -1,4 +1,4 @@
-namespace PluralKit.Bot.CommandSystem
+namespace PluralKit.Bot
 {
     public class Command
     {

@@ -1,16 +1,17 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+
 using Dapper;
 
 using Npgsql;
 
 using Serilog;
 
-namespace PluralKit {
+namespace PluralKit.Core {
     public class SchemaService
     {
-        private const int TargetSchemaVersion = 3;
+        private const int TargetSchemaVersion = 5;
 
         private DbConnectionFactory _conn;
         private ILogger _logger;

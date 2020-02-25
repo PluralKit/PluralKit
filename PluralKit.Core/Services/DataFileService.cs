@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
 using Newtonsoft.Json;
+
 using NodaTime;
 using NodaTime.Text;
-using PluralKit.Core;
+
 using Serilog;
 
-namespace PluralKit.Bot
+namespace PluralKit.Core
 {
     public class DataFileService
     {
@@ -34,13 +37,13 @@ namespace PluralKit.Bot
                 Name = m.Name,
                 DisplayName = m.DisplayName,
                 Description = m.Description,
-                Birthday = m.Birthday != null ? Formats.DateExportFormat.Format(m.Birthday.Value) : null,
+                Birthday = m.Birthday != null ? DateTimeFormats.DateExportFormat.Format(m.Birthday.Value) : null,
                 Pronouns = m.Pronouns,
                 Color = m.Color,
                 AvatarUrl = m.AvatarUrl,
                 ProxyTags = m.ProxyTags,
                 KeepProxy = m.KeepProxy,
-                Created = Formats.TimestampExportFormat.Format(m.Created),
+                Created = DateTimeFormats.TimestampExportFormat.Format(m.Created),
                 MessageCount = messageCounts.Where(x => x.Member == m.Id).Select(x => x.MessageCount).FirstOrDefault()
             })) members.Add(member);
 
@@ -49,7 +52,7 @@ namespace PluralKit.Bot
             var switchList = await _data.GetPeriodFronters(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
             switches.AddRange(switchList.Select(x => new DataFileSwitch
             {
-                Timestamp = Formats.TimestampExportFormat.Format(x.TimespanStart),
+                Timestamp = DateTimeFormats.TimestampExportFormat.Format(x.TimespanStart),
                 Members = x.Members.Select(m => m.Hid).ToList() // Look up member's HID using the member export from above
             }));
 
@@ -63,7 +66,7 @@ namespace PluralKit.Bot
                 TimeZone = system.UiTz,
                 Members = members,
                 Switches = switches,
-                Created = Formats.TimestampExportFormat.Format(system.Created),
+                Created = DateTimeFormats.TimestampExportFormat.Format(system.Created),
                 LinkedAccounts = (await _data.GetSystemAccounts(system)).ToList()
             };
         }
@@ -170,7 +173,7 @@ namespace PluralKit.Bot
 
                 if (dataMember.Birthday != null)
                 {
-                    var birthdayParse = Formats.DateExportFormat.Parse(dataMember.Birthday);
+                    var birthdayParse = DateTimeFormats.DateExportFormat.Parse(dataMember.Birthday);
                     member.Birthday = birthdayParse.Success ? (LocalDate?)birthdayParse.Value : null;
                 }
 
@@ -224,7 +227,18 @@ namespace PluralKit.Bot
 
         private bool TimeZoneValid => TimeZone == null || DateTimeZoneProviders.Tzdb.GetZoneOrNull(TimeZone) != null;
 
-        [JsonIgnore] public bool Valid => TimeZoneValid && Members != null && Members.All(m => m.Valid);
+        [JsonIgnore] public bool Valid =>
+            TimeZoneValid &&
+            Members != null &&
+            Members.Count <= Limits.MaxMemberCount &&
+            Members.All(m => m.Valid) &&
+            Switches != null &&
+            Switches.Count < 10000 &&
+            Switches.All(s => s.Valid) &&
+            !Name.IsLongerThan(Limits.MaxSystemNameLength) &&
+            !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
+            !Tag.IsLongerThan(Limits.MaxSystemTagLength) &&
+            !AvatarUrl.IsLongerThan(1000);
     }
 
     public struct DataFileMember
@@ -249,13 +263,31 @@ namespace PluralKit.Bot
         [JsonProperty("message_count")] public int MessageCount;
         [JsonProperty("created")] public string Created;
 
-        [JsonIgnore] public bool Valid => Name != null;
+        [JsonIgnore] public bool Valid =>
+            Name != null &&
+            !Name.IsLongerThan(Limits.MaxMemberNameLength) &&
+            !DisplayName.IsLongerThan(Limits.MaxMemberNameLength) &&
+            !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
+            !Pronouns.IsLongerThan(Limits.MaxPronounsLength) &&
+            (Color == null || Regex.IsMatch(Color, "[0-9a-f]{6}")) &&
+            (Birthday == null || DateTimeFormats.DateExportFormat.Parse(Birthday).Success) &&
+            
+            // Sanity checks
+            !AvatarUrl.IsLongerThan(1000) &&
+            ProxyTags.Count < 100 &&
+            ProxyTags.All(t => !t.ProxyString.IsLongerThan(100)) &&
+            !Prefix.IsLongerThan(100) && !Suffix.IsLongerThan(100);
     }
 
     public struct DataFileSwitch
     {
         [JsonProperty("timestamp")] public string Timestamp;
         [JsonProperty("members")] public ICollection<string> Members;
+
+        [JsonIgnore] public bool Valid =>
+            Members != null &&
+            Members.Count < 100 &&
+            DateTimeFormats.TimestampExportFormat.Parse(Timestamp).Success;
     }
 
     public struct TupperboxConversionResult

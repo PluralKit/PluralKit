@@ -1,11 +1,15 @@
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using NodaTime;
 
-namespace PluralKit.API.Controllers
+using PluralKit.Core;
+
+namespace PluralKit.API
 {
     public struct MessageReturn
     {

@@ -217,6 +217,14 @@ To preview the current avatar (if one is set), use the command with no arguments
     
 To clear your avatar, use the subcommand `avatar clear` (eg. `pk;member John avatar clear`).
 
+### Member server avatar
+You can also set an avatar for a specific server. This will "override" the normal avatar, and will be used when proxying messages and looking up member cards in that server. To do so, use the `pk;member serveravatar` command, in the same way as the normal avatar command above:
+
+    pk;member John serveravatar
+    pk;member John serveravatar http://placebeard.it/512.jpg
+    pk;member "Craig Johnson" serveravatar   (with an attached image)
+    pk;member John serveravatar clear
+
 ### Member pronouns
 If you want to list a member's preferred pronouns, you can use the pronouns field on a member profile. This is a free text field, so you can put whatever you'd like in there (with a 100 character limit), like so:
 
@@ -459,6 +467,39 @@ This requires you to have the *Manage Server* permission on the server. For exam
     pk;log #proxy-log
     
 To disable logging, use the `pk;log` command with no channel name.
+
+### Channel blacklisting
+It's possible to blacklist a channel from being used for proxying. To do so, use the `pk;blacklist` command, for examplle:
+
+    pk;blacklist add #admin-channel #mod-channel #welcome
+    pk;blacklist add all
+    pk;blacklist remove #general-two
+    pk;blacklist remove all
+    
+This requires you to have the *Manage Server* permission on the server. 
+
+### Log cleanup
+Many servers use *logger bots* for keeping track of edited and deleted messages, nickname changes, and other server events. Because
+PluralKit deletes messages as part of proxying, this can often clutter up these logs. To remedy this, PluralKit can delete those
+log messages from the logger bots. To enable this, use the following command:
+
+    pk;logclean on
+    
+This requires you to have the *Manage Server* permission on the server. At the moment, log cleanup works with the following bots:
+- Auttaja 
+- blargbot
+- Carl-bot
+- Circle
+- Dyno
+- GenericBot
+- Logger (#6088 and #6278)
+- Mantaro
+- Pancake
+- UnbelievaBoat
+
+If you want support for another logging bot, [let me know on the support server](https://discord.gg/PczBt78).
+
+Another alternative is to use the **Gabby Gums** logging bot - an invite link for which can be found [on Gabby Gums' support server](https://discord.gg/Xwhk89T).
 
 ## Importing and exporting data
 If you're a user of another proxy bot (eg. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands.

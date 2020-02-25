@@ -1,14 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 using Discord;
 
 using NodaTime;
 using NodaTime.TimeZones;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class Switch
     {
@@ -79,7 +80,7 @@ namespace PluralKit.Bot.Commands
             var timeToMove = ctx.RemainderOrNull() ?? throw new PKSyntaxError("Must pass a date or time to move the switch to.");
             var tz = TzdbDateTimeZoneSource.Default.ForId(ctx.System.UiTz ?? "UTC");
             
-            var result = PluralKit.Utils.ParseDateTime(timeToMove, true, tz);
+            var result = DateUtils.ParseDateTime(timeToMove, true, tz);
             if (result == null) throw Errors.InvalidDateTime(timeToMove);
             
             var time = result.Value;
@@ -102,10 +103,10 @@ namespace PluralKit.Bot.Commands
             // But, we do a prompt to confirm.
             var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
-            var lastSwitchTimeStr = Formats.ZonedDateTimeFormat.Format(lastTwoSwitches[0].Timestamp.InZone(ctx.System.Zone));
-            var lastSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
-            var newSwitchTimeStr = Formats.ZonedDateTimeFormat.Format(time);
-            var newSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - time.ToInstant());
+            var lastSwitchTimeStr = DateTimeFormats.ZonedDateTimeFormat.Format(lastTwoSwitches[0].Timestamp.InZone(ctx.System.Zone));
+            var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
+            var newSwitchTimeStr = DateTimeFormats.ZonedDateTimeFormat.Format(time);
+            var newSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - time.ToInstant());
             
             // yeet
             var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr.SanitizeMentions()}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
@@ -137,7 +138,7 @@ namespace PluralKit.Bot.Commands
 
             var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
-            var lastSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
+            var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
 
             IUserMessage msg;
             if (lastTwoSwitches.Count == 1)
@@ -149,7 +150,7 @@ namespace PluralKit.Bot.Commands
             {
                 var secondSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[1]);
                 var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.Name).ToListAsync());
-                var secondSwitchDeltaStr = Formats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
+                var secondSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
                 msg = await ctx.Reply(
                     $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.SanitizeMentions()} ({secondSwitchDeltaStr} ago). Is this okay?");
             }

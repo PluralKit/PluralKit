@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
 using App.Metrics;
 
 using Discord;
@@ -11,10 +12,9 @@ using Humanizer;
 
 using NodaTime;
 
-using PluralKit.Bot.CommandSystem;
 using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands {
+namespace PluralKit.Bot {
     public class Misc
     {
         private BotConfig _botConfig;
@@ -79,7 +79,7 @@ namespace PluralKit.Bot.Commands {
                 .AddField("Messages proxied", $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)", true)
                 .AddField("Commands executed", $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)", true)
                 .AddField("Current shard", $"Shard #{shardId} (of {shardTotal} total, {shardUpTotal} are up)", true)
-                .AddField("Shard uptime", $"{Formats.DurationFormat.Format(shardUptime)} ({shardInfo.DisconnectionCount} disconnections)", true)
+                .AddField("Shard uptime", $"{DateTimeFormats.DurationFormat.Format(shardUptime)} ({shardInfo.DisconnectionCount} disconnections)", true)
                 .AddField("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true)
                 .AddField("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true)
                 .AddField("Latency", $"API: {(msg.Timestamp - ctx.Message.Timestamp).TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency} ms", true)
@@ -128,7 +128,7 @@ namespace PluralKit.Bot.Commands {
             foreach (var channel in await guild.GetTextChannelsAsync())
             {
                 // TODO: do we need to hide channels here to prevent info-leaking?
-                var perms = await channel.PermissionsIn();
+                var perms = channel.PermissionsIn();
 
                 // We use a bitfield so we can set individual permission bits in the loop
                 ulong missingPermissionField = 0;

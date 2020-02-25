@@ -8,6 +8,8 @@ using Discord.WebSocket;
 using Humanizer;
 using NodaTime;
 
+using PluralKit.Core;
+
 namespace PluralKit.Bot {
     public class EmbedService
     {
@@ -31,7 +33,7 @@ namespace PluralKit.Bot {
                 .WithColor(Color.Blue)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
-                .WithFooter($"System ID: {system.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
+                .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
  
             var latestSwitch = await _data.GetLatestSwitch(system);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
@@ -54,7 +56,7 @@ namespace PluralKit.Bot {
             }
 
             if (system.Description != null && system.DescriptionPrivacy.CanAccess(ctx))
-                eb.AddField("Description", system.Description.Truncate(1024), false);
+                eb.AddField("Description", system.Description.NormalizeLineEndSpacing().Truncate(1024), false);
 
             return eb.Build();
         }
@@ -64,7 +66,7 @@ namespace PluralKit.Bot {
             var timestamp = SnowflakeUtils.FromSnowflake(messageId);
             return new EmbedBuilder()
                 .WithAuthor($"#{channel.Name}: {member.Name}", member.AvatarUrl)
-                .WithDescription(content)
+                .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
                 .WithTimestamp(timestamp)
                 .Build();
@@ -90,30 +92,37 @@ namespace PluralKit.Bot {
 
             var messageCount = await _data.GetMemberMessageCount(member);
 
-            string guildDisplayName = null;
-            if (guild != null)
-                guildDisplayName = (await _data.GetMemberGuildSettings(member, guild.Id)).DisplayName;
+            var guildSettings = guild != null ? await _data.GetMemberGuildSettings(member, guild.Id) : null;
+            var guildDisplayName = guildSettings?.DisplayName;
+            var avatar = guildSettings?.AvatarUrl ?? member.AvatarUrl;
 
             var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
 
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
-                .WithAuthor(name, member.AvatarUrl)
+                .WithAuthor(name, avatar)
                 .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : Color.Default)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {Formats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
-            if (member.MemberPrivacy == PrivacyLevel.Private) eb.WithDescription("*(this member is private)*");
+            var description = "";
+            if (member.MemberPrivacy == PrivacyLevel.Private) description += "*(this member is private)*\n";
+            if (guildSettings?.AvatarUrl != null)
+                if (member.AvatarUrl != null) 
+                    description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl}) to see the global avatar)*\n";
+                else
+                    description += "*(this member has a server-specific avatar set)*\n";
+            if (description != "") eb.WithDescription(description);
 
-            if (member.AvatarUrl != null) eb.WithThumbnailUrl(member.AvatarUrl);
+            if (avatar != null) eb.WithThumbnailUrl(avatar);
 
-            if (member.DisplayName != null) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
+            if (!member.DisplayName.EmptyOrNull()) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
             if (member.Birthday != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Birthdate", member.BirthdayString, true);
-            if (member.Pronouns != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
+            if (!member.Pronouns.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
             if (messageCount > 0 && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Message Count", messageCount, true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
-            if (member.Color != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
-            if (member.Description != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description, false);
+            if (!member.Color.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
+            if (!member.Description.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
 
             return eb.Build();
         }
@@ -125,7 +134,7 @@ namespace PluralKit.Bot {
             return new EmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
                 .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
-                .AddField("Since", $"{Formats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({Formats.DurationFormat.Format(timeSinceSwitch)} ago)")
+                .AddField("Since", $"{DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({DateTimeFormats.DurationFormat.Format(timeSinceSwitch)} ago)")
                 .Build();
         }
 
@@ -161,7 +170,7 @@ namespace PluralKit.Bot {
 
             var eb = new EmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
-                .WithDescription(serverMsg?.Content ?? "*(message contents deleted or inaccessible)*")
+                .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
@@ -179,7 +188,7 @@ namespace PluralKit.Bot {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new EmbedBuilder()
                 .WithColor(Color.Blue)
-                .WithFooter($"Since {Formats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({Formats.DurationFormat.Format(actualPeriod)} ago)");
+                .WithFooter($"Since {DateTimeFormats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({DateTimeFormats.DurationFormat.Format(actualPeriod)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
@@ -193,13 +202,13 @@ namespace PluralKit.Bot {
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / actualPeriod;
-                eb.AddField(pair.Key?.Name ?? "*(no fronter)*", $"{frac*100:F0}% ({Formats.DurationFormat.Format(pair.Value)})");
+                eb.AddField(pair.Key?.Name ?? "*(no fronter)*", $"{frac*100:F0}% ({DateTimeFormats.DurationFormat.Format(pair.Value)})");
             }
 
             if (membersOrdered.Count > maxEntriesToDisplay)
             {
                 eb.AddField("(others)",
-                    Formats.DurationFormat.Format(membersOrdered.Skip(maxEntriesToDisplay)
+                    DateTimeFormats.DurationFormat.Format(membersOrdered.Skip(maxEntriesToDisplay)
                         .Aggregate(Duration.Zero, (prod, next) => prod + next.Value)), true);
             }
 

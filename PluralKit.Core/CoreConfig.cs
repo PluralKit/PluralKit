@@ -1,4 +1,4 @@
-namespace PluralKit
+namespace PluralKit.Core
 {
     public class CoreConfig
     {

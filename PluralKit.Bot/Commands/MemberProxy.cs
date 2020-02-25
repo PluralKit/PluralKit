@@ -1,10 +1,9 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
-namespace PluralKit.Bot.Commands
+namespace PluralKit.Bot
 {
     public class MemberProxy
     {
@@ -45,7 +44,7 @@ namespace PluralKit.Bot.Commands
             
             // "Sub"command: no arguments clearing
             // Also matches the pseudo-subcommand "text" which is equivalent to empty proxy tags on both sides.
-            if (!ctx.HasNext() || ctx.Match("clear", "purge", "clean", "removeall"))
+            if (!ctx.HasNext(skipFlags: false) || ctx.Match("clear", "purge", "clean", "removeall"))
             {
                 // If we already have multiple tags, this would clear everything, so prompt that
                 if (target.ProxyTags.Count > 1)
@@ -64,9 +63,9 @@ namespace PluralKit.Bot.Commands
             // Subcommand: "add"
             else if (ctx.Match("add", "append"))
             {
-                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
+                if (!ctx.HasNext(skipFlags: false)) throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
                 
-                var tagToAdd = ParseProxyTags(ctx.RemainderOrNull());
+                var tagToAdd = ParseProxyTags(ctx.RemainderOrNull(skipFlags: false));
                 if (tagToAdd.IsEmpty) throw Errors.EmptyProxyTags(target);
                 if (target.ProxyTags.Contains(tagToAdd))
                     throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
@@ -84,9 +83,9 @@ namespace PluralKit.Bot.Commands
             // Subcommand: "remove"
             else if (ctx.Match("remove", "delete"))
             {
-                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass a proxy tag to remove (eg. `[text]` or `J:text`).");
+                if (!ctx.HasNext(skipFlags: false)) throw new PKSyntaxError("You must pass a proxy tag to remove (eg. `[text]` or `J:text`).");
 
-                var tagToRemove = ParseProxyTags(ctx.RemainderOrNull());
+                var tagToRemove = ParseProxyTags(ctx.RemainderOrNull(skipFlags: false));
                 if (tagToRemove.IsEmpty) throw Errors.EmptyProxyTags(target);
                 if (!target.ProxyTags.Contains(tagToRemove))
                     throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
@@ -101,9 +100,9 @@ namespace PluralKit.Bot.Commands
             // Subcommand: bare proxy tag given
             else
             {
-                if (!ctx.HasNext()) throw new PKSyntaxError("You must pass an example proxy to set (eg. `[text]` or `J:text`).");
+                if (!ctx.HasNext(skipFlags: false)) throw new PKSyntaxError("You must pass an example proxy to set (eg. `[text]` or `J:text`).");
 
-                var requestedTag = ParseProxyTags(ctx.RemainderOrNull());
+                var requestedTag = ParseProxyTags(ctx.RemainderOrNull(skipFlags: false));
                 if (requestedTag.IsEmpty) throw Errors.EmptyProxyTags(target);
 
                 // This is mostly a legacy command, so it's gonna warn if there's

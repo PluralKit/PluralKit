@@ -7,7 +7,7 @@ using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 
-using PluralKit.Bot.CommandSystem;
+using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
@@ -82,7 +82,7 @@ namespace PluralKit.Bot {
 
             try
             {
-                var msg = await ctx.Channel.SendMessageAsync(embed: await MakeEmbedForPage(0));
+                var msg = await ctx.Reply(embed: await MakeEmbedForPage(0));
                 if (pageCount == 1) return; // If we only have one page, don't bother with the reaction/pagination logic, lol
                 IEmote[] botEmojis = { new Emoji("\u23EA"), new Emoji("\u2B05"), new Emoji("\u27A1"), new Emoji("\u23E9"), new Emoji(Emojis.Error) };
                 await msg.AddReactionsAsync(botEmojis);
@@ -147,7 +147,7 @@ namespace PluralKit.Bot {
                 var pageCount = (items.Count-1) / pageSize + 1;
                 
                 // Send the original message
-                var msg = await ctx.Channel.SendMessageAsync($"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
+                var msg = await ctx.Reply($"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
                 
                 // Add back/forward reactions and the actual indicator emojis
                 async Task AddEmojis()
@@ -186,7 +186,7 @@ namespace PluralKit.Bot {
             }
             else
             {
-                var msg = await ctx.Channel.SendMessageAsync($"{description}\n{MakeOptionList(0)}");
+                var msg = await ctx.Reply($"{description}\n{MakeOptionList(0)}");
 
                 // Add the relevant reactions (we don't care too much about awaiting)
                 async Task AddEmojis()
