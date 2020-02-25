@@ -157,7 +157,7 @@ namespace PluralKit.Core
                 member.Name = dataMember.Name;
                 if (dataMember.DisplayName != null) member.DisplayName = dataMember.DisplayName;
                 if (dataMember.Description != null) member.Description = dataMember.Description;
-                if (dataMember.Color != null) member.Color = dataMember.Color;
+                if (dataMember.Color != null) member.Color = dataMember.Color.ToLower();
                 if (dataMember.AvatarUrl != null) member.AvatarUrl = dataMember.AvatarUrl;
                 if (dataMember.Prefix != null || dataMember.Suffix != null)
                 {

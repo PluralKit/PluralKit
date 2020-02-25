@@ -87,7 +87,7 @@ namespace PluralKit.Bot
                 if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
             }
 
-            target.Color = color;
+            target.Color = color?.ToLower();
             await _data.SaveMember(target);
 
             await ctx.Reply($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");

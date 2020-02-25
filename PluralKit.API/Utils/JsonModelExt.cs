@@ -77,7 +77,7 @@ namespace PluralKit.API
                 throw new JsonModelParseError("Member name can not be set to null.");
             
             if (o.ContainsKey("name")) member.Name = o.Value<string>("name").BoundsCheckField(Limits.MaxMemberNameLength, "Member name");
-            if (o.ContainsKey("color")) member.Color = o.Value<string>("color").NullIfEmpty();
+            if (o.ContainsKey("color")) member.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
             if (o.ContainsKey("display_name")) member.DisplayName = o.Value<string>("display_name").NullIfEmpty().BoundsCheckField(Limits.MaxMemberNameLength, "Member display name");
             if (o.ContainsKey("birthday"))
             {
