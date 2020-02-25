@@ -269,7 +269,7 @@ namespace PluralKit.Core
             !DisplayName.IsLongerThan(Limits.MaxMemberNameLength) &&
             !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
             !Pronouns.IsLongerThan(Limits.MaxPronounsLength) &&
-            (Color == null || Regex.IsMatch(Color, "[0-9a-f]{6}")) &&
+            (Color == null || Regex.IsMatch(Color, "[0-9a-fA-F]{6}")) &&
             (Birthday == null || DateTimeFormats.DateExportFormat.Parse(Birthday).Success) &&
             
             // Sanity checks
