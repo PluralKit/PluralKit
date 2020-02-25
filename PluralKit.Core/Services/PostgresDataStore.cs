@@ -61,15 +61,10 @@ namespace PluralKit.Core {
         }
 
         public async Task<PKSystem> CreateSystem(string systemName = null) {
-            string hid;
-            do
-            {
-                hid = StringUtils.GenerateHid();
-            } while (await GetSystemByHid(hid) != null);
 
             PKSystem system;
             using (var conn = await _conn.Obtain())
-                system = await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (@Hid, @Name) returning *", new { Hid = hid, Name = systemName });
+                system = await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (generatesystemhid(), @Name) returning *", new {Name = systemName });
 
             _logger.Information("Created system {System}", system.Id);
             // New system has no accounts, therefore nothing gets cached, therefore no need to invalidate caches right here
@@ -155,16 +150,9 @@ namespace PluralKit.Core {
         }
 
         public async Task<PKMember> CreateMember(PKSystem system, string name) {
-            string hid;
-            do
-            {
-                hid = StringUtils.GenerateHid();
-            } while (await GetMemberByHid(hid) != null);
-
             PKMember member;
             using (var conn = await _conn.Obtain())
-                member = await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (@Hid, @SystemId, @Name) returning *", new {
-                    Hid = hid,
+                member = await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (generatememberhid(), @SystemId, @Name) returning *", new {
                     SystemID = system.Id,
                     Name = name
                 });
@@ -182,17 +170,8 @@ namespace PluralKit.Core {
                 var results = new Dictionary<string, PKMember>();
                 foreach (var name in names)
                 {
-                    string hid;
-                    do
+                    var member = await conn.QuerySingleAsync<PKMember>("INSERT INTO members (generatememberhid(), system, name) VALUES (@Hid, @SystemId, @Name) RETURNING *", new
                     {
-                        hid = await conn.QuerySingleOrDefaultAsync<string>("SELECT @Hid WHERE NOT EXISTS (SELECT id FROM members WHERE hid = @Hid LIMIT 1)", new
-                        {
-                            Hid = StringUtils.GenerateHid()
-                        });
-                    } while (hid == null);
-                    var member = await conn.QuerySingleAsync<PKMember>("INSERT INTO members (hid, system, name) VALUES (@Hid, @SystemId, @Name) RETURNING *", new
-                    {
-                        Hid = hid,
                         SystemID = system.Id,
                         Name = name.Value
                     });
