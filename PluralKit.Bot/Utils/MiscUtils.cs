@@ -20,6 +20,9 @@ namespace PluralKit.Bot
             // Discord server errors are *not our problem*
             if (e is HttpException he && ((int) he.HttpCode) >= 500) return false;
             
+            // Webhook server errors are also *not our problem*
+            if (e is WebhookExecutionErrorOnDiscordsEnd) return false;
+            
             // Socket errors are *not our problem*
             if (e is SocketException) return false;
             

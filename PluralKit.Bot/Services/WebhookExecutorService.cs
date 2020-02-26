@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,9 @@ using Serilog;
 
 namespace PluralKit.Bot
 {
+    public class WebhookExecutionErrorOnDiscordsEnd: Exception {
+    }
+    
     public class WebhookExecutorService
     {
         private WebhookCacheService _webhookCache;
@@ -73,7 +77,7 @@ namespace PluralKit.Bot
             var responseString = await response.Content.ReadAsStringAsync();
             if (responseString.StartsWith("<"))
                 // if the response starts with a < it's probably a CloudFlare error or similar, so just force-break
-                response.EnsureSuccessStatusCode();
+                throw new WebhookExecutionErrorOnDiscordsEnd();
 
             var responseJson = JsonConvert.DeserializeObject<JObject>(responseString);
             if (responseJson.ContainsKey("code"))
@@ -91,6 +95,11 @@ namespace PluralKit.Bot
                     throw Errors.AttachmentTooLarge; // should be caught by the check above but just makin' sure
 
                 // TODO: look into what this actually throws, and if this is the correct handling
+                if ((int) response.StatusCode >= 500)
+                    // If it's a 5xx error code, this is on Discord's end, so we throw an execution exception
+                    throw new WebhookExecutionErrorOnDiscordsEnd();
+                
+                // Otherwise, this is going to throw on 4xx, and bubble up to our Sentry handler
                 response.EnsureSuccessStatusCode();
             }
             
