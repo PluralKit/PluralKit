@@ -168,7 +168,14 @@ namespace PluralKit.Bot
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
             else if (ctx.Match("off", "disabled", "false", "no")) newValue = false;
             else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
-            else newValue = !gs.ProxyEnabled;
+            else
+            {
+                if (gs.ProxyEnabled)
+                    await ctx.Reply("Proxying in this server is currently **enabled** for your system. To disable it, type `pk;system proxy off`.");
+                else
+                    await ctx.Reply("Proxying in this server is currently **disabled** for your system. To enable it, type `pk;system proxy on`.");
+                return;
+            }
 
             gs.ProxyEnabled = newValue;
             await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, gs);
