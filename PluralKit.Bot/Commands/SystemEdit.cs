@@ -38,7 +38,7 @@ namespace PluralKit.Bot
         public async Task Description(Context ctx) {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear"))
+            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
                 ctx.System.Description = null;
                 await _data.SaveSystem(ctx.System);
@@ -73,7 +73,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear"))
+            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
                 ctx.System.Tag = null;
                 await _data.SaveSystem(ctx.System);
@@ -190,7 +190,7 @@ namespace PluralKit.Bot
         {
             if (ctx.System == null) throw Errors.NoSystemError;
 
-            if (ctx.MatchFlag("c", "clear"))
+            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
                 ctx.System.UiTz = "UTC";
                 await _data.SaveSystem(ctx.System);
