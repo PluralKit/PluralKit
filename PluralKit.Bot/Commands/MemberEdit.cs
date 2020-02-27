@@ -1,6 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using Discord;
+
 using NodaTime;
 
 using PluralKit.Core;
@@ -50,16 +52,42 @@ namespace PluralKit.Bot
         }
         
         public async Task Description(Context ctx, PKMember target) {
+            var description = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
+
+            var lookupContext = ctx.LookupContextFor(target.System);
+            if (description == null)
+            {
+                if (!target.MemberPrivacy.CanAccess(lookupContext))
+                    throw Errors.LookupNotAllowed;
+                if (target.Description == null)
+                    if (lookupContext == LookupContext.ByOwner)
+                        await ctx.Reply("This member does not have a description set. To set one, type `pk;s description <description>`.");
+                    else
+                        await ctx.Reply("This member does not have a description set.");
+                else if (ctx.MatchFlag("r", "raw"))
+                    await ctx.Reply($"```\n{target.Description}\n```");
+                else
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .WithTitle("Member description")
+                        .WithDescription(target.Description)
+                        .WithFooter($"To print the description with formatting, type `pk;m {target.Hid} description -raw`." 
+                                    + (lookupContext == LookupContext.ByOwner ? $" To clear it, type `pk;m {target.Hid} description -clear`." : ""))
+                        .Build());
+
+                return;
+            }
+
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            var description = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
-            if (description.IsLongerThan(Limits.MaxDescriptionLength)) throw Errors.DescriptionTooLongError(description.Length);
-
-            target.Description = description;
+            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+                target.Description = null;
+            else if (description.IsLongerThan(Limits.MaxDescriptionLength))
+                throw Errors.DescriptionTooLongError(description.Length);
+            else target.Description = description;
+                    
             await _data.SaveMember(target);
-
-            await ctx.Reply($"{Emojis.Success} Member description {(description == null ? "cleared" : "changed")}.");
+            await ctx.Reply($"{Emojis.Success} Member description {(target.Description == null ? "cleared" : "changed")}.");
         }
         
         public async Task Pronouns(Context ctx, PKMember target) {

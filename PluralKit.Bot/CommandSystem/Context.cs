@@ -286,6 +286,9 @@ namespace PluralKit.Bot
 
         public LookupContext LookupContextFor(PKSystem target) => 
             System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        
+        public LookupContext LookupContextFor(int systemId) => 
+            System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
 
         public Context CheckSystemPrivacy(PKSystem target, PrivacyLevel level)
         {
