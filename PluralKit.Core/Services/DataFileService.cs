@@ -157,7 +157,7 @@ namespace PluralKit.Core
                 member.Name = dataMember.Name;
                 if (dataMember.DisplayName != null) member.DisplayName = dataMember.DisplayName;
                 if (dataMember.Description != null) member.Description = dataMember.Description;
-                if (dataMember.Color != null) member.Color = dataMember.Color;
+                if (dataMember.Color != null) member.Color = dataMember.Color.ToLower();
                 if (dataMember.AvatarUrl != null) member.AvatarUrl = dataMember.AvatarUrl;
                 if (dataMember.Prefix != null || dataMember.Suffix != null)
                 {
@@ -269,7 +269,7 @@ namespace PluralKit.Core
             !DisplayName.IsLongerThan(Limits.MaxMemberNameLength) &&
             !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
             !Pronouns.IsLongerThan(Limits.MaxPronounsLength) &&
-            (Color == null || Regex.IsMatch(Color, "[0-9a-f]{6}")) &&
+            (Color == null || Regex.IsMatch(Color, "[0-9a-fA-F]{6}")) &&
             (Birthday == null || DateTimeFormats.DateExportFormat.Parse(Birthday).Success) &&
             
             // Sanity checks
