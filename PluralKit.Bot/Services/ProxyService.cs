@@ -273,15 +273,23 @@ namespace PluralKit.Bot
                                                        ISocketMessageChannel channel, ulong userWhoReacted,
                                                        IEmote reactedEmote)
         {
-
+            // Bail in DMs
+            if (!(channel is SocketGuildChannel gc)) return;
+            
             // Find the message in the DB
             var msg = await _data.GetMessage(message.Id);
             if (msg == null) return;
-
+            
+            // Check if the pinger has permission to ping in this channel
+            var guildUser = await _client.Rest.GetGuildUserAsync(gc.Guild.Id, userWhoReacted);
+            var permissions = guildUser.GetPermissions(gc);
+            
             var realMessage = await message.GetOrDownloadAsync();
-            var embed = new EmbedBuilder()
-                .WithDescription($"[Jump to pinged message]({realMessage.GetJumpUrl()})");
 
+            // If they don't have Send Messages permission, bail (since PK shouldn't send anything on their behalf)
+            if (!permissions.SendMessages || !permissions.ViewChannel) return;
+
+            var embed = new EmbedBuilder().WithDescription($"[Jump to pinged message]({realMessage.GetJumpUrl()})");
             await channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{userWhoReacted}>.", embed: embed.Build());
             
             // Finally remove the original reaction (if we can)
