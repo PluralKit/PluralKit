@@ -20,6 +20,21 @@ namespace PluralKit.Bot
         {
             var guildData = ctx.Guild != null ? await _data.GetMemberGuildSettings(target, ctx.Guild.Id) : null;
 
+            if (ctx.Match("clear", "remove", "reset") || ctx.MatchFlag("c", "clear"))
+            {
+                if (ctx.System == null) throw Errors.NoSystemError;
+                if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+                
+                target.AvatarUrl = null;
+                await _data.SaveMember(target);
+                
+                if (guildData?.AvatarUrl != null)
+                    await ctx.Reply($"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Hid} serveravatar clear` if you wish to clear that too.");
+                else 
+                    await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
+                return;
+            }
+            
             if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
             {
                 if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
@@ -28,7 +43,7 @@ namespace PluralKit.Bot
                         .WithTitle($"{target.Name.SanitizeMentions()}'s avatar")
                         .WithImageUrl(target.AvatarUrl);
                     if (target.System == ctx.System?.Id)
-                        eb.WithDescription($"To clear, use `pk;member {target.Hid} avatar clear`.");
+                        eb.WithDescription($"To clear, use `pk;member {target.Hid} avatar -clear`.");
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
@@ -44,16 +59,6 @@ namespace PluralKit.Bot
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            if (ctx.Match("clear", "remove", "reset"))
-            {
-                target.AvatarUrl = null;
-                await _data.SaveMember(target);
-                
-                if (guildData?.AvatarUrl != null)
-                    await ctx.Reply($"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Hid} serveravatar clear` if you wish to clear that too.");
-                else 
-                    await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
-            }
             else if (await ctx.MatchUser() is IUser user)
             {
                 if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
@@ -90,6 +95,20 @@ namespace PluralKit.Bot
             ctx.CheckGuildContext();
             var guildData = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
             
+            if (ctx.Match("clear", "remove", "reset") || ctx.MatchFlag("c", "clear"))
+            {
+                if (ctx.System == null) throw Errors.NoSystemError;
+                if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+                
+                guildData.AvatarUrl = null;
+                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
+                
+                if (target.AvatarUrl != null)
+                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member will now use the global avatar in this server (**{ctx.Guild.Name}**).");
+                else
+                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member now has no avatar.");
+            }
+            
             if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
             {
                 if ((guildData.AvatarUrl?.Trim() ?? "").Length > 0)
@@ -110,17 +129,7 @@ namespace PluralKit.Bot
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            if (ctx.Match("clear", "remove", "reset"))
-            {
-                guildData.AvatarUrl = null;
-                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
-                
-                if (target.AvatarUrl != null)
-                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member will now use the global avatar in this server (**{ctx.Guild.Name}**).");
-                else
-                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member now has no avatar.");
-            }
-            else if (await ctx.MatchUser() is IUser user)
+            if (await ctx.MatchUser() is IUser user)
             {
                 if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
                 guildData.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);

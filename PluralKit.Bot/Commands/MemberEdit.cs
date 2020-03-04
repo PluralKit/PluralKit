@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Discord;
@@ -50,18 +51,36 @@ namespace PluralKit.Bot
                     await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName.SanitizeMentions()}) in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name here.");
             }
         }
-        
-        public async Task Description(Context ctx, PKMember target) {
-            var description = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
 
-            var lookupContext = ctx.LookupContextFor(target.System);
-            if (description == null)
+        private void CheckReadMemberPermission(Context ctx, PKMember target)
+        {
+            if (!target.MemberPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                throw Errors.LookupNotAllowed;
+        }
+
+        private void CheckEditMemberPermission(Context ctx, PKMember target)
+        {
+            if (target.System != ctx.System?.Id) throw Errors.NotOwnMemberError;
+        }
+        
+        private static bool MatchClear(Context ctx) =>
+            ctx.Match("clear") || ctx.MatchFlag("c", "clear");
+
+        public async Task Description(Context ctx, PKMember target) {
+            if (MatchClear(ctx))
             {
-                if (!target.MemberPrivacy.CanAccess(lookupContext))
-                    throw Errors.LookupNotAllowed;
+                CheckEditMemberPermission(ctx, target);
+                target.Description = null;
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member description cleared.");
+            } 
+            else if (!ctx.HasNext())
+            {
+                CheckReadMemberPermission(ctx, target);
                 if (target.Description == null)
-                    if (lookupContext == LookupContext.ByOwner)
-                        await ctx.Reply("This member does not have a description set. To set one, type `pk;s description <description>`.");
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This member does not have a description set. To set one, type `pk;member {target.Hid} description <description>`.");
                     else
                         await ctx.Reply("This member does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
@@ -70,125 +89,245 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new EmbedBuilder()
                         .WithTitle("Member description")
                         .WithDescription(target.Description)
-                        .WithFooter($"To print the description with formatting, type `pk;m {target.Hid} description -raw`." 
-                                    + (lookupContext == LookupContext.ByOwner ? $" To clear it, type `pk;m {target.Hid} description -clear`." : ""))
+                        .AddField("\u200B", $"To print the description with formatting, type `pk;member {target.Hid} description -raw`." 
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Hid} description -clear`." : ""))
                         .Build());
-
-                return;
             }
+            else
+            {
+                CheckEditMemberPermission(ctx, target);
 
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
-                target.Description = null;
-            else if (description.IsLongerThan(Limits.MaxDescriptionLength))
-                throw Errors.DescriptionTooLongError(description.Length);
-            else target.Description = description;
-                    
-            await _data.SaveMember(target);
-            await ctx.Reply($"{Emojis.Success} Member description {(target.Description == null ? "cleared" : "changed")}.");
+                var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
+                if (description.IsLongerThan(Limits.MaxDescriptionLength))
+                    throw Errors.DescriptionTooLongError(description.Length);
+                target.Description = description;
+        
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member description changed.");
+            }
         }
         
         public async Task Pronouns(Context ctx, PKMember target) {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            if (MatchClear(ctx))
+            {
+                CheckEditMemberPermission(ctx, target);
+                target.Pronouns = null;
+                
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member pronouns cleared.");
+            } 
+            else if (!ctx.HasNext())
+            {
+                CheckReadMemberPermission(ctx, target);
+                if (target.Pronouns == null)
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This member does not have pronouns set. To set some, type `pk;member {target.Hid} pronouns <pronouns>`.");
+                    else
+                        await ctx.Reply("This member does not have pronouns set.");
+                else
+                    await ctx.Reply($"**{target.Name.SanitizeMentions()}**'s pronouns are **{target.Pronouns.SanitizeMentions()}**."
+                        + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Hid} pronouns -clear`." : ""));
+            }
+            else
+            {
+                CheckEditMemberPermission(ctx, target);
 
-            var pronouns = ctx.RemainderOrNull();
-            if (pronouns.IsLongerThan(Limits.MaxPronounsLength)) throw Errors.MemberPronounsTooLongError(pronouns.Length);
-
-            target.Pronouns = pronouns;
-            await _data.SaveMember(target);
-
-            await ctx.Reply($"{Emojis.Success} Member pronouns {(pronouns == null ? "cleared" : "changed")}.");
+                var pronouns = ctx.RemainderOrNull().NormalizeLineEndSpacing();
+                if (pronouns.IsLongerThan(Limits.MaxPronounsLength))
+                    throw Errors.MemberPronounsTooLongError(pronouns.Length);
+                target.Pronouns = pronouns;
+        
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member pronouns changed.");
+            }
         }
 
         public async Task Color(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-
             var color = ctx.RemainderOrNull();
-            if (color != null)
+            if (MatchClear(ctx))
             {
+                CheckEditMemberPermission(ctx, target);
+                target.Color = null;
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member color cleared.");
+            }
+            else if (!ctx.HasNext())
+            {
+                CheckReadMemberPermission(ctx, target);
+
+                if (target.Color == null)
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply(
+                            $"This member does not have a color set. To set one, type `pk;member {target.Hid} color <color>`.");
+                    else
+                        await ctx.Reply("This member does not have a color set.");
+                else
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .WithTitle("Member color")
+                        .WithColor(target.Color.ToDiscordColor().Value)
+                        .WithThumbnailUrl($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
+                        .WithDescription($"This member's color is **#{target.Color}**."
+                                         + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Hid} color -clear`." : ""))
+                        .Build());
+            }
+            else
+            {
+                CheckEditMemberPermission(ctx, target);
+
                 if (color.StartsWith("#")) color = color.Substring(1);
                 if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
+                target.Color = color.ToLower();
+                await _data.SaveMember(target);
+
+                await ctx.Reply(embed: new EmbedBuilder()
+                    .WithTitle($"{Emojis.Success} Member color changed.")
+                    .WithColor(target.Color.ToDiscordColor().Value)
+                    .WithThumbnailUrl($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
+                    .Build());
             }
-
-            target.Color = color?.ToLower();
-            await _data.SaveMember(target);
-
-            await ctx.Reply($"{Emojis.Success} Member color {(color == null ? "cleared" : "changed")}.");
         }
-
         public async Task Birthday(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
-            LocalDate? date = null;
-            var birthday = ctx.RemainderOrNull();
-            if (birthday != null)
+            if (MatchClear(ctx))
             {
-                date = DateUtils.ParseDate(birthday, true);
-                if (date == null) throw Errors.BirthdayParseError(birthday);
+                CheckEditMemberPermission(ctx, target);
+                target.Birthday = null;
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member birthdate cleared.");
+            } 
+            else if (!ctx.HasNext())
+            {
+                CheckReadMemberPermission(ctx, target);
+                
+                if (target.Birthday == null)
+                    await ctx.Reply("This member does not have a birthdate set."
+                        + (ctx.System?.Id == target.System ? $" To set one, type `pk;member {target.Hid} birthdate <birthdate>`." : ""));
+                else
+                    await ctx.Reply($"This member's birthdate is **{target.BirthdayString}**."
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Hid} birthdate -clear`." : ""));
             }
-
-            target.Birthday = date;
-            await _data.SaveMember(target);
-            
-            await ctx.Reply($"{Emojis.Success} Member birthdate {(date == null ? "cleared" : $"changed to {target.BirthdayString}")}.");
-        }
-
-        public async Task DisplayName(Context ctx, PKMember target)
-        {            
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-
-            var newDisplayName = ctx.RemainderOrNull();
-
-            target.DisplayName = newDisplayName;
-            await _data.SaveMember(target);
-
-            var successStr = $"{Emojis.Success} ";
-            if (newDisplayName != null)
-                successStr += $"Member display name changed. This member will now be proxied using the name \"{newDisplayName.SanitizeMentions()}\".";
             else
-                successStr += $"Member display name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".";
+            {
+                CheckEditMemberPermission(ctx, target);
+                
+                var birthdayStr = ctx.RemainderOrNull();
+                var birthday = DateUtils.ParseDate(birthdayStr, true);
+                if (birthday == null) throw Errors.BirthdayParseError(birthdayStr);
+                target.Birthday = birthday;
+                await _data.SaveMember(target);
+                await ctx.Reply($"{Emojis.Success} Member birthdate changed.");
+            }
+        }
+        
+        private async Task<EmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
+        {
+            MemberGuildSettings memberGuildConfig = null;
+            if (ctx.Guild != null)
+                memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+
+            var eb = new EmbedBuilder().WithTitle($"Member names")
+                .WithFooter($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name.");
+
+            if (target.DisplayName == null && memberGuildConfig?.DisplayName == null)
+                eb.AddField($"Name", $"**{target.Name}**");
+            else
+                eb.AddField("Name", target.Name);
+            
+            if (target.DisplayName != null && memberGuildConfig?.DisplayName == null)
+                eb.AddField($"Display Name", $"**{target.DisplayName}**");
+            else
+                eb.AddField("Display Name", target.DisplayName ?? "*(none)*");
 
             if (ctx.Guild != null)
             {
-                var memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
-                if (memberGuildConfig.DisplayName != null)
-                    successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name, \"{memberGuildConfig.DisplayName.SanitizeMentions()}\", here.";
+                if (memberGuildConfig?.DisplayName != null)
+                    eb.AddField($"Server Name (in {ctx.Guild.Name.SanitizeMentions()})", $"**{memberGuildConfig.DisplayName}**");
+                else
+                    eb.AddField($"Server Name (in {ctx.Guild.Name.SanitizeMentions()})", memberGuildConfig?.DisplayName ?? "*(none)*");
             }
 
-            await ctx.Reply(successStr);
+            return eb;
         }
 
+        public async Task DisplayName(Context ctx, PKMember target)
+        {
+            async Task PrintSuccess(string text)
+            {
+                var successStr = text;
+                if (ctx.Guild != null)
+                {
+                    var memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+                    if (memberGuildConfig.DisplayName != null)
+                        successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name, \"{memberGuildConfig.DisplayName.SanitizeMentions()}\", here.";
+                }
+
+                await ctx.Reply(successStr);
+            }
+            
+            if (MatchClear(ctx))
+            {
+                CheckEditMemberPermission(ctx, target);
+                
+                target.DisplayName = null;
+                await _data.SaveMember(target);
+                await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".");
+            }
+            else if (!ctx.HasNext())
+            {
+                // No perms check, display name isn't covered by member privacy 
+                var eb = await CreateMemberNameInfoEmbed(ctx, target);
+                if (ctx.System?.Id == target.System)
+                    eb.WithDescription($"To change display name, type `pk;member {target.Hid} displayname <display name>`.\nTo clear it, type `pk;member {target.Hid} displayname -clear`.");
+                await ctx.Reply(embed: eb.Build());
+            }
+            else
+            {
+                CheckEditMemberPermission(ctx, target);
+                
+                var newDisplayName = ctx.RemainderOrNull();
+                target.DisplayName = newDisplayName;
+                await _data.SaveMember(target);
+
+                await PrintSuccess($"{Emojis.Success} Member display name changed. This member will now be proxied using the name \"{newDisplayName.SanitizeMentions()}\".");
+            }
+        }
+        
         public async Task ServerName(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-            
-            // TODO: allow setting server names for different servers/in DMs by ID
             ctx.CheckGuildContext();
-            
-            var newServerName = ctx.RemainderOrNull();
-
             var guildSettings = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
-            guildSettings.DisplayName = newServerName;
-            await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildSettings);
+            
+            if (MatchClear(ctx))
+            {
+                CheckEditMemberPermission(ctx, target);
+                
+                guildSettings.DisplayName = null;
+                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildSettings);
 
-            var successStr = $"{Emojis.Success} ";
-            if (newServerName != null)
-                successStr += $"Member server name changed. This member will now be proxied using the name \"{newServerName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).";
-            else if (target.DisplayName != null)
-                successStr += $"Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).";
+                if (target.DisplayName != null)
+                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
+                else
+                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
+            }
+            else if (!ctx.HasNext())
+            {
+                // No perms check, server name isn't covered by member privacy 
+                var eb = await CreateMemberNameInfoEmbed(ctx, target);
+                if (ctx.System?.Id == target.System)
+                    eb.WithDescription($"To change server name, type `pk;member {target.Hid} servername <server name>`.\nTo clear it, type `pk;member {target.Hid} servername -clear`.");
+                await ctx.Reply(embed: eb.Build());
+            }
             else
-                successStr += $"Member server name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).";
+            {
+                CheckEditMemberPermission(ctx, target);
+                
+                var newServerName = ctx.RemainderOrNull();
+                guildSettings.DisplayName = newServerName;
+                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildSettings);
 
-            await ctx.Reply(successStr);
+                await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
+            }
         }
         
         public async Task KeepProxy(Context ctx, PKMember target)
@@ -200,7 +339,14 @@ namespace PluralKit.Bot
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
             else if (ctx.Match("off", "disabled", "false", "no")) newValue = false;
             else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
-            else newValue = !target.KeepProxy;
+            else
+            {
+                if (target.KeepProxy)
+                    await ctx.Reply("This member has keepproxy **enabled**, which means proxy tags will be **included** in the resulting message when proxying.");
+                else
+                    await ctx.Reply("This member has keepproxy **disabled**, which means proxy tags will **not** be included in the resulting message when proxying.");
+                return;
+            };
 
             target.KeepProxy = newValue;
             await _data.SaveMember(target);
@@ -220,8 +366,17 @@ namespace PluralKit.Bot
             if (ctx.Match("private", "hide", "hidden", "on", "enable", "yes")) newValue = PrivacyLevel.Private;
             else if (ctx.Match("public", "show", "shown", "displayed", "off", "disable", "no")) newValue = PrivacyLevel.Public;
             else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"private\" or \"public\".");
-            // If we're getting a value from command (eg. "pk;m <name> private" == always private, "pk;m <name> public == always public"), use that instead of parsing/toggling
-            else newValue = newValueFromCommand ?? (target.MemberPrivacy != PrivacyLevel.Private ? PrivacyLevel.Private : PrivacyLevel.Public); 
+            // If we're getting a value from command (eg. "pk;m <name> private" == always private, "pk;m <name> public == always public"), use that instead of parsing
+            else if (newValueFromCommand != null) newValue = newValueFromCommand.Value;
+            else
+            {
+                if (target.MemberPrivacy == PrivacyLevel.Public)
+                    await ctx.Reply("This member's privacy is currently set to **public**. This member will not show up in member lists and will return limited information when queried by other accounts.");
+                else
+                    await ctx.Reply("This member's privacy is currently set to **private**. This member will show up in member lists and will return all information when queried by other accounts.");
+
+                return;
+            }
 
             target.MemberPrivacy = newValue;
             await _data.SaveMember(target);

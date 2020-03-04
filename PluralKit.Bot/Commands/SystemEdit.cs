@@ -27,12 +27,28 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            var newSystemName = ctx.RemainderOrNull();
-            if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
+            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            {
+                ctx.System.Name = null;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System name cleared.");
+                return;
+            }
 
+            var newSystemName = ctx.RemainderOrNull();
+            if (newSystemName == null)
+            {
+                if (ctx.System.Name != null)
+                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name.SanitizeMentions()}**. Type `pk;system name -clear` to clear it.");
+                else
+                    await ctx.Reply("Your system currently does not have a name. Type `pk;system name <name>` to set one.");
+                return;
+            }
+            
+            if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
             ctx.System.Name = newSystemName;
             await _data.SaveSystem(ctx.System);
-            await ctx.Reply($"{Emojis.Success} System name {(newSystemName != null ? "changed" : "cleared")}.");
+            await ctx.Reply($"{Emojis.Success} System name changed.");
         }
         
         public async Task Description(Context ctx) {
@@ -52,7 +68,7 @@ namespace PluralKit.Bot
                 if (ctx.System.Description == null)
                     await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
                 else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
+                    await ctx.Reply($"```\n{ctx.System.Description.SanitizeMentions()}\n```");
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .WithTitle("System description")
@@ -101,7 +117,14 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
             
-            if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
+            if (ctx.Match("clear") || ctx.MatchFlag("c", "clear"))
+            {
+                ctx.System.AvatarUrl = null;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply($"{Emojis.Success} System avatar cleared.");
+                return;
+            }
+            else if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
             {
                 if ((ctx.System.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
@@ -127,12 +150,6 @@ namespace PluralKit.Bot
                 var embed = new EmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
                 await ctx.Reply(
                     $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
-            }
-            else if (ctx.Match("clear"))
-            {
-                ctx.System.AvatarUrl = null;
-                await _data.SaveSystem(ctx.System);
-                await ctx.Reply($"{Emojis.Success} System avatar cleared.");
             }
             else
             {
@@ -194,7 +211,7 @@ namespace PluralKit.Bot
             {
                 ctx.System.UiTz = "UTC";
                 await _data.SaveSystem(ctx.System);
-                await ctx.Reply($"{Emojis.Success} System time zone cleared.");
+                await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
                 return;
             }
             

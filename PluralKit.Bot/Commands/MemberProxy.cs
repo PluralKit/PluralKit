@@ -42,9 +42,8 @@ namespace PluralKit.Bot
                 return await ctx.PromptYesNo(msg);
             }
             
-            // "Sub"command: no arguments clearing
-            // Also matches the pseudo-subcommand "text" which is equivalent to empty proxy tags on both sides.
-            if (!ctx.HasNext(skipFlags: false) || ctx.Match("clear", "purge", "clean", "removeall"))
+            // "Sub"command: clear flag
+            if (ctx.Match("clear", "purge", "clean", "removeall", "text") || ctx.MatchFlag("c", "clear"))
             {
                 // If we already have multiple tags, this would clear everything, so prompt that
                 if (target.ProxyTags.Count > 1)
@@ -59,6 +58,17 @@ namespace PluralKit.Bot
                 
                 await _data.SaveMember(target);
                 await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
+            }
+            // "Sub"command: no arguments; will print proxy tags
+            else if (!ctx.HasNext(skipFlags: false))
+            {
+                if (target.ProxyTags.Count == 0)
+                    await ctx.Reply("This member does not have any proxy tags.");
+                else
+                {
+                    var tags = string.Join("\n", target.ProxyTags.Select(t => $"`{t.ProxyString}`".SanitizeMentions()));
+                    await ctx.Reply($"This member's proxy tags are:\n{tags}");
+                }
             }
             // Subcommand: "add"
             else if (ctx.Match("add", "append"))
@@ -100,8 +110,6 @@ namespace PluralKit.Bot
             // Subcommand: bare proxy tag given
             else
             {
-                if (!ctx.HasNext(skipFlags: false)) throw new PKSyntaxError("You must pass an example proxy to set (eg. `[text]` or `J:text`).");
-
                 var requestedTag = ParseProxyTags(ctx.RemainderOrNull(skipFlags: false));
                 if (requestedTag.IsEmpty) throw Errors.EmptyProxyTags(target);
 
