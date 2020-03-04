@@ -43,7 +43,7 @@ namespace PluralKit.Bot
             }
             
             // "Sub"command: clear flag
-            if (ctx.Match("clear", "purge", "clean", "removeall", "text") || ctx.MatchFlag("c", "clear"))
+            if (ctx.Match("clear", "purge", "clean", "removeall") || ctx.MatchFlag("c", "clear"))
             {
                 // If we already have multiple tags, this would clear everything, so prompt that
                 if (target.ProxyTags.Count > 1)
