@@ -337,7 +337,9 @@ namespace PluralKit.Core
         [JsonProperty("group_id")] public string GroupId; // Not supported by PK
         [JsonProperty("group_pos")] public int? GroupPos; // Not supported by PK
 
-        [JsonIgnore] public bool Valid => Name != null && Brackets != null && Brackets.Count % 2 == 0;
+        [JsonIgnore] public bool Valid =>
+            Name != null && Brackets != null && Brackets.Count % 2 == 0 &&
+            (Birthday == null || DateTimeFormats.TimestampExportFormat.Parse(Birthday).Success);
 
         public DataFileMember ToPluralKit(ref string lastSetTag, ref bool multipleTags, ref bool hasGroup)
         {
@@ -355,12 +357,17 @@ namespace PluralKit.Core
             for (var i = 0; i < Brackets.Count / 2; i++) 
                 tags.Add(new ProxyTag(Brackets[i * 2], Brackets[i * 2 + 1]));
 
+            // Convert birthday from ISO timestamp format to ISO date
+            var convertedBirthdate = Birthday != null ? DateTimeFormats.DateExportFormat.Format(
+                LocalDate.FromDateTime(DateTimeFormats.TimestampExportFormat.Parse(Birthday).Value
+                    .ToDateTimeUtc())) : null;
+            
             return new DataFileMember
             {
                 Id = Guid.NewGuid().ToString(), // Note: this is only ever used for lookup purposes
                 Name = Name,
                 AvatarUrl = AvatarUrl,
-                Birthday = Birthday,
+                Birthday = convertedBirthdate,
                 Description = Description,
                 ProxyTags = tags,
                 KeepProxy = ShowBrackets,
