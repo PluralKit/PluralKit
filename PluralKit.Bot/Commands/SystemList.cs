@@ -113,8 +113,8 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
 
-            var shouldShowLongList = ctx.Match("f", "full", "big", "details", "long");
-            var canShowPrivate = ctx.Match("a", "all", "everyone", "private");
+            var shouldShowLongList = ctx.Match("full", "big", "details", "long") || ctx.MatchFlag("f", "full");
+            var canShowPrivate = ctx.Match("all", "everyone", "private") || ctx.MatchFlag("a", "all");
 
             var searchTerm = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must specify a search term.");
             
