@@ -25,7 +25,9 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;system [system] fronthistory` - Shows the last 10 fronters of a system.
 - `pk;system [system] frontpercent [timeframe]` - Shows the aggregated front history of a system within a given time frame.
 - `pk;system [system] list` - Shows a paginated list of a system's members.
-- `pk;system [system] list full` - Shows a paginated list of a system's members, with increased detail.
+- `pk;system [system] list -full` - Shows a paginated list of a system's members, with increased detail.
+- `pk;find <search term>` - Searches members by name.
+- `pk;system [system] find <search term>` - (same as above, but for a specific system)
 - `pk;autoproxy [off|front|latch|member]` - Updates the system's autoproxy settings for a given server.
 - `pk;link <account>` - Links this system to a different account.
 - `pk;unlink [account]` - Unlinks an account from this system.
