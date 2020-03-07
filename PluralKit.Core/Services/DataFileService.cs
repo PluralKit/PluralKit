@@ -271,11 +271,13 @@ namespace PluralKit.Core
             !Pronouns.IsLongerThan(Limits.MaxPronounsLength) &&
             (Color == null || Regex.IsMatch(Color, "[0-9a-fA-F]{6}")) &&
             (Birthday == null || DateTimeFormats.DateExportFormat.Parse(Birthday).Success) &&
-            
+
             // Sanity checks
             !AvatarUrl.IsLongerThan(1000) &&
-            ProxyTags.Count < 100 &&
-            ProxyTags.All(t => !t.ProxyString.IsLongerThan(100)) &&
+
+            // Older versions have Prefix and Suffix as fields, meaning ProxyTags is null
+            (ProxyTags == null || ProxyTags.Count < 100 &&
+                ProxyTags.All(t => !t.ProxyString.IsLongerThan(100))) &&
             !Prefix.IsLongerThan(100) && !Suffix.IsLongerThan(100);
     }
 
