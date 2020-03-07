@@ -32,6 +32,8 @@ services:
       - "db_data:/var/lib/postgresql/data"
     restart: always
     command: ["postgres", "-c", "max-connections=1000"]
+    environment:
+      - "POSTGRES_PASSWORD=postgres"
   influx:
     image: influxdb:alpine
     volumes:
@@ -39,7 +41,7 @@ services:
     ports:
       - 2839:8086
     restart: always
-    
+
 volumes:
   db_data:
   influx_data:
