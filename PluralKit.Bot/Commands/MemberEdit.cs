@@ -84,7 +84,7 @@ namespace PluralKit.Bot
                     else
                         await ctx.Reply("This member does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{target.Description}\n```");
+                    await ctx.Reply($"```\n{target.Description.SanitizeMentions()}\n```");
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .WithTitle("Member description")
