@@ -203,7 +203,7 @@ namespace PluralKit.Bot
             else if (ctx.Match("privacy"))
                 await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx));
             if (ctx.Match("refresh"))
-                return ctx.Execute<System>(Refresh, m => m.Refresh(ctx));
+                await ctx.Execute<System>(Refresh, m => m.Refresh(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
             else if (!ctx.HasNext()) // Bare command
