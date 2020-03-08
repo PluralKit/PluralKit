@@ -75,11 +75,18 @@ namespace PluralKit.Bot
             timerCtx.Dispose();
 
             var responseString = await response.Content.ReadAsStringAsync();
-            if (responseString.StartsWith("<"))
-                // if the response starts with a < it's probably a CloudFlare error or similar, so just force-break
-                throw new WebhookExecutionErrorOnDiscordsEnd();
 
-            var responseJson = JsonConvert.DeserializeObject<JObject>(responseString);
+            JObject responseJson;
+            try
+            {
+                responseJson = JsonConvert.DeserializeObject<JObject>(responseString);
+            }
+            catch (JsonReaderException)
+            {
+                // Sometimes we get invalid JSON from the server, just ignore all of it
+                throw new WebhookExecutionErrorOnDiscordsEnd();
+            }
+            
             if (responseJson.ContainsKey("code"))
             {
                 var errorCode = responseJson["code"].Value<int>();
