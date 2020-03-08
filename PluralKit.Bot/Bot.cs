@@ -260,7 +260,7 @@ namespace PluralKit.Bot
         public async Task HandleMessage(SocketMessage arg)
         {
             var shard = _client.GetShardFor((arg.Channel as IGuildChannel)?.Guild);
-            if (shard.ConnectionState != ConnectionState.Connected)
+            if (shard.ConnectionState != ConnectionState.Connected || _client.CurrentUser == null)
                 return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
 
             RegisterMessageMetrics(arg);
