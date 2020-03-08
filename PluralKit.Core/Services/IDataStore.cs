@@ -145,6 +145,12 @@ namespace PluralKit.Core {
         Task SetSystemGuildSettings(PKSystem system, ulong guild, SystemGuildSettings settings);
 
         /// <summary>
+        /// Invalidates the cache for a given system.
+        /// Useful when updating information through the API.
+        /// </summary>
+        Task InvalidateSystemCache(PKSystem system);
+
+        /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
         /// </summary>
         /// <param name="systemName">An optional system name to set. If `null`, will not set a system name.</param>

@@ -51,6 +51,7 @@ namespace PluralKit.Bot
         public static Command TokenRefresh = new Command("token refresh", "token refresh", "Resets your system's API token");
         public static Command Import = new Command("import", "import [fileurl]", "Imports system information from a data file");
         public static Command Export = new Command("export", "export", "Exports system information to a data file");
+        public static Command Refresh = new Command("refresh", "refresh", "Clears the cached information for your system.");
         public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
         public static Command Message = new Command("message", "message <id|link>", "Looks up a proxied message");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
@@ -111,6 +112,8 @@ namespace PluralKit.Bot
                 return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
             if (ctx.Match("export"))
                 return ctx.Execute<ImportExport>(Export, m => m.Export(ctx));
+            if (ctx.Match("refresh"))
+                return ctx.Execute<System>(Refresh, m => m.Refresh(ctx));
             if (ctx.Match("help"))
                 if (ctx.Match("commands"))
                     return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
@@ -199,6 +202,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx));
+            if (ctx.Match("refresh"))
+                return ctx.Execute<System>(Refresh, m => m.Refresh(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
             else if (!ctx.HasNext()) // Bare command

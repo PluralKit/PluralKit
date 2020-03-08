@@ -116,6 +116,11 @@ namespace PluralKit.Core {
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where id = @Id", new { Id = id });
         }
 
+        public async Task InvalidateSystemCache(PKSystem system)
+        {
+            await _cache.InvalidateSystem(system);
+        }
+
         public async Task SaveSystem(PKSystem system) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz, description_privacy = @DescriptionPrivacy, member_list_privacy = @MemberListPrivacy, front_privacy = @FrontPrivacy, front_history_privacy = @FrontHistoryPrivacy where id = @Id", system);
