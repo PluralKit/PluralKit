@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using Discord.Net;
 
+using Npgsql;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -31,6 +33,9 @@ namespace PluralKit.Bot
 
             // Sometimes Discord just times everything out.
             if (e is TimeoutException) return false;
+            
+            // Ignore "Database is shutting down" error
+            if (e is PostgresException pe && pe.SqlState == "57P03") return false;
             
             // This may expanded at some point.
             return true;
