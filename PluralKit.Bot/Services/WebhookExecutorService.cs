@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -73,6 +74,10 @@ namespace PluralKit.Bot
             var timerCtx = _metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime);
             using var response = await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}?wait=true", mfd);
             timerCtx.Dispose();
+
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                // Rate limits should be respected, we bail early
+                throw new WebhookExecutionErrorOnDiscordsEnd();
 
             var responseString = await response.Content.ReadAsStringAsync();
 
