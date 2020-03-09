@@ -371,9 +371,9 @@ namespace PluralKit.Bot
             else
             {
                 if (target.MemberPrivacy == PrivacyLevel.Public)
-                    await ctx.Reply("This member's privacy is currently set to **public**. This member will not show up in member lists and will return limited information when queried by other accounts.");
+                    await ctx.Reply("This member's privacy is currently set to **public**. This member will show up in member lists and will return all information when queried by other accounts.");
                 else
-                    await ctx.Reply("This member's privacy is currently set to **private**. This member will show up in member lists and will return all information when queried by other accounts.");
+                    await ctx.Reply("This member's privacy is currently set to **private**. This member will not show up in member lists and will return limited information when queried by other accounts.");
 
                 return;
             }
