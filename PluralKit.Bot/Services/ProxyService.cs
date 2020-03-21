@@ -289,6 +289,12 @@ namespace PluralKit.Bot
             // If they don't have Send Messages permission, bail (since PK shouldn't send anything on their behalf)
             if (!permissions.SendMessages || !permissions.ViewChannel) return;
 
+	    if (!msg.System.Pings) {
+		    await channel.SendMessageAsync($"Hey <@{userWhoReacted}>, {msg.Member.DisplayName ?? msg.Member.Name}'s system has disabled reaction pings. You can mention them by copy pasting the following message:");
+		    await channel.SendMessageAsync($"`<@{msg.Message.Sender}>`");
+		    return;
+	    }
+
             var embed = new EmbedBuilder().WithDescription($"[Jump to pinged message]({realMessage.GetJumpUrl()})");
             await channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{userWhoReacted}>.", embed: embed.Build());
             
