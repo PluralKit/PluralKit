@@ -285,9 +285,15 @@ namespace PluralKit.Bot
             var requiredPerms = Permissions.AccessChannels | Permissions.SendMessages;
             if ((permissions & requiredPerms) != requiredPerms) return;
             
+            if (!msg.System.Pings) {
+                await args.Channel.SendMessageAsync($"Hey <@{args.User.Id}>, {msg.Member.DisplayName ?? msg.Member.Name}'s system has disabled reaction pings. You can mention them by copy pasting the following message:");
+                await args.Channel.SendMessageAsync($"`<@{msg.Message.Sender}>`");
+                return;
+            }
+            
             var embed = new DiscordEmbedBuilder().WithDescription($"[Jump to pinged message]({args.Message.JumpLink})");
             await args.Channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{args.User.Id}>.", embed: embed.Build());
-            
+
             // Finally remove the original reaction (if we can)
             if (args.Channel.BotHasAllPermissions(Permissions.ManageMessages))
                 await args.Message.DeleteReactionAsync(args.Emoji, args.User);

@@ -312,6 +312,29 @@ namespace PluralKit.Bot
             await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
         }
 
+        public async Task SystemPing(Context ctx) 
+	{
+	    ctx.CheckSystem();
+
+	    if (!ctx.HasNext()) 
+	    {
+		    if (ctx.System.Pings) {await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;s ping disable`.");}
+		    else {await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;s ping enable`.");}
+	    }
+        else {
+            if (ctx.Match("on", "enable")) {
+                ctx.System.Pings = true;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply("Reaction pings have now been enabled.");
+            }
+            if (ctx.Match("off", "disable")) {
+                ctx.System.Pings = false;
+                await _data.SaveSystem(ctx.System);
+                await ctx.Reply("Reaction pings have now been disabled.");
+            }
+        }
+	}
+
         public async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr) {
             // First, if we're given a flag emoji, we extract the flag emoji code from it.
             zoneStr = Core.StringUtils.ExtractCountryFlag(zoneStr) ?? zoneStr;
