@@ -18,7 +18,7 @@ namespace PluralKit.Core {
         [JsonProperty("created")] public Instant Created { get; set; }
         [JsonProperty("tz")] public string UiTz { get; set; }
         [JsonProperty("ping")] public bool Pings { get; set; }
-	public PrivacyLevel DescriptionPrivacy { get; set; }
+	    public PrivacyLevel DescriptionPrivacy { get; set; }
         public PrivacyLevel MemberListPrivacy { get; set; }
         public PrivacyLevel FrontPrivacy { get; set; }
         public PrivacyLevel FrontHistoryPrivacy { get; set; }
