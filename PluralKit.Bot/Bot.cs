@@ -89,6 +89,9 @@ namespace PluralKit.Bot
             }
 
             logger.Information("Shutting down");
+            
+            // Allow the log buffer to flush properly before exiting (needed for fatal errors)
+            await Task.Delay(1000);
         }
     }
     class Bot
