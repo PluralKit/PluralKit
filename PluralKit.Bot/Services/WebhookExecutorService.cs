@@ -22,18 +22,25 @@ namespace PluralKit.Bot
     public class WebhookExecutionErrorOnDiscordsEnd: Exception {
     }
     
+    public class WebhookRateLimited: WebhookExecutionErrorOnDiscordsEnd {
+        // Exceptions for control flow? don't mind if I do
+        // TODO: rewrite both of these as a normal exceptional return value (0?) in case of error to be discarded by caller 
+    }
+    
     public class WebhookExecutorService
     {
         private WebhookCacheService _webhookCache;
+        private WebhookRateLimitService _rateLimit;
         private ILogger _logger;
         private IMetrics _metrics;
         private HttpClient _client;
 
-        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client)
+        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client, WebhookRateLimitService rateLimit)
         {
             _metrics = metrics;
             _webhookCache = webhookCache;
             _client = client;
+            _rateLimit = rateLimit;
             _logger = logger.ForContext<WebhookExecutorService>();
         }
 
@@ -56,7 +63,6 @@ namespace PluralKit.Bot
         private async Task<ulong> ExecuteWebhookInner(IWebhook webhook, string name, string avatarUrl, string content,
             IReadOnlyCollection<IAttachment> attachments, bool hasRetried = false)
         {
-
             using var mfd = new MultipartFormDataContent
             {
                 {new StringContent(content.Truncate(2000)), "content"},
@@ -70,15 +76,23 @@ namespace PluralKit.Bot
                 _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks", attachments.Count, attachments.Select(a => a.Size).Sum() / 1024 / 1024, attachmentChunks.Count);
                 await AddAttachmentsToMultipart(mfd, attachmentChunks.First());
             }
+            
+            mfd.Headers.Add("X-RateLimit-Precision", "millisecond"); // Need this for better rate limit support
+            
+            // Adding this check as close to the actual send call as possible to prevent potential race conditions (unlikely, but y'know)
+            if (!_rateLimit.TryExecuteWebhook(webhook))
+                throw new WebhookRateLimited();
 
             var timerCtx = _metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime);
             using var response = await _client.PostAsync($"{DiscordConfig.APIUrl}webhooks/{webhook.Id}/{webhook.Token}?wait=true", mfd);
             timerCtx.Dispose();
+            
+            _rateLimit.UpdateRateLimitInfo(webhook, response);
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
-                // Rate limits should be respected, we bail early
-                throw new WebhookExecutionErrorOnDiscordsEnd();
-
+                // Rate limits should be respected, we bail early (already updated the limit info so we hopefully won't hit this again)
+                throw new WebhookRateLimited();
+            
             var responseString = await response.Content.ReadAsStringAsync();
 
             JObject responseJson;
@@ -136,7 +150,6 @@ namespace PluralKit.Bot
             // TODO: can we do this without a round-trip to a string?
             return responseJson["id"].Value<ulong>();
         }
-
         private IReadOnlyCollection<IReadOnlyCollection<IAttachment>> ChunkAttachmentsOrThrow(
             IReadOnlyCollection<IAttachment> attachments, int sizeThreshold)
         {

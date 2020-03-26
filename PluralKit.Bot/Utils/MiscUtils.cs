@@ -23,6 +23,7 @@ namespace PluralKit.Bot
             if (e is HttpException he && ((int) he.HttpCode) >= 500) return false;
             
             // Webhook server errors are also *not our problem*
+            // (this includes rate limit errors, WebhookRateLimited is a subclass)
             if (e is WebhookExecutionErrorOnDiscordsEnd) return false;
             
             // Socket errors are *not our problem*

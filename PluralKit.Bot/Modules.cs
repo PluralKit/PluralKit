@@ -60,6 +60,7 @@ namespace PluralKit.Bot
             builder.RegisterType<ProxyService>().AsSelf().SingleInstance();
             builder.RegisterType<LogChannelService>().AsSelf().SingleInstance();
             builder.RegisterType<DataFileService>().AsSelf().SingleInstance();
+            builder.RegisterType<WebhookRateLimitService>().AsSelf().SingleInstance();
             builder.RegisterType<WebhookExecutorService>().AsSelf().SingleInstance();
             builder.RegisterType<WebhookCacheService>().AsSelf().SingleInstance();
             builder.RegisterType<ShardInfoService>().AsSelf().SingleInstance();
