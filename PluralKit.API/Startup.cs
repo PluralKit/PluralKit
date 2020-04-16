@@ -1,4 +1,6 @@
-﻿using Autofac;
+﻿using System;
+
+using Autofac;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -31,7 +33,7 @@ namespace PluralKit.API
 
         public void ConfigureContainer(ContainerBuilder builder)
         {
-            builder.RegisterInstance(Configuration);
+            builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build()).As<IConfiguration>();
             builder.RegisterModule(new ConfigModule<object>());
             builder.RegisterModule(new LoggingModule("api"));
             builder.RegisterModule(new MetricsModule("API"));
