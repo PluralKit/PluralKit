@@ -24,6 +24,8 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<WebhookRateLimitService>();
         }
 
+        public int CacheSize => _info.Count;
+
         public bool TryExecuteWebhook(IWebhook webhook)
         {
             // If we have nothing saved, just allow it (we'll save something once the response returns)
