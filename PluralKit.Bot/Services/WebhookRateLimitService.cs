@@ -37,6 +37,11 @@ namespace PluralKit.Bot
                 if (!info.hasResetTimeExpired)
                     info.remaining = info.maxLimit;
                 info.hasResetTimeExpired = true;
+                
+                // We can hit this multiple times if many requests are in flight before a real one gets "back", so we still
+                // decrement the remaining request count, this basically "blacklists" the channel given continuous spam until *one* of the requests come back with new rate limit headers
+                info.remaining--;
+
                 return true;
             }
 
