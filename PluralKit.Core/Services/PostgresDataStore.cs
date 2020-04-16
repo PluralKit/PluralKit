@@ -342,7 +342,7 @@ namespace PluralKit.Core {
         public async Task<FullMessage> GetLastMessageInGuild(ulong account, ulong guild)
         {
             using var conn = await _conn.Obtain();
-            return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, FullMessage>("select messages.*, members.*, systems.* from messages, members, systems where messages.guild = @Guild and messages.sender = @Uid and messages.member = members.id and systems.id = members.system order by mid desc limit 1", (msg, member, system) => new FullMessage
+            return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, FullMessage>("select messages.*, members.*, systems.* from messages left join members on members.id = messages.member left join systems on systems.id = members.system where messages.guild = @Guild and messages.sender = @Uid order by mid desc limit 1", (msg, member, system) => new FullMessage
             {
                 Message = msg,
                 System = system,
