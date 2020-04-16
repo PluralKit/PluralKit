@@ -102,13 +102,16 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
+        private WebhookRateLimitService _webhookRateLimit;
+        private int _periodicUpdateCount;
 
-        public Bot(ILifetimeScope services, IDiscordClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
+        public Bot(ILifetimeScope services, IDiscordClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger, WebhookRateLimitService webhookRateLimit)
         {
             _services = services;
             _client = client as DiscordShardedClient;
             _metrics = metrics;
             _collector = collector;
+            _webhookRateLimit = webhookRateLimit;
             _logger = logger.ForContext<Bot>();
         }
 
@@ -161,7 +164,13 @@ namespace PluralKit.Bot
         {
             // Change bot status
             await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
-            
+
+            // Run webhook rate limit GC every 10 minutes
+            if (_periodicUpdateCount++ % 10 == 0)
+            {
+                var _ = Task.Run(() => _webhookRateLimit.GarbageCollect());
+            }
+
             await _collector.CollectStats();
             
             _logger.Information("Submitted metrics to backend");

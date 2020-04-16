@@ -87,6 +87,23 @@ namespace PluralKit.Bot
             }
         }
 
+        public void GarbageCollect()
+        {
+            _logger.Information("Garbage-collecting webhook rate limit buckets...");
+            
+            var collected = 0;
+            foreach (var channel in _info.Keys)
+            {
+                if (!_info.TryGetValue(channel, out var info)) continue;
+                
+                // Remove all keys that expired more than an hour ago (and of course, haven't been reset)
+                if (info.resetTime < SystemClock.Instance.GetCurrentInstant() - Duration.FromHours(1))
+                    if (_info.TryRemove(channel, out _)) collected++;
+            }
+            
+            _logger.Information("Garbage-collected {ChannelCount} channels from the webhook rate limit buckets.", collected);
+        }
+
         private string GetHeader(HttpResponseMessage response, string key)
         {
             var firstPair = response.Headers.FirstOrDefault(pair => pair.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase));
