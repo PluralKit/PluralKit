@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 
-using Discord;
+using DSharpPlus.Entities;
 
 using NodaTime;
 
@@ -26,7 +26,7 @@ namespace PluralKit.Bot
 
         public int CacheSize => _info.Count;
 
-        public bool TryExecuteWebhook(IWebhook webhook)
+        public bool TryExecuteWebhook(DiscordWebhook webhook)
         {
             // If we have nothing saved, just allow it (we'll save something once the response returns)
             if (!_info.TryGetValue(webhook.Id, out var info)) return true;
@@ -57,7 +57,7 @@ namespace PluralKit.Bot
             return true;
         }
 
-        public void UpdateRateLimitInfo(IWebhook webhook, HttpResponseMessage response)
+        public void UpdateRateLimitInfo(DiscordWebhook webhook, HttpResponseMessage response)
         {
             var info = _info.GetOrAdd(webhook.Id, _ => new WebhookRateLimitInfo());
 

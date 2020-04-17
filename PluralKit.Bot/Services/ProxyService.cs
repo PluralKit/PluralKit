@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
-using Discord.Net;
-using Discord.WebSocket;
+using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.Exceptions;
 
 using NodaTime;
-using NodaTime.Extensions;
 
 using PluralKit.Core;
 
@@ -83,16 +83,16 @@ namespace PluralKit.Bot
             return null;
         }
 
-        public async Task HandleMessageAsync(GuildConfig guild, CachedAccount account, IMessage message, bool doAutoProxy)
+        public async Task HandleMessageAsync(DiscordClient client, GuildConfig guild, CachedAccount account, DiscordMessage message, bool doAutoProxy)
         {
             // Bail early if this isn't in a guild channel
-            if (!(message.Channel is ITextChannel channel)) return;
+            if (message.Channel.Guild != null) return;
             
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, account.System, account.Members);
 
             // O(n) lookup since n is small (max ~100 in prod) and we're more constrained by memory (for a dictionary) here
-            var systemSettingsForGuild = account.SettingsForGuild(channel.GuildId);
+            var systemSettingsForGuild = account.SettingsForGuild(message.Channel.GuildId);
             
             // If we didn't get a match by proxy tags, try to get one by autoproxy
             // Also try if we *did* get a match, but there's no inner text. This happens if someone sends a message that
@@ -102,26 +102,26 @@ namespace PluralKit.Bot
             // When a normal message is sent, autoproxy is enabled, but if this method is called from a message *edit*
             // event, then autoproxy is disabled. This is so AP doesn't "retrigger" when the original message was escaped.
             if (doAutoProxy && (match == null || (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)))
-                match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, channel);
+                match = await GetAutoproxyMatch(account, systemSettingsForGuild, message, message.Channel);
             
             // If we still haven't found any, just yeet
             if (match == null) return;
             
             // And make sure the channel's not blacklisted from proxying.
-            if (guild.Blacklist.Contains(channel.Id)) return;
+            if (guild.Blacklist.Contains(message.ChannelId)) return;
             
             // Make sure the system hasn't blacklisted the guild either
             if (!systemSettingsForGuild.ProxyEnabled) return;
             
             // We know message.Channel can only be ITextChannel as PK doesn't work in DMs/groups
             // Afterwards we ensure the bot has the right permissions, otherwise bail early
-            if (!await EnsureBotPermissions(channel)) return;
+            if (!await EnsureBotPermissions(message.Channel)) return;
             
             // Can't proxy a message with no content and no attachment
             if (match.InnerText.Trim().Length == 0 && message.Attachments.Count == 0)
                 return;
 
-            var memberSettingsForGuild = account.SettingsForMemberGuild(match.Member.Id, channel.GuildId);
+            var memberSettingsForGuild = account.SettingsForMemberGuild(match.Member.Id, message.Channel.GuildId);
             
             // Get variables in order and all
             var proxyName = match.Member.ProxyName(match.System.Tag, memberSettingsForGuild.DisplayName);
@@ -138,19 +138,17 @@ namespace PluralKit.Bot
                 : match.InnerText;
             
             // Sanitize @everyone, but only if the original user wouldn't have permission to
-            messageContents = SanitizeEveryoneMaybe(message, messageContents);
+            messageContents = await SanitizeEveryoneMaybe(message, messageContents);
             
             // Execute the webhook itself
-            var hookMessageId = await _webhookExecutor.ExecuteWebhook(
-                channel,
-                proxyName, avatarUrl,
+            var hookMessageId = await _webhookExecutor.ExecuteWebhook(message.Channel, proxyName, avatarUrl,
                 messageContents,
                 message.Attachments
             );
 
             // Store the message in the database, and log it in the log channel (if applicable)
-            await _data.AddMessage(message.Author.Id, hookMessageId, channel.GuildId, message.Channel.Id, message.Id, match.Member);
-            await _logChannel.LogMessage(match.System, match.Member, hookMessageId, message.Id, message.Channel as IGuildChannel, message.Author, match.InnerText, guild);
+            await _data.AddMessage(message.Author.Id, hookMessageId, message.Channel.GuildId, message.Channel.Id, message.Id, match.Member);
+            await _logChannel.LogMessage(client, match.System, match.Member, hookMessageId, message.Id, message.Channel, message.Author, match.InnerText, guild);
 
             // Wait a second or so before deleting the original message
             await Task.Delay(1000);
@@ -159,14 +157,14 @@ namespace PluralKit.Bot
             {
                 await message.DeleteAsync();
             }
-            catch (HttpException)
+            catch (NotFoundException)
             {
                 // If it's already deleted, we just log and swallow the exception
                 _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", message.Id);
             }
         }
 
-        private async Task<ProxyMatch> GetAutoproxyMatch(CachedAccount account, SystemGuildSettings guildSettings, IMessage message, IGuildChannel channel)
+        private async Task<ProxyMatch> GetAutoproxyMatch(CachedAccount account, SystemGuildSettings guildSettings, DiscordMessage message, DiscordChannel channel)
         {
             // For now we use a backslash as an "escape character", subject to change later
             if ((message.Content ?? "").TrimStart().StartsWith("\\")) return null; 
@@ -189,7 +187,7 @@ namespace PluralKit.Bot
 
                     // If the message is older than 6 hours, ignore it and force the sender to "refresh" a proxy
                     // This can be revised in the future, it's a preliminary value.
-                    var timestamp = SnowflakeUtils.FromSnowflake(msg.Message.Mid).ToInstant();
+                    var timestamp = DiscordUtils.SnowflakeToInstant(msg.Message.Mid);
                     var timeSince = SystemClock.Instance.GetCurrentInstant() - timestamp;
                     if (timeSince > Duration.FromHours(6)) return null;
                     
@@ -214,23 +212,23 @@ namespace PluralKit.Bot
             };
         }
 
-        private static string SanitizeEveryoneMaybe(IMessage message, string messageContents)
+        private static async Task<string> SanitizeEveryoneMaybe(DiscordMessage message,
+                                                                string messageContents)
         {
-            var senderPermissions = ((IGuildUser) message.Author).GetPermissions(message.Channel as IGuildChannel);
-            if (!senderPermissions.MentionEveryone) return messageContents.SanitizeEveryone();
+            var member = await message.Channel.Guild.GetMemberAsync(message.Author.Id);
+            if ((member.PermissionsIn(message.Channel) & Permissions.MentionEveryone) == 0) return messageContents.SanitizeEveryone();
             return messageContents;
         }
 
-        private async Task<bool> EnsureBotPermissions(ITextChannel channel)
+        private async Task<bool> EnsureBotPermissions(DiscordChannel channel)
         {
-            var guildUser = await channel.Guild.GetCurrentUserAsync();
-            var permissions = guildUser.GetPermissions(channel);
+            var permissions = channel.BotPermissions();
 
             // If we can't send messages at all, just bail immediately.
             // TODO: can you have ManageMessages and *not* SendMessages? What happens then?
-            if (!permissions.SendMessages && !permissions.ManageMessages) return false;
+            if ((permissions & (Permissions.SendMessages | Permissions.ManageMessages)) == 0) return false;
 
-            if (!permissions.ManageWebhooks)
+            if ((permissions & Permissions.ManageWebhooks) == 0)
             {
                 // todo: PKError-ify these
                 await channel.SendMessageAsync(
@@ -238,7 +236,7 @@ namespace PluralKit.Bot
                 return false;
             }
 
-            if (!permissions.ManageMessages)
+            if ((permissions & Permissions.ManageMessages) == 0)
             {
                 await channel.SendMessageAsync(
                     $"{Emojis.Error} PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the original trigger message. Please contact a server administrator to remedy this.");
@@ -248,121 +246,117 @@ namespace PluralKit.Bot
             return true;
         }
 
-        public Task HandleReactionAddedAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        public Task HandleReactionAddedAsync(MessageReactionAddEventArgs args)
         {
             // Dispatch on emoji
-            switch (reaction.Emote.Name)
+            switch (args.Emoji.Name)
             {
                 case "\u274C": // Red X
-                    return HandleMessageDeletionByReaction(message, reaction.UserId);
+                    return HandleMessageDeletionByReaction(args);
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
-                    return HandleMessageQueryByReaction(message, channel, reaction.UserId, reaction.Emote);
+                    return HandleMessageQueryByReaction(args);
                 case "\U0001F514": // Bell
                 case "\U0001F6CE": // Bellhop bell
                 case "\U0001F3D3": // Ping pong paddle (lol)
                 case "\u23F0": // Alarm clock
                 case "\u2757": // Exclamation mark
-                    return HandleMessagePingByReaction(message, channel, reaction.UserId, reaction.Emote);
+                    return HandleMessagePingByReaction(args);
                 default:
                     return Task.CompletedTask;
             }
         }
 
-        private async Task HandleMessagePingByReaction(Cacheable<IUserMessage, ulong> message,
-                                                       ISocketMessageChannel channel, ulong userWhoReacted,
-                                                       IEmote reactedEmote)
+        private async Task HandleMessagePingByReaction(MessageReactionAddEventArgs args)
         {
             // Bail in DMs
-            if (!(channel is SocketGuildChannel gc)) return;
+            if (args.Channel.Type != ChannelType.Text) return;
             
             // Find the message in the DB
-            var msg = await _data.GetMessage(message.Id);
+            var msg = await _data.GetMessage(args.Message.Id);
             if (msg == null) return;
             
             // Check if the pinger has permission to ping in this channel
-            var guildUser = await _client.Rest.GetGuildUserAsync(gc.Guild.Id, userWhoReacted);
-            var permissions = guildUser.GetPermissions(gc);
+            var guildUser = await args.Guild.GetMemberAsync(args.User.Id);
+            var permissions = guildUser.PermissionsIn(args.Channel);
             
-            var realMessage = await message.GetOrDownloadAsync();
-
             // If they don't have Send Messages permission, bail (since PK shouldn't send anything on their behalf)
-            if (!permissions.SendMessages || !permissions.ViewChannel) return;
-
-            var embed = new EmbedBuilder().WithDescription($"[Jump to pinged message]({realMessage.GetJumpUrl()})");
-            await channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{userWhoReacted}>.", embed: embed.Build());
+            var requiredPerms = Permissions.AccessChannels | Permissions.SendMessages;
+            if ((permissions & requiredPerms) != requiredPerms) return;
+            
+            var embed = new DiscordEmbedBuilder().WithDescription($"[Jump to pinged message]({args.Message.JumpLink})");
+            await args.Channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{args.User.Id}>.", embed: embed.Build());
             
             // Finally remove the original reaction (if we can)
-            var user = await _client.Rest.GetUserAsync(userWhoReacted);
-            if (user != null && realMessage.Channel.HasPermission(ChannelPermission.ManageMessages))
-                await realMessage.RemoveReactionAsync(reactedEmote, user);
+            if (args.Channel.BotHasPermission(Permissions.ManageMessages))
+                await args.Message.DeleteReactionAsync(args.Emoji, args.User);
         }
 
-        private async Task HandleMessageQueryByReaction(Cacheable<IUserMessage, ulong> message,
-                                                        ISocketMessageChannel channel, ulong userWhoReacted,
-                                                        IEmote reactedEmote)
+        private async Task HandleMessageQueryByReaction(MessageReactionAddEventArgs args)
         {
-            // Find the user who sent the reaction, so we can DM them
-            var user = await _client.Rest.GetUserAsync(userWhoReacted);
-            if (user == null) return;
-
+            // Bail if not in guild
+            if (args.Guild == null) return;
+            
             // Find the message in the DB
-            var msg = await _data.GetMessage(message.Id);
+            var msg = await _data.GetMessage(args.Message.Id);
             if (msg == null) return;
+            
+            // Get guild member so we can DM
+            var member = await args.Guild.GetMemberAsync(args.User.Id);
 
             // DM them the message card
             try
             {
-                await user.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, (channel as IGuildChannel)?.Guild, LookupContext.ByNonOwner));
-                await user.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(msg));
+                await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, args.Guild, LookupContext.ByNonOwner));
+                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(args.Client, msg));
             }
-            catch (HttpException e) when (e.DiscordCode == 50007)
+            catch (BadRequestException)
             {
+                // TODO: is this the correct exception
                 // Ignore exception if it means we don't have DM permission to this user
                 // not much else we can do here :/
             }
 
             // And finally remove the original reaction (if we can)
-            var msgObj = await message.GetOrDownloadAsync();
-            if (msgObj.Channel.HasPermission(ChannelPermission.ManageMessages))
-                await msgObj.RemoveReactionAsync(reactedEmote, user);
+            await args.Message.DeleteReactionAsync(args.Emoji, args.User);
         }
 
-        public async Task HandleMessageDeletionByReaction(Cacheable<IUserMessage, ulong> message, ulong userWhoReacted)
+        public async Task HandleMessageDeletionByReaction(MessageReactionAddEventArgs args)
         {
+            // Bail if we don't have permission to delete
+            if (!args.Channel.BotHasPermission(Permissions.ManageMessages)) return;
+            
             // Find the message in the database
-            var storedMessage = await _data.GetMessage(message.Id);
+            var storedMessage = await _data.GetMessage(args.Message.Id);
             if (storedMessage == null) return; // (if we can't, that's ok, no worries)
 
             // Make sure it's the actual sender of that message deleting the message
-            if (storedMessage.Message.Sender != userWhoReacted) return;
+            if (storedMessage.Message.Sender != args.User.Id) return;
 
-            try {
-                // Then, fetch the Discord message and delete that
-                // TODO: this could be faster if we didn't bother fetching it and just deleted it directly
-                // somehow through REST?
-                await (await message.GetOrDownloadAsync()).DeleteAsync();
+            try
+            {
+                await args.Message.DeleteAsync();
             } catch (NullReferenceException) {
                 // Message was deleted before we got to it... cool, no problem, lmao
             }
 
             // Finally, delete it from our database.
-            await _data.DeleteMessage(message.Id);
+            await _data.DeleteMessage(args.Message.Id);
         }
 
-        public async Task HandleMessageDeletedAsync(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        public async Task HandleMessageDeletedAsync(MessageDeleteEventArgs args)
         {
             // Don't delete messages from the store if they aren't webhooks
             // Non-webhook messages will never be stored anyway.
             // If we're not sure (eg. message outside of cache), delete just to be sure.
-            if (message.HasValue && !message.Value.Author.IsWebhook) return;
-            await _data.DeleteMessage(message.Id);
+            if (!args.Message.WebhookMessage) return;
+            await _data.DeleteMessage(args.Message.Id);
         }
 
-        public async Task HandleMessageBulkDeleteAsync(IReadOnlyCollection<Cacheable<IMessage, ulong>> messages, IMessageChannel channel)
+        public async Task HandleMessageBulkDeleteAsync(MessageBulkDeleteEventArgs args)
         {
-            _logger.Information("Bulk deleting {Count} messages in channel {Channel}", messages.Count, channel.Id);
-            await _data.DeleteMessagesBulk(messages.Select(m => m.Id).ToList());
+            _logger.Information("Bulk deleting {Count} messages in channel {Channel}", args.Messages.Count, args.Channel.Id);
+            await _data.DeleteMessagesBulk(args.Messages.Select(m => m.Id).ToList());
         }
     }
 }

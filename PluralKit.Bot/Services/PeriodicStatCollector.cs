@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using App.Metrics;
-using Discord;
-using Discord.WebSocket;
+
+using DSharpPlus;
+using DSharpPlus.Entities;
+
 using NodaTime.Extensions;
 using PluralKit.Core;
 
@@ -27,9 +30,9 @@ namespace PluralKit.Bot
 
         private ILogger _logger;
 
-        public PeriodicStatCollector(IDiscordClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, IDataStore data, CpuStatService cpu, WebhookRateLimitService webhookRateLimitCache)
+        public PeriodicStatCollector(DiscordShardedClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, IDataStore data, CpuStatService cpu, WebhookRateLimitService webhookRateLimitCache)
         {
-            _client = (DiscordShardedClient) client;
+            _client = client;
             _metrics = metrics;
             _webhookCache = webhookCache;
             _countHolder = countHolder;
@@ -45,18 +48,31 @@ namespace PluralKit.Bot
             stopwatch.Start();
             
             // Aggregate guild/channel stats
-            _metrics.Measure.Gauge.SetValue(BotMetrics.Guilds, _client.Guilds.Count);
-            _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, _client.Guilds.Sum(g => g.TextChannels.Count));
-            _metrics.Measure.Gauge.SetValue(BotMetrics.ShardsConnected, _client.Shards.Count(shard => shard.ConnectionState == ConnectionState.Connected));
+
+            var guildCount = 0;
+            var channelCount = 0;
+            // No LINQ today, sorry
+            foreach (var shard in _client.ShardClients.Values)
+            {
+                guildCount += shard.Guilds.Count;
+                foreach (var guild in shard.Guilds.Values)
+                foreach (var channel in guild.Channels.Values)
+                    if (channel.Type == ChannelType.Text)
+                        channelCount++;
+            }
+            
+            _metrics.Measure.Gauge.SetValue(BotMetrics.Guilds, guildCount);
+            _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, channelCount);
 
             // Aggregate member stats
             var usersKnown = new HashSet<ulong>();
             var usersOnline = new HashSet<ulong>();
-            foreach (var guild in _client.Guilds)
-            foreach (var user in guild.Users)
+            foreach (var shard in _client.ShardClients.Values)
+            foreach (var guild in shard.Guilds.Values)
+            foreach (var user in guild.Members.Values)
             {
                 usersKnown.Add(user.Id);
-                if (user.Status == UserStatus.Online) usersOnline.Add(user.Id);
+                if (user.Presence.Status == UserStatus.Online) usersOnline.Add(user.Id);
             }
 
             _metrics.Measure.Gauge.SetValue(BotMetrics.MembersTotal, usersKnown.Count);

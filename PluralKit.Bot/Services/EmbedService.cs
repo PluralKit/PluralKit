@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
+
+using DSharpPlus;
+using DSharpPlus.Entities;
 
 using Humanizer;
 using NodaTime;
@@ -22,15 +23,15 @@ namespace PluralKit.Bot {
             _data = data;
         }
 
-        public async Task<Embed> CreateSystemEmbed(PKSystem system, LookupContext ctx) {
+        public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx) {
             var accounts = await _data.GetSystemAccounts(system);
 
             // Fetch/render info for all accounts simultaneously
-            var users = await Task.WhenAll(accounts.Select(async uid => (await _client.Rest.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
             var memberCount = await _data.GetSystemMemberCount(system, false);
-            var eb = new EmbedBuilder()
-                .WithColor(Color.Blue)
+            var eb = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Blue)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
@@ -61,33 +62,33 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, IUser sender, string content, IGuildChannel channel) {
+        public DiscordEmbed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordUser sender, string content, DiscordChannel channel) {
             // TODO: pronouns in ?-reacted response using this card
-            var timestamp = SnowflakeUtils.FromSnowflake(messageId);
-            return new EmbedBuilder()
+            var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
+            return new DiscordEmbedBuilder()
                 .WithAuthor($"#{channel.Name}: {member.Name}", member.AvatarUrl)
                 .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
-                .WithTimestamp(timestamp)
+                .WithTimestamp(timestamp.ToDateTimeOffset())
                 .Build();
         }
 
-        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, IGuild guild, LookupContext ctx)
+        public async Task<DiscordEmbed> CreateMemberEmbed(PKSystem system, PKMember member, DiscordGuild guild, LookupContext ctx)
         {
             var name = member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
 
-            Color color;
+            DiscordColor color;
             try
             {
-                color = member.Color?.ToDiscordColor() ?? Color.Default;
+                color = member.Color?.ToDiscordColor() ?? DiscordColor.Gray;
             }
             catch (ArgumentException)
             {
                 // Bad API use can cause an invalid color string
                 // TODO: fix that in the API
                 // for now we just default to a blank color, yolo
-                color = Color.Default;
+                color = DiscordColor.Gray;
             }
 
             var messageCount = await _data.GetMemberMessageCount(member);
@@ -98,10 +99,10 @@ namespace PluralKit.Bot {
 
             var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
 
-            var eb = new EmbedBuilder()
+            var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, avatar)
-                .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : Color.Default)
+                .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : DiscordColor.Gray)
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
             var description = "";
@@ -119,7 +120,7 @@ namespace PluralKit.Bot {
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
             if (member.Birthday != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Birthdate", member.BirthdayString, true);
             if (!member.Pronouns.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
-            if (messageCount > 0 && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Message Count", messageCount, true);
+            if (messageCount > 0 && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Message Count", messageCount.ToString(), true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
             if (!member.Color.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
             if (!member.Description.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
@@ -127,48 +128,45 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public async Task<Embed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone)
+        public async Task<DiscordEmbed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone)
         {
             var members = await _data.GetSwitchMembers(sw).ToListAsync();
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
-            return new EmbedBuilder()
-                .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? Color.Blue)
+            return new DiscordEmbedBuilder()
+                .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordColor.Blue)
                 .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
                 .AddField("Since", $"{DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({DateTimeFormats.DurationFormat.Format(timeSinceSwitch)} ago)")
                 .Build();
         }
 
-        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
+        public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordClient client, FullMessage msg)
         {
-            var channel = _client.GetChannel(msg.Message.Channel) as ITextChannel;
+            var channel = await client.GetChannelAsync(msg.Message.Channel);
             var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
 
             var memberStr = $"{msg.Member.Name} (`{msg.Member.Hid}`)";
 
             var userStr = $"*(deleted user {msg.Message.Sender})*";
-            ICollection<IRole> roles = null;
+            ICollection<DiscordRole> roles = null;
 
             if (channel != null)
             {
                 // Look up the user with the REST client
                 // this ensures we'll still get the information even if the user's not cached,
                 // even if this means an extra API request (meh, it'll be fine)
-                var shard = _client.GetShardFor(channel.Guild);
-                var guildUser = await shard.Rest.GetGuildUserAsync(channel.Guild.Id, msg.Message.Sender);
+                var guildUser = await channel.Guild.GetMemberAsync(msg.Message.Sender);
                 if (guildUser != null)
                 {
-                    if (guildUser.RoleIds.Count > 0)
-                        roles = guildUser.RoleIds
-                            .Select(roleId => channel.Guild.GetRole(roleId))
-                            .Where(role => role.Name != "@everyone")
-                            .OrderByDescending(role => role.Position)
-                            .ToList();
+                    roles = guildUser.Roles
+                        .Where(role => role.Name != "@everyone")
+                        .OrderByDescending(role => role.Position)
+                        .ToList();
 
-                    userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser?.NameAndMention();
+                    userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser.NameAndMention();
                 }
             }
 
-            var eb = new EmbedBuilder()
+            var eb = new DiscordEmbedBuilder()
                 .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
                 .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
@@ -176,18 +174,18 @@ namespace PluralKit.Bot {
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
                 .AddField("Member", memberStr, true)
                 .AddField("Sent by", userStr, inline: true)
-                .WithTimestamp(SnowflakeUtils.FromSnowflake(msg.Message.Mid));
+                .WithTimestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset());
 
             if (roles != null && roles.Count > 0)
                 eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, DateTimeZone tz)
+        public Task<DiscordEmbed> CreateFrontPercentEmbed(FrontBreakdown breakdown, DateTimeZone tz)
         {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
-            var eb = new EmbedBuilder()
-                .WithColor(Color.Blue)
+            var eb = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Blue)
                 .WithFooter($"Since {DateTimeFormats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({DateTimeFormats.DurationFormat.Format(actualPeriod)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
