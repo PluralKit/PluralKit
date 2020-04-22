@@ -227,8 +227,8 @@ namespace PluralKit.Bot
             var permissions = guildUser.GetPermissions(channel);
 
             // If we can't send messages at all, just bail immediately.
-            // TODO: can you have ManageMessages and *not* SendMessages? What happens then?
-            if (!permissions.SendMessages && !permissions.ManageMessages) return false;
+            // 2020-04-22: Manage Messages does *not* override a lack of Send Messages.
+            if (!permissions.SendMessages) return false;
 
             if (!permissions.ManageWebhooks)
             {
