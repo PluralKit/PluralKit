@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
@@ -162,7 +163,11 @@ namespace PluralKit.Bot
         {
             // Change bot status
             var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
-            await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
+            try // DiscordClient may throw an exception if an update is attempted while reconnecting (e.g just after OP 7 received)
+            {
+                await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
+            }
+            catch (WebSocketException) { }
 
             // Run webhook rate limit GC every 10 minutes
             if (_periodicUpdateCount++ % 10 == 0)
@@ -176,9 +181,9 @@ namespace PluralKit.Bot
             await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
         }
 
-        /*private Task ShardReady(DiscordSocketClient shardClient)
+        private Task ShardReady(DiscordClient shardClient)
         {
-            _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", shardClient.ShardId, shardClient.Guilds.Sum(g => g.Channels.Count), shardClient.Guilds.Count);
+            _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", shardClient.ShardId, shardClient.Guilds.Sum(g => g.Value.Channels.Count), shardClient.Guilds.Count);
 
             if (shardClient.ShardId == 0)
             {
@@ -190,7 +195,7 @@ namespace PluralKit.Bot
         }
 
             return Task.CompletedTask;
-        }*/
+        }
 
         private Task HandleEvent(Func<PKEventHandler, Task> handler)
         {
