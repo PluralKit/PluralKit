@@ -288,7 +288,7 @@ namespace PluralKit.Bot
             if (discordChannel.Type != ChannelType.Text) return null;
             
             PopArgument();
-            return null;// return textChannel;
+            return discordChannel;
         }
     }
 }
