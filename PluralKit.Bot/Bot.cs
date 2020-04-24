@@ -283,7 +283,7 @@ namespace PluralKit.Bot
             
             // Fetch information about the guild early, as we need it for the logger cleanup
             GuildConfig cachedGuild = default;
-            if (msg.Channel.Type == ChannelType.Text) await _cache.GetGuildDataCached(msg.Channel.GuildId);
+            if (msg.Channel.Type == ChannelType.Text) cachedGuild = await _cache.GetGuildDataCached(msg.Channel.GuildId);
             
             // Pass guild bot/WH messages onto the logger cleanup service, but otherwise ignore
             if (msg.Author.IsBot && msg.Channel.Type == ChannelType.Text)
