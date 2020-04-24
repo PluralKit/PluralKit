@@ -86,7 +86,7 @@ namespace PluralKit.Bot
         public async Task HandleMessageAsync(DiscordClient client, GuildConfig guild, CachedAccount account, DiscordMessage message, bool doAutoProxy)
         {
             // Bail early if this isn't in a guild channel
-            if (message.Channel.Guild != null) return;
+            if (message.Channel.Guild == null) return;
             
             // Find a member with proxy tags matching the message
             var match = GetProxyTagMatch(message.Content, account.System, account.Members);
