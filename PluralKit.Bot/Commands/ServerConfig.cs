@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus;
+using DSharpPlus.Entities;
 
 using PluralKit.Core;
 
@@ -20,12 +21,13 @@ namespace PluralKit.Bot
 
         public async Task SetLogChannel(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
             
-            ITextChannel channel = null;
+            DiscordChannel channel = null;
             if (ctx.HasNext())
                 channel = ctx.MatchChannel() ?? throw new PKSyntaxError("You must pass a #channel to set.");
-            if (channel != null && channel.GuildId != ctx.Guild.Id) throw new PKError("That channel is not in this server!"); 
+            if (channel != null && channel.GuildId != ctx.Guild.Id) throw new PKError("That channel is not in this server!");
+            if (channel.Type != ChannelType.Text) throw new PKError("The logging channel must be a text channel."); //TODO: test this
 
             var cfg = await _data.GetOrCreateGuildConfig(ctx.Guild.Id);
             cfg.LogChannel = channel?.Id;
@@ -39,15 +41,16 @@ namespace PluralKit.Bot
 
         public async Task SetLogEnabled(Context ctx, bool enable)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
 
-            var affectedChannels = new List<ITextChannel>();
+            var affectedChannels = new List<DiscordChannel>();
             if (ctx.Match("all"))
-                affectedChannels = (await ctx.Guild.GetChannelsAsync()).OfType<ITextChannel>().ToList();
+                affectedChannels = (await ctx.Guild.GetChannelsAsync()).Where(x => x.Type == ChannelType.Text).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                if (!(ctx.MatchChannel() is ITextChannel channel))
+                var channel = ctx.MatchChannel(); //TODO: test this
+                if (channel.Type != ChannelType.Text)
                     throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
                 if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
                 affectedChannels.Add(channel);
@@ -65,15 +68,16 @@ namespace PluralKit.Bot
         
         public async Task SetBlacklisted(Context ctx, bool onBlacklist)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
 
-            var affectedChannels = new List<ITextChannel>();
+            var affectedChannels = new List<DiscordChannel>();
             if (ctx.Match("all"))
-                affectedChannels = (await ctx.Guild.GetChannelsAsync()).OfType<ITextChannel>().ToList();
+                affectedChannels = (await ctx.Guild.GetChannelsAsync()).Where(x => x.Type == ChannelType.Text).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                if (!(ctx.MatchChannel() is ITextChannel channel))
+                var channel = ctx.MatchChannel(); //TODO: test this
+                if (channel.Type != ChannelType.Text)
                     throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
                 if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
                 affectedChannels.Add(channel);
@@ -89,7 +93,7 @@ namespace PluralKit.Bot
 
         public async Task SetLogCleanup(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(GuildPermission.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
 
             var guildCfg = await _data.GetOrCreateGuildConfig(ctx.Guild.Id);
             var botList = string.Join(", ", _cleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
@@ -108,7 +112,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var eb = new EmbedBuilder()
+                var eb = new DiscordEmbedBuilder()
                     .WithTitle("Log cleanup settings")
                     .AddField("Supported bots", botList);
                 

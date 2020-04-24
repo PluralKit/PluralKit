@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus.Entities;
 
 using NodaTime;
 using NodaTime.TimeZones;
@@ -140,7 +140,7 @@ namespace PluralKit.Bot
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
             var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
 
-            IUserMessage msg;
+            DiscordMessage msg;
             if (lastTwoSwitches.Count == 1)
             {
                 msg = await ctx.Reply(

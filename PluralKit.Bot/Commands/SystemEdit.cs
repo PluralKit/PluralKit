@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus;
+using DSharpPlus.Entities;
 
 using NodaTime;
 using NodaTime.Text;
@@ -70,7 +71,7 @@ namespace PluralKit.Bot
                 else if (ctx.MatchFlag("r", "raw"))
                     await ctx.Reply($"```\n{ctx.System.Description.SanitizeMentions()}\n```");
                 else
-                    await ctx.Reply(embed: new EmbedBuilder()
+                    await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("System description")
                         .WithDescription(ctx.System.Description)
                         .WithFooter("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`.")
@@ -128,7 +129,7 @@ namespace PluralKit.Bot
             {
                 if ((ctx.System.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
-                    var eb = new EmbedBuilder()
+                    var eb = new DiscordEmbedBuilder()
                         .WithTitle($"System avatar")
                         .WithImageUrl(ctx.System.AvatarUrl)
                         .WithDescription($"To clear, use `pk;system avatar clear`.");
@@ -143,11 +144,11 @@ namespace PluralKit.Bot
             var member = await ctx.MatchUser();
             if (member != null)
             {
-                if (member.AvatarId == null) throw Errors.UserHasNoAvatar;
+                if (member.AvatarUrl == member.DefaultAvatarUrl) throw Errors.UserHasNoAvatar;
                 ctx.System.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
                 await _data.SaveSystem(ctx.System);
             
-                var embed = new EmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
+                var embed = new DiscordEmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
                 await ctx.Reply(
                     $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
             }
@@ -160,7 +161,7 @@ namespace PluralKit.Bot
                 ctx.System.AvatarUrl = url;
                 await _data.SaveSystem(ctx.System);
 
-                var embed = url != null ? new EmbedBuilder().WithImageUrl(url).Build() : null;
+                var embed = url != null ? new DiscordEmbedBuilder().WithImageUrl(url).Build() : null;
                 await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed);
             }
         }
@@ -249,7 +250,7 @@ namespace PluralKit.Bot
                     _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
                 };
 
-                var eb = new EmbedBuilder()
+                var eb = new DiscordEmbedBuilder()
                     .WithTitle("Current privacy settings for your system")
                     .AddField("Description", PrivacyLevelString(ctx.System.DescriptionPrivacy))
                     .AddField("Member list", PrivacyLevelString(ctx.System.MemberListPrivacy))

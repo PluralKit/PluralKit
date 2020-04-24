@@ -1,7 +1,8 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus;
+using DSharpPlus.Entities;
 
 using PluralKit.Core;
 
@@ -39,7 +40,7 @@ namespace PluralKit.Bot
             {
                 if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
-                    var eb = new EmbedBuilder()
+                    var eb = new DiscordEmbedBuilder()
                         .WithTitle($"{target.Name.SanitizeMentions()}'s avatar")
                         .WithImageUrl(target.AvatarUrl);
                     if (target.System == ctx.System?.Id)
@@ -55,18 +56,17 @@ namespace PluralKit.Bot
 
                 return;
             }
-            
+            var user = await ctx.MatchUser();
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
-
-            else if (await ctx.MatchUser() is IUser user)
+            else if (user != null)
             {
-                if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
+                if (user.AvatarUrl == user.DefaultAvatarUrl) throw Errors.UserHasNoAvatar; //TODO: is this necessary?
                 target.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
                 
                 await _data.SaveMember(target);
             
-                var embed = new EmbedBuilder().WithImageUrl(target.AvatarUrl).Build();
+                var embed = new DiscordEmbedBuilder().WithImageUrl(target.AvatarUrl).Build();
                 await ctx.Reply(
                     $"{Emojis.Success} Member avatar changed to {user.Username}'s avatar! {Emojis.Warn} Please note that if {user.Username} changes their avatar, the member's avatar will need to be re-set.", embed: embed);
             }
@@ -76,10 +76,10 @@ namespace PluralKit.Bot
                 target.AvatarUrl = url;
                 await _data.SaveMember(target);
 
-                var embed = new EmbedBuilder().WithImageUrl(url).Build();
+                var embed = new DiscordEmbedBuilder().WithImageUrl(url).Build();
                 await ctx.Reply($"{Emojis.Success} Member avatar changed.", embed: embed);
             }
-            else if (ctx.Message.Attachments.FirstOrDefault() is Attachment attachment)
+            else if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment attachment)
             {
                 await AvatarUtils.VerifyAvatarOrThrow(attachment.Url);
                 target.AvatarUrl = attachment.Url;
@@ -113,7 +113,7 @@ namespace PluralKit.Bot
             {
                 if ((guildData.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
-                    var eb = new EmbedBuilder()
+                    var eb = new DiscordEmbedBuilder()
                         .WithTitle($"{target.Name.SanitizeMentions()}'s server avatar (for {ctx.Guild.Name})")
                         .WithImageUrl(guildData.AvatarUrl);
                     if (target.System == ctx.System?.Id)
@@ -125,17 +125,17 @@ namespace PluralKit.Bot
 
                 return;
             }
-            
+            var user = await ctx.MatchUser();
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            if (await ctx.MatchUser() is IUser user)
+            if (user != null)
             {
-                if (user.AvatarId == null) throw Errors.UserHasNoAvatar;
+                if (user.AvatarUrl == user.DefaultAvatarUrl) throw Errors.UserHasNoAvatar;
                 guildData.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
                 await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
             
-                var embed = new EmbedBuilder().WithImageUrl(guildData.AvatarUrl).Build();
+                var embed = new DiscordEmbedBuilder().WithImageUrl(guildData.AvatarUrl).Build();
                 await ctx.Reply(
                     $"{Emojis.Success} Member server avatar changed to {user.Username}'s avatar! This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**). {Emojis.Warn} Please note that if {user.Username} changes their avatar, the member's server avatar will need to be re-set.", embed: embed);
             }
@@ -145,10 +145,10 @@ namespace PluralKit.Bot
                 guildData.AvatarUrl = url;
                 await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
 
-                var embed = new EmbedBuilder().WithImageUrl(url).Build();
+                var embed = new DiscordEmbedBuilder().WithImageUrl(url).Build();
                 await ctx.Reply($"{Emojis.Success} Member server avatar changed. This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).", embed: embed);
             }
-            else if (ctx.Message.Attachments.FirstOrDefault() is Attachment attachment)
+            else if (ctx.Message.Attachments.FirstOrDefault() is DiscordAttachment attachment)
             {
                 await AvatarUtils.VerifyAvatarOrThrow(attachment.Url);
                 guildData.AvatarUrl = attachment.Url;

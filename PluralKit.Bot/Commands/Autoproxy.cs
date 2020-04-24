@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus.Entities;
 
 using PluralKit.Core;
 
@@ -96,12 +96,12 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.Name}** in this server.");
         }
 
-        private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx)
+        private async Task<DiscordEmbed> CreateAutoproxyStatusEmbed(Context ctx)
         {
             var settings = await _data.GetSystemGuildSettings(ctx.System, ctx.Guild.Id);
 
             var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member\n**pk;autoproxy front** - Autoproxies as current (first) fronter\n**pk;autoproxy <member>** - Autoproxies as a specific member";
-            var eb = new EmbedBuilder().WithTitle($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
+            var eb = new DiscordEmbedBuilder().WithTitle($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
 
             switch (settings.AutoproxyMode) {
                 case AutoproxyMode.Off: eb.WithDescription($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");

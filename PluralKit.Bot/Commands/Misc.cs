@@ -3,16 +3,18 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Net.WebSockets;
 
 using App.Metrics;
 
-using Discord;
+using DSharpPlus;
 
 using Humanizer;
 
 using NodaTime;
 
 using PluralKit.Core;
+using DSharpPlus.Entities;
 
 namespace PluralKit.Bot {
     public class Misc
@@ -36,18 +38,16 @@ namespace PluralKit.Bot {
         
         public async Task Invite(Context ctx)
         {
-            var clientId = _botConfig.ClientId ?? (await ctx.Client.GetApplicationInfoAsync()).Id;
-            var permissions = new GuildPermissions(
-                addReactions: true,
-                attachFiles: true,
-                embedLinks: true,
-                manageMessages: true,
-                manageWebhooks: true,
-                readMessageHistory: true,
-                sendMessages: true
-            );
-
-            var invite = $"https://discordapp.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={permissions.RawValue}";
+            var clientId = _botConfig.ClientId ?? ctx.Client.CurrentApplication.Id;
+            var permissions = new Permissions()
+                .Grant(Permissions.AddReactions)
+                .Grant(Permissions.AttachFiles)
+                .Grant(Permissions.EmbedLinks)
+                .Grant(Permissions.ManageMessages)
+                .Grant(Permissions.ManageWebhooks)
+                .Grant(Permissions.ReadMessageHistory)
+                .Grant(Permissions.SendMessages);
+            var invite = $"https://discordapp.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={(long)permissions}";
             await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }
         
@@ -65,8 +65,8 @@ namespace PluralKit.Bot {
             var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.First(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name).Value;
 
             var shardId = ctx.Shard.ShardId;
-            var shardTotal = ctx.Client.Shards.Count;
-            var shardUpTotal = ctx.Client.Shards.Select(s => s.ConnectionState == ConnectionState.Connected).Count();
+            var shardTotal = ctx.Client.ShardClients.Count;
+            var shardUpTotal = ctx.Client.ShardClients.Where(x => x.Value.IsConnected()).Count();
             var shardInfo = _shards.GetShardInfo(ctx.Shard);
             
             var process = Process.GetCurrentProcess();
@@ -74,7 +74,7 @@ namespace PluralKit.Bot {
 
             var shardUptime = SystemClock.Instance.GetCurrentInstant() - shardInfo.LastConnectionTime;
 
-            var embed = new EmbedBuilder()
+            var embed = new DiscordEmbedBuilder()
                 .AddField("Messages processed", $"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)", true)
                 .AddField("Messages proxied", $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)", true)
                 .AddField("Commands executed", $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)", true)
@@ -84,17 +84,12 @@ namespace PluralKit.Bot {
                 .AddField("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true)
                 .AddField("Latency", $"API: {(msg.Timestamp - ctx.Message.Timestamp).TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency} ms", true)
                 .AddField("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalSwitches:N0} switches, {totalMessages:N0} messages");
-
-            await msg.ModifyAsync(f =>
-            {
-                f.Content = "";
-                f.Embed = embed.Build();
-            });
+            await msg.ModifyAsync("", embed.Build());
         }
-        
+
         public async Task PermCheckGuild(Context ctx)
         {
-            IGuild guild;
+            DiscordGuild guild;
 
             if (ctx.Guild != null && !ctx.HasNext())
             {
@@ -107,51 +102,52 @@ namespace PluralKit.Bot {
                     throw new PKSyntaxError($"Could not parse `{guildIdStr.SanitizeMentions()}` as an ID.");
 
                 // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
-                guild = ctx.Client.GetGuild(guildId);
+                guild = await ctx.Rest.GetGuildAsync(guildId);
                 if (guild == null)
                     throw Errors.GuildNotFound(guildId);
             }
-
+            
             var requiredPermissions = new []
             {
-                ChannelPermission.ViewChannel,
-                ChannelPermission.SendMessages,
-                ChannelPermission.AddReactions,
-                ChannelPermission.AttachFiles,
-                ChannelPermission.EmbedLinks,
-                ChannelPermission.ManageMessages,
-                ChannelPermission.ManageWebhooks
+                Permissions.AccessChannels,
+                Permissions.SendMessages,
+                Permissions.AddReactions,
+                Permissions.AttachFiles,
+                Permissions.EmbedLinks,
+                Permissions.ManageMessages,
+                Permissions.ManageWebhooks
             };
 
             // Loop through every channel and group them by sets of permissions missing
-            var permissionsMissing = new Dictionary<ulong, List<ITextChannel>>();
-            foreach (var channel in await guild.GetTextChannelsAsync())
+            var permissionsMissing = new Dictionary<ulong, List<DiscordChannel>>();
+            var guildTextChannels = (await guild.GetChannelsAsync()).Where(x => x.Type == ChannelType.Text);
+            foreach (var channel in guildTextChannels)
             {
                 // TODO: do we need to hide channels here to prevent info-leaking?
-                var perms = channel.PermissionsIn();
+                var perms = await channel.PermissionsIn(ctx.Client.CurrentUser);
 
                 // We use a bitfield so we can set individual permission bits in the loop
                 ulong missingPermissionField = 0;
                 foreach (var requiredPermission in requiredPermissions)
-                    if (!perms.Has(requiredPermission))
+                    if (!perms.HasPermission(requiredPermission))
                         missingPermissionField |= (ulong) requiredPermission;
 
                 // If we're not missing any permissions, don't bother adding it to the dict
                 // This means we can check if the dict is empty to see if all channels are proxyable
                 if (missingPermissionField != 0)
                 {
-                    permissionsMissing.TryAdd(missingPermissionField, new List<ITextChannel>());
+                    permissionsMissing.TryAdd(missingPermissionField, new List<DiscordChannel>());
                     permissionsMissing[missingPermissionField].Add(channel);
                 }
             }
             
             // Generate the output embed
-            var eb = new EmbedBuilder()
+            var eb = new DiscordEmbedBuilder()
                 .WithTitle($"Permission check for **{guild.Name.SanitizeMentions()}**");
 
             if (permissionsMissing.Count == 0)
             {
-                eb.WithDescription($"No errors found, all channels proxyable :)").WithColor(Color.Green);
+                eb.WithDescription($"No errors found, all channels proxyable :)").WithColor(DiscordColor.Green);
             }
             else
             {
@@ -159,15 +155,13 @@ namespace PluralKit.Bot {
                 {
                     // Each missing permission field can have multiple missing channels
                     // so we extract them all and generate a comma-separated list
-                    var missingPermissionNames = string.Join(", ", new ChannelPermissions(missingPermissionField)
-                        .ToList()
-                        .Select(perm => perm.Humanize().Transform(To.TitleCase)));
+                    var missingPermissionNames = ((Permissions)missingPermissionField).ToPermissionString();
                     
                     var channelsList = string.Join("\n", channels
                         .OrderBy(c => c.Position)
                         .Select(c => $"#{c.Name}"));
                     eb.AddField($"Missing *{missingPermissionNames}*", channelsList.Truncate(1000));
-                    eb.WithColor(Color.Red);
+                    eb.WithColor(DiscordColor.Red);
                 }
             }
 
@@ -189,7 +183,7 @@ namespace PluralKit.Bot {
             var message = await _data.GetMessage(messageId);
             if (message == null) throw Errors.MessageNotFound(messageId);
 
-            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(ctx.Shard, message)); //TODO: test this
         }
     }
 }

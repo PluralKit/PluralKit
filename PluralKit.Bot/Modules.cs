@@ -15,14 +15,20 @@ namespace PluralKit.Bot
     {
         protected override void Load(ContainerBuilder builder)
         {
-            // Client
+            // Clients
             builder.Register(c => new DiscordShardedClient(new DiscordConfiguration
                 {
                     Token = c.Resolve<BotConfig>().Token,
                     TokenType = TokenType.Bot,
                     MessageCacheSize = 0,
                 })).AsSelf().SingleInstance();
-            
+            builder.Register(c => new DiscordRestClient(new DiscordConfiguration
+            {
+                Token = c.Resolve<BotConfig>().Token,
+                TokenType = TokenType.Bot,
+                MessageCacheSize = 0,
+            })).AsSelf().SingleInstance();
+
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
             builder.RegisterType<Autoproxy>().AsSelf();
