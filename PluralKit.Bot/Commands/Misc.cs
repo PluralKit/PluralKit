@@ -183,7 +183,7 @@ namespace PluralKit.Bot {
             var message = await _data.GetMessage(messageId);
             if (message == null) throw Errors.MessageNotFound(messageId);
 
-            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(ctx.Shard, message)); //TODO: test this
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(ctx.Shard, message));
         }
     }
 }
