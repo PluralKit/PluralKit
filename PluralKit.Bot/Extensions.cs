@@ -1,4 +1,5 @@
 using DSharpPlus;
+using DSharpPlus.Entities;
 
 using System.Net.WebSockets;
 
@@ -18,6 +19,11 @@ namespace PluralKit.Bot
                 return false;
             }
             return true;
+        }
+
+        public static bool HasAvatar(this DiscordUser user)
+        {
+            return user.AvatarUrl != user.DefaultAvatarUrl;
         }
     }
 }

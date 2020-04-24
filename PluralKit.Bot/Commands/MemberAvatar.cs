@@ -61,7 +61,7 @@ namespace PluralKit.Bot
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             else if (user != null)
             {
-                if (user.AvatarUrl == user.DefaultAvatarUrl) throw Errors.UserHasNoAvatar; //TODO: is this necessary?
+                if (!user.HasAvatar()) throw Errors.UserHasNoAvatar; //TODO: is this necessary?
                 target.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
                 
                 await _data.SaveMember(target);
@@ -131,7 +131,7 @@ namespace PluralKit.Bot
 
             if (user != null)
             {
-                if (user.AvatarUrl == user.DefaultAvatarUrl) throw Errors.UserHasNoAvatar;
+                if (!user.HasAvatar()) throw Errors.UserHasNoAvatar;
                 guildData.AvatarUrl = user.GetAvatarUrl(ImageFormat.Png, size: 256);
                 await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
             

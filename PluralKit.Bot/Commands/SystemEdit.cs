@@ -144,7 +144,7 @@ namespace PluralKit.Bot
             var member = await ctx.MatchUser();
             if (member != null)
             {
-                if (member.AvatarUrl == member.DefaultAvatarUrl) throw Errors.UserHasNoAvatar;
+                if (!member.HasAvatar()) throw Errors.UserHasNoAvatar;
                 ctx.System.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
                 await _data.SaveSystem(ctx.System);
             
