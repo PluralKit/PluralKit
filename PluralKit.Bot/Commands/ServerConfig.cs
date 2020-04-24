@@ -27,7 +27,6 @@ namespace PluralKit.Bot
             if (ctx.HasNext())
                 channel = ctx.MatchChannel() ?? throw new PKSyntaxError("You must pass a #channel to set.");
             if (channel != null && channel.GuildId != ctx.Guild.Id) throw new PKError("That channel is not in this server!");
-            if (channel.Type != ChannelType.Text) throw new PKError("The logging channel must be a text channel."); //TODO: test this
 
             var cfg = await _data.GetOrCreateGuildConfig(ctx.Guild.Id);
             cfg.LogChannel = channel?.Id;
@@ -49,9 +48,7 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                var channel = ctx.MatchChannel(); //TODO: test this
-                if (channel.Type != ChannelType.Text)
-                    throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
+                var channel = ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
                 if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
                 affectedChannels.Add(channel);
             }
@@ -76,9 +73,7 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                var channel = ctx.MatchChannel(); //TODO: test this
-                if (channel.Type != ChannelType.Text)
-                    throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
+                var channel = ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
                 if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
                 affectedChannels.Add(channel);
             }
