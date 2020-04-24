@@ -6,12 +6,11 @@ using App.Metrics;
 
 using Autofac;
 
-using Discord;
-using Discord.WebSocket;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
 
+using PluralKit.Bot.Utils;
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -20,6 +19,7 @@ namespace PluralKit.Bot
     {
         private ILifetimeScope _provider;
 
+        private readonly DiscordRestClient _rest;
         private readonly DiscordShardedClient _client;
         private readonly DiscordClient _shard;
         private readonly DiscordMessage _message;
@@ -34,6 +34,7 @@ namespace PluralKit.Bot
         public Context(ILifetimeScope provider, DiscordClient shard, DiscordMessage message, int commandParseOffset,
                        PKSystem senderSystem)
         {
+            _rest = provider.Resolve<DiscordRestClient>();
             _client = provider.Resolve<DiscordShardedClient>();
             _message = message;
             _shard = shard;
@@ -50,6 +51,9 @@ namespace PluralKit.Bot
         public DiscordGuild Guild => _message.Channel.Guild;
         public DiscordClient Shard => _shard;
         public DiscordShardedClient Client => _client;
+
+        public DiscordRestClient Rest => _rest;
+
         public PKSystem System => _senderSystem;
 
         public string PopArgument() => _parameters.Pop();
@@ -280,10 +284,11 @@ namespace PluralKit.Bot
         public DiscordChannel MatchChannel()
         {
             if (!MentionUtils.TryParseChannel(PeekArgument(), out var channel)) return null;
-            if (!(_client.GetChannelAsync(channel) is ITextChannel textChannel)) return null;
+            var discordChannel = _rest.GetChannelAsync(channel).GetAwaiter().GetResult();
+            if (discordChannel.Type != ChannelType.Text) return null;
             
             PopArgument();
-            return textChannel;
+            return null;// return textChannel;
         }
     }
 }

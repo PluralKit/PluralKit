@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord.WebSocket;
+using DSharpPlus;
 
 using PluralKit.Core;
 
@@ -81,6 +81,7 @@ namespace PluralKit.Bot
 
         public CommandTree(DiscordShardedClient client)
         {
+            
             _client = client;
         }
 
@@ -345,7 +346,7 @@ namespace PluralKit.Bot
             {
                 // Try to resolve the user ID to find the associated account,
                 // so we can print their username.
-                var user = await _client.Rest.GetUserAsync(id);
+                var user = await ctx.Rest.GetUserAsync(id);
 
                 // Print descriptive errors based on whether we found the user or not.
                 if (user == null)

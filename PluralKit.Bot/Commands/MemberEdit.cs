@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus.Entities;
 
 using NodaTime;
 
@@ -86,7 +86,7 @@ namespace PluralKit.Bot
                 else if (ctx.MatchFlag("r", "raw"))
                     await ctx.Reply($"```\n{target.Description.SanitizeMentions()}\n```");
                 else
-                    await ctx.Reply(embed: new EmbedBuilder()
+                    await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Member description")
                         .WithDescription(target.Description)
                         .AddField("\u200B", $"To print the description with formatting, type `pk;member {target.Hid} description -raw`." 
@@ -163,7 +163,7 @@ namespace PluralKit.Bot
                     else
                         await ctx.Reply("This member does not have a color set.");
                 else
-                    await ctx.Reply(embed: new EmbedBuilder()
+                    await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Member color")
                         .WithColor(target.Color.ToDiscordColor().Value)
                         .WithThumbnailUrl($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
@@ -180,7 +180,7 @@ namespace PluralKit.Bot
                 target.Color = color.ToLower();
                 await _data.SaveMember(target);
 
-                await ctx.Reply(embed: new EmbedBuilder()
+                await ctx.Reply(embed: new DiscordEmbedBuilder()
                     .WithTitle($"{Emojis.Success} Member color changed.")
                     .WithColor(target.Color.ToDiscordColor().Value)
                     .WithThumbnailUrl($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
@@ -220,13 +220,13 @@ namespace PluralKit.Bot
             }
         }
         
-        private async Task<EmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
+        private async Task<DiscordEmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
         {
             MemberGuildSettings memberGuildConfig = null;
             if (ctx.Guild != null)
                 memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
 
-            var eb = new EmbedBuilder().WithTitle($"Member names")
+            var eb = new DiscordEmbedBuilder().WithTitle($"Member names")
                 .WithFooter($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name.");
 
             if (target.DisplayName == null && memberGuildConfig?.DisplayName == null)
