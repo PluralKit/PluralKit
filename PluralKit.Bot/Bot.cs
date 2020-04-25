@@ -119,8 +119,9 @@ namespace PluralKit.Bot
 
         public Task Init()
         {
-            // _client.ShardDisconnected += ShardDisconnected;
-            // _client.ShardReady += ShardReady;
+            // DiscordShardedClient SocketErrored/Ready events also fire whenever an individual shard's respective events fire
+            _client.SocketErrored += ShardDisconnected;
+            _client.Ready += ShardReady;
             _client.DebugLogger.LogMessageReceived += FrameworkLog;
             
             _client.MessageCreated += args => HandleEvent(eh => eh.HandleMessage(args));
@@ -134,11 +135,11 @@ namespace PluralKit.Bot
             return Task.CompletedTask;
         }
 
-        /*private Task ShardDisconnected(Exception ex, DiscordSocketClient shard)
+        private Task ShardDisconnected(SocketErrorEventArgs e)
         {
-            _logger.Warning(ex, $"Shard #{shard.ShardId} disconnected");
+            _logger.Warning(e.Exception, $"Shard #{e.Client.ShardId} disconnected");
             return Task.CompletedTask;
-        }*/
+        }
 
         private void FrameworkLog(object sender, DebugLogMessageEventArgs args)
         {
@@ -163,7 +164,7 @@ namespace PluralKit.Bot
         {
             // Change bot status
             var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
-            try // DiscordClient may throw an exception if an update is attempted while reconnecting (e.g just after OP 7 received)
+            try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
             {
                 await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
             }
@@ -181,11 +182,11 @@ namespace PluralKit.Bot
             await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
         }
 
-        private Task ShardReady(DiscordClient shardClient)
+        private Task ShardReady(ReadyEventArgs e)
         {
-            _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", shardClient.ShardId, shardClient.Guilds.Sum(g => g.Value.Channels.Count), shardClient.Guilds.Count);
+            _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", e.Client.ShardId, e.Client.Guilds.Sum(g => g.Value.Channels.Count), e.Client.Guilds.Count);
 
-            if (shardClient.ShardId == 0)
+            if (e.Client.ShardId == 0)
             {
                 _updateTimer = new Timer((_) => {
                     HandleEvent(_ => UpdatePeriodic()); 
