@@ -125,15 +125,25 @@ namespace PluralKit.Bot {
 
             // Loop through every channel and group them by sets of permissions missing
             var permissionsMissing = new Dictionary<ulong, List<ITextChannel>>();
+            var hiddenChannels = 0;
             foreach (var channel in await guild.GetTextChannelsAsync())
             {
-                // TODO: do we need to hide channels here to prevent info-leaking?
-                var perms = channel.PermissionsIn();
+                var botPermissions = channel.PermissionsIn();
+                var userGuildPermissions = ((IGuildUser) ctx.Author).GuildPermissions;
+                var userPermissions = ((IGuildUser) ctx.Author).GetPermissions(channel);
+                if (!userPermissions.ViewChannel && !userGuildPermissions.Administrator)
+                {
+                    // If the user can't see this channel, don't calculate permissions for it
+                    // (to prevent info-leaking, mostly)
+                    // Instead, count how many hidden channels and show the user (so they don't get confused)
+                    hiddenChannels++;
+                    continue;
+                }
 
                 // We use a bitfield so we can set individual permission bits in the loop
                 ulong missingPermissionField = 0;
                 foreach (var requiredPermission in requiredPermissions)
-                    if (!perms.Has(requiredPermission))
+                    if (!botPermissions.Has(requiredPermission))
                         missingPermissionField |= (ulong) requiredPermission;
 
                 // If we're not missing any permissions, don't bother adding it to the dict
@@ -170,6 +180,9 @@ namespace PluralKit.Bot {
                     eb.WithColor(Color.Red);
                 }
             }
+
+            if (hiddenChannels > 0)
+                eb.WithFooter($"{"channel".ToQuantity(hiddenChannels)} were ignored as you do not have view access to them.");
 
             // Send! :)
             await ctx.Reply(embed: eb.Build());
