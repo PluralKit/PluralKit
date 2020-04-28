@@ -112,6 +112,11 @@ namespace PluralKit.Bot {
                     throw Errors.GuildNotFound(guildId);
             }
 
+            // Ensure people can't query guilds they're not in + get their own permissions (for view access checking)
+            var senderGuildUser = await guild.GetUserAsync(ctx.Author.Id);
+            if (senderGuildUser == null)
+                throw new PKError("You must be a member of the guild you are querying.");
+            
             var requiredPermissions = new []
             {
                 ChannelPermission.ViewChannel,
@@ -129,8 +134,9 @@ namespace PluralKit.Bot {
             foreach (var channel in await guild.GetTextChannelsAsync())
             {
                 var botPermissions = channel.PermissionsIn();
-                var userGuildPermissions = ((IGuildUser) ctx.Author).GuildPermissions;
-                var userPermissions = ((IGuildUser) ctx.Author).GetPermissions(channel);
+                
+                var userGuildPermissions = senderGuildUser.GuildPermissions;
+                var userPermissions = senderGuildUser.GetPermissions(channel);
                 if (!userPermissions.ViewChannel && !userGuildPermissions.Administrator)
                 {
                     // If the user can't see this channel, don't calculate permissions for it
