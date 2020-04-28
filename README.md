@@ -44,6 +44,8 @@ $ docker-compose up -d
 * Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`
 
+(tip: use `scripts/run-test-db.sh` to run a temporary PostgreSQL database on your local system. Requires Docker.)
+
 # Building the docs
 The website and documentation are automatically built by GitHub Pages when pushed to the `master` branch. They use [Jekyll 3](https://jekyllrb.com), which requires [Ruby](https://www.ruby-lang.org) and [Bundler](https://bundler.io/).
 
