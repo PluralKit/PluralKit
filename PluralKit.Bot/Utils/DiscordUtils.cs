@@ -10,6 +10,11 @@ namespace PluralKit.Bot
 {
     public static class DiscordUtils
     {
+        public static DiscordColor Blue = new DiscordColor(0x1f99d8);
+        public static DiscordColor Green = new DiscordColor(0x00cc78);
+        public static DiscordColor Red = new DiscordColor(0xef4b3d);
+        public static DiscordColor Gray = new DiscordColor(0x979c9f);
+        
         public static string NameAndMention(this DiscordUser user) {
             return $"{user.Username}#{user.Discriminator} ({user.Mention})";
         }

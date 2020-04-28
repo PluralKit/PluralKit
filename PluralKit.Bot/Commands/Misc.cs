@@ -147,7 +147,7 @@ namespace PluralKit.Bot {
 
             if (permissionsMissing.Count == 0)
             {
-                eb.WithDescription($"No errors found, all channels proxyable :)").WithColor(DiscordColor.Green);
+                eb.WithDescription($"No errors found, all channels proxyable :)").WithColor(DiscordUtils.Green);
             }
             else
             {
@@ -161,7 +161,7 @@ namespace PluralKit.Bot {
                         .OrderBy(c => c.Position)
                         .Select(c => $"#{c.Name}"));
                     eb.AddField($"Missing *{missingPermissionNames}*", channelsList.Truncate(1000));
-                    eb.WithColor(DiscordColor.Red);
+                    eb.WithColor(DiscordUtils.Red);
                 }
             }
 

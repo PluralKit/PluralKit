@@ -31,7 +31,7 @@ namespace PluralKit.Bot {
 
             var memberCount = await _data.GetSystemMemberCount(system, false);
             var eb = new DiscordEmbedBuilder()
-                .WithColor(DiscordColor.Blue)
+                .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl ?? null)
                 .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
@@ -81,14 +81,14 @@ namespace PluralKit.Bot {
             DiscordColor color;
             try
             {
-                color = member.Color?.ToDiscordColor() ?? DiscordColor.Gray;
+                color = member.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
             }
             catch (ArgumentException)
             {
                 // Bad API use can cause an invalid color string
                 // TODO: fix that in the API
                 // for now we just default to a blank color, yolo
-                color = DiscordColor.Gray;
+                color = DiscordUtils.Gray;
             }
 
             var messageCount = await _data.GetMemberMessageCount(member);
@@ -102,7 +102,7 @@ namespace PluralKit.Bot {
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, avatar)
-                .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : DiscordColor.Gray)
+                .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
             var description = "";
@@ -133,7 +133,7 @@ namespace PluralKit.Bot {
             var members = await _data.GetSwitchMembers(sw).ToListAsync();
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new DiscordEmbedBuilder()
-                .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordColor.Blue)
+                .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
                 .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
                 .AddField("Since", $"{DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({DateTimeFormats.DurationFormat.Format(timeSinceSwitch)} ago)")
                 .Build();
@@ -185,7 +185,7 @@ namespace PluralKit.Bot {
         {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new DiscordEmbedBuilder()
-                .WithColor(DiscordColor.Blue)
+                .WithColor(DiscordUtils.Gray)
                 .WithFooter($"Since {DateTimeFormats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({DateTimeFormats.DurationFormat.Format(actualPeriod)} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
