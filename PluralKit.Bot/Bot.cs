@@ -15,6 +15,8 @@ using DSharpPlus.EventArgs;
 
 using Microsoft.Extensions.Configuration;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 using Sentry;
@@ -106,7 +108,8 @@ namespace PluralKit.Bot
         private ILogger _logger;
         private WebhookRateLimitService _webhookRateLimit;
         private int _periodicUpdateCount;
-
+        private Task _periodicWorker;
+        
         public Bot(ILifetimeScope services, DiscordShardedClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger, WebhookRateLimitService webhookRateLimit)
         {
             _services = services;
@@ -131,6 +134,9 @@ namespace PluralKit.Bot
             _client.MessageUpdated += args => HandleEvent(eh => eh.HandleMessageEdited(args)); 
             
             _services.Resolve<ShardInfoService>().Init(_client);
+            
+            // Will not be awaited, just runs in the background
+            _periodicWorker = UpdatePeriodic();
 
             return Task.CompletedTask;
         }
@@ -158,43 +164,40 @@ namespace PluralKit.Bot
 
             _logger.Write(level, args.Exception, "D#+ {Source}: {Message}", args.Application, args.Message);
         }
-
-        // Method called every 60 seconds
+        
         private async Task UpdatePeriodic()
         {
-            // Change bot status
-            var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
-            try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
+            while (true)
             {
-                await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
-            }
-            catch (WebSocketException) { }
+                // Run at every whole minute (:00), mostly because I feel like it
+                var timeNow = SystemClock.Instance.GetCurrentInstant();
+                var timeTillNextWholeMinute = 60000 - (timeNow.ToUnixTimeMilliseconds() % 60000);
+                await Task.Delay((int) timeTillNextWholeMinute);
+                
+                // Change bot status
+                var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
+                try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
+                {
+                    await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
+                }
+                catch (WebSocketException) { }
 
-            // Run webhook rate limit GC every 10 minutes
-            if (_periodicUpdateCount++ % 10 == 0)
-            {
-                var _ = Task.Run(() => _webhookRateLimit.GarbageCollect());
-            }
+                // Run webhook rate limit GC every 10 minutes
+                if (_periodicUpdateCount++ % 10 == 0)
+                {
+                    var _ = Task.Run(() => _webhookRateLimit.GarbageCollect());
+                }
 
-            await _collector.CollectStats();
-            
-            _logger.Information("Submitted metrics to backend");
-            await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
+                await _collector.CollectStats();
+
+                _logger.Information("Submitted metrics to backend");
+                await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
+            }
         }
 
         private Task ShardReady(ReadyEventArgs e)
         {
             _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", e.Client.ShardId, e.Client.Guilds.Sum(g => g.Value.Channels.Count), e.Client.Guilds.Count);
-
-            if (e.Client.ShardId == 0)
-            {
-                _updateTimer = new Timer((_) => {
-                    HandleEvent(_ => UpdatePeriodic()); 
-                }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
-
-                _logger.Information("PluralKit started as {Username}#{Discriminator} ({Id})", _client.CurrentUser.Username, _client.CurrentUser.Discriminator, _client.CurrentUser.Id);
-        }
-
             return Task.CompletedTask;
         }
 
