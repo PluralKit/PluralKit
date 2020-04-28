@@ -16,18 +16,15 @@ namespace PluralKit.Bot
         protected override void Load(ContainerBuilder builder)
         {
             // Clients
-            builder.Register(c => new DiscordShardedClient(new DiscordConfiguration
-                {
-                    Token = c.Resolve<BotConfig>().Token,
-                    TokenType = TokenType.Bot,
-                    MessageCacheSize = 0,
-                })).AsSelf().SingleInstance();
-            builder.Register(c => new DiscordRestClient(new DiscordConfiguration
+            builder.Register(c => new DiscordConfiguration
             {
                 Token = c.Resolve<BotConfig>().Token,
                 TokenType = TokenType.Bot,
                 MessageCacheSize = 0,
-            })).AsSelf().SingleInstance();
+                LargeThreshold = 50
+            }).AsSelf();
+            builder.Register(c => new DiscordShardedClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();
+            builder.Register(c => new DiscordRestClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();
 
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
@@ -69,8 +66,7 @@ namespace PluralKit.Bot
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
-            
-            
+
             // Utils
             builder.Register(c => new HttpClient
             {
