@@ -63,7 +63,6 @@ namespace PluralKit.Bot
                 embedTitle,
                 async (builder, switches) =>
                 {
-                    var outputStr = "";
                     foreach (var entry in switches)
                     {
                         var lastSw = entry.LastTime;
@@ -98,8 +97,6 @@ namespace PluralKit.Bot
                             break;
                         }// TODO: Make sure this works
                     }
-
-                    builder.Description = outputStr;
                 }
             );
         }
