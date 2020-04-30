@@ -102,21 +102,17 @@ namespace PluralKit.Bot
     {
         private ILifetimeScope _services;
         private DiscordShardedClient _client;
-        private Timer _updateTimer;
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
-        private WebhookRateLimitService _webhookRateLimit;
-        private int _periodicUpdateCount;
         private Task _periodicWorker;
         
-        public Bot(ILifetimeScope services, DiscordShardedClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger, WebhookRateLimitService webhookRateLimit)
+        public Bot(ILifetimeScope services, DiscordShardedClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
             _services = services;
             _client = client;
             _metrics = metrics;
             _collector = collector;
-            _webhookRateLimit = webhookRateLimit;
             _logger = logger.ForContext<Bot>();
         }
 
@@ -181,12 +177,6 @@ namespace PluralKit.Bot
                     await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
                 }
                 catch (WebSocketException) { }
-
-                // Run webhook rate limit GC every 10 minutes
-                if (_periodicUpdateCount++ % 10 == 0)
-                {
-                    var _ = Task.Run(() => _webhookRateLimit.GarbageCollect());
-                }
 
                 await _collector.CollectStats();
 

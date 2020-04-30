@@ -31,17 +31,15 @@ namespace PluralKit.Bot
     public class WebhookExecutorService
     {
         private WebhookCacheService _webhookCache;
-        private WebhookRateLimitService _rateLimit;
         private ILogger _logger;
         private IMetrics _metrics;
         private HttpClient _client;
 
-        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client, WebhookRateLimitService rateLimit)
+        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client)
         {
             _metrics = metrics;
             _webhookCache = webhookCache;
             _client = client;
-            _rateLimit = rateLimit;
             _logger = logger.ForContext<WebhookExecutorService>();
         }
 
