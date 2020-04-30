@@ -72,9 +72,8 @@ namespace PluralKit.Bot
             foreach (var user in guild.Members.Values)
             {
                 usersKnown.Add(user.Id);
-                
-                // Presence updates are disabled, for now we just assume every user is online, I guess
-                usersOnline.Add(user.Id);
+                if (user.Presence?.Status == UserStatus.Online)
+                    usersOnline.Add(user.Id);
             }
 
             _metrics.Measure.Gauge.SetValue(BotMetrics.MembersTotal, usersKnown.Count);
