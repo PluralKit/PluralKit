@@ -81,6 +81,12 @@ namespace PluralKit.Bot
             {
                 response = await webhook.ExecuteAsync(dwb);
             }
+            catch (JsonReaderException)
+            {
+                // This happens sometimes when we hit a CloudFlare error (or similar) on Discord's end
+                // Nothing we can do about this - happens sometimes under server load, so just drop the message and give up
+                throw new WebhookExecutionErrorOnDiscordsEnd();
+            }
             catch (NotFoundException e)
             {
                 if (e.JsonMessage.Contains("10015") && !hasRetried)
