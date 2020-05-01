@@ -215,9 +215,8 @@ namespace PluralKit.Bot
         private static async Task<string> SanitizeEveryoneMaybe(DiscordMessage message,
                                                                 string messageContents)
         {
-            var member = await message.Channel.Guild.GetMemberAsync(message.Author.Id);
-            if ((member.PermissionsIn(message.Channel) & Permissions.MentionEveryone) == 0) return messageContents.SanitizeEveryone();
-            return messageContents;
+            var permissions = await message.Channel.PermissionsIn(message.Author);
+            return (permissions & Permissions.MentionEveryone) == 0 ? messageContents.SanitizeEveryone() : messageContents;
         }
 
         private async Task<bool> EnsureBotPermissions(DiscordChannel channel)
