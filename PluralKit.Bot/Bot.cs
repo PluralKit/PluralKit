@@ -118,9 +118,6 @@ namespace PluralKit.Bot
 
         public Task Init()
         {
-            // DiscordShardedClient SocketErrored/Ready events also fire whenever an individual shard's respective events fire
-            _client.SocketErrored += ShardDisconnected;
-            _client.Ready += ShardReady;
             _client.DebugLogger.LogMessageReceived += FrameworkLog;
             
             _client.MessageCreated += args => HandleEvent(eh => eh.HandleMessage(args));
@@ -134,12 +131,6 @@ namespace PluralKit.Bot
             // Will not be awaited, just runs in the background
             _periodicWorker = UpdatePeriodic();
 
-            return Task.CompletedTask;
-        }
-
-        private Task ShardDisconnected(SocketErrorEventArgs e)
-        {
-            _logger.Warning(e.Exception, $"Shard #{e.Client.ShardId} disconnected");
             return Task.CompletedTask;
         }
 
@@ -183,12 +174,6 @@ namespace PluralKit.Bot
                 _logger.Information("Submitted metrics to backend");
                 await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
             }
-        }
-
-        private Task ShardReady(ReadyEventArgs e)
-        {
-            _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", e.Client.ShardId, e.Client.Guilds.Sum(g => g.Value.Channels.Count), e.Client.Guilds.Count);
-            return Task.CompletedTask;
         }
 
         private Task HandleEvent(Func<PKEventHandler, Task> handler)

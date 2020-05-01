@@ -52,20 +52,23 @@ namespace PluralKit.Bot {
         
         public async Task Stats(Context ctx)
         {
+            var timeBefore = SystemClock.Instance.GetCurrentInstant();
             var msg = await ctx.Reply($"...");
+            var timeAfter = SystemClock.Instance.GetCurrentInstant();
+            var apiLatency = timeAfter - timeBefore;
             
-            var messagesReceived = _metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name).Value;
-            var messagesProxied = _metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name).Value;
-            var commandsRun = _metrics.Snapshot.GetForContext("Bot").Meters.First(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name).Value;
+            var messagesReceived = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name)?.Value;
+            var messagesProxied = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name)?.Value;
+            var commandsRun = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name)?.Value;
 
-            var totalSystems = _metrics.Snapshot.GetForContext("Application").Gauges.First(m => m.MultidimensionalName == CoreMetrics.SystemCount.Name).Value;
-            var totalMembers = _metrics.Snapshot.GetForContext("Application").Gauges.First(m => m.MultidimensionalName == CoreMetrics.MemberCount.Name).Value;
-            var totalSwitches = _metrics.Snapshot.GetForContext("Application").Gauges.First(m => m.MultidimensionalName == CoreMetrics.SwitchCount.Name).Value;
-            var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.First(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name).Value;
+            var totalSystems = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.SystemCount.Name)?.Value ?? 0;
+            var totalMembers = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MemberCount.Name)?.Value ?? 0;
+            var totalSwitches = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.SwitchCount.Name)?.Value ?? 0;
+            var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name)?.Value ?? 0;
 
             var shardId = ctx.Shard.ShardId;
             var shardTotal = ctx.Client.ShardClients.Count;
-            var shardUpTotal = ctx.Client.ShardClients.Where(x => x.Value.IsConnected()).Count();
+            var shardUpTotal = _shards.Shards.Where(x => x.Connected).Count();
             var shardInfo = _shards.GetShardInfo(ctx.Shard);
             
             var process = Process.GetCurrentProcess();
@@ -73,15 +76,17 @@ namespace PluralKit.Bot {
 
             var shardUptime = SystemClock.Instance.GetCurrentInstant() - shardInfo.LastConnectionTime;
 
-            var embed = new DiscordEmbedBuilder()
-                .AddField("Messages processed", $"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)", true)
-                .AddField("Messages proxied", $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)", true)
-                .AddField("Commands executed", $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)", true)
+            var embed = new DiscordEmbedBuilder();
+            if (messagesReceived != null) embed.AddField("Messages processed",$"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)", true);
+            if (messagesProxied != null) embed.AddField("Messages proxied", $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)", true);
+            if (commandsRun != null) embed.AddField("Commands executed", $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)", true);
+
+            embed
                 .AddField("Current shard", $"Shard #{shardId} (of {shardTotal} total, {shardUpTotal} are up)", true)
                 .AddField("Shard uptime", $"{DateTimeFormats.DurationFormat.Format(shardUptime)} ({shardInfo.DisconnectionCount} disconnections)", true)
                 .AddField("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true)
                 .AddField("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true)
-                .AddField("Latency", $"API: {(msg.Timestamp - ctx.Message.Timestamp).TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency} ms", true)
+                .AddField("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true)
                 .AddField("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalSwitches:N0} switches, {totalMessages:N0} messages");
             await msg.ModifyAsync("", embed.Build());
         }
