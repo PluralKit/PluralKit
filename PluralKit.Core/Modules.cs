@@ -107,7 +107,7 @@ namespace PluralKit.Core
                     // Output simultaneously. May remove the JSON formatter later, keeping it just in cast.
                     // Flush interval is 250ms (down from 10s) to make "tail -f" easier. May be too low?
                     a.File(
-                        (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
+                        (config.LogDir ?? "logs") + $"/pluralkit.{_component}.log",
                         outputTemplate: outputTemplate,
                         rollingInterval: RollingInterval.Day,
                         flushToDiskInterval: TimeSpan.FromMilliseconds(250),
