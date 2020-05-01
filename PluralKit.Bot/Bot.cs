@@ -165,7 +165,8 @@ namespace PluralKit.Bot
                 var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
                 try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
                 {
-                    await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
+                    foreach (var c in _client.ShardClients.Values)
+                        await c.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers | Shard {c.ShardId}"));
                 }
                 catch (WebSocketException) { }
 
