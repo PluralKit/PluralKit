@@ -7,6 +7,7 @@ namespace PluralKit.Bot
     // not particularly efficient? It allocates a dictionary *and* a queue for every single channel (500k in prod!)
     // whereas this is, worst case, one dictionary *entry* of a single ulong per channel, and one dictionary instance
     // on the whole instance, total. Yeah, much more efficient.
+    // TODO: is this still needed after the D#+ migration?
     public class LastMessageCacheService
     {
         private IDictionary<ulong, ulong> _cache = new ConcurrentDictionary<ulong, ulong>();

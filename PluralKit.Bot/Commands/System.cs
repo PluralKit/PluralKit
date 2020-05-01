@@ -18,9 +18,9 @@ namespace PluralKit.Bot
         public async Task Query(Context ctx, PKSystem system) {
             if (system == null) throw Errors.NoSystemError;
 
-            await ctx.Reply(embed: await _embeds.CreateSystemEmbed(system, ctx.LookupContextFor(system)));
+            await ctx.Reply(embed: await _embeds.CreateSystemEmbed(ctx.Shard, system, ctx.LookupContextFor(system)));
         }
-        
+
         public async Task New(Context ctx)
         {
             ctx.CheckNoSystem();

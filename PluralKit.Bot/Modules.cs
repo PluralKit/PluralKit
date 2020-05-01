@@ -3,9 +3,7 @@ using System.Net.Http;
 
 using Autofac;
 
-using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
+using DSharpPlus;
 
 using PluralKit.Core;
 
@@ -17,20 +15,17 @@ namespace PluralKit.Bot
     {
         protected override void Load(ContainerBuilder builder)
         {
-            // Client
-            builder.Register(c => new DiscordShardedClient(new DiscordSocketConfig()
+            // Clients
+            builder.Register(c => new DiscordConfiguration
             {
+                Token = c.Resolve<BotConfig>().Token,
+                TokenType = TokenType.Bot,
                 MessageCacheSize = 0,
-                ConnectionTimeout = 2 * 60 * 1000,
-                ExclusiveBulkDelete = true,
-                LargeThreshold = 50,
-                GuildSubscriptions = false,
-                DefaultRetryMode = RetryMode.RetryTimeouts | RetryMode.RetryRatelimit
-                // Commented this out since Debug actually sends, uh, quite a lot that's not necessary in production
-                // but leaving it here in case I (or someone else) get[s] confused about why logging isn't working again :p
-                // LogLevel = LogSeverity.Debug // We filter log levels in Serilog, so just pass everything through (Debug is lower than Verbose)
-            })).AsSelf().As<BaseDiscordClient>().As<BaseSocketClient>().As<IDiscordClient>().SingleInstance();
-            
+                LargeThreshold = 50
+            }).AsSelf();
+            builder.Register(c => new DiscordShardedClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();
+            builder.Register(c => new DiscordRestClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();
+
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
             builder.RegisterType<Autoproxy>().AsSelf();
@@ -60,7 +55,6 @@ namespace PluralKit.Bot
             builder.RegisterType<ProxyService>().AsSelf().SingleInstance();
             builder.RegisterType<LogChannelService>().AsSelf().SingleInstance();
             builder.RegisterType<DataFileService>().AsSelf().SingleInstance();
-            builder.RegisterType<WebhookRateLimitService>().AsSelf().SingleInstance();
             builder.RegisterType<WebhookExecutorService>().AsSelf().SingleInstance();
             builder.RegisterType<WebhookCacheService>().AsSelf().SingleInstance();
             builder.RegisterType<ShardInfoService>().AsSelf().SingleInstance();
@@ -71,8 +65,7 @@ namespace PluralKit.Bot
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
-            
-            
+
             // Utils
             builder.Register(c => new HttpClient
             {

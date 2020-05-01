@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 using App.Metrics;
 
@@ -95,20 +96,58 @@ namespace PluralKit.Core
 
         private ILogger InitLogger(CoreConfig config)
         {
+            var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
+
             return new LoggerConfiguration()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
                 .MinimumLevel.Debug()
                 .WriteTo.Async(a =>
+                {
+                    // Both the same output, except one is raw compact JSON and one is plain text.
+                    // Output simultaneously. May remove the JSON formatter later, keeping it just in cast.
+                    // Flush interval is 250ms (down from 10s) to make "tail -f" easier. May be too low?
+                    a.File(
+                        (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
+                        outputTemplate: outputTemplate,
+                        rollingInterval: RollingInterval.Day,
+                        flushToDiskInterval: TimeSpan.FromMilliseconds(250),
+                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        formatProvider: new UTCTimestampFormatProvider(),
+                        buffered: true);
+                    
                     a.File(
                         new RenderedCompactJsonFormatter(),
-                        (config.LogDir ?? "logs") + $"/pluralkit.{_component}.log",
+                        (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
                         rollingInterval: RollingInterval.Day,
-                        flushToDiskInterval: TimeSpan.FromSeconds(10),
+                        flushToDiskInterval: TimeSpan.FromMilliseconds(250),
                         restrictedToMinimumLevel: LogEventLevel.Information,
-                        buffered: true))
+                        buffered: true);
+                })
+                // TODO: render as UTC in the console, too? or just in log files
                 .WriteTo.Async(a => 
-                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate:"[{Timestamp:HH:mm:ss}] {Level:u3} {Message:lj}{NewLine}{Exception}"))
+                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate: outputTemplate, formatProvider: new UTCTimestampFormatProvider()))
                 .CreateLogger();
+        }
+    }
+
+    // Serilog why is this necessary for such a simple thing >.>
+    public class UTCTimestampFormatProvider: IFormatProvider
+    {
+        public object GetFormat(Type formatType) => new UTCTimestampFormatter();
+    }
+
+    public class UTCTimestampFormatter: ICustomFormatter
+    {
+        public string Format(string format, object arg, IFormatProvider formatProvider)
+        {
+            // Convert offset to UTC and then print
+            // FormatProvider defaults to locale-specific stuff so we force-default to invariant culture
+            // If we pass the given formatProvider it'll conveniently ignore it, for some reason >.>
+            if (arg is DateTimeOffset dto)
+                return dto.ToUniversalTime().ToString(format, CultureInfo.InvariantCulture);
+            if (arg is IFormattable f)
+                return f.ToString(format, CultureInfo.InvariantCulture);
+            return arg.ToString();
         }
     }
 }

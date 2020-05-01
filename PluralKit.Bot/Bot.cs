@@ -1,15 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using App.Metrics;
 
 using Autofac;
 
-using Discord;
-using Discord.WebSocket;
+using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+
 using Microsoft.Extensions.Configuration;
+
+using NodaTime;
 
 using PluralKit.Core;
 
@@ -61,7 +67,6 @@ namespace PluralKit.Bot
                 SchemaService.Initialize();
 
                 var coreConfig = services.Resolve<CoreConfig>();
-                var botConfig = services.Resolve<BotConfig>();
                 var schema = services.Resolve<SchemaService>();
 
                 using var _ = Sentry.SentrySdk.Init(coreConfig.SentryUrl);
@@ -71,10 +76,9 @@ namespace PluralKit.Bot
 
                 logger.Information("Connecting to Discord");
                 var client = services.Resolve<DiscordShardedClient>();
-                await client.LoginAsync(TokenType.Bot, botConfig.Token);
-
-                logger.Information("Initializing bot");
                 await client.StartAsync();
+                
+                logger.Information("Initializing bot");
                 await services.Resolve<Bot>().Init();
                 
                 try
@@ -98,98 +102,92 @@ namespace PluralKit.Bot
     {
         private ILifetimeScope _services;
         private DiscordShardedClient _client;
-        private Timer _updateTimer;
         private IMetrics _metrics;
         private PeriodicStatCollector _collector;
         private ILogger _logger;
-        private WebhookRateLimitService _webhookRateLimit;
-        private int _periodicUpdateCount;
-
-        public Bot(ILifetimeScope services, IDiscordClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger, WebhookRateLimitService webhookRateLimit)
+        private Task _periodicWorker;
+        
+        public Bot(ILifetimeScope services, DiscordShardedClient client, IMetrics metrics, PeriodicStatCollector collector, ILogger logger)
         {
             _services = services;
-            _client = client as DiscordShardedClient;
+            _client = client;
             _metrics = metrics;
             _collector = collector;
-            _webhookRateLimit = webhookRateLimit;
             _logger = logger.ForContext<Bot>();
         }
 
         public Task Init()
         {
-            _client.ShardDisconnected += ShardDisconnected;
-            _client.ShardReady += ShardReady;
-            _client.Log += FrameworkLog;
+            // DiscordShardedClient SocketErrored/Ready events also fire whenever an individual shard's respective events fire
+            _client.SocketErrored += ShardDisconnected;
+            _client.Ready += ShardReady;
+            _client.DebugLogger.LogMessageReceived += FrameworkLog;
             
-            _client.MessageReceived += (msg) => HandleEvent(eh => eh.HandleMessage(msg));
-            _client.ReactionAdded += (msg, channel, reaction) => HandleEvent(eh => eh.HandleReactionAdded(msg, channel, reaction));
-            _client.MessageDeleted += (msg, channel) => HandleEvent(eh => eh.HandleMessageDeleted(msg, channel));
-            _client.MessagesBulkDeleted += (msgs, channel) => HandleEvent(eh => eh.HandleMessagesBulkDelete(msgs, channel));
-            _client.MessageUpdated += (oldMessage, newMessage, channel) => HandleEvent(eh => eh.HandleMessageEdited(oldMessage, newMessage, channel)); 
+            _client.MessageCreated += args => HandleEvent(eh => eh.HandleMessage(args));
+            _client.MessageReactionAdded += args => HandleEvent(eh => eh.HandleReactionAdded(args));
+            _client.MessageDeleted += args => HandleEvent(eh => eh.HandleMessageDeleted(args));
+            _client.MessagesBulkDeleted += args => HandleEvent(eh => eh.HandleMessagesBulkDelete(args));
+            _client.MessageUpdated += args => HandleEvent(eh => eh.HandleMessageEdited(args)); 
             
             _services.Resolve<ShardInfoService>().Init(_client);
+            
+            // Will not be awaited, just runs in the background
+            _periodicWorker = UpdatePeriodic();
 
             return Task.CompletedTask;
         }
 
-        private Task ShardDisconnected(Exception ex, DiscordSocketClient shard)
+        private Task ShardDisconnected(SocketErrorEventArgs e)
         {
-            _logger.Warning(ex, $"Shard #{shard.ShardId} disconnected");
+            _logger.Warning(e.Exception, $"Shard #{e.Client.ShardId} disconnected");
             return Task.CompletedTask;
         }
 
-        private Task FrameworkLog(LogMessage msg)
+        private void FrameworkLog(object sender, DebugLogMessageEventArgs args)
         {
-            // Bridge D.NET logging to Serilog
+            // Bridge D#+ logging to Serilog
             LogEventLevel level = LogEventLevel.Verbose;
-            if (msg.Severity == LogSeverity.Critical)
+            if (args.Level == LogLevel.Critical)
                 level = LogEventLevel.Fatal;
-            else if (msg.Severity == LogSeverity.Debug)
+            else if (args.Level == LogLevel.Debug)
                 level = LogEventLevel.Debug;
-            else if (msg.Severity == LogSeverity.Error)
+            else if (args.Level == LogLevel.Error)
                 level = LogEventLevel.Error;
-            else if (msg.Severity == LogSeverity.Info)
+            else if (args.Level == LogLevel.Info)
                 level = LogEventLevel.Information;
-            else if (msg.Severity == LogSeverity.Debug) // D.NET's lowest level is Debug and Verbose is greater, Serilog's is the other way around
-                level = LogEventLevel.Verbose;
-            else if (msg.Severity == LogSeverity.Verbose)
-                level = LogEventLevel.Debug;
+            else if (args.Level == LogLevel.Warning)
+                level = LogEventLevel.Warning;
 
-            _logger.Write(level, msg.Exception, "Discord.Net {Source}: {Message}", msg.Source, msg.Message);
-            return Task.CompletedTask;
+            _logger.Write(level, args.Exception, "D#+ {Source}: {Message}", args.Application, args.Message);
         }
-
-        // Method called every 60 seconds
+        
         private async Task UpdatePeriodic()
         {
-            // Change bot status
-            await _client.SetGameAsync($"pk;help | in {_client.Guilds.Count} servers");
-
-            // Run webhook rate limit GC every 10 minutes
-            if (_periodicUpdateCount++ % 10 == 0)
+            while (true)
             {
-                var _ = Task.Run(() => _webhookRateLimit.GarbageCollect());
+                // Run at every whole minute (:00), mostly because I feel like it
+                var timeNow = SystemClock.Instance.GetCurrentInstant();
+                var timeTillNextWholeMinute = 60000 - (timeNow.ToUnixTimeMilliseconds() % 60000);
+                await Task.Delay((int) timeTillNextWholeMinute);
+                
+                // Change bot status
+                var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
+                try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
+                {
+                    await _client.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers"));
+                }
+                catch (WebSocketException) { }
+
+                await _collector.CollectStats();
+
+                _logger.Information("Submitted metrics to backend");
+                await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
             }
-
-            await _collector.CollectStats();
-            
-            _logger.Information("Submitted metrics to backend");
-            await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
         }
 
-        private Task ShardReady(DiscordSocketClient shardClient)
+        private Task ShardReady(ReadyEventArgs e)
         {
-            _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", shardClient.ShardId, shardClient.Guilds.Sum(g => g.Channels.Count), shardClient.Guilds.Count);
-
-            if (shardClient.ShardId == 0)
-            {
-                _updateTimer = new Timer((_) => {
-                    HandleEvent(_ => UpdatePeriodic()); 
-                }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
-
-                _logger.Information("PluralKit started as {Username}#{Discriminator} ({Id})", _client.CurrentUser.Username, _client.CurrentUser.Discriminator, _client.CurrentUser.Id);
-        }
-
+            _logger.Information("Shard {Shard} connected to {ChannelCount} channels in {GuildCount} guilds", e.Client.ShardId, e.Client.Guilds.Sum(g => g.Value.Channels.Count), e.Client.Guilds.Count);
             return Task.CompletedTask;
         }
 
@@ -252,7 +250,7 @@ namespace PluralKit.Bot
         // This means that the HandleMessage function will either be called once, or not at all
         // The ReportError function will be called on an error, and needs to refer back to the "trigger message"
         // hence, we just store it in a local variable, ignoring it entirely if it's null.
-        private IUserMessage _msg = null;
+        private DiscordMessage _currentlyHandlingMessage = null;
 
         public PKEventHandler(ProxyService proxy, ILogger logger, IMetrics metrics, DiscordShardedClient client, DbConnectionFactory connectionFactory, ILifetimeScope services, CommandTree tree, Scope sentryScope, ProxyCache cache, LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean)
         {
@@ -269,42 +267,44 @@ namespace PluralKit.Bot
             _loggerClean = loggerClean;
         }
 
-        public async Task HandleMessage(SocketMessage arg)
+        public async Task HandleMessage(MessageCreateEventArgs args)
         {
-            var shard = _client.GetShardFor((arg.Channel as IGuildChannel)?.Guild);
+            // TODO
+            /*var shard = _client.GetShardFor((arg.Channel as IGuildChannel)?.Guild);
             if (shard.ConnectionState != ConnectionState.Connected || _client.CurrentUser == null)
-                return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts
+                return; // Discard messages while the bot "catches up" to avoid unnecessary CPU pressure causing timeouts*/
 
-            RegisterMessageMetrics(arg);
+            RegisterMessageMetrics(args);
 
             // Ignore system messages (member joined, message pinned, etc)
-            var msg = arg as SocketUserMessage;
-            if (msg == null) return;
+            var msg = args.Message;
+            if (msg.MessageType != MessageType.Default) return;
             
             // Fetch information about the guild early, as we need it for the logger cleanup
-            GuildConfig cachedGuild = default; // todo: is this default correct?
-            if (msg.Channel is ITextChannel textChannel) cachedGuild = await _cache.GetGuildDataCached(textChannel.GuildId);
+            GuildConfig cachedGuild = default;
+            if (msg.Channel.Type == ChannelType.Text) cachedGuild = await _cache.GetGuildDataCached(msg.Channel.GuildId);
             
             // Pass guild bot/WH messages onto the logger cleanup service, but otherwise ignore
-            if ((msg.Author.IsBot || msg.Author.IsWebhook) && msg.Channel is ITextChannel)
+            if (msg.Author.IsBot && msg.Channel.Type == ChannelType.Text)
             {
-                await _loggerClean.HandleLoggerBotCleanup(arg, cachedGuild);
+                await _loggerClean.HandleLoggerBotCleanup(msg, cachedGuild);
                 return;
             }
+
+            _currentlyHandlingMessage = msg;
             
             // Add message info as Sentry breadcrumb
-            _msg = msg;
             _sentryScope.AddBreadcrumb(msg.Content, "event.message", data: new Dictionary<string, string>
             {
                 {"user", msg.Author.Id.ToString()},
                 {"channel", msg.Channel.Id.ToString()},
-                {"guild", ((msg.Channel as IGuildChannel)?.GuildId ?? 0).ToString()},
+                {"guild", msg.Channel.GuildId.ToString()},
                 {"message", msg.Id.ToString()},
             });
-            _sentryScope.SetTag("shard", shard.ShardId.ToString());
+            _sentryScope.SetTag("shard", args.Client.ShardId.ToString());
             
             // Add to last message cache
-            _lastMessageCache.AddMessage(arg.Channel.Id, arg.Id);
+            _lastMessageCache.AddMessage(msg.Channel.Id, msg.Id);
             
             // We fetch information about the sending account from the cache
             var cachedAccount = await _cache.GetAccountDataCached(msg.Author.Id);
@@ -330,7 +330,7 @@ namespace PluralKit.Bot
 
                 try
                 {
-                    await _tree.ExecuteCommand(new Context(_services, msg, argPos, cachedAccount?.System));
+                    await _tree.ExecuteCommand(new Context(_services, args.Client, msg, argPos, cachedAccount?.System));
                 }
                 catch (PKError)
                 {
@@ -345,12 +345,12 @@ namespace PluralKit.Bot
                 // no data = no account = no system = no proxy!
                 try
                 {
-                    await _proxy.HandleMessageAsync(cachedGuild, cachedAccount, msg, doAutoProxy: true);
+                    await _proxy.HandleMessageAsync(args.Client, cachedGuild, cachedAccount, msg, doAutoProxy: true);
                 }
                 catch (PKError e)
                 {
-                    if (arg.Channel.HasPermission(ChannelPermission.SendMessages))
-                        await arg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
+                    if (msg.Channel.Guild == null || msg.Channel.BotHasPermission(Permissions.SendMessages))
+                        await msg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
                 }
             }
         }
@@ -358,98 +358,95 @@ namespace PluralKit.Bot
         public async Task ReportError(SentryEvent evt, Exception exc)
         {
             // If we don't have a "trigger message", bail
-            if (_msg == null) return;
+            if (_currentlyHandlingMessage == null) return;
             
             // This function *specifically* handles reporting a command execution error to the user.
             // We'll fetch the event ID and send a user-facing error message.
             // ONLY IF this error's actually our problem. As for what defines an error as "our problem",
             // check the extension method :)
-            if (exc.IsOurProblem() && _msg.Channel.HasPermission(ChannelPermission.SendMessages))
+            if (exc.IsOurProblem() && _currentlyHandlingMessage.Channel.BotHasPermission(Permissions.SendMessages))
             {
                 var eid = evt.EventId;
-                await _msg.Channel.SendMessageAsync(
+                await _currentlyHandlingMessage.Channel.SendMessageAsync(
                     $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{eid}`\nBe sure to include a description of what you were doing to make the error occur.");
             }
             
             // If not, don't care. lol.
         }
 
-        private void RegisterMessageMetrics(SocketMessage msg)
+        private void RegisterMessageMetrics(MessageCreateEventArgs msg)
         {
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
 
-            var gatewayLatency = DateTimeOffset.Now - msg.CreatedAt;
+            var gatewayLatency = DateTimeOffset.Now - msg.Message.Timestamp;
             _logger.Verbose("Message received with latency {Latency}", gatewayLatency);
         }
 
-        public Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,
-            SocketReaction reaction)
+        public Task HandleReactionAdded(MessageReactionAddEventArgs args)
         {
             _sentryScope.AddBreadcrumb("", "event.reaction", data: new Dictionary<string, string>()
             {
-                {"user", reaction.UserId.ToString()},
-                {"channel", channel.Id.ToString()},
-                {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
-                {"message", message.Id.ToString()},
-                {"reaction", reaction.Emote.Name}
+                {"user", args.User.Id.ToString()},
+                {"channel", (args.Channel?.Id ?? 0).ToString()},
+                {"guild", (args.Channel?.GuildId ?? 0).ToString()},
+                {"message", args.Message.Id.ToString()},
+                {"reaction", args.Emoji.Name}
             });
-            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
-
-            return _proxy.HandleReactionAddedAsync(message, channel, reaction);
+            _sentryScope.SetTag("shard", args.Client.ShardId.ToString());
+            return _proxy.HandleReactionAddedAsync(args);
         }
 
-        public Task HandleMessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        public Task HandleMessageDeleted(MessageDeleteEventArgs args)
         {
             _sentryScope.AddBreadcrumb("", "event.messageDelete", data: new Dictionary<string, string>()
             {
-                {"channel", channel.Id.ToString()},
-                {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
-                {"message", message.Id.ToString()},
+                {"channel", args.Channel.Id.ToString()},
+                {"guild", args.Channel.GuildId.ToString()},
+                {"message", args.Message.Id.ToString()},
             });
-            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+            _sentryScope.SetTag("shard", args.Client.ShardId.ToString());
 
-            return _proxy.HandleMessageDeletedAsync(message, channel);
+            return _proxy.HandleMessageDeletedAsync(args);
         }
 
-        public Task HandleMessagesBulkDelete(IReadOnlyCollection<Cacheable<IMessage, ulong>> messages,
-                                             IMessageChannel channel)
+        public Task HandleMessagesBulkDelete(MessageBulkDeleteEventArgs args)
         {
             _sentryScope.AddBreadcrumb("", "event.messageDelete", data: new Dictionary<string, string>()
             {
-                {"channel", channel.Id.ToString()},
-                {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
-                {"messages", string.Join(",", messages.Select(m => m.Id))},
+                {"channel", args.Channel.Id.ToString()},
+                {"guild", args.Channel.Id.ToString()},
+                {"messages", string.Join(",", args.Messages.Select(m => m.Id))},
             });
-            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+            _sentryScope.SetTag("shard", args.Client.ShardId.ToString());
 
-            return _proxy.HandleMessageBulkDeleteAsync(messages, channel);
+            return _proxy.HandleMessageBulkDeleteAsync(args);
         }
 
-        public async Task HandleMessageEdited(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        public async Task HandleMessageEdited(MessageUpdateEventArgs args)
         {
-            _sentryScope.AddBreadcrumb(newMessage.Content, "event.messageEdit", data: new Dictionary<string, string>()
+            _sentryScope.AddBreadcrumb(args.Message.Content ?? "<unknown>", "event.messageEdit", data: new Dictionary<string, string>()
             {
-                {"channel", channel.Id.ToString()},
-                {"guild", ((channel as IGuildChannel)?.GuildId ?? 0).ToString()},
-                {"message", newMessage.Id.ToString()}
+                {"channel", args.Channel.Id.ToString()},
+                {"guild", args.Channel.GuildId.ToString()},
+                {"message", args.Message.Id.ToString()}
             });
-            _sentryScope.SetTag("shard", _client.GetShardIdFor((channel as IGuildChannel)?.Guild).ToString());
+            _sentryScope.SetTag("shard", args.Client.ShardId.ToString());
 
             // If this isn't a guild, bail
-            if (!(channel is IGuildChannel gc)) return;
+            if (args.Channel.Guild == null) return;
             
             // If this isn't the last message in the channel, don't do anything
-            if (_lastMessageCache.GetLastMessage(channel.Id) != newMessage.Id) return;
+            if (_lastMessageCache.GetLastMessage(args.Channel.Id) != args.Message.Id) return;
             
             // Fetch account from cache if there is any
-            var account = await _cache.GetAccountDataCached(newMessage.Author.Id);
+            var account = await _cache.GetAccountDataCached(args.Author.Id);
             if (account == null) return; // Again: no cache = no account = no system = no proxy
             
             // Also fetch guild cache
-            var guild = await _cache.GetGuildDataCached(gc.GuildId);
+            var guild = await _cache.GetGuildDataCached(args.Channel.GuildId);
 
             // Just run the normal message handling stuff
-            await _proxy.HandleMessageAsync(guild, account, newMessage, doAutoProxy: false);
+            await _proxy.HandleMessageAsync(args.Client, guild, account, args.Message, doAutoProxy: false);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus;
+using DSharpPlus.Entities;
 
 using PluralKit.Core;
 
@@ -8,20 +9,18 @@ using Serilog;
 
 namespace PluralKit.Bot {
     public class LogChannelService {
-        private IDiscordClient _client;
         private EmbedService _embed;
         private IDataStore _data;
         private ILogger _logger;
 
-        public LogChannelService(IDiscordClient client, EmbedService embed, ILogger logger, IDataStore data)
+        public LogChannelService(EmbedService embed, ILogger logger, IDataStore data)
         {
-            _client = client;
             _embed = embed;
             _data = data;
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async Task LogMessage(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, IGuildChannel originalChannel, IUser sender, string content, GuildConfig? guildCfg = null)
+        public async Task LogMessage(DiscordClient client, PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordChannel originalChannel, DiscordUser sender, string content, GuildConfig? guildCfg = null)
         {
             if (guildCfg == null) 
                 guildCfg = await _data.GetOrCreateGuildConfig(originalChannel.GuildId);
@@ -31,17 +30,19 @@ namespace PluralKit.Bot {
             if (guildCfg.Value.LogBlacklist.Contains(originalChannel.Id)) return;
             
             // Bail if we can't find the channel
-            if (!(await _client.GetChannelAsync(guildCfg.Value.LogChannel.Value) is ITextChannel logChannel)) return;
+            var channel = await client.GetChannelAsync(guildCfg.Value.LogChannel.Value);
+            if (channel == null || channel.Type != ChannelType.Text) return;
 
             // Bail if we don't have permission to send stuff here
-            if (!logChannel.HasPermission(ChannelPermission.SendMessages) || !logChannel.HasPermission(ChannelPermission.EmbedLinks))
+            var neededPermissions = Permissions.SendMessages | Permissions.EmbedLinks;
+            if ((channel.BotPermissions() & neededPermissions) != neededPermissions)
                 return;
 
             var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, originalMsgId, sender, content, originalChannel);
 
             var url = $"https://discordapp.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
             
-            await logChannel.SendMessageAsync(text: url, embed: embed);
+            await channel.SendMessageAsync(content: url, embed: embed);
         }
     }
 }

@@ -3,8 +3,6 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-using Discord.Net;
-
 using Npgsql;
 
 using PluralKit.Core;
@@ -20,7 +18,8 @@ namespace PluralKit.Bot
             // otherwise we'd blow out our error reporting budget as soon as Discord takes a dump, or something.
             
             // Discord server errors are *not our problem*
-            if (e is HttpException he && ((int) he.HttpCode) >= 500) return false;
+            // TODO
+            // if (e is DSharpPlus.Exceptions he && ((int) he.HttpCode) >= 500) return false;
             
             // Webhook server errors are also *not our problem*
             // (this includes rate limit errors, WebhookRateLimited is a subclass)

@@ -2,16 +2,16 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-using Discord;
+using DSharpPlus.Entities;
 
 namespace PluralKit.Bot
 {
     public static class StringUtils
     {
-        public static Color? ToDiscordColor(this string color)
+        public static DiscordColor? ToDiscordColor(this string color)
         {
-            if (uint.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
-                return new Color(colorInt);
+            if (int.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
+                return new DiscordColor(colorInt);
             throw new ArgumentException($"Invalid color string '{color}'.");
         }
         
@@ -23,7 +23,7 @@ namespace PluralKit.Bot
             if (string.IsNullOrEmpty(content) || content.Length <= 3 || (content[0] != '<' || content[1] != '@'))
                 return false;
             int num = content.IndexOf('>');
-            if (num == -1 || content.Length < num + 2 || content[num + 1] != ' ' || !MentionUtils.TryParseUser(content.Substring(0, num + 1), out mentionId))
+            if (num == -1 || content.Length < num + 2 || content[num + 1] != ' ' || !TryParseMention(content.Substring(0, num + 1), out mentionId))
                 return false;
             argPos = num + 2;
             return true;
@@ -32,7 +32,18 @@ namespace PluralKit.Bot
         public static bool TryParseMention(this string potentialMention, out ulong id)
         {
             if (ulong.TryParse(potentialMention, out id)) return true;
-            if (MentionUtils.TryParseUser(potentialMention, out id)) return true;
+            
+            // Roughly ported from Discord.MentionUtils.TryParseUser
+            if (potentialMention.Length >= 3 && potentialMention[0] == '<' && potentialMention[1] == '@' && potentialMention[potentialMention.Length - 1] == '>')
+            {
+                if (potentialMention.Length >= 4 && potentialMention[2] == '!')
+                    potentialMention = potentialMention.Substring(3, potentialMention.Length - 4); //<@!123>
+                else
+                    potentialMention = potentialMention.Substring(2, potentialMention.Length - 3); //<@123>
+                
+                if (ulong.TryParse(potentialMention, NumberStyles.None, CultureInfo.InvariantCulture, out id))
+                    return true;
+            }
             return false;
         }
 

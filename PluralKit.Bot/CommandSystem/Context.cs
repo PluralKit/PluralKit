@@ -6,9 +6,11 @@ using App.Metrics;
 
 using Autofac;
 
-using Discord;
-using Discord.WebSocket;
 
+using DSharpPlus;
+using DSharpPlus.Entities;
+
+using PluralKit.Bot.Utils;
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -17,8 +19,10 @@ namespace PluralKit.Bot
     {
         private ILifetimeScope _provider;
 
+        private readonly DiscordRestClient _rest;
         private readonly DiscordShardedClient _client;
-        private readonly SocketUserMessage _message;
+        private readonly DiscordClient _shard;
+        private readonly DiscordMessage _message;
         private readonly Parameters _parameters;
 
         private readonly IDataStore _data;
@@ -27,11 +31,13 @@ namespace PluralKit.Bot
 
         private Command _currentCommand;
 
-        public Context(ILifetimeScope provider, SocketUserMessage message, int commandParseOffset,
+        public Context(ILifetimeScope provider, DiscordClient shard, DiscordMessage message, int commandParseOffset,
                        PKSystem senderSystem)
         {
+            _rest = provider.Resolve<DiscordRestClient>();
             _client = provider.Resolve<DiscordShardedClient>();
             _message = message;
+            _shard = shard;
             _data = provider.Resolve<IDataStore>();
             _senderSystem = senderSystem;
             _metrics = provider.Resolve<IMetrics>();
@@ -39,12 +45,15 @@ namespace PluralKit.Bot
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
         }
 
-        public IUser Author => _message.Author;
-        public IMessageChannel Channel => _message.Channel;
-        public IUserMessage Message => _message;
-        public IGuild Guild => (_message.Channel as ITextChannel)?.Guild;
-        public DiscordSocketClient Shard => _client.GetShardFor(Guild);
+        public DiscordUser Author => _message.Author;
+        public DiscordChannel Channel => _message.Channel;
+        public DiscordMessage Message => _message;
+        public DiscordGuild Guild => _message.Channel.Guild;
+        public DiscordClient Shard => _shard;
         public DiscordShardedClient Client => _client;
+
+        public DiscordRestClient Rest => _rest;
+
         public PKSystem System => _senderSystem;
 
         public string PopArgument() => _parameters.Pop();
@@ -53,13 +62,13 @@ namespace PluralKit.Bot
         public bool HasNext(bool skipFlags = true) => RemainderOrNull(skipFlags) != null;
         public string FullCommand => _parameters.FullCommand;
 
-        public Task<IUserMessage> Reply(string text = null, Embed embed = null)
+        public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null)
         {
-            if (!this.BotHasPermission(ChannelPermission.SendMessages))
+            if (!this.BotHasPermission(Permissions.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
                 throw new PKError("PluralKit does not have permission to send messages in this channel.");
 
-            if (embed != null && !this.BotHasPermission(ChannelPermission.EmbedLinks))
+            if (embed != null && !this.BotHasPermission(Permissions.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
             
             return Channel.SendMessageAsync(text, embed: embed);
@@ -125,11 +134,11 @@ namespace PluralKit.Bot
             }
         }
 
-        public async Task<IUser> MatchUser()
+        public async Task<DiscordUser> MatchUser()
         {
             var text = PeekArgument();
-            if (MentionUtils.TryParseUser(text, out var id))
-                return await Shard.Rest.GetUserAsync(id); // TODO: this should properly fetch
+            if (text.TryParseMention(out var id))
+                return await Shard.GetUserAsync(id);
             return null;
         }
 
@@ -138,11 +147,9 @@ namespace PluralKit.Bot
             id = 0;
             
             var text = PeekArgument();
-            if (MentionUtils.TryParseUser(text, out var mentionId))
+            if (text.TryParseMention(out var mentionId))
                 id = mentionId;
-            else if (ulong.TryParse(text, out var rawId))
-                id = rawId;
-            
+
             return id != 0;
         }
 
@@ -246,41 +253,19 @@ namespace PluralKit.Bot
             return this;
         }
 
-        public GuildPermissions GetGuildPermissions(IUser user)
+        public Context CheckAuthorPermission(Permissions neededPerms, string permissionName)
         {
-            if (user is IGuildUser gu)
-                return gu.GuildPermissions;
-            if (Channel is SocketGuildChannel gc)
-                return gc.GetUser(user.Id).GuildPermissions;
-            return GuildPermissions.None;
-        }
-
-        public ChannelPermissions GetChannelPermissions(IUser user)
-        {
-            if (user is IGuildUser gu && Channel is IGuildChannel igc)
-                return gu.GetPermissions(igc);
-            if (Channel is SocketGuildChannel gc)
-                return gc.GetUser(user.Id).GetPermissions(gc);
-            return ChannelPermissions.DM;
-        }
-        
-        public Context CheckAuthorPermission(GuildPermission permission, string permissionName)
-        {
-            if (!GetGuildPermissions(Author).Has(permission))
-                throw new PKError($"You must have the \"{permissionName}\" permission in this server to use this command.");
-            return this;
-        }
-        
-        public Context CheckAuthorPermission(ChannelPermission permission, string permissionName)
-        {
-            if (!GetChannelPermissions(Author).Has(permission))
+            // TODO: can we always assume Author is a DiscordMember? I would think so, given they always come from a
+            // message received event...
+            var hasPerms = Channel.PermissionsInSync(Author);
+            if ((hasPerms & neededPerms) != neededPerms)
                 throw new PKError($"You must have the \"{permissionName}\" permission in this server to use this command.");
             return this;
         }
 
         public Context CheckGuildContext()
         {
-            if (Channel is IGuildChannel) return this;
+            if (Channel.Guild != null) return this;
             throw new PKError("This command can not be run in a DM.");
         }
 
@@ -296,13 +281,14 @@ namespace PluralKit.Bot
             throw new PKError("You do not have permission to access this information.");
         }
 
-        public ITextChannel MatchChannel()
+        public DiscordChannel MatchChannel()
         {
             if (!MentionUtils.TryParseChannel(PeekArgument(), out var channel)) return null;
-            if (!(_client.GetChannel(channel) is ITextChannel textChannel)) return null;
+            var discordChannel = _rest.GetChannelAsync(channel).GetAwaiter().GetResult();
+            if (discordChannel.Type != ChannelType.Text) return null;
             
             PopArgument();
-            return textChannel;
+            return discordChannel;
         }
     }
 }

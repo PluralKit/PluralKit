@@ -1,7 +1,8 @@
-﻿using System.Linq;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus.Entities;
 
 using NodaTime;
 
@@ -62,7 +63,6 @@ namespace PluralKit.Bot
                 embedTitle,
                 async (builder, switches) =>
                 {
-                    var outputStr = "";
                     foreach (var entry in switches)
                     {
                         var lastSw = entry.LastTime;
@@ -88,12 +88,15 @@ namespace PluralKit.Bot
                             stringToAdd =
                                 $"**{membersStr}** ({DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {DateTimeFormats.DurationFormat.Format(switchSince)} ago)\n";
                         }
-
-                        if (outputStr.Length + stringToAdd.Length > EmbedBuilder.MaxDescriptionLength) break;
-                        outputStr += stringToAdd;
+                        try // Unfortunately the only way to test DiscordEmbedBuilder.Description max length is this
+                        {
+                            builder.Description += stringToAdd;
+                        }
+                        catch (ArgumentException)
+                        {
+                            break;
+                        }// TODO: Make sure this works
                     }
-
-                    builder.Description = outputStr;
                 }
             );
         }

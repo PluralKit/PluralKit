@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Discord;
+using DSharpPlus.Entities;
 
 using Humanizer;
 
@@ -21,7 +21,7 @@ namespace PluralKit.Bot
         }
 
         private async Task RenderMemberList(Context ctx, PKSystem system, bool canShowPrivate, int membersPerPage, string embedTitle, Func<PKMember, bool> filter,
-                                            Func<EmbedBuilder, IEnumerable<PKMember>, Task>
+                                            Func<DiscordEmbedBuilder, IEnumerable<PKMember>, Task>
                                                 renderer)
         {
             var authCtx = ctx.LookupContextFor(system);
@@ -54,7 +54,7 @@ namespace PluralKit.Bot
                 });
         }
 
-        private Task ShortRenderer(EmbedBuilder eb, IEnumerable<PKMember> members)
+        private Task ShortRenderer(DiscordEmbedBuilder eb, IEnumerable<PKMember> members)
         {
             eb.Description = string.Join("\n", members.Select((m) =>
             {
@@ -73,7 +73,7 @@ namespace PluralKit.Bot
             return Task.CompletedTask;
         }
 
-        private Task LongRenderer(EmbedBuilder eb, IEnumerable<PKMember> members)
+        private Task LongRenderer(DiscordEmbedBuilder eb, IEnumerable<PKMember> members)
         {
             foreach (var m in members)
             {

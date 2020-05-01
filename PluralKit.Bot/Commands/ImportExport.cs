@@ -5,10 +5,9 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-using Discord;
-using Discord.Net;
-
 using Newtonsoft.Json;
+using DSharpPlus.Exceptions;
+using DSharpPlus.Entities;
 
 using PluralKit.Core;
 
@@ -134,13 +133,14 @@ namespace PluralKit.Bot
 
             try
             {
-                await ctx.Author.SendFileAsync(stream, "system.json", $"{Emojis.Success} Here you go!");
-                
+                var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
+                await dm.SendFileAsync("system.json", stream, $"{Emojis.Success} Here you go!");
+
                 // If the original message wasn't posted in DMs, send a public reminder
-                if (!(ctx.Channel is IDMChannel))
+                if (!(ctx.Channel is DiscordDmChannel))
                     await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
-            catch (HttpException)
+            catch (UnauthorizedException)
             {
                 // If user has DMs closed, tell 'em to open them
                 await ctx.Reply(
