@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 
 using PluralKit.Core;
 
@@ -30,8 +31,20 @@ namespace PluralKit.Bot {
             if (guildCfg.Value.LogBlacklist.Contains(originalChannel.Id)) return;
             
             // Bail if we can't find the channel
-            var channel = await client.GetChannelAsync(guildCfg.Value.LogChannel.Value);
-            if (channel == null || channel.Type != ChannelType.Text) return;
+            DiscordChannel channel;
+            try
+            {
+                channel = await client.GetChannelAsync(guildCfg.Value.LogChannel.Value);
+            }
+            catch (NotFoundException)
+            {
+                // If it doesn't exist, remove it from the DB
+                await RemoveLogChannel(guildCfg.Value);
+                return; 
+            }
+            
+            // Bail if it's not a text channel
+            if (channel.Type != ChannelType.Text) return;
 
             // Bail if we don't have permission to send stuff here
             var neededPermissions = Permissions.SendMessages | Permissions.EmbedLinks;
@@ -43,6 +56,12 @@ namespace PluralKit.Bot {
             var url = $"https://discordapp.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
             
             await channel.SendMessageAsync(content: url, embed: embed);
+        }
+
+        private async Task RemoveLogChannel(GuildConfig cfg)
+        {
+            cfg.LogChannel = null;
+            await _data.SaveGuildConfig(cfg);
         }
     }
 }
