@@ -4,6 +4,7 @@ using System.Net.Http;
 using Autofac;
 
 using DSharpPlus;
+using DSharpPlus.EventArgs;
 
 using PluralKit.Core;
 
@@ -48,7 +49,10 @@ namespace PluralKit.Bot
             
             // Bot core
             builder.RegisterType<Bot>().AsSelf().SingleInstance();
-            builder.RegisterType<PKEventHandler>().AsSelf();
+            builder.RegisterType<MessageCreated>().As<IEventHandler<MessageCreateEventArgs>>();
+            builder.RegisterType<MessageDeleted>().As<IEventHandler<MessageDeleteEventArgs>>().As<IEventHandler<MessageBulkDeleteEventArgs>>();
+            builder.RegisterType<MessageEdited>().As<IEventHandler<MessageUpdateEventArgs>>();
+            builder.RegisterType<ReactionAdded>().As<IEventHandler<MessageReactionAddEventArgs>>();
             
             // Bot services
             builder.RegisterType<EmbedService>().AsSelf().SingleInstance();

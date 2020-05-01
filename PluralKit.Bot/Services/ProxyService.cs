@@ -23,7 +23,7 @@ namespace PluralKit.Bot
         public string InnerText;
     }
 
-    class ProxyService {
+    public class ProxyService {
         private DiscordShardedClient _client;
         private LogChannelService _logChannel;
         private IDataStore _data;
