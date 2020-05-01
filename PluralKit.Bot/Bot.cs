@@ -424,6 +424,12 @@ namespace PluralKit.Bot
 
         public async Task HandleMessageEdited(MessageUpdateEventArgs args)
         {
+            // Sometimes edit message events arrive for other reasons (eg. an embed gets updated server-side)
+            // If this wasn't a *content change* (ie. there's message contents to read), bail
+            // It'll also sometimes arrive with no *author*, so we'll go ahead and ignore those messages too
+            if (args.Message.Content == null) return;
+            if (args.Author == null) return;
+            
             _sentryScope.AddBreadcrumb(args.Message.Content ?? "<unknown>", "event.messageEdit", data: new Dictionary<string, string>()
             {
                 {"channel", args.Channel.Id.ToString()},
