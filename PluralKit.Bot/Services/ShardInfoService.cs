@@ -32,49 +32,61 @@ namespace PluralKit.Bot
 
         public void Init(DiscordShardedClient client)
         {
-            foreach (var i in client.ShardClients.Keys)
+            foreach (var (shardId, shard) in client.ShardClients)
             {
-                _shardInfo[i] = new ShardInfo();
+                _shardInfo[shardId] = new ShardInfo();
 
-                var shard = client.ShardClients[i];
                 shard.Heartbeated += Heartbeated;
                 shard.SocketClosed += SocketClosed;
-                shard.SocketOpened += () => SocketOpened(shard);
                 shard.Ready += Ready;
                 shard.Resumed += Resumed;
+                shard.SocketOpened += () => SocketOpened(shard);
             }
+        }
+
+        private Task SocketOpened(DiscordClient e)
+        {
+            // We do nothing else here, since this kinda doesn't mean *much*? It's only really started once we get Ready/Resumed
+            // And it doesn't get fired first time around since we don't have time to add the event listener before it's fired'
+            _logger.Information("Shard #{Shard} opened socket", e.ShardId);
+            return Task.CompletedTask;
+        }
+
+        private ShardInfo UpdateShard(DiscordClient shard)
+        {
+            // If we haven't seen this shard before, add it to the dict!
+            if (!_shardInfo.TryGetValue(shard.ShardId, out var info))
+                _shardInfo[shard.ShardId] = info = new ShardInfo();
+            return info;
         }
 
         private Task Resumed(ReadyEventArgs e)
         {
             _logger.Information("Shard #{Shard} resumed connection", e.Client.ShardId);
-            _shardInfo[e.Client.ShardId].LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
-            _shardInfo[e.Client.ShardId].Connected = true;
+            
+            var info = UpdateShard(e.Client);
+            // info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
+            info.Connected = true;
             return Task.CompletedTask;
         }
 
         private Task Ready(ReadyEventArgs e)
         {
             _logger.Information("Shard #{Shard} sent Ready event", e.Client.ShardId);
-            _shardInfo[e.Client.ShardId].LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
-            _shardInfo[e.Client.ShardId].Connected = true;
-            return Task.CompletedTask;
-        }
-
-        private Task SocketOpened(DiscordClient shard)
-        {
-            // TODO: do we need this at all? vs. Ready/Resumed
-            _logger.Information("Shard #{Shard} connected", shard.ShardId);
-            _shardInfo[shard.ShardId].LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
-            _shardInfo[shard.ShardId].Connected = true;
+            
+            var info = UpdateShard(e.Client);
+            info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
+            info.Connected = true;
             return Task.CompletedTask;
         }
 
         private Task SocketClosed(SocketCloseEventArgs e)
         {
             _logger.Warning("Shard #{Shard} disconnected ({CloseCode}: {CloseMessage})", e.Client.ShardId, e.CloseCode, e.CloseMessage);
-            _shardInfo[e.Client.ShardId].DisconnectionCount++;
-            _shardInfo[e.Client.ShardId].Connected = false;
+            
+            var info = UpdateShard(e.Client);
+            info.DisconnectionCount++;
+            info.Connected = false;
             return Task.CompletedTask; 
         }
 
@@ -82,8 +94,11 @@ namespace PluralKit.Bot
         {
             var latency = Duration.FromMilliseconds(e.Ping);
             _logger.Information("Shard #{Shard} received heartbeat (latency: {Latency} ms)", e.Client.ShardId, latency.Milliseconds);
-            _shardInfo[e.Client.ShardId].LastHeartbeatTime = e.Timestamp.ToInstant();
-            _shardInfo[e.Client.ShardId].ShardLatency = latency;
+
+            var info = UpdateShard(e.Client);
+            info.LastHeartbeatTime = e.Timestamp.ToInstant();
+            info.Connected = true;
+            info.ShardLatency = latency;
             return Task.CompletedTask;
         }
 
