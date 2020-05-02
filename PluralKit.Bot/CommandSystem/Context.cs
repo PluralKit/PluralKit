@@ -64,11 +64,11 @@ namespace PluralKit.Bot
 
         public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null)
         {
-            if (!this.BotHasPermission(Permissions.SendMessages))
+            if (!this.BotHasAllPermissions(Permissions.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
                 throw new PKError("PluralKit does not have permission to send messages in this channel.");
 
-            if (embed != null && !this.BotHasPermission(Permissions.EmbedLinks))
+            if (embed != null && !this.BotHasAllPermissions(Permissions.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
             
             return Channel.SendMessageAsync(text, embed: embed);

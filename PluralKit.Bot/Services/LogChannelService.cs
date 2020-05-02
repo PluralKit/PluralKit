@@ -47,8 +47,7 @@ namespace PluralKit.Bot {
             if (channel.Type != ChannelType.Text) return;
 
             // Bail if we don't have permission to send stuff here
-            var neededPermissions = Permissions.SendMessages | Permissions.EmbedLinks;
-            if ((channel.BotPermissions() & neededPermissions) != neededPermissions)
+            if (!channel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
                 return;
 
             var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, originalMsgId, sender, content, originalChannel);

@@ -118,7 +118,7 @@ namespace PluralKit.Bot
             catch (PKError e)
             {
                 // User-facing errors, print to the channel properly formatted
-                if (msg.Channel.Guild == null || msg.Channel.BotHasPermission(Permissions.SendMessages))
+                if (msg.Channel.Guild == null || msg.Channel.BotHasAllPermissions(Permissions.SendMessages))
                     await msg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
             }
 

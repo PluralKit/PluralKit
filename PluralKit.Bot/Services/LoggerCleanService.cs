@@ -67,7 +67,7 @@ namespace PluralKit.Bot
             // Bail if not enabled, or if we don't have permission here
             if (!cachedGuild.LogCleanupEnabled) return;
             if (msg.Channel.Type != ChannelType.Text) return;
-            if (!msg.Channel.BotHasPermission(Permissions.ManageMessages)) return;
+            if (!msg.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
  
             // If this message is from a *webhook*, check if the name matches one of the bots we know
             // TODO: do we need to do a deeper webhook origin check, or would that be too hard on the rate limit?

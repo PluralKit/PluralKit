@@ -287,7 +287,7 @@ namespace PluralKit.Bot
             await args.Channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{args.User.Id}>.", embed: embed.Build());
             
             // Finally remove the original reaction (if we can)
-            if (args.Channel.BotHasPermission(Permissions.ManageMessages))
+            if (args.Channel.BotHasAllPermissions(Permissions.ManageMessages))
                 await args.Message.DeleteReactionAsync(args.Emoji, args.User);
         }
 
@@ -323,7 +323,7 @@ namespace PluralKit.Bot
         public async Task HandleMessageDeletionByReaction(MessageReactionAddEventArgs args)
         {
             // Bail if we don't have permission to delete
-            if (!args.Channel.BotHasPermission(Permissions.ManageMessages)) return;
+            if (!args.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
             
             // Find the message in the database
             var storedMessage = await _data.GetMessage(args.Message.Id);

@@ -109,7 +109,7 @@ namespace PluralKit.Bot {
                         if (currentPage < 0) currentPage += pageCount;
                         
                         // If we can, remove the user's reaction (so they can press again quickly)
-                        if (ctx.BotHasPermission(Permissions.ManageMessages)) await msg.DeleteReactionAsync(reaction.Emoji, reaction.User);
+                        if (ctx.BotHasAllPermissions(Permissions.ManageMessages)) await msg.DeleteReactionAsync(reaction.Emoji, reaction.User);
                         
                         // Edit the embed with the new page
                         var embed = await MakeEmbedForPage(currentPage);
@@ -119,7 +119,7 @@ namespace PluralKit.Bot {
                     // "escape hatch", clean up as if we hit X
                 }
 
-                if (ctx.BotHasPermission(Permissions.ManageMessages)) await msg.DeleteAllReactionsAsync();
+                if (ctx.BotHasAllPermissions(Permissions.ManageMessages)) await msg.DeleteAllReactionsAsync();
             }
             // If we get a "NotFound" error, the message has been deleted and thus not our problem
             catch (NotFoundException) { }
@@ -208,8 +208,8 @@ namespace PluralKit.Bot {
 
         public static Permissions BotPermissions(this Context ctx) => ctx.Channel.BotPermissions();
 
-        public static bool BotHasPermission(this Context ctx, Permissions permission) =>
-            ctx.Channel.BotHasPermission(permission);
+        public static bool BotHasAllPermissions(this Context ctx, Permissions permission) =>
+            ctx.Channel.BotHasAllPermissions(permission);
 
         public static async Task BusyIndicator(this Context ctx, Func<Task> f, string emoji = "\u23f3" /* hourglass */)
         {

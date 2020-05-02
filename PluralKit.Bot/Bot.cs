@@ -98,7 +98,7 @@ namespace PluralKit.Bot
 
                 // Once we've sent it to Sentry, report it to the user (if we have permission to)
                 var reportChannel = handler.ErrorChannelFor(evt);
-                if (reportChannel != null && reportChannel.BotHasPermission(Permissions.SendMessages))
+                if (reportChannel != null && reportChannel.BotHasAllPermissions(Permissions.SendMessages))
                 {
                     var eid = sentryEvent.EventId;
                     await reportChannel.SendMessageAsync(

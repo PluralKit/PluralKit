@@ -58,7 +58,7 @@ namespace PluralKit.Bot
             return Permissions.None;
         }
 
-        public static bool BotHasPermission(this DiscordChannel channel, Permissions permissionSet) =>
+        public static bool BotHasAllPermissions(this DiscordChannel channel, Permissions permissionSet) =>
             (BotPermissions(channel) & permissionSet) == permissionSet;
 
         public static Instant SnowflakeToInstant(ulong snowflake) => 
