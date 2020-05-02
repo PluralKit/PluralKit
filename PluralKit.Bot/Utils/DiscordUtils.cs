@@ -15,46 +15,53 @@ namespace PluralKit.Bot
         public static DiscordColor Red = new DiscordColor(0xef4b3d);
         public static DiscordColor Gray = new DiscordColor(0x979c9f);
         
+        public static Permissions DM_PERMISSIONS = (Permissions) 0b00000_1000110_1011100110000_000000;
+        
         public static string NameAndMention(this DiscordUser user) {
             return $"{user.Username}#{user.Discriminator} ({user.Mention})";
         }
 
-        public static async Task<Permissions> PermissionsIn(this DiscordChannel channel, DiscordUser user)
+        // We funnel all "permissions from DiscordMember" calls through here 
+        // This way we can ensure we do the read permission correction everywhere
+        private static Permissions PermissionsInGuild(DiscordChannel channel, DiscordMember member)
         {
-            if (channel.Guild != null)
-            {
-                var member = await channel.Guild.GetMemberAsync(user.Id);
-                return member.PermissionsIn(channel);
-            }
+            var permissions = channel.PermissionsFor(member);
             
-            if (channel.Type == ChannelType.Private)
-                return (Permissions) 0b00000_1000110_1011100110000_000000;
-
-            return Permissions.None;
+            // This method doesn't account for channels without read permissions
+            // If we don't have read permissions in the channel, we don't have *any* permissions
+            if ((permissions & Permissions.AccessChannels) != Permissions.AccessChannels)
+                return Permissions.None;
+            
+            return permissions;
         }
 
+        public static async Task<Permissions> PermissionsIn(this DiscordChannel channel, DiscordUser user)
+        {
+            // Just delegates to PermissionsInSync, but handles the case of a non-member User in a guild properly
+            // This is a separate method because it requires an async call
+            if (channel.Guild != null && !(user is DiscordMember))
+                return PermissionsInSync(channel, await channel.Guild.GetMemberAsync(user.Id));
+            return PermissionsInSync(channel, user);
+        }
+        
+        // Same as PermissionsIn, but always synchronous. DiscordUser must be a DiscordMember if channel is in guild.
         public static Permissions PermissionsInSync(this DiscordChannel channel, DiscordUser user)
         {
-            if (user is DiscordMember dm && channel.Guild != null)
-                return dm.PermissionsIn(channel);
+            if (channel.Guild != null && !(user is DiscordMember))
+                throw new ArgumentException("Function was passed a guild channel but a non-member DiscordUser");
             
-            if (channel.Type == ChannelType.Private)
-                return (Permissions) 0b00000_1000110_1011100110000_000000;
-
+            if (user is DiscordMember m) return PermissionsInGuild(channel, m);
+            if (channel.Type == ChannelType.Private) return DM_PERMISSIONS;
             return Permissions.None;
         }
 
         public static Permissions BotPermissions(this DiscordChannel channel)
         {
+            // TODO: can we get a CurrentMember somehow without a guild context?
+            // at least, without somehow getting a DiscordClient reference as an arg(which I don't want to do)
             if (channel.Guild != null)
-            {
-                var member = channel.Guild.CurrentMember;
-                return channel.PermissionsFor(member);
-            }
-
-            if (channel.Type == ChannelType.Private)
-                return (Permissions) 0b00000_1000110_1011100110000_000000;
-
+                return PermissionsInSync(channel, channel.Guild.CurrentMember);
+            if (channel.Type == ChannelType.Private) return DM_PERMISSIONS;
             return Permissions.None;
         }
 

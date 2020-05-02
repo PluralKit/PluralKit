@@ -9,6 +9,7 @@ using Autofac;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 
 using PluralKit.Bot.Utils;
 using PluralKit.Core;
@@ -281,14 +282,27 @@ namespace PluralKit.Bot
             throw new PKError("You do not have permission to access this information.");
         }
 
-        public DiscordChannel MatchChannel()
+        public async Task<DiscordChannel> MatchChannel()
         {
-            if (!MentionUtils.TryParseChannel(PeekArgument(), out var channel)) return null;
-            var discordChannel = _rest.GetChannelAsync(channel).GetAwaiter().GetResult();
-            if (discordChannel.Type != ChannelType.Text) return null;
-            
-            PopArgument();
-            return discordChannel;
+            if (!MentionUtils.TryParseChannel(PeekArgument(), out var channel)) 
+                return null;
+
+            try
+            {
+                var discordChannel = await _shard.GetChannelAsync(channel);
+                if (discordChannel.Type != ChannelType.Text) return null;
+                
+                PopArgument();
+                return discordChannel;
+            }
+            catch (NotFoundException)
+            {
+                return null;
+            }
+            catch (UnauthorizedException)
+            {
+                return null;
+            }
         }
     }
 }
