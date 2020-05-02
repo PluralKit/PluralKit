@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using DSharpPlus;
+using DSharpPlus.Exceptions;
 
 using PluralKit.Core;
 
@@ -346,12 +347,16 @@ namespace PluralKit.Bot
             {
                 // Try to resolve the user ID to find the associated account,
                 // so we can print their username.
-                var user = await ctx.Rest.GetUserAsync(id);
-
-                // Print descriptive errors based on whether we found the user or not.
-                if (user == null)
+                try
+                {
+                    var user = await ctx.Rest.GetUserAsync(id);
+                    return $"Account **{user.Username}#{user.Discriminator}** does not have a system registered.";
+                }
+                catch (NotFoundException)
+                {
+                    // User not found, just return ID
                     return $"Account with ID `{id}` not found.";
-                return $"Account **{user.Username}#{user.Discriminator}** does not have a system registered.";
+                }
             }
 
             return $"System with ID `{input}` not found.";
