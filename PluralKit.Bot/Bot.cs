@@ -121,7 +121,7 @@ namespace PluralKit.Bot
                 try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
                 {
                     foreach (var c in _client.ShardClients.Values)
-                        await c.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers | Shard {c.ShardId}"));
+                        await c.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers | shard #{c.ShardId}"));
                 }
                 catch (WebSocketException) { }
 
