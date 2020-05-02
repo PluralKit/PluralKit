@@ -8,6 +8,7 @@ namespace PluralKit.Bot
 {
     public static class StringUtils
     {
+        private static readonly Regex USER_MENTION = new Regex("^<@!?(\\d{17,19})>$");
         public static DiscordColor? ToDiscordColor(this string color)
         {
             if (int.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
@@ -32,18 +33,14 @@ namespace PluralKit.Bot
         public static bool TryParseMention(this string potentialMention, out ulong id)
         {
             if (ulong.TryParse(potentialMention, out id)) return true;
-            
-            // Roughly ported from Discord.MentionUtils.TryParseUser
-            if (potentialMention.Length >= 3 && potentialMention[0] == '<' && potentialMention[1] == '@' && potentialMention[potentialMention.Length - 1] == '>')
+
+            var match = USER_MENTION.Match(potentialMention);
+            if (match.Success) 
             {
-                if (potentialMention.Length >= 4 && potentialMention[2] == '!')
-                    potentialMention = potentialMention.Substring(3, potentialMention.Length - 4); //<@!123>
-                else
-                    potentialMention = potentialMention.Substring(2, potentialMention.Length - 3); //<@123>
-                
-                if (ulong.TryParse(potentialMention, NumberStyles.None, CultureInfo.InvariantCulture, out id))
-                    return true;
+                id = ulong.Parse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture);
+                return true;
             }
+
             return false;
         }
 
