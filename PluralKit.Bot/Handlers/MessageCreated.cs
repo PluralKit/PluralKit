@@ -139,6 +139,11 @@ namespace PluralKit.Bot
                 {"message", evt.Message.Id.ToString()},
             });
             _sentryScope.SetTag("shard", evt.Client.ShardId.ToString());
+            
+            // Also report information about the bot's permissions in the channel
+            // We get a lot of permission errors so this'll be useful for determining problems
+            var perms = evt.Channel.BotPermissions();
+            _sentryScope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
         }
     }
 }
