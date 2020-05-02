@@ -35,14 +35,6 @@ namespace PluralKit.Bot
             
             // Also, if this is in DMs don't bother either
             if (evt.Channel.Guild == null) return;
-            
-            _sentryScope.AddBreadcrumb(evt.Message.Content ?? "<unknown>", "event.messageEdit", data: new Dictionary<string, string>()
-            {
-                {"channel", evt.Channel.Id.ToString()},
-                {"guild", evt.Channel.GuildId.ToString()},
-                {"message", evt.Message.Id.ToString()}
-            });
-            _sentryScope.SetTag("shard", evt.Client.ShardId.ToString());
 
             // If this isn't the last message in the channel, don't do anything
             if (_lastMessageCache.GetLastMessage(evt.Channel.Id) != evt.Message.Id) return;

@@ -69,6 +69,13 @@ namespace PluralKit.Bot
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
+            builder.RegisterType<SentryEnricher>()
+                .As<ISentryEnricher<MessageCreateEventArgs>>()
+                .As<ISentryEnricher<MessageDeleteEventArgs>>()
+                .As<ISentryEnricher<MessageUpdateEventArgs>>()
+                .As<ISentryEnricher<MessageBulkDeleteEventArgs>>()
+                .As<ISentryEnricher<MessageReactionAddEventArgs>>()
+                .SingleInstance();
 
             // Utils
             builder.Register(c => new HttpClient

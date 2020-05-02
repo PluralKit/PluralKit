@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -129,21 +128,6 @@ namespace PluralKit.Bot
         {
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
             _lastMessageCache.AddMessage(evt.Channel.Id, evt.Message.Id);
-            
-            // Add message info as Sentry breadcrumb
-            _sentryScope.AddBreadcrumb(evt.Message.Content, "event.message", data: new Dictionary<string, string>
-            {
-                {"user", evt.Author.Id.ToString()},
-                {"channel", evt.Channel.Id.ToString()},
-                {"guild", evt.Channel.GuildId.ToString()},
-                {"message", evt.Message.Id.ToString()},
-            });
-            _sentryScope.SetTag("shard", evt.Client.ShardId.ToString());
-            
-            // Also report information about the bot's permissions in the channel
-            // We get a lot of permission errors so this'll be useful for determining problems
-            var perms = evt.Channel.BotPermissions();
-            _sentryScope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
         }
     }
 }

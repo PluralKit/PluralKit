@@ -47,6 +47,8 @@ namespace PluralKit.Bot
             _client.DebugLogger.LogMessageReceived += FrameworkLog;
             
             // HandleEvent takes a type parameter, automatically inferred by the event type
+            // It will then look up an IEventHandler<TypeOfEvent> in the DI container and call that object's handler method
+            // For registering new ones, see Modules.cs 
             _client.MessageCreated += HandleEvent;
             _client.MessageDeleted += HandleEvent;
             _client.MessageUpdated += HandleEvent;
@@ -69,8 +71,14 @@ namespace PluralKit.Bot
             async Task HandleEventInner()
             {
                 var serviceScope = _services.BeginLifetimeScope();
+                
+                // Find an event handler that can handle the type of event (<T>) we're given
                 var handler = serviceScope.Resolve<IEventHandler<T>>();
-
+                
+                // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
+                var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
+                sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), evt);
+                
                 try
                 {
                     await handler.Handle(evt);
