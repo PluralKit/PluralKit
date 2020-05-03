@@ -66,7 +66,7 @@ namespace PluralKit.Bot {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
             return new DiscordEmbedBuilder()
-                .WithAuthor($"#{channel.Name}: {member.Name}", member.AvatarUrl)
+                .WithAuthor($"#{channel.Name}: {member.Name}", iconUrl: member.AvatarUrl)
                 .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
                 .WithTimestamp(timestamp.ToDateTimeOffset())
