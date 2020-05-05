@@ -156,6 +156,7 @@ namespace PluralKit.Bot
             {
                 // They can't both be null - otherwise we would've hit the conditional at the very top
                 string url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.ProxyUrl;
+                if (url?.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
                 await ctx.BusyIndicator(() => AvatarUtils.VerifyAvatarOrThrow(url));
 
                 ctx.System.AvatarUrl = url;

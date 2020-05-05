@@ -59,6 +59,7 @@ namespace PluralKit.Bot {
         public static PKError AvatarInvalid => new PKError($"Could not read image file - perhaps it's corrupted or the wrong format. Try a different image.");
         public static PKError UserHasNoAvatar => new PKError("The given user has no avatar set.");
         public static PKError InvalidUrl(string url) => new PKError($"The given URL is invalid.");
+        public static PKError UrlTooLong(string url) => new PKError($"The given URL is too long ({url.Length}/{Limits.MaxUriLength} characters).");
         
         public static PKError AccountAlreadyLinked => new PKError("That account is already linked to your system.");
         public static PKError AccountNotLinked => new PKError("That account isn't linked to your system.");

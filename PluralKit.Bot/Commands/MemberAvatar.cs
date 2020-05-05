@@ -72,6 +72,7 @@ namespace PluralKit.Bot
             }
             else if (ctx.RemainderOrNull() is string url)
             {
+                if (url.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
                 await AvatarUtils.VerifyAvatarOrThrow(url);
                 target.AvatarUrl = url;
                 await _data.SaveMember(target);
@@ -141,6 +142,7 @@ namespace PluralKit.Bot
             }
             else if (ctx.RemainderOrNull() is string url)
             {
+                if (url.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
                 await AvatarUtils.VerifyAvatarOrThrow(url);
                 guildData.AvatarUrl = url;
                 await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildData);
