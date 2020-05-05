@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using PluralKit.Core;
 
 using Serilog;
+using Serilog.Core;
 
 namespace PluralKit.Bot
 {
@@ -41,39 +42,67 @@ namespace PluralKit.Bot
                 await services.Resolve<DiscordShardedClient>().StartAsync();
                 
                 // Start the bot stuff and let it register things
-                services.Resolve<Bot>().Init();
+                var bot = services.Resolve<Bot>();
+                bot.Init();
                 
                 // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
-                await Task.Delay(-1, ct);
+                try
+                {
+                    await Task.Delay(-1, ct);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Once the CancellationToken fires, we need to shut stuff down
+                    // (generally happens given a SIGINT/SIGKILL/Ctrl-C, see calling wrapper)
+                    await bot.Shutdown();
+                }
             });
         }
 
         private static async Task RunWrapper(IContainer services, Func<CancellationToken, Task> taskFunc)
         {
             // This function does a couple things: 
-            // - Creates a CancellationToken that'll cancel tasks once we get a Ctrl-C / SIGINT
+            // - Creates a CancellationToken that'll cancel tasks once needed
             // - Wraps the given function in an exception handler that properly logs errors
+            // - Adds a SIGINT (Ctrl-C) listener through Console.CancelKeyPress to gracefully shut down
+            // - Adds a SIGTERM (kill, systemctl stop, docker stop) listener through AppDomain.ProcessExit (same as above)
             var logger = services.Resolve<ILogger>().ForContext<Init>();
+
+            var shutdown = new TaskCompletionSource<object>();
+            var gracefulShutdownCts = new CancellationTokenSource();
             
-            var cts = new CancellationTokenSource();
-            Console.CancelKeyPress += delegate { cts.Cancel(); };
+            Console.CancelKeyPress += delegate
+            {
+                // ReSharper disable once AccessToDisposedClosure (will only be hit before the below disposal)
+                logger.Information("Received SIGINT/Ctrl-C, attempting graceful shutdown...");
+                gracefulShutdownCts.Cancel();
+            };
+            
+            AppDomain.CurrentDomain.ProcessExit += (_, __) =>
+            {
+                // This callback is fired on a SIGKILL is sent.
+                // The runtime will kill the program as soon as this callback is finished, so we have to
+                // block on the shutdown task's completion to ensure everything is sorted by the time this returns.
+
+                // ReSharper disable once AccessToDisposedClosure (it's only disposed after the block)
+                logger.Information("Received SIGKILL event, attempting graceful shutdown...");
+                gracefulShutdownCts.Cancel();
+                var ___ = shutdown.Task.Result; // Blocking! This is the only time it's justified...
+            };
 
             try
             {
-                await taskFunc(cts.Token);
-            }
-            catch (TaskCanceledException e) when (e.CancellationToken == cts.Token)
-            {
-                // The CancellationToken we made got triggered - this is normal!
-                // Therefore, exception handler is empty.
+                await taskFunc(gracefulShutdownCts.Token);
+                logger.Information("Shutdown complete. Have a nice day~");
             }
             catch (Exception e)
             {
                 logger.Fatal(e, "Error while running bot");
-                
-                // Allow the log buffer to flush properly before exiting
-                await Task.Delay(1000, cts.Token);
             }
+            
+            // Allow the log buffer to flush properly before exiting
+            ((Logger) logger).Dispose();
+            shutdown.SetResult(null);
         }
 
         private static IContainer BuildContainer(IConfiguration config)

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -30,7 +31,7 @@ namespace PluralKit.Bot
         private readonly PeriodicStatCollector _collector;
         private readonly IMetrics _metrics;
 
-        private Task _periodicTask; // Never read, just kept here for GC reasons
+        private Timer _periodicTask; // Never read, just kept here for GC reasons
 
         public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics)
         {
@@ -54,12 +55,34 @@ namespace PluralKit.Bot
             _client.MessageUpdated += HandleEvent;
             _client.MessagesBulkDeleted += HandleEvent;
             _client.MessageReactionAdded += HandleEvent;
+
+            // Update shard status for shards immediately on connect
+            _client.Ready += args => UpdateBotStatus(args.Client); 
+            _client.Resumed += args => UpdateBotStatus(args.Client); 
             
             // Init the shard stuff
             _services.Resolve<ShardInfoService>().Init(_client);
 
             // Not awaited, just needs to run in the background
-            _periodicTask = UpdatePeriodic();
+            // Trying our best to run it at whole minute boundaries (xx:00), with ~250ms buffer
+            // This *probably* doesn't matter in practice but I jut think it's neat, y'know.
+            var timeNow = SystemClock.Instance.GetCurrentInstant();
+            var timeTillNextWholeMinute = TimeSpan.FromMilliseconds(60000 - timeNow.ToUnixTimeMilliseconds() % 60000 + 250);
+            _periodicTask = new Timer(_ =>
+            {
+                 var __ = UpdatePeriodic();
+            }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
+        }
+
+        public async Task Shutdown()
+        {
+            // This will stop the timer and prevent any subsequent invocations
+            await _periodicTask.DisposeAsync();
+
+            // Send users a lil status message
+            // We're not actually properly disconnecting from the gateway (lol)  so it'll linger for a few minutes
+            // Should be plenty of time for the bot to connect again next startup and set the real status
+            await _client.UpdateStatusAsync(new DiscordActivity("Restarting... (please wait)"));
         }
 
         private Task HandleEvent<T>(T evt) where T: DiscordEventArgs
@@ -123,28 +146,32 @@ namespace PluralKit.Bot
         
         private async Task UpdatePeriodic()
         {
-            while (true)
-            {
-                // Run at every whole minute (:00), mostly because I feel like it
-                var timeNow = SystemClock.Instance.GetCurrentInstant();
-                var timeTillNextWholeMinute = 60000 - (timeNow.ToUnixTimeMilliseconds() % 60000);
-                await Task.Delay((int) timeTillNextWholeMinute);
-                
-                // Change bot status
-                var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
-                try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
-                {
-                    foreach (var c in _client.ShardClients.Values)
-                        await c.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers | shard #{c.ShardId}"));
-                }
-                catch (WebSocketException) { }
+            _logger.Information("Running once-per-minute scheduled tasks");
 
-                // Collect some stats, submit them to the metrics backend
-                await _collector.CollectStats();
-                await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
-                _logger.Information("Submitted metrics to backend");
-            }
+            await UpdateBotStatus();
+
+            // Collect some stats, submit them to the metrics backend
+            await _collector.CollectStats();
+            await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
+            _logger.Information("Submitted metrics to backend");
         }
+
+        private async Task UpdateBotStatus(DiscordClient specificShard = null)
+        {
+            var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
+            try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
+            {
+                Task UpdateStatus(DiscordClient shard) =>
+                    shard.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers | shard #{shard.ShardId}")); 
+                
+                if (specificShard != null)
+                    await UpdateStatus(specificShard);
+                else // Run shard updates concurrently
+                    await Task.WhenAll(_client.ShardClients.Values.Select(UpdateStatus));
+            }
+            catch (WebSocketException) { }
+        }
+        
         private void FrameworkLog(object sender, DebugLogMessageEventArgs args)
         {
             // Bridge D#+ logging to Serilog
