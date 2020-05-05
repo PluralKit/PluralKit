@@ -11,6 +11,7 @@ using Autofac;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Exceptions;
 
 using NodaTime;
 
@@ -122,6 +123,8 @@ namespace PluralKit.Bot
         {
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
+            if (exc is BadRequestException bre)
+                sentryEvent.SetExtra("errors", MiscUtils.ExtractError(bre));
 
             _logger.Error(exc, "Exception in bot event handler (Sentry ID: {SentryEventId})", sentryEvent.EventId);
 

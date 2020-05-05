@@ -33,7 +33,7 @@ namespace PluralKit.Bot {
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)
-                .WithThumbnailUrl(system.AvatarUrl ?? null)
+                .WithThumbnailUrl(system.AvatarUrl)
                 .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
  
             var latestSwitch = await _data.GetLatestSwitch(system);
@@ -66,7 +66,8 @@ namespace PluralKit.Bot {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
             return new DiscordEmbedBuilder()
-                .WithAuthor($"#{channel.Name}: {member.Name}", iconUrl: member.AvatarUrl)
+                .WithAuthor($"#{channel.Name}: {member.Name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarUrl))
+                .WithThumbnailUrl(member.AvatarUrl)
                 .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
                 .WithTimestamp(timestamp.ToDateTimeOffset())
@@ -101,7 +102,7 @@ namespace PluralKit.Bot {
 
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
-                .WithAuthor(name, avatar)
+                .WithAuthor(name, iconUrl: DiscordUtils.WorkaroundForUrlBug(avatar))
                 .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
 
@@ -167,7 +168,7 @@ namespace PluralKit.Bot {
             }
 
             var eb = new DiscordEmbedBuilder()
-                .WithAuthor(msg.Member.Name, msg.Member.AvatarUrl)
+                .WithAuthor(msg.Member.Name, iconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarUrl))
                 .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",

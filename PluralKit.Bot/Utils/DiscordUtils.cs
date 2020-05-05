@@ -84,5 +84,11 @@ namespace PluralKit.Bot
                 await msg.CreateReactionAsync(DiscordEmoji.FromUnicode(reaction));
             }
         }
+
+        public static string WorkaroundForUrlBug(string input)
+        {
+            // Workaround for https://github.com/DSharpPlus/DSharpPlus/issues/565
+            return input.Replace("%20", "+");
+        }
     }
 }

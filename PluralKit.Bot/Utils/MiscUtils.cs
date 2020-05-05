@@ -3,6 +3,8 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
+using DSharpPlus.Exceptions;
+
 using Npgsql;
 
 using PluralKit.Core;
@@ -39,6 +41,11 @@ namespace PluralKit.Bot
             
             // This may expanded at some point.
             return true;
+        }
+
+        public static string ExtractError(BadRequestException e)
+        {
+            return e.WebResponse.Response;
         }
     }
 }
