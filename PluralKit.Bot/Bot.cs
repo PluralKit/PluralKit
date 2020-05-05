@@ -72,16 +72,20 @@ namespace PluralKit.Bot
             {
                 var serviceScope = _services.BeginLifetimeScope();
                 
-                // Find an event handler that can handle the type of event (<T>) we're given
-                var handler = serviceScope.Resolve<IEventHandler<T>>();
-                
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
                 var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
                 sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), evt);
                 
+                // Find an event handler that can handle the type of event (<T>) we're given
+                var handler = serviceScope.Resolve<IEventHandler<T>>();
+                var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
                 try
                 {
-                    await handler.Handle(evt);
+                    // Delegate to the queue to see if it wants to handle this event
+                    // the TryHandle call returns true if it's handled the event
+                    // Usually it won't, so just pass it on to the main handler
+                    if (queue == null || !await queue.TryHandle(evt))
+                        await handler.Handle(evt);
                 }
                 catch (Exception exc)
                 {

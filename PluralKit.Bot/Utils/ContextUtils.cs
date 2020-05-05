@@ -1,22 +1,71 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+
+using Autofac;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
-        public static async Task<bool> PromptYesNo(this Context ctx, DiscordMessage message, DiscordUser user = null, TimeSpan? timeout = null) {
+        public static async Task<bool> PromptYesNo(this Context ctx, DiscordMessage message, DiscordUser user = null, Duration? timeout = null)
+        {
+            var cts = new CancellationTokenSource();
+            if (user == null) user = ctx.Author;
+            if (timeout == null) timeout = Duration.FromMinutes(5);
+            
             // "Fork" the task adding the reactions off so we don't have to wait for them to be finished to start listening for presses
             var _ = message.CreateReactionsBulk(new[] {Emojis.Success, Emojis.Error});
-            var reaction = await ctx.AwaitReaction(message, user ?? ctx.Author, r => r.Emoji.Name == Emojis.Success || r.Emoji.Name == Emojis.Error, timeout ?? TimeSpan.FromMinutes(1));
-            return reaction.Emoji.Name == Emojis.Success;
+            
+            bool ReactionPredicate(MessageReactionAddEventArgs e)
+            {
+                if (e.Channel.Id != message.ChannelId || e.Message.Id != message.Id) return false;
+                if (e.User.Id != user.Id) return false;
+                return true;
+            }
+
+            bool MessagePredicate(MessageCreateEventArgs e)
+            {
+                if (e.Channel.Id != message.ChannelId) return false;
+                if (e.Author.Id != user.Id) return false;
+
+                var strings = new [] {"y", "yes", "n", "no"};
+                foreach (var str in strings)
+                    if (e.Message.Content.Equals(str, StringComparison.InvariantCultureIgnoreCase))
+                        return true;
+                
+                return false;
+            }
+
+            var messageTask = ctx.Services.Resolve<HandlerQueue<MessageCreateEventArgs>>().WaitFor(MessagePredicate, timeout, cts.Token);
+            var reactionTask = ctx.Services.Resolve<HandlerQueue<MessageReactionAddEventArgs>>().WaitFor(ReactionPredicate, timeout, cts.Token);
+            
+            var theTask = await Task.WhenAny(messageTask, reactionTask);
+            cts.Cancel();
+
+            if (theTask == messageTask)
+            {
+                var responseMsg = (await messageTask).Message;
+                var positives = new[] {"y", "yes"};
+                foreach (var p in positives)
+                    if (responseMsg.Content.Equals(p, StringComparison.InvariantCultureIgnoreCase))
+                        return true;
+                return false;
+            }
+
+            if (theTask == reactionTask) 
+                return (await reactionTask).Emoji.Name == Emojis.Success;
+
+            return false;
         }
 
         public static async Task<MessageReactionAddEventArgs> AwaitReaction(this Context ctx, DiscordMessage message, DiscordUser user = null, Func<MessageReactionAddEventArgs, bool> predicate = null, TimeSpan? timeout = null) {
@@ -37,33 +86,15 @@ namespace PluralKit.Bot {
             }
         }
 
-        public static async Task<DiscordMessage> AwaitMessage(this Context ctx, DiscordChannel channel, DiscordUser user = null, Func<DiscordMessage, bool> predicate = null, TimeSpan? timeout = null) {
-            var tcs = new TaskCompletionSource<DiscordMessage>();
-            Task Inner(MessageCreateEventArgs args)
-            {
-                var msg = args.Message;
-                if (channel != msg.Channel) return Task.CompletedTask; // Ignore messages in a different channel
-                if (user != null && user != msg.Author) return Task.CompletedTask; // Ignore messages from other users
-                if (predicate != null && !predicate.Invoke(msg)) return Task.CompletedTask; // Check predicate
-                tcs.SetResult(msg);
-                return Task.CompletedTask;
-            }
-
-            ctx.Shard.MessageCreated += Inner;
-            try
-            {
-                return await (tcs.Task.TimeoutAfter(timeout));
-            }
-            finally
-            {
-                ctx.Shard.MessageCreated -= Inner;
-            }
-        }
-        
         public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply)
         {
-            var msg = await ctx.AwaitMessage(ctx.Channel, ctx.Author, timeout: TimeSpan.FromMinutes(1));
-            return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
+            bool Predicate(MessageCreateEventArgs e) =>
+                e.Author == ctx.Author && e.Channel.Id == ctx.Channel.Id;
+            
+            var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEventArgs>>()
+                .WaitFor(Predicate, Duration.FromMinutes(1));
+            
+            return string.Equals(msg.Message.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
         }
 
         public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, Func<DiscordEmbedBuilder, IEnumerable<T>, Task> renderer) {

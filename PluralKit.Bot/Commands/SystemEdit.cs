@@ -169,9 +169,9 @@ namespace PluralKit.Bot
         public async Task Delete(Context ctx) {
             ctx.CheckSystem();
 
-            var msg = await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{ctx.System.Hid}`).\n**Note: this action is permanent.**");
-            var reply = await ctx.AwaitMessage(ctx.Channel, ctx.Author, timeout: TimeSpan.FromMinutes(1));
-            if (reply.Content != ctx.System.Hid) throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{ctx.System.Hid}`) *verbatim*.");
+            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{ctx.System.Hid}`).\n**Note: this action is permanent.**");
+            if (!await ctx.ConfirmWithReply(ctx.System.Hid))
+                throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{ctx.System.Hid}`) *verbatim*.");
 
             await _data.DeleteSystem(ctx.System);
             await ctx.Reply($"{Emojis.Success} System deleted.");

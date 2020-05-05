@@ -54,6 +54,10 @@ namespace PluralKit.Bot
             builder.RegisterType<MessageEdited>().As<IEventHandler<MessageUpdateEventArgs>>();
             builder.RegisterType<ReactionAdded>().As<IEventHandler<MessageReactionAddEventArgs>>();
             
+            // Event handler queue
+            builder.RegisterType<HandlerQueue<MessageCreateEventArgs>>().AsSelf().SingleInstance();
+            builder.RegisterType<HandlerQueue<MessageReactionAddEventArgs>>().AsSelf().SingleInstance();
+            
             // Bot services
             builder.RegisterType<EmbedService>().AsSelf().SingleInstance();
             builder.RegisterType<ProxyService>().AsSelf().SingleInstance();

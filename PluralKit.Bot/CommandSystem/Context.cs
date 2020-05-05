@@ -304,5 +304,7 @@ namespace PluralKit.Bot
                 return null;
             }
         }
+
+        public IComponentContext Services => _provider;
     }
 }
