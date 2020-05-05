@@ -97,14 +97,16 @@ namespace PluralKit.Bot
         private async Task HandleError<T>(IEventHandler<T> handler, T evt, ILifetimeScope serviceScope, Exception exc)
             where T: DiscordEventArgs
         {
-            _logger.Error(exc, "Exception in bot event handler");
+            // Make this beforehand so we can access the event ID for logging
+            var sentryEvent = new SentryEvent(exc);
+
+            _logger.Error(exc, "Exception in bot event handler (Sentry ID: {SentryEventId})", sentryEvent.EventId);
 
             var shouldReport = exc.IsOurProblem();
             if (shouldReport)
             {
                 // Report error to Sentry
                 // This will just no-op if there's no URL set
-                var sentryEvent = new SentryEvent();
                 var sentryScope = serviceScope.Resolve<Scope>();
                 SentrySdk.CaptureEvent(sentryEvent, sentryScope);
 
