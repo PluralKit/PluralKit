@@ -458,6 +458,7 @@ components:
                 In addition, this field will be returned as `null` if the request is not authorized with this system's token.
 
                 Because of this, there is no way for an unauthorized user to tell the difference between a private description and a `null` description - this is intentional.
+              example: public
 
         member_list_privacy:
           allOf:
@@ -468,6 +469,7 @@ components:
                 If this is set to "private", this system's member list can not be queried without proper authorization.
 
                 In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+              example: public
 
         front_privacy:
           allOf:
@@ -478,6 +480,7 @@ components:
                 If this is set to "private", this system's current fronter can not be queried without proper authorization.
 
                 In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+              example: public
 
         front_history_privacy:
           allOf:
@@ -488,6 +491,7 @@ components:
                 If this is set to "private", this system's front/switch history can not be queried without proper authorization.
 
                 In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+              example: public
 
     Member:
       properties:
@@ -580,6 +584,7 @@ components:
                 Specifically, the properties `birthday`, `pronouns` and `description` will always be returned as `null` if a valid token for the system isn't provided, even if the underlying value is present.
 
                 In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+              example: public
 
         proxy_tags:
           type: array
@@ -600,6 +605,7 @@ components:
 
             This field is deprecated and will be removed in API v2.
           deprecated: true
+          example: "{{"
 
         suffix:
           type: string
@@ -611,6 +617,7 @@ components:
 
             This field is deprecated and will be removed in API v2.
           deprecated: true
+          example: "}}"
 
         keep_proxy:
           type: boolean
@@ -699,7 +706,7 @@ components:
       pattern: "^[0-9]{17,19}"
       minLength: 17
       maxLength: 19
-      example: 466378653216014359 # PK's account ID :3
+      example: "466378653216014359" # PK's account ID :3
 
     Message:
       title: Message Info
@@ -717,18 +724,22 @@ components:
           allOf:
             - $ref: "#/components/schemas/Snowflake"
             - description: "The ID of the proxied webhook message posted by PluralKit."
+              example: "123456789012345678"
         original:
           allOf:
             - $ref: "#/components/schemas/Snowflake"
             - description: "The ID of the original (now-deleted) trigger message containing the proxy tags."
+              example: "123456789012345678"
         sender:
           allOf:
             - $ref: "#/components/schemas/Snowflake"
             - description: "The ID of the Discord user that sent the trigger message."
+              example: "123456789012345678"
         channel:
           allOf:
             - $ref: "#/components/schemas/Snowflake"
             - description: "The ID of the Discord channel the relevant messages were posted in."
+              example: "123456789012345678"
         system:
           allOf:
             - $ref: "#/components/schemas/System"
