@@ -102,6 +102,7 @@ namespace PluralKit.Bot
             
             // Allow the log buffer to flush properly before exiting
             ((Logger) logger).Dispose();
+            await Task.Delay(500);
             shutdown.SetResult(null);
         }
 
