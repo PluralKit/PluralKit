@@ -48,8 +48,14 @@ namespace PluralKit.Bot
 
         public async Task Handle(MessageCreateEventArgs evt)
         {
+            // Drop the message if we've already received it.
+            // Gateway occasionally resends events for whatever reason and it can break stuff relying on IDs being unique
+            // Not a perfect fix since reordering could still break things but... it's good enough for now
+            // (was considering checking the order of the IDs but IDs aren't guaranteed to be *perfectly* in order, so that'd cause false positives)
+            // LastMessageCache is updated in RegisterMessageMetrics so the ordering here is correct.
+            if (_lastMessageCache.GetLastMessage(evt.Channel.Id) == evt.Message.Id) return;
             RegisterMessageMetrics(evt);
-
+            
             // Ignore system messages (member joined, message pinned, etc)
             var msg = evt.Message;
             if (msg.MessageType != MessageType.Default) return;
