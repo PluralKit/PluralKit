@@ -6,6 +6,9 @@ description: PluralKit's API documentation.
 nav_order: 4
 ---
 
+**2020-05-07**: The PluralKit API is now documented on Swagger: https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.0  
+Accompanying it is an [OpenAPI v3.0 definition](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml). It's mostly complete, but is still subject to change - so don't go generating API clients and mock servers with it quite yet. It may still be useful, though :) 
+
 # API documentation
 PluralKit has a basic HTTP REST API for querying and modifying your system.
 The root endpoint of the API is `https://api.pluralkit.me/v1/`.
@@ -462,6 +465,8 @@ The returned system and member's privacy settings will be respected, and as such
 ```
 
 ## Version history
+* 2020-05-07
+  * The API (v1) is now formally(ish) defined with OpenAPI v3.0. [The definition file can be found here.](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml)
 * 2020-02-10
   * Birthdates with no year can now be stored using `0004` as a year, for better leap year support. Both options remain valid and either may be returned by the API.
   * Added privacy set/get support, meaning you will now see privacy values in authed requests and can set them.

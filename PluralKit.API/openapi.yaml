@@ -8,6 +8,8 @@ info:
   description: |
     This is the API for [PluralKit](https://pluralkit.me/)! :)
 
+    The API itself is stable, but this document (the OpenAPI description) is still subject to change, and may be updated, corrected or restructured in the future (as long as it's still coherent with the real API).
+
     # Authentication
     Authentication is handled using a "system token". At the moment, the only way
     to obtain a system token is to use the `pk;token` command through the Discord bot.
@@ -19,6 +21,14 @@ info:
     # Errors
     Errors are just returned as HTTP response codes. Most error responses include a human-readable
     error message as the body, but this should not be relied on. Just read the response codes :)
+
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+externalDocs:
+  url: https://pluralkit.me/api
+  description: For more information, see the official PluralKit API documentation on the website.
 
 servers:
   - url: https://api.pluralkit.me/v1
@@ -360,6 +370,7 @@ components:
 
   schemas:
     ID:
+      title: ID (system or member)
       type: string
       readOnly: true
       minLength: 5
@@ -608,6 +619,7 @@ components:
             Whether or not to include the used proxy tags in proxied messages.
 
     PrivacySetting:
+      title: Privacy Setting
       type: string
       nullable: true
       description: A privacy setting for systems or members, either public or private. May occasionally be `null` in cases where you are not authorized to view the privacy setting's state.
@@ -615,13 +627,15 @@ components:
       example: public
 
     ProxyTag:
+      title: Proxy Tag
       description: |
-        Represents a set of proxy tags to match messages on.
+        Represents a proxy tag to match messages on.
 
         A "proxy tag" consists of a prefix and a suffix, and a given proxy tag set matches a string
-        if that string begins with the prefix and ends with the suffix. They're often represented to the user with the word `text` between them, eg. `[text]`, `{{text`, etc.
+        if that string begins with the prefix and ends with the suffix.
+        It's often represented to the user with the word `text` between them, eg. `[text]`, `{{text`, and so on.
 
-        For example, the proxy tag pair "[" and "]" will match any string [in square brackets].
+        For example, the proxy tag pair "[" and "]" will match any string \[in square brackets\].
 
         Either the prefix or the suffix may be missing (or both may be present), but it is invalid for
         both values to be null.
@@ -646,6 +660,7 @@ components:
           maxLength: 100
 
     Switch:
+      title: Logged Switch
       properties:
         timestamp:
           type: string
@@ -660,7 +675,7 @@ components:
             $ref: "#/components/schemas/ID"
 
     FullSwitch:
-      description: A variant of the Switch schema where the full Member object is contained instead of just IDs.
+      title: Logged Switch (with full Member object)
       properties:
         timestamp:
           type: string
@@ -674,6 +689,7 @@ components:
             $ref: "#/components/schemas/Member"
 
     Snowflake:
+      title: Snowflake (Discord ID)
       description: |
         A unique identifier used by Discord for its objects (accounts, guilds, channels, messages).
 
@@ -686,6 +702,7 @@ components:
       example: 466378653216014359 # PK's account ID :3
 
     Message:
+      title: Message Info
       description: |
         An object containing information about a proxied message, including message, user and channel IDs, as well as the system and member it's related to.
 
@@ -726,3 +743,4 @@ components:
       type: apiKey
       in: header
       name: Authorization
+      description: A system token obtained from the `pk;proxy` command in the Discord bot.
