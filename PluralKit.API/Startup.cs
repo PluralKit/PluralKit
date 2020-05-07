@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using Autofac;
 
@@ -29,6 +29,12 @@ namespace PluralKit.API
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddNewtonsoftJson(); // sorry MS, this just does *more*
+
+            services.AddApiVersioning(c =>
+            {
+                c.AssumeDefaultVersionWhenUnspecified = true;
+                c.DefaultApiVersion = ApiVersion.Parse("1.0");
+            });
         }
 
         public void ConfigureContainer(ContainerBuilder builder)

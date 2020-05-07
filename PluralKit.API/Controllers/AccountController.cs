@@ -9,8 +9,9 @@ using PluralKit.Core;
 namespace PluralKit.API
 {
     [ApiController]
+    [ApiVersion("1.0")]
     [Route("a")]
-    [Route("v1/a")]
+    [Route( "v{version:apiVersion}/a" )]
     public class AccountController: ControllerBase
     {
         private IDataStore _data;
