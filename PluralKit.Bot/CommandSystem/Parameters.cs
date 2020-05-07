@@ -5,9 +5,28 @@ namespace PluralKit.Bot
 {
     public class Parameters
     {
-        private static readonly Dictionary<char, char> _quotePairs = new Dictionary<char, char>()
+        // Dictionary of (left, right) quote pairs
+        // Each char in the string is an individual quote, multi-char strings imply "one of the following chars"
+        private static readonly Dictionary<string, string> _quotePairs = new Dictionary<string, string>
         {
-            {'\'', '\''}, {'"', '"'}, {'“', '”'}
+            // Basic
+            {"'", "'"}, // ASCII single quotes
+            {"\"", "\""}, // ASCII double quotes
+            
+            // "Smart quotes"
+            // Specifically ignore the left/right status of the quotes and match any combination of them
+            // Left string also includes "low" quotes to allow for the low-high style used in some locales
+            {"\u201C\u201D\u201F\u201E", "\u201C\u201D\u201F"}, // double quotes
+            {"\u2018\u2019\u201B\u201A", "\u2018\u2019\u201B"}, // single quotes
+            
+            // Chevrons (normal and "fullwidth" variants)
+            {"\u00AB\u300A", "\u00BB\u300B"}, // double chevrons, pointing away (<<text>>)
+            {"\u00BB\u300B", "\u00AA\u300A"}, // double chevrons, pointing together (>>text<<)
+            {"\u2039\u3008", "\u203A\u3009"}, // single chevrons, pointing away (<text>)
+            {"\u203A\u3009", "\u2039\u3008"}, // single chevrons, pointing together (>text<)
+            
+            // Other
+            {"\u300C\u300E", "\u300D\u300F"}, // corner brackets (Japanese/Chinese)
         };
 
         private readonly string _cmd;
@@ -125,25 +144,18 @@ namespace PluralKit.Bot
             if (_cmd.Length <= position) return null;
 
             // Is this a quoted word?
-            if (_quotePairs.ContainsKey(_cmd[position]))
+            if (TryCheckQuote(_cmd[position], out var endQuotes))
             {
-                // This is a quoted word, find corresponding end quote and return span
-                var endQuote = _quotePairs[_cmd[position]];
-                var endQuotePosition = _cmd.IndexOf(endQuote, position + 1);
+                // We found a quoted word - find an instance of one of the corresponding end quotes
+                var endQuotePosition = -1;
+                for (var i = position + 1; i < _cmd.Length; i++)
+                    if (endQuotePosition == -1 && endQuotes.Contains(_cmd[i]))
+                        endQuotePosition = i; // need a break; don't feel like brackets tho lol
 
-                // Position after the end quote should be a space (or EOL)
-                // Otherwise treat it as a standard word that's not quoted
+                // Position after the end quote should be EOL or a space
+                // Otherwise we fallthrough to the unquoted word handler below
                 if (_cmd.Length == endQuotePosition + 1 || _cmd[endQuotePosition + 1] == ' ')
-                {
-                    if (endQuotePosition == -1)
-                    {
-                        // This is an unterminated quoted word, just return the entire word including the start quote
-                        // TODO: should we do something else here?
-                        return new WordPosition(position, _cmd.Length, 0, false);
-                    }
-
                     return new WordPosition(position + 1, endQuotePosition, 2, true);
-                }
             }
 
             // Not a quoted word, just find the next space and return if it's the end of the command
@@ -152,6 +164,21 @@ namespace PluralKit.Bot
             return wordEnd == -1
                 ? new WordPosition(position, _cmd.Length, 0, false)
                 : new WordPosition(position, wordEnd, 1, false);
+        }
+
+        private bool TryCheckQuote(char potentialLeftQuote, out string correspondingRightQuotes)
+        {
+            foreach (var (left, right) in _quotePairs)
+            {
+                if (left.Contains(potentialLeftQuote))
+                {
+                    correspondingRightQuotes = right;
+                    return true;
+                }
+            }
+            
+            correspondingRightQuotes = null;
+            return false;
         }
     }
 }
