@@ -1,4 +1,6 @@
-﻿using System;
+using System;
+using System.IO;
+using System.Reflection;
 
 using Autofac;
 
@@ -60,6 +62,12 @@ namespace PluralKit.API
                     if (!apiDesc.RelativePath.StartsWith("v1/")) return false;
                     return apiDesc.GroupName == docName;
                 });
+                
+                // Set the comments path for the Swagger JSON and UI.
+                // https://docs.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-3.1&tabs=visual-studio#customize-and-extend
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
             services.AddSwaggerGenNewtonsoftSupport();
         }
