@@ -140,6 +140,9 @@ namespace PluralKit.Bot
 
         private WordPosition? NextWordPosition(int position)
         {
+            // Skip leading spaces before actual content
+            while (position < _cmd.Length && _cmd[position] == ' ') position++;
+
             // Is this the end of the string?
             if (_cmd.Length <= position) return null;
 
