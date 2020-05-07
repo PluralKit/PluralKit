@@ -1,13 +1,15 @@
-using System;
+﻿using System;
 
 using Autofac;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 
 using PluralKit.Core;
 
@@ -35,11 +37,37 @@ namespace PluralKit.API
                 c.AssumeDefaultVersionWhenUnspecified = true;
                 c.DefaultApiVersion = ApiVersion.Parse("1.0");
             });
+            
+            services.AddVersionedApiExplorer(c =>
+            {
+                c.GroupNameFormat = "'v'VV";
+                c.DefaultApiVersion = ApiVersion.Parse("1.0");
+                c.ApiVersionParameterSource = new UrlSegmentApiVersionReader();
+                c.SubstituteApiVersionInUrl = true;
+            });
+            
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1.0", new OpenApiInfo {Title = "PluralKit", Version = "1.0"});
+                
+                c.EnableAnnotations();
+                c.AddSecurityDefinition("TokenAuth",
+                    new OpenApiSecurityScheme {Name = "Authorization", Type = SecuritySchemeType.ApiKey});
+                
+                // Exclude routes without a version, then fall back to group name matching (default behavior)
+                c.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    if (!apiDesc.RelativePath.StartsWith("v1/")) return false;
+                    return apiDesc.GroupName == docName;
+                });
+            });
+            services.AddSwaggerGenNewtonsoftSupport();
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
         {
-            builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build()).As<IConfiguration>();
+            builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build())
+                .As<IConfiguration>();
             builder.RegisterModule(new ConfigModule<object>());
             builder.RegisterModule(new LoggingModule("api"));
             builder.RegisterModule(new MetricsModule("API"));
@@ -55,6 +83,13 @@ namespace PluralKit.API
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                
+                // Only enable Swagger stuff when ASPNETCORE_ENVIRONMENT=Development (for now)
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "PluralKit (v1)");
+                });
             }
             else
             {
