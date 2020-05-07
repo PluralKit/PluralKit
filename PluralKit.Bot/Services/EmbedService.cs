@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 
 using Humanizer;
 using NodaTime;
@@ -145,40 +146,38 @@ namespace PluralKit.Bot {
             var channel = await client.GetChannelAsync(msg.Message.Channel);
             var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
 
-            var memberStr = $"{msg.Member.Name} (`{msg.Member.Hid}`)";
+            // Need this whole dance to handle cases where:
+            // - the user is deleted (userInfo == null)
+            // - the bot's no longer in the server we're querying (channel == null)
+            // - the member is no longer in the server we're querying (memberInfo == null)
+            DiscordMember memberInfo = null;
+            DiscordUser userInfo = null; 
+            if (channel != null) try { memberInfo = await channel.Guild.GetMemberAsync(msg.Message.Sender); } catch (NotFoundException) { }
+            if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
+            else try { userInfo = await client.GetUserAsync(msg.Message.Sender); } catch (NotFoundException) { }
 
-            var userStr = $"*(deleted user {msg.Message.Sender})*";
-            ICollection<DiscordRole> roles = null;
+            // Calculate string displayed under "Sent by"
+            string userStr;
+            if (memberInfo != null && memberInfo.Nickname != null)
+                userStr = $"**Username:** {memberInfo.NameAndMention()}\n**Nickname:** {memberInfo.Nickname}";
+            else if (userInfo != null) userStr = userInfo.NameAndMention();
+            else userStr = $"*(deleted user {msg.Message.Sender})*";
 
-            if (channel != null)
-            {
-                // Look up the user with the REST client
-                // this ensures we'll still get the information even if the user's not cached,
-                // even if this means an extra API request (meh, it'll be fine)
-                var guildUser = await channel.Guild.GetMemberAsync(msg.Message.Sender);
-                if (guildUser != null)
-                {
-                    roles = guildUser.Roles
-                        .Where(role => role.Name != "@everyone")
-                        .OrderByDescending(role => role.Position)
-                        .ToList();
-
-                    userStr = guildUser.Nickname != null ? $"**Username:** {guildUser?.NameAndMention()}\n**Nickname:** {guildUser.Nickname}" : guildUser.NameAndMention();
-                }
-            }
-
+            // Put it all together
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor(msg.Member.Name, iconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarUrl))
                 .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
-                .AddField("Member", memberStr, true)
+                .AddField("Member", $"{msg.Member.Name} (`{msg.Member.Hid}`)", true)
                 .AddField("Sent by", userStr, inline: true)
                 .WithTimestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset());
 
+            var roles = memberInfo?.Roles?.ToList();
             if (roles != null && roles.Count > 0)
                 eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
+            
             return eb.Build();
         }
 
