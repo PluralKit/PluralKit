@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using DSharpPlus.Exceptions;
 
+using Newtonsoft.Json;
+
 using Npgsql;
 
 using PluralKit.Core;
@@ -20,8 +22,13 @@ namespace PluralKit.Bot
             // otherwise we'd blow out our error reporting budget as soon as Discord takes a dump, or something.
             
             // Discord server errors are *not our problem*
-            // TODO
+            // TODO: DSharpPlus doesn't have a generic "HttpException" type and only special cases a couple response codes (that we don't need here)
+            // Doesn't seem to handle 500s in the library at all, I'm not sure what it does in case it receives one...
             // if (e is DSharpPlus.Exceptions he && ((int) he.HttpCode) >= 500) return false;
+
+            // Occasionally Discord's API will Have A Bad Time and return a bunch of CloudFlare errors (in HTML format).
+            // The library tries to parse these HTML responses as JSON and crashes with a consistent exception message.
+            if (e is JsonReaderException jre && jre.Message == "Unexpected character encountered while parsing value: <. Path '', line 0, position 0.") return false;
             
             // Webhook server errors are also *not our problem*
             // (this includes rate limit errors, WebhookRateLimited is a subclass)
