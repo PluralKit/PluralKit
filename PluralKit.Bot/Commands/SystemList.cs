@@ -78,6 +78,7 @@ namespace PluralKit.Bot
             foreach (var m in members)
             {
                 var profile = $"**ID**: {m.Hid}";
+                if (m.DisplayName != null) profile += $"\n**Display name**: {m.DisplayName}";
                 if (m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
                 if (m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                 if (m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
