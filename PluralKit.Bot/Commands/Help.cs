@@ -23,5 +23,10 @@ namespace PluralKit.Bot
                 .WithColor(DiscordUtils.Blue)
                 .Build());
         }
+
+        public async Task Explain(Context ctx)
+        {
+            await ctx.Reply("> **About PluralKit**\nPluralKit detects messages enclosed in specific tags associated with a profile, then replaces that message under a \"pseudo-account\" of that profile using Discord webhooks.\n\nThis is useful for multiple people sharing one body (aka. *systems*), people who wish to role-play as different characters without having multiple Discord accounts, or anyone else who may want to post messages under a different identity from the same Discord account.\n\nDue to Discord limitations, these messages will show up with the `[BOT]` tag - however, they are not bots.");
+        }
     }
 }

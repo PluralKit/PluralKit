@@ -53,6 +53,7 @@ namespace PluralKit.Bot
         public static Command Import = new Command("import", "import [fileurl]", "Imports system information from a data file");
         public static Command Export = new Command("export", "export", "Exports system information to a data file");
         public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
+        public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
         public static Command Message = new Command("message", "message <id|link>", "Looks up a proxied message");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
@@ -119,6 +120,8 @@ namespace PluralKit.Bot
                 else if (ctx.Match("proxy"))
                     return ctx.Reply("The proxy help page has been moved! See the website: https://pluralkit.me/guide#proxying");
                 else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
+            if (ctx.Match("explain"))
+                return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
             if (ctx.Match("commands"))
                 return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
             if (ctx.Match("message", "msg"))
