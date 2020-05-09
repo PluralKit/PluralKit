@@ -32,6 +32,7 @@ namespace PluralKit.Bot
         private readonly PeriodicStatCollector _collector;
         private readonly IMetrics _metrics;
 
+        private bool _hasReceivedReady = false;
         private Timer _periodicTask; // Never read, just kept here for GC reasons
 
         public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics)
@@ -58,7 +59,11 @@ namespace PluralKit.Bot
             _client.MessageReactionAdded += HandleEvent;
 
             // Update shard status for shards immediately on connect
-            _client.Ready += args => UpdateBotStatus(args.Client); 
+            _client.Ready += args =>
+            {
+                _hasReceivedReady = true;
+                return UpdateBotStatus(args.Client);
+            }; 
             _client.Resumed += args => UpdateBotStatus(args.Client); 
             
             // Init the shard stuff
@@ -83,7 +88,8 @@ namespace PluralKit.Bot
             // Send users a lil status message
             // We're not actually properly disconnecting from the gateway (lol)  so it'll linger for a few minutes
             // Should be plenty of time for the bot to connect again next startup and set the real status
-            await _client.UpdateStatusAsync(new DiscordActivity("Restarting... (please wait)"));
+            if (_hasReceivedReady)
+                await _client.UpdateStatusAsync(new DiscordActivity("Restarting... (please wait)"));
         }
 
         private Task HandleEvent<T>(T evt) where T: DiscordEventArgs
@@ -161,6 +167,9 @@ namespace PluralKit.Bot
 
         private async Task UpdateBotStatus(DiscordClient specificShard = null)
         {
+            // If we're not on any shards, don't bother (this happens if the periodic timer fires before the first Ready)
+            if (!_hasReceivedReady) return;
+            
             var totalGuilds = _client.ShardClients.Values.Sum(c => c.Guilds.Count);
             try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
             {
