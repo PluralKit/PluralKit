@@ -268,8 +268,9 @@ namespace PluralKit.Bot
 
         private async Task HandleMessagePingByReaction(MessageReactionAddEventArgs args)
         {
-            // Bail in DMs
+            // Bail in DMs or if we don't have send permission
             if (args.Channel.Type != ChannelType.Text) return;
+            if (!args.Channel.BotHasAllPermissions(Permissions.SendMessages)) return;
             
             // Find the message in the DB
             var msg = await _data.GetMessage(args.Message.Id);
