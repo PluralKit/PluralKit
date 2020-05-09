@@ -62,7 +62,7 @@ namespace PluralKit.Bot
             _client.Resumed += args => UpdateBotStatus(args.Client); 
             
             // Init the shard stuff
-            _services.Resolve<ShardInfoService>().Init(_client);
+            _services.Resolve<ShardInfoService>().Init();
 
             // Not awaited, just needs to run in the background
             // Trying our best to run it at whole minute boundaries (xx:00), with ~250ms buffer
@@ -175,7 +175,7 @@ namespace PluralKit.Bot
             catch (WebSocketException) { }
         }
         
-        private void FrameworkLog(object sender, DebugLogMessageEventArgs args)
+        public void FrameworkLog(object sender, DebugLogMessageEventArgs args)
         {
             // Bridge D#+ logging to Serilog
             LogEventLevel level = LogEventLevel.Verbose;

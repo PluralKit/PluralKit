@@ -37,14 +37,16 @@ namespace PluralKit.Bot
                 logger.Information("Connecting to database");
                 await services.Resolve<SchemaService>().ApplyMigrations();
                 
-                // Start the Discord client; StartAsync returns once shard instances are *created* (not necessarily connected)
-                logger.Information("Connecting to Discord");
-                await services.Resolve<DiscordShardedClient>().StartAsync();
-                
-                // Start the bot stuff and let it register things
+                // Init the bot instance itself, register handlers and such to the client before beginning to connect
+                logger.Information("Initializing bot");
                 var bot = services.Resolve<Bot>();
                 bot.Init();
-                
+
+                // Start the Discord shards themselves (handlers already set up)
+                logger.Information("Connecting to Discord");
+                await services.Resolve<DiscordShardedClient>().StartAsync();
+                logger.Information("Connected! All is good (probably).");
+
                 // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
                 try
                 {
