@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 using DSharpPlus;
@@ -16,7 +19,9 @@ namespace PluralKit.Bot
         public static DiscordColor Gray = new DiscordColor(0x979c9f);
         
         public static Permissions DM_PERMISSIONS = (Permissions) 0b00000_1000110_1011100110000_000000;
-        
+
+        private static readonly FieldInfo _roleIdsField = typeof(DiscordMember).GetField("_role_ids", BindingFlags.NonPublic | BindingFlags.Instance);
+
         public static string NameAndMention(this DiscordUser user) {
             return $"{user.Username}#{user.Discriminator} ({user.Mention})";
         }
@@ -25,6 +30,7 @@ namespace PluralKit.Bot
         // This way we can ensure we do the read permission correction everywhere
         private static Permissions PermissionsInGuild(DiscordChannel channel, DiscordMember member)
         {
+            ValidateCachedRoles(member);
             var permissions = channel.PermissionsFor(member);
             
             // This method doesn't account for channels without read permissions
@@ -33,6 +39,15 @@ namespace PluralKit.Bot
                 return Permissions.None;
             
             return permissions;
+        }
+
+        // Workaround for DSP internal error
+        private static void ValidateCachedRoles(DiscordMember member)
+        {
+            var roleIdCache = _roleIdsField.GetValue(member) as List<ulong>;
+            var currentRoleIds = member.Roles.Where(x => x != null).Select(x => x.Id);
+            var invalidRoleIds = roleIdCache.Where(x => !currentRoleIds.Contains(x));
+            roleIdCache.RemoveAll(x => invalidRoleIds.Contains(x));
         }
 
         public static async Task<Permissions> PermissionsIn(this DiscordChannel channel, DiscordUser user)
