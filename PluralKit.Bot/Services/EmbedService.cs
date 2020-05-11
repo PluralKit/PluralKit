@@ -77,7 +77,7 @@ namespace PluralKit.Bot {
 
         public async Task<DiscordEmbed> CreateMemberEmbed(PKSystem system, PKMember member, DiscordGuild guild, LookupContext ctx)
         {
-            var name = member.Name;
+            var name = member.MemberPrivacy.CanAccess(ctx) && member.DisplayName != null ? member.Name : member.DisplayName ?? member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
 
             DiscordColor color;
