@@ -81,11 +81,11 @@ namespace PluralKit.Bot
             var member = await ctx.MatchMember();
             var proxyMessage = ctx.RemainderOrNull(false);
             if (member != null) 
-                if (proxyMessage != null)
-                    // await ctx.Reply($"**{member.DisplayName ?? member.Name}**: {proxyMessage}");
-                    await _proxy.HandleMessageAsync(ctx.Shard, await _cache.GetGuildDataCached(ctx.Guild.Id), await _cache.GetAccountDataCached(ctx.Author.Id), ctx.Message, false, member, proxyMessage);
-                else 
+                if (proxyMessage == null && ctx.Message.Attachments.Count == 0)
                     await ctx.Reply($"{Emojis.Error} Must have a message!");
+                else
+                await _proxy.HandleMessageAsync(ctx.Shard, await _cache.GetGuildDataCached(ctx.Guild.Id), await _cache.GetAccountDataCached(ctx.Author.Id), ctx.Message, false, member, proxyMessage);
+                                    
             else 
                 //If member does not exist, error
                 await ctx.Reply($"{Emojis.Error} {ctx.CreateMemberNotFoundError(ctx.PopArgument())}");
