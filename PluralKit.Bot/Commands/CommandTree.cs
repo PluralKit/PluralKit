@@ -43,6 +43,7 @@ namespace PluralKit.Bot
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command MemberRandom = new Command("random", "random", "Looks up a random member from your system");
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
+        public static Command ProxyMember = new Command("proxy","proxy <member> <text>","Proxies a member without using proxy tags");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -143,8 +144,10 @@ namespace PluralKit.Bot
                 else if (ctx.Match("disable", "off", "remove", "allow"))
                     return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
                 else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove);
-            if (ctx.Match("proxy", "enable", "disable"))
+            if (ctx.Match("enable", "disable"))
                 return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
+            if (ctx.Match("proxy"))
+                return ctx.Execute<Member>(ProxyMember, m => m.ProxyMember(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
             if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
             if (ctx.Match("fire")) return ctx.Execute<Fun>(null, m => m.Fire(ctx));

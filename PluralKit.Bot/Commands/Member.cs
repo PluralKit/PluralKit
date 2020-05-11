@@ -10,6 +10,9 @@ namespace PluralKit.Bot
         private IDataStore _data;
         private IDatabase _db;
         private EmbedService _embeds;
+        private readonly ProxyService _proxy;
+        private readonly ProxyCache _cache;
+
         
         public Member(IDataStore data, EmbedService embeds, IDatabase db)
         {
@@ -71,6 +74,21 @@ namespace PluralKit.Bot
             
             var system = await _db.Execute(c => c.QuerySystem(target.System));
             await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
+        }
+
+        public async Task ProxyMember(Context ctx){
+            //Get member off the argument stack
+            var member = await ctx.MatchMember();
+            var proxyMessage = ctx.RemainderOrNull(false);
+            if (member != null) 
+                if (proxyMessage != null)
+                    // await ctx.Reply($"**{member.DisplayName ?? member.Name}**: {proxyMessage}");
+                    await _proxy.HandleMessageAsync(ctx.Shard, await _cache.GetGuildDataCached(ctx.Guild.Id), await _cache.GetAccountDataCached(ctx.Author.Id), ctx.Message, false, member, proxyMessage);
+                else 
+                    await ctx.Reply($"{Emojis.Error} Must have a message!");
+            else 
+                //If member does not exist, error
+                await ctx.Reply($"{Emojis.Error} {ctx.CreateMemberNotFoundError(ctx.PopArgument())}");
         }
     }
 }
