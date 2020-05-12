@@ -8,8 +8,8 @@
 [x] Member embed follow privacy settings
 [ ] System list full follow privacy settings (pass ctx into LongRenderer somehow) in SystemList.cs
 [x] Logs respect privacy
-[ ] API respect privacy
+[x] API respect privacy
   [x] Basic Privacy
-  [ ] Update privacy property to have diffrent options as children 
+  [x] Update privacy property to have diffrent options as children 
 [x] Update "CheckReadMemberPermission" function in MemberEdit.cs
 [ ] Export/Import to include privacy settings (Privacy does not get exported/imported, should it?)
