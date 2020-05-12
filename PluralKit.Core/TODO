@@ -1,10 +1,14 @@
 -- Setting Privacy --
 [x] Add privacy options to member model
-[ ] Update DB to handle new model
+[x] Update DB to handle new model
 [x] Improve member privacy command
   [x] Add privacy settings display
   [x] Add commands for setting privacy options
 -- Implementing Privacy --
-[ ] Member embed follow privacy settings
-[ ] System list full follow privacy settings
-[ ] Logs respect privacy
+[x] Member embed follow privacy settings
+[ ] System list full follow privacy settings (pass ctx into LongRenderer somehow)
+[x] Logs respect privacy
+[ ] API respect privacy
+  [x] Basic Privacy
+  [ ] Update privacy property to have diffrent options as children 
+[ ] Update "CheckReadMemberPermission" function in MemberEdit.cs
