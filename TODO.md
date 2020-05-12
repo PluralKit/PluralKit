@@ -1,17 +1,17 @@
 # Setting Privacy 
-[x] Add privacy options to member model
-[x] Update DB to handle new model
-[x] Improve member privacy command
-  [x] Add privacy settings display
-  [x] Add commands for setting privacy options
+- [x] Add privacy options to member model
+- [x] Update DB to handle new model
+- [x] Improve member privacy command
+  - [x] Add privacy settings display
+  - [x] Add commands for setting privacy options
   
 # Implementing Privacy
-[x] Member embed follow privacy settings
-[x] System list full follow privacy settings (pass ctx into LongRenderer somehow) in SystemList.cs
-[x] Logs respect privacy
-[x] API respect privacy
-  [x] Basic Privacy
-  [x] Update privacy property to have diffrent options as children 
-[x] Update "CheckReadMemberPermission" function in MemberEdit.cs
-~~[ ] Export/Import to include privacy settings (Privacy does not get exported/imported, should it?)~~ Decided on no
-[ ] Update User Guide
+- [x] Member embed follow privacy settings
+- [x] System list full follow privacy settings (pass ctx into LongRenderer somehow) in SystemList.cs
+- [x] Logs respect privacy
+- [x] API respect privacy
+  - [x] Basic Privacy
+  - [x] Update privacy property to have diffrent options as children 
+- [x] Update "CheckReadMemberPermission" function in MemberEdit.cs
+- ~~[ ] Export/Import to include privacy settings (Privacy does not get exported/imported, should it?)~~ Decided on no
+- [ ] Update User Guide
