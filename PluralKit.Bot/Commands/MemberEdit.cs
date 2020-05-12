@@ -433,7 +433,7 @@ namespace PluralKit.Bot
                 subjectStr = "pronouns";
                 target.PronounPrivacy = PopPrivacyLevel("pronouns", out levelStr, out levelExplanation);
             }
-            else if(ctx.Match("color"))
+            else if(ctx.Match("color","colour"))
             {
                 subjectStr = "color";
                 target.ColorPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
