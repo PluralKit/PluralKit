@@ -1,14 +1,10 @@
 -- Setting Privacy --
 [x] Add privacy options to member model
 [ ] Update DB to handle new model
-[ ] Improve member privacy command
+[x] Improve member privacy command
   [x] Add privacy settings display
-  [ ] Add commands for setting privacy options
+  [x] Add commands for setting privacy options
 -- Implementing Privacy --
 [ ] Member embed follow privacy settings
 [ ] System list full follow privacy settings
 [ ] Logs respect privacy
-
-
--- Notes --
-When Implementing this change, should set all member privacy settings to be equal to member.MemberPrivacy, so that this change does not reveal any information of hidden members

@@ -362,32 +362,10 @@ namespace PluralKit.Bot
 
         public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
         {
-            // if (ctx.System == null) throw Errors.NoSystemError;
-            // if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            // PrivacyLevel newValue;
-            // if (ctx.Match("private", "hide", "hidden", "on", "enable", "yes")) newValue = PrivacyLevel.Private;
-            // else if (ctx.Match("public", "show", "shown", "displayed", "off", "disable", "no")) newValue = PrivacyLevel.Public;
-            // else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"private\" or \"public\".");
-            // // If we're getting a value from command (eg. "pk;m <name> private" == always private, "pk;m <name> public == always public"), use that instead of parsing
-            // else if (newValueFromCommand != null) newValue = newValueFromCommand.Value;
-            // else
-            // {
-            //     if (target.MemberPrivacy == PrivacyLevel.Public)
-            //         await ctx.Reply("This member's privacy is currently set to **public**. This member will show up in member lists and will return all information when queried by other accounts.");
-            //     else
-            //         await ctx.Reply("This member's privacy is currently set to **private**. This member will not show up in member lists and will return limited information when queried by other accounts.");
-
-            //     return;
-            // }
-
-            // target.MemberPrivacy = newValue;
-            // await _data.SaveMember(target);
-
-            // if (newValue == PrivacyLevel.Private)
-            //     await ctx.Reply($"{Emojis.Success} Member privacy set to **private**. This member will no longer show up in member lists and will return limited information when queried by other accounts.");
-            // else
-            //     await ctx.Reply($"{Emojis.Success} Member privacy set to **public**. This member will now show up in member lists and will return all information when queried by other accounts.");
+            // Display privacy settings
             if (!ctx.HasNext())
             {
                 string PrivacyLevelString(PrivacyLevel level) => level switch
@@ -404,12 +382,110 @@ namespace PluralKit.Bot
                     .AddField("Birthday", PrivacyLevelString(target.BirthdayPrivacy))
                     .AddField("Pronouns", PrivacyLevelString(target.PronounPrivacy))
                     .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
-                    .AddField("MessageCount", PrivacyLevelString(target.CreatedTimestampPrivacy))
+                    .AddField("Date Created", PrivacyLevelString(target.CreatedTimestampPrivacy))
+                    .AddField("Message Count", PrivacyLevelString(target.MessageCountPrivacy))
                     .AddField("Visibility", PrivacyLevelString(target.MemberVisibility))
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front` or `fronthistory`\n- `level` is either `public` or `private`.");
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }
+
+            // Set Privacy Settings
+            PrivacyLevel PopPrivacyLevel(string subject, out string levelStr, out string levelExplanation)
+            {
+                if (ctx.Match("public", "show", "shown", "visible"))
+                {
+                    levelStr = "public";
+                    levelExplanation = "be shown on the member card";
+                    return PrivacyLevel.Public;
+                }
+
+                if (ctx.Match("private", "hide", "hidden"))
+                {
+                    levelStr = "private";
+                    levelExplanation = "*not* be shown on the member card";
+                    if(subject == "name") levelExplanation += " unless no display name is set";
+                    return PrivacyLevel.Private;
+                }
+
+                if (!ctx.HasNext())
+                    throw new PKSyntaxError($"You must pass a privacy level for `{subject}` (`public` or `private`)");
+                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument().SanitizeMentions()}` (must be `public` or `private`).");
+            }
+
+            string levelStr, levelExplanation, subjectStr;
+            var subjectList = "`name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, `visibility`, or `all`";
+            if(ctx.Match("name"))
+            {
+                subjectStr = "name";
+                target.NamePrivacy = PopPrivacyLevel("name", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("description", "desc", "text", "info"))
+            {
+                subjectStr = "description";
+                target.DescriptionPrivacy = PopPrivacyLevel("description", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("birthday", "birth", "bday"))
+            {
+                subjectStr = "birthday";
+                target.BirthdayPrivacy = PopPrivacyLevel("birthday", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("pronouns", "pronoun"))
+            {
+                subjectStr = "pronouns";
+                target.PronounPrivacy = PopPrivacyLevel("pronouns", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("color"))
+            {
+                subjectStr = "color";
+                target.ColorPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("created","datecreated","date"))
+            {
+                subjectStr = "date created";
+                target.CreatedTimestampPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("messages","message","messagecount"))
+            {
+                subjectStr = "messages";
+                target.MessageCountPrivacy = PopPrivacyLevel("messages", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("visibility","hidden","shown"))
+            {
+                subjectStr = "visibility";
+                target.MemberVisibility = PopPrivacyLevel("visibility", out levelStr, out levelExplanation);
+            }
+            else if(ctx.Match("all")){
+                subjectStr = "all";
+                PrivacyLevel level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
+                target.MemberVisibility = level;
+                target.NamePrivacy = level;
+                target.DescriptionPrivacy = level;
+                target.BirthdayPrivacy = level;
+                target.PronounPrivacy = level;
+                target.ColorPrivacy = level;
+                target.CreatedTimestampPrivacy = level;
+                target.MessageCountPrivacy = level;
+            }            
+            else
+                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
+
+
+            await _data.SaveMember(target);
+            //Handle "all" subject
+            if(subjectStr == "all"){
+                if(levelStr == "private")
+                    await ctx.Reply($"All {target.Name}'s privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card");
+                else 
+                    await ctx.Reply($"All {target.Name}'s privacy settings have been set to **{levelStr}**. Other accounts will now see everything on the member card");
+            } 
+            //Handle other subjects
+            else
+                await ctx.Reply($"{target.Name}'s {subjectStr} has been set to **{levelStr}**. Other accounts will now {levelExplanation}");
+
+
+
+
         }
         
         public async Task Delete(Context ctx, PKMember target)
