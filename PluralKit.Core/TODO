@@ -4,3 +4,7 @@
 -- Implementing Privacy --
 [ ] Member embed follow privacy settings
 [ ] System list full follow privacy settings
+
+
+-- Notes --
+When Implementing this change, should set all member privacy settings to be equal to member.MemberPrivacy, so that this change does not reveal any information of hidden members
