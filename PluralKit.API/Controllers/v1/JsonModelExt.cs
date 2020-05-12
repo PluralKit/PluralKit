@@ -45,13 +45,13 @@ namespace PluralKit.API
             var o = new JObject();
             o.Add("id", member.Hid);
             o.Add("name", member.Name);
-            o.Add("color", member.MemberPrivacy.CanAccess(ctx) ? member.Color : null);
+            o.Add("color", member.MemberVisibility.CanAccess(ctx) ? member.Color : null);
             o.Add("display_name", member.DisplayName);
-            o.Add("birthday", member.MemberPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
-            o.Add("pronouns", member.MemberPrivacy.CanAccess(ctx) ? member.Pronouns : null);
+            o.Add("birthday", member.MemberVisibility.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
+            o.Add("pronouns", member.MemberVisibility.CanAccess(ctx) ? member.Pronouns : null);
             o.Add("avatar_url", member.AvatarUrl);
-            o.Add("description", member.MemberPrivacy.CanAccess(ctx) ? member.Description : null);
-            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("description", member.MemberVisibility.CanAccess(ctx) ? member.Description : null);
+            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
             
             var tagArray = new JArray();
             foreach (var tag in member.ProxyTags) 
@@ -102,7 +102,7 @@ namespace PluralKit.API
                     .ToList();
             }
             
-            if (o.ContainsKey("privacy")) member.MemberPrivacy = o.Value<string>("privacy").ParsePrivacy("member");
+            if (o.ContainsKey("privacy")) member.MemberVisibility = o.Value<string>("privacy").ParsePrivacy("member");
         }
 
         private static string BoundsCheckField(this string input, int maxLength, string nameInError)

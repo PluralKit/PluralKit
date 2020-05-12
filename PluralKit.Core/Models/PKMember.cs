@@ -23,7 +23,7 @@ namespace PluralKit.Core {
         public Instant Created { get; }
         public int MessageCount { get; }
 
-        public PrivacyLevel MemberPrivacy { get; set; }
+        public PrivacyLevel MemberVisibility { get; set; }
         public PrivacyLevel DescriptionPrivacy { get; set; }
         public PrivacyLevel NamePrivacy { get; set; } //ignore setting if no display name is set
         public PrivacyLevel BirthdayPrivacy { get; set; }

@@ -108,7 +108,7 @@ namespace PluralKit.Bot {
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} {(member.CreatedTimestampPrivacy.CanAccess(ctx) ? $"| Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}":"")}");
 
             var description = "";
-            if (member.MemberPrivacy == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
+            if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
             if (guildSettings?.AvatarUrl != null)
                 if (member.AvatarUrl != null) 
                     description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl}) to see the global avatar)*\n";

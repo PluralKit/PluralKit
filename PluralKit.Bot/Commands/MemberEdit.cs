@@ -55,7 +55,7 @@ namespace PluralKit.Bot
 
         private void CheckReadMemberPermission(Context ctx, PKMember target)
         {
-            if (!target.MemberPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+            if (!target.MemberVisibility.CanAccess(ctx.LookupContextFor(target.System)))
                 throw Errors.LookupNotAllowed;
         }
 
@@ -405,7 +405,7 @@ namespace PluralKit.Bot
                     .AddField("Pronouns", PrivacyLevelString(target.PronounPrivacy))
                     .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
                     .AddField("MessageCount", PrivacyLevelString(target.CreatedTimestampPrivacy))
-                    .AddField("Visibility", PrivacyLevelString(target.MemberPrivacy))
+                    .AddField("Visibility", PrivacyLevelString(target.MemberVisibility))
                     .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front` or `fronthistory`\n- `level` is either `public` or `private`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
