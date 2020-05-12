@@ -12,4 +12,4 @@
   [x] Basic Privacy
   [ ] Update privacy property to have diffrent options as children 
 [x] Update "CheckReadMemberPermission" function in MemberEdit.cs
-[ ] Export/Import to include privacy settings
+[ ] Export/Import to include privacy settings (Privacy does not get exported/imported, should it?)
