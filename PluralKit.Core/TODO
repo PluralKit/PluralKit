@@ -6,7 +6,7 @@
   [x] Add commands for setting privacy options
 -- Implementing Privacy --
 [x] Member embed follow privacy settings
-[ ] System list full follow privacy settings (pass ctx into LongRenderer somehow)
+[ ] System list full follow privacy settings (pass ctx into LongRenderer somehow) in SystemList.cs
 [x] Logs respect privacy
 [ ] API respect privacy
   [x] Basic Privacy
