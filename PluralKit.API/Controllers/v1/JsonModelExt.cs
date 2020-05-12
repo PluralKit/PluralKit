@@ -44,14 +44,20 @@ namespace PluralKit.API
         {
             var o = new JObject();
             o.Add("id", member.Hid);
-            o.Add("name", member.Name);
+            o.Add("name", member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name);
             o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
             o.Add("display_name", member.DisplayName);
             o.Add("birthday", member.BirthdayPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
             o.Add("pronouns", member.PronounPrivacy.CanAccess(ctx) ? member.Pronouns : null);
             o.Add("avatar_url", member.AvatarUrl);
             o.Add("description", member.DescriptionPrivacy.CanAccess(ctx) ? member.Description : null);
-            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
+
+            o.Add("visibility", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("name_privacy", ctx == LookupContext.ByOwner ? (member.NamePrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("pronouns_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             
             var tagArray = new JArray();
             foreach (var tag in member.ProxyTags) 
