@@ -362,32 +362,54 @@ namespace PluralKit.Bot
 
         public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            // if (ctx.System == null) throw Errors.NoSystemError;
+            // if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-            PrivacyLevel newValue;
-            if (ctx.Match("private", "hide", "hidden", "on", "enable", "yes")) newValue = PrivacyLevel.Private;
-            else if (ctx.Match("public", "show", "shown", "displayed", "off", "disable", "no")) newValue = PrivacyLevel.Public;
-            else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"private\" or \"public\".");
-            // If we're getting a value from command (eg. "pk;m <name> private" == always private, "pk;m <name> public == always public"), use that instead of parsing
-            else if (newValueFromCommand != null) newValue = newValueFromCommand.Value;
-            else
+            // PrivacyLevel newValue;
+            // if (ctx.Match("private", "hide", "hidden", "on", "enable", "yes")) newValue = PrivacyLevel.Private;
+            // else if (ctx.Match("public", "show", "shown", "displayed", "off", "disable", "no")) newValue = PrivacyLevel.Public;
+            // else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"private\" or \"public\".");
+            // // If we're getting a value from command (eg. "pk;m <name> private" == always private, "pk;m <name> public == always public"), use that instead of parsing
+            // else if (newValueFromCommand != null) newValue = newValueFromCommand.Value;
+            // else
+            // {
+            //     if (target.MemberPrivacy == PrivacyLevel.Public)
+            //         await ctx.Reply("This member's privacy is currently set to **public**. This member will show up in member lists and will return all information when queried by other accounts.");
+            //     else
+            //         await ctx.Reply("This member's privacy is currently set to **private**. This member will not show up in member lists and will return limited information when queried by other accounts.");
+
+            //     return;
+            // }
+
+            // target.MemberPrivacy = newValue;
+            // await _data.SaveMember(target);
+
+            // if (newValue == PrivacyLevel.Private)
+            //     await ctx.Reply($"{Emojis.Success} Member privacy set to **private**. This member will no longer show up in member lists and will return limited information when queried by other accounts.");
+            // else
+            //     await ctx.Reply($"{Emojis.Success} Member privacy set to **public**. This member will now show up in member lists and will return all information when queried by other accounts.");
+            if (!ctx.HasNext())
             {
-                if (target.MemberPrivacy == PrivacyLevel.Public)
-                    await ctx.Reply("This member's privacy is currently set to **public**. This member will show up in member lists and will return all information when queried by other accounts.");
-                else
-                    await ctx.Reply("This member's privacy is currently set to **private**. This member will not show up in member lists and will return limited information when queried by other accounts.");
+                string PrivacyLevelString(PrivacyLevel level) => level switch
+                {
+                    PrivacyLevel.Private => "**Private** (visible only when queried by you)",
+                    PrivacyLevel.Public => "**Public** (visible to everyone)",
+                    _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
+                };
 
+                var eb = new DiscordEmbedBuilder()
+                    .WithTitle($"Current privacy settings for {target.Name}")
+                    .AddField("Name",PrivacyLevelString(target.NamePrivacy))
+                    .AddField("Description", PrivacyLevelString(target.DescriptionPrivacy))
+                    .AddField("Birthday", PrivacyLevelString(target.BirthdayPrivacy))
+                    .AddField("Pronouns", PrivacyLevelString(target.PronounPrivacy))
+                    .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
+                    .AddField("MessageCount", PrivacyLevelString(target.CreatedTimestampPrivacy))
+                    .AddField("Visibility", PrivacyLevelString(target.MemberPrivacy))
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front` or `fronthistory`\n- `level` is either `public` or `private`.");
+                await ctx.Reply(embed: eb.Build());
                 return;
             }
-
-            target.MemberPrivacy = newValue;
-            await _data.SaveMember(target);
-
-            if (newValue == PrivacyLevel.Private)
-                await ctx.Reply($"{Emojis.Success} Member privacy set to **private**. This member will no longer show up in member lists and will return limited information when queried by other accounts.");
-            else
-                await ctx.Reply($"{Emojis.Success} Member privacy set to **public**. This member will now show up in member lists and will return all information when queried by other accounts.");
         }
         
         public async Task Delete(Context ctx, PKMember target)
