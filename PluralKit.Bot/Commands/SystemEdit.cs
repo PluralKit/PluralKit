@@ -262,7 +262,7 @@ namespace PluralKit.Bot
                     .AddField("Member list", PrivacyLevelString(ctx.System.MemberListPrivacy))
                     .AddField("Current fronter(s)", PrivacyLevelString(ctx.System.FrontPrivacy))
                     .AddField("Front/switch history", PrivacyLevelString(ctx.System.FrontHistoryPrivacy))
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front` or `fronthistory`\n- `level` is either `public` or `private`.");
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, or `all` \n- `level` is either `public` or `private`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }
@@ -289,7 +289,7 @@ namespace PluralKit.Bot
             }
 
             string levelStr, levelExplanation, subjectStr;
-            var subjectList = "`description`, `members`, `front` or `fronthistory`";
+            var subjectList = "`description`, `members`, `front`, `fronthistory`, or `all`";
             if (ctx.Match("description", "desc", "text", "info"))
             {
                 subjectStr = "description";
@@ -310,10 +310,27 @@ namespace PluralKit.Bot
                 subjectStr = "front history";
                 ctx.System.FrontHistoryPrivacy = PopPrivacyLevel("fronthistory", out levelStr, out levelExplanation);
             }
+            else if (ctx.Match("all")){
+                subjectStr = "all";
+                PrivacyLevel level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
+                ctx.System.DescriptionPrivacy = level;
+                ctx.System.MemberListPrivacy = level;
+                ctx.System.FrontPrivacy = level;
+                ctx.System.FrontHistoryPrivacy = level;
+
+            }
             else
                 throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
 
             await _data.SaveSystem(ctx.System);
+            if(subjectStr == "all"){
+                if(levelStr == "private")
+                    await ctx.Reply($"All of your systems privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card");
+                else 
+                    await ctx.Reply($"All of your systems privacy have been set to **{levelStr}**. Other accounts will now see everything on the member card");
+            } 
+            //Handle other subjects
+            else
             await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
         }
 
