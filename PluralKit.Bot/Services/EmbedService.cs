@@ -68,8 +68,9 @@ namespace PluralKit.Bot {
         public DiscordEmbed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordUser sender, string content, DiscordChannel channel) {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
+            var name = member.NamePrivacy == PrivacyLevel.Public ? member.Name : member.DisplayName ?? member.Name;
             return new DiscordEmbedBuilder()
-                .WithAuthor($"#{channel.Name}: {member.NamePrivacy == PrivacyLevel.Public ? member.Name : member.DisplayName ?? member.Name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarUrl))
+                .WithAuthor($"#{channel.Name}: {name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarUrl))
                 .WithThumbnailUrl(member.AvatarUrl)
                 .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
