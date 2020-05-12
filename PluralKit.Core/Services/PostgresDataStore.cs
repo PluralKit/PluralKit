@@ -150,7 +150,7 @@ namespace PluralKit.Core {
 
         public async Task SaveMember(PKMember member) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_visibility = @MemberVisibility, description_privacy = @DescriptionPrivacy,  name_privacy = @NamePrivacy, birthday_privacy = @BirthdayPrivacy, pronoun_privacy = PronounPrivacy, message_count_privacy = @MessageCountPrivacy, created_timestamp_privacy = @CreatedTimestampPrivacy, color_privacy = @ColorPrivacy, where id = @Id", member);
+                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_visibility = @MemberVisibility, description_privacy = @DescriptionPrivacy,  name_privacy = @NamePrivacy, birthday_privacy = @BirthdayPrivacy, pronoun_privacy = @PronounPrivacy, message_count_privacy = @MessageCountPrivacy, created_timestamp_privacy = @CreatedTimestampPrivacy, color_privacy = @ColorPrivacy, where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
         }
