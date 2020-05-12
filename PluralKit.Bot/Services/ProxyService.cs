@@ -310,9 +310,8 @@ namespace PluralKit.Bot
                 await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, args.Guild, LookupContext.ByNonOwner));
                 await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(args.Client, msg));
             }
-            catch (BadRequestException)
+            catch (UnauthorizedException)
             {
-                // TODO: is this the correct exception
                 // Ignore exception if it means we don't have DM permission to this user
                 // not much else we can do here :/
             }
