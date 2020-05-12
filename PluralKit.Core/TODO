@@ -11,4 +11,4 @@
 [ ] API respect privacy
   [x] Basic Privacy
   [ ] Update privacy property to have diffrent options as children 
-[ ] Update "CheckReadMemberPermission" function in MemberEdit.cs
+[x] Update "CheckReadMemberPermission" function in MemberEdit.cs

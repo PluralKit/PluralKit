@@ -53,12 +53,6 @@ namespace PluralKit.Bot
             }
         }
 
-        private void CheckReadMemberPermission(Context ctx, PKMember target)
-        {
-            if (!target.MemberVisibility.CanAccess(ctx.LookupContextFor(target.System)))
-                throw Errors.LookupNotAllowed;
-        }
-
         private void CheckEditMemberPermission(Context ctx, PKMember target)
         {
             if (target.System != ctx.System?.Id) throw Errors.NotOwnMemberError;
@@ -78,7 +72,8 @@ namespace PluralKit.Bot
             } 
             else if (!ctx.HasNext())
             {
-                CheckReadMemberPermission(ctx, target);
+                if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
                         await ctx.Reply($"This member does not have a description set. To set one, type `pk;member {target.Hid} description <description>`.");
@@ -119,7 +114,8 @@ namespace PluralKit.Bot
             } 
             else if (!ctx.HasNext())
             {
-                CheckReadMemberPermission(ctx, target);
+                if (!target.PronounPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
                 if (target.Pronouns == null)
                     if (ctx.System?.Id == target.System)
                         await ctx.Reply($"This member does not have pronouns set. To set some, type `pk;member {target.Hid} pronouns <pronouns>`.");
@@ -155,7 +151,8 @@ namespace PluralKit.Bot
             }
             else if (!ctx.HasNext())
             {
-                CheckReadMemberPermission(ctx, target);
+                if (!target.ColorPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
 
                 if (target.Color == null)
                     if (ctx.System?.Id == target.System)
@@ -199,7 +196,8 @@ namespace PluralKit.Bot
             } 
             else if (!ctx.HasNext())
             {
-                CheckReadMemberPermission(ctx, target);
+                if (!target.BirthdayPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
                 
                 if (target.Birthday == null)
                     await ctx.Reply("This member does not have a birthdate set."
