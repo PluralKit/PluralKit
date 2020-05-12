@@ -29,6 +29,11 @@ namespace PluralKit.Bot
             // Occasionally Discord's API will Have A Bad Time and return a bunch of CloudFlare errors (in HTML format).
             // The library tries to parse these HTML responses as JSON and crashes with a consistent exception message.
             if (e is JsonReaderException jre && jre.Message == "Unexpected character encountered while parsing value: <. Path '', line 0, position 0.") return false;
+
+            // And now (2020-05-12), apparently Discord returns these weird responses occasionally. Also not our problem.
+            if (e is BadRequestException bre && bre.WebResponse.Response.Contains("<center>nginx</center>")) return false;
+            if (e is NotFoundException ne && ne.WebResponse.Response.Contains("<center>nginx</center>")) return false;
+            if (e is UnauthorizedException ue && ue.WebResponse.Response.Contains("<center>nginx</center>")) return false;
             
             // Webhook server errors are also *not our problem*
             // (this includes rate limit errors, WebhookRateLimited is a subclass)
