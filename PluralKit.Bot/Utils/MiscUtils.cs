@@ -49,10 +49,5 @@ namespace PluralKit.Bot
             // This may expanded at some point.
             return true;
         }
-
-        public static string ExtractError(BadRequestException e)
-        {
-            return e.WebResponse.Response;
-        }
     }
 }

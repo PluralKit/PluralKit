@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
@@ -129,8 +130,6 @@ namespace PluralKit.Bot
         {
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
-            if (exc is BadRequestException bre)
-                sentryEvent.SetExtra("errors", MiscUtils.ExtractError(bre));
 
             _logger.Error(exc, "Exception in bot event handler (Sentry ID: {SentryEventId})", sentryEvent.EventId);
 
@@ -140,6 +139,15 @@ namespace PluralKit.Bot
                 // Report error to Sentry
                 // This will just no-op if there's no URL set
                 var sentryScope = serviceScope.Resolve<Scope>();
+                
+                // Add some specific info about Discord error responses, as a breadcrumb
+                if (exc is BadRequestException bre)
+                    sentryScope.AddBreadcrumb(bre.WebResponse.Response, "response.error", data: new Dictionary<string, string>(bre.WebResponse.Headers)); 
+                if (exc is NotFoundException nfe)
+                    sentryScope.AddBreadcrumb(nfe.WebResponse.Response, "response.error", data: new Dictionary<string, string>(nfe.WebResponse.Headers)); 
+                if (exc is UnauthorizedException ue)
+                    sentryScope.AddBreadcrumb(ue.WebResponse.Response, "response.error", data: new Dictionary<string, string>(ue.WebResponse.Headers)); 
+                
                 SentrySdk.CaptureEvent(sentryEvent, sentryScope);
 
                 // Once we've sent it to Sentry, report it to the user (if we have permission to)
