@@ -23,7 +23,13 @@ namespace PluralKit.Core {
         public Instant Created { get; }
         public int MessageCount { get; }
 
-        public PrivacyLevel MemberPrivacy { get; set; }
+        public PrivacyLevel MemberPrivacy { get; set; } //Use as completely private toggle, hides member in list and such
+        public PrivacyLevel DescriptionPrivacy { get; set; }
+        public PrivacyLevel NamePrivacy { get; set; } //ignore setting if no display name is set
+        public PrivacyLevel BirthdayPrivacy { get; set; }
+        public PrivacyLevel PronounPrivacy { get; set; }
+        public PrivacyLevel MessageCountPrivacy { get; set; }
+        public PrivacyLevel CreatedTimestampPrivacy { get; set; }
 
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
         /// Before Feb 10 2020, the sentinel year was 0001, now it is 0004.

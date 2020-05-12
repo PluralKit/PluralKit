@@ -1,0 +1,6 @@
+-- Setting Privacy --
+[x] Add privacy options to member model
+[ ] Improve member privacy command
+-- Implementing Privacy --
+[ ] Member embed follow privacy settings
+[ ] System list full follow privacy settings
