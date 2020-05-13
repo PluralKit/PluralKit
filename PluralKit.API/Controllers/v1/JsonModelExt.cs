@@ -58,6 +58,8 @@ namespace PluralKit.API
             o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("pronouns_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("message_count_privacy", ctx == LookupContext.ByOwner ? (member.MessageCountPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("created_timestamp_privacy", ctx == LookupContext.ByOwner ? (member.CreatedTimestampPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             
             var tagArray = new JArray();
             foreach (var tag in member.ProxyTags) 
@@ -65,7 +67,7 @@ namespace PluralKit.API
             o.Add("proxy_tags", tagArray);
 
             o.Add("keep_proxy", member.KeepProxy);
-            if(member.PronounPrivacy.CanAccess(ctx))
+            if(member.CreatedTimestampPrivacy.CanAccess(ctx))
                 o.Add("created", DateTimeFormats.TimestampExportFormat.Format(member.Created));
             else
                 o.Add("created", null);
@@ -112,7 +114,15 @@ namespace PluralKit.API
                     .ToList();
             }
             
-            if (o.ContainsKey("privacy")) member.MemberVisibility = o.Value<string>("privacy").ParsePrivacy("member");
+            if (o.ContainsKey("visibility")) member.MemberVisibility = o.Value<string>("visibility").ParsePrivacy("member");
+            if (o.ContainsKey("name_privacy")) member.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
+            if (o.ContainsKey("description_privacy")) member.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
+            if (o.ContainsKey("birthday_privacy")) member.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
+            if (o.ContainsKey("pronoun_privacy")) member.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
+            if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
+            if (o.ContainsKey("message_count_privacy")) member.MessageCountPrivacy = o.Value<string>("message_count_privacy").ParsePrivacy("member");
+            if (o.ContainsKey("created_timestamp_privacy")) member.CreatedTimestampPrivacy = o.Value<string>("created_timestamp_privacy").ParsePrivacy("member");
+
         }
 
         private static string BoundsCheckField(this string input, int maxLength, string nameInError)
