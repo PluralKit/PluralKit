@@ -59,6 +59,8 @@ namespace PluralKit.API
 
             o.Add("keep_proxy", member.KeepProxy);
 
+            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null); //This is for deprication purposes, you will no longer be able to patch to it
+
             o.Add("visibility", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("name_privacy", ctx == LookupContext.ByOwner ? (member.NamePrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
