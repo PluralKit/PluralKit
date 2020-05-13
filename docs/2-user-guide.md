@@ -476,11 +476,13 @@ However there are two catches. When name is set to private, it will be replaced 
 Member info will not be shown in member lists even if someone in the system queries the list, unless the user is part of the system and uses the -all flag.
 
 To update a members privacy you can use the command:
+
     member <member> privacy <subject> <level>
 
 where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.
 
 For example:
+
     pk;member John privacy visibility private
     pk;member "Craig Johnson" privacy description public
     pk;member Robert privacy privacy color public
