@@ -59,7 +59,7 @@ namespace PluralKit.API
 
             o.Add("keep_proxy", member.KeepProxy);
 
-            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null); //This is for deprication purposes, you will no longer be able to patch to it
+            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
 
             o.Add("visibility", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("name_privacy", ctx == LookupContext.ByOwner ? (member.NamePrivacy == PrivacyLevel.Private ? "private" : "public") : null);
@@ -116,16 +116,30 @@ namespace PluralKit.API
                     .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
                     .ToList();
             }
-            
-            if (o.ContainsKey("visibility")) member.MemberVisibility = o.Value<string>("visibility").ParsePrivacy("member");
-            if (o.ContainsKey("name_privacy")) member.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
-            if (o.ContainsKey("description_privacy")) member.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
-            if (o.ContainsKey("birthday_privacy")) member.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
-            if (o.ContainsKey("pronoun_privacy")) member.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
-            if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
-            if (o.ContainsKey("message_count_privacy")) member.MessageCountPrivacy = o.Value<string>("message_count_privacy").ParsePrivacy("member");
-            if (o.ContainsKey("created_timestamp_privacy")) member.CreatedTimestampPrivacy = o.Value<string>("created_timestamp_privacy").ParsePrivacy("member");
-
+            if(o.ContainsKey("privacy")) //TODO: Deprecate this completely in api v2
+            {
+                var plevel = o.Value<string>("privacy").ParsePrivacy("member");
+                                
+                member.MemberVisibility = plevel;
+                member.NamePrivacy = plevel;
+                member.DescriptionPrivacy = plevel;
+                member.BirthdayPrivacy = plevel;
+                member.PronounPrivacy = plevel;
+                member.ColorPrivacy = plevel;
+                member.MessageCountPrivacy = plevel;
+                member.CreatedTimestampPrivacy = plevel;
+            }
+            else
+            {
+                if (o.ContainsKey("visibility")) member.MemberVisibility = o.Value<string>("visibility").ParsePrivacy("member");
+                if (o.ContainsKey("name_privacy")) member.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("description_privacy")) member.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("birthday_privacy")) member.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("pronoun_privacy")) member.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("message_count_privacy")) member.MessageCountPrivacy = o.Value<string>("message_count_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("created_timestamp_privacy")) member.CreatedTimestampPrivacy = o.Value<string>("created_timestamp_privacy").ParsePrivacy("member");
+            }
         }
 
         private static string BoundsCheckField(this string input, int maxLength, string nameInError)
