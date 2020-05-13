@@ -65,7 +65,11 @@ namespace PluralKit.API
             o.Add("proxy_tags", tagArray);
 
             o.Add("keep_proxy", member.KeepProxy);
-            o.Add("created", DateTimeFormats.TimestampExportFormat.Format(member.Created));
+            if(member.PronounPrivacy.CanAccess(ctx))
+                o.Add("created", DateTimeFormats.TimestampExportFormat.Format(member.Created));
+            else
+                o.Add("created", null);
+            
 
             if (member.ProxyTags.Count > 0)
             {
