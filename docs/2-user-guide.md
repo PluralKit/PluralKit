@@ -438,7 +438,7 @@ To update your system privacy settings, use the following commands:
 
     pk;system privacy <subject> <level>
     
-where `<subject>` is either `description`, `fronter`, `fronthistory` or `list`, corresponding to the options above, and `level` is either `public` or `private`.
+where `<subject>` is either `description`, `fronter`, `fronthistory` or `list`, corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.
 
 For example:
 
@@ -449,7 +449,7 @@ For example:
 When the **member list** is **private**, other users will not be able to view the full member list of your system, but they can still query individual members given their 5-letter ID. If **current fronter** is private, but **front history** isn't, someone can still see the current fronter by looking at the history (this combination doesn't make much sense).
 
 ### Member privacy
-There is also an option to mark a specific member as private, using the command:
+<!-- There is also an option to mark a specific member as private, using the command:
 
     pk;member <name> private
 
@@ -457,7 +457,35 @@ A private member will *not* be displayed in member lists (even if the member lis
 
 All of this can only be accessed using the member's 5-letter ID, which is exposed when proxying. So, if you want to keep a member absolutely private, it's recommended you don't proxy with it publicly - that way the ID isn't exposed.
 
-An example of a private member is `cmpuv` - try looking it up and see what's shown, as well as the corresponding system list (`pk;system exmpl list`).
+An example of a private member is `cmpuv` - try looking it up and see what's shown, as well as the corresponding system list (`pk;system exmpl list`). -->
+There is also 9 options for configuring member privacy. 
+
+- Name
+- Description
+- Birthday
+- Pronouns
+- Colour
+- Date created
+- Message count
+- Visibility
+
+As with system privacy, each can be set to **public** or **private**. The same rules apply for how they are shown too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
+
+However there are two catches. When name is set to private, it will be replaced by a members display name, but only if they have one! When visibility is set to private, the member will not show up in the member list unless -all is used in the command (and you are part of the system).
+
+Member info will not be shown in member lists even if someone in the system queries the list, unless the user is part of the system and uses the -all flag.
+
+To update a members privacy you can use the command:
+    member <member> privacy <subject> <level>
+
+where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.
+
+For example:
+    pk;member John privacy visibility private
+    pk;member "Craig Johnson" privacy description public
+    pk;member Robert privacy privacy color public
+    pk;member Skyler privacy all private
+
 ## Moderation commands
 
 ### Log channel

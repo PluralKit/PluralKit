@@ -531,7 +531,8 @@ The returned system and member's privacy settings will be respected, and as such
 ```
 
 ## Version history
-* 2020-05-14 (Update this on official release)
+<!-- (Update this on official release) -->
+* 2020-05-14
   * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `color_privacy`, `message_count_privacy`, and `created_timestamp_privacy`. All are strings and accept the values of `public`, `private` and `null`
   * The `privacy` field has now been deprecated and should not be used. It is a reflection of visibility.
 * 2020-05-07
