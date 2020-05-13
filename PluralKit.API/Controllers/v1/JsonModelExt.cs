@@ -46,7 +46,7 @@ namespace PluralKit.API
             o.Add("id", member.Hid);
             o.Add("name", member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name);
             o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
-            o.Add("display_name", member.DisplayName);
+            o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
             o.Add("birthday", member.BirthdayPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
             o.Add("pronouns", member.PronounPrivacy.CanAccess(ctx) ? member.Pronouns : null);
             o.Add("avatar_url", member.AvatarUrl);
