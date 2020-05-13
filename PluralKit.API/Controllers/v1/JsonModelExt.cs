@@ -51,15 +51,6 @@ namespace PluralKit.API
             o.Add("pronouns", member.PronounPrivacy.CanAccess(ctx) ? member.Pronouns : null);
             o.Add("avatar_url", member.AvatarUrl);
             o.Add("description", member.DescriptionPrivacy.CanAccess(ctx) ? member.Description : null);
-
-            o.Add("visibility", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("name_privacy", ctx == LookupContext.ByOwner ? (member.NamePrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("pronouns_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("message_count_privacy", ctx == LookupContext.ByOwner ? (member.MessageCountPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("created_timestamp_privacy", ctx == LookupContext.ByOwner ? (member.CreatedTimestampPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             
             var tagArray = new JArray();
             foreach (var tag in member.ProxyTags) 
@@ -67,6 +58,16 @@ namespace PluralKit.API
             o.Add("proxy_tags", tagArray);
 
             o.Add("keep_proxy", member.KeepProxy);
+
+            o.Add("visibility", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("name_privacy", ctx == LookupContext.ByOwner ? (member.NamePrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("pronoun_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("message_count_privacy", ctx == LookupContext.ByOwner ? (member.MessageCountPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("created_timestamp_privacy", ctx == LookupContext.ByOwner ? (member.CreatedTimestampPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+
             if(member.CreatedTimestampPrivacy.CanAccess(ctx))
                 o.Add("created", DateTimeFormats.TimestampExportFormat.Format(member.Created));
             else
