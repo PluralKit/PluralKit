@@ -18,7 +18,7 @@ services:
     restart: always
   api:
     image: pluralkit
-    build: .
+    # build: .
     command: ["PluralKit.API.dll"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
