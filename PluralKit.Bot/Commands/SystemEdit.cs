@@ -325,9 +325,9 @@ namespace PluralKit.Bot
             await _data.SaveSystem(ctx.System);
             if(subjectStr == "all"){
                 if(levelStr == "private")
-                    await ctx.Reply($"All of your systems privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card");
+                    await ctx.Reply($"All of your systems privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card.");
                 else 
-                    await ctx.Reply($"All of your systems privacy have been set to **{levelStr}**. Other accounts will now see everything on the member card");
+                    await ctx.Reply($"All of your systems privacy have been set to **{levelStr}**. Other accounts will now see everything on the member card.");
             } 
             //Handle other subjects
             else
