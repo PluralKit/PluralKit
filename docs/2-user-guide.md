@@ -449,16 +449,7 @@ For example:
 When the **member list** is **private**, other users will not be able to view the full member list of your system, but they can still query individual members given their 5-letter ID. If **current fronter** is private, but **front history** isn't, someone can still see the current fronter by looking at the history (this combination doesn't make much sense).
 
 ### Member privacy
-<!-- There is also an option to mark a specific member as private, using the command:
-
-    pk;member <name> private
-
-A private member will *not* be displayed in member lists (even if the member list is public), and will show only limited information if looked up by others - namely name, display name and avatar. Other information, such as description, pronouns and birthday will be hidden.
-
-All of this can only be accessed using the member's 5-letter ID, which is exposed when proxying. So, if you want to keep a member absolutely private, it's recommended you don't proxy with it publicly - that way the ID isn't exposed.
-
-An example of a private member is `cmpuv` - try looking it up and see what's shown, as well as the corresponding system list (`pk;system exmpl list`). -->
-There is also 9 options for configuring member privacy. 
+There are also nine options for configuring member privacy;
 
 - Name
 - Description
@@ -485,7 +476,7 @@ For example:
 
     pk;member John privacy visibility private
     pk;member "Craig Johnson" privacy description public
-    pk;member Robert privacy privacy color public
+    pk;member Robert privacy color public
     pk;member Skyler privacy all private
 
 ## Moderation commands
