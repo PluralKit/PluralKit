@@ -473,13 +473,13 @@ namespace PluralKit.Bot
             //Handle "all" subject
             if(subjectStr == "all"){
                 if(levelStr == "private")
-                    await ctx.Reply($"All {target.Name}'s privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card");
+                    await ctx.Reply($"All {target.Name.SanitizeMentions()}'s privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card.");
                 else 
-                    await ctx.Reply($"All {target.Name}'s privacy settings have been set to **{levelStr}**. Other accounts will now see everything on the member card");
+                    await ctx.Reply($"All {target.Name.SanitizeMentions()}'s privacy settings have been set to **{levelStr}**. Other accounts will now see everything on the member card.");
             } 
             //Handle other subjects
             else
-                await ctx.Reply($"{target.Name}'s {subjectStr} has been set to **{levelStr}**. Other accounts will now {levelExplanation}");
+                await ctx.Reply($"{target.Name.SanitizeMentions()}'s {subjectStr} has been set to **{levelStr}**. Other accounts will now {levelExplanation}.");
 
 
 
