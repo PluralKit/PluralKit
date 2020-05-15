@@ -1,3 +1,4 @@
+-- SCHEMA VERSION 6: 2020-05-13 --
 -- Create new columns --
 alter table members add column description_privacy integer check (description_privacy in (1, 2)) not null default 1;
 alter table members add column name_privacy integer check (name_privacy in (1, 2)) not null default 1;
