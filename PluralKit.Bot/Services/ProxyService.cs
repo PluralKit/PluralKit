@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Autofac;
+
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -30,8 +32,9 @@ namespace PluralKit.Bot
         private EmbedService _embeds;
         private ILogger _logger;
         private WebhookExecutorService _webhookExecutor;
+        private readonly ILifetimeScope _services;
         
-        public ProxyService(DiscordShardedClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, WebhookExecutorService webhookExecutor)
+        public ProxyService(DiscordShardedClient client, LogChannelService logChannel, IDataStore data, EmbedService embeds, ILogger logger, WebhookExecutorService webhookExecutor, ILifetimeScope services)
         {
             _client = client;
             _logChannel = logChannel;
@@ -39,6 +42,7 @@ namespace PluralKit.Bot
             _embeds = embeds;
             _webhookExecutor = webhookExecutor;
             _logger = logger.ForContext<ProxyService>();
+            _services = services;
         }
 
         private ProxyMatch GetProxyTagMatch(string message, PKSystem system, IEnumerable<PKMember> potentialMembers)
@@ -308,7 +312,7 @@ namespace PluralKit.Bot
             try
             {
                 await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, args.Guild, LookupContext.ByNonOwner));
-                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(args.Client, msg));
+                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(_services.Resolve<DiscordShardedClient>(), args.Client, msg));
             }
             catch (UnauthorizedException)
             {

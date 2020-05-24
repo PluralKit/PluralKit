@@ -141,9 +141,9 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordClient client, FullMessage msg)
+        public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordShardedClient client, DiscordClient CurrentShard, FullMessage msg)
         {
-            var channel = await DiscordUtils.GetShardChannelAsync(client, msg.Message.Channel);
+            var channel = await DiscordUtils.FindGuildedChannel(client, msg.Message.Channel);
             var serverMsg = channel != null ? await DiscordUtils.GetChannelMessageAsync(channel, msg.Message.Mid) : null;
 
             // Need this whole dance to handle cases where:
@@ -154,7 +154,7 @@ namespace PluralKit.Bot {
             DiscordUser userInfo = null; 
             if (channel != null) memberInfo = await DiscordUtils.GetGuildMemberAsync(channel.Guild, msg.Message.Sender);
             if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
-            else userInfo = await DiscordUtils.GetShardUserAsync(client, msg.Message.Sender);
+            else userInfo = await DiscordUtils.GetShardUserAsync(CurrentShard, msg.Message.Sender);
 
             // Calculate string displayed under "Sent by"
             string userStr;

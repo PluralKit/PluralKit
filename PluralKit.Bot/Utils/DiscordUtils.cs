@@ -91,6 +91,16 @@ namespace PluralKit.Bot
             }
         }
 
+        // DSP cache is not shared across shards, so we iterate over all the shards until we find one where our channel has a Guild attribute
+        public static async Task<DiscordChannel> FindGuildedChannel(DiscordShardedClient client, ulong ChannelId) {
+            DiscordChannel channel = null;
+            foreach (KeyValuePair<int, DiscordClient> entry in client.ShardClients) {
+                channel = await DiscordUtils.GetShardChannelAsync(entry.Value, ChannelId);
+                if (channel != null) { if (channel.Guild != null) { return channel; }  } // this sucks
+            }
+            return null;
+        }
+
         // DSP internal error workaround: 
         // Rest.GetGuild doesn't give us a full guild object; a partial guild object throws at trying to read the guild cache
         // So we iterate over all shards to find the guild we need.
