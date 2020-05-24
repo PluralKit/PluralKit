@@ -143,8 +143,14 @@ namespace PluralKit.Bot {
 
         public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordShardedClient client, DiscordClient CurrentShard, FullMessage msg)
         {
+            DiscordGuild guild = null;
             var channel = await DiscordUtils.FindGuildedChannel(client, msg.Message.Channel);
             var serverMsg = channel != null ? await DiscordUtils.GetChannelMessageAsync(channel, msg.Message.Mid) : null;
+            if (channel != null) {
+                if (channel.Guild == null) guild = await DiscordUtils.GetShardGuildAsync(CurrentShard, channel.GuildId);
+                // save a lookup if we already have the guild for some reason
+                else guild = channel.Guild;
+            }
 
             // Need this whole dance to handle cases where:
             // - the user is deleted (userInfo == null)
@@ -152,7 +158,7 @@ namespace PluralKit.Bot {
             // - the member is no longer in the server we're querying (memberInfo == null)
             DiscordMember memberInfo = null;
             DiscordUser userInfo = null; 
-            if (channel != null) memberInfo = await DiscordUtils.GetGuildMemberAsync(channel.Guild, msg.Message.Sender);
+            if ((channel != null) && (guild != null)) memberInfo = await DiscordUtils.GetGuildMemberAsync(guild, msg.Message.Sender);
             if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
             else userInfo = await DiscordUtils.GetShardUserAsync(CurrentShard, msg.Message.Sender);
 

@@ -101,6 +101,14 @@ namespace PluralKit.Bot
             return null;
         }
 
+        public static async Task<DiscordGuild> GetShardGuildAsync(DiscordClient client, ulong GuildId) {
+            try {
+                return await client.GetGuildAsync(GuildId);
+            } catch (DSharpPlus.Exceptions.NotFoundException) {
+                return null;
+            }
+        }
+
         // DSP internal error workaround: 
         // Rest.GetGuild doesn't give us a full guild object; a partial guild object throws at trying to read the guild cache
         // So we iterate over all shards to find the guild we need.
