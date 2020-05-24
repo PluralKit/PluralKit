@@ -41,6 +41,22 @@ namespace PluralKit.Bot
             return permissions;
         }
 
+        // DSP internal error workaround: 
+        // Rest.GetGuild doesn't give us a full guild object; a partial guild object throws at trying to read the guild cache
+        // So we iterate over all shards to find the guild we need.
+        public static DiscordGuild FindGuildInShards(DiscordShardedClient client, ulong GuildId) {
+            DiscordGuild guild = null;
+            foreach (KeyValuePair<int, DiscordClient> entry in client.ShardClients) {
+                try {
+                    guild = entry.Value.Guilds[GuildId];
+                } catch (KeyNotFoundException) { }
+                if (guild != null) {
+                    return guild;
+                }
+            }
+            return null;
+        }
+
         // Workaround for DSP internal error
         private static void ValidateCachedRoles(DiscordMember member)
         {
