@@ -43,7 +43,7 @@ namespace PluralKit.Bot
 
         // DSP throws errors and we must catch them
 
-        public static async Task<DiscordMember> GetMemberAsync(DiscordGuild guild, ulong id) {
+        public static async Task<DiscordMember> GetGuildMemberAsync(DiscordGuild guild, ulong id) {
             try {
                 return await guild.GetMemberAsync(id);
             } catch (DSharpPlus.Exceptions.NotFoundException) {
@@ -121,7 +121,7 @@ namespace PluralKit.Bot
             // Just delegates to PermissionsInSync, but handles the case of a non-member User in a guild properly
             // This is a separate method because it requires an async call
             if (channel.Guild != null && !(user is DiscordMember))
-                return PermissionsInSync(channel, await DiscordUtils.GetMemberAsync(channel.Guild, user.Id));
+                return PermissionsInSync(channel, await DiscordUtils.GetGuildMemberAsync(channel.Guild, user.Id));
             return PermissionsInSync(channel, user);
         }
         

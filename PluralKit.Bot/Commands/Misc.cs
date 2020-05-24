@@ -112,7 +112,7 @@ namespace PluralKit.Bot {
             }
             
             // Ensure people can't query guilds they're not in + get their own permissions (for view access checking)
-            var senderGuildUser = await DiscordUtils.GetMemberAsync(guild, ctx.Author.Id);
+            var senderGuildUser = await DiscordUtils.GetGuildMemberAsync(guild, ctx.Author.Id);
             if (senderGuildUser == null)
                 throw new PKError("You must be a member of the guild you are querying.");
 
