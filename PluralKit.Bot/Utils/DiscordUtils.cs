@@ -41,6 +41,56 @@ namespace PluralKit.Bot
             return permissions;
         }
 
+        // DSP throws errors and we must catch them
+
+        public static async Task<DiscordMember> GetMemberAsync(DiscordGuild guild, ulong id) {
+            try {
+                return await guild.GetMemberAsync(id);
+            } catch (DSharpPlus.Exceptions.NotFoundException) {
+                return null; 
+            }
+        }
+
+        public static async Task<DiscordUser> GetShardUserAsync(DiscordClient shard, ulong id) {
+            try {
+                return await shard.GetUserAsync(id);
+            } catch (DSharpPlus.Exceptions.NotFoundException) {
+                return null; 
+            }
+        }
+
+        public static async Task<DiscordChannel> GetShardChannelAsync(DiscordClient shard, ulong id) {
+            try {
+                return await shard.GetChannelAsync(id);
+            } catch (DSharpPlus.Exceptions.NotFoundException) {
+                return null; 
+            }
+        }
+
+        public static async Task<IReadOnlyList<DiscordChannel>> GetGuildChannelsAsync(DiscordGuild guild) {
+            try {
+                return await guild.GetChannelsAsync();
+            } catch (DSharpPlus.Exceptions.NotFoundException) {
+                return null; 
+            }
+        }
+
+        public static async Task<DiscordMessage> GetChannelMessageAsync(DiscordChannel channel, ulong id) {
+            try {
+                return await channel.GetMessageAsync(id);
+            } catch (DSharpPlus.Exceptions.NotFoundException) {
+                return null; 
+            }
+        }
+
+        public static async Task<IReadOnlyList<DiscordWebhook>> GetChannelWebhooksAsync(DiscordChannel channel) {
+            try {
+                return await channel.GetWebhooksAsync();
+            } catch (DSharpPlus.Exceptions.NotFoundException) {
+                return null; 
+            }
+        }
+
         // DSP internal error workaround: 
         // Rest.GetGuild doesn't give us a full guild object; a partial guild object throws at trying to read the guild cache
         // So we iterate over all shards to find the guild we need.
@@ -71,7 +121,7 @@ namespace PluralKit.Bot
             // Just delegates to PermissionsInSync, but handles the case of a non-member User in a guild properly
             // This is a separate method because it requires an async call
             if (channel.Guild != null && !(user is DiscordMember))
-                return PermissionsInSync(channel, await channel.Guild.GetMemberAsync(user.Id));
+                return PermissionsInSync(channel, await DiscordUtils.GetMemberAsync(channel.Guild, user.Id));
             return PermissionsInSync(channel, user);
         }
         

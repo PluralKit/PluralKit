@@ -112,7 +112,7 @@ namespace PluralKit.Bot {
             }
             
             // Ensure people can't query guilds they're not in + get their own permissions (for view access checking)
-            var senderGuildUser = await guild.GetMemberAsync(ctx.Author.Id);
+            var senderGuildUser = await DiscordUtils.GetMemberAsync(guild, ctx.Author.Id);
             if (senderGuildUser == null)
                 throw new PKError("You must be a member of the guild you are querying.");
 
@@ -130,7 +130,7 @@ namespace PluralKit.Bot {
             // Loop through every channel and group them by sets of permissions missing
             var permissionsMissing = new Dictionary<ulong, List<DiscordChannel>>();
             var hiddenChannels = 0;
-            foreach (var channel in await guild.GetChannelsAsync())
+            foreach (var channel in await DiscordUtils.GetGuildChannelsAsync(guild))
             {
                 var botPermissions = channel.BotPermissions();
                 

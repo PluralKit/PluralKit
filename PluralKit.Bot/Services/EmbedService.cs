@@ -28,7 +28,7 @@ namespace PluralKit.Bot {
             var accounts = await _data.GetSystemAccounts(system);
 
             // Fetch/render info for all accounts simultaneously
-            var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var users = await Task.WhenAll(accounts.Select(async uid => (await DiscordUtils.GetShardUserAsync(client, uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
             var memberCount = await _data.GetSystemMemberCount(system, false);
             var eb = new DiscordEmbedBuilder()
@@ -143,8 +143,8 @@ namespace PluralKit.Bot {
 
         public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordClient client, FullMessage msg)
         {
-            var channel = await client.GetChannelAsync(msg.Message.Channel);
-            var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
+            var channel = await DiscordUtils.GetShardChannelAsync(client, msg.Message.Channel);
+            var serverMsg = channel != null ? await DiscordUtils.GetChannelMessageAsync(channel, msg.Message.Mid) : null;
 
             // Need this whole dance to handle cases where:
             // - the user is deleted (userInfo == null)
@@ -152,9 +152,9 @@ namespace PluralKit.Bot {
             // - the member is no longer in the server we're querying (memberInfo == null)
             DiscordMember memberInfo = null;
             DiscordUser userInfo = null; 
-            if (channel != null) try { memberInfo = await channel.Guild.GetMemberAsync(msg.Message.Sender); } catch (NotFoundException) { }
+            if (channel != null) try { memberInfo = await DiscordUtils.GetMemberAsync(channel.Guild, msg.Message.Sender); } catch (NotFoundException) { }
             if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
-            else try { userInfo = await client.GetUserAsync(msg.Message.Sender); } catch (NotFoundException) { }
+            else try { userInfo = await DiscordUtils.GetShardUserAsync(client, msg.Message.Sender); } catch (NotFoundException) { }
 
             // Calculate string displayed under "Sent by"
             string userStr;

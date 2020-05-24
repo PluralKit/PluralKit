@@ -139,7 +139,7 @@ namespace PluralKit.Bot
         {
             var text = PeekArgument();
             if (text.TryParseMention(out var id))
-                return await Shard.GetUserAsync(id);
+                return await DiscordUtils.GetShardUserAsync(Shard, id);
             return null;
         }
 
@@ -289,7 +289,7 @@ namespace PluralKit.Bot
 
             try
             {
-                var discordChannel = await _shard.GetChannelAsync(channel);
+                var discordChannel = await DiscordUtils.GetShardChannelAsync(_shard, channel);
                 if (discordChannel.Type != ChannelType.Text) return null;
                 
                 PopArgument();

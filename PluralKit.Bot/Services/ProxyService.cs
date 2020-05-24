@@ -277,7 +277,7 @@ namespace PluralKit.Bot
             if (msg == null) return;
             
             // Check if the pinger has permission to ping in this channel
-            var guildUser = await args.Guild.GetMemberAsync(args.User.Id);
+            var guildUser = await DiscordUtils.GetMemberAsync(args.Guild, args.User.Id);
             var permissions = guildUser.PermissionsIn(args.Channel);
             
             // If they don't have Send Messages permission, bail (since PK shouldn't send anything on their behalf)
@@ -302,7 +302,7 @@ namespace PluralKit.Bot
             if (msg == null) return;
             
             // Get guild member so we can DM
-            var member = await args.Guild.GetMemberAsync(args.User.Id);
+            var member = await DiscordUtils.GetMemberAsync(args.Guild, args.User.Id);
 
             // DM them the message card
             try

@@ -44,7 +44,7 @@ namespace PluralKit.Bot
 
             var affectedChannels = new List<DiscordChannel>();
             if (ctx.Match("all"))
-                affectedChannels = (await ctx.Guild.GetChannelsAsync()).Where(x => x.Type == ChannelType.Text).ToList();
+                affectedChannels = (await DiscordUtils.GetGuildChannelsAsync(ctx.Guild)).Where(x => x.Type == ChannelType.Text).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
@@ -69,7 +69,7 @@ namespace PluralKit.Bot
 
             var affectedChannels = new List<DiscordChannel>();
             if (ctx.Match("all"))
-                affectedChannels = (await ctx.Guild.GetChannelsAsync()).Where(x => x.Type == ChannelType.Text).ToList();
+                affectedChannels = (await DiscordUtils.GetGuildChannelsAsync(ctx.Guild)).Where(x => x.Type == ChannelType.Text).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
