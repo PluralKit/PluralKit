@@ -152,9 +152,9 @@ namespace PluralKit.Bot {
             // - the member is no longer in the server we're querying (memberInfo == null)
             DiscordMember memberInfo = null;
             DiscordUser userInfo = null; 
-            if (channel != null) try { memberInfo = await DiscordUtils.GetGuildMemberAsync(channel.Guild, msg.Message.Sender); } catch (NotFoundException) { }
+            if (channel != null) memberInfo = await DiscordUtils.GetGuildMemberAsync(channel.Guild, msg.Message.Sender);
             if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
-            else try { userInfo = await DiscordUtils.GetShardUserAsync(client, msg.Message.Sender); } catch (NotFoundException) { }
+            else userInfo = await DiscordUtils.GetShardUserAsync(client, msg.Message.Sender);
 
             // Calculate string displayed under "Sent by"
             string userStr;
