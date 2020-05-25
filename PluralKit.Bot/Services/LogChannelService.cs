@@ -52,7 +52,7 @@ namespace PluralKit.Bot {
 
             var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, originalMsgId, sender, content, originalChannel);
 
-            var url = $"https://discordapp.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
+            var url = $"https://discord.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
             
             await channel.SendMessageAsync(content: url, embed: embed);
         }
