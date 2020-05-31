@@ -16,6 +16,7 @@ namespace PluralKit.Bot
 
         public class ShardInfo
         {
+            public bool HasAttachedListeners;
             public Instant LastConnectionTime;
             public Instant LastHeartbeatTime;
             public int DisconnectionCount;
@@ -45,7 +46,14 @@ namespace PluralKit.Bot
             // This callback doesn't actually receive the shard that was opening, so we just try to check we have 'em all (so far)
             foreach (var (id, shard) in _client.ShardClients)
             {
-                if (_shardInfo.ContainsKey(id)) continue;
+                // Get or insert info in the client dict
+                if (_shardInfo.TryGetValue(id, out var info))
+                {
+                    // Skip adding listeners if we've seen this shard & already added listeners to it
+                    if (info.HasAttachedListeners) continue;
+                } else _shardInfo[id] = info = new ShardInfo();
+                
+                
                 // Call our own SocketOpened listener manually (and then attach the listener properly)
                 await SocketOpened(shard);
                 shard.SocketOpened += () => SocketOpened(shard);
@@ -56,6 +64,9 @@ namespace PluralKit.Bot
                 shard.Ready += Ready;
                 shard.SocketClosed += SocketClosed;
                 shard.Heartbeated += Heartbeated;
+                
+                // Register that we've seen it
+                info.HasAttachedListeners = true;
             }
         }
 
