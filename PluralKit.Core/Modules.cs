@@ -105,12 +105,12 @@ namespace PluralKit.Core
                 {
                     // Both the same output, except one is raw compact JSON and one is plain text.
                     // Output simultaneously. May remove the JSON formatter later, keeping it just in cast.
-                    // Flush interval is 250ms (down from 10s) to make "tail -f" easier. May be too low?
+                    // Flush interval is 50ms (down from 10s) to make "tail -f" easier. May be too low?
                     a.File(
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.log",
                         outputTemplate: outputTemplate,
                         rollingInterval: RollingInterval.Day,
-                        flushToDiskInterval: TimeSpan.FromMilliseconds(250),
+                        flushToDiskInterval: TimeSpan.FromMilliseconds(50),
                         restrictedToMinimumLevel: LogEventLevel.Information,
                         formatProvider: new UTCTimestampFormatProvider(),
                         buffered: true);
@@ -119,7 +119,7 @@ namespace PluralKit.Core
                         new RenderedCompactJsonFormatter(),
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
                         rollingInterval: RollingInterval.Day,
-                        flushToDiskInterval: TimeSpan.FromMilliseconds(250),
+                        flushToDiskInterval: TimeSpan.FromMilliseconds(50),
                         restrictedToMinimumLevel: LogEventLevel.Information,
                         buffered: true);
                 })
