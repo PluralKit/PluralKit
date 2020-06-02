@@ -108,6 +108,8 @@ namespace PluralKit.Bot
                     await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member will now use the global avatar in this server (**{ctx.Guild.Name}**).");
                 else
                     await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member now has no avatar.");
+
+                return;
             }
             
             if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
