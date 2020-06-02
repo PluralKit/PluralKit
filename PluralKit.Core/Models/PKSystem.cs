@@ -12,7 +12,8 @@ namespace PluralKit.Core {
         public string Hid { get; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public string Tag { get; set; }
+        public string TagSuffix { get; set; }
+        public string TagPrefix { get; set; }
         public string AvatarUrl { get; set; }
         public string Token { get; set; }
         public Instant Created { get; }

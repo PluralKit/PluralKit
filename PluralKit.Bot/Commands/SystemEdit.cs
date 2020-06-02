@@ -96,15 +96,15 @@ namespace PluralKit.Bot
 
             if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
-                ctx.System.Tag = null;
+                ctx.System.TagSuffix = null;
                 await _data.SaveSystem(ctx.System);
                 await ctx.Reply($"{Emojis.Success} System tag cleared.");
             } else if (!ctx.HasNext(skipFlags: false))
             {
-                if (ctx.System.Tag == null)
+                if (ctx.System.TagSuffix == null)
                     await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
                 else
-                    await ctx.Reply($"Your current system tag is `{ctx.System.Tag}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                    await ctx.Reply($"Your current system tag is `{ctx.System.TagSuffix}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
             }
             else
             {
@@ -112,7 +112,7 @@ namespace PluralKit.Bot
                 if (newTag != null)
                     if (newTag.Length > Limits.MaxSystemTagLength)
                         throw Errors.SystemNameTooLongError(newTag.Length);
-                ctx.System.Tag = newTag;
+                ctx.System.TagSuffix = newTag;
                 await _data.SaveSystem(ctx.System);
                 await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag}` when proxied.");
             }

@@ -85,7 +85,7 @@ namespace PluralKit.Core {
 
         public async Task SaveSystem(PKSystem system) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz, description_privacy = @DescriptionPrivacy, member_list_privacy = @MemberListPrivacy, front_privacy = @FrontPrivacy, front_history_privacy = @FrontHistoryPrivacy, pings_enabled = @PingsEnabled where id = @Id", system);
+                await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag_suffix = @TagSuffix, tag_prefix = @TagPrefix, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz, description_privacy = @DescriptionPrivacy, member_list_privacy = @MemberListPrivacy, front_privacy = @FrontPrivacy, front_history_privacy = @FrontHistoryPrivacy, pings_enabled = @PingsEnabled where id = @Id", system);
 
             _logger.Information("Updated system {@System}", system);
         }

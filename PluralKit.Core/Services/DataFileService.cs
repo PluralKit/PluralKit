@@ -62,7 +62,7 @@ namespace PluralKit.Core
                 Id = system.Hid,
                 Name = system.Name,
                 Description = system.Description,
-                Tag = system.Tag,
+                Tag = system.TagSuffix,
                 AvatarUrl = system.AvatarUrl,
                 TimeZone = system.UiTz,
                 Members = members,
@@ -121,7 +121,7 @@ namespace PluralKit.Core
             // Apply system info
             system.Name = data.Name;
             if (data.Description != null) system.Description = data.Description;
-            if (data.Tag != null) system.Tag = data.Tag;
+            if (data.Tag != null) system.TagSuffix = data.Tag;
             if (data.AvatarUrl != null) system.AvatarUrl = data.AvatarUrl;
             if (data.TimeZone != null) system.UiTz = data.TimeZone ?? "UTC";
             await _data.SaveSystem(system);
