@@ -5,17 +5,25 @@ using System.Threading.Tasks;
 
 using Dapper;
 
+using NodaTime;
+
 using PluralKit.Core;
+
+using Serilog;
 
 namespace PluralKit.Bot
 {
     public class SystemList
     {
+        private readonly IClock _clock;
         private readonly DbConnectionFactory _db;
+        private readonly ILogger _logger;
         
-        public SystemList(DbConnectionFactory db)
+        public SystemList(DbConnectionFactory db, ILogger logger, IClock clock)
         {
             _db = db;
+            _logger = logger;
+            _clock = clock;
         }
 
         public async Task MemberList(Context ctx, PKSystem target)
@@ -34,8 +42,8 @@ namespace PluralKit.Bot
                 GetEmbedTitle(target, opts),
                 (eb, ms) =>
                 {
-                    eb.WithFooter($"{members.Count} total.");
-                    renderer.RenderPage(eb, ms);
+                    eb.WithFooter($"{opts.CreateFilterString()}. {members.Count} results.");
+                    renderer.RenderPage(eb, ctx.System, ms);
                     return Task.CompletedTask;
                 });
         }
@@ -43,8 +51,15 @@ namespace PluralKit.Bot
         private async Task<IReadOnlyList<PKListMember>> GetMemberList(PKSystem target, SortFilterOptions opts)
         {
             using var conn = await _db.Obtain();
+            var query = opts.BuildQuery();
             var args = new {System = target.Id, opts.Filter};
-            return (await conn.QueryAsync<PKListMember>(opts.BuildQuery(), args)).ToList();
+
+            var timeBefore = _clock.GetCurrentInstant();
+            var results = (await conn.QueryAsync<PKListMember>(query, args)).ToList();
+            var timeAfter = _clock.GetCurrentInstant();
+            _logger.Debug("Executing sort/filter query `{Query}` with arguments {Args} returning {ResultCount} results in {QueryTime}", query, args, results.Count, timeAfter - timeBefore);
+
+            return results;
         }
 
         private string GetEmbedTitle(PKSystem target, SortFilterOptions opts)
@@ -54,7 +69,7 @@ namespace PluralKit.Bot
             if (target.Name != null) title.Append($"{target.Name.SanitizeMentions()} (`{target.Hid}`)");
             else title.Append($"`{target.Hid}`");
  
-            if (opts.Filter != null) title.Append($"matching **{opts.Filter.SanitizeMentions()}**");
+            if (opts.Filter != null) title.Append($" matching **{opts.Filter.SanitizeMentions()}**");
             
             return title.ToString();
         }

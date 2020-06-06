@@ -5,6 +5,8 @@ using DSharpPlus.Entities;
 
 using Humanizer;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -19,7 +21,7 @@ namespace PluralKit.Bot
             _fields = fields;
         }
 
-        public void RenderPage(DiscordEmbedBuilder eb, IEnumerable<PKListMember> members)
+        public void RenderPage(DiscordEmbedBuilder eb, PKSystem system, IEnumerable<PKListMember> members)
         {
             foreach (var m in members)
             {
@@ -29,6 +31,8 @@ namespace PluralKit.Bot
                 if (_fields.ShowBirthday && m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                 if (_fields.ShowPronouns && m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
                 if (_fields.ShowMessageCount && m.MessageCount > 0) profile += $"\n**Message count:** {m.MessageCount}";
+                if (_fields.ShowLastMessage && m.LastMessage != null) profile += $"\n**Last message:** {FormatTimestamp(system, DiscordUtils.SnowflakeToInstant(m.LastMessage.Value))}";
+                if (_fields.ShowLastSwitch && m.LastSwitchTime != null) profile += $"\n**Last switched in:** {FormatTimestamp(system, m.LastSwitchTime.Value)}";
                 if (_fields.ShowDescription && m.Description != null) profile += $"\n\n{m.Description}";
                 if (_fields.ShowPrivacy && m.MemberPrivacy == PrivacyLevel.Private)
                     profile += "\n*(this member is private)*";
@@ -36,26 +40,33 @@ namespace PluralKit.Bot
                 eb.AddField(m.Name, profile.Truncate(1024));
             }
         }
-        
+
+        private static string FormatTimestamp(PKSystem system, Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone ?? DateTimeZone.Utc));
+
         public class MemberFields
         {
             public bool ShowDisplayName = true;
-            public bool ShowCreated = true;
-            public bool ShowMessageCount = true;
+            public bool ShowCreated = false;
             public bool ShowPronouns = true;
             public bool ShowBirthday = true;
             public bool ShowProxyTags = true;
             public bool ShowDescription = true;
             public bool ShowPrivacy = true;
             
+            public bool ShowMessageCount = false;
+            public bool ShowLastSwitch = false;
+            public bool ShowLastMessage = false;
+
             public static MemberFields FromFlags(Context ctx)
             {
-                // TODO
-                return new MemberFields
-                {
-                    ShowMessageCount = false,
-                    ShowCreated = false
-                };
+                var def = new MemberFields();
+                if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
+                    def.ShowLastSwitch = true;
+                if (ctx.MatchFlag("with-message-count", "wmc"))
+                    def.ShowMessageCount = true;
+                if (ctx.MatchFlag("with-last-message", "with-last-proxy", "wlm", "wlp"))
+                    def.ShowLastMessage = true;
+                return def;
             }
         }
     }

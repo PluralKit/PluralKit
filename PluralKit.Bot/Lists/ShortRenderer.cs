@@ -4,15 +4,17 @@ using System.Linq;
 
 using DSharpPlus.Entities;
 
+using PluralKit.Core;
+
 namespace PluralKit.Bot
 {
     public class ShortRenderer: IListRenderer
     {
         public int MembersPerPage => 25;
         
-        public void RenderPage(DiscordEmbedBuilder eb, IEnumerable<PKListMember> members)
+        public void RenderPage(DiscordEmbedBuilder eb, PKSystem system, IEnumerable<PKListMember> members)
         {
-            eb.Description = string.Join("\n", members.Select(m =>
+            string RenderLine(PKListMember m)
             {
                 if (m.HasProxyTags)
                 {
@@ -24,7 +26,9 @@ namespace PluralKit.Bot
                 }
 
                 return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
-            }));
+            }
+
+            eb.Description = string.Join("\n", members.Select(RenderLine));
         }
     }
 }
