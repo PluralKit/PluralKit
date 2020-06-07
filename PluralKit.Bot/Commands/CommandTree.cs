@@ -100,7 +100,7 @@ namespace PluralKit.Bot
             if (ctx.Match("list", "l", "members"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("f", "find", "search", "query", "fd"))
-                return ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
+                return ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("link"))
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
@@ -188,7 +188,7 @@ namespace PluralKit.Bot
             else if (ctx.Match("list", "l", "members"))
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("find", "search", "query", "fd", "s"))
-                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
@@ -225,7 +225,7 @@ namespace PluralKit.Bot
             else if (ctx.Match("list", "l", "members"))
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
             else if (ctx.Match("find", "search", "query", "fd", "s"))
-                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, target));
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))

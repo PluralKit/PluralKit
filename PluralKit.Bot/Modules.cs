@@ -6,6 +6,8 @@ using Autofac;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 using Sentry;
@@ -86,6 +88,7 @@ namespace PluralKit.Bot
             {
                 Timeout = TimeSpan.FromSeconds(5)
             }).AsSelf().SingleInstance();
+            builder.RegisterInstance(SystemClock.Instance).As<IClock>();
         }
     }
 }
