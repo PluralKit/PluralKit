@@ -88,8 +88,8 @@ namespace PluralKit.Bot
             query.Append(SortProperty switch
             {
                 // Name/DN order needs `collate "C"` to match legacy .NET behavior (affects sorting of emojis, etc)
-                SortProperty.Name => " order by members.name collate 'C'",
-                SortProperty.DisplayName => " order by members.display_name, members.name collate 'C'",
+                SortProperty.Name => " order by members.name collate \"C\"",
+                SortProperty.DisplayName => " order by members.display_name, members.name collate \"C\"",
                 SortProperty.Hid => " order by members.hid",
                 SortProperty.CreationDate => " order by members.created",
                 SortProperty.Birthdate =>
