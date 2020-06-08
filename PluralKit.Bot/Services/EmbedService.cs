@@ -50,7 +50,9 @@ namespace PluralKit.Bot {
                         string.Join(", ", switchMembers.Select(m => m.NameFor(ctx))));
             }
 
-            if (system.TagSuffix != null) eb.AddField("Tag", system.TagSuffix.EscapeMarkdown());
+            if (system.TagPrefix != null) eb.AddField("Tag Prefix", system.TagPrefix.EscapeMarkdown(), true);
+            if (system.TagSuffix != null) eb.AddField("Tag Suffix", system.TagSuffix.EscapeMarkdown(), true);
+
             eb.AddField("Linked accounts", string.Join(", ", users).Truncate(1000), true);
 
             if (system.MemberListPrivacy.CanAccess(ctx))

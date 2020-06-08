@@ -97,24 +97,36 @@ namespace PluralKit.Bot
             if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
                 ctx.System.TagSuffix = null;
+                ctx.System.TagPrefix = null;
                 await _data.SaveSystem(ctx.System);
                 await ctx.Reply($"{Emojis.Success} System tag cleared.");
             } else if (!ctx.HasNext(skipFlags: false))
             {
-                if (ctx.System.TagSuffix == null)
+                if (ctx.System.TagSuffix == null && ctx.System.TagPrefix == null)
                     await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
                 else
-                    await ctx.Reply($"Your current system tag is `{ctx.System.TagSuffix}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                    await ctx.Reply($"Your current system tag is {(ctx.System.TagPrefix != null ? '`'+ctx.System.TagPrefix.EscapeMarkdown()+'`' : "")}**Name**{(ctx.System.TagSuffix != null ? '`'+ctx.System.TagSuffix.EscapeMarkdown()+'`' : "")}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
             }
             else
             {
                 var newTag = ctx.RemainderOrNull(skipFlags: false);
+                var newTagPair = newTag.Split("text");
                 if (newTag != null)
-                    if (newTag.Length > Limits.MaxSystemTagLength)
+                    if(newTagPair.Length > 1){
+                        if(newTagPair[0].Length + newTagPair[1].Length > Limits.MaxSystemTagLength){
+                            throw Errors.SystemNameTooLongError(newTag.Length);
+                        }
+                        ctx.System.TagPrefix = (newTagPair[0].Trim() != "") ? newTagPair[0] : null;
+                        ctx.System.TagSuffix = (newTagPair[1].Trim() != "") ? newTagPair[1] : null;
+                    }
+                    else if (newTag.Length > Limits.MaxSystemTagLength)
                         throw Errors.SystemNameTooLongError(newTag.Length);
-                ctx.System.TagSuffix = newTag;
+                    else {
+                        ctx.System.TagPrefix = null;
+                        ctx.System.TagSuffix = " "+newTag;
+                    }
                 await _data.SaveSystem(ctx.System);
-                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag}` when proxied.");
+                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now {(ctx.System.TagPrefix!=null ? $"start with `{ctx.System.TagPrefix.EscapeMarkdown()}` ":"")}{(ctx.System.TagPrefix!=null&&ctx.System.TagSuffix!=null ? "and ":"")}{(ctx.System.TagSuffix!=null ? $"end with `{ctx.System.TagSuffix.EscapeMarkdown()}` ":"")}when proxied.");
             }
         }
         
