@@ -21,9 +21,15 @@
     }
         
     .command-argument {
+        font-size: $exampleFontSize;
+        font-family: $exampleFontFamily;
+        color: $exampleTextColor;
+
         padding: 0 0.5rem;
         background-color: lighten($exampleBgColor, 15%);
         border-radius: 4px;
+        
+        line-height: 1.7;
     }
     
     .argument-details {

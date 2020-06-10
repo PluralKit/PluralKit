@@ -8,7 +8,8 @@
     .command-example-group {
         background-color: $exampleBgColor;
         border-radius: 6px;
-        
+
+        margin: 0.5rem 0;
         padding: 0.75rem 1.25rem;
     }
     

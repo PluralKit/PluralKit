@@ -1,6 +1,7 @@
 ﻿<template>
     <p class="command-example">
         <span class="bot-prefix">pk;</span><slot></slot>
+        <span class="example-comment" v-if="comment">// {{ comment }}</span>
     </p>
 </template>
 
@@ -8,8 +9,8 @@
     .command-example {
         font-size: $exampleFontSize;
         font-family: $exampleFontFamily;
-
         color: $exampleTextColor;
+        
         background-color: $exampleBgColor;
         border-radius: 6px;
         
@@ -20,4 +21,15 @@
     .bot-prefix {
         color: $examplePrefixColor;
     }
+    
+    .example-comment {
+        color: $exampleCommentColor;
+        float: right;
+    }
 </style>
+
+<script>
+    export default {
+        props: ["comment"]
+    }
+</script>
