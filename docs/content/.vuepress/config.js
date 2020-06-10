@@ -48,6 +48,7 @@ module.exports = {
         repo: "xSke/PluralKit",
         repoLabel: "Contribute!",
         docsDir: "docs/content",
+        docsBranch: "new-docs",
         editLinks: true,
         editLinkText: "Help us improve this page!"
     }
