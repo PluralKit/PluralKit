@@ -6,13 +6,17 @@
     .example-inline {
         font-size: $exampleFontSize;
         font-family: $exampleFontFamily;
-        
-        background-color: $exampleBgColor;
+
+        background-color: $exampleArgColor;
         color: $exampleTextColor;
         padding: 0.2rem 0.4rem;
         border-radius: 3px;
     }
         
+    .custom-block.tip .example-inline {
+        background-color: darken($exampleArgColor, 3%);
+    }
+
     .inline-bot-prefix {
         color: $examplePrefixColor;
     }

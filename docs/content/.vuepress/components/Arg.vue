@@ -26,12 +26,24 @@
         color: $exampleTextColor;
 
         padding: 0 0.5rem;
-        background-color: lighten($exampleBgColor, 15%);
+        background-color: $exampleArgColor;
         border-radius: 4px;
         
         line-height: 1.7;
     }
-    
+       
+    .custom-block.tip .command-argument {
+        background-color: darken($exampleArgColor, 3%);
+    }
+        
+    .command-example .command-argument {
+        background-color: darken($exampleArgColor, 8%);
+    }
+        
+    .custom-block.tip .command-example .command-argument {
+        background-color: darken($exampleArgColor, 10%);
+    }
+
     .argument-details {
         font-size: 0.75em;
         font-style: italic; 

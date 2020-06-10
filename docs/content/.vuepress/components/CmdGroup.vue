@@ -11,6 +11,12 @@
 
         margin: 0.5rem 0;
         padding: 0.75rem 1.25rem;
+        
+        clear: both;
+    }
+        
+    .custom-block.tip .command-example-group {
+        background-color: darken($exampleBgColor, 3%);
     }
     
     .command-example-group .command-example {

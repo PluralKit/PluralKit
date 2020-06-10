@@ -1,10 +1,18 @@
 ﻿// THEME
-$accentColor = #e8a024;
+$textColor = #2c3e50;
+$accentColor = darken(#e8a024, 10%);
 
 // CUSTOM
-$exampleBgColor = $codeBgColor;
-$exampleTextColor = #ffffff;
-$examplePrefixColor = #b3b6b9;
-$exampleCommentColor = darken($accentColor, 10%);
+/*$exampleBgColor = $codeBgColor;
+$exampleTextColor = #ffffff;*/
+$exampleBgColor = #f3f5f7;
+$exampleBgColorInContainer = darken($exampleBgColor, 3%);
+$exampleTextColor = darken($textColor, 5%);
+$exampleArgColor = $exampleBgColor;
+$tipDarkenFactor = 3;
+$exampleDarkenFactor = 5;
+//$examplePrefixColor = #b3b6b9;
+$examplePrefixColor = desaturate(lighten($textColor, 40%), 50%);
+$exampleCommentColor = darken($accentColor, 15%);
 $exampleFontSize = 0.9rem;
 $exampleFontFamily = source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
