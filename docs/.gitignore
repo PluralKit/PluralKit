@@ -1,7 +1,4 @@
-_site
-.sass-cache
-.jekyll-metadata
+node_modules/
+yarn-error.log
 
-.bundle
-vendor
-Gemfile.lock
+content/.vuepress/dist

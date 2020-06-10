@@ -1,9 +1,0 @@
-title: PluralKit
-baseurl: ""
-url: "https://pluralkit.me"
-remote_theme: pmarsceill/just-the-docs
-
-search_enabled: true
-aux_links:
-  "Add PluralKit to your server":
-    - "https://discordapp.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904"
