@@ -18,7 +18,7 @@ When an argument asks for a **member ID**, you can either fill in a member's [5-
 
 ## System commands
 ::: tip
-You can use <CmdInline>s</CmdInline> instead of <CmdInline>system</CmdInline> on all of the below commands.
+You can use <CmdInline>s</CmdInline> instead of <CmdInline>system</CmdInline> as a short-hand.
 :::
 
 <CommandInfo cmd="system-info"></CommandInfo>
@@ -26,10 +26,10 @@ You can use <CmdInline>s</CmdInline> instead of <CmdInline>system</CmdInline> on
 
 ## Member commands
 ::: tip
-You can use <CmdInline>m</CmdInline> instead of <CmdInline>member</CmdInline> on all of the below commands.
+You can use <CmdInline>m</CmdInline> instead of <CmdInline>member</CmdInline> as a short-hand.
 :::
 
 ## Switch commands
 ::: tip
-You can use <CmdInline>sw</CmdInline> instead of <CmdInline>switch</CmdInline> on all of the below commands.
+You can use <CmdInline>sw</CmdInline> instead of <CmdInline>switch</CmdInline> as a short-hand.
 :::

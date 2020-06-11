@@ -16,7 +16,7 @@
     }
         
     .custom-block.tip .command-example-group {
-        background-color: darken($exampleBgColor, 3%);
+        background-color: $exampleBgColorInTip;
     }
     
     .command-example-group .command-example {

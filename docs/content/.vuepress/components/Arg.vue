@@ -33,15 +33,15 @@
     }
        
     .custom-block.tip .command-argument {
-        background-color: darken($exampleArgColor, 3%);
+        background-color: $exampleArgColorInTip;
     }
         
     .command-example .command-argument {
-        background-color: darken($exampleArgColor, 8%);
+        background-color: $exampleArgColorInExample;
     }
         
     .custom-block.tip .command-example .command-argument {
-        background-color: darken($exampleArgColor, 10%);
+        background-color: $exampleArgColorInBoth;
     }
 
     .argument-details {

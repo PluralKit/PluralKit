@@ -21,7 +21,7 @@
     }
         
     .custom-block.tip .command-example {
-        background-color: darken($exampleBgColor, 3%);
+        background-color: $exampleBgColorInTip;
     }
     
     .bot-prefix {

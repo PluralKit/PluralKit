@@ -14,7 +14,7 @@
     }
         
     .custom-block.tip .example-inline {
-        background-color: darken($exampleArgColor, 3%);
+        background-color: $exampleArgColorInTip;
     }
 
     .inline-bot-prefix {
