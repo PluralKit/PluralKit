@@ -285,9 +285,16 @@ namespace PluralKit.Bot
             var requiredPerms = Permissions.AccessChannels | Permissions.SendMessages;
             if ((permissions & requiredPerms) != requiredPerms) return;
             
-            if (!msg.System.Pings) {
-                await args.Channel.SendMessageAsync($"Hey <@{args.User.Id}>, {msg.Member.DisplayName ?? msg.Member.Name}'s system has disabled reaction pings. You can mention them by copy pasting the following message:");
-                await args.Channel.SendMessageAsync($"`<@{msg.Message.Sender}>`");
+            if (!msg.System.PingsEnabled) {
+                // If the target system has disabled pings, tell the pinger and bail
+                var member = await args.Guild.GetMemberAsync(args.User.Id);
+                try
+                {
+                    await member.SendMessageAsync($"{Emojis.Error} {msg.Member.DisplayName ?? msg.Member.Name}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:");
+                    await member.SendMessageAsync($"`<@{msg.Message.Sender}>`");
+                }
+                catch (UnauthorizedException) { }
+
                 return;
             }
             

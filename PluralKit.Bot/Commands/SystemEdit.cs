@@ -313,27 +313,27 @@ namespace PluralKit.Bot
         }
 
         public async Task SystemPing(Context ctx) 
-	{
-	    ctx.CheckSystem();
-
-	    if (!ctx.HasNext()) 
 	    {
-		    if (ctx.System.Pings) {await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;s ping disable`.");}
-		    else {await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;s ping enable`.");}
+	        ctx.CheckSystem();
+
+	        if (!ctx.HasNext()) 
+	        {
+		        if (ctx.System.PingsEnabled) {await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;s ping disable`.");}
+		        else {await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;s ping enable`.");}
+	        }
+            else {
+                if (ctx.Match("on", "enable")) {
+                    ctx.System.PingsEnabled = true;
+                    await _data.SaveSystem(ctx.System);
+                    await ctx.Reply("Reaction pings have now been enabled.");
+                }
+                if (ctx.Match("off", "disable")) {
+                    ctx.System.PingsEnabled = false;
+                    await _data.SaveSystem(ctx.System);
+                    await ctx.Reply("Reaction pings have now been disabled.");
+                }
+            }
 	    }
-        else {
-            if (ctx.Match("on", "enable")) {
-                ctx.System.Pings = true;
-                await _data.SaveSystem(ctx.System);
-                await ctx.Reply("Reaction pings have now been enabled.");
-            }
-            if (ctx.Match("off", "disable")) {
-                ctx.System.Pings = false;
-                await _data.SaveSystem(ctx.System);
-                await ctx.Reply("Reaction pings have now been disabled.");
-            }
-        }
-	}
 
         public async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr) {
             // First, if we're given a flag emoji, we extract the flag emoji code from it.
