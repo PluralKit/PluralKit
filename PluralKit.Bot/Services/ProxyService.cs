@@ -294,12 +294,12 @@ namespace PluralKit.Bot
                     await member.SendMessageAsync($"`<@{msg.Message.Sender}>`");
                 }
                 catch (UnauthorizedException) { }
-
-                return;
             }
-            
-            var embed = new DiscordEmbedBuilder().WithDescription($"[Jump to pinged message]({args.Message.JumpLink})");
-            await args.Channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{args.User.Id}>.", embed: embed.Build());
+            else
+            {
+                var embed = new DiscordEmbedBuilder().WithDescription($"[Jump to pinged message]({args.Message.JumpLink})");
+                await args.Channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName ?? msg.Member.Name}** (<@{msg.Message.Sender}>), you have been pinged by <@{args.User.Id}>.", embed: embed.Build());
+            }
 
             // Finally remove the original reaction (if we can)
             if (args.Channel.BotHasAllPermissions(Permissions.ManageMessages))
