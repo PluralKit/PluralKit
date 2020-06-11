@@ -296,7 +296,7 @@ namespace PluralKit.Core {
                     _logger.Information("Deleted message {Message}", id);
         }
 
-        public async Task DeleteMessagesBulk(IEnumerable<ulong> ids)
+        public async Task DeleteMessagesBulk(IReadOnlyCollection<ulong> ids)
         {
             using (var conn = await _conn.Obtain())
             {

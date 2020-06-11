@@ -118,7 +118,7 @@ namespace PluralKit.Bot
             
             try
             {
-                await _proxy.HandleMessageAsync(evt.Client, cachedGuild, cachedAccount, msg, doAutoProxy: true);
+                await _proxy.HandleMessageAsync(evt.Client, cachedGuild, cachedAccount, msg, allowAutoproxy: true);
             }
             catch (PKError e)
             {

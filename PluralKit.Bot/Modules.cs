@@ -82,6 +82,10 @@ namespace PluralKit.Bot
                 .As<ISentryEnricher<MessageBulkDeleteEventArgs>>()
                 .As<ISentryEnricher<MessageReactionAddEventArgs>>()
                 .SingleInstance();
+            
+            // Proxy stuff
+            builder.RegisterType<Autoproxier>().AsSelf().SingleInstance();
+            builder.RegisterType<ProxyTagParser>().AsSelf().SingleInstance();
 
             // Utils
             builder.Register(c => new HttpClient

@@ -281,7 +281,7 @@ namespace PluralKit.Core {
         /// Deletes messages from the data store in bulk.
         /// </summary>
         /// <param name="postedMessageIds">The IDs of the webhook messages to delete.</param>
-        Task DeleteMessagesBulk(IEnumerable<ulong> postedMessageIds);
+        Task DeleteMessagesBulk(IReadOnlyCollection<ulong> postedMessageIds);
         
         /// <summary>
         /// Gets the most recent message sent by a given account in a given guild.

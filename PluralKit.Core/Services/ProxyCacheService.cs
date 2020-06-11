@@ -187,6 +187,7 @@ namespace PluralKit.Core
         public ulong[] Accounts;
 
         public SystemGuildSettings SettingsForGuild(ulong guild) =>
+            // O(n) lookup since n is small (max ~100 in prod) and we're more constrained by memory (for a dictionary) here
             SystemGuild.FirstOrDefault(s => s.Guild == guild) ?? new SystemGuildSettings();
         
         public MemberGuildSettings SettingsForMemberGuild(int memberId, ulong guild) =>
