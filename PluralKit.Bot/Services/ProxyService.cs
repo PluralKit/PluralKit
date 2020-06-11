@@ -76,6 +76,7 @@ namespace PluralKit.Bot
                 if (isMatch) {
                     var inner = message.Substring(prefix.Length, message.Length - prefix.Length - suffix.Length);
                     if (leadingMention != null) inner = $"{leadingMention} {inner}";
+                    if (inner == "\U0000fe0f") return null;
                     return new ProxyMatch { Member = match, System = system, InnerText = inner, ProxyTags = tag};
                 }
             }
