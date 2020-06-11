@@ -155,7 +155,7 @@ namespace PluralKit.Core
         }
     }
 
-    public class PerformanceTrackingConnection: IDbConnection, IAsyncDisposable
+    public class PerformanceTrackingConnection: IAsyncDbConnection
     {
         // Simple delegation of everything.
         internal NpgsqlConnection _impl;
@@ -245,6 +245,11 @@ namespace PluralKit.Core
         }
     }
 
+    public interface IAsyncDbConnection: IDbConnection, IAsyncDisposable
+    {
+        
+    }
+
     public class DbConnectionFactory
     {
         private CoreConfig _config;
@@ -261,7 +266,7 @@ namespace PluralKit.Core
             _logger = logger;
         }
 
-        public async Task<IDbConnection> Obtain()
+        public async Task<IAsyncDbConnection> Obtain()
         {
             // Mark the request (for a handle, I guess) in the metrics
             _metrics.Measure.Meter.Mark(CoreMetrics.DatabaseRequests);
