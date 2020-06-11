@@ -15,4 +15,4 @@ This bot detects messages with certain tags associated with a profile, then repl
 #### for example...
 ![demonstration of PluralKit]({% link /assets/demo.gif %})
 
-For more information, see the links to the left, or click [here](https://discordapp.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904) to invite the bot to your server!
+For more information, see the links to the left, or click [here](https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904) to invite the bot to your server!

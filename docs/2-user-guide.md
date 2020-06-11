@@ -20,7 +20,7 @@ If you want to use PluralKit on a Discord server, you must first *add* it to the
 
 Use this link to add the bot to your server:
 
-[https://discordapp.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904](https://discordapp.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904)
+[https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904](https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904)
 
 Once you go through the wizard, the bot account will automatically join the server you've chosen. Please ensure the bot has the *Read Messages*, *Send Messages*, *Manage Messages*, *Attach Files* and *Manage Webhooks* permission in the channels you want it to work in. 
 
@@ -304,7 +304,7 @@ The practical effect of this is:
 If you want information about a proxied message (eg. for moderation reasons), you can query the message for its sender account, system, member, etc.
 
 Either you can react to the message itself with the ❔ or ❓ emoji, which will DM you information about the message in question, 
-or you can use the `pk;message` command followed by [the message's ID](https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).
+or you can use the `pk;message` command followed by [the message's ID](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).
 
 ### Pinging a specific user
 If you'd like to "ping" the account behind a proxied message without having to query the message and ping them yourself,

@@ -46,7 +46,7 @@ namespace PluralKit.Bot {
                 .Grant(Permissions.ManageWebhooks)
                 .Grant(Permissions.ReadMessageHistory)
                 .Grant(Permissions.SendMessages);
-            var invite = $"https://discordapp.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={(long)permissions}";
+            var invite = $"https://discord.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={(long)permissions}";
             await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }
         
@@ -198,7 +198,7 @@ namespace PluralKit.Bot {
             ulong messageId;
             if (ulong.TryParse(word, out var id))
                 messageId = id;
-            else if (Regex.Match(word, "https://discordapp.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
+            else if (Regex.Match(word, "https://discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
                 messageId = ulong.Parse(match.Groups[1].Value);
             else throw new PKSyntaxError($"Could not parse `{word}` as a message ID or link.");
 
