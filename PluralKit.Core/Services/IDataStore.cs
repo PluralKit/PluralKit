@@ -229,14 +229,6 @@ namespace PluralKit.Core {
         Task<PKMember> CreateMember(PKSystem system, string name);
         
         /// <summary>
-        /// Creates multiple members, auto-generating each corresponding ID.
-        /// </summary>
-        /// <param name="system">The system to create the member in.</param>
-        /// <param name="memberNames">A dictionary containing a mapping from an arbitrary key to the member's name.</param>
-        /// <returns>A dictionary containing the resulting member structs, each mapped to the key given in the argument dictionary.</returns>
-        Task<Dictionary<string, PKMember>> CreateMembersBulk(PKSystem system, Dictionary<string, string> memberNames);
-        
-        /// <summary>
         /// Saves the information within the given <see cref="PKMember"/> struct to the data store.
         /// </summary>
         Task SaveMember(PKMember member);
@@ -357,14 +349,7 @@ namespace PluralKit.Core {
         /// </summary>
         /// <exception>Throws an exception (TODO: which?) if any of the members are not in the given system.</exception>
         Task AddSwitch(PKSystem system, IEnumerable<PKMember> switchMembers);
-        
-        /// <summary>
-        /// Registers switches in bulk.
-        /// </summary>
-        /// <param name="switches">A list of switch structs, each containing a timestamp and a list of members.</param>
-        /// <exception>Throws an exception (TODO: which?) if any of the given members are not in the given system.</exception>
-        Task AddSwitchesBulk(PKSystem system, IEnumerable<ImportedSwitch> switches);
-        
+
         /// <summary>
         /// Updates the timestamp of a given switch. 
         /// </summary>

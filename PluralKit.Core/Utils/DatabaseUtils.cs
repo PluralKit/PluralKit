@@ -155,7 +155,7 @@ namespace PluralKit.Core
         }
     }
 
-    public class PerformanceTrackingConnection: IDbConnection
+    public class PerformanceTrackingConnection: IDbConnection, IAsyncDisposable
     {
         // Simple delegation of everything.
         internal NpgsqlConnection _impl;
@@ -226,6 +226,7 @@ namespace PluralKit.Core
         public string Database => _impl.Database;
 
         public ConnectionState State => _impl.State;
+        public ValueTask DisposeAsync() => _impl.DisposeAsync();
     }
 
     public class DbConnectionCountHolder
