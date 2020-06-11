@@ -11,7 +11,7 @@ using Serilog;
 namespace PluralKit.Core {
     public class SchemaService
     {
-        private const int TargetSchemaVersion = 5;
+        private const int TargetSchemaVersion = 6;
 
         private DbConnectionFactory _conn;
         private ILogger _logger;
