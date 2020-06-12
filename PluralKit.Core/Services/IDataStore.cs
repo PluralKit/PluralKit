@@ -28,12 +28,6 @@ namespace PluralKit.Core {
         public ulong? OriginalMid;
     }
 
-    public struct ImportedSwitch
-    {
-        public Instant Timestamp;
-        public IReadOnlyCollection<PKMember> Members;
-    }
-
     public struct SwitchListEntry
     {
         public ICollection<PKMember> Members;
@@ -265,13 +259,7 @@ namespace PluralKit.Core {
         /// </summary>
         /// <param name="postedMessageIds">The IDs of the webhook messages to delete.</param>
         Task DeleteMessagesBulk(IReadOnlyCollection<ulong> postedMessageIds);
-        
-        /// <summary>
-        /// Gets the most recent message sent by a given account in a given guild.
-        /// </summary>
-        /// <returns>The full message object, or null if none was found.</returns>
-        Task<FullMessage> GetLastMessageInGuild(ulong account, ulong guild);
-        
+
         /// <summary>
         /// Gets switches from a system.
         /// </summary>
@@ -282,7 +270,6 @@ namespace PluralKit.Core {
         /// Gets the total amount of switches in a given system.
         /// </summary>
         Task<int> GetSwitchCount(PKSystem system);
-
 
         /// <summary>
         /// Gets the latest (temporally; closest to now) switch of a given system.
@@ -321,12 +308,6 @@ namespace PluralKit.Core {
         /// <returns></returns>
         Task<FrontBreakdown> GetFrontBreakdown(PKSystem system, Instant periodStart, Instant periodEnd);
 
-        /// <summary>
-        /// Gets the first listed fronter in a system.
-        /// </summary>
-        /// <returns>The first fronter, or null if none are registered.</returns>
-        Task<PKMember> GetFirstFronter(PKSystem system);
-        
         /// <summary>
         /// Registers a switch with the given members in the given system.
         /// </summary>

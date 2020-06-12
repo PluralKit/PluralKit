@@ -277,17 +277,6 @@ namespace PluralKit.Core {
             }
         }
 
-        public async Task<FullMessage> GetLastMessageInGuild(ulong account, ulong guild)
-        {
-            using var conn = await _conn.Obtain();
-            return (await conn.QueryAsync<PKMessage, PKMember, PKSystem, FullMessage>("select messages.*, members.*, systems.* from messages left join members on members.id = messages.member left join systems on systems.id = members.system where messages.guild = @Guild and messages.sender = @Uid order by mid desc limit 1", (msg, member, system) => new FullMessage
-            {
-                Message = msg,
-                System = system,
-                Member = member
-            }, new { Uid = account, Guild = guild })).FirstOrDefault();
-        }
-
         public async Task<ulong> GetTotalMessages()
         {
             using (var conn = await _conn.Obtain())
@@ -338,15 +327,6 @@ namespace PluralKit.Core {
                     Blacklist = cfg.Blacklist.Select(c  => (long) c).ToList()
                 });
             _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
-        }
-
-        public async Task<PKMember> GetFirstFronter(PKSystem system)
-        {
-            // TODO: move to extension method since it doesn't rely on internals
-            var lastSwitch = await GetLatestSwitch(system);
-            if (lastSwitch == null) return null;
-
-            return await GetSwitchMembers(lastSwitch).FirstOrDefaultAsync();
         }
 
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
