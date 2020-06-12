@@ -84,13 +84,13 @@ as $$
 $$ language sql stable rows 10;
 
 
-create function generate_hid() returns text as $$
+create function generate_hid() returns char(5) as $$
     select string_agg(substr('abcdefghijklmnopqrstuvwxyz', ceil(random() * 26)::integer, 1), '') from generate_series(1, 5)
 $$ language sql volatile;
 
 
-create function find_free_system_hid() returns text as $$
-declare new_hid text;
+create function find_free_system_hid() returns char(5) as $$
+declare new_hid char(5);
 begin
     loop
         new_hid := generate_hid();
@@ -100,8 +100,8 @@ end
 $$ language plpgsql volatile;
 
 
-create function find_free_member_hid() returns text as $$
-declare new_hid text;
+create function find_free_member_hid() returns char(5) as $$
+declare new_hid char(5);
 begin
     loop
         new_hid := generate_hid();
