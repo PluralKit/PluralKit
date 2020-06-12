@@ -1,30 +1,18 @@
 ﻿<template>
-    <div class="command-example-group">
+    <div class="cmd-group">
         <slot />
     </div>
 </template>
 
 <style lang="stylus">
-    .command-example-group {
-        background-color: $exampleBgColor;
+    .cmd-group {
+        background-color: $codeBgColor;
         border-radius: 6px;
-
         margin: 0.5rem 0;
-        padding: 0.75rem 1.25rem;
-        
-        clear: both;
-    }
-        
-    .custom-block.tip .command-example-group {
-        background-color: $exampleBgColorInTip;
+        padding: 0.25rem 0;
     }
     
-    .command-example-group .command-example {
-        margin: 0;
-        padding: 0;
-    }
-    
-    .command-example-group .command-example:not(:last-child) {
-        margin-bottom: 0.5rem;
+    .details .cmd-group {
+        margin-top: 1rem;
     }
 </style>

@@ -1,38 +1,30 @@
 ﻿<template>
-    <span class="command-argument"><slot/></span>
+    <span class="cmd-arg"><slot/></span>
 </template>
 
 <style lang="stylus">
-    .command-argument {
+    .cmd-arg {
+        font-weight: bold;
+        line-height: 1.75;
+
         display: inline-block;
+        padding: 0 0.6rem;
         
-        font-size: $exampleFontSize;
-        font-family: $exampleFontFamily;
-        border-bottom: 1px solid darken($exampleArgColor, 15%);
-        color: $exampleTextColor;
-
-        padding: 0 0.5rem;
-        background-color: $exampleArgColor;
-        border-radius: 4px;
-
-        line-height: 1.7;
+        background-color: $argBgPlain;
+        border-radius: 3px;
     }
-
-    .custom-block.tip .command-argument {
-        background-color: $exampleArgColorInTip;
+        
+    .cmd-inline .cmd-arg {
+        background-color: $argBgInline;
     }
-
-    .command-example .command-argument {
-        background-color: $exampleArgColorInExample;
-    }
-
-    .custom-block.tip .command-example .command-argument {
-        background-color: $exampleArgColorInBoth;
+    
+    .cmd-block .cmd-arg {
+        background-color: $argBgBlock;
     }
 </style>
 
 <script>
     export default {
-        props: ["optional", "name", "edit", "value"],
+        props: [],
     }
 </script>

@@ -1,18 +1,18 @@
 ﻿// THEME
 $textColor = #2c3e50;
-$accentColor = darken(#e8a024, 10%);
+$accentColor = darken(#e8a024, 10%)
 
-// CUSTOM
-$exampleBgColor = #f3f5f7;
-$exampleBgColorInTip = darken($exampleBgColor, 4%);
-$exampleTextColor = darken($textColor, 5%);
-$exampleArgColor = darken($exampleBgColor, 1%);
-$exampleArgColorInExample = darken($exampleBgColor, 4%);
-$exampleArgColorInTip = darken($exampleBgColor, 3%);
-$exampleArgColorInBoth = darken($exampleBgColor, 8%);
-$tipDarkenFactor = 3;
-$exampleDarkenFactor = 5;
-$exampleCommentColor = darken($accentColor, 15%);
-$examplePrefixColor = desaturate(lighten($exampleCommentColor, 20%), 10%);
-$exampleFontSize = 0.9rem;
-$exampleFontFamily = source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+// COMMANDS
+$cmdColor = #f8fafc;
+
+$cmdBgBlock = #282c34;
+$cmdBgInline = darken(#f3f5f7, 4%);
+$cmdBgInlineTip = darken(#f3f5f7, 5%);
+
+$argBgPlain = darken(#f3f5f7, 4%);
+$argBgInline = darken(#f3f5f7, 5%);
+$argBgBlock = lighten($cmdBgBlock, 15%);
+
+// FONTS
+$monoFont = Inconsolata, source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+$monoWeight = 500;

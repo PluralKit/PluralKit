@@ -1,10 +1,10 @@
 ﻿<template>
-    <div class="command-info">
+    <div class="cmd-info">
         <h3 :id="cmd">
             <a class="header-anchor" :href="'#' + cmd">#</a>
             {{ command.title }}
         </h3>
-        <p>{{ command.summary }}</p>
+        <p class="summary">{{ command.summary }}</p>
 
         <slot></slot>
 
@@ -21,8 +21,8 @@
         <h4 v-if="command.arguments">Arguments <small>(fill in above)</small></h4>
         <div class="info-arg" v-for="(arg, key) in command.arguments">
             <Arg>{{ key }}</Arg>
-            (<strong v-if="arg.type === 'string'">text</strong><strong v-if="arg.type === 'system'">system
-            ID</strong><span v-if="arg.optional">, <em>optional</em></span>) - {{ arg.desc }}.
+            (<span v-if="arg.type === 'string'">text</span><span v-if="arg.type === 'system'">system
+            reference</span><span v-if="arg.optional">, <em>optional</em></span>) - {{ arg.desc }}.
         </div>
 
         <h4 v-if="command.flags">Flags <small>(all optional, starts with a hyphen, place anywhere in the
@@ -46,24 +46,14 @@
     }
 </script>
 
-<style>
-    .command-info {
-        margin-bottom: 2.5rem;
-    }
-
-    .command-info h3 {
-        margin-bottom: 0;
-    }
-
-    .command-info p {
-        margin-top: 0.25rem;
-    }
-
-    .command-info h4 {
-        margin-bottom: 0.75rem;
-    }
-
-    .info-arg, .info-flag {
-        margin-bottom: 0.5rem;
+<style lang="stylus">
+    .cmd-info {
+        .summary { margin-top: 0; }
+        h3, h4 { margin-bottom: 0.5rem; }
+        
+        .info-arg, .info-flag {
+            line-height: 1.5;
+            margin: 0.5rem 0;
+        }
     }
 </style>

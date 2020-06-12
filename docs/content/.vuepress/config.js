@@ -30,6 +30,8 @@ module.exports = {
                 collapsable: false,
                 children: [
                     "/guide/quick-start",
+                    "/guide/ids",
+                    "/guide/listing",
                     "/guide/systems",
                     "/guide/members",
                     "/guide/proxying",
