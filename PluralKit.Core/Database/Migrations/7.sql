@@ -3,8 +3,10 @@
 
 -- Add message count row to members table, initialize it with the correct data
 alter table members add column message_count int not null default 0;
-update members set message_count = (select count(*) from messages where messages.member = members.id);
 
+update members set message_count = counts.count
+from (select member, count(*) as count from messages group by messages.member) as counts
+where counts.member = members.id;
 
 -- Create a trigger function to increment the message count on inserting to the messages table
 create function trg_msgcount_increment() returns trigger as $$
