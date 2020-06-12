@@ -49,8 +49,15 @@ create function proxy_members(account_id bigint, guild_id bigint)
         id int,
         proxy_tags proxy_tag[],
         keep_proxy bool,
-        proxy_name text,
-        proxy_avatar text
+        
+        server_name text,
+        display_name text,
+        name text,
+        system_tag text,
+        
+        server_avatar text,
+        avatar text,
+        system_icon text
     )
 as $$
     select
@@ -59,12 +66,16 @@ as $$
         members.proxy_tags as proxy_tags,
         members.keep_proxy as keep_proxy,
     
-        -- Proxy info
-        case
-            when systems.tag is not null then (coalesce(member_guild.display_name, members.display_name, members.name) || ' ' || systems.tag) 
-            else coalesce(member_guild.display_name, members.display_name, members.name)
-        end as proxy_name,
-        coalesce(member_guild.avatar_url, members.avatar_url, systems.avatar_url) as proxy_avatar
+        -- Name info
+        member_guild.display_name as server_name,
+        members.display_name as display_name,
+        members.name as name,
+        systems.tag as system_tag,
+        
+        -- Avatar info
+        member_guild.avatar_url as server_avatar,
+        members.avatar_url as avatar,
+        systems.avatar_url as system_icon
     from accounts
         inner join systems on systems.id = accounts.system
         inner join members on members.system = systems.id
