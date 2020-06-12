@@ -70,7 +70,10 @@
                 const parts = [];
                 let lastMatch = 0;
 
-                for (const match of usage.matchAll(/`([^`]+)`/g)) {
+                // matchAll isn't common yet, using exec :(
+                const re = /`([^`]+)`/g;
+                let match;
+                while (match = re.exec(usage)) {
                     if (match.index > 0)
                         parts.push({type: "str", str: usage.substring(lastMatch, match.index)});
                     parts.push({type: "arg", arg: match[1]});
