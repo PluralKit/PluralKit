@@ -1,60 +1,33 @@
 ﻿<template>
-    <div class="command-argument-parent">
-        <div class="command-argument">
-            <slot />
-        </div>
-        
-        <div v-if="false" class="argument-details">
-            {{ name }}
-            <span v-if="optional !== undefined">(optional)</span>
-        </div>
-    </div>
-
+    <span class="command-argument"><slot/></span>
 </template>
 
 <style lang="stylus">
-    .command-argument-parent {
-        display: inline-flex;
-        flex-direction: column;
-
-        text-align: center;
-    }
-        
     .command-argument {
+        display: inline-block;
+        
         font-size: $exampleFontSize;
         font-family: $exampleFontFamily;
+        border-bottom: 1px solid darken($exampleArgColor, 15%);
         color: $exampleTextColor;
 
         padding: 0 0.5rem;
         background-color: $exampleArgColor;
         border-radius: 4px;
-        
+
         line-height: 1.7;
     }
-       
+
     .custom-block.tip .command-argument {
         background-color: $exampleArgColorInTip;
     }
-        
+
     .command-example .command-argument {
         background-color: $exampleArgColorInExample;
     }
-        
+
     .custom-block.tip .command-example .command-argument {
         background-color: $exampleArgColorInBoth;
-    }
-
-    .argument-details {
-        font-size: 0.75em;
-        font-style: italic; 
-    }
-    
-    .arg-input {
-        /*font-size: 0.9rem;*/
-        color: $exampleTextColor;
-        background-color: transparent;
-        text-align: center;
-        border: none;
     }
 </style>
 

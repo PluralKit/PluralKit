@@ -11,6 +11,7 @@
         color: $exampleTextColor;
         padding: 0.2rem 0.4rem;
         border-radius: 3px;
+        border-bottom: 1px solid darken($exampleArgColor, 15%);
     }
         
     .custom-block.tip .example-inline {

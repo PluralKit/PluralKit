@@ -10,22 +10,12 @@
 
         <h4>Syntax <small>(how the command is used)</small></h4>
         <CmdGroup>
-            <Cmd v-for="usage in command.usage" :comment="usage.desc">
-                <span v-for="part in parseUsage(usage)">
-                    <span v-if="part.type === 'str'">{{ part.str }}</span>
-                    <span v-if="part.type === 'arg'"><Arg>{{ part.arg }}</Arg></span>
-                </span>
-            </Cmd>
+            <Cmd v-for="usage in command.usage" :comment="usage.desc" :usage="usage.cmd || usage" />
         </CmdGroup>
 
         <h4 v-if="command.examples">Examples</h4>
         <CmdGroup v-if="command.examples">
-            <Cmd v-for="example in command.examples" :comment="example.desc">
-                <span v-for="part in parseUsage(example)">
-                    <span v-if="part.type === 'str'">{{ part.str }}</span>
-                    <span v-if="part.type === 'arg'"><Arg>{{ part.arg }}</Arg></span>
-                </span>
-            </Cmd>
+            <Cmd v-for="example in command.examples" :comment="example.desc" :usage="example.cmd || example" />
         </CmdGroup>
 
         <h4 v-if="command.arguments">Arguments <small>(fill in above)</small></h4>
@@ -41,25 +31,6 @@
             <Arg>-{{ key }}</Arg>
             - {{ flag.desc }}
         </div>
-
-        <!--table>
-            <thead>
-            <tr>
-                <th>Argument</th>
-                <th>Type</th>
-                <th>Description</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="(arg, key) in command.arguments">
-                <td>
-                    <Arg>{{ key }}</Arg>
-                </td>
-                <td>{{ arg.type }}</td>
-                <td>{{ arg.desc }}</td>
-            </tr>
-            </tbody>
-        </table-->
     </div>
 </template>
 
@@ -71,27 +42,6 @@
 
         data() {
             return {command: commands[this.cmd]};
-        },
-
-        methods: {
-            parseUsage(usage) {
-                if (usage.cmd) usage = usage.cmd;
-
-                const argRegex = /`([^`]+)`/g;
-                const parts = [];
-                let lastMatch = 0;
-                for (const match of usage.matchAll(argRegex)) {
-                    if (match.index > 0)
-                        parts.push({type: "str", str: usage.substring(lastMatch, match.index)});
-                    parts.push({type: "arg", arg: match[1]});
-                    lastMatch = match.index + match[0].length;
-                }
-                if (lastMatch < usage.length)
-                    parts.push({type: "str", str: usage.substring(lastMatch)});
-                console.log("INPUT STRING:", usage);
-                console.log("OUTPUT TOKENS:", parts);
-                return parts;
-            }
         }
     }
 </script>
