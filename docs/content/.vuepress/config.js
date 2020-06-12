@@ -9,7 +9,7 @@ module.exports = {
     
     theme: "@vuepress/theme-default",
     plugins: [
-        "vuepress-plugin-clean-urls",
+        ["vuepress-plugin-clean-urls", {normalSuffix: "/"}],
     ],
     markdown: {
         extendMarkdown: md => {
