@@ -8,16 +8,16 @@ namespace PluralKit.Core
     /// </summary>
     public class ProxyMember
     {
-        public int Id { get; set; }
-        public IReadOnlyCollection<ProxyTag> ProxyTags { get; set; } = new ProxyTag[0];
-        public bool KeepProxy { get; set; }
+        public int Id { get; }
+        public IReadOnlyCollection<ProxyTag> ProxyTags { get; } = new ProxyTag[0];
+        public bool KeepProxy { get; }
         
-        public string? ServerName { get; set; }
-        public string? DisplayName { get; set; }
-        public string Name { get; set; } = "";
+        public string? ServerName { get; }
+        public string? DisplayName { get; }
+        public string Name { get; } = "";
         
-        public string? ServerAvatar { get; set; }
-        public string? Avatar { get; set; }
+        public string? ServerAvatar { get; }
+        public string? Avatar { get; }
 
         public string ProxyName(MessageContext ctx) => ctx.SystemTag != null
             ? $"{ServerName ?? DisplayName ?? Name} {ctx.SystemTag}"

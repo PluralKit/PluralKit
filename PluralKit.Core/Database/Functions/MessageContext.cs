@@ -10,20 +10,20 @@ namespace PluralKit.Core
     /// </summary>
     public class MessageContext
     {
-        public int? SystemId { get; set; }
-        public ulong? LogChannel { get; set; }
-        public bool InBlacklist { get; set; }
-        public bool InLogBlacklist { get; set; }
-        public bool LogCleanupEnabled { get; set; }
-        public bool ProxyEnabled { get; set; }
-        public AutoproxyMode AutoproxyMode { get; set; }
-        public int? AutoproxyMember { get; set; }
-        public ulong? LastMessage { get; set; }
-        public int? LastMessageMember { get; set; }
-        public int LastSwitch { get; set; }
-        public IReadOnlyList<int> LastSwitchMembers { get; set; } = new int[0];
-        public Instant LastSwitchTimestamp { get; set; }
-        public string? SystemTag { get; set; }
-        public string? SystemAvatar { get; set; }
+        public int? SystemId { get; }
+        public ulong? LogChannel { get; }
+        public bool InBlacklist { get; }
+        public bool InLogBlacklist { get; }
+        public bool LogCleanupEnabled { get; }
+        public bool ProxyEnabled { get; }
+        public AutoproxyMode AutoproxyMode { get; }
+        public int? AutoproxyMember { get; }
+        public ulong? LastMessage { get; }
+        public int? LastMessageMember { get; }
+        public int LastSwitch { get; }
+        public IReadOnlyList<int> LastSwitchMembers { get; } = new int[0];
+        public Instant LastSwitchTimestamp { get; }
+        public string? SystemTag { get; }
+        public string? SystemAvatar { get; }
     }
 }
