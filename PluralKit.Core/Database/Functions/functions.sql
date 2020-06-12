@@ -82,3 +82,30 @@ as $$
         left join member_guild on member_guild.member = members.id and member_guild.guild = guild_id
     where accounts.uid = account_id
 $$ language sql stable rows 10;
+
+
+create function generate_hid() returns text as $$
+    select string_agg(substr('abcdefghijklmnopqrstuvwxyz', ceil(random() * 26)::integer, 1), '') from generate_series(1, 5)
+$$ language sql volatile;
+
+
+create function find_free_system_hid() returns text as $$
+declare new_hid text;
+begin
+    loop
+        new_hid := generate_hid();
+        if not exists (select 1 from systems where hid = new_hid) then return new_hid; end if;
+    end loop;
+end
+$$ language plpgsql volatile;
+
+
+create function find_free_member_hid() returns text as $$
+declare new_hid text;
+begin
+    loop
+        new_hid := generate_hid();
+        if not exists (select 1 from members where hid = new_hid) then return new_hid; end if;
+    end loop;
+end
+$$ language plpgsql volatile;

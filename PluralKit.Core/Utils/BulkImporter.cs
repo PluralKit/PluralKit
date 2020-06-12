@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -69,7 +70,7 @@ namespace PluralKit.Core
             // if not, roll a new hid and we'll insert one with that
             // (we can't trust the hid given in the member, it might let us overwrite another system's members)
             var existingMember = FindExistingMemberInSystem(member.Hid, member.Name); 
-            string newHid = existingMember?.Hid ?? await FindFreeHid();
+            string newHid = existingMember?.Hid ?? await _conn.QuerySingleAsync<string>("find_free_member_hid", commandType: CommandType.StoredProcedure);
 
             // Upsert member data and return the ID
             QueryBuilder qb = QueryBuilder.Upsert("members", "hid")
@@ -110,19 +111,6 @@ namespace PluralKit.Core
             if (_existingMembersByHid.TryGetValue(hid, out var byHid)) return byHid;
             if (_existingMembersByName.TryGetValue(name, out var byName)) return byName;
             return null;
-        }
-
-        private async Task<string> FindFreeHid()
-        {
-            string hid;
-            do
-            {
-                hid = await _conn.QuerySingleOrDefaultAsync<string>(
-                    "select @Hid where not exists (select id from members where hid = @Hid)",
-                    new {Hid = StringUtils.GenerateHid()});
-            } while (hid == null);
-
-            return hid;
         }
 
         /// <summary>
