@@ -52,23 +52,16 @@ namespace PluralKit.Bot
             // For best performance, add index:
             // - `on switch_members using btree (member asc nulls last) include (switch);`
             // TODO: add a migration adding this, perhaps lumped with the rest of the DB changes (it's there in prod)
-            // TODO: also, this should be moved to a view, ideally
             
             // Select clause
-            StringBuilder query = new StringBuilder();
-            query.Append("select members.*, message_info.*");
-            query.Append(", (select max(switches.timestamp) from switch_members inner join switches on switches.id = switch_members.switch where switch_members.member = members.id) as last_switch_time");
-            query.Append(" from members");
-            
-            // Join here to enforce index scan on messages table by member, collect both max and count in one swoop
-            query.Append(" left join lateral (select count(messages.mid) as message_count, max(messages.mid) as last_message from messages where messages.member = members.id) as message_info on true");
+            StringBuilder query = new StringBuilder("select * from member_list");
 
             // Filtering
-            query.Append(" where members.system = @System");
+            query.Append(" where system = @System");
             query.Append(PrivacyFilter switch
             {
-                PrivacyFilter.PrivateOnly => $" and members.member_privacy = {(int) PrivacyLevel.Private}",
-                PrivacyFilter.PublicOnly => $" and members.member_privacy = {(int) PrivacyLevel.Public}",
+                PrivacyFilter.PrivateOnly => $" and member_privacy = {(int) PrivacyLevel.Private}",
+                PrivacyFilter.PublicOnly => $" and member_privacy = {(int) PrivacyLevel.Public}",
                 _ => ""
             });
 
@@ -78,28 +71,12 @@ namespace PluralKit.Bot
                 // Use position rather than ilike to not bother with escaping and such
                 query.Append(" and (");
                 query.Append(
-                    "position(lower(@Filter) in lower(members.name)) > 0 or position(lower(@Filter) in lower(coalesce(members.display_name, ''))) > 0");
+                    "position(lower(@Filter) in lower(name)) > 0 or position(lower(@Filter) in lower(coalesce(display_name, ''))) > 0");
                 if (SearchInDescription)
-                    query.Append(" or position(lower(@Filter) in lower(coalesce(members.description, ''))) > 0");
+                    query.Append(" or position(lower(@Filter) in lower(coalesce(description, ''))) > 0");
                 query.Append(")");
             }
-
-            // Order clause
-            query.Append(SortProperty switch
-            {
-                // Name/DN order needs `collate "C"` to match legacy .NET behavior (affects sorting of emojis, etc)
-                SortProperty.Name => " order by members.name collate \"C\"",
-                SortProperty.DisplayName => " order by members.display_name, members.name collate \"C\"",
-                SortProperty.Hid => " order by members.hid",
-                SortProperty.CreationDate => " order by members.created",
-                SortProperty.Birthdate =>
-                " order by extract(month from members.birthday), extract(day from members.birthday)",
-                SortProperty.MessageCount => " order by message_count",
-                SortProperty.LastMessage => " order by last_message",
-                SortProperty.LastSwitch => " order by last_switch_time",
-                _ => throw new ArgumentOutOfRangeException($"Couldn't find order clause for sort property {SortProperty}")
-            });
-
+            
             // Order direction
             var direction = SortProperty switch
             {
@@ -110,8 +87,24 @@ namespace PluralKit.Bot
                 _ => SortDirection.Ascending
             };
             if (Reverse) direction = direction == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending;
-            query.Append(direction == SortDirection.Ascending ? " asc" : " desc");
-            query.Append(" nulls last");
+            var order = direction == SortDirection.Ascending ? "asc" : "desc";
+            
+            // Order clause
+            const string fallback = "name collate \"C\" asc"; // how to handle null values
+            query.Append(" order by ");
+            query.Append(SortProperty switch
+            {
+                // Name/DN order needs `collate "C"` to match legacy .NET behavior (affects sorting of emojis, etc)
+                SortProperty.Name => $"name collate \"C\" {order}",
+                SortProperty.DisplayName => $"display_name collate \"C\" {order}, name collate \"C\" {order}",
+                SortProperty.Hid => $"hid {order}",
+                SortProperty.CreationDate => $"created {order}",
+                SortProperty.Birthdate => $"birthday_md {order} nulls last, {fallback}",
+                SortProperty.MessageCount => $"message_count {order} nulls last, {fallback}",
+                SortProperty.LastMessage => $"last_message {order} nulls last, {fallback}",
+                SortProperty.LastSwitch => $"last_switch_time {order} nulls last, {fallback}",
+                _ => throw new ArgumentOutOfRangeException($"Couldn't find order clause for sort property {SortProperty}")
+            });
 
             return query.ToString();
         }

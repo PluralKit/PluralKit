@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,7 +9,7 @@ namespace PluralKit.Bot
 {
     public class ProxyTagParser
     {
-        public bool TryParse(string input, IEnumerable<PKMember> members, out ProxyMatch result)
+        public bool TryMatch(IEnumerable<ProxyMember> members, string input, out ProxyMatch result)
         {
             result = default;
             
@@ -19,7 +20,7 @@ namespace PluralKit.Bot
 
             // "Flatten" list of members to a list of tag-member pairs
             // Then order them by "tag specificity"
-            // (ProxyString length desc = prefix+suffix length desc = inner message asc = more specific proxy first)
+            // (prefix+suffix length desc = inner message asc = more specific proxy first)
             var tags = members
                 .SelectMany(member => member.ProxyTags.Select(tag => (tag, member)))
                 .OrderByDescending(p => p.tag.ProxyString.Length);
@@ -34,15 +35,10 @@ namespace PluralKit.Bot
                 if (tag.Prefix == null && tag.Suffix == null) continue;
 
                 // Can we match with these tags?
-                if (TryMatchTags(input, tag, out result.Content))
+                if (TryMatchTagsInner(input, tag, out result.Content))
                 {
-                    // (see https://github.com/xSke/PluralKit/pull/181)
-                    if (result.Content == "\U0000fe0f") return false;
-                    
                     // If we extracted a leading mention before, add that back now
                     if (leadingMention != null) result.Content = $"{leadingMention} {result.Content}";
-                    
-                    // We're done!
                     return true;
                 }
                 
@@ -53,8 +49,24 @@ namespace PluralKit.Bot
             return false;
         }
 
-        private bool TryMatchTags(string input, ProxyTag tag, out string content)
+        public bool TryMatchTags(string input, ProxyTag tag, out string inner)
         {
+            // This just wraps TryMatchTagsInner w/ support for leading mentions
+            var leadingMention = ExtractLeadingMention(ref input);
+            
+            inner = "";
+            if (!TryMatchTagsInner(input, tag, out var innerRaw)) return false;
+            
+            // Add leading mentions back
+            inner = leadingMention == null ? innerRaw : $"{leadingMention} {innerRaw}";
+            return true;
+
+        }
+
+        private bool TryMatchTagsInner(string input, ProxyTag tag, out string inner)
+        {
+            inner = "";
+            
             // Normalize null tags to empty strings
             var prefix = tag.Prefix ?? "";
             var suffix = tag.Suffix ?? "";
@@ -66,19 +78,14 @@ namespace PluralKit.Bot
             // Special case: image-only proxies + proxy tags with spaces
             // Trim everything, then see if we have a "contentless tag pair" (normally disallowed, but OK if we have an attachment)
             if (!isMatch && input.Trim() == prefix.TrimEnd() + suffix.TrimStart())
-            {
-                content = ""; 
                 return true;
-            }
-
-            if (isMatch)
-            {
-                content = input.Substring(prefix.Length, input.Length - prefix.Length - suffix.Length);
-                return true;
-            }
-
-            content = "";
-            return false;
+            if (!isMatch) return false; 
+            
+            // We got a match, extract inner text
+            inner = input.Substring(prefix.Length, input.Length - prefix.Length - suffix.Length).Trim();
+            
+            // (see https://github.com/xSke/PluralKit/pull/181)
+            return inner != "\U0000fe0f";
         }
 
         private string? ExtractLeadingMention(ref string input)

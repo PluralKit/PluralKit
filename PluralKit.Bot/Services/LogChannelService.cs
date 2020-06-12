@@ -1,4 +1,7 @@
+using System.Linq;
 using System.Threading.Tasks;
+
+using Dapper;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -10,57 +13,59 @@ using Serilog;
 
 namespace PluralKit.Bot {
     public class LogChannelService {
-        private EmbedService _embed;
-        private IDataStore _data;
-        private ILogger _logger;
+        private readonly EmbedService _embed;
+        private readonly DbConnectionFactory _db;
+        private readonly IDataStore _data;
+        private readonly ILogger _logger;
+        private readonly DiscordRestClient _rest;
 
-        public LogChannelService(EmbedService embed, ILogger logger, IDataStore data)
+        public LogChannelService(EmbedService embed, ILogger logger, DiscordRestClient rest, DbConnectionFactory db, IDataStore data)
         {
             _embed = embed;
+            _rest = rest;
+            _db = db;
             _data = data;
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async Task LogMessage(DiscordClient client, PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordChannel originalChannel, DiscordUser sender, string content, GuildConfig? guildCfg = null)
+        public async Task LogMessage(ProxyMatch proxy, DiscordMessage trigger, ulong hookMessage)
         {
-            if (guildCfg == null) 
-                guildCfg = await _data.GetOrCreateGuildConfig(originalChannel.GuildId);
-
-            // Bail if logging is disabled either globally or for this channel
-            if (guildCfg.Value.LogChannel == null) return;
-            if (guildCfg.Value.LogBlacklist.Contains(originalChannel.Id)) return;
+            if (proxy.Member.LogChannel == null || proxy.Member.LogBlacklist.Contains(trigger.ChannelId)) return;
             
-            // Bail if we can't find the channel
-            DiscordChannel channel;
+            // Find log channel and check if valid
+            var logChannel = await FindLogChannel(trigger.Channel.GuildId, proxy);
+            if (logChannel == null || logChannel.Type != ChannelType.Text) return;
+            
+            // Check bot permissions
+            if (!trigger.Channel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks)) return;
+            
+            // Send embed!
+            await using var conn = await _db.Obtain();
+            var embed = _embed.CreateLoggedMessageEmbed(await _data.GetSystemById(proxy.Member.SystemId),
+                await _data.GetMemberById(proxy.Member.MemberId), hookMessage, trigger.Id, trigger.Author, proxy.Content,
+                trigger.Channel);
+            var url = $"https://discord.com/channels/{trigger.Channel.GuildId}/{trigger.ChannelId}/{hookMessage}";
+            await logChannel.SendMessageAsync(content: url, embed: embed);
+        }
+
+        private async Task<DiscordChannel> FindLogChannel(ulong guild, ProxyMatch proxy)
+        {
+            var logChannel = proxy.Member.LogChannel.Value;
+            
             try
             {
-                channel = await client.GetChannelAsync(guildCfg.Value.LogChannel.Value);
+                return await _rest.GetChannelAsync(logChannel);
             }
             catch (NotFoundException)
             {
-                // If it doesn't exist, remove it from the DB
-                await RemoveLogChannel(guildCfg.Value);
-                return; 
+                // Channel doesn't exist, let's remove it from the database too
+                _logger.Warning("Attempted to fetch missing log channel {LogChannel}, removing from database", logChannel);
+                await using var conn = await _db.Obtain();
+                await conn.ExecuteAsync("update servers set log_channel = null where server = @Guild",
+                    new {Guild = guild});
             }
-            
-            // Bail if it's not a text channel
-            if (channel.Type != ChannelType.Text) return;
 
-            // Bail if we don't have permission to send stuff here
-            if (!channel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
-                return;
-
-            var embed = _embed.CreateLoggedMessageEmbed(system, member, messageId, originalMsgId, sender, content, originalChannel);
-
-            var url = $"https://discord.com/channels/{originalChannel.GuildId}/{originalChannel.Id}/{messageId}";
-            
-            await channel.SendMessageAsync(content: url, embed: embed);
-        }
-
-        private async Task RemoveLogChannel(GuildConfig cfg)
-        {
-            cfg.LogChannel = null;
-            await _data.SaveGuildConfig(cfg);
+            return null;
         }
     }
 }

@@ -84,7 +84,7 @@ namespace PluralKit.Bot
                 .SingleInstance();
             
             // Proxy stuff
-            builder.RegisterType<Autoproxier>().AsSelf().SingleInstance();
+            builder.RegisterType<ProxyMatcher>().AsSelf().SingleInstance();
             builder.RegisterType<ProxyTagParser>().AsSelf().SingleInstance();
 
             // Utils

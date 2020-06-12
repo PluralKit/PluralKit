@@ -231,25 +231,6 @@ namespace PluralKit.Core {
             await _cache.InvalidateSystem(member.System);
         }
 
-        public async Task<ulong> GetMemberMessageCount(PKMember member)
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleAsync<ulong>("select count(*) from messages where member = @Id", member);
-        }
-
-        public async Task<IEnumerable<MemberMessageCount>> GetMemberMessageCountBulk(PKSystem system)
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.QueryAsync<MemberMessageCount>(
-                    @"SELECT messages.member, COUNT(messages.member) messagecount
-                        FROM members
-                        JOIN messages
-                        ON members.id = messages.member
-                        WHERE members.system = @System
-                        GROUP BY messages.member",
-                    new { System = system.Id });
-        }
-
         public async Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate)
         {
             var query = "select count(*) from members where system = @Id";
@@ -264,19 +245,19 @@ namespace PluralKit.Core {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from members");
         }
-        public async Task AddMessage(ulong senderId, ulong messageId, ulong guildId, ulong channelId, ulong originalMessage, PKMember member) {
+        public async Task AddMessage(ulong senderId, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId) {
             using (var conn = await _conn.Obtain())
                 // "on conflict do nothing" in the (pretty rare) case of duplicate events coming in from Discord, which would lead to a DB error before
                 await conn.ExecuteAsync("insert into messages(mid, guild, channel, member, sender, original_mid) values(@MessageId, @GuildId, @ChannelId, @MemberId, @SenderId, @OriginalMid) on conflict do nothing", new {
-                    MessageId = messageId,
+                    MessageId = postedMessageId,
                     GuildId = guildId,
                     ChannelId = channelId,
-                    MemberId = member.Id,
+                    MemberId = proxiedMemberId,
                     SenderId = senderId,
-                    OriginalMid = originalMessage
+                    OriginalMid = triggerMessageId
                 });
 
-            _logger.Information("Stored message {Message} in channel {Channel}", messageId, channelId);
+            _logger.Debug("Stored message {Message} in channel {Channel}", postedMessageId, channelId);
         }
 
         public async Task<FullMessage> GetMessage(ulong id)

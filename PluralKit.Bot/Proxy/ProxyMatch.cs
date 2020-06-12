@@ -5,10 +5,10 @@ namespace PluralKit.Bot
 {
     public struct ProxyMatch
     {
-        public PKMember Member;
+        public ProxyMember Member;
         public string? Content;
         public ProxyTag? ProxyTags;
-
+        
         public string? ProxyContent
         {
             get

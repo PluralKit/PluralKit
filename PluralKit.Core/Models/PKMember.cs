@@ -22,6 +22,7 @@ namespace PluralKit.Core {
         [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags { get; set; }
         [JsonProperty("keep_proxy")] public bool KeepProxy { get; set; }
         [JsonProperty("created")] public Instant Created { get; set; }
+        [JsonProperty("message_count")] public int MessageCount { get; set; }
 
         public PrivacyLevel MemberPrivacy { get; set; }
 

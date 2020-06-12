@@ -41,12 +41,6 @@ namespace PluralKit.Core {
         public Instant TimespanEnd;
     }
 
-    public struct MemberMessageCount
-    {
-        public int Member;
-        public int MessageCount;
-    }
-    
     public struct FrontBreakdown
     {
         public Dictionary<PKMember, Duration> MemberSwitchDurations;
@@ -208,18 +202,7 @@ namespace PluralKit.Core {
         /// </summary>
         /// <returns>An enumerable of <see cref="PKMember"/> structs representing each member in the system, in no particular order.</returns>
         IAsyncEnumerable<PKMember> GetSystemMembers(PKSystem system, bool orderByName = false);
-        /// <summary>
-        /// Gets the amount of messages proxied by a given member. 
-        /// </summary>
-        /// <returns>The message count of the given member.</returns>
-        Task<ulong> GetMemberMessageCount(PKMember member);
-        
-        /// <summary>
-        /// Collects a breakdown of each member in a system's message count.
-        /// </summary>
-        /// <returns>An enumerable of members along with their message counts.</returns>
-        Task<IEnumerable<MemberMessageCount>> GetMemberMessageCountBulk(PKSystem system);
-        
+
         /// <summary>
         /// Creates a member, auto-generating its corresponding IDs.
         /// </summary>
@@ -267,9 +250,9 @@ namespace PluralKit.Core {
         /// <param name="channelId">The ID of the channel the message was posted to.</param>
         /// <param name="postedMessageId">The ID of the message posted by the webhook.</param>
         /// <param name="triggerMessageId">The ID of the original trigger message containing the proxy tags.</param>
-        /// <param name="proxiedMember">The member (and by extension system) that was proxied.</param>
+        /// <param name="proxiedMemberId">The member (and by extension system) that was proxied.</param>
         /// <returns></returns>
-        Task AddMessage(ulong senderAccount, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, PKMember proxiedMember);
+        Task AddMessage(ulong senderAccount, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId);
         
         /// <summary>
         /// Deletes a message from the data store.

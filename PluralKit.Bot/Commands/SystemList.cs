@@ -50,14 +50,16 @@ namespace PluralKit.Bot
 
         private async Task<IReadOnlyList<PKListMember>> GetMemberList(PKSystem target, SortFilterOptions opts)
         {
-            using var conn = await _db.Obtain();
+            await using var conn = await _db.Obtain();
             var query = opts.BuildQuery();
             var args = new {System = target.Id, opts.Filter};
-
+            _logger.Debug("Executing sort/filter query `{Query}` with arguments {Args}", query, args);
+            
             var timeBefore = _clock.GetCurrentInstant();
             var results = (await conn.QueryAsync<PKListMember>(query, args)).ToList();
             var timeAfter = _clock.GetCurrentInstant();
-            _logger.Debug("Executing sort/filter query `{Query}` with arguments {Args} returning {ResultCount} results in {QueryTime}", query, args, results.Count, timeAfter - timeBefore);
+            
+            _logger.Debug("Executed sort/filter query `{Query}` returning {ResultCount} results in {QueryTime}", query, results.Count, timeAfter - timeBefore);
 
             return results;
         }

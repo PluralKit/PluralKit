@@ -30,7 +30,6 @@ namespace PluralKit.Core
             // Export members
             var members = new List<DataFileMember>();
             var pkMembers = _data.GetSystemMembers(system); // Read all members in the system
-            var messageCounts = await _data.GetMemberMessageCountBulk(system); // Count messages proxied by all members in the system
             
             await foreach (var member in pkMembers.Select(m => new DataFileMember
             {
@@ -45,7 +44,7 @@ namespace PluralKit.Core
                 ProxyTags = m.ProxyTags,
                 KeepProxy = m.KeepProxy,
                 Created = DateTimeFormats.TimestampExportFormat.Format(m.Created),
-                MessageCount = messageCounts.Where(x => x.Member == m.Id).Select(x => x.MessageCount).FirstOrDefault()
+                MessageCount = m.MessageCount
             })) members.Add(member);
 
             // Export switches

@@ -58,7 +58,7 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleDeleteReaction(MessageReactionAddEventArgs evt, FullMessage msg)
         {
-            if (evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
+            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
             
             // Can only delete your own message
             if (msg.Message.Sender != evt.User.Id) return;

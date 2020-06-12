@@ -45,7 +45,7 @@ namespace PluralKit.Bot
             var guild = await _proxyCache.GetGuildDataCached(evt.Channel.GuildId);
             
             // Just run the normal message handling stuff, with a flag to disable autoproxying
-            await _proxy.HandleMessageAsync(evt.Client, guild, account, evt.Message, allowAutoproxy: false);
+            await _proxy.HandleIncomingMessage(evt.Message, allowAutoproxy: false);
         }
     }
 }

@@ -33,7 +33,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Include="Migrations\*.sql" />
+      <EmbeddedResource Include="Database/**/*.sql" />
     </ItemGroup>
-
 </Project>

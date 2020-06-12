@@ -35,7 +35,7 @@ namespace PluralKit.Bot
 
                 // "Connect to the database" (ie. set off database migrations and ensure state)
                 logger.Information("Connecting to database");
-                await services.Resolve<SchemaService>().ApplyMigrations();
+                await services.Resolve<Schemas>().InitializeDatabase();
                 
                 // Init the bot instance itself, register handlers and such to the client before beginning to connect
                 logger.Information("Initializing bot");
