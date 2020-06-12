@@ -22,8 +22,6 @@ Some commands accept a **target system or member**:
 For **systems**, this can either be a [5-character ID](./ids.md), a `@mention`, or a [Discord user ID](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-).  
 In many cases you can leave the system out entirely. Instead, it'll just use your own system.
 
-For **members**, this can be the member's name or their [5-character ID](./ids).
-
 ::: details Example of referring to systems
 <CmdGroup>
 <Cmd comment="Own system">system list</Cmd>
@@ -32,6 +30,8 @@ For **members**, this can be the member's name or their [5-character ID](./ids).
 <Cmd comment="By Discord user ID">system <Arg>466378653216014359</Arg> list</Cmd>
 </CmdGroup>
 :::
+
+For **members**, this can be the member's name or their [5-character ID](./ids).
 
 ::: details Example of referring to members
 <CmdGroup>
@@ -44,6 +44,18 @@ For **members**, this can be the member's name or their [5-character ID](./ids).
 ::: warning
 If you're trying to refer to a member with **spaces or emojis** in their name, you'll need to wrap the name in either 'single' or "double" quotes. Alternatively, you can use the [member ID](./ids).
 :::
+
+### Flags
+**Flags** are small options you can apply to a command to change its behavior.
+
+All flags follow the format `-word` or `-multiple-words` (as in, they all start with a **-**).
+Flags **may appear in any order**, and most flags can appear anywhere in the command
+(with some exceptions; although placing them before the first argument is usually a safe bet).
+
+A common flag is `-clear`, which is used for most "change" commands. This flag instructs the command to clear a value instead of showing or changing it. For example, to clear your system description, you'd use the flag like this:
+<Cmd comment="Clears your system description (note the flag: -clear)">system description -clear</Cmd>
+
+Commands with flags list the flags in the **Flags** section below, along with an explanation of what they do.
 
 ## System commands
 ::: tip

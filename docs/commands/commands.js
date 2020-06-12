@@ -42,8 +42,8 @@ function systemSetterCommand(cmdPrefix, valueName, valueArg, exampleVal = "examp
             {cmd: `${cmdPrefix} \`${valueArg}\``, desc: `Sets your ${valueName}.`}
         ],
         examples: [
-            {cmd: cmdPrefix, desc: `Shows your current ${valueName}.`},
             {cmd: `${cmdPrefix} -clear`, desc: `Clears your ${valueName}.`},
+            ...(withRaw ? [{cmd: `${cmdPrefix} -raw`, desc: `Shows your ${valueName} with formatting.`}] : []),
             {cmd: `${cmdPrefix} \`${exampleVal}\``, desc: `Changes your ${valueName} to '${exampleVal}'`}
         ],
         flags: {
