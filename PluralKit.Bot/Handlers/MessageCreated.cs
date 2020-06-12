@@ -11,10 +11,6 @@ using DSharpPlus.EventArgs;
 
 using PluralKit.Core;
 
-using Sentry;
-
-using Serilog;
-
 namespace PluralKit.Bot
 {
     public class MessageCreated: IEventHandler<MessageCreateEventArgs>
@@ -22,83 +18,84 @@ namespace PluralKit.Bot
         private readonly CommandTree _tree;
         private readonly DiscordShardedClient _client;
         private readonly LastMessageCacheService _lastMessageCache;
-        private readonly ILogger _logger;
         private readonly LoggerCleanService _loggerClean;
         private readonly IMetrics _metrics;
         private readonly ProxyService _proxy;
-        private readonly ProxyCache _proxyCache;
-        private readonly Scope _sentryScope;
         private readonly ILifetimeScope _services;
-        
-        public MessageCreated(LastMessageCacheService lastMessageCache, ILogger logger, LoggerCleanService loggerClean, IMetrics metrics, ProxyService proxy, ProxyCache proxyCache, Scope sentryScope, DiscordShardedClient client, CommandTree tree, ILifetimeScope services)
+        private readonly DbConnectionFactory _db;
+        private readonly IDataStore _data;
+
+        public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean,
+                              IMetrics metrics, ProxyService proxy, DiscordShardedClient client,
+                              CommandTree tree, ILifetimeScope services, DbConnectionFactory db, IDataStore data)
         {
             _lastMessageCache = lastMessageCache;
-            _logger = logger;
             _loggerClean = loggerClean;
             _metrics = metrics;
             _proxy = proxy;
-            _proxyCache = proxyCache;
-            _sentryScope = sentryScope;
             _client = client;
             _tree = tree;
             _services = services;
+            _db = db;
+            _data = data;
         }
 
         public DiscordChannel ErrorChannelFor(MessageCreateEventArgs evt) => evt.Channel;
 
+        private bool IsDuplicateMessage(DiscordMessage evt) =>
+            // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
+            _lastMessageCache.GetLastMessage(evt.ChannelId) == evt.Id;
+
         public async Task Handle(MessageCreateEventArgs evt)
         {
-            // Drop the message if we've already received it.
-            // Gateway occasionally resends events for whatever reason and it can break stuff relying on IDs being unique
-            // Not a perfect fix since reordering could still break things but... it's good enough for now
-            // (was considering checking the order of the IDs but IDs aren't guaranteed to be *perfectly* in order, so that'd cause false positives)
-            // LastMessageCache is updated in RegisterMessageMetrics so the ordering here is correct.
-            if (_lastMessageCache.GetLastMessage(evt.Channel.Id) == evt.Message.Id) return;
-            RegisterMessageMetrics(evt);
+            if (evt.Message.MessageType != MessageType.Default) return;
+            if (IsDuplicateMessage(evt.Message)) return;
             
-            // Ignore system messages (member joined, message pinned, etc)
-            var msg = evt.Message;
-            if (msg.MessageType != MessageType.Default) return;
-
-            var cachedGuild = await _proxyCache.GetGuildDataCached(msg.Channel.GuildId);
-            var cachedAccount = await _proxyCache.GetAccountDataCached(msg.Author.Id);
-            // this ^ may be null, do remember that down the line
+            // Log metrics and message info
+            _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
+            _lastMessageCache.AddMessage(evt.Channel.Id, evt.Message.Id);
             
-            // Pass guild bot/WH messages onto the logger cleanup service
-            if (msg.Author.IsBot && msg.Channel.Type == ChannelType.Text)
-            {
-                await _loggerClean.HandleLoggerBotCleanup(msg, cachedGuild);
-                return;
-            }
-
-            // First try parsing a command, then try proxying
-            if (await TryHandleCommand(evt, cachedGuild, cachedAccount)) return;
-            await TryHandleProxy(evt, cachedGuild, cachedAccount);
+            // Try each handler until we find one that succeeds
+            var ctx = await _db.Execute(c => c.QueryMessageContext(evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id));
+            var _ = await TryHandleLogClean(evt, ctx) ||
+                    await TryHandleCommand(evt, ctx) || 
+                    await TryHandleProxy(evt, ctx);
         }
 
-        private async Task<bool> TryHandleCommand(MessageCreateEventArgs evt, GuildConfig cachedGuild, CachedAccount cachedAccount)
+        private async ValueTask<bool> TryHandleLogClean(MessageCreateEventArgs evt, MessageContext ctx)
         {
-            var msg = evt.Message;
-            
-            int argPos = -1;
+            if (!evt.Message.Author.IsBot || evt.Message.Channel.Type != ChannelType.Text ||
+                !ctx.LogCleanupEnabled) return false;
+
+            await _loggerClean.HandleLoggerBotCleanup(evt.Message);
+            return true;
+        }
+
+        private async ValueTask<bool> TryHandleCommand(MessageCreateEventArgs evt, MessageContext ctx)
+        {
+            var content = evt.Message.Content;
+            if (content == null) return false;
+
+            var argPos = -1;
             // Check if message starts with the command prefix
-            if (msg.Content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
-            else if (msg.Content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
-            else if (msg.Content != null && StringUtils.HasMentionPrefix(msg.Content, ref argPos, out var id)) // Set argPos to the proper value
+            if (content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
+            else if (content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
+            else if (StringUtils.HasMentionPrefix(content, ref argPos, out var id)) // Set argPos to the proper value
                 if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
                     argPos = -1;
-            
+
             // If we didn't find a prefix, give up handling commands
             if (argPos == -1) return false;
-            
+
             // Trim leading whitespace from command without actually modifying the wring
             // This just moves the argPos pointer by however much whitespace is at the start of the post-argPos string
-            var trimStartLengthDiff = msg.Content.Substring(argPos).Length - msg.Content.Substring(argPos).TrimStart().Length;
+            var trimStartLengthDiff = content.Substring(argPos).Length - content.Substring(argPos).TrimStart().Length;
             argPos += trimStartLengthDiff;
 
             try
             {
-                await _tree.ExecuteCommand(new Context(_services, evt.Client, msg, argPos, cachedAccount?.System));
+                var system = ctx.SystemId != null ? await _data.GetSystemById(ctx.SystemId.Value) : null;
+                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, argPos, system));
             }
             catch (PKError)
             {
@@ -109,31 +106,21 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task<bool> TryHandleProxy(MessageCreateEventArgs evt, GuildConfig cachedGuild, CachedAccount cachedAccount)
+        private async ValueTask<bool> TryHandleProxy(MessageCreateEventArgs evt, MessageContext ctx)
         {
-            var msg = evt.Message;
-            
-            // If we don't have any cached account data, this means no member in the account has a proxy tag set
-            if (cachedAccount == null) return false;
-            
             try
             {
-                await _proxy.HandleIncomingMessage(evt.Message, allowAutoproxy: true);
+                return await _proxy.HandleIncomingMessage(evt.Message, ctx, allowAutoproxy: true);
             }
             catch (PKError e)
             {
                 // User-facing errors, print to the channel properly formatted
+                var msg = evt.Message;
                 if (msg.Channel.Guild == null || msg.Channel.BotHasAllPermissions(Permissions.SendMessages))
                     await msg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
             }
 
-            return true;
-        }
-
-        private void RegisterMessageMetrics(MessageCreateEventArgs evt)
-        {
-            _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
-            _lastMessageCache.AddMessage(evt.Channel.Id, evt.Message.Id);
+            return false;
         }
     }
 }

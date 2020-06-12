@@ -20,11 +20,11 @@ namespace PluralKit.Bot
             _clock = clock;
         }
 
-        public bool TryMatch(IReadOnlyCollection<ProxyMember> members, out ProxyMatch match, string messageContent,
+        public bool TryMatch(MessageContext ctx, IReadOnlyCollection<ProxyMember> members, out ProxyMatch match, string messageContent,
                              bool hasAttachments, bool allowAutoproxy)
         {
             if (TryMatchTags(members, messageContent, hasAttachments, out match)) return true;
-            if (allowAutoproxy && TryMatchAutoproxy(members, messageContent, out match)) return true;
+            if (allowAutoproxy && TryMatchAutoproxy(ctx, members, messageContent, out match)) return true;
             return false;
         }
 
@@ -37,33 +37,44 @@ namespace PluralKit.Bot
             return hasAttachments || match.Content.Length > 0;
         }
 
-        private bool TryMatchAutoproxy(IReadOnlyCollection<ProxyMember> members, string messageContent,
+        private bool TryMatchAutoproxy(MessageContext ctx, IReadOnlyCollection<ProxyMember> members, string messageContent,
                                        out ProxyMatch match)
         {
             match = default;
 
-            // We handle most autoproxy logic in the database function, so we just look for the member that's marked
-            var info = members.FirstOrDefault(i => i.IsAutoproxyMember);
-            if (info == null) return false;
-
-            // If we're in latch mode and the latch message is too old, fail the match too
-            if (info.AutoproxyMode == AutoproxyMode.Latch && info.LatchMessage != null)
+            // Find the member we should autoproxy (null if none)
+            var member = ctx.AutoproxyMode switch
             {
-                var timestamp = DiscordUtils.SnowflakeToInstant(info.LatchMessage.Value);
-                if (_clock.GetCurrentInstant() - timestamp > LatchExpiryTime) return false;
-            }
+                AutoproxyMode.Member when ctx.AutoproxyMember != null => 
+                    members.FirstOrDefault(m => m.Id == ctx.AutoproxyMember),
+                
+                AutoproxyMode.Front when ctx.LastSwitchMembers.Count > 0 => 
+                    members.FirstOrDefault(m => m.Id == ctx.LastSwitchMembers[0]),
+                
+                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx.LastMessage) =>
+                    members.FirstOrDefault(m => m.Id == ctx.LastMessageMember.Value),
+                
+                _ => null
+            };
 
-            // Match succeeded, build info object and return
+            if (member == null) return false;
             match = new ProxyMatch
             {
                 Content = messageContent,
-                Member = info,
-
+                Member = member,
+            
                 // We're autoproxying, so not using any proxy tags here
                 // we just find the first pair of tags (if any), otherwise null
-                ProxyTags = info.ProxyTags.FirstOrDefault()
+                ProxyTags = member.ProxyTags.FirstOrDefault()
             };
             return true;
+        }
+
+        private bool IsLatchExpired(ulong? messageId)
+        {
+            if (messageId == null) return true;
+            var timestamp = DiscordUtils.SnowflakeToInstant(messageId.Value);
+            return _clock.GetCurrentInstant() - timestamp > LatchExpiryTime;
         }
     }
 }

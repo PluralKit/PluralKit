@@ -28,7 +28,6 @@ namespace PluralKit.Core
             builder.RegisterType<Schemas>().AsSelf();
             
             builder.Populate(new ServiceCollection().AddMemoryCache());
-            builder.RegisterType<ProxyCache>().AsSelf().SingleInstance();
         }
     }
 

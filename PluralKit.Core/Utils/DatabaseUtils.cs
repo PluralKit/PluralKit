@@ -308,4 +308,13 @@ namespace PluralKit.Core
             parameter.Value = (long) value;
         }
     }
+
+    public static class DatabaseExt
+    {
+        public static async Task<T> Execute<T>(this DbConnectionFactory db, Func<IDbConnection, Task<T>> func)
+        {
+            await using var conn = await db.Obtain();
+            return await func(conn);
+        }
+    }
 }

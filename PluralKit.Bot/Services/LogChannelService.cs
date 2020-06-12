@@ -28,12 +28,12 @@ namespace PluralKit.Bot {
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async Task LogMessage(ProxyMatch proxy, DiscordMessage trigger, ulong hookMessage)
+        public async ValueTask LogMessage(MessageContext ctx, ProxyMatch proxy, DiscordMessage trigger, ulong hookMessage)
         {
-            if (proxy.Member.LogChannel == null || proxy.Member.LogBlacklist.Contains(trigger.ChannelId)) return;
+            if (ctx.SystemId == null || ctx.LogChannel == null || ctx.InLogBlacklist) return;
             
             // Find log channel and check if valid
-            var logChannel = await FindLogChannel(trigger.Channel.GuildId, proxy);
+            var logChannel = await FindLogChannel(trigger.Channel.GuildId, ctx.LogChannel.Value);
             if (logChannel == null || logChannel.Type != ChannelType.Text) return;
             
             // Check bot permissions
@@ -41,25 +41,23 @@ namespace PluralKit.Bot {
             
             // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateLoggedMessageEmbed(await _data.GetSystemById(proxy.Member.SystemId),
-                await _data.GetMemberById(proxy.Member.MemberId), hookMessage, trigger.Id, trigger.Author, proxy.Content,
+            var embed = _embed.CreateLoggedMessageEmbed(await _data.GetSystemById(ctx.SystemId.Value),
+                await _data.GetMemberById(proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content,
                 trigger.Channel);
             var url = $"https://discord.com/channels/{trigger.Channel.GuildId}/{trigger.ChannelId}/{hookMessage}";
             await logChannel.SendMessageAsync(content: url, embed: embed);
         }
 
-        private async Task<DiscordChannel> FindLogChannel(ulong guild, ProxyMatch proxy)
+        private async Task<DiscordChannel> FindLogChannel(ulong guild, ulong channel)
         {
-            var logChannel = proxy.Member.LogChannel.Value;
-            
             try
             {
-                return await _rest.GetChannelAsync(logChannel);
+                return await _rest.GetChannelAsync(channel);
             }
             catch (NotFoundException)
             {
                 // Channel doesn't exist, let's remove it from the database too
-                _logger.Warning("Attempted to fetch missing log channel {LogChannel}, removing from database", logChannel);
+                _logger.Warning("Attempted to fetch missing log channel {LogChannel}, removing from database", channel);
                 await using var conn = await _db.Obtain();
                 await conn.ExecuteAsync("update servers set log_channel = null where server = @Guild",
                     new {Guild = guild});

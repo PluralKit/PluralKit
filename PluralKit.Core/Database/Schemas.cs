@@ -46,7 +46,7 @@ namespace PluralKit.Core
 
             // Now, reapply views/functions (we deleted them above, no need to worry about conflicts)
             await ExecuteSqlFile($"{RootPath}.views.sql", conn, tx);
-            await ExecuteSqlFile($"{RootPath}.functions.sql", conn, tx);
+            await ExecuteSqlFile($"{RootPath}.Functions.functions.sql", conn, tx);
 
             // Finally, commit tx
             tx.Commit();

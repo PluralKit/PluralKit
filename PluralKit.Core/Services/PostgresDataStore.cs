@@ -12,13 +12,11 @@ namespace PluralKit.Core {
     public class PostgresDataStore: IDataStore {
         private DbConnectionFactory _conn;
         private ILogger _logger;
-        private ProxyCache _cache;
 
-        public PostgresDataStore(DbConnectionFactory conn, ILogger logger, ProxyCache cache)
+        public PostgresDataStore(DbConnectionFactory conn, ILogger logger)
         {
             _conn = conn;
             _logger = logger;
-            _cache = cache;
         }
 
         public async Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag)
@@ -56,7 +54,6 @@ namespace PluralKit.Core {
                     settings.AutoproxyMode,
                     settings.AutoproxyMember
                 });
-            await _cache.InvalidateSystem(system);
             _logger.Information("Updated system guild settings {@SystemGuildSettings}", settings);
         }
 
@@ -83,7 +80,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
 
             _logger.Information("Linked system {System} to account {Account}", system.Id, accountId);
-            await _cache.InvalidateSystem(system);
         }
 
         public async Task RemoveAccount(PKSystem system, ulong accountId) {
@@ -91,8 +87,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
 
             _logger.Information("Unlinked system {System} from account {Account}", system.Id, accountId);
-            await _cache.InvalidateSystem(system);
-            _cache.InvalidateAccounts(new [] { accountId });
         }
 
         public async Task<PKSystem> GetSystemByAccount(ulong accountId) {
@@ -121,7 +115,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz, description_privacy = @DescriptionPrivacy, member_list_privacy = @MemberListPrivacy, front_privacy = @FrontPrivacy, front_history_privacy = @FrontHistoryPrivacy, pings_enabled = @PingsEnabled where id = @Id", system);
 
             _logger.Information("Updated system {@System}", system);
-            await _cache.InvalidateSystem(system);
         }
 
         public async Task DeleteSystem(PKSystem system)
@@ -133,7 +126,6 @@ namespace PluralKit.Core {
             await conn.ExecuteAsync("delete from systems where id = @Id", system);
             
             _logger.Information("Deleted system {System}", system.Id);
-            _cache.InvalidateDeletedSystem(system.Id, accounts);
         }
 
         public async Task<IEnumerable<ulong>> GetSystemAccounts(PKSystem system)
@@ -170,7 +162,6 @@ namespace PluralKit.Core {
                 });
 
             _logger.Information("Created member {Member}", member.Id);
-            await _cache.InvalidateSystem(system);
             return member;
         }
 
@@ -202,7 +193,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_privacy = @MemberPrivacy where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
-            await _cache.InvalidateSystem(member.System);
         }
 
         public async Task DeleteMember(PKMember member) {
@@ -210,7 +200,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
 
             _logger.Information("Deleted member {@Member}", member);
-            await _cache.InvalidateSystem(member.System);
         }
 
         public async Task<MemberGuildSettings> GetMemberGuildSettings(PKMember member, ulong guild)
@@ -228,7 +217,6 @@ namespace PluralKit.Core {
                 "insert into member_guild (member, guild, display_name, avatar_url) values (@Member, @Guild, @DisplayName, @AvatarUrl) on conflict (member, guild) do update set display_name = @DisplayName, avatar_url = @AvatarUrl",
                 settings);
             _logger.Information("Updated member guild settings {@MemberGuildSettings}", settings);
-            await _cache.InvalidateSystem(member.System);
         }
 
         public async Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate)
@@ -350,7 +338,6 @@ namespace PluralKit.Core {
                     Blacklist = cfg.Blacklist.Select(c  => (long) c).ToList()
                 });
             _logger.Information("Updated guild configuration {@GuildCfg}", cfg);
-            _cache.InvalidateGuild(cfg.Id);
         }
 
         public async Task<PKMember> GetFirstFronter(PKSystem system)

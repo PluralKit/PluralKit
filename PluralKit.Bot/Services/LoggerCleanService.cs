@@ -64,10 +64,8 @@ namespace PluralKit.Bot
 
         public ICollection<LoggerBot> Bots => _bots.Values;
 
-        public async ValueTask HandleLoggerBotCleanup(DiscordMessage msg, GuildConfig cachedGuild)
+        public async ValueTask HandleLoggerBotCleanup(DiscordMessage msg)
         {
-            // Bail if not enabled, or if we don't have permission here
-            if (!cachedGuild.LogCleanupEnabled) return;
             if (msg.Channel.Type != ChannelType.Text) return;
             if (!msg.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
  

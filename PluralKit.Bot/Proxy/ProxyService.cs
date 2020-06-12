@@ -20,11 +20,11 @@ namespace PluralKit.Bot
     {
         public static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
 
-        private LogChannelService _logChannel;
-        private DbConnectionFactory _db;
-        private IDataStore _data;
-        private ILogger _logger;
-        private WebhookExecutorService _webhookExecutor;
+        private readonly LogChannelService _logChannel;
+        private readonly DbConnectionFactory _db;
+        private readonly IDataStore _data;
+        private readonly ILogger _logger;
+        private readonly WebhookExecutorService _webhookExecutor;
         private readonly ProxyMatcher _matcher;
 
         public ProxyService(LogChannelService logChannel, IDataStore data, ILogger logger,
@@ -38,35 +38,57 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<ProxyService>();
         }
 
-        public async Task HandleIncomingMessage(DiscordMessage message, bool allowAutoproxy)
+        public async Task<bool> HandleIncomingMessage(DiscordMessage message, MessageContext ctx, bool allowAutoproxy)
         {
-            // Quick context checks to quit early
-            if (!IsMessageValid(message)) return;
+            if (!ShouldProxy(message, ctx)) return false;
 
             // Fetch members and try to match to a specific member
-            var members = await FetchProxyMembers(message.Author.Id, message.Channel.GuildId);
-            if (!_matcher.TryMatch(members, out var match, message.Content, message.Attachments.Count > 0,
-                allowAutoproxy)) return;
+            var members = (await _db.Execute(c => c.QueryProxyMembers(message.Author.Id, message.Channel.GuildId))).ToList();
+            if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Count > 0,
+                allowAutoproxy)) return false;
 
-            // Do some quick permission checks before going through with the proxy
-            // (do channel checks *after* checking other perms to make sure we don't spam errors when eg. channel is blacklisted)
-            if (!IsProxyValid(message, match)) return;
-            if (!await CheckBotPermissionsOrError(message.Channel)) return;
-            if (!CheckProxyNameBoundsOrError(match)) return;
+            // Permission check after proxy match so we don't get spammed when not actually proxying
+            if (!await CheckBotPermissionsOrError(message.Channel)) return false;
+            if (!CheckProxyNameBoundsOrError(match)) return false;
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(message, match);
+            await ExecuteProxy(message, ctx, match);
+            return true;
         }
-        
-        private async Task ExecuteProxy(DiscordMessage trigger, ProxyMatch match)
+
+        private bool ShouldProxy(DiscordMessage msg, MessageContext ctx)
+        {
+            // Make sure author has a system
+            if (ctx.SystemId == null) return false;
+            
+            // Make sure channel is a guild text channel and this is a normal message
+            if (msg.Channel.Type != ChannelType.Text || msg.MessageType != MessageType.Default) return false;
+            
+            // Make sure author is a normal user
+            if (msg.Author.IsSystem == true || msg.Author.IsBot || msg.WebhookMessage) return false;
+            
+            // Make sure proxying is enabled here
+            if (!ctx.ProxyEnabled || ctx.InBlacklist) return false;
+            
+            // Make sure we have either an attachment or message content
+            var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
+            if (isMessageBlank && msg.Attachments.Count == 0) return false;
+            
+            // All good!
+            return true;
+        }
+
+        private async Task ExecuteProxy(DiscordMessage trigger, MessageContext ctx, ProxyMatch match)
         {
             // Send the webhook
-            var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName, match.Member.ProxyAvatar,
+            var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName,
+                match.Member.ProxyAvatar,
                 match.Content, trigger.Attachments);
-            
+
             // Handle post-proxy actions
-            await _data.AddMessage(trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id, match.Member.MemberId);
-            await _logChannel.LogMessage(match, trigger, id);
+            await _data.AddMessage(trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id,
+                match.Member.Id);
+            await _logChannel.LogMessage(ctx, match, trigger, id);
 
             // Wait a second or so before deleting the original message
             await Task.Delay(MessageDeletionDelay);
@@ -81,14 +103,6 @@ namespace PluralKit.Bot
             }
         }
         
-        private async Task<IReadOnlyCollection<ProxyMember>> FetchProxyMembers(ulong account, ulong guild)
-        {
-            await using var conn = await _db.Obtain();
-            var members = await conn.QueryAsync<ProxyMember>("proxy_info",
-                new {account_id = account, guild_id = guild}, commandType: CommandType.StoredProcedure);
-            return members.ToList();
-        }
-
         private async Task<bool> CheckBotPermissionsOrError(DiscordChannel channel)
         {
             var permissions = channel.BotPermissions();
@@ -114,43 +128,15 @@ namespace PluralKit.Bot
 
             return true;
         }
-        
+
         private bool CheckProxyNameBoundsOrError(ProxyMatch match)
         {
             var proxyName = match.Member.ProxyName;
             if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
-            
+
             // TODO: this never returns false as it throws instead, should this happen?
             return true;
-        }
-        
-        private bool IsMessageValid(DiscordMessage message)
-        {
-            return
-                // Must be a guild text channel
-                message.Channel.Type == ChannelType.Text &&
-                
-                // Must not be a system message
-                message.MessageType == MessageType.Default &&
-                !(message.Author.IsSystem ?? false) &&
-                
-                // Must not be a bot or webhook message
-                !message.WebhookMessage &&
-                !message.Author.IsBot &&
-                
-                // Must have either an attachment or content (or both, but not neither) 
-                (message.Attachments.Count > 0 || (message.Content != null && message.Content.Trim().Length > 0));
-        }
-
-        private bool IsProxyValid(DiscordMessage message, ProxyMatch match)
-        {
-            return
-                // System and member must have proxying enabled in this guild
-                match.Member.ProxyEnabled &&
-                
-                // Channel must not be blacklisted here
-                !match.Member.ChannelBlacklist.Contains(message.ChannelId);
         }
     }
 }
