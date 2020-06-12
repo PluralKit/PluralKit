@@ -21,8 +21,10 @@ When an argument asks for a **member ID**, you can either fill in a member's [5-
 You can use <CmdInline>s</CmdInline> instead of <CmdInline>system</CmdInline> as a short-hand.
 :::
 
-<CommandInfo cmd="system-info"></CommandInfo>
-<CommandInfo cmd="system-new"></CommandInfo>
+<CommandInfo cmd="systemInfo"></CommandInfo>
+<CommandInfo cmd="systemNew"></CommandInfo>
+<CommandInfo cmd="systemName"></CommandInfo>
+<CommandInfo cmd="systemDesc"></CommandInfo>
 
 ## Member commands
 ::: tip

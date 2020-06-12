@@ -8,6 +8,7 @@
 
         <slot></slot>
 
+        <h4>Syntax <small>(how the command is used)</small></h4>
         <CmdGroup>
             <Cmd v-for="usage in command.usage" :comment="usage.desc">
                 <span v-for="part in parseUsage(usage)">
@@ -17,9 +18,28 @@
             </Cmd>
         </CmdGroup>
 
-        <h4>Arguments</h4>
-        <div v-for="(arg, key) in command.arguments">
-            <Arg>{{ key }}</Arg> (<strong v-if="arg.type === 'string'">text</strong><strong v-if="arg.type === 'system'">system ID</strong><span v-if="arg.optional">, <em>optional</em></span>) - {{ arg.desc }}. 
+        <h4 v-if="command.examples">Examples</h4>
+        <CmdGroup v-if="command.examples">
+            <Cmd v-for="example in command.examples" :comment="example.desc">
+                <span v-for="part in parseUsage(example)">
+                    <span v-if="part.type === 'str'">{{ part.str }}</span>
+                    <span v-if="part.type === 'arg'"><Arg>{{ part.arg }}</Arg></span>
+                </span>
+            </Cmd>
+        </CmdGroup>
+
+        <h4 v-if="command.arguments">Arguments <small>(fill in above)</small></h4>
+        <div class="info-arg" v-for="(arg, key) in command.arguments">
+            <Arg>{{ key }}</Arg>
+            (<strong v-if="arg.type === 'string'">text</strong><strong v-if="arg.type === 'system'">system
+            ID</strong><span v-if="arg.optional">, <em>optional</em></span>) - {{ arg.desc }}.
+        </div>
+
+        <h4 v-if="command.flags">Flags <small>(all optional, starts with a hyphen, place anywhere in the
+            command)</small></h4>
+        <div class="info-flag" v-for="(flag, key) in command.flags">
+            <Arg>-{{ key }}</Arg>
+            - {{ flag.desc }}
         </div>
 
         <!--table>
@@ -57,16 +77,20 @@
             parseUsage(usage) {
                 if (usage.cmd) usage = usage.cmd;
 
-                const parts = usage.split(/\s/);
-                const output = [];
-                for (const part of parts) {
-                    const match = part.match(/`([\w\-]+)`/);
-                    if (match)
-                        output.push({type: "arg", arg: match[1]});
-                    else
-                        output.push({type: "str", str: part})
+                const argRegex = /`([^`]+)`/g;
+                const parts = [];
+                let lastMatch = 0;
+                for (const match of usage.matchAll(argRegex)) {
+                    if (match.index > 0)
+                        parts.push({type: "str", str: usage.substring(lastMatch, match.index)});
+                    parts.push({type: "arg", arg: match[1]});
+                    lastMatch = match.index + match[0].length;
                 }
-                return output;
+                if (lastMatch < usage.length)
+                    parts.push({type: "str", str: usage.substring(lastMatch)});
+                console.log("INPUT STRING:", usage);
+                console.log("OUTPUT TOKENS:", parts);
+                return parts;
             }
         }
     }
@@ -87,5 +111,9 @@
 
     .command-info h4 {
         margin-bottom: 0.75rem;
+    }
+
+    .info-arg, .info-flag {
+        margin-bottom: 0.5rem;
     }
 </style>
