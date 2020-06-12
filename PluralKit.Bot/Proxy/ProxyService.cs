@@ -49,7 +49,7 @@ namespace PluralKit.Bot
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
             if (!await CheckBotPermissionsOrError(message.Channel)) return false;
-            if (!CheckProxyNameBoundsOrError(match)) return false;
+            if (!CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx))) return false;
 
             // Everything's in order, we can execute the proxy!
             await ExecuteProxy(message, ctx, match);
@@ -81,8 +81,8 @@ namespace PluralKit.Bot
         private async Task ExecuteProxy(DiscordMessage trigger, MessageContext ctx, ProxyMatch match)
         {
             // Send the webhook
-            var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName,
-                match.Member.ProxyAvatar,
+            var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
+                match.Member.ProxyAvatar(ctx),
                 match.Content, trigger.Attachments);
 
             // Handle post-proxy actions
@@ -129,9 +129,8 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool CheckProxyNameBoundsOrError(ProxyMatch match)
+        private bool CheckProxyNameBoundsOrError(string proxyName)
         {
-            var proxyName = match.Member.ProxyName;
             if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
 

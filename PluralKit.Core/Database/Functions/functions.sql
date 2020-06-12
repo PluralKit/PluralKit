@@ -12,7 +12,9 @@
         last_message_member int,
         last_switch int,
         last_switch_members int[],
-        last_switch_timestamp timestamp
+        last_switch_timestamp timestamp,
+        system_tag text,
+        system_avatar text
     )
 as $$
     with
@@ -32,7 +34,9 @@ as $$
         last_message.member as last_message_member,
         system_last_switch.switch as last_switch,
         system_last_switch.members as last_switch_members,
-        system_last_switch.timestamp as last_switch_timestamp
+        system_last_switch.timestamp as last_switch_timestamp,
+        system.tag as system_tag,
+        system.avatar_url as system_avatar
     from system
         full join guild on true
         left join last_message on true
@@ -53,11 +57,9 @@ create function proxy_members(account_id bigint, guild_id bigint)
         server_name text,
         display_name text,
         name text,
-        system_tag text,
         
         server_avatar text,
-        avatar text,
-        system_icon text
+        avatar text
     )
 as $$
     select
@@ -70,12 +72,10 @@ as $$
         member_guild.display_name as server_name,
         members.display_name as display_name,
         members.name as name,
-        systems.tag as system_tag,
         
         -- Avatar info
         member_guild.avatar_url as server_avatar,
-        members.avatar_url as avatar,
-        systems.avatar_url as system_icon
+        members.avatar_url as avatar
     from accounts
         inner join systems on systems.id = accounts.system
         inner join members on members.system = systems.id

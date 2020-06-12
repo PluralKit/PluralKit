@@ -15,16 +15,14 @@ namespace PluralKit.Core
         public string? ServerName { get; set; }
         public string? DisplayName { get; set; }
         public string Name { get; set; } = "";
-        public string? SystemTag { get; set; }
         
         public string? ServerAvatar { get; set; }
         public string? Avatar { get; set; }
-        public string? SystemIcon { get; set; }
 
-        public string ProxyName => SystemTag != null
-            ? $"{ServerName ?? DisplayName ?? Name} {SystemTag}"
+        public string ProxyName(MessageContext ctx) => ctx.SystemTag != null
+            ? $"{ServerName ?? DisplayName ?? Name} {ctx.SystemTag}"
             : ServerName ?? DisplayName ?? Name;
 
-        public string? ProxyAvatar => ServerAvatar ?? Avatar ?? SystemIcon;
+        public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? Avatar ?? ctx.SystemAvatar;
     }
 }

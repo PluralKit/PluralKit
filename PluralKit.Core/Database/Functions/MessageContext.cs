@@ -23,5 +23,7 @@ namespace PluralKit.Core
         public int LastSwitch { get; set; }
         public IReadOnlyList<int> LastSwitchMembers { get; set; } = new int[0];
         public Instant LastSwitchTimestamp { get; set; }
+        public string? SystemTag { get; set; }
+        public string? SystemAvatar { get; set; }
     }
 }
