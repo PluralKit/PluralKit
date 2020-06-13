@@ -17,8 +17,8 @@ namespace PluralKit.Core
 
         public Task ChangeDatabaseAsync(string databaseName, CancellationToken ct = default);
         
-        public ValueTask<DbTransaction> BeginTransactionAsync(CancellationToken ct = default) => BeginTransactionAsync(IsolationLevel.Unspecified, ct);
-        public ValueTask<DbTransaction> BeginTransactionAsync(IsolationLevel level, CancellationToken ct = default);
+        public ValueTask<IPKTransaction> BeginTransactionAsync(CancellationToken ct = default) => BeginTransactionAsync(IsolationLevel.Unspecified, ct);
+        public ValueTask<IPKTransaction> BeginTransactionAsync(IsolationLevel level, CancellationToken ct = default);
         
         public NpgsqlBinaryImporter BeginBinaryImport(string copyFromCommand);
         public NpgsqlBinaryExporter BeginBinaryExport(string copyToCommand);

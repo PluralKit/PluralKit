@@ -52,14 +52,16 @@ namespace PluralKit.Core
         protected override DbCommand CreateDbCommand() => new PKCommand(Inner.CreateCommand(), this, _logger, _metrics);
         
         public void ReloadTypes() => Inner.ReloadTypes();
-        
+
+        public new async ValueTask<IPKTransaction> BeginTransactionAsync(IsolationLevel level, CancellationToken ct = default) => new PKTransaction(await Inner.BeginTransactionAsync(level, ct));
+
         public NpgsqlBinaryImporter BeginBinaryImport(string copyFromCommand) => Inner.BeginBinaryImport(copyFromCommand);
         public NpgsqlBinaryExporter BeginBinaryExport(string copyToCommand) => Inner.BeginBinaryExport(copyToCommand);
         
         public override void ChangeDatabase(string databaseName) => Inner.ChangeDatabase(databaseName);
         public override Task ChangeDatabaseAsync(string databaseName, CancellationToken ct = default) => Inner.ChangeDatabaseAsync(databaseName, ct);
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => throw SyncError(nameof(BeginDbTransaction));
-        protected override async ValueTask<DbTransaction> BeginDbTransactionAsync(IsolationLevel level, CancellationToken ct) => await Inner.BeginTransactionAsync(level, ct);
+        protected override async ValueTask<DbTransaction> BeginDbTransactionAsync(IsolationLevel level, CancellationToken ct) => new PKTransaction(await Inner.BeginTransactionAsync(level, ct));
 
         public override void Open() => throw SyncError(nameof(Open));
         public override void Close() => throw SyncError(nameof(Close));
@@ -102,6 +104,6 @@ namespace PluralKit.Core
             _logger.Verbose("Closed database connection {ConnectionId} (open for {ConnectionDuration}), new connection count {ConnectionCount}", ConnectionId, duration, _countHolder.ConnectionCount);
         }
 
-        private static Exception SyncError(string caller) => throw new Exception($"Executed synchronous IPKConnection function {caller}!");
+        private static Exception SyncError(string caller) => throw new Exception($"Executed synchronous IDbCommand function {caller}!");
     }
 }

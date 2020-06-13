@@ -17,80 +17,87 @@ namespace PluralKit.Core
 {
     public class PKCommand: DbCommand, IPKCommand
     {
-        private readonly NpgsqlCommand _inner;
+        public NpgsqlCommand Inner { get; }
+        
         private readonly PKConnection _ourConnection;
         private readonly ILogger _logger;
         private readonly IMetrics _metrics;
         
         public PKCommand(NpgsqlCommand inner, PKConnection ourConnection, ILogger logger, IMetrics metrics)
         {
-            _inner = inner;
+            Inner = inner;
             _ourConnection = ourConnection;
             _logger = logger.ForContext<PKCommand>();
             _metrics = metrics;
         }
 
-        public override int ExecuteNonQuery() => throw SyncError(nameof(ExecuteNonQuery));
-        public override object ExecuteScalar() => throw SyncError(nameof(ExecuteScalar));
-        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => throw SyncError(nameof(ExecuteDbDataReader));
+        public override Task<int> ExecuteNonQueryAsync(CancellationToken ct) => LogQuery(Inner.ExecuteNonQueryAsync(ct));
+        public override Task<object> ExecuteScalarAsync(CancellationToken ct) => LogQuery(Inner.ExecuteScalarAsync(ct));
+        protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken ct) => await LogQuery(Inner.ExecuteReaderAsync(behavior, ct));
 
-        public override Task<int> ExecuteNonQueryAsync(CancellationToken ct) => LogQuery(_inner.ExecuteNonQueryAsync(ct));
-        public override Task<object> ExecuteScalarAsync(CancellationToken ct) => LogQuery(_inner.ExecuteScalarAsync(ct));
-        protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken ct) => await LogQuery(_inner.ExecuteReaderAsync(behavior, ct));
-
-        public override void Prepare() => _inner.Prepare();
-        public override void Cancel() => _inner.Cancel();
-        protected override DbParameter CreateDbParameter() => _inner.CreateParameter();
+        public override Task PrepareAsync(CancellationToken ct = default) => Inner.PrepareAsync(ct);
+        public override void Cancel() => Inner.Cancel();
+        protected override DbParameter CreateDbParameter() => Inner.CreateParameter();
 
         public override string CommandText
         {
-            get => _inner.CommandText;
-            set => _inner.CommandText = value;
+            get => Inner.CommandText;
+            set => Inner.CommandText = value;
         }
 
         public override int CommandTimeout
         {
-            get => _inner.CommandTimeout;
-            set => _inner.CommandTimeout = value;
+            get => Inner.CommandTimeout;
+            set => Inner.CommandTimeout = value;
         }
 
         public override CommandType CommandType
         {
-            get => _inner.CommandType;
-            set => _inner.CommandType = value;
+            get => Inner.CommandType;
+            set => Inner.CommandType = value;
         }
 
         public override UpdateRowSource UpdatedRowSource
         {
-            get => _inner.UpdatedRowSource;
-            set => _inner.UpdatedRowSource = value;
+            get => Inner.UpdatedRowSource;
+            set => Inner.UpdatedRowSource = value;
         }
 
-        protected override DbParameterCollection DbParameterCollection => _inner.Parameters;
+        protected override DbParameterCollection DbParameterCollection => Inner.Parameters;
         protected override DbTransaction? DbTransaction
         {
-            get => _inner.Transaction;
-            set => _inner.Transaction = (NpgsqlTransaction?) value;
+            get => Inner.Transaction;
+            set => Inner.Transaction = value switch
+            {
+                NpgsqlTransaction npg => npg,
+                PKTransaction pk => pk.Inner,
+                _ => throw new ArgumentException($"Can't convert input type {value?.GetType()} to NpgsqlTransaction")
+            };
         }
 
         public override bool DesignTimeVisible
         {
-            get => _inner.DesignTimeVisible;
-            set => _inner.DesignTimeVisible = value;
+            get => Inner.DesignTimeVisible;
+            set => Inner.DesignTimeVisible = value;
         }
 
         protected override DbConnection? DbConnection
         {
-            get => _inner.Connection;
+            get => Inner.Connection;
             set =>
-                _inner.Connection = value switch
+                Inner.Connection = value switch
                 {
                     NpgsqlConnection npg => npg,
                     PKConnection pk => pk.Inner,
                     _ => throw new ArgumentException($"Can't convert input type {value?.GetType()} to NpgsqlConnection")
                 };
         }
-        
+
+        public override int ExecuteNonQuery() => throw SyncError(nameof(ExecuteNonQuery));
+        public override object ExecuteScalar() => throw SyncError(nameof(ExecuteScalar));
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => throw SyncError(nameof(ExecuteDbDataReader));
+        public override void Prepare() => throw SyncError(nameof(Prepare));
+
         private async Task<T> LogQuery<T>(Task<T> task)
         {
             var start = SystemClock.Instance.GetCurrentInstant();
@@ -112,6 +119,6 @@ namespace PluralKit.Core
             }
         }
         
-        private static Exception SyncError(string caller) => throw new Exception($"Executed synchronous IPKCommand function {caller}!");
+        private static Exception SyncError(string caller) => throw new Exception($"Executed synchronous IDbCommand function {caller}!");
     }
 }

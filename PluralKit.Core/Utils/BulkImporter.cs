@@ -21,12 +21,12 @@ namespace PluralKit.Core
     {
         private readonly int _systemId;
         private readonly IPKConnection _conn;
-        private readonly DbTransaction _tx;
+        private readonly IPKTransaction _tx;
         private readonly Dictionary<string, int> _knownMembers = new Dictionary<string, int>();
         private readonly Dictionary<string, PKMember> _existingMembersByHid = new Dictionary<string, PKMember>();
         private readonly Dictionary<string, PKMember> _existingMembersByName = new Dictionary<string, PKMember>();
 
-        private BulkImporter(int systemId, IPKConnection conn, DbTransaction tx)
+        private BulkImporter(int systemId, IPKConnection conn, IPKTransaction tx)
         {
             _systemId = systemId;
             _conn = conn;
