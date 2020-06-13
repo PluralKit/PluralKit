@@ -236,7 +236,7 @@ namespace PluralKit.Core {
         {
             // Use a transaction here since we're doing multiple executed commands in one
             await using var conn = await _conn.Obtain();
-            using var tx = await conn.BeginTransactionAsync();
+            await using var tx = await conn.BeginTransactionAsync();
             
             // First, we insert the switch itself
             var sw = await conn.QuerySingleAsync<PKSwitch>("insert into switches(system) values (@System) returning *",
@@ -252,7 +252,7 @@ namespace PluralKit.Core {
             }
 
             // Finally we commit the tx, since the using block will otherwise rollback it
-            tx.Commit();
+            await tx.CommitAsync();
 
             _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system.Id, members.Select(m => m.Id));
         }
