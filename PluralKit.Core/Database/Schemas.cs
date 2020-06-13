@@ -16,10 +16,10 @@ namespace PluralKit.Core
         private const string RootPath = "PluralKit.Core.Database"; // "resource path" root for SQL files
         private const int TargetSchemaVersion = 7;
 
-        private Database _conn;
+        private IDatabase _conn;
         private ILogger _logger;
 
-        public Schemas(Database conn, ILogger logger)
+        public Schemas(IDatabase conn, ILogger logger)
         {
             _conn = conn;
             _logger = logger.ForContext<Schemas>();

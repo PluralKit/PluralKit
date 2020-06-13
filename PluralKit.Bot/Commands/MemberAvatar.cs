@@ -14,9 +14,9 @@ namespace PluralKit.Bot
 {
     public class MemberAvatar
     {
-        private readonly Database _db;
+        private readonly IDatabase _db;
 
-        public MemberAvatar(Database db)
+        public MemberAvatar(IDatabase db)
         {
             _db = db;
         }

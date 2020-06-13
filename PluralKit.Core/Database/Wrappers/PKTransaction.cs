@@ -8,7 +8,7 @@ using Npgsql;
 
 namespace PluralKit.Core
 {
-    public class PKTransaction: DbTransaction, IPKTransaction
+    internal class PKTransaction: DbTransaction, IPKTransaction
     {
         public NpgsqlTransaction Inner { get; }
         

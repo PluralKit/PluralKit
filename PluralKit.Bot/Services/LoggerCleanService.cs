@@ -53,10 +53,10 @@ namespace PluralKit.Bot
             .Where(b => b.WebhookName != null)
             .ToDictionary(b => b.WebhookName);
 
-        private Database _db;
+        private IDatabase _db;
         private DiscordShardedClient _client;
         
-        public LoggerCleanService(Database db, DiscordShardedClient client)
+        public LoggerCleanService(IDatabase db, DiscordShardedClient client)
         {
             _db = db;
             _client = client;

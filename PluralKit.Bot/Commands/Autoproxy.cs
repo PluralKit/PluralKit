@@ -11,9 +11,9 @@ namespace PluralKit.Bot
 {
     public class Autoproxy
     {
-        private readonly Database _db;
+        private readonly IDatabase _db;
 
-        public Autoproxy(Database db)
+        public Autoproxy(IDatabase db)
         {
             _db = db;
         }

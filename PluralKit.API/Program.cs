@@ -11,7 +11,7 @@ namespace PluralKit.API
     {
         public static void Main(string[] args)
         {
-            Database.InitStatic();
+            InitUtils.InitStatic();
             CreateHostBuilder(args).Build().Run();
         }
 

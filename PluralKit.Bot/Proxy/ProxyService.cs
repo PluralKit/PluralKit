@@ -21,14 +21,14 @@ namespace PluralKit.Bot
         public static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
 
         private readonly LogChannelService _logChannel;
-        private readonly Database _db;
+        private readonly IDatabase _db;
         private readonly IDataStore _data;
         private readonly ILogger _logger;
         private readonly WebhookExecutorService _webhookExecutor;
         private readonly ProxyMatcher _matcher;
 
         public ProxyService(LogChannelService logChannel, IDataStore data, ILogger logger,
-                            WebhookExecutorService webhookExecutor, Database db, ProxyMatcher matcher)
+                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher)
         {
             _logChannel = logChannel;
             _data = data;

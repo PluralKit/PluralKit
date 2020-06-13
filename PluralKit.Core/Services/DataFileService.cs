@@ -15,10 +15,10 @@ namespace PluralKit.Core
     public class DataFileService
     {
         private IDataStore _data;
-        private Database _db;
+        private IDatabase _db;
         private ILogger _logger;
 
-        public DataFileService(ILogger logger, IDataStore data, Database db)
+        public DataFileService(ILogger logger, IDataStore data, IDatabase db)
         {
             _data = data;
             _db = db;

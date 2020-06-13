@@ -23,7 +23,7 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private CpuStatService _cpu;
 
-        private Database _db;
+        private IDatabase _db;
 
         private WebhookCacheService _webhookCache;
 
@@ -31,7 +31,7 @@ namespace PluralKit.Bot
 
         private ILogger _logger;
 
-        public PeriodicStatCollector(DiscordShardedClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, Database db)
+        public PeriodicStatCollector(DiscordShardedClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, IDatabase db)
         {
             _client = client;
             _metrics = metrics;

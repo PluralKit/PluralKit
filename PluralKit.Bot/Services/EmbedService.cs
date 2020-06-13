@@ -16,10 +16,10 @@ namespace PluralKit.Bot {
     public class EmbedService
     {
         private IDataStore _data;
-        private Database _db;
+        private IDatabase _db;
         private DiscordShardedClient _client;
 
-        public EmbedService(DiscordShardedClient client, IDataStore data, Database db)
+        public EmbedService(DiscordShardedClient client, IDataStore data, IDatabase db)
         {
             _client = client;
             _data = data;

@@ -10,10 +10,10 @@ using Serilog;
 
 namespace PluralKit.Core {
     public class PostgresDataStore: IDataStore {
-        private Database _conn;
+        private IDatabase _conn;
         private ILogger _logger;
 
-        public PostgresDataStore(Database conn, ILogger logger)
+        public PostgresDataStore(IDatabase conn, ILogger logger)
         {
             _conn = conn;
             _logger = logger;

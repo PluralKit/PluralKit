@@ -15,7 +15,7 @@ using Serilog;
 
 namespace PluralKit.Core
 {
-    public class PKConnection: DbConnection, IPKConnection
+    internal class PKConnection: DbConnection, IPKConnection
     {
         public NpgsqlConnection Inner { get; }
         public Guid ConnectionId { get; }

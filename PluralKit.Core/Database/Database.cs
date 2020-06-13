@@ -14,7 +14,7 @@ using Serilog;
 
 namespace PluralKit.Core
 {
-    public class Database
+    internal class Database: IDatabase
     {
         private readonly CoreConfig _config;
         private readonly ILogger _logger;
@@ -63,18 +63,6 @@ namespace PluralKit.Core
             var conn = new PKConnection(new NpgsqlConnection(_config.Database), _countHolder, _logger, _metrics);
             await conn.OpenAsync();
             return conn;
-        }
-        
-        public async Task Execute(Func<IPKConnection, Task> func)
-        {
-            await using var conn = await Obtain();
-            await func(conn);
-        }
-        
-        public async Task<T> Execute<T>(Func<IPKConnection, Task<T>> func)
-        {
-            await using var conn = await Obtain();
-            return await func(conn);
         }
 
         private class PassthroughTypeHandler<T>: SqlMapper.TypeHandler<T>

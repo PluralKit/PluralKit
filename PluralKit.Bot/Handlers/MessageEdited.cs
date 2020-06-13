@@ -11,9 +11,9 @@ namespace PluralKit.Bot
     {
         private readonly LastMessageCacheService _lastMessageCache;
         private readonly ProxyService _proxy;
-        private readonly Database _db;
+        private readonly IDatabase _db;
 
-        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, Database db)
+        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db)
         {
             _lastMessageCache = lastMessageCache;
             _proxy = proxy;

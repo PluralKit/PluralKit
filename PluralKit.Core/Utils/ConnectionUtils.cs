@@ -7,7 +7,7 @@ using Dapper;
 namespace PluralKit.Core {
     public static class ConnectionUtils
     {
-        public static async IAsyncEnumerable<T> QueryStreamAsync<T>(this Database connFactory, string sql, object param)
+        public static async IAsyncEnumerable<T> QueryStreamAsync<T>(this IDatabase connFactory, string sql, object param)
         {
             await using var conn = await connFactory.Obtain();
             

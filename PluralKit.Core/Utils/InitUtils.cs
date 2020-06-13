@@ -10,6 +10,11 @@ using NodaTime.Serialization.JsonNet;
 namespace PluralKit.Core {
     public static class InitUtils
     {
+        public static void InitStatic()
+        {
+            Database.InitStatic();
+        }
+        
         public static IConfigurationBuilder BuildConfiguration(string[] args) => new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("pluralkit.conf", true)

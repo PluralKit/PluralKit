@@ -15,9 +15,9 @@ using Serilog;
 
 namespace PluralKit.Core
 {
-    public class PKCommand: DbCommand, IPKCommand
+    internal class PKCommand: DbCommand, IPKCommand
     {
-        public NpgsqlCommand Inner { get; }
+        private NpgsqlCommand Inner { get; }
         
         private readonly PKConnection _ourConnection;
         private readonly ILogger _logger;
