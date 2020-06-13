@@ -22,9 +22,7 @@ namespace PluralKit.Core
         
         public NpgsqlBinaryImporter BeginBinaryImport(string copyFromCommand);
         public NpgsqlBinaryExporter BeginBinaryExport(string copyToCommand);
-
-        public void ReloadTypes();
-
+        
         [Obsolete] new void Open();
         [Obsolete] new void Close();
 

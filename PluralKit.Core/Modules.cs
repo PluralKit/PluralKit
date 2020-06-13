@@ -23,9 +23,8 @@ namespace PluralKit.Core
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
-            builder.RegisterType<Database>().AsSelf().SingleInstance();
+            builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
             builder.RegisterType<PostgresDataStore>().AsSelf().As<IDataStore>();
-            builder.RegisterType<Schemas>().AsSelf();
             
             builder.Populate(new ServiceCollection().AddMemoryCache());
         }
