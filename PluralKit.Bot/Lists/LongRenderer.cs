@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using DSharpPlus.Entities;
 
@@ -21,8 +20,10 @@ namespace PluralKit.Bot
             _fields = fields;
         }
 
-        public void RenderPage(DiscordEmbedBuilder eb, PKSystem system, IEnumerable<PKListMember> members)
+        public void RenderPage(DiscordEmbedBuilder eb, DateTimeZone zone, IEnumerable<ListedMember> members)
         {
+            string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(zone));
+
             foreach (var m in members)
             {
                 var profile = $"**ID**: {m.Hid}";
@@ -31,8 +32,8 @@ namespace PluralKit.Bot
                 if (_fields.ShowBirthday && m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                 if (_fields.ShowPronouns && m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
                 if (_fields.ShowMessageCount && m.MessageCount > 0) profile += $"\n**Message count:** {m.MessageCount}";
-                if (_fields.ShowLastMessage && m.LastMessage != null) profile += $"\n**Last message:** {FormatTimestamp(system, DiscordUtils.SnowflakeToInstant(m.LastMessage.Value))}";
-                if (_fields.ShowLastSwitch && m.LastSwitchTime != null) profile += $"\n**Last switched in:** {FormatTimestamp(system, m.LastSwitchTime.Value)}";
+                if (_fields.ShowLastMessage && m.LastMessage != null) profile += $"\n**Last message:** {FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value))}";
+                if (_fields.ShowLastSwitch && m.LastSwitchTime != null) profile += $"\n**Last switched in:** {FormatTimestamp(m.LastSwitchTime.Value)}";
                 if (_fields.ShowDescription && m.Description != null) profile += $"\n\n{m.Description}";
                 if (_fields.ShowPrivacy && m.MemberPrivacy == PrivacyLevel.Private)
                     profile += "\n*(this member is private)*";
@@ -40,9 +41,7 @@ namespace PluralKit.Bot
                 eb.AddField(m.Name, profile.Truncate(1024));
             }
         }
-
-        private static string FormatTimestamp(PKSystem system, Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone ?? DateTimeZone.Utc));
-
+        
         public class MemberFields
         {
             public bool ShowDisplayName = true;

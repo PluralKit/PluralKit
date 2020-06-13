@@ -1,4 +1,9 @@
-﻿drop view if exists system_last_switch;
+﻿-- This gets run on every bot startup and makes sure we're starting from a clean slate
+-- Then, the views/functions.sql files get run, and they recreate the necessary objects
+-- This does mean we can't use any functions in row triggers, etc. Still unsure how to handle this.
+
+drop view if exists system_last_switch;
+drop view if exists system_fronters;
 drop view if exists member_list;
 
 drop function if exists message_context;

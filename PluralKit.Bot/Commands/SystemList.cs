@@ -1,29 +1,18 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Dapper;
-
-using NodaTime;
-
 using PluralKit.Core;
-
-using Serilog;
 
 namespace PluralKit.Bot
 {
     public class SystemList
     {
-        private readonly IClock _clock;
         private readonly IDatabase _db;
-        private readonly ILogger _logger;
         
-        public SystemList(IDatabase db, ILogger logger, IClock clock)
+        public SystemList(IDatabase db)
         {
             _db = db;
-            _logger = logger;
-            _clock = clock;
         }
 
         public async Task MemberList(Context ctx, PKSystem target)
@@ -34,7 +23,8 @@ namespace PluralKit.Bot
             // GetRendererFor must be called before GetOptions as it consumes a potential positional full argument that'd otherwise land in the filter
             var renderer = GetRendererFor(ctx);
             var opts = GetOptions(ctx, target);
-            var members = await GetMemberList(target, opts);
+            
+            var members = (await _db.Execute(c => opts.Execute(c, target))).ToList();
             await ctx.Paginate(
                 members.ToAsyncEnumerable(),
                 members.Count,
@@ -43,25 +33,9 @@ namespace PluralKit.Bot
                 (eb, ms) =>
                 {
                     eb.WithFooter($"{opts.CreateFilterString()}. {members.Count} results.");
-                    renderer.RenderPage(eb, ctx.System, ms);
+                    renderer.RenderPage(eb, ctx.System.Zone, ms);
                     return Task.CompletedTask;
                 });
-        }
-
-        private async Task<IReadOnlyList<PKListMember>> GetMemberList(PKSystem target, SortFilterOptions opts)
-        {
-            await using var conn = await _db.Obtain();
-            var query = opts.BuildQuery();
-            var args = new {System = target.Id, opts.Filter};
-            _logger.Debug("Executing sort/filter query `{Query}` with arguments {Args}", query, args);
-            
-            var timeBefore = _clock.GetCurrentInstant();
-            var results = (await conn.QueryAsync<PKListMember>(query, args)).ToList();
-            var timeAfter = _clock.GetCurrentInstant();
-            
-            _logger.Debug("Executed sort/filter query `{Query}` returning {ResultCount} results in {QueryTime}", query, results.Count, timeAfter - timeBefore);
-
-            return results;
         }
 
         private string GetEmbedTitle(PKSystem target, SortFilterOptions opts)

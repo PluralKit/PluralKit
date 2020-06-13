@@ -1,5 +1,11 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+
+using NodaTime;
 
 using PluralKit.Core;
 
@@ -15,7 +21,7 @@ namespace PluralKit.Bot
 
         public string CreateFilterString()
         {
-            StringBuilder str = new StringBuilder();
+            var str = new StringBuilder();
             str.Append("Sorting by ");
             str.Append(SortProperty switch
             {
@@ -46,69 +52,53 @@ namespace PluralKit.Bot
             
             return str.ToString();
         }
-
-        public string BuildQuery()
-        {
-            // For best performance, add index:
-            // - `on switch_members using btree (member asc nulls last) include (switch);`
-            // TODO: add a migration adding this, perhaps lumped with the rest of the DB changes (it's there in prod)
-            
-            // Select clause
-            StringBuilder query = new StringBuilder("select * from member_list");
-
-            // Filtering
-            query.Append(" where system = @System");
-            query.Append(PrivacyFilter switch
-            {
-                PrivacyFilter.PrivateOnly => $" and member_privacy = {(int) PrivacyLevel.Private}",
-                PrivacyFilter.PublicOnly => $" and member_privacy = {(int) PrivacyLevel.Public}",
-                _ => ""
-            });
-
-            // String filter
-            if (Filter != null)
-            {
-                // Use position rather than ilike to not bother with escaping and such
-                query.Append(" and (");
-                query.Append(
-                    "position(lower(@Filter) in lower(name)) > 0 or position(lower(@Filter) in lower(coalesce(display_name, ''))) > 0");
-                if (SearchInDescription)
-                    query.Append(" or position(lower(@Filter) in lower(coalesce(description, ''))) > 0");
-                query.Append(")");
-            }
-            
-            // Order direction
-            var direction = SortProperty switch
-            {
-                // Some of these make more "logical sense" as descending (ie. "last message" = descending order of message timestamp/ID)
-                SortProperty.MessageCount => SortDirection.Descending,
-                SortProperty.LastMessage => SortDirection.Descending,
-                SortProperty.LastSwitch => SortDirection.Descending,
-                _ => SortDirection.Ascending
-            };
-            if (Reverse) direction = direction == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending;
-            var order = direction == SortDirection.Ascending ? "asc" : "desc";
-            
-            // Order clause
-            const string fallback = "name collate \"C\" asc"; // how to handle null values
-            query.Append(" order by ");
-            query.Append(SortProperty switch
-            {
-                // Name/DN order needs `collate "C"` to match legacy .NET behavior (affects sorting of emojis, etc)
-                SortProperty.Name => $"name collate \"C\" {order}",
-                SortProperty.DisplayName => $"display_name collate \"C\" {order}, name collate \"C\" {order}",
-                SortProperty.Hid => $"hid {order}",
-                SortProperty.CreationDate => $"created {order}",
-                SortProperty.Birthdate => $"birthday_md {order} nulls last, {fallback}",
-                SortProperty.MessageCount => $"message_count {order} nulls last, {fallback}",
-                SortProperty.LastMessage => $"last_message {order} nulls last, {fallback}",
-                SortProperty.LastSwitch => $"last_switch_time {order} nulls last, {fallback}",
-                _ => throw new ArgumentOutOfRangeException($"Couldn't find order clause for sort property {SortProperty}")
-            });
-
-            return query.ToString();
-        }
         
+        public async Task<IEnumerable<ListedMember>> Execute(IPKConnection conn, PKSystem system)
+        {
+            var filtered = await QueryWithFilter(conn, system);
+            return Sort(filtered);
+        }
+
+        private Task<IEnumerable<ListedMember>> QueryWithFilter(IPKConnection conn, PKSystem system) =>
+            conn.QueryMemberList(system.Id, PrivacyFilter switch
+            {
+                PrivacyFilter.PrivateOnly => PrivacyLevel.Private,
+                PrivacyFilter.PublicOnly => PrivacyLevel.Public,
+                PrivacyFilter.All => null
+            }, Filter, SearchInDescription);
+
+        private IEnumerable<ListedMember> Sort(IEnumerable<ListedMember> input)
+        {
+            IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
+                Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
+            
+            var culture = StringComparer.InvariantCultureIgnoreCase;
+            return (SortProperty switch
+            {
+                // As for the OrderByDescending HasValue calls: https://www.jerriepelser.com/blog/orderby-with-null-values/
+                // We want nulls last no matter what, even if orders are reversed
+                SortProperty.Hid => input.OrderBy(m => m.Hid, ReverseMaybe(culture)),
+                SortProperty.Name => input.OrderBy(m => m.Name, ReverseMaybe(culture)),
+                SortProperty.CreationDate => input.OrderBy(m => m.Created, ReverseMaybe(Comparer<Instant>.Default)),
+                SortProperty.MessageCount => input.OrderByDescending(m => m.MessageCount, ReverseMaybe(Comparer<int>.Default)),
+                SortProperty.DisplayName => input
+                    .OrderByDescending(m => m.DisplayName != null)
+                    .ThenBy(m => m.DisplayName, ReverseMaybe(culture)),
+                SortProperty.Birthdate => input
+                    .OrderByDescending(m => m.AnnualBirthday.HasValue)
+                    .ThenBy(m => m.AnnualBirthday, ReverseMaybe(Comparer<AnnualDate?>.Default)),
+                SortProperty.LastMessage => input
+                    .OrderByDescending(m => m.LastMessage.HasValue)
+                    .ThenByDescending(m => m.LastMessage, ReverseMaybe(Comparer<ulong?>.Default)),
+                SortProperty.LastSwitch => input
+                    .OrderByDescending(m => m.LastSwitchTime.HasValue)
+                    .ThenByDescending(m => m.LastSwitchTime, ReverseMaybe(Comparer<Instant?>.Default)),
+                _ => throw new ArgumentOutOfRangeException($"Unknown sort property {SortProperty}")
+            })
+                // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
+                .ThenBy(m => m.Name, culture);
+        }
+
         public static SortFilterOptions FromFlags(Context ctx)
         {
             var p = new SortFilterOptions();
@@ -138,7 +128,6 @@ namespace PluralKit.Bot
             
             return p;
         }
-        
     }
 
     public enum SortProperty
@@ -151,12 +140,6 @@ namespace PluralKit.Bot
         LastSwitch,
         LastMessage,
         Birthdate
-    }
-
-    public enum SortDirection
-    {
-        Ascending,
-        Descending
     }
 
     public enum PrivacyFilter

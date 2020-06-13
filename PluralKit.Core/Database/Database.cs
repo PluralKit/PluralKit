@@ -82,7 +82,7 @@ namespace PluralKit.Core
             await ApplyMigrations(conn, tx);
 
             // Now, reapply views/functions (we deleted them above, no need to worry about conflicts)
-            await ExecuteSqlFile($"{RootPath}.views.sql", conn, tx);
+            await ExecuteSqlFile($"{RootPath}.Views.views.sql", conn, tx);
             await ExecuteSqlFile($"{RootPath}.Functions.functions.sql", conn, tx);
 
             // Finally, commit tx

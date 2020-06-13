@@ -3,6 +3,8 @@ using System.Text;
 
 using DSharpPlus.Entities;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -11,9 +13,9 @@ namespace PluralKit.Bot
     {
         public int MembersPerPage => 25;
         
-        public void RenderPage(DiscordEmbedBuilder eb, PKSystem system, IEnumerable<PKListMember> members)
+        public void RenderPage(DiscordEmbedBuilder eb, DateTimeZone timezone, IEnumerable<ListedMember> members)
         {
-            string RenderLine(PKListMember m)
+            string RenderLine(ListedMember m)
             {
                 if (m.HasProxyTags)
                 {

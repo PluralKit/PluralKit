@@ -2,6 +2,8 @@
 
 using DSharpPlus.Entities;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -9,6 +11,6 @@ namespace PluralKit.Bot
     public interface IListRenderer
     {
         int MembersPerPage { get; }
-        void RenderPage(DiscordEmbedBuilder eb, PKSystem system, IEnumerable<PKListMember> members);
+        void RenderPage(DiscordEmbedBuilder eb, DateTimeZone zone, IEnumerable<ListedMember> members);
     }
 }
