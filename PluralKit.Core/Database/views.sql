@@ -9,7 +9,8 @@ from systems
 create view member_list as
 select members.*,
        -- Find last message ID
-       (select max(messages.mid) from messages where messages.member = members.id) as last_message,
+       -- max(mid) does full table scan, order by/limit uses index (dunno why, but it works!)
+       (select mid from messages where messages.member = members.id order by mid desc nulls last limit 1) as last_message,
        
        -- Find last switch timestamp
        (
