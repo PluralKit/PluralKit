@@ -70,6 +70,7 @@ namespace PluralKit.Bot
 
         private async Task AvatarFromUser(AvatarLocation location, Context ctx, PKMember target, DiscordUser user)
         {
+            ctx.CheckSystem().CheckOwnMember(target);
             if (user.AvatarHash == null) throw Errors.UserHasNoAvatar;
             
             var url = user.GetAvatarUrl(ImageFormat.Png, 256);
@@ -84,6 +85,7 @@ namespace PluralKit.Bot
 
         private async Task AvatarFromArg(AvatarLocation location, Context ctx, PKMember target, string url)
         {
+            ctx.CheckSystem().CheckOwnMember(target);
             if (url.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
             await AvatarUtils.VerifyAvatarOrThrow(url);
 
@@ -96,6 +98,7 @@ namespace PluralKit.Bot
 
         private async Task AvatarFromAttachment(AvatarLocation location, Context ctx, PKMember target, DiscordAttachment attachment)
         {
+            ctx.CheckSystem().CheckOwnMember(target);
             await AvatarUtils.VerifyAvatarOrThrow(attachment.Url);
             await UpdateAvatar(location, ctx, target, attachment.Url);
             if (location == AvatarLocation.Server)
