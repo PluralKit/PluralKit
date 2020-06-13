@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,20 +20,20 @@ namespace PluralKit.Core
     public class BulkImporter: IAsyncDisposable
     {
         private readonly int _systemId;
-        private readonly NpgsqlConnection _conn;
-        private readonly NpgsqlTransaction _tx;
+        private readonly IPKConnection _conn;
+        private readonly DbTransaction _tx;
         private readonly Dictionary<string, int> _knownMembers = new Dictionary<string, int>();
         private readonly Dictionary<string, PKMember> _existingMembersByHid = new Dictionary<string, PKMember>();
         private readonly Dictionary<string, PKMember> _existingMembersByName = new Dictionary<string, PKMember>();
 
-        private BulkImporter(int systemId, NpgsqlConnection conn, NpgsqlTransaction tx)
+        private BulkImporter(int systemId, IPKConnection conn, DbTransaction tx)
         {
             _systemId = systemId;
             _conn = conn;
             _tx = tx;
         }
 
-        public static async Task<BulkImporter> Begin(PKSystem system, NpgsqlConnection conn)
+        public static async Task<BulkImporter> Begin(PKSystem system, IPKConnection conn)
         {
             var tx = await conn.BeginTransactionAsync();
             var importer = new BulkImporter(system.Id, conn, tx);

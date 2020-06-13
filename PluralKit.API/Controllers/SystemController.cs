@@ -40,10 +40,10 @@ namespace PluralKit.API
     public class SystemController : ControllerBase
     {
         private IDataStore _data;
-        private DbConnectionFactory _conn;
+        private Database _conn;
         private TokenAuthService _auth;
 
-        public SystemController(IDataStore data, DbConnectionFactory conn, TokenAuthService auth)
+        public SystemController(IDataStore data, Database conn, TokenAuthService auth)
         {
             _data = data;
             _conn = conn;

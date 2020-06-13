@@ -16,10 +16,10 @@ namespace PluralKit.Core
         private const string RootPath = "PluralKit.Core.Database"; // "resource path" root for SQL files
         private const int TargetSchemaVersion = 7;
 
-        private DbConnectionFactory _conn;
+        private Database _conn;
         private ILogger _logger;
 
-        public Schemas(DbConnectionFactory conn, ILogger logger)
+        public Schemas(Database conn, ILogger logger)
         {
             _conn = conn;
             _logger = logger.ForContext<Schemas>();
@@ -36,7 +36,7 @@ namespace PluralKit.Core
         {
             // Run everything in a transaction
             await using var conn = await _conn.Obtain();
-            using var tx = conn.BeginTransaction();
+            await using var tx = await conn.BeginTransactionAsync();
             
             // Before applying migrations, clean out views/functions to prevent type errors
             await ExecuteSqlFile($"{RootPath}.clean.sql", conn, tx);
@@ -49,10 +49,10 @@ namespace PluralKit.Core
             await ExecuteSqlFile($"{RootPath}.Functions.functions.sql", conn, tx);
 
             // Finally, commit tx
-            tx.Commit();
+            await tx.CommitAsync();
         }
 
-        private async Task ApplyMigrations(IAsyncDbConnection conn, IDbTransaction tx)
+        private async Task ApplyMigrations(IPKConnection conn, IDbTransaction tx)
         {
             var currentVersion = await GetCurrentDatabaseVersion(conn);
             _logger.Information("Current schema version: {CurrentVersion}", currentVersion);
@@ -63,7 +63,7 @@ namespace PluralKit.Core
             }
         }
 
-        private async Task ExecuteSqlFile(string resourceName, IDbConnection conn, IDbTransaction tx = null)
+        private async Task ExecuteSqlFile(string resourceName, IPKConnection conn, IDbTransaction tx = null)
         {
             await using var stream = typeof(Schemas).Assembly.GetManifestResourceStream(resourceName);
             if (stream == null) throw new ArgumentException($"Invalid resource name  '{resourceName}'");
@@ -76,10 +76,10 @@ namespace PluralKit.Core
             // If the above creates new enum/composite types, we must tell Npgsql to reload the internal type caches
             // This will propagate to every other connection as well, since it marks the global type mapper collection dirty.
             // TODO: find a way to get around the cast to our internal tracker wrapper... this could break if that ever changes
-            ((PerformanceTrackingConnection) conn)._impl.ReloadTypes();
+            conn.ReloadTypes();
         }
 
-        private async Task<int> GetCurrentDatabaseVersion(IDbConnection conn)
+        private async Task<int> GetCurrentDatabaseVersion(IPKConnection conn)
         {
             // First, check if the "info" table exists (it may not, if this is a *really* old database)
             var hasInfoTable =

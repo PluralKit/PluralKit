@@ -14,12 +14,12 @@ using Serilog;
 namespace PluralKit.Bot {
     public class LogChannelService {
         private readonly EmbedService _embed;
-        private readonly DbConnectionFactory _db;
+        private readonly Database _db;
         private readonly IDataStore _data;
         private readonly ILogger _logger;
         private readonly DiscordRestClient _rest;
 
-        public LogChannelService(EmbedService embed, ILogger logger, DiscordRestClient rest, DbConnectionFactory db, IDataStore data)
+        public LogChannelService(EmbedService embed, ILogger logger, DiscordRestClient rest, Database db, IDataStore data)
         {
             _embed = embed;
             _rest = rest;

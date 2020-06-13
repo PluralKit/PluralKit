@@ -16,10 +16,10 @@ namespace PluralKit.Bot
     public class SystemList
     {
         private readonly IClock _clock;
-        private readonly DbConnectionFactory _db;
+        private readonly Database _db;
         private readonly ILogger _logger;
         
-        public SystemList(DbConnectionFactory db, ILogger logger, IClock clock)
+        public SystemList(Database db, ILogger logger, IClock clock)
         {
             _db = db;
             _logger = logger;

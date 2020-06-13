@@ -22,12 +22,12 @@ namespace PluralKit.Bot
         private readonly IMetrics _metrics;
         private readonly ProxyService _proxy;
         private readonly ILifetimeScope _services;
-        private readonly DbConnectionFactory _db;
+        private readonly Database _db;
         private readonly IDataStore _data;
 
         public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean,
                               IMetrics metrics, ProxyService proxy, DiscordShardedClient client,
-                              CommandTree tree, ILifetimeScope services, DbConnectionFactory db, IDataStore data)
+                              CommandTree tree, ILifetimeScope services, Database db, IDataStore data)
         {
             _lastMessageCache = lastMessageCache;
             _loggerClean = loggerClean;

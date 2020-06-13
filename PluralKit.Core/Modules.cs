@@ -23,7 +23,7 @@ namespace PluralKit.Core
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
-            builder.RegisterType<DbConnectionFactory>().AsSelf().SingleInstance();
+            builder.RegisterType<Database>().AsSelf().SingleInstance();
             builder.RegisterType<PostgresDataStore>().AsSelf().As<IDataStore>();
             builder.RegisterType<Schemas>().AsSelf();
             
@@ -99,7 +99,7 @@ namespace PluralKit.Core
 
             return new LoggerConfiguration()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
-                .MinimumLevel.Debug()
+                .MinimumLevel.Is(config.ConsoleLogLevel)
                 .WriteTo.Async(a =>
                 {
                     // Both the same output, except one is raw compact JSON and one is plain text.
@@ -110,7 +110,7 @@ namespace PluralKit.Core
                         outputTemplate: outputTemplate,
                         rollingInterval: RollingInterval.Day,
                         flushToDiskInterval: TimeSpan.FromMilliseconds(50),
-                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        restrictedToMinimumLevel: config.FileLogLevel,
                         formatProvider: new UTCTimestampFormatProvider(),
                         buffered: true);
                     
@@ -119,7 +119,7 @@ namespace PluralKit.Core
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
                         rollingInterval: RollingInterval.Day,
                         flushToDiskInterval: TimeSpan.FromMilliseconds(50),
-                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        restrictedToMinimumLevel: config.FileLogLevel,
                         buffered: true);
                 })
                 // TODO: render as UTC in the console, too? or just in log files

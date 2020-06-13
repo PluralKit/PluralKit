@@ -21,14 +21,14 @@ namespace PluralKit.Bot
         public static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
 
         private readonly LogChannelService _logChannel;
-        private readonly DbConnectionFactory _db;
+        private readonly Database _db;
         private readonly IDataStore _data;
         private readonly ILogger _logger;
         private readonly WebhookExecutorService _webhookExecutor;
         private readonly ProxyMatcher _matcher;
 
         public ProxyService(LogChannelService logChannel, IDataStore data, ILogger logger,
-                            WebhookExecutorService webhookExecutor, DbConnectionFactory db, ProxyMatcher matcher)
+                            WebhookExecutorService webhookExecutor, Database db, ProxyMatcher matcher)
         {
             _logChannel = logChannel;
             _data = data;
@@ -43,7 +43,8 @@ namespace PluralKit.Bot
             if (!ShouldProxy(message, ctx)) return false;
 
             // Fetch members and try to match to a specific member
-            var members = (await _db.Execute(c => c.QueryProxyMembers(message.Author.Id, message.Channel.GuildId))).ToList();
+            await using var conn = await _db.Obtain();
+            var members = (await conn.QueryProxyMembers(message.Author.Id, message.Channel.GuildId)).ToList();
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Count > 0,
                 allowAutoproxy)) return false;
 
@@ -52,7 +53,7 @@ namespace PluralKit.Bot
             if (!CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx))) return false;
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(message, ctx, match);
+            await ExecuteProxy(conn, message, ctx, match);
             return true;
         }
 
@@ -78,29 +79,39 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task ExecuteProxy(DiscordMessage trigger, MessageContext ctx, ProxyMatch match)
+        private async Task ExecuteProxy(IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
+                                        ProxyMatch match)
         {
             // Send the webhook
             var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
                 match.Member.ProxyAvatar(ctx),
                 match.Content, trigger.Attachments);
 
-            // Handle post-proxy actions
-            await _data.AddMessage(trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id,
-                match.Member.Id);
-            await _logChannel.LogMessage(ctx, match, trigger, id);
-
-            // Wait a second or so before deleting the original message
-            await Task.Delay(MessageDeletionDelay);
-            try
+                        
+            Task SaveMessage() => _data.AddMessage(conn, trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id, match.Member.Id);
+            Task LogMessage() => _logChannel.LogMessage(ctx, match, trigger, id).AsTask();
+            async Task DeleteMessage()
             {
-                await trigger.DeleteAsync();
+                // Wait a second or so before deleting the original message
+                await Task.Delay(MessageDeletionDelay);
+                try
+                {
+                    await trigger.DeleteAsync();
+                }
+                catch (NotFoundException)
+                {
+                    // If it's already deleted, we just log and swallow the exception
+                    _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", trigger.Id);
+                }
             }
-            catch (NotFoundException)
-            {
-                // If it's already deleted, we just log and swallow the exception
-                _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", trigger.Id);
-            }
+            
+            // Run post-proxy actions (simultaneously; order doesn't matter)
+            // Note that only AddMessage is using our passed-in connection, careful not to pass it elsewhere and run into conflicts
+            await Task.WhenAll(
+                DeleteMessage(),
+                SaveMessage(),
+                LogMessage()
+            );
         }
         
         private async Task<bool> CheckBotPermissionsOrError(DiscordChannel channel)

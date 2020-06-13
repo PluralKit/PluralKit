@@ -13,9 +13,9 @@ namespace PluralKit.Bot
 {
     public class ServerConfig
     {
-        private DbConnectionFactory _db;
+        private Database _db;
         private LoggerCleanService _cleanService;
-        public ServerConfig(LoggerCleanService cleanService, DbConnectionFactory db)
+        public ServerConfig(LoggerCleanService cleanService, Database db)
         {
             _cleanService = cleanService;
             _db = db;

@@ -15,10 +15,10 @@ namespace PluralKit.Core
     public class DataFileService
     {
         private IDataStore _data;
-        private DbConnectionFactory _db;
+        private Database _db;
         private ILogger _logger;
 
-        public DataFileService(ILogger logger, IDataStore data, DbConnectionFactory db)
+        public DataFileService(ILogger logger, IDataStore data, Database db)
         {
             _data = data;
             _db = db;
@@ -127,8 +127,8 @@ namespace PluralKit.Core
             await _data.SaveSystem(system);
             
             // -- Member/switch import --
-            await using var conn = (PerformanceTrackingConnection) await _db.Obtain();
-            await using (var imp = await BulkImporter.Begin(system, conn._impl))
+            await using var conn = await _db.Obtain();
+            await using (var imp = await BulkImporter.Begin(system, conn))
             {
                 // Tally up the members that didn't exist before, and check member count on import
                 // If creating the unmatched members would put us over the member limit, abort before creating any members

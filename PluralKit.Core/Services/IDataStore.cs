@@ -201,7 +201,7 @@ namespace PluralKit.Core {
         /// <param name="triggerMessageId">The ID of the original trigger message containing the proxy tags.</param>
         /// <param name="proxiedMemberId">The member (and by extension system) that was proxied.</param>
         /// <returns></returns>
-        Task AddMessage(ulong senderAccount, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId);
+        Task AddMessage(IPKConnection conn, ulong senderAccount, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId);
         
         /// <summary>
         /// Deletes a message from the data store.

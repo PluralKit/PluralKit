@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,10 +10,10 @@ using Serilog;
 
 namespace PluralKit.Core {
     public class PostgresDataStore: IDataStore {
-        private DbConnectionFactory _conn;
+        private Database _conn;
         private ILogger _logger;
 
-        public PostgresDataStore(DbConnectionFactory conn, ILogger logger)
+        public PostgresDataStore(Database conn, ILogger logger)
         {
             _conn = conn;
             _logger = logger;
@@ -182,17 +182,17 @@ namespace PluralKit.Core {
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from members");
         }
-        public async Task AddMessage(ulong senderId, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId) {
-            using (var conn = await _conn.Obtain())
-                // "on conflict do nothing" in the (pretty rare) case of duplicate events coming in from Discord, which would lead to a DB error before
-                await conn.ExecuteAsync("insert into messages(mid, guild, channel, member, sender, original_mid) values(@MessageId, @GuildId, @ChannelId, @MemberId, @SenderId, @OriginalMid) on conflict do nothing", new {
-                    MessageId = postedMessageId,
-                    GuildId = guildId,
-                    ChannelId = channelId,
-                    MemberId = proxiedMemberId,
-                    SenderId = senderId,
-                    OriginalMid = triggerMessageId
-                });
+        
+        public async Task AddMessage(IPKConnection conn, ulong senderId, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId) {
+            // "on conflict do nothing" in the (pretty rare) case of duplicate events coming in from Discord, which would lead to a DB error before
+            await conn.ExecuteAsync("insert into messages(mid, guild, channel, member, sender, original_mid) values(@MessageId, @GuildId, @ChannelId, @MemberId, @SenderId, @OriginalMid) on conflict do nothing", new {
+                MessageId = postedMessageId,
+                GuildId = guildId,
+                ChannelId = channelId,
+                MemberId = proxiedMemberId,
+                SenderId = senderId,
+                OriginalMid = triggerMessageId
+            });
 
             _logger.Debug("Stored message {Message} in channel {Channel}", postedMessageId, channelId);
         }
@@ -235,27 +235,26 @@ namespace PluralKit.Core {
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
-            using (var conn = await _conn.Obtain())
-            using (var tx = conn.BeginTransaction())
+            await using var conn = await _conn.Obtain();
+            using var tx = await conn.BeginTransactionAsync();
+            
+            // First, we insert the switch itself
+            var sw = await conn.QuerySingleAsync<PKSwitch>("insert into switches(system) values (@System) returning *",
+                new {System = system.Id});
+
+            // Then we insert each member in the switch in the switch_members table
+            // TODO: can we parallelize this or send it in bulk somehow?
+            foreach (var member in members)
             {
-                // First, we insert the switch itself
-                var sw = await conn.QuerySingleAsync<PKSwitch>("insert into switches(system) values (@System) returning *",
-                    new {System = system.Id});
-
-                // Then we insert each member in the switch in the switch_members table
-                // TODO: can we parallelize this or send it in bulk somehow?
-                foreach (var member in members)
-                {
-                    await conn.ExecuteAsync(
-                        "insert into switch_members(switch, member) values(@Switch, @Member)",
-                        new {Switch = sw.Id, Member = member.Id});
-                }
-
-                // Finally we commit the tx, since the using block will otherwise rollback it
-                tx.Commit();
-
-                _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system.Id, members.Select(m => m.Id));
+                await conn.ExecuteAsync(
+                    "insert into switch_members(switch, member) values(@Switch, @Member)",
+                    new {Switch = sw.Id, Member = member.Id});
             }
+
+            // Finally we commit the tx, since the using block will otherwise rollback it
+            tx.Commit();
+
+            _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system.Id, members.Select(m => m.Id));
         }
 
         public IAsyncEnumerable<PKSwitch> GetSwitches(PKSystem system)
@@ -276,8 +275,8 @@ namespace PluralKit.Core {
         public async IAsyncEnumerable<SwitchMembersListEntry> GetSwitchMembersList(PKSystem system, Instant start, Instant end)
         {
             // Wrap multiple commands in a single transaction for performance
-            using var conn = await _conn.Obtain();
-            using var tx = conn.BeginTransaction();
+            await using var conn = await _conn.Obtain();
+            await using var tx = await conn.BeginTransactionAsync();
             
             // Find the time of the last switch outside the range as it overlaps the range
             // If no prior switch exists, the lower bound of the range remains the start time

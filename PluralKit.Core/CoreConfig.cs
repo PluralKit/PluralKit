@@ -1,3 +1,5 @@
+using Serilog.Events;
+
 namespace PluralKit.Core
 {
     public class CoreConfig
@@ -7,5 +9,8 @@ namespace PluralKit.Core
         public string InfluxUrl { get; set; }
         public string InfluxDb { get; set; }
         public string LogDir { get; set; }
+
+        public LogEventLevel ConsoleLogLevel { get; set; } = LogEventLevel.Verbose;
+        public LogEventLevel FileLogLevel { get; set; } = LogEventLevel.Information;
     }
 }

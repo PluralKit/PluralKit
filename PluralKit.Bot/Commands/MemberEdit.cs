@@ -12,9 +12,9 @@ namespace PluralKit.Bot
     public class MemberEdit
     {
         private readonly IDataStore _data;
-        private readonly DbConnectionFactory _db;
+        private readonly Database _db;
 
-        public MemberEdit(IDataStore data, DbConnectionFactory db)
+        public MemberEdit(IDataStore data, Database db)
         {
             _data = data;
             _db = db;

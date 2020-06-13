@@ -18,10 +18,10 @@ namespace PluralKit.Bot
     public class SystemEdit
     {
         private IDataStore _data;
-        private DbConnectionFactory _db;
+        private Database _db;
         private EmbedService _embeds;
 
-        public SystemEdit(IDataStore data, EmbedService embeds, DbConnectionFactory db)
+        public SystemEdit(IDataStore data, EmbedService embeds, Database db)
         {
             _data = data;
             _embeds = embeds;
