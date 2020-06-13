@@ -1,5 +1,8 @@
 using System.Linq;
 using System.Threading.Tasks;
+
+using Dapper;
+
 using Microsoft.AspNetCore.Http;
 
 using PluralKit.Core;
@@ -10,11 +13,11 @@ namespace PluralKit.API
     {
         public PKSystem CurrentSystem { get; set; }
 
-        private IDataStore _data;
+        private readonly IDatabase _db;
 
-        public TokenAuthService(IDataStore data)
+        public TokenAuthService(IDatabase db)
         {
-            _data = data;
+            _db = db;
         }
 
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -22,7 +25,7 @@ namespace PluralKit.API
             var token = context.Request.Headers["Authorization"].FirstOrDefault();
             if (token != null)
             {
-                CurrentSystem = await _data.GetSystemByToken(token);
+                CurrentSystem = await _db.Execute(c => c.QueryFirstOrDefaultAsync("select * from systems where token = @token", new { token }));
             }
             
             await next.Invoke(context);
