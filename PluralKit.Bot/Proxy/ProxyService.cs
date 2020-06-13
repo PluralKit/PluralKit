@@ -18,7 +18,7 @@ namespace PluralKit.Bot
 {
     public class ProxyService
     {
-        public static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
+        private static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
 
         private readonly LogChannelService _logChannel;
         private readonly IDatabase _db;

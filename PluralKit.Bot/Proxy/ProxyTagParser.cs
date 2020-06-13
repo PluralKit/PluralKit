@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -47,20 +46,6 @@ namespace PluralKit.Bot
             
             // We couldn't match anything :(
             return false;
-        }
-
-        public bool TryMatchTags(string input, ProxyTag tag, out string inner)
-        {
-            // This just wraps TryMatchTagsInner w/ support for leading mentions
-            var leadingMention = ExtractLeadingMention(ref input);
-            
-            inner = "";
-            if (!TryMatchTagsInner(input, tag, out var innerRaw)) return false;
-            
-            // Add leading mentions back
-            inner = leadingMention == null ? innerRaw : $"{leadingMention} {innerRaw}";
-            return true;
-
         }
 
         private bool TryMatchTagsInner(string input, ProxyTag tag, out string inner)

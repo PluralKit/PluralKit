@@ -64,7 +64,8 @@ namespace PluralKit.Bot
             {
                 PrivacyFilter.PrivateOnly => PrivacyLevel.Private,
                 PrivacyFilter.PublicOnly => PrivacyLevel.Public,
-                PrivacyFilter.All => null
+                PrivacyFilter.All => null,
+                _ => throw new ArgumentOutOfRangeException($"Unknown privacy filter {PrivacyFilter}")
             }, Filter, SearchInDescription);
 
         private IEnumerable<ListedMember> Sort(IEnumerable<ListedMember> input)

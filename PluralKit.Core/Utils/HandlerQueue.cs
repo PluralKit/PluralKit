@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 using NodaTime;
 
-namespace PluralKit.Bot
+namespace PluralKit.Core
 {
     public class HandlerQueue<T>
     {

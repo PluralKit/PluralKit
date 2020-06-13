@@ -9,10 +9,10 @@ namespace PluralKit.Bot
 {
     public class ProxyMatcher
     {
-        public static readonly Duration LatchExpiryTime = Duration.FromHours(6);
+        private static readonly Duration LatchExpiryTime = Duration.FromHours(6);
 
-        private IClock _clock;
-        private ProxyTagParser _parser;
+        private readonly IClock _clock;
+        private readonly ProxyTagParser _parser;
 
         public ProxyMatcher(ProxyTagParser parser, IClock clock)
         {
