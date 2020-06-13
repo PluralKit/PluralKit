@@ -8,7 +8,7 @@ using NodaTime.Text;
 namespace PluralKit.Core {
     public class PKMember
     {
-        public int Id { get; set; }
+        public int Id { get; }
         public string Hid { get; set; }
         public int System { get; set; }
         public string Color { get; set; }
@@ -20,8 +20,8 @@ namespace PluralKit.Core {
         public string Description { get; set; }
         public ICollection<ProxyTag> ProxyTags { get; set; }
         public bool KeepProxy { get; set; }
-        public Instant Created { get; set; }
-        public int MessageCount { get; set; }
+        public Instant Created { get; }
+        public int MessageCount { get; }
 
         public PrivacyLevel MemberPrivacy { get; set; }
 
