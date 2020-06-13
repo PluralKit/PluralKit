@@ -85,7 +85,7 @@ namespace PluralKit.Bot
             // Send the webhook
             var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
                 match.Member.ProxyAvatar(ctx),
-                match.Content, trigger.Attachments);
+                match.ProxyContent, trigger.Attachments);
 
                         
             Task SaveMessage() => _data.AddMessage(conn, trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id, match.Member.Id);
