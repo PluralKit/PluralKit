@@ -75,7 +75,7 @@ namespace PluralKit.Bot
                 (logChannel == null ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;log channel #your-log-channel`." : ""));
         }
         
-        public async Task SetBlacklisted(Context ctx, bool onBlacklist)
+        public async Task SetBlacklisted(Context ctx, bool shouldAdd)
         {
             ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
 
@@ -94,15 +94,15 @@ namespace PluralKit.Bot
             {
                 var guild = await conn.QueryOrInsertGuildConfig(ctx.Guild.Id);
                 var blacklist = guild.Blacklist.ToHashSet();
-                if (onBlacklist)
-                    blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
-                else
+                if (shouldAdd)
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
+                else
+                    blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
                 await conn.ExecuteAsync("update servers set blacklist = @Blacklist where id = @Id",
                     new {ctx.Guild.Id, Blacklist = blacklist.ToArray()});
             }
 
-            await ctx.Reply($"{Emojis.Success} Channels {(onBlacklist ? "added to" : "removed from")} the proxy blacklist.");
+            await ctx.Reply($"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
         }
 
         public async Task SetLogCleanup(Context ctx)
