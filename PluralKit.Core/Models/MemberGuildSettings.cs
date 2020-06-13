@@ -7,13 +7,5 @@ namespace PluralKit.Core
         public ulong Guild { get; }
         public string? DisplayName { get; }
         public string? AvatarUrl { get; }
-
-        public MemberGuildSettings() { }
-
-        public MemberGuildSettings(int member, ulong guild)
-        {
-            Member = member;
-            Guild = guild;
-        }
     }
 }
