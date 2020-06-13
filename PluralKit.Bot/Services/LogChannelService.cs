@@ -41,8 +41,8 @@ namespace PluralKit.Bot {
             
             // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateLoggedMessageEmbed(await _data.GetSystemById(ctx.SystemId.Value),
-                await _data.GetMemberById(proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content,
+            var embed = _embed.CreateLoggedMessageEmbed(await conn.QuerySystem(ctx.SystemId.Value),
+                await conn.QueryMember(proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content,
                 trigger.Channel);
             var url = $"https://discord.com/channels/{trigger.Channel.GuildId}/{trigger.ChannelId}/{hookMessage}";
             await logChannel.SendMessageAsync(content: url, embed: embed);

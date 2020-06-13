@@ -8,12 +8,14 @@ namespace PluralKit.Bot
     public class Member
     {
         private IDataStore _data;
+        private IDatabase _db;
         private EmbedService _embeds;
         
-        public Member(IDataStore data, EmbedService embeds)
+        public Member(IDataStore data, EmbedService embeds, IDatabase db)
         {
             _data = data;
             _embeds = embeds;
+            _db = db;
         }
 
         public async Task NewMember(Context ctx) {
@@ -66,7 +68,8 @@ namespace PluralKit.Bot
 
         public async Task ViewMember(Context ctx, PKMember target)
         {
-            var system = await _data.GetSystemById(target.System);
+            
+            var system = await _db.Execute(c => c.QuerySystem(target.System));
             await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
         }
     }

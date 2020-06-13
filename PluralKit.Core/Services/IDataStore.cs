@@ -52,12 +52,6 @@ namespace PluralKit.Core {
     public interface IDataStore
     {
         /// <summary>
-        /// Gets a system by its internal system ID.
-        /// </summary>
-        /// <returns>The <see cref="PKSystem"/> with the given internal ID, or null if no system was found.</returns>
-        Task<PKSystem> GetSystemById(int systemId);
-        
-        /// <summary>
         /// Gets a system by its user-facing human ID.
         /// </summary>
         /// <returns>The <see cref="PKSystem"/> with the given human ID, or null if no system was found.</returns>

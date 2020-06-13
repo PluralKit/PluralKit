@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System.Data;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -8,6 +7,9 @@ namespace PluralKit.Core
 {
     public static class ModelQueryExt
     {
+        public static Task<PKSystem?> QuerySystem(this IPKConnection conn, int id) =>
+            conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where id = @id", new {id});
+        
         public static Task<PKMember?> QueryMember(this IPKConnection conn, int id) =>
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where id = @id", new {id});
         
