@@ -311,6 +311,11 @@ namespace PluralKit.Core
 
     public static class DatabaseExt
     {
+        public static async Task Execute(this DbConnectionFactory db, Func<IDbConnection, Task> func)
+        {
+            await using var conn = await db.Obtain();
+            await func(conn);
+        }
         public static async Task<T> Execute<T>(this DbConnectionFactory db, Func<IDbConnection, Task<T>> func)
         {
             await using var conn = await db.Obtain();

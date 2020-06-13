@@ -95,7 +95,7 @@ namespace PluralKit.Bot
             try
             {
                 var system = ctx.SystemId != null ? await _data.GetSystemById(ctx.SystemId.Value) : null;
-                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, argPos, system));
+                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, argPos, system, ctx));
             }
             catch (PKError)
             {

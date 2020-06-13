@@ -16,12 +16,14 @@ namespace PluralKit.Bot {
     public class EmbedService
     {
         private IDataStore _data;
+        private DbConnectionFactory _db;
         private DiscordShardedClient _client;
 
-        public EmbedService(DiscordShardedClient client, IDataStore data)
+        public EmbedService(DiscordShardedClient client, IDataStore data, DbConnectionFactory db)
         {
             _client = client;
             _data = data;
+            _db = db;
         }
 
         public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx) {
@@ -93,7 +95,7 @@ namespace PluralKit.Bot {
                 color = DiscordUtils.Gray;
             }
             
-            var guildSettings = guild != null ? await _data.GetMemberGuildSettings(member, guild.Id) : null;
+            var guildSettings = guild != null ? await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(guild.Id, member.Id)) : null;
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarUrl;
 

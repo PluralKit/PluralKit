@@ -1,10 +1,9 @@
-using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
+using Dapper;
 
-using NodaTime;
+using DSharpPlus.Entities;
 
 using PluralKit.Core;
 
@@ -12,11 +11,13 @@ namespace PluralKit.Bot
 {
     public class MemberEdit
     {
-        private IDataStore _data;
+        private readonly IDataStore _data;
+        private readonly DbConnectionFactory _db;
 
-        public MemberEdit(IDataStore data)
+        public MemberEdit(IDataStore data, DbConnectionFactory db)
         {
             _data = data;
+            _db = db;
         }
 
         public async Task Name(Context ctx, PKMember target) {
@@ -46,7 +47,7 @@ namespace PluralKit.Bot
 
             if (ctx.Guild != null)
             {
-                var memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+                var memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
                 if (memberGuildConfig.DisplayName != null)
                     await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName.SanitizeMentions()}) in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name here.");
             }
@@ -224,7 +225,7 @@ namespace PluralKit.Bot
         {
             MemberGuildSettings memberGuildConfig = null;
             if (ctx.Guild != null)
-                memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+                memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
 
             var eb = new DiscordEmbedBuilder().WithTitle($"Member names")
                 .WithFooter($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name.");
@@ -257,7 +258,7 @@ namespace PluralKit.Bot
                 var successStr = text;
                 if (ctx.Guild != null)
                 {
-                    var memberGuildConfig = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
+                    var memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
                     if (memberGuildConfig.DisplayName != null)
                         successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name, \"{memberGuildConfig.DisplayName.SanitizeMentions()}\", here.";
                 }
@@ -296,14 +297,14 @@ namespace PluralKit.Bot
         public async Task ServerName(Context ctx, PKMember target)
         {
             ctx.CheckGuildContext();
-            var guildSettings = await _data.GetMemberGuildSettings(target, ctx.Guild.Id);
             
             if (MatchClear(ctx))
             {
                 CheckEditMemberPermission(ctx, target);
-                
-                guildSettings.DisplayName = null;
-                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildSettings);
+
+                await _db.Execute(c =>
+                    c.ExecuteAsync("update member_guild set display_name = null where member = @member and guild = @guild",
+                        new {member = target.Id, guild = ctx.Guild.Id}));
 
                 if (target.DisplayName != null)
                     await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
@@ -323,8 +324,10 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
                 
                 var newServerName = ctx.RemainderOrNull();
-                guildSettings.DisplayName = newServerName;
-                await _data.SetMemberGuildSettings(target, ctx.Guild.Id, guildSettings);
+                 
+                await _db.Execute(c =>
+                    c.ExecuteAsync("update member_guild set display_name = @newServerName where member = @member and guild = @guild",
+                        new {member = target.Id, guild = ctx.Guild.Id, newServerName}));    
 
                 await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
             }

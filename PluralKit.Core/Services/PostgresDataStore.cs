@@ -35,28 +35,7 @@ namespace PluralKit.Core {
                     Suffix = tag.Suffix
                 });
         }
-
-        public async Task<SystemGuildSettings> GetSystemGuildSettings(PKSystem system, ulong guild)
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleOrDefaultAsync<SystemGuildSettings>(
-                           "select * from system_guild where system = @System and guild = @Guild",
-                           new {System = system.Id, Guild = guild}) ?? new SystemGuildSettings();
-        }
-        public async Task SetSystemGuildSettings(PKSystem system, ulong guild, SystemGuildSettings settings)
-        {
-            using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("insert into system_guild (system, guild, proxy_enabled, autoproxy_mode, autoproxy_member) values (@System, @Guild, @ProxyEnabled, @AutoproxyMode, @AutoproxyMember) on conflict (system, guild) do update set proxy_enabled = @ProxyEnabled, autoproxy_mode = @AutoproxyMode, autoproxy_member = @AutoproxyMember", new
-                {
-                    System = system.Id,
-                    Guild = guild,
-                    settings.ProxyEnabled,
-                    settings.AutoproxyMode,
-                    settings.AutoproxyMember
-                });
-            _logger.Information("Updated system guild settings {@SystemGuildSettings}", settings);
-        }
-
+        
         public async Task<PKSystem> CreateSystem(string systemName = null) {
             PKSystem system;
             using (var conn = await _conn.Obtain())
@@ -187,23 +166,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("delete from members where id = @Id", member);
 
             _logger.Information("Deleted member {@Member}", member);
-        }
-
-        public async Task<MemberGuildSettings> GetMemberGuildSettings(PKMember member, ulong guild)
-        {
-            using var conn = await _conn.Obtain();
-            return await conn.QuerySingleOrDefaultAsync<MemberGuildSettings>(
-                       "select * from member_guild where member = @Member and guild = @Guild", new { Member = member.Id, Guild = guild})
-                   ?? new MemberGuildSettings { Guild = guild, Member = member.Id };
-        }
-
-        public async Task SetMemberGuildSettings(PKMember member, ulong guild, MemberGuildSettings settings)
-        {
-            using var conn = await _conn.Obtain();
-            await conn.ExecuteAsync(
-                "insert into member_guild (member, guild, display_name, avatar_url) values (@Member, @Guild, @DisplayName, @AvatarUrl) on conflict (member, guild) do update set display_name = @DisplayName, avatar_url = @AvatarUrl",
-                settings);
-            _logger.Information("Updated member guild settings {@MemberGuildSettings}", settings);
         }
 
         public async Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate)

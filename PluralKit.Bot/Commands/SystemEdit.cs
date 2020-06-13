@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Dapper;
+
 using DSharpPlus;
 using DSharpPlus.Entities;
 
@@ -16,12 +18,14 @@ namespace PluralKit.Bot
     public class SystemEdit
     {
         private IDataStore _data;
+        private DbConnectionFactory _db;
         private EmbedService _embeds;
 
-        public SystemEdit(IDataStore data, EmbedService embeds)
+        public SystemEdit(IDataStore data, EmbedService embeds, DbConnectionFactory db)
         {
             _data = data;
             _embeds = embeds;
+            _db = db;
         }
 
         public async Task Name(Context ctx)
@@ -181,7 +185,7 @@ namespace PluralKit.Bot
         public async Task SystemProxy(Context ctx)
         {
             ctx.CheckSystem().CheckGuildContext();
-            var gs = await _data.GetSystemGuildSettings(ctx.System, ctx.Guild.Id);
+            var gs = await _db.Execute(c => c.QueryOrInsertSystemGuildConfig(ctx.Guild.Id, ctx.System.Id));
 
             bool newValue;
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
@@ -196,8 +200,9 @@ namespace PluralKit.Bot
                 return;
             }
 
-            gs.ProxyEnabled = newValue;
-            await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, gs);
+            await _db.Execute(c =>
+                c.ExecuteAsync("update system_guild set proxy_enabled = @newValue where system = @system and guild = @guild",
+                    new {newValue, system = ctx.System.Id, guild = ctx.Guild.Id}));
 
             if (newValue)
                 await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");

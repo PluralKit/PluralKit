@@ -25,6 +25,7 @@ namespace PluralKit.Bot
         private readonly DiscordClient _shard;
         private readonly DiscordMessage _message;
         private readonly Parameters _parameters;
+        private readonly MessageContext _messageContext;
 
         private readonly IDataStore _data;
         private readonly PKSystem _senderSystem;
@@ -33,7 +34,7 @@ namespace PluralKit.Bot
         private Command _currentCommand;
 
         public Context(ILifetimeScope provider, DiscordClient shard, DiscordMessage message, int commandParseOffset,
-                       PKSystem senderSystem)
+                       PKSystem senderSystem, MessageContext messageContext)
         {
             _rest = provider.Resolve<DiscordRestClient>();
             _client = provider.Resolve<DiscordShardedClient>();
@@ -41,6 +42,7 @@ namespace PluralKit.Bot
             _shard = shard;
             _data = provider.Resolve<IDataStore>();
             _senderSystem = senderSystem;
+            _messageContext = messageContext;
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
@@ -52,6 +54,7 @@ namespace PluralKit.Bot
         public DiscordGuild Guild => _message.Channel.Guild;
         public DiscordClient Shard => _shard;
         public DiscordShardedClient Client => _client;
+        public MessageContext MessageContext => _messageContext;
 
         public DiscordRestClient Rest => _rest;
 

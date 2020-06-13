@@ -48,23 +48,7 @@ namespace PluralKit.Core {
         public int Member;
         public Instant Timestamp;
     }
-    
-    public class SystemGuildSettings
-    {
-        public ulong Guild { get; set; }
-        public bool ProxyEnabled { get; set; } = true;
 
-        public AutoproxyMode AutoproxyMode { get; set; } = AutoproxyMode.Off;
-        public int? AutoproxyMember { get; set; }
-    }
-
-    public class MemberGuildSettings
-    {
-        public int Member { get; set; }
-        public ulong Guild { get; set; }
-        public string DisplayName { get; set; }
-        public string AvatarUrl { get; set; }
-    }
     public interface IDataStore
     {
         /// <summary>
@@ -112,17 +96,7 @@ namespace PluralKit.Core {
         /// </summary>
         /// <param name="system">The system to check in.</param>
         Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag);
-
-        /// <summary>
-        /// Gets a specific system's guild-specific settings for a given guild.
-        /// </summary>
-        Task<SystemGuildSettings> GetSystemGuildSettings(PKSystem system, ulong guild);
         
-        /// <summary>
-        /// Saves a specific system's guild-specific settings.
-        /// </summary>
-        Task SetSystemGuildSettings(PKSystem system, ulong guild, SystemGuildSettings settings);
-
         /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
         /// </summary>
@@ -210,16 +184,6 @@ namespace PluralKit.Core {
         /// </para>
         Task DeleteMember(PKMember member);
         
-        /// <summary>
-        /// Gets a specific member's guild-specific settings for a given guild.
-        /// </summary>
-        Task<MemberGuildSettings> GetMemberGuildSettings(PKMember member, ulong guild);
-        
-        /// <summary>
-        /// Saves a specific member's guild-specific settings.
-        /// </summary>
-        Task SetMemberGuildSettings(PKMember member, ulong guild, MemberGuildSettings settings);
-
         /// <summary>
         /// Gets a message and its information by its ID.
         /// </summary>
