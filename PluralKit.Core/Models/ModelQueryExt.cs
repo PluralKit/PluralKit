@@ -12,7 +12,7 @@ namespace PluralKit.Core
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where id = @id", new {id});
         
         public static Task<GuildConfig> QueryOrInsertGuildConfig(this IPKConnection conn, ulong guild) =>
-            conn.QueryFirstAsync<GuildConfig>("insert into servers (id) values (@Guild) on conflict do nothing returning *", new {Guild = guild});
+            conn.QueryFirstAsync<GuildConfig>("insert into servers (id) values (@guild) on conflict (id) do update set id = @guild returning *", new {guild});
 
         public static Task<SystemGuildSettings> QueryOrInsertSystemGuildConfig(this IPKConnection conn, ulong guild, int system) =>
             conn.QueryFirstAsync<SystemGuildSettings>(

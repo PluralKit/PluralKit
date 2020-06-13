@@ -2,7 +2,7 @@
 {
     public class GuildConfig
     {
-        public int Id { get; }
+        public ulong Id { get; }
         public ulong? LogChannel { get; }
         public ulong[] LogBlacklist { get; }
         public ulong[] Blacklist { get; }

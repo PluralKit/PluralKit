@@ -21,7 +21,7 @@ namespace PluralKit.Bot
         {
             // Load configuration and run global init stuff
             var config = InitUtils.BuildConfiguration(args).Build();
-            InitUtils.Init();
+            Database.InitStatic();
             
             // Set up DI container and modules
             var services = BuildContainer(config);

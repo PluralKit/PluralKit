@@ -67,7 +67,7 @@ namespace PluralKit.Bot
                 else
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
                 await conn.ExecuteAsync("update servers set log_blacklist = @LogBlacklist where id = @Id",
-                    new {ctx.Guild.Id, LogBlacklist = blacklist});
+                    new {ctx.Guild.Id, LogBlacklist = blacklist.ToArray()});
             }
 
             await ctx.Reply(
@@ -99,7 +99,7 @@ namespace PluralKit.Bot
                 else
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
                 await conn.ExecuteAsync("update servers set blacklist = @Blacklist where id = @Id",
-                    new {ctx.Guild.Id, Blacklist = blacklist});
+                    new {ctx.Guild.Id, Blacklist = blacklist.ToArray()});
             }
 
             await ctx.Reply($"{Emojis.Success} Channels {(onBlacklist ? "added to" : "removed from")} the proxy blacklist.");

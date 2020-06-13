@@ -25,13 +25,6 @@ namespace PluralKit.Core
             _logger = logger.ForContext<Schemas>();
         }
 
-        public static void Initialize()
-        {
-            // Without these it'll still *work* but break at the first launch + probably cause other small issues
-            NpgsqlConnection.GlobalTypeMapper.MapComposite<ProxyTag>("proxy_tag");
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<PrivacyLevel>("privacy_level");
-        }
-
         public async Task InitializeDatabase()
         {
             // Run everything in a transaction
