@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 
 using Serilog;
-using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.SystemConsole.Themes;
 

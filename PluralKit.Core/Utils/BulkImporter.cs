@@ -3,15 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 
 using Dapper;
 
 using NodaTime;
-
-using Npgsql;
 
 using NpgsqlTypes;
 

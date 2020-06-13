@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 
-using DSharpPlus;
 using DSharpPlus.Entities;
 
 using PluralKit.Core;

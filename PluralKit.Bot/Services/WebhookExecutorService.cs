@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -14,7 +13,6 @@ using DSharpPlus.Exceptions;
 using Humanizer;
 
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 using Serilog;
 

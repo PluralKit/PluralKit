@@ -1,7 +1,4 @@
-﻿using System.Data;
-using System.Threading;
-
-using Dapper;
+﻿using System.Threading;
 
 namespace PluralKit.Core
 {
