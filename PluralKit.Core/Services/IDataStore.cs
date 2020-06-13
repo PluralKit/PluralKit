@@ -283,25 +283,5 @@ namespace PluralKit.Core {
         /// Deletes all switches in a given system from the data store.
         /// </summary>
         Task DeleteAllSwitches(PKSystem system);
-
-        /// <summary>
-        /// Gets the total amount of systems in the data store.
-        /// </summary>
-        Task<ulong> GetTotalSystems();
-        
-        /// <summary>
-        /// Gets the total amount of members in the data store.
-        /// </summary>
-        Task<ulong> GetTotalMembers();
-        
-        /// <summary>
-        /// Gets the total amount of switches in the data store.
-        /// </summary>
-        Task<ulong> GetTotalSwitches();
-        
-        /// <summary>
-        /// Gets the total amount of messages in the data store.
-        /// </summary>
-        Task<ulong> GetTotalMessages();
     }
 }

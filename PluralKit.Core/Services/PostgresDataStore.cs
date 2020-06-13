@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -113,12 +113,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("delete from switches where system = @Id", system);
         }
 
-        public async Task<ulong> GetTotalSystems()
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.ExecuteScalarAsync<ulong>("select count(id) from systems");
-        }
-
         public async Task<PKMember> CreateMember(PKSystem system, string name) {
             PKMember member;
             using (var conn = await _conn.Obtain())
@@ -226,12 +220,6 @@ namespace PluralKit.Core {
             }
         }
 
-        public async Task<ulong> GetTotalMessages()
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.ExecuteScalarAsync<ulong>("select count(mid) from messages");
-        }
-
         public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
@@ -334,12 +322,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
 
             _logger.Information("Deleted switch {Switch}");
-        }
-
-        public async Task<ulong> GetTotalSwitches()
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.ExecuteScalarAsync<ulong>("select count(id) from switches");
         }
 
         public async Task<IEnumerable<SwitchListEntry>> GetPeriodFronters(PKSystem system, Instant periodStart, Instant periodEnd)
