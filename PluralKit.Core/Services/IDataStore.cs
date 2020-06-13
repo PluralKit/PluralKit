@@ -48,16 +48,7 @@ namespace PluralKit.Core {
         public int Member;
         public Instant Timestamp;
     }
-
-    public struct GuildConfig
-    {
-        public ulong Id { get; set; }
-        public ulong? LogChannel { get; set; }
-        public ISet<ulong> LogBlacklist { get; set; }
-        public ISet<ulong> Blacklist { get; set; }
-        public bool LogCleanupEnabled { get; set; }
-    }
-
+    
     public class SystemGuildSettings
     {
         public ulong Guild { get; set; }
@@ -348,16 +339,5 @@ namespace PluralKit.Core {
         /// Gets the total amount of messages in the data store.
         /// </summary>
         Task<ulong> GetTotalMessages();
-
-        /// <summary>
-        /// Gets the guild configuration struct for a given guild, creating and saving one if none was found.
-        /// </summary>
-        /// <returns>The guild's configuration struct.</returns>
-        Task<GuildConfig> GetOrCreateGuildConfig(ulong guild);
-        
-        /// <summary>
-        /// Saves the given guild configuration struct to the data store.
-        /// </summary>
-        Task SaveGuildConfig(GuildConfig cfg);
     }
 }
