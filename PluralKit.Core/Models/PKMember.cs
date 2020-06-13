@@ -8,21 +8,20 @@ using NodaTime.Text;
 namespace PluralKit.Core {
     public class PKMember
     {
-        // Additions here should be mirrored in MemberStore::Save
-        [JsonIgnore] public int Id { get; set; }
-        [JsonProperty("id")] public string Hid { get; set; }
-        [JsonIgnore] public int System { get; set; }
-        [JsonProperty("color")] public string Color { get; set; }
-        [JsonProperty("avatar_url")] public string AvatarUrl { get; set; }
-        [JsonProperty("name")] public string Name { get; set; }
-        [JsonProperty("display_name")] public string DisplayName { get; set; }
-        [JsonProperty("birthday")] public LocalDate? Birthday { get; set; }
-        [JsonProperty("pronouns")] public string Pronouns { get; set; }
-        [JsonProperty("description")] public string Description { get; set; }
-        [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags { get; set; }
-        [JsonProperty("keep_proxy")] public bool KeepProxy { get; set; }
-        [JsonProperty("created")] public Instant Created { get; set; }
-        [JsonProperty("message_count")] public int MessageCount { get; set; }
+        public int Id { get; set; }
+        public string Hid { get; set; }
+        public int System { get; set; }
+        public string Color { get; set; }
+        public string AvatarUrl { get; set; }
+        public string Name { get; set; }
+        public string DisplayName { get; set; }
+        public LocalDate? Birthday { get; set; }
+        public string Pronouns { get; set; }
+        public string Description { get; set; }
+        public ICollection<ProxyTag> ProxyTags { get; set; }
+        public bool KeepProxy { get; set; }
+        public Instant Created { get; set; }
+        public int MessageCount { get; set; }
 
         public PrivacyLevel MemberPrivacy { get; set; }
 
