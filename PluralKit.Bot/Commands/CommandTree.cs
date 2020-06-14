@@ -255,6 +255,8 @@ namespace PluralKit.Bot
         {
             if (ctx.Match("new", "n", "add", "create", "register"))
                 await ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx));
+            else if (ctx.Match("list"))
+                await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "members", MemberCommands);
             else if (await ctx.MatchMember() is PKMember target)
