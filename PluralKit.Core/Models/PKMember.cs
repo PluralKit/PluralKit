@@ -40,10 +40,5 @@ namespace PluralKit.Core {
         }
 
         [JsonIgnore] public bool HasProxyTags => ProxyTags.Count > 0;
-        public string ProxyName(string systemTag, string guildDisplayName)
-        {
-            if (systemTag == null) return guildDisplayName ?? DisplayName ?? Name;
-            return $"{guildDisplayName ?? DisplayName ?? Name} {systemTag}";
-        }
     }
 }
