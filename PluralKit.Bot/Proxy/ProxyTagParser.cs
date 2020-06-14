@@ -65,6 +65,7 @@ namespace PluralKit.Bot
             
             // Special case: image-only proxies + proxy tags with spaces
             // Trim everything, then see if we have a "contentless tag pair" (normally disallowed, but OK if we have an attachment)
+            // Note `input` is still "", even if there are spaces between
             if (!isMatch && input.Trim() == prefix.TrimEnd() + suffix.TrimStart())
                 return true;
             if (!isMatch) return false; 

@@ -1,4 +1,6 @@
 #nullable enable
+using System.Collections.Generic;
+
 using PluralKit.Bot;
 using PluralKit.Core;
 
@@ -9,81 +11,175 @@ namespace PluralKit.Tests
     public class ProxyTagParserTests
     {
         private ProxyTagParser parser = new ProxyTagParser();
-        private ProxyMember[] members = {
-            new ProxyMember("Tagless"), 
-            new ProxyMember("John", new ProxyTag("[", "]")),
-            new ProxyMember("Curly", new ProxyTag("{", "}")),
-            new ProxyMember("Specific", new ProxyTag("{{", "}}")),
-            new ProxyMember("SuperSpecific", new ProxyTag("{{{", "}}}")),
-            new ProxyMember("Manytags", new ProxyTag("-", "-"), new ProxyTag("<", ">")),
-            new ProxyMember("Lopsided", new ProxyTag("-", "")),
-            new ProxyMember("Othersided", new ProxyTag("", "-"))
-        };
 
-        [Fact]
-        public void EmptyStringMatchesNothing() =>
-            Assert.False(parser.TryMatch(members, "", out _));
 
-        [Fact]
-        public void NullStringMatchesNothing() =>
-            Assert.False(parser.TryMatch(members, null, out _));
-
-        [Fact]
-        public void PlainStringMatchesNothing() =>
-            // Note that we have "Tagless" with no proxy tags
-            Assert.False(parser.TryMatch(members, "string without any of the tags", out _));
-
-        [Fact]
-        public void StringWithBasicTagsMatch() =>
-            Assert.True(parser.TryMatch(members, "[these are john's tags]", out _));
-
-        [Theory]
-        [InlineData("[these are john's tags]", "John")]
-        [InlineData("-lopsided tags on the left", "Lopsided")]
-        [InlineData("lopsided tags on the right-", "Othersided")]
-        public void MatchReturnsCorrectMember(string input, string expectedName)
+        public class Basics
         {
-            parser.TryMatch(members, input, out var result);
-            Assert.Equal(expectedName, result.Member.Name);
+            private ProxyMember[] members = {
+                new ProxyMember("John", new ProxyTag("[", "]")),
+                new ProxyMember("Bob", new ProxyTag("{", "}"), new ProxyTag("<", ">")),
+                new ProxyMember("Prefixed", new ProxyTag("A:", "")),
+                new ProxyMember("Tagless") 
+            };
+
+            [Fact]
+            public void StringWithoutAnyTagsMatchesNothing() =>
+                // Note that we have "Tagless" with no proxy tags
+                AssertNoMatch(members, "string without any tags");
+
+            [Theory]
+            [InlineData("[john's tags]")]
+            [InlineData("{bob's tags}")]
+            [InlineData("A:tag with prefix")]
+            public void StringWithTagsMatch(string input) =>
+                AssertMatch(members, input);
+
+            [Theory]
+            [InlineData("[john's tags]", "John")]
+            [InlineData("{bob's tags}", "Bob")]
+            [InlineData("A:tag with prefix", "Prefixed")]
+            public void MatchReturnsCorrespondingMember(string input, string expectedName) =>
+                AssertMatch(members, input, name: expectedName);
+
+            [Theory]
+            [InlineData("[text inside]", "text inside")]
+            [InlineData("A:text after", "text after")]
+            [InlineData("A: space after prefix", "space after prefix")]
+            [InlineData("[      lots and lots of spaces      ]", "lots and lots of spaces")]
+            public void ContentBetweenTagsIsExtracted(string input, string expectedContent) =>
+                AssertMatch(members, input, content: expectedContent);
+
+            [Theory]
+            [InlineData("[john's tags]", "[", "]")]
+            [InlineData("{bob's tags}", "{", "}")]
+            [InlineData("<also bob's tags>", "<", ">")]
+            public void ReturnedTagMatchesInput(string input, string expectedPrefix, string expectedSuffix) =>
+                AssertMatch(members, input, prefix: expectedPrefix, suffix: expectedSuffix);
+
+            [Theory]
+            [InlineData("[tags at the start] but more text here")]
+            [InlineData("text at the start [but tags after]")]
+            [InlineData("something A:prefix")]
+            public void TagsOnlyMatchAtTheStartAndEnd(string input) =>
+                AssertNoMatch(members, input);
         }
 
-        [Fact]
-        public void MatchReturnsCorrectContent()
+        public class MentionPrefix
         {
-            parser.TryMatch(members, "[these are john's tags]", out var result);
-            Assert.Equal("these are john's tags", result.Content);
+            private ProxyMember[] members = {
+                new ProxyMember("John", new ProxyTag("[", "]")),
+                new ProxyMember("Suffix only", new ProxyTag("", "-Q")), 
+            };
+
+            public void MentionAtStartGetsMovedIntoTags() =>
+                AssertMatch(members, "<@466378653216014359>[some text]", content: "some text");
+            
+            public void SpacesBetweenMentionAndTagsAreAllowed() =>
+                AssertMatch(members, "<@466378653216014359> [some text]", content: "some text");
+            
+            public void MentionMovingTakesPrecedenceOverTagMatching() =>
+                // (as opposed to content: "<@466378653216014359> some text")
+                // which would also be valid, but the tags should be moved first
+                AssertMatch(members, "<@466378653216014359> some text -Q", content: "some text");
+
+            public void AlternateMentionSyntaxAlsoAccepted() =>
+                AssertMatch(members, "<@466378653216014359> [some text]", content: "some text");
         }
 
-        [Theory]
-        [InlineData("{just curly}", "Curly", "just curly")]
-        [InlineData("{{getting deeper}}", "Specific", "getting deeper")]
-        [InlineData("{{{way too deep}}}", "SuperSpecific", "way too deep")]
-        [InlineData("{{unmatched brackets}}}", "Specific", "unmatched brackets}")]
-        [InlineData("{more unmatched brackets}}}}}", "Curly", "more unmatched brackets}}}}")]
-        public void MostSpecificTagsAreMatched(string input, string expectedName, string expectedContent)
+        public class Specificity
         {
-            Assert.True(parser.TryMatch(members, input, out var result));
-            Assert.Equal(expectedName, result.Member.Name);
-            Assert.Equal(expectedContent, result.Content);
+            private ProxyMember[] members =
+            {
+                new ProxyMember("Level One", new ProxyTag("[", "]")),
+                new ProxyMember("Level Two", new ProxyTag("[[", "]]")),
+                new ProxyMember("Level Three", new ProxyTag("[[[", "]]]")),
+            };
+
+            [Theory]
+            [InlineData("[just one]", "Level One")]
+            [InlineData("[[getting deeper]]", "Level Two")]
+            [InlineData("[[[way too deep]]]", "Level Three")]
+            [InlineData("[[unmatched brackets]]]", "Level Two")]
+            [InlineData("[more unmatched brackets]]]]]]", "Level One")]
+            public void MostSpecificTagsAreMatched(string input, string expectedName) => 
+                AssertMatch(members, input, name: expectedName);
+        }
+        
+        public class EmptyInput
+        {
+            private ProxyMember[] members = {new ProxyMember("Something", new ProxyTag("[", "]"))};
+            
+            [Theory]
+            [InlineData("")]
+            [InlineData("some text")]
+            [InlineData("{bogus tags, idk}")]
+            public void NoMembersMatchNothing(string input) => 
+                AssertNoMatch(new ProxyMember[]{}, input);
+            
+            [Fact]
+            public void EmptyStringMatchesNothing() =>
+                AssertNoMatch(members, "");
+
+            [Fact]
+            public void NullStringMatchesNothing() =>
+                AssertNoMatch(members, null);
         }
 
-        [Theory]
-        [InlineData("")]
-        [InlineData("some text")]
-        [InlineData("{bogus tags, idk}")]
-        public void NoMembersMatchNothing(string input) => 
-            Assert.False(parser.TryMatch(new ProxyMember[]{}, input, out _));
-
-        [Theory]
-        [InlineData("{hello world}", "{", "}")]
-        [InlineData("[some other tags]", "[", "]")]
-        [InlineData("-manytags has multiple sets-", "-", "-")]
-        [InlineData("<and it should return the correct set>", "<", ">")]
-        public void ReturnedProxyTagsShouldMatchInput(string input, string expectedPrefix, string expectedSuffix)
+        public class TagSpaceHandling
         {
-            Assert.True(parser.TryMatch(members, input, out var result));
-            Assert.Equal(expectedPrefix, result.ProxyTags?.Prefix);
-            Assert.Equal(expectedSuffix, result.ProxyTags?.Suffix);
+            private ProxyMember[] members =
+            {
+                new ProxyMember("Tags without spaces", new ProxyTag("[", "]")),
+                new ProxyMember("Tags with spaces", new ProxyTag("{ ", " }")),
+                new ProxyMember("Spaced prefix tag", new ProxyTag("A: ", ""))
+            };
+
+
+            [Fact]
+            public void TagsWithoutSpacesAlwaysMatch()
+            {
+                AssertMatch(members, "[no spaces inside tags]");
+                AssertMatch(members, "[ spaces inside tags ]");
+            }
+
+            [Fact]
+            public void TagsWithSpacesOnlyMatchWithSpaces()
+            {
+                AssertMatch(members, "{ spaces in here }");
+                AssertNoMatch(members, "{no spaces}");
+                
+                AssertMatch(members, "A: text here");
+                AssertNoMatch(members, "A:same text without spaces");
+            }
+            
+            [Fact]
+            public void SpacesBeforePrefixOrAfterSuffixAlsoCount()
+            {
+                AssertNoMatch(members, " A: text here");
+                AssertNoMatch(members, "{ something something }  ");
+            }
+
+            [Fact]
+            public void TagsWithSpacesStillMatchWithoutSpacesIfTheContentIsEmpty()
+            {
+                AssertMatch(members, "A:");
+                AssertMatch(members, "{}");
+            }
+        }
+        
+        internal static ProxyMatch AssertMatch(IEnumerable<ProxyMember> members, string input, string? name = null, string? prefix = null, string? suffix = null, string? content = null)
+        {
+            Assert.True(new ProxyTagParser().TryMatch(members, input, out var result));
+            if (name != null) Assert.Equal(name, result.Member.Name);
+            if (prefix != null) Assert.Equal(prefix, result.ProxyTags?.Prefix);
+            if (suffix != null) Assert.Equal(suffix, result.ProxyTags?.Suffix);
+            if (content != null) Assert.Equal(content, result.Content);
+            return result;
+        }
+
+        internal static void AssertNoMatch(IEnumerable<ProxyMember> members, string? input)
+        {
+            Assert.False(new ProxyTagParser().TryMatch(members, input, out _));
         }
     }
 }
