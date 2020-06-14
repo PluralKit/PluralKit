@@ -73,5 +73,17 @@ namespace PluralKit.Tests
         [InlineData("{bogus tags, idk}")]
         public void NoMembersMatchNothing(string input) => 
             Assert.False(parser.TryMatch(new ProxyMember[]{}, input, out _));
+
+        [Theory]
+        [InlineData("{hello world}", "{", "}")]
+        [InlineData("[some other tags]", "[", "]")]
+        [InlineData("-manytags has multiple sets-", "-", "-")]
+        [InlineData("<and it should return the correct set>", "<", ">")]
+        public void ReturnedProxyTagsShouldMatchInput(string input, string expectedPrefix, string expectedSuffix)
+        {
+            Assert.True(parser.TryMatch(members, input, out var result));
+            Assert.Equal(expectedPrefix, result.ProxyTags?.Prefix);
+            Assert.Equal(expectedSuffix, result.ProxyTags?.Suffix);
+        }
     }
 }
