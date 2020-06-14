@@ -101,7 +101,7 @@ namespace PluralKit.Bot
 
             async Task HandleEventInner()
             {
-                var serviceScope = _services.BeginLifetimeScope();
+                await using var serviceScope = _services.BeginLifetimeScope();
                 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
                 var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
