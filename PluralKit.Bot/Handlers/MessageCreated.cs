@@ -55,8 +55,13 @@ namespace PluralKit.Bot
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
             _lastMessageCache.AddMessage(evt.Channel.Id, evt.Message.Id);
             
+            // Get message context from DB (tracking w/ metrics)
+            MessageContext ctx;
+            await using (var conn = await _db.Obtain())
+            using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
+                ctx = await conn.QueryMessageContext(evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id);
+
             // Try each handler until we find one that succeeds
-            var ctx = await _db.Execute(c => c.QueryMessageContext(evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id));
             var _ = await TryHandleLogClean(evt, ctx) ||
                     await TryHandleCommand(evt, ctx) || 
                     await TryHandleProxy(evt, ctx);

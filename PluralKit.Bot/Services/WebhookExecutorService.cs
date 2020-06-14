@@ -13,6 +13,7 @@ using DSharpPlus.Exceptions;
 using Humanizer;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 using Serilog;
 
@@ -72,36 +73,34 @@ namespace PluralKit.Bot
                 await AddAttachmentsToBuilder(dwb, attachmentChunks[0]);
             }
             
-            var timerCtx = _metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime);
-
             DiscordMessage response;
-            try
-            {
-                response = await webhook.ExecuteAsync(dwb);
-            }
-            catch (JsonReaderException)
-            {
-                // This happens sometimes when we hit a CloudFlare error (or similar) on Discord's end
-                // Nothing we can do about this - happens sometimes under server load, so just drop the message and give up
-                throw new WebhookExecutionErrorOnDiscordsEnd();
-            }
-            catch (NotFoundException e)
-            {
-                var errorText = e.WebResponse?.Response;
-                if (errorText != null && errorText.Contains("10015") && !hasRetried)
+            using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime)) {
+                try
                 {
-                    // Error 10015 = "Unknown Webhook" - this likely means the webhook was deleted
-                    // but is still in our cache. Invalidate, refresh, try again
-                    _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
-                    
-                    var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(channel, webhook);
-                    return await ExecuteWebhookInner(channel, newWebhook, name, avatarUrl, content, attachments, hasRetried: true);
+                    response = await webhook.ExecuteAsync(dwb);
                 }
+                catch (JsonReaderException)
+                {
+                    // This happens sometimes when we hit a CloudFlare error (or similar) on Discord's end
+                    // Nothing we can do about this - happens sometimes under server load, so just drop the message and give up
+                    throw new WebhookExecutionErrorOnDiscordsEnd();
+                }
+                catch (NotFoundException e)
+                {
+                    var errorText = e.WebResponse?.Response;
+                    if (errorText != null && errorText.Contains("10015") && !hasRetried)
+                    {
+                        // Error 10015 = "Unknown Webhook" - this likely means the webhook was deleted
+                        // but is still in our cache. Invalidate, refresh, try again
+                        _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
+                        
+                        var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(channel, webhook);
+                        return await ExecuteWebhookInner(channel, newWebhook, name, avatarUrl, content, attachments, hasRetried: true);
+                    }
 
-                throw;
-            }
-
-            timerCtx.Dispose();
+                    throw;
+                }
+            } 
 
             // We don't care about whether the sending succeeds, and we don't want to *wait* for it, so we just fork it off
             var _ = TrySendRemainingAttachments(webhook, name, avatarUrl, attachmentChunks);

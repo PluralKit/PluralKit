@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
 
+using App.Metrics;
+
 using DSharpPlus.EventArgs;
 
 using PluralKit.Core;
@@ -12,12 +14,14 @@ namespace PluralKit.Bot
         private readonly LastMessageCacheService _lastMessageCache;
         private readonly ProxyService _proxy;
         private readonly IDatabase _db;
+        private readonly IMetrics _metrics;
 
-        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db)
+        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics)
         {
             _lastMessageCache = lastMessageCache;
             _proxy = proxy;
             _db = db;
+            _metrics = metrics;
         }
 
         public async Task Handle(MessageUpdateEventArgs evt)
@@ -29,7 +33,10 @@ namespace PluralKit.Bot
             if (_lastMessageCache.GetLastMessage(evt.Channel.Id) != evt.Message.Id) return;
             
             // Just run the normal message handling code, with a flag to disable autoproxying
-            var ctx = await _db.Execute(c => c.QueryMessageContext(evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id));
+            MessageContext ctx;
+            await using (var conn = await _db.Obtain())
+            using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
+                ctx = await conn.QueryMessageContext(evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id);
             await _proxy.HandleIncomingMessage(evt.Message, ctx, allowAutoproxy: false);
         }
     }

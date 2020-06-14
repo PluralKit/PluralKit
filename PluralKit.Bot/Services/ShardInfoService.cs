@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+
+using App.Metrics;
 
 using DSharpPlus;
 using DSharpPlus.EventArgs;
@@ -24,13 +27,15 @@ namespace PluralKit.Bot
             public bool Connected;
         }
 
+        private IMetrics _metrics;
         private ILogger _logger;
         private DiscordShardedClient _client;
         private Dictionary<int, ShardInfo> _shardInfo = new Dictionary<int, ShardInfo>();
         
-        public ShardInfoService(ILogger logger, DiscordShardedClient client)
+        public ShardInfoService(ILogger logger, DiscordShardedClient client, IMetrics metrics)
         {
             _client = client;
+            _metrics = metrics;
             _logger = logger.ForContext<ShardInfoService>();
         }
 
@@ -39,6 +44,13 @@ namespace PluralKit.Bot
             // We initialize this before any shards are actually created and connected
             // This means the client won't know the shard count, so we attach a listener every time a shard gets connected
             _client.SocketOpened += RefreshShardList;
+        }
+
+        private void ReportShardStatus()
+        {
+            foreach (var (id, shard) in _shardInfo)
+                _metrics.Measure.Gauge.SetValue(BotMetrics.ShardLatency, new MetricTags("shard", id.ToString()), shard.ShardLatency.TotalMilliseconds);
+            _metrics.Measure.Gauge.SetValue(BotMetrics.ShardsConnected, _shardInfo.Count(s => s.Value.Connected));
         }
 
         private async Task RefreshShardList()
@@ -95,6 +107,7 @@ namespace PluralKit.Bot
             var info = TryGetShard(e.Client);
             // info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
+            ReportShardStatus();
             return Task.CompletedTask;
         }
 
@@ -105,6 +118,7 @@ namespace PluralKit.Bot
             var info = TryGetShard(e.Client);
             info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
+            ReportShardStatus();
             return Task.CompletedTask;
         }
 
@@ -115,6 +129,7 @@ namespace PluralKit.Bot
             var info = TryGetShard(e.Client);
             info.DisconnectionCount++;
             info.Connected = false;
+            ReportShardStatus();
             return Task.CompletedTask; 
         }
 

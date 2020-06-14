@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
+using App.Metrics;
+
 using DSharpPlus;
 using DSharpPlus.Entities;
 
@@ -18,11 +20,13 @@ namespace PluralKit.Bot
         private DiscordShardedClient _client;
         private ConcurrentDictionary<ulong, Lazy<Task<DiscordWebhook>>> _webhooks;
 
+        private IMetrics _metrics;
         private ILogger _logger;
 
-        public WebhookCacheService(DiscordShardedClient client, ILogger logger)
+        public WebhookCacheService(DiscordShardedClient client, ILogger logger, IMetrics metrics)
         {
             _client = client;
+            _metrics = metrics;
             _logger = logger.ForContext<WebhookCacheService>();
             _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<DiscordWebhook>>>();
         }
@@ -78,6 +82,7 @@ namespace PluralKit.Bot
         private async Task<DiscordWebhook> GetOrCreateWebhook(DiscordChannel channel)
         {
             _logger.Debug("Webhook for channel {Channel} not found in cache, trying to fetch", channel.Id);
+            _metrics.Measure.Meter.Mark(BotMetrics.WebhookCacheMisses);
             return await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
         }
 

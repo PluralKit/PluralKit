@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
+using App.Metrics;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -22,15 +25,17 @@ namespace PluralKit.Bot
         private readonly ILogger _logger;
         private readonly WebhookExecutorService _webhookExecutor;
         private readonly ProxyMatcher _matcher;
+        private readonly IMetrics _metrics;
 
         public ProxyService(LogChannelService logChannel, IDataStore data, ILogger logger,
-                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher)
+                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher, IMetrics metrics)
         {
             _logChannel = logChannel;
             _data = data;
             _webhookExecutor = webhookExecutor;
             _db = db;
             _matcher = matcher;
+            _metrics = metrics;
             _logger = logger.ForContext<ProxyService>();
         }
 
@@ -40,7 +45,11 @@ namespace PluralKit.Bot
 
             // Fetch members and try to match to a specific member
             await using var conn = await _db.Obtain();
-            var members = (await conn.QueryProxyMembers(message.Author.Id, message.Channel.GuildId)).ToList();
+
+            List<ProxyMember> members;
+            using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
+                members = (await conn.QueryProxyMembers(message.Author.Id, message.Channel.GuildId)).ToList();
+            
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Count > 0,
                 allowAutoproxy)) return false;
 
