@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -36,13 +38,14 @@ namespace PluralKit.Core
         
         public static void InitStatic()
         {
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
+            
             // Dapper by default tries to pass ulongs to Npgsql, which rejects them since PostgreSQL technically
             // doesn't support unsigned types on its own.
             // Instead we add a custom mapper to encode them as signed integers instead, converting them back and forth.
             SqlMapper.RemoveTypeMap(typeof(ulong));
             SqlMapper.AddTypeHandler(new UlongEncodeAsLongHandler());
             SqlMapper.AddTypeHandler(new UlongArrayHandler());
-            DefaultTypeMap.MatchNamesWithUnderscores = true;
 
             NpgsqlConnection.GlobalTypeMapper.UseNodaTime();
             // With the thing we add above, Npgsql already handles NodaTime integration
@@ -50,6 +53,14 @@ namespace PluralKit.Core
             // So we add a custom type handler that literally just passes the type through to Npgsql
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
+            
+            // Add ID types to Dapper
+            SqlMapper.AddTypeHandler(new NumericIdHandler<SystemId, int>(i => new SystemId(i)));
+            SqlMapper.AddTypeHandler(new NumericIdHandler<MemberId, int>(i => new MemberId(i)));
+            SqlMapper.AddTypeHandler(new NumericIdHandler<SwitchId, int>(i => new SwitchId(i)));
+            SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SystemId, int>(i => new SystemId(i)));
+            SqlMapper.AddTypeHandler(new NumericIdArrayHandler<MemberId, int>(i => new MemberId(i)));
+            SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SwitchId, int>(i => new SwitchId(i)));
             
             // Register our custom types to Npgsql
             // Without these it'll still *work* but break at the first launch + probably cause other small issues
@@ -152,6 +163,38 @@ namespace PluralKit.Core
             public override void SetValue(IDbDataParameter parameter, ulong[] value) => parameter.Value = Array.ConvertAll(value, i => (long) i);
 
             public override ulong[] Parse(object value) => Array.ConvertAll((long[]) value, i => (ulong) i);
+        }
+
+        private class NumericIdHandler<T, TInner>: SqlMapper.TypeHandler<T>
+            where T: INumericId<T, TInner>
+            where TInner: IEquatable<TInner>, IComparable<TInner>
+        {
+            private readonly Func<TInner, T> _factory;
+
+            public NumericIdHandler(Func<TInner, T> factory)
+            {
+                _factory = factory;
+            }
+
+            public override void SetValue(IDbDataParameter parameter, T value) => parameter.Value = value.Value;
+
+            public override T Parse(object value) => _factory((TInner) value);
+        }
+
+        private class NumericIdArrayHandler<T, TInner>: SqlMapper.TypeHandler<T[]>
+            where T: INumericId<T, TInner>
+            where TInner: IEquatable<TInner>, IComparable<TInner>
+        {
+            private readonly Func<TInner, T> _factory;
+
+            public NumericIdArrayHandler(Func<TInner, T> factory)
+            {
+                _factory = factory;
+            }
+
+            public override void SetValue(IDbDataParameter parameter, T[] value) => parameter.Value = Array.ConvertAll(value, v => v.Value);
+
+            public override T[] Parse(object value) => Array.ConvertAll((TInner[]) value, v => _factory(v));
         }
     }
 }

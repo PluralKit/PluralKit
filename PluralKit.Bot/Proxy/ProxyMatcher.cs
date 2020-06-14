@@ -48,7 +48,7 @@ namespace PluralKit.Bot
                 AutoproxyMode.Member when ctx.AutoproxyMember != null => 
                     members.FirstOrDefault(m => m.Id == ctx.AutoproxyMember),
                 
-                AutoproxyMode.Front when ctx.LastSwitchMembers.Count > 0 => 
+                AutoproxyMode.Front when ctx.LastSwitchMembers.Length > 0 => 
                     members.FirstOrDefault(m => m.Id == ctx.LastSwitchMembers[0]),
                 
                 AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx.LastMessage) =>

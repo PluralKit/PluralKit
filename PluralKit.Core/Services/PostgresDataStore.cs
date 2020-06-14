@@ -125,7 +125,7 @@ namespace PluralKit.Core {
             return member;
         }
 
-        public async Task<PKMember> GetMemberById(int id) {
+        public async Task<PKMember> GetMemberById(MemberId id) {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where id = @Id", new { Id = id });
         }
@@ -177,7 +177,7 @@ namespace PluralKit.Core {
                 return await conn.ExecuteScalarAsync<ulong>("select count(id) from members");
         }
         
-        public async Task AddMessage(IPKConnection conn, ulong senderId, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId) {
+        public async Task AddMessage(IPKConnection conn, ulong senderId, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, MemberId proxiedMemberId) {
             // "on conflict do nothing" in the (pretty rare) case of duplicate events coming in from Discord, which would lead to a DB error before
             await conn.ExecuteAsync("insert into messages(mid, guild, channel, member, sender, original_mid) values(@MessageId, @GuildId, @ChannelId, @MemberId, @SenderId, @OriginalMid) on conflict do nothing", new {
                 MessageId = postedMessageId,
@@ -334,7 +334,7 @@ namespace PluralKit.Core {
             // query DB for all members involved in any of the switches above and collect into a dictionary for future use
             // this makes sure the return list has the same instances of PKMember throughout, which is important for the dictionary
             // key used in GetPerMemberSwitchDuration below
-            Dictionary<int, PKMember> memberObjects;
+            Dictionary<MemberId, PKMember> memberObjects;
             using (var conn = await _conn.Obtain())
             {
                 memberObjects = (
@@ -351,7 +351,7 @@ namespace PluralKit.Core {
                 select new SwitchListEntry
                 {
                     TimespanStart = g.Key,
-                    Members = g.Where(x => x.Member != 0).Select(x => memberObjects[x.Member]).ToList()
+                    Members = g.Where(x => x.Member != default(MemberId)).Select(x => memberObjects[x.Member]).ToList()
                 };
 
             // Loop through every switch that overlaps the range and add it to the output list

@@ -8,7 +8,7 @@ namespace PluralKit.Core
     /// </summary>
     public class ProxyMember
     {
-        public int Id { get; }
+        public MemberId Id { get; }
         public IReadOnlyCollection<ProxyTag> ProxyTags { get; } = new ProxyTag[0];
         public bool KeepProxy { get; }
         

@@ -8,9 +8,9 @@ using NodaTime.Text;
 namespace PluralKit.Core {
     public class PKMember
     {
-        public int Id { get; }
+        public MemberId Id { get; }
         public string Hid { get; set; }
-        public int System { get; set; }
+        public SystemId System { get; set; }
         public string Color { get; set; }
         public string AvatarUrl { get; set; }
         public string Name { get; set; }

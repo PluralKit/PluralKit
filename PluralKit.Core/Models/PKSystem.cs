@@ -8,7 +8,7 @@ namespace PluralKit.Core {
     public class PKSystem
     {
         // Additions here should be mirrored in SystemStore::Save
-        [Key] public int Id { get; }
+        [Key] public SystemId Id { get; }
         public string Hid { get; }
         public string Name { get; set; }
         public string Description { get; set; }

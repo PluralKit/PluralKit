@@ -9,10 +9,10 @@ namespace PluralKit.Core
 {
     public static class DatabaseViewsExt
     {
-        public static Task<IEnumerable<SystemFronter>> QueryCurrentFronters(this IPKConnection conn, int system) =>
+        public static Task<IEnumerable<SystemFronter>> QueryCurrentFronters(this IPKConnection conn, SystemId system) =>
             conn.QueryAsync<SystemFronter>("select * from system_fronters where system = @system", new {system});
 
-        public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, int system, PrivacyLevel? privacyFilter = null, string? filter = null, bool includeDescriptionInNameFilter = false)
+        public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system, PrivacyLevel? privacyFilter = null, string? filter = null, bool includeDescriptionInNameFilter = false)
         {
             StringBuilder query = new StringBuilder("select * from member_list where system = @system");
 

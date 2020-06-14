@@ -87,7 +87,7 @@ namespace PluralKit.Bot
             var fronters = ctx.MessageContext.LastSwitchMembers;
             var relevantMember = ctx.MessageContext.AutoproxyMode switch
             {
-                AutoproxyMode.Front => fronters.Count > 0 ? await _db.Execute(c => c.QueryMember(fronters[0])) : null,
+                AutoproxyMode.Front => fronters.Length > 0 ? await _db.Execute(c => c.QueryMember(fronters[0])) : null,
                 AutoproxyMode.Member => await _db.Execute(c => c.QueryMember(ctx.MessageContext.AutoproxyMember.Value)),
                 _ => null
             };
@@ -97,7 +97,7 @@ namespace PluralKit.Bot
                     break;
                 case AutoproxyMode.Front:
                 {
-                    if (fronters.Count == 0)
+                    if (fronters.Length == 0)
                         eb.WithDescription("Autoproxy is currently set to **front mode** in this server, but there are currently no fronters registered. Use the `pk;switch` command to log a switch.");
                     else
                     {
@@ -123,7 +123,7 @@ namespace PluralKit.Bot
             return eb.Build();
         }
         
-        private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, int? autoproxyMember) =>
+        private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember) =>
             _db.Execute(c => 
                 c.ExecuteAsync(
                     "update system_guild set autoproxy_mode = @autoproxyMode, autoproxy_member = @autoproxyMember where guild = @guild and system = @system",

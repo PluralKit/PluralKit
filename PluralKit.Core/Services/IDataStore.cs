@@ -45,7 +45,7 @@ namespace PluralKit.Core {
     
     public struct SwitchMembersListEntry
     {
-        public int Member;
+        public MemberId Member;
         public Instant Timestamp;
     }
 
@@ -131,7 +131,7 @@ namespace PluralKit.Core {
         /// Gets a system by its internal member ID.
         /// </summary>
         /// <returns>The <see cref="PKMember"/> with the given internal ID, or null if no member was found.</returns>
-        Task<PKMember> GetMemberById(int memberId);
+        Task<PKMember> GetMemberById(MemberId memberId);
         
         /// <summary>
         /// Gets a member by its user-facing human ID.
@@ -195,7 +195,7 @@ namespace PluralKit.Core {
         /// <param name="triggerMessageId">The ID of the original trigger message containing the proxy tags.</param>
         /// <param name="proxiedMemberId">The member (and by extension system) that was proxied.</param>
         /// <returns></returns>
-        Task AddMessage(IPKConnection conn, ulong senderAccount, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, int proxiedMemberId);
+        Task AddMessage(IPKConnection conn, ulong senderAccount, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, MemberId proxiedMemberId);
         
         /// <summary>
         /// Deletes a message from the data store.

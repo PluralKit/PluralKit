@@ -16,14 +16,14 @@ namespace PluralKit.Core
 {
     public class BulkImporter: IAsyncDisposable
     {
-        private readonly int _systemId;
+        private readonly SystemId _systemId;
         private readonly IPKConnection _conn;
         private readonly IPKTransaction _tx;
-        private readonly Dictionary<string, int> _knownMembers = new Dictionary<string, int>();
+        private readonly Dictionary<string, MemberId> _knownMembers = new Dictionary<string, MemberId>();
         private readonly Dictionary<string, PKMember> _existingMembersByHid = new Dictionary<string, PKMember>();
         private readonly Dictionary<string, PKMember> _existingMembersByName = new Dictionary<string, PKMember>();
 
-        private BulkImporter(int systemId, IPKConnection conn, IPKTransaction tx)
+        private BulkImporter(SystemId systemId, IPKConnection conn, IPKTransaction tx)
         {
             _systemId = systemId;
             _conn = conn;
@@ -124,7 +124,7 @@ namespace PluralKit.Core
             // Fetch the existing switches in the database so we can avoid duplicates
             var existingSwitches = (await _conn.QueryAsync<PKSwitch>("select * from switches where system = @System", new {System = _systemId})).ToList();
             var existingTimestamps = existingSwitches.Select(sw => sw.Timestamp).ToImmutableHashSet();
-            var lastSwitchId = existingSwitches.Count != 0 ? existingSwitches.Select(sw => sw.Id).Max() : -1;
+            var lastSwitchId = existingSwitches.Count != 0 ? existingSwitches.Select(sw => sw.Id).Max() : (SwitchId?) null;
 
             // Import switch definitions
             var importedSwitches = new Dictionary<Instant, SwitchInfo>();
@@ -152,7 +152,7 @@ namespace PluralKit.Core
             // IDs are sequential, so any ID in this system, with a switch ID > the last max, will be one we just added
             var justAddedSwitches = await _conn.QueryAsync<PKSwitch>(
                 "select * from switches where system = @System and id > @LastSwitchId",
-                new {System = _systemId, LastSwitchId = lastSwitchId});
+                new {System = _systemId, LastSwitchId = lastSwitchId?.Value ?? -1});
             
             // Lastly, import the switch members
             await using (var importer = _conn.BeginBinaryImport("copy switch_members (switch, member) from stdin (format binary)"))
