@@ -8,9 +8,12 @@ namespace PluralKit.Bot
 {
     public class ProxyTagParser
     {
-        public bool TryMatch(IEnumerable<ProxyMember> members, string input, out ProxyMatch result)
+        public bool TryMatch(IEnumerable<ProxyMember> members, string? input, out ProxyMatch result)
         {
             result = default;
+            
+            // Null input is valid and is equivalent to empty string
+            if (input == null) return false;
             
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message

@@ -24,5 +24,13 @@ namespace PluralKit.Core
             : ServerName ?? DisplayName ?? Name;
 
         public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? Avatar ?? ctx.SystemAvatar;
+
+        public ProxyMember() { }
+
+        public ProxyMember(string name, params ProxyTag[] tags)
+        {
+            Name = name;
+            ProxyTags = tags;
+        }
     }
 }
