@@ -413,7 +413,7 @@ namespace PluralKit.Bot
             }
 
             string levelStr, levelExplanation, subjectStr;
-            var subjectList = "`name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, `visibility`, or `all`";
+            var subjectList = "`name`, `description`, `birthday`, `pronouns`, `color`, `metadata`, `visibility`, or `all`";
             if(ctx.Match("name"))
             {
                 subjectStr = "name";
@@ -444,7 +444,7 @@ namespace PluralKit.Bot
                 subjectStr = "date created";
                 target.MetadataPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
             }
-            else if(ctx.Match("visibility","hidden","shown"))
+            else if(ctx.Match("visibility","hidden","shown","visible"))
             {
                 subjectStr = "visibility";
                 target.MemberVisibility = PopPrivacyLevel("visibility", out levelStr, out levelExplanation);
