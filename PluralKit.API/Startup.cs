@@ -4,6 +4,8 @@ using System.Reflection;
 
 using Autofac;
 
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
+using PluralKit.API;
 using PluralKit.Core;
 
 namespace PluralKit.API
@@ -30,6 +33,23 @@ namespace PluralKit.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+            services.AddAuthentication("SystemToken")
+                .AddScheme<SystemTokenAuthenticationHandler.Opts, SystemTokenAuthenticationHandler>("SystemToken", null);
+            
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("EditSystem", p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
+                options.AddPolicy("EditMember", p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
+                
+                options.AddPolicy("ViewMembers", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.MemberListPrivacy)));
+                options.AddPolicy("ViewFront", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontPrivacy)));
+                options.AddPolicy("ViewFrontHistory", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontHistoryPrivacy)));
+            });
+            services.AddSingleton<IAuthenticationHandler, SystemTokenAuthenticationHandler>();
+            services.AddSingleton<IAuthorizationHandler, MemberOwnerHandler>();
+            services.AddSingleton<IAuthorizationHandler, SystemOwnerHandler>();
+            services.AddSingleton<IAuthorizationHandler, SystemPrivacyHandler>();
+            
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddNewtonsoftJson(); // sorry MS, this just does *more*
@@ -105,9 +125,10 @@ namespace PluralKit.API
 
             //app.UseHttpsRedirection();
             app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization"));
-            app.UseMiddleware<TokenAuthService>();
             
             app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }

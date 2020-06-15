@@ -79,7 +79,7 @@ namespace PluralKit.Core {
         /// Gets the member count of a system.
         /// </summary>
         /// <param name="includePrivate">Whether the returned count should include private members.</param>
-        Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate);
+        Task<int> GetSystemMemberCount(SystemId system, bool includePrivate);
 
         /// <summary>
         /// Gets a list of members with proxy tags that conflict with the given tags.
@@ -162,7 +162,7 @@ namespace PluralKit.Core {
         /// <param name="system">The system in which to create the member.</param>
         /// <param name="name">The name of the member to create.</param>
         /// <returns>The created system model.</returns>
-        Task<PKMember> CreateMember(PKSystem system, string name);
+        Task<PKMember> CreateMember(SystemId system, string name);
         
         /// <summary>
         /// Saves the information within the given <see cref="PKMember"/> struct to the data store.
@@ -213,7 +213,7 @@ namespace PluralKit.Core {
         /// Gets switches from a system.
         /// </summary>
         /// <returns>An enumerable of the *count* latest switches in the system, in latest-first order. May contain fewer elements than requested.</returns>
-        IAsyncEnumerable<PKSwitch> GetSwitches(PKSystem system);
+        IAsyncEnumerable<PKSwitch> GetSwitches(SystemId system);
 
         /// <summary>
         /// Gets the total amount of switches in a given system.
@@ -223,7 +223,7 @@ namespace PluralKit.Core {
         /// <summary>
         /// Gets the latest (temporally; closest to now) switch of a given system.
         /// </summary>
-        Task<PKSwitch> GetLatestSwitch(PKSystem system);
+        Task<PKSwitch> GetLatestSwitch(SystemId system);
 
         /// <summary>
         /// Gets the members a given switch consists of.
@@ -261,7 +261,7 @@ namespace PluralKit.Core {
         /// Registers a switch with the given members in the given system.
         /// </summary>
         /// <exception>Throws an exception (TODO: which?) if any of the members are not in the given system.</exception>
-        Task AddSwitch(PKSystem system, IEnumerable<PKMember> switchMembers);
+        Task AddSwitch(SystemId system, IEnumerable<PKMember> switchMembers);
 
         /// <summary>
         /// Updates the timestamp of a given switch. 

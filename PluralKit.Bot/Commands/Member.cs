@@ -33,12 +33,12 @@ namespace PluralKit.Bot
             }
 
             // Enforce per-system member limit
-            var memberCount = await _data.GetSystemMemberCount(ctx.System, true);
+            var memberCount = await _data.GetSystemMemberCount(ctx.System.Id, true);
             if (memberCount >= Limits.MaxMemberCount)
                 throw Errors.MemberLimitReachedError;
 
             // Create the member
-            var member = await _data.CreateMember(ctx.System, memberName);
+            var member = await _data.CreateMember(ctx.System.Id, memberName);
             memberCount++;
             
             // Send confirmation and space hint

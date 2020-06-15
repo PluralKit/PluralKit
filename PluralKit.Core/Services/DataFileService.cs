@@ -132,7 +132,7 @@ namespace PluralKit.Core
             {
                 // Tally up the members that didn't exist before, and check member count on import
                 // If creating the unmatched members would put us over the member limit, abort before creating any members
-                var memberCountBefore = await _data.GetSystemMemberCount(system, true);
+                var memberCountBefore = await _data.GetSystemMemberCount(system.Id, true);
                 var membersToAdd = data.Members.Count(m => imp.IsNewMember(m.Id, m.Name));
                 if (memberCountBefore + membersToAdd > Limits.MaxMemberCount)
                 {

@@ -15,12 +15,10 @@ namespace PluralKit.API
     public class AccountController: ControllerBase
     {
         private IDataStore _data;
-        private TokenAuthService _auth;
 
-        public AccountController(IDataStore data, TokenAuthService auth)
+        public AccountController(IDataStore data)
         {
             _data = data;
-            _auth = auth;
         }
 
         [HttpGet("{aid}")]
@@ -29,7 +27,7 @@ namespace PluralKit.API
             var system = await _data.GetSystemByAccount(aid);
             if (system == null) return NotFound("Account not found.");
             
-            return Ok(system.ToJson(_auth.ContextFor(system)));
+            return Ok(system.ToJson(User.ContextFor(system)));
         }
     }
 }

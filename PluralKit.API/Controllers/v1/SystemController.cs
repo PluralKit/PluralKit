@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 using Dapper;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,9 +42,9 @@ namespace PluralKit.API
     {
         private IDataStore _data;
         private IDatabase _conn;
-        private TokenAuthService _auth;
+        private IAuthorizationService _auth;
 
-        public SystemController(IDataStore data, IDatabase conn, TokenAuthService auth)
+        public SystemController(IDataStore data, IDatabase conn, IAuthorizationService auth)
         {
             _data = data;
             _conn = conn;
@@ -51,10 +52,11 @@ namespace PluralKit.API
         }
 
         [HttpGet]
-        [RequiresSystem]
-        public Task<ActionResult<JObject>> GetOwnSystem()
+        [Authorize]
+        public async Task<ActionResult<JObject>> GetOwnSystem()
         {
-            return Task.FromResult<ActionResult<JObject>>(Ok(_auth.CurrentSystem.ToJson(_auth.ContextFor(_auth.CurrentSystem))));
+            var system = await _conn.Execute(c => c.QuerySystem(User.CurrentSystem()));
+            return system.ToJson(User.ContextFor(system));
         }
 
         [HttpGet("{hid}")]
@@ -62,7 +64,7 @@ namespace PluralKit.API
         {
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
-            return Ok(system.ToJson(_auth.ContextFor(system)));
+            return Ok(system.ToJson(User.ContextFor(system)));
         }
 
         [HttpGet("{hid}/members")]
@@ -71,13 +73,13 @@ namespace PluralKit.API
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
 
-            if (!system.MemberListPrivacy.CanAccess(_auth.ContextFor(system)))
+            if (!system.MemberListPrivacy.CanAccess(User.ContextFor(system)))
                 return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view member list.");
 
             var members = _data.GetSystemMembers(system);
             return Ok(await members
-                .Where(m => m.MemberPrivacy.CanAccess(_auth.ContextFor(system)))
-                .Select(m => m.ToJson(_auth.ContextFor(system)))
+                .Where(m => m.MemberPrivacy.CanAccess(User.ContextFor(system)))
+                .Select(m => m.ToJson(User.ContextFor(system)))
                 .ToListAsync());
         }
 
@@ -88,9 +90,9 @@ namespace PluralKit.API
             
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
-            
-            if (!system.FrontHistoryPrivacy.CanAccess(_auth.ContextFor(system)))
-                return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view front history.");
+
+            var auth = await _auth.AuthorizeAsync(User, system, "ViewFrontHistory");
+            if (!auth.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view front history.");
 
             using (var conn = await _conn.Obtain())
             {
@@ -112,26 +114,25 @@ namespace PluralKit.API
             var system = await _data.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
             
-            if (!system.FrontPrivacy.CanAccess(_auth.ContextFor(system)))
-                return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view fronter.");
+            var auth = await _auth.AuthorizeAsync(User, system, "ViewFront");
+            if (!auth.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view fronter.");
             
-            var sw = await _data.GetLatestSwitch(system);
+            var sw = await _data.GetLatestSwitch(system.Id);
             if (sw == null) return NotFound("System has no registered switches."); 
                 
             var members = _data.GetSwitchMembers(sw);
             return Ok(new FrontersReturn
             {
                 Timestamp = sw.Timestamp,
-                Members = await members.Select(m => m.ToJson(_auth.ContextFor(system))).ToListAsync()
+                Members = await members.Select(m => m.ToJson(User.ContextFor(system))).ToListAsync()
             });
         }
 
         [HttpPatch]
-        [RequiresSystem]
+        [Authorize]
         public async Task<ActionResult<JObject>> EditSystem([FromBody] JObject changes)
         {
-            var system = _auth.CurrentSystem;
-
+            var system = await _conn.Execute(c => c.QuerySystem(User.CurrentSystem()));
             try
             {
                 system.ApplyJson(changes);
@@ -142,18 +143,18 @@ namespace PluralKit.API
             }
 
             await _data.SaveSystem(system);
-            return Ok(system.ToJson(_auth.ContextFor(system)));
+            return Ok(system.ToJson(User.ContextFor(system)));
         }
 
         [HttpPost("switches")]
-        [RequiresSystem]
+        [Authorize]
         public async Task<IActionResult> PostSwitch([FromBody] PostSwitchParams param)
         {
-            if (param.Members.Distinct().Count() != param.Members.Count())
+            if (param.Members.Distinct().Count() != param.Members.Count)
                 return BadRequest("Duplicate members in member list.");
             
             // We get the current switch, if it exists
-            var latestSwitch = await _data.GetLatestSwitch(_auth.CurrentSystem);
+            var latestSwitch = await _data.GetLatestSwitch(User.CurrentSystem());
             if (latestSwitch != null)
             {
                 var latestSwitchMembers = _data.GetSwitchMembers(latestSwitch);
@@ -169,7 +170,7 @@ namespace PluralKit.API
                 membersList = (await conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new {Hids = param.Members})).ToList();
             
             foreach (var member in membersList)
-                if (member.System != _auth.CurrentSystem.Id)
+                if (member.System != User.CurrentSystem())
                     return BadRequest($"Cannot switch to member '{member.Hid}' not in system.");
 
             // membersList is in DB order, and we want it in actual input order
@@ -185,7 +186,7 @@ namespace PluralKit.API
             }
 
             // Finally, log the switch (yay!)
-            await _data.AddSwitch(_auth.CurrentSystem, membersInOrder);
+            await _data.AddSwitch(User.CurrentSystem(), membersInOrder);
             return NoContent();
         }
     }

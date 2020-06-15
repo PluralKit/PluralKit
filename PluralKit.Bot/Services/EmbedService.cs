@@ -32,14 +32,14 @@ namespace PluralKit.Bot {
             // Fetch/render info for all accounts simultaneously
             var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
-            var memberCount = await _data.GetSystemMemberCount(system, false);
+            var memberCount = await _data.GetSystemMemberCount(system.Id, false);
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnailUrl(system.AvatarUrl)
                 .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
  
-            var latestSwitch = await _data.GetLatestSwitch(system);
+            var latestSwitch = await _data.GetLatestSwitch(system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
                 var switchMembers = await _data.GetSwitchMembers(latestSwitch).ToListAsync();

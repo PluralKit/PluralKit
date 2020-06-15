@@ -30,12 +30,10 @@ namespace PluralKit.API
     public class MessageController: ControllerBase
     {
         private IDataStore _data;
-        private TokenAuthService _auth;
 
-        public MessageController(IDataStore _data, TokenAuthService auth)
+        public MessageController(IDataStore _data)
         {
             this._data = _data;
-            _auth = auth;
         }
 
         [HttpGet("{mid}")]
@@ -50,8 +48,8 @@ namespace PluralKit.API
                 Id = msg.Message.Mid.ToString(),
                 Channel = msg.Message.Channel.ToString(),
                 Sender = msg.Message.Sender.ToString(),
-                Member = msg.Member.ToJson(_auth.ContextFor(msg.System)),
-                System = msg.System.ToJson(_auth.ContextFor(msg.System)),
+                Member = msg.Member.ToJson(User.ContextFor(msg.System)),
+                System = msg.System.ToJson(User.ContextFor(msg.System)),
                 Original = msg.Message.OriginalMid?.ToString()
             };
         } 

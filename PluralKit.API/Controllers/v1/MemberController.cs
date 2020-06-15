@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json.Linq;
@@ -15,9 +16,9 @@ namespace PluralKit.API
     public class MemberController: ControllerBase
     {
         private IDataStore _data;
-        private TokenAuthService _auth;
+        private IAuthorizationService _auth;
 
-        public MemberController(IDataStore data, TokenAuthService auth)
+        public MemberController(IDataStore data, IAuthorizationService auth)
         {
             _data = data;
             _auth = auth;
@@ -29,15 +30,15 @@ namespace PluralKit.API
             var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
-            return Ok(member.ToJson(_auth.ContextFor(member)));
+            return Ok(member.ToJson(User.ContextFor(member)));
         }
 
         [HttpPost]
-        [RequiresSystem]
+        [Authorize]
         public async Task<ActionResult<JObject>> PostMember([FromBody] JObject properties)
         {
-            var system = _auth.CurrentSystem;
-
+            var system = User.CurrentSystem();
+            
             if (!properties.ContainsKey("name"))
                 return BadRequest("Member name must be specified.");
 
@@ -57,17 +58,18 @@ namespace PluralKit.API
             }
             
             await _data.SaveMember(member);
-            return Ok(member.ToJson(_auth.ContextFor(member)));
+            return Ok(member.ToJson(User.ContextFor(member)));
         }
 
         [HttpPatch("{hid}")]
-        [RequiresSystem]
+        [Authorize]
         public async Task<ActionResult<JObject>> PatchMember(string hid, [FromBody] JObject changes)
         {
             var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
-
-            if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
+            
+            var res = await _auth.AuthorizeAsync(User, member, "EditMember");
+            if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
 
             try
             {
@@ -79,17 +81,18 @@ namespace PluralKit.API
             }
             
             await _data.SaveMember(member);
-            return Ok(member.ToJson(_auth.ContextFor(member)));
+            return Ok(member.ToJson(User.ContextFor(member)));
         }
         
         [HttpDelete("{hid}")]
-        [RequiresSystem]
+        [Authorize]
         public async Task<ActionResult> DeleteMember(string hid)
         {
             var member = await _data.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
             
-            if (member.System != _auth.CurrentSystem.Id) return Unauthorized($"Member '{hid}' is not part of your system.");
+            var res = await _auth.AuthorizeAsync(User, member, "EditMember");
+            if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
             
             await _data.DeleteMember(member);
             return Ok();

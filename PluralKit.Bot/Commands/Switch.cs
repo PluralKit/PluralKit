@@ -56,7 +56,7 @@ namespace PluralKit.Bot
             if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
 
             // Find the last switch and its members if applicable
-            var lastSwitch = await _data.GetLatestSwitch(ctx.System);
+            var lastSwitch = await _data.GetLatestSwitch(ctx.System.Id);
             if (lastSwitch != null)
             {
                 var lastSwitchMembers = _data.GetSwitchMembers(lastSwitch);
@@ -65,7 +65,7 @@ namespace PluralKit.Bot
                     throw Errors.SameSwitch(members);
             }
 
-            await _data.AddSwitch(ctx.System, members);
+            await _data.AddSwitch(ctx.System.Id, members);
 
             if (members.Count == 0)
                 await ctx.Reply($"{Emojis.Success} Switch-out registered.");
@@ -87,7 +87,7 @@ namespace PluralKit.Bot
             if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _data.GetSwitches(ctx.System).Take(2).ToListAsync();
+            var lastTwoSwitches = await _data.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
             
             // If we don't have a switch to move, don't bother
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
@@ -133,7 +133,7 @@ namespace PluralKit.Bot
             }
             
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _data.GetSwitches(ctx.System).Take(2).ToListAsync();
+            var lastTwoSwitches = await _data.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
             var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);

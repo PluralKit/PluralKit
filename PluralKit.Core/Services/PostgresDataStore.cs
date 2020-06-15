@@ -113,11 +113,11 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("delete from switches where system = @Id", system);
         }
 
-        public async Task<PKMember> CreateMember(PKSystem system, string name) {
+        public async Task<PKMember> CreateMember(SystemId system, string name) {
             PKMember member;
             using (var conn = await _conn.Obtain())
                 member = await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (find_free_member_hid(), @SystemId, @Name) returning *", new {
-                    SystemID = system.Id,
+                    SystemID = system,
                     Name = name
                 });
 
@@ -162,13 +162,13 @@ namespace PluralKit.Core {
             _logger.Information("Deleted member {@Member}", member);
         }
 
-        public async Task<int> GetSystemMemberCount(PKSystem system, bool includePrivate)
+        public async Task<int> GetSystemMemberCount(SystemId id, bool includePrivate)
         {
-            var query = "select count(*) from members where system = @Id";
+            var query = "select count(*) from members where system = @id";
             if (!includePrivate) query += " and member_privacy = 1"; // 1 = public
             
             using (var conn = await _conn.Obtain())
-                return await conn.ExecuteScalarAsync<int>(query, system);
+                return await conn.ExecuteScalarAsync<int>(query, new { id });
         }
 
         public async Task<ulong> GetTotalMembers()
@@ -220,7 +220,7 @@ namespace PluralKit.Core {
             }
         }
 
-        public async Task AddSwitch(PKSystem system, IEnumerable<PKMember> members)
+        public async Task AddSwitch(SystemId system, IEnumerable<PKMember> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
             await using var conn = await _conn.Obtain();
@@ -228,7 +228,7 @@ namespace PluralKit.Core {
             
             // First, we insert the switch itself
             var sw = await conn.QuerySingleAsync<PKSwitch>("insert into switches(system) values (@System) returning *",
-                new {System = system.Id});
+                new {System = system});
 
             // Then we insert each member in the switch in the switch_members table
             // TODO: can we parallelize this or send it in bulk somehow?
@@ -242,16 +242,16 @@ namespace PluralKit.Core {
             // Finally we commit the tx, since the using block will otherwise rollback it
             await tx.CommitAsync();
 
-            _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system.Id, members.Select(m => m.Id));
+            _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system, members.Select(m => m.Id));
         }
 
-        public IAsyncEnumerable<PKSwitch> GetSwitches(PKSystem system)
+        public IAsyncEnumerable<PKSwitch> GetSwitches(SystemId system)
         {
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
             // (maybe when we get caching in?)
             return _conn.QueryStreamAsync<PKSwitch>(
                 "select * from switches where system = @System order by timestamp desc",
-                new {System = system.Id});
+                new {System = system});
         }
 
         public async Task<int> GetSwitchCount(PKSystem system)
@@ -304,7 +304,7 @@ namespace PluralKit.Core {
                 new {Switch = sw.Id});
         }
 
-        public async Task<PKSwitch> GetLatestSwitch(PKSystem system) => 
+        public async Task<PKSwitch> GetLatestSwitch(SystemId system) => 
             await GetSwitches(system).FirstOrDefaultAsync();
 
         public async Task MoveSwitch(PKSwitch sw, Instant time)

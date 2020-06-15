@@ -36,7 +36,7 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontPrivacy);
             
-            var sw = await _data.GetLatestSwitch(system);
+            var sw = await _data.GetLatestSwitch(system.Id);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
@@ -47,7 +47,7 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
-            var sws = _data.GetSwitches(system)
+            var sws = _data.GetSwitches(system.Id)
                 .Scan(new FrontHistoryEntry(null, null), (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
             var totalSwitches = await _data.GetSwitchCount(system);
             if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
