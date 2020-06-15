@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -10,7 +10,7 @@ namespace PluralKit.Core
     {
         public static Task<MessageContext> QueryMessageContext(this IPKConnection conn, ulong account, ulong guild, ulong channel)
         {
-            return conn.QueryFirstAsync<MessageContext>("message_context", 
+            return conn.QueryFirstOrDefaultAsync<MessageContext>("message_context", 
                 new { account_id = account, guild_id = guild, channel_id = channel }, 
                 commandType: CommandType.StoredProcedure);
         }  

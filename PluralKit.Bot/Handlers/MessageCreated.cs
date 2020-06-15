@@ -70,7 +70,7 @@ namespace PluralKit.Bot
         private async ValueTask<bool> TryHandleLogClean(MessageCreateEventArgs evt, MessageContext ctx)
         {
             if (!evt.Message.Author.IsBot || evt.Message.Channel.Type != ChannelType.Text ||
-                !ctx.LogCleanupEnabled) return false;
+                ctx == null || !ctx.LogCleanupEnabled) return false;
 
             await _loggerClean.HandleLoggerBotCleanup(evt.Message);
             return true;
@@ -99,7 +99,7 @@ namespace PluralKit.Bot
 
             try
             {
-                var system = ctx.SystemId != null ? await _db.Execute(c => c.QuerySystem(ctx.SystemId.Value)) : null;
+                var system = ctx?.SystemId != null ? await _db.Execute(c => c.QuerySystem(ctx.SystemId.Value)) : null;
                 await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, argPos, system, ctx));
             }
             catch (PKError)
@@ -113,6 +113,7 @@ namespace PluralKit.Bot
 
         private async ValueTask<bool> TryHandleProxy(MessageCreateEventArgs evt, MessageContext ctx)
         {
+            if (ctx == null) return false;
             try
             {
                 return await _proxy.HandleIncomingMessage(evt.Message, ctx, allowAutoproxy: true);
