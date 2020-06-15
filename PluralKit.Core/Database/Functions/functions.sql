@@ -17,6 +17,7 @@
         system_avatar text
     )
 as $$
+    -- CTEs to query "static" (accessible only through args) data
     with
         system as (select systems.* from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id),
@@ -26,7 +27,7 @@ as $$
         guild.log_channel,
         (channel_id = any(guild.blacklist)) as in_blacklist,
         (channel_id = any(guild.log_blacklist)) as in_log_blacklist,
-        guild.log_cleanup_enabled,
+        coalesce(guild.log_cleanup_enabled, false),
         coalesce(system_guild.proxy_enabled, true) as proxy_enabled,
         coalesce(system_guild.autoproxy_mode, 1) as autoproxy_mode,
         system_guild.autoproxy_member,
@@ -37,10 +38,12 @@ as $$
         system_last_switch.timestamp as last_switch_timestamp,
         system.tag as system_tag,
         system.avatar_url as system_avatar
-    from system
-        full join guild on true
+    -- We need a "from" clause, so we just use some bogus data that's always present
+    -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
+    from (select 1) as _placeholder
+        left join system on true
+        left join guild on true
         left join last_message on true
-        
         left join system_last_switch on system_last_switch.system = system.id
         left join system_guild on system_guild.system = system.id and system_guild.guild = guild_id
 $$ language sql stable rows 1;
