@@ -377,7 +377,7 @@ namespace PluralKit.Bot
 
                 var eb = new DiscordEmbedBuilder()
                     .WithTitle($"Current privacy settings for {target.Name}")
-                    .AddField("Name",PrivacyLevelString(target.NamePrivacy))
+                    .AddField("Name (replaces name with display name if member has one)",PrivacyLevelString(target.NamePrivacy))
                     .AddField("Description", PrivacyLevelString(target.DescriptionPrivacy))
                     .AddField("Birthday", PrivacyLevelString(target.BirthdayPrivacy))
                     .AddField("Pronouns", PrivacyLevelString(target.PronounPrivacy))
