@@ -11,6 +11,6 @@ namespace PluralKit.Bot
     public interface IListRenderer
     {
         int MembersPerPage { get; }
-        void RenderPage(DiscordEmbedBuilder eb, DateTimeZone zone, IEnumerable<ListedMember> members);
+        void RenderPage(DiscordEmbedBuilder eb, DateTimeZone zone, IEnumerable<ListedMember> members, LookupContext ctx);
     }
 }

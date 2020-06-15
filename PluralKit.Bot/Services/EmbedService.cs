@@ -106,7 +106,7 @@ namespace PluralKit.Bot {
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, iconUrl: DiscordUtils.WorkaroundForUrlBug(avatar))
                 .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} {(member.CreatedTimestampPrivacy.CanAccess(ctx) ? $"| Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}":"")}");
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}":"")}");
 
             var description = "";
             if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
@@ -123,7 +123,7 @@ namespace PluralKit.Bot {
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
             if (member.Birthday != null && member.BirthdayPrivacy.CanAccess(ctx)) eb.AddField("Birthdate", member.BirthdayString, true);
             if (!member.Pronouns.EmptyOrNull() && member.PronounPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
-            if (member.MessageCount > 0 && member.MessageCountPrivacy.CanAccess(ctx)) eb.AddField("Message Count", member.MessageCount.ToString(), true);
+            if (member.MessageCount > 0 && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Message Count", member.MessageCount.ToString(), true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
             if (!member.Color.EmptyOrNull() && member.ColorPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
             if (!member.Description.EmptyOrNull() && member.DescriptionPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);

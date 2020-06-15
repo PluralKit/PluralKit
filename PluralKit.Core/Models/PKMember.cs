@@ -28,8 +28,7 @@ namespace PluralKit.Core {
         public PrivacyLevel NamePrivacy { get; set; } //ignore setting if no display name is set
         public PrivacyLevel BirthdayPrivacy { get; set; }
         public PrivacyLevel PronounPrivacy { get; set; }
-        public PrivacyLevel MessageCountPrivacy { get; set; }
-        public PrivacyLevel CreatedTimestampPrivacy { get; set; }
+        public PrivacyLevel MetadataPrivacy { get; set; }
         public PrivacyLevel ColorPrivacy { get; set; }
 
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden

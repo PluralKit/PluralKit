@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System;
+
 
 using Dapper;
 
@@ -380,8 +382,7 @@ namespace PluralKit.Bot
                     .AddField("Birthday", PrivacyLevelString(target.BirthdayPrivacy))
                     .AddField("Pronouns", PrivacyLevelString(target.PronounPrivacy))
                     .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
-                    .AddField("Date Created", PrivacyLevelString(target.CreatedTimestampPrivacy))
-                    .AddField("Message Count", PrivacyLevelString(target.MessageCountPrivacy))
+                    .AddField("Meta (message count, last front, last message)", PrivacyLevelString(target.MetadataPrivacy))
                     .AddField("Visibility", PrivacyLevelString(target.MemberVisibility))
                     .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.");
                 await ctx.Reply(embed: eb.Build());
@@ -438,15 +439,10 @@ namespace PluralKit.Bot
                 subjectStr = "color";
                 target.ColorPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
             }
-            else if(ctx.Match("created","datecreated","date"))
+            else if(ctx.Match("meta","metadata"))
             {
                 subjectStr = "date created";
-                target.CreatedTimestampPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
-            }
-            else if(ctx.Match("messages","message","messagecount"))
-            {
-                subjectStr = "messages";
-                target.MessageCountPrivacy = PopPrivacyLevel("messages", out levelStr, out levelExplanation);
+                target.MetadataPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
             }
             else if(ctx.Match("visibility","hidden","shown"))
             {
@@ -462,8 +458,7 @@ namespace PluralKit.Bot
                 target.BirthdayPrivacy = level;
                 target.PronounPrivacy = level;
                 target.ColorPrivacy = level;
-                target.CreatedTimestampPrivacy = level;
-                target.MessageCountPrivacy = level;
+                target.MetadataPrivacy = level;
             }            
             else
                 throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
