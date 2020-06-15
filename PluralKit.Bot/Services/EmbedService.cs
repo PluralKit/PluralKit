@@ -26,6 +26,8 @@ namespace PluralKit.Bot {
             _db = db;
         }
 
+
+        
         public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx) {
             var accounts = await _data.GetSystemAccounts(system);
 
@@ -80,6 +82,9 @@ namespace PluralKit.Bot {
 
         public async Task<DiscordEmbed> CreateMemberEmbed(PKSystem system, PKMember member, DiscordGuild guild, LookupContext ctx)
         {
+
+            string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
+
             var name = member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
 
@@ -125,7 +130,11 @@ namespace PluralKit.Bot {
             if (!member.Pronouns.EmptyOrNull() && member.PronounPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
             if (member.MessageCount > 0 && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Message Count", member.MessageCount.ToString(), true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
+            // --- For when this gets added to the member object itself or however they get added
+            // if (member.LastMessage != null && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last message:" FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value)));
+            // if (member.LastSwitchTime != null && m.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last switched in:", FormatTimestamp(member.LastSwitchTime.Value));
             if (!member.Color.EmptyOrNull() && member.ColorPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
+            
             if (!member.Description.EmptyOrNull() && member.DescriptionPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
 
             return eb.Build();
