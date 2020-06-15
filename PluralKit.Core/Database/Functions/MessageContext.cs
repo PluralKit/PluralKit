@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System.Collections.Generic;
 
 using NodaTime;
 
@@ -20,9 +19,9 @@ namespace PluralKit.Core
         public MemberId? AutoproxyMember { get; }
         public ulong? LastMessage { get; }
         public MemberId? LastMessageMember { get; }
-        public SwitchId LastSwitch { get; }
-        public MemberId[] LastSwitchMembers { get; } = new MemberId[0];
-        public Instant LastSwitchTimestamp { get; }
+        public SwitchId? LastSwitch { get; }
+        public MemberId[] LastSwitchMembers { get; }
+        public Instant? LastSwitchTimestamp { get; }
         public string? SystemTag { get; }
         public string? SystemAvatar { get; }
     }
