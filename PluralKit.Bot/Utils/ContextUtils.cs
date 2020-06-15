@@ -102,8 +102,8 @@ namespace PluralKit.Bot {
 
             var buffer = new List<T>();
             await using var enumerator = items.GetAsyncEnumerator();
-            
-            var pageCount = (totalCount / itemsPerPage) + 1;
+
+            var pageCount = (int) Math.Ceiling(totalCount / (double) itemsPerPage);
             async Task<DiscordEmbed> MakeEmbedForPage(int page)
             {
                 var bufferedItemsNeeded = (page + 1) * itemsPerPage;
