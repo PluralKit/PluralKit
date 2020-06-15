@@ -30,7 +30,7 @@ namespace PluralKit.Bot
                 if (_fields.ShowDisplayName && m.DisplayName != null) profile += $"\n**Display name**: {m.DisplayName}";
                 if (_fields.ShowPronouns && m.Pronouns != null) profile += $"\n**Pronouns**: {m.Pronouns}";
                 if (_fields.ShowBirthday && m.Birthday != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
-                if (_fields.ShowPronouns && m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
+                if (_fields.ShowProxyTags && m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
                 if (_fields.ShowMessageCount && m.MessageCount > 0) profile += $"\n**Message count:** {m.MessageCount}";
                 if (_fields.ShowLastMessage && m.LastMessage != null) profile += $"\n**Last message:** {FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value))}";
                 if (_fields.ShowLastSwitch && m.LastSwitchTime != null) profile += $"\n**Last switched in:** {FormatTimestamp(m.LastSwitchTime.Value)}";
