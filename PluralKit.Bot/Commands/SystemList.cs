@@ -33,7 +33,7 @@ namespace PluralKit.Bot
                 (eb, ms) =>
                 {
                     eb.WithFooter($"{opts.CreateFilterString()}. {members.Count} results.");
-                    renderer.RenderPage(eb, ctx.System.Zone, ms, ctx.LookupContextFor(ctx.System));
+                    renderer.RenderPage(eb, ctx.System.Zone, ms, ctx.LookupContextFor(target));
                     return Task.CompletedTask;
                 });
         }
