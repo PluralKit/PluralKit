@@ -4,7 +4,7 @@ alter table members add column description_privacy integer check (description_pr
 alter table members add column name_privacy integer check (name_privacy in (1, 2)) not null default 1;
 alter table members add column birthday_privacy integer check (birthday_privacy in (1, 2)) not null default 1;
 alter table members add column pronoun_privacy integer check (pronoun_privacy in (1, 2)) not null default 1;
-alter table members add column metadata_privacy integer check (message_count_privacy in (1, 2)) not null default 1;
+alter table members add column metadata_privacy integer check (metadata_privacy in (1, 2)) not null default 1;
 alter table members add column color_privacy integer check (color_privacy in (1, 2)) not null default 1;
 
 -- Transfer existing settings --
