@@ -470,7 +470,8 @@ To update a members privacy you can use the command:
 
     member <member> privacy <subject> <level>
 
-where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.
+where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `birthday`, `pronouns`, `color`, `metadata`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.  
+`metatdata` will affect the message count, the date created, the last fronted, and the last message information.
 
 For example:
 
