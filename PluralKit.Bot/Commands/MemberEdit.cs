@@ -366,7 +366,7 @@ namespace PluralKit.Bot
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             // Display privacy settings
-            if (!ctx.HasNext())
+            if (!ctx.HasNext() && newValueFromCommand == null)
             {
                 string PrivacyLevelString(PrivacyLevel level) => level switch
                 {
@@ -441,17 +441,34 @@ namespace PluralKit.Bot
             }
             else if(ctx.Match("meta","metadata"))
             {
-                subjectStr = "date created";
-                target.MetadataPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
+                subjectStr = "metadata (date created, message count, last fronted, and last message)";
+                target.MetadataPrivacy = PopPrivacyLevel("metadata", out levelStr, out levelExplanation);
             }
             else if(ctx.Match("visibility","hidden","shown","visible"))
             {
                 subjectStr = "visibility";
                 target.MemberVisibility = PopPrivacyLevel("visibility", out levelStr, out levelExplanation);
             }
-            else if(ctx.Match("all")){
+            else if(ctx.Match("all") || newValueFromCommand != null){
                 subjectStr = "all";
-                PrivacyLevel level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
+                PrivacyLevel level;
+                if(newValueFromCommand != null)
+                {
+                    if(newValueFromCommand == PrivacyLevel.Public)
+                    {
+                        level = PrivacyLevel.Public;
+                        levelStr = "public";
+                        levelExplanation = "be shown on the member card";
+                    }
+                    else
+                    {
+                        level = PrivacyLevel.Private;
+                        levelStr = "private";
+                        levelExplanation = "*not* be shown on the member card";
+                    }
+                }
+                else
+                    level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
                 target.MemberVisibility = level;
                 target.NamePrivacy = level;
                 target.DescriptionPrivacy = level;
