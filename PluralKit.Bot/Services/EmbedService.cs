@@ -83,7 +83,7 @@ namespace PluralKit.Bot {
         public async Task<DiscordEmbed> CreateMemberEmbed(PKSystem system, PKMember member, DiscordGuild guild, LookupContext ctx)
         {
 
-            string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
+            // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
 
             var name = member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
