@@ -20,7 +20,7 @@ namespace PluralKit.Core
         public ulong? LastMessage { get; }
         public MemberId? LastMessageMember { get; }
         public SwitchId? LastSwitch { get; }
-        public MemberId[] LastSwitchMembers { get; }
+        public MemberId[] LastSwitchMembers { get; } = new MemberId[0];
         public Instant? LastSwitchTimestamp { get; }
         public string? SystemTag { get; }
         public string? SystemAvatar { get; }
