@@ -70,9 +70,7 @@ The following three models (usually represented in JSON format) represent the va
 |description_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 |birthday_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 |pronoun_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
-|color_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
-|message_count_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
-|created_timestamp_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|metadata_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 
 #### ProxyTag object
 
@@ -178,9 +176,7 @@ If the request is not authenticated with the system's token, members marked as p
         "description_privacy": null,
         "birthday_privacy": null,
         "pronoun_privacy": null,
-        "color_privacy": null,
-        "message_count_privacy": null,
-        "created_timestamp_privacy": null
+        "metadata_privacy": null
     }
 ]
 ```
@@ -240,9 +236,7 @@ If the system has chosen to hide its current fronters, this will return `403 For
             "description_privacy": null,
             "birthday_privacy": null,
             "pronoun_privacy": null,
-            "color_privacy": null,
-            "message_count_privacy": null,
-            "created_timestamp_privacy": null,
+            "metadata_privacy": null,
             "created": "2019-01-01T15:00:00.654321Z"
         }
     ]
@@ -307,7 +301,7 @@ Registers a new switch to your own system given a list of member IDs.
 
 ### GET /m/\<id>
 Queries a member's information by its 5-character member ID. If the member does not exist, will return `404 Not Found`.
-If this member is marked private, and the request isn't authenticated with the member's system's token, some fields (currently only `description`) will contain `null` rather than the true value. Regardless of privacy setting, a non-authenticated request will only receive `null` for the `privacy` field.
+If this member is marked private, and the request isn't authenticated with the member's system's token, some fields will contain `null` rather than the true value (corresponding with the privacy settings). Regardless of privacy setting, a non-authenticated request will only receive `null` for the privacy fields (and `visibility`).
 
 #### Example request
     GET https://api.pluralkit.me/v1/m/qwert
@@ -330,9 +324,7 @@ If this member is marked private, and the request isn't authenticated with the m
     "description_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
-    "color_privacy": "public",
-    "message_count_privacy": "private",
-    "created_timestamp_privacy": "public"
+    "metadata_privacy": "public"
 }
 ```
 
@@ -359,9 +351,7 @@ Creates a new member with the information given. Missing fields (except for name
     "description_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
-    "color_privacy": "public",
-    "message_count_privacy": "private",
-    "created_timestamp_privacy": "public"
+    "metadata_privacy": "private"
 }
 ```
 (note the absence of a `proxy_tags` field, which is cleared in the response)
@@ -385,9 +375,7 @@ Creates a new member with the information given. Missing fields (except for name
     "description_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
-    "color_privacy": "public",
-    "message_count_privacy": "private",
-    "created_timestamp_privacy": "public"
+    "metadata_privacy": "private"
 }
 ```
 
@@ -414,9 +402,7 @@ Edits a member's information. Missing fields will keep their current values. Wil
     "description_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
-    "color_privacy": "public",
-    "message_count_privacy": "private",
-    "created_timestamp_privacy": "public"
+    "metadata_privacy": "private"
 }
 ```
 (note the absence of a `proxy_tags` field, which keeps its old value in the response)
@@ -440,9 +426,7 @@ Edits a member's information. Missing fields will keep their current values. Wil
     "description_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
-    "color_privacy": "public",
-    "message_count_privacy": "private",
-    "created_timestamp_privacy": "public"
+    "metadata_privacy": "private"
 }
 ```
 
@@ -523,18 +507,15 @@ The returned system and member's privacy settings will be respected, and as such
         "description_privacy": "private",
         "birthday_privacy": "private",
         "pronoun_privacy": "public",
-        "color_privacy": "public",
-        "message_count_privacy": "private",
-        "created_timestamp_privacy": "public"
+        "metadata_privacy": "private"
     }
 }
 ```
 
 ## Version history
-<!-- (Update this on official release) -->
-* 2020-05-14
-  * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `color_privacy`, `message_count_privacy`, and `created_timestamp_privacy`. All are strings and accept the values of `public`, `private` and `null`
-  * The `privacy` field has now been deprecated and should not be used. It is a reflection of visibility.
+* 2020-06-17
+  * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `metadata_privacy`. All are strings and accept the values of `public`, `private` and `null`
+  * The `privacy` field has now been deprecated and should not be used. It's still returned (mirroring the `visibility` field), and writing to it will write to *all privacy options*.
 * 2020-05-07
   * The API (v1) is now formally(ish) defined with OpenAPI v3.0. [The definition file can be found here.](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml)
 * 2020-02-10

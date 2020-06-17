@@ -449,35 +449,33 @@ For example:
 When the **member list** is **private**, other users will not be able to view the full member list of your system, but they can still query individual members given their 5-letter ID. If **current fronter** is private, but **front history** isn't, someone can still see the current fronter by looking at the history (this combination doesn't make much sense).
 
 ### Member privacy
-There are also nine options for configuring member privacy;
+There are also six options for configuring member privacy;
 
 - Name
 - Description
 - Birthday
 - Pronouns
-- Colour
-- Date created
-- Message count
-- Visibility
+- Metadata *(message count, creation date, etc)*
+- Visibility *(whether the member shows up in member lists)*
 
-As with system privacy, each can be set to **public** or **private**. The same rules apply for how they are shown too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
+As with system privacy, each can be set to **public** or **private**. The same rules apply for how they are shown, too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
 
-However there are two catches. When name is set to private, it will be replaced by a members display name, but only if they have one! When visibility is set to private, the member will not show up in the member list unless -all is used in the command (and you are part of the system).
-
-Member info will not be shown in member lists even if someone in the system queries the list, unless the user is part of the system and uses the -all flag.
+However, there are two catches:
+- When the **name** is set to private, it will be replaced by the member's **display name**, but only if they have one! If the member has no display name, **name privacy will not do anything**. PluralKit still needs some way to refer to a member by name :) 
+- When **visibility** is set to private, the member will not show up in member lists unless `-all` is used in the command (and you are part of the system).
 
 To update a members privacy you can use the command:
 
     member <member> privacy <subject> <level>
 
-where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `birthday`, `pronouns`, `color`, `metadata`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.  
+where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `birthday`, `pronouns`, `metadata`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.  
 `metatdata` will affect the message count, the date created, the last fronted, and the last message information.
 
 For example:
 
     pk;member John privacy visibility private
     pk;member "Craig Johnson" privacy description public
-    pk;member Robert privacy color public
+    pk;member Robert privacy birthday public
     pk;member Skyler privacy all private
 
 ## Moderation commands
