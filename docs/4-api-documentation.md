@@ -6,7 +6,7 @@ description: PluralKit's API documentation.
 nav_order: 4
 ---
 
-**2020-05-07**: The PluralKit API is now documented on Swagger: https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.0  
+**2020-05-07**: The PluralKit API is now documented on Swagger: https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.1
 Accompanying it is an [OpenAPI v3.0 definition](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml). It's mostly complete, but is still subject to change - so don't go generating API clients and mock servers with it quite yet. It may still be useful, though :) 
 
 # API documentation
@@ -513,7 +513,7 @@ The returned system and member's privacy settings will be respected, and as such
 ```
 
 ## Version history
-* 2020-06-17
+* 2020-06-17 (v1.1)
   * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `metadata_privacy`. All are strings and accept the values of `public`, `private` and `null`
   * The `privacy` field has now been deprecated and should not be used. It's still returned (mirroring the `visibility` field), and writing to it will write to *all privacy options*.
 * 2020-05-07
