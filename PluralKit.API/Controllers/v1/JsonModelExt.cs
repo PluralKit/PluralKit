@@ -45,7 +45,8 @@ namespace PluralKit.API
             var o = new JObject();
             o.Add("id", member.Hid);
             o.Add("name", member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name);
-            o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
+            // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
+            o.Add("color", member.Color);
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
             o.Add("birthday", member.BirthdayPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
             o.Add("pronouns", member.PronounPrivacy.CanAccess(ctx) ? member.Pronouns : null);
@@ -66,7 +67,7 @@ namespace PluralKit.API
             o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("pronoun_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            // o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("metadata_privacy", ctx == LookupContext.ByOwner ? (member.MetadataPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
 
             if(member.MetadataPrivacy.CanAccess(ctx))
@@ -124,7 +125,7 @@ namespace PluralKit.API
                 member.DescriptionPrivacy = plevel;
                 member.BirthdayPrivacy = plevel;
                 member.PronounPrivacy = plevel;
-                member.ColorPrivacy = plevel;
+                // member.ColorPrivacy = plevel;
                 member.MetadataPrivacy = plevel;
             }
             else
@@ -134,7 +135,7 @@ namespace PluralKit.API
                 if (o.ContainsKey("description_privacy")) member.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
                 if (o.ContainsKey("birthday_privacy")) member.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
                 if (o.ContainsKey("pronoun_privacy")) member.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
+                // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
                 if (o.ContainsKey("metadata_privacy")) member.MetadataPrivacy = o.Value<string>("metadata_privacy").ParsePrivacy("member");
             }
         }

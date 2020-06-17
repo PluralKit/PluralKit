@@ -153,8 +153,8 @@ namespace PluralKit.Bot
             }
             else if (!ctx.HasNext())
             {
-                if (!target.ColorPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                    throw Errors.LookupNotAllowed;
+                // if (!target.ColorPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                //     throw Errors.LookupNotAllowed;
 
                 if (target.Color == null)
                     if (ctx.System?.Id == target.System)
@@ -381,10 +381,10 @@ namespace PluralKit.Bot
                     .AddField("Description", PrivacyLevelString(target.DescriptionPrivacy))
                     .AddField("Birthday", PrivacyLevelString(target.BirthdayPrivacy))
                     .AddField("Pronouns", PrivacyLevelString(target.PronounPrivacy))
-                    .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
+                    // .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
                     .AddField("Meta (message count, last front, last message)", PrivacyLevelString(target.MetadataPrivacy))
                     .AddField("Visibility", PrivacyLevelString(target.MemberVisibility))
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `birthday`, `pronouns`, `color`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.");
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }
@@ -413,7 +413,7 @@ namespace PluralKit.Bot
             }
 
             string levelStr, levelExplanation, subjectStr;
-            var subjectList = "`name`, `description`, `birthday`, `pronouns`, `color`, `metadata`, `visibility`, or `all`";
+            var subjectList = "`name`, `description`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`";
             if(ctx.Match("name"))
             {
                 subjectStr = "name";
@@ -434,11 +434,11 @@ namespace PluralKit.Bot
                 subjectStr = "pronouns";
                 target.PronounPrivacy = PopPrivacyLevel("pronouns", out levelStr, out levelExplanation);
             }
-            else if(ctx.Match("color","colour"))
+            /*else if(ctx.Match("color","colour"))
             {
                 subjectStr = "color";
                 target.ColorPrivacy = PopPrivacyLevel("color", out levelStr, out levelExplanation);
-            }
+            }*/
             else if(ctx.Match("meta","metadata"))
             {
                 subjectStr = "metadata (date created, message count, last fronted, and last message)";
@@ -474,7 +474,7 @@ namespace PluralKit.Bot
                 target.DescriptionPrivacy = level;
                 target.BirthdayPrivacy = level;
                 target.PronounPrivacy = level;
-                target.ColorPrivacy = level;
+                // target.ColorPrivacy = level;
                 target.MetadataPrivacy = level;
             }            
             else

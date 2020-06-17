@@ -29,8 +29,8 @@ namespace PluralKit.Core {
         public PrivacyLevel BirthdayPrivacy { get; set; }
         public PrivacyLevel PronounPrivacy { get; set; }
         public PrivacyLevel MetadataPrivacy { get; set; }
-        public PrivacyLevel ColorPrivacy { get; set; }
-
+        // public PrivacyLevel ColorPrivacy { get; set; }
+        
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
         /// Before Feb 10 2020, the sentinel year was 0001, now it is 0004.
         [JsonIgnore] public string BirthdayString
