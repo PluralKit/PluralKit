@@ -26,6 +26,8 @@ namespace PluralKit.Bot {
             _db = db;
         }
 
+
+        
         public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx) {
             var accounts = await _data.GetSystemAccounts(system);
 
@@ -68,8 +70,9 @@ namespace PluralKit.Bot {
         public DiscordEmbed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordUser sender, string content, DiscordChannel channel) {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
+            var name = member.NamePrivacy == PrivacyLevel.Public ? member.Name : member.DisplayName ?? member.Name;
             return new DiscordEmbedBuilder()
-                .WithAuthor($"#{channel.Name}: {member.Name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarUrl))
+                .WithAuthor($"#{channel.Name}: {name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarUrl))
                 .WithThumbnailUrl(member.AvatarUrl)
                 .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
@@ -79,7 +82,10 @@ namespace PluralKit.Bot {
 
         public async Task<DiscordEmbed> CreateMemberEmbed(PKSystem system, PKMember member, DiscordGuild guild, LookupContext ctx)
         {
-            var name = member.Name;
+
+            // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
+
+            var name = member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name;
             if (system.Name != null) name = $"{member.Name} ({system.Name})";
 
             DiscordColor color;
@@ -104,11 +110,11 @@ namespace PluralKit.Bot {
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, iconUrl: DiscordUtils.WorkaroundForUrlBug(avatar))
-                .WithColor(member.MemberPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}");
+                .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}":"")}");
 
             var description = "";
-            if (member.MemberPrivacy == PrivacyLevel.Private) description += "*(this member is private)*\n";
+            if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
             if (guildSettings?.AvatarUrl != null)
                 if (member.AvatarUrl != null) 
                     description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl}) to see the global avatar)*\n";
@@ -118,14 +124,18 @@ namespace PluralKit.Bot {
 
             if (avatar != null) eb.WithThumbnailUrl(avatar);
 
-            if (!member.DisplayName.EmptyOrNull()) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
+            if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
-            if (member.Birthday != null && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Birthdate", member.BirthdayString, true);
-            if (!member.Pronouns.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
-            if (member.MessageCount > 0 && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Message Count", member.MessageCount.ToString(), true);
+            if (member.Birthday != null && member.BirthdayPrivacy.CanAccess(ctx)) eb.AddField("Birthdate", member.BirthdayString, true);
+            if (!member.Pronouns.EmptyOrNull() && member.PronounPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
+            if (member.MessageCount > 0 && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Message Count", member.MessageCount.ToString(), true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
-            if (!member.Color.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
-            if (!member.Description.EmptyOrNull() && member.MemberPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
+            // --- For when this gets added to the member object itself or however they get added
+            // if (member.LastMessage != null && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last message:" FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value)));
+            // if (member.LastSwitchTime != null && m.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last switched in:", FormatTimestamp(member.LastSwitchTime.Value));
+            if (!member.Color.EmptyOrNull() && member.ColorPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
+            
+            if (!member.Description.EmptyOrNull() && member.DescriptionPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
 
             return eb.Build();
         }

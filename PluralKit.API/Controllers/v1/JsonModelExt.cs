@@ -44,14 +44,13 @@ namespace PluralKit.API
         {
             var o = new JObject();
             o.Add("id", member.Hid);
-            o.Add("name", member.Name);
-            o.Add("color", member.MemberPrivacy.CanAccess(ctx) ? member.Color : null);
-            o.Add("display_name", member.DisplayName);
-            o.Add("birthday", member.MemberPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
-            o.Add("pronouns", member.MemberPrivacy.CanAccess(ctx) ? member.Pronouns : null);
+            o.Add("name", member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name);
+            o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
+            o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
+            o.Add("birthday", member.BirthdayPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
+            o.Add("pronouns", member.PronounPrivacy.CanAccess(ctx) ? member.Pronouns : null);
             o.Add("avatar_url", member.AvatarUrl);
-            o.Add("description", member.MemberPrivacy.CanAccess(ctx) ? member.Description : null);
-            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("description", member.DescriptionPrivacy.CanAccess(ctx) ? member.Description : null);
             
             var tagArray = new JArray();
             foreach (var tag in member.ProxyTags) 
@@ -59,7 +58,22 @@ namespace PluralKit.API
             o.Add("proxy_tags", tagArray);
 
             o.Add("keep_proxy", member.KeepProxy);
-            o.Add("created", DateTimeFormats.TimestampExportFormat.Format(member.Created));
+
+            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
+
+            o.Add("visibility", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("name_privacy", ctx == LookupContext.ByOwner ? (member.NamePrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("pronoun_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("metadata_privacy", ctx == LookupContext.ByOwner ? (member.MetadataPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+
+            if(member.MetadataPrivacy.CanAccess(ctx))
+                o.Add("created", DateTimeFormats.TimestampExportFormat.Format(member.Created));
+            else
+                o.Add("created", null);
+            
 
             if (member.ProxyTags.Count > 0)
             {
@@ -101,8 +115,28 @@ namespace PluralKit.API
                     .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
                     .ToList();
             }
-            
-            if (o.ContainsKey("privacy")) member.MemberPrivacy = o.Value<string>("privacy").ParsePrivacy("member");
+            if(o.ContainsKey("privacy")) //TODO: Deprecate this completely in api v2
+            {
+                var plevel = o.Value<string>("privacy").ParsePrivacy("member");
+                                
+                member.MemberVisibility = plevel;
+                member.NamePrivacy = plevel;
+                member.DescriptionPrivacy = plevel;
+                member.BirthdayPrivacy = plevel;
+                member.PronounPrivacy = plevel;
+                member.ColorPrivacy = plevel;
+                member.MetadataPrivacy = plevel;
+            }
+            else
+            {
+                if (o.ContainsKey("visibility")) member.MemberVisibility = o.Value<string>("visibility").ParsePrivacy("member");
+                if (o.ContainsKey("name_privacy")) member.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("description_privacy")) member.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("birthday_privacy")) member.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("pronoun_privacy")) member.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("metadata_privacy")) member.MetadataPrivacy = o.Value<string>("metadata_privacy").ParsePrivacy("member");
+            }
         }
 
         private static string BoundsCheckField(this string input, int maxLength, string nameInError)

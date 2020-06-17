@@ -150,7 +150,7 @@ namespace PluralKit.Core {
 
         public async Task SaveMember(PKMember member) {
             using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_privacy = @MemberPrivacy where id = @Id", member);
+                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_visibility = @MemberVisibility, description_privacy = @DescriptionPrivacy,  name_privacy = @NamePrivacy, birthday_privacy = @BirthdayPrivacy, pronoun_privacy = @PronounPrivacy, metadata_privacy = @MetadataPrivacy, color_privacy = @ColorPrivacy where id = @Id", member);
 
             _logger.Information("Updated member {@Member}", member);
         }
@@ -164,8 +164,8 @@ namespace PluralKit.Core {
 
         public async Task<int> GetSystemMemberCount(SystemId id, bool includePrivate)
         {
-            var query = "select count(*) from members where system = @id";
-            if (!includePrivate) query += " and member_privacy = 1"; // 1 = public
+            var query = "select count(*) from members where system = @Id";
+            if (!includePrivate) query += " and member_visibility = 1"; // 1 = public
             
             using (var conn = await _conn.Obtain())
                 return await conn.ExecuteScalarAsync<int>(query, new { id });

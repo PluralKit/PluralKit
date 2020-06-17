@@ -13,7 +13,7 @@ namespace PluralKit.Bot
     {
         public int MembersPerPage => 25;
         
-        public void RenderPage(DiscordEmbedBuilder eb, DateTimeZone timezone, IEnumerable<ListedMember> members)
+        public void RenderPage(DiscordEmbedBuilder eb, DateTimeZone timezone, IEnumerable<ListedMember> members, LookupContext ctx)
         {
             string RenderLine(ListedMember m)
             {
@@ -22,8 +22,8 @@ namespace PluralKit.Bot
                     var proxyTagsString = m.ProxyTagsString().SanitizeMentions();
                     if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
                         proxyTagsString = "tags too long, see member card";
-
-                    return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}** *({proxyTagsString})*";
+                    var memberName = m.NamePrivacy.CanAccess(ctx) ? m.Name : (m.DisplayName ?? m.Name);
+                    return $"[`{m.Hid}`] **{memberName.SanitizeMentions()}** *({proxyTagsString})*";
                 }
 
                 return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";

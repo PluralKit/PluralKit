@@ -59,7 +59,7 @@ namespace PluralKit.Bot
             //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
 
             // TODO: don't buffer these, find something else to do ig
-            var members = await _data.GetSystemMembers(ctx.System).Where(m => m.MemberPrivacy == PrivacyLevel.Public).ToListAsync();
+            var members = await _data.GetSystemMembers(ctx.System).Where(m => m.MemberVisibility == PrivacyLevel.Public).ToListAsync();
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count);

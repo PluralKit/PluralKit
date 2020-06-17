@@ -17,7 +17,7 @@ namespace PluralKit.Core
             StringBuilder query = new StringBuilder("select * from member_list where system = @system");
 
             if (privacyFilter != null)
-                query.Append($" and member_privacy = {(int) privacyFilter}");
+                query.Append($" and member_visibility = {(int) privacyFilter}");
 
             if (filter != null)
             {
