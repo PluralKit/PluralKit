@@ -3,7 +3,7 @@ openapi: 3.0.0
 
 info:
   title: PluralKit
-  version: "1.0"
+  version: "1.1"
 
   description: |
     This is the API for [PluralKit](https://pluralkit.me/)! :)
@@ -21,6 +21,10 @@ info:
     # Errors
     Errors are just returned as HTTP response codes. Most error responses include a human-readable
     error message as the body, but this should not be relied on. Just read the response codes :)
+    
+    # OpenAPI version history
+    - **1.1**: Granular member privacy
+    - **1.0**: (initial definition version)
 
   license:
     name: Apache 2.0
@@ -573,15 +577,87 @@ components:
             A link to the avatar/icon of the member.
 
             If used for proxying, the image must be at most 1000 pixels in width *and* height, and at most 1 MiB in size. This restriction is on Discord's end and is not verified through the API (it's simply stored as a string).
+            
         privacy:
           allOf:
             - $ref: "#/components/schemas/PrivacySetting"
             - description: |
-                The member's privacy setting, either "public" or "private".
+                This field is deprecated. 
+                
+                At the moment, it's still included in member objects, with a value that mirrors the `visibility` field. Writing to this field will set *every* privacy setting to the written value.
+              example: public
+              deprecated: true
+
+        visibility:
+          allOf:
+            - $ref: "#/components/schemas/PrivacySetting"
+            - description: |
+                The member's current visibility, either "public" or "private".
 
                 If this is set to "private", the member will not appear in public member lists. It can still be looked up using its 5-character member ID, but will return limited information.
 
-                Specifically, the properties `birthday`, `pronouns` and `description` will always be returned as `null` if a valid token for the system isn't provided, even if the underlying value is present.
+                In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+              example: public
+              
+        name_privacy:
+          allOf:
+            - $ref: "#/components/schemas/PrivacySetting"
+            - description: |
+                The member's current name privacy setting, either "public" or "private".
+
+                If this is set to "private", the member's returned `name` will be replaced by their `display_name` when applicable.
+
+                In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+
+                Because of this, there is no way for an unauthorized user to tell the difference between a private name being replaced by the display name, and an empty display name with the name set - this is intentional.
+              example: public
+              
+        description_privacy:
+          allOf:
+            - $ref: "#/components/schemas/PrivacySetting"
+            - description: |
+                The member's current description privacy setting, either "public" or "private".
+
+                If this is set to "private", the field `description` will be returned as `null` on all requests not authorized with this system's token.
+
+                In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+
+                Because of this, there is no way for an unauthorized user to tell the difference between a private description and a `null` description - this is intentional.
+              example: public
+              
+        pronouns_privacy:
+          allOf:
+            - $ref: "#/components/schemas/PrivacySetting"
+            - description: |
+                The member's current pronouns privacy setting, either "public" or "private".
+
+                If this is set to "private", the field `pronouns` will be returned as `null` on all requests not authorized with this system's token.
+
+                In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+
+                Because of this, there is no way for an unauthorized user to tell the difference between private pronouns and `null` pronouns - this is intentional.
+              example: public
+              
+        birthday_privacy:
+          allOf:
+            - $ref: "#/components/schemas/PrivacySetting"
+            - description: |
+                The member's current birthday privacy setting, either "public" or "private".
+
+                If this is set to "private", the field `birthday` will be returned as `null` on all requests not authorized with this system's token.
+
+                In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+
+                Because of this, there is no way for an unauthorized user to tell the difference between a private birthday and a `null` birthday - this is intentional.
+              example: public
+              
+        metadata_privacy:
+          allOf:
+            - $ref: "#/components/schemas/PrivacySetting"
+            - description: |
+                The member's current metadata privacy setting, either "public" or "private".
+
+                If this is set to "private", the field `created` on all requests not authorized with this system's token.
 
                 In addition, this field will be returned as `null` if the request is not authorized with this system's token.
               example: public
@@ -624,6 +700,13 @@ components:
           default: false
           description: |
             Whether or not to include the used proxy tags in proxied messages.
+            
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          description: The creation timestamp of the member. May be returned as `null` depending on the value of `metadata_privacy` and the request authorization. 
+          nullable: true
 
     PrivacySetting:
       title: Privacy Setting
