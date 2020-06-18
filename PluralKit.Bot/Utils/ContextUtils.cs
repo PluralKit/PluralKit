@@ -119,7 +119,7 @@ namespace PluralKit.Bot {
             try
             {
                 var msg = await ctx.Reply(embed: await MakeEmbedForPage(0));
-                if (pageCount == 1) return; // If we only have one page, don't bother with the reaction/pagination logic, lol
+                if (pageCount <= 1) return; // If we only have one (or no) page, don't bother with the reaction/pagination logic, lol
                 string[] botEmojis = { "\u23EA", "\u2B05", "\u27A1", "\u23E9", Emojis.Error };
                 
                 var _ = msg.CreateReactionsBulk(botEmojis); // Again, "fork"
