@@ -28,6 +28,7 @@ namespace PluralKit.Bot
         private static Regex _unbelievaboatRegex = new Regex("Message ID: (\\d{17,19})");
         private static Regex _vanessaRegex = new Regex("Message sent by <@!?(\\d{17,19})> deleted in");
         private static Regex _salRegex = new Regex("\\(ID: (\\d{17,19})\\)");
+        private static Regex _GearBotRegex = new Regex("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
 
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
@@ -46,7 +47,8 @@ namespace PluralKit.Bot
             new LoggerBot("Mantaro", 213466096718708737, ExtractMantaro), 
             new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat, webhookName: "UnbelievaBoat"), 
             new LoggerBot("Vanessa", 310261055060443136, fuzzyExtractFunc: ExtractVanessa), 
-            new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL)
+            new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL),
+            new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot)
         }.ToDictionary(b => b.Id);
 
         private static readonly Dictionary<string, LoggerBot> _botsByWebhookName = _bots.Values
@@ -276,6 +278,17 @@ namespace PluralKit.Bot
             var authorField = embed.Fields.FirstOrDefault(f => f.Name == "Message Author");
             if (authorField == null) return null;
             var match = _salRegex.Match(authorField.Value);
+            return match.Success
+                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                : (FuzzyExtractResult?) null;
+        }
+
+        private static FuzzyExtractResult? ExtractGearBot(DiscordMessage msg)
+        {
+            // Simple text based message log.
+            // No message ID, but we have timestamp and author ID.
+            // Not using timestamp here though (seems to be same as message timestamp), might be worth implementing in the future.
+            var match = _GearBotRegex.Match(msg.Content);
             return match.Success
                 ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
                 : (FuzzyExtractResult?) null;
