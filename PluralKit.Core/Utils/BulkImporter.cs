@@ -137,7 +137,7 @@ namespace PluralKit.Core
                     
                     // Otherwise, write to importer
                     await importer.StartRowAsync();
-                    await importer.WriteAsync(_systemId, NpgsqlDbType.Integer);
+                    await importer.WriteAsync(_systemId.Value, NpgsqlDbType.Integer);
                     await importer.WriteAsync(sw.Timestamp, NpgsqlDbType.Timestamp);
                     
                     // Note that we've imported a switch with this timestamp
@@ -170,8 +170,8 @@ namespace PluralKit.Core
                             throw new Exception($"Attempted to import switch with member identifier {memberIdentifier} but could not find an entry in the id map for this! :/");
                         
                         await importer.StartRowAsync();
-                        await importer.WriteAsync(justAddedSwitch.Id, NpgsqlDbType.Integer);
-                        await importer.WriteAsync(memberId, NpgsqlDbType.Integer);
+                        await importer.WriteAsync(justAddedSwitch.Id.Value, NpgsqlDbType.Integer);
+                        await importer.WriteAsync(memberId.Value, NpgsqlDbType.Integer);
                     }
                 }
 

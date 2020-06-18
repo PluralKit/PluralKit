@@ -76,7 +76,7 @@ namespace PluralKit.Bot
             ctx.CheckOwnMember(member);
 
             await UpdateAutoproxy(ctx, AutoproxyMode.Member, member.Id);
-            await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.Name}** in this server.");
+            await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** in this server.");
         }
 
         private async Task<DiscordEmbed> CreateAutoproxyStatusEmbed(Context ctx)
@@ -103,14 +103,14 @@ namespace PluralKit.Bot
                     {
                         if (relevantMember == null) 
                             throw new ArgumentException("Attempted to print member autoproxy status, but the linked member ID wasn't found in the database. Should be handled appropriately.");
-                        eb.WithDescription($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.Name.EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+                        eb.WithDescription($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
                     }
 
                     break;
                 }
                 // AutoproxyMember is never null if Mode is Member, this is just to make the compiler shut up
                 case AutoproxyMode.Member when relevantMember != null: {
-                    eb.WithDescription($"Autoproxy is active for member **{relevantMember.Name}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
+                    eb.WithDescription($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
                     break;
                 }
                 case AutoproxyMode.Latch:

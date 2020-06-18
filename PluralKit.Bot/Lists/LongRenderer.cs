@@ -38,8 +38,7 @@ namespace PluralKit.Bot
                 if (_fields.ShowPrivacy && m.MemberVisibility == PrivacyLevel.Private)
                     profile += "\n*(this member is hidden)*";
 
-                var memberName = m.NamePrivacy.CanAccess(ctx) ? m.Name : (m.DisplayName ?? m.Name);
-                eb.AddField(memberName, profile.Truncate(1024));
+                eb.AddField(m.NameFor(ctx), profile.Truncate(1024));
             }
         }
         

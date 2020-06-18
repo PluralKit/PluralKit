@@ -39,7 +39,7 @@ namespace PluralKit.Bot
             var sw = await _data.GetLatestSwitch(system.Id);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
-            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
+            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system)));
         }
 
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
@@ -68,7 +68,7 @@ namespace PluralKit.Bot
                         var sw = entry.ThisSwitch;
                         // Fetch member list and format
                         var members = await _data.GetSwitchMembers(sw).ToListAsync();
-                        var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
+                        var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "no fronter";
 
                         var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
 
@@ -113,7 +113,7 @@ namespace PluralKit.Bot
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
             var frontpercent = await _data.GetFrontBreakdown(system, rangeStart.Value.ToInstant(), now);
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone, ctx.LookupContextFor(system)));
         }
     }
 }

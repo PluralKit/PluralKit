@@ -35,7 +35,7 @@ namespace PluralKit.Bot
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, newName);
             if (existingMember != null) {
-                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx).SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
@@ -124,7 +124,7 @@ namespace PluralKit.Bot
                     else
                         await ctx.Reply("This member does not have pronouns set.");
                 else
-                    await ctx.Reply($"**{target.Name.SanitizeMentions()}**'s pronouns are **{target.Pronouns.SanitizeMentions()}**."
+                    await ctx.Reply($"**{target.NameFor(ctx).SanitizeMentions()}**'s pronouns are **{target.Pronouns.SanitizeMentions()}**."
                         + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Hid} pronouns -clear`." : ""));
             }
             else
@@ -223,6 +223,8 @@ namespace PluralKit.Bot
         
         private async Task<DiscordEmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
         {
+            var lcx = ctx.LookupContextFor(target);
+            
             MemberGuildSettings memberGuildConfig = null;
             if (ctx.Guild != null)
                 memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
@@ -231,14 +233,17 @@ namespace PluralKit.Bot
                 .WithFooter($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name.");
 
             if (target.DisplayName == null && memberGuildConfig?.DisplayName == null)
-                eb.AddField($"Name", $"**{target.Name}**");
+                eb.AddField("Name", $"**{target.NameFor(ctx)}**");
             else
-                eb.AddField("Name", target.Name);
-            
-            if (target.DisplayName != null && memberGuildConfig?.DisplayName == null)
-                eb.AddField($"Display Name", $"**{target.DisplayName}**");
-            else
-                eb.AddField("Display Name", target.DisplayName ?? "*(none)*");
+                eb.AddField("Name", target.NameFor(ctx));
+
+            if (target.NamePrivacy.CanAccess(lcx))
+            {
+                if (target.DisplayName != null && memberGuildConfig?.DisplayName == null)
+                    eb.AddField("Display Name", $"**{target.DisplayName}**");
+                else
+                    eb.AddField("Display Name", target.DisplayName ?? "*(none)*");
+            }
 
             if (ctx.Guild != null)
             {
@@ -272,7 +277,7 @@ namespace PluralKit.Bot
                 
                 target.DisplayName = null;
                 await _data.SaveMember(target);
-                await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\".");
+                await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx).SanitizeMentions()}\".");
             }
             else if (!ctx.HasNext())
             {
@@ -309,7 +314,7 @@ namespace PluralKit.Bot
                 if (target.DisplayName != null)
                     await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
                 else
-                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.Name.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
+                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx).SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
             }
             else if (!ctx.HasNext())
             {
@@ -360,7 +365,7 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
         }
 
-        private DiscordEmbed CreatePrivacyEmbed(PKMember member)
+        private DiscordEmbed CreatePrivacyEmbed(Context ctx, PKMember member)
         {
             string PrivacyLevelString(PrivacyLevel level) => level switch
             {
@@ -370,7 +375,7 @@ namespace PluralKit.Bot
             };
 
             var eb = new DiscordEmbedBuilder()
-                .WithTitle($"Current privacy settings for {member.Name}")
+                .WithTitle($"Current privacy settings for {member.NameFor(ctx)}")
                 .AddField("Name (replaces name with display name if member has one)",PrivacyLevelString(member.NamePrivacy))
                 .AddField("Description", PrivacyLevelString(member.DescriptionPrivacy))
                 .AddField("Birthday", PrivacyLevelString(member.BirthdayPrivacy))
@@ -390,7 +395,7 @@ namespace PluralKit.Bot
             // Display privacy settings
             if (!ctx.HasNext() && newValueFromCommand == null)
             {
-                await ctx.Reply(embed: CreatePrivacyEmbed(target));
+                await ctx.Reply(embed: CreatePrivacyEmbed(ctx, target));
                 return;
             }
 
@@ -440,7 +445,7 @@ namespace PluralKit.Bot
                     (MemberPrivacySubject.Visibility, PrivacyLevel.Public) => "This member is no longer hidden from member lists.",
                 };
                 
-                await ctx.Reply($"{Emojis.Success} {target.Name.SanitizeMentions()}'s {subject.Name()} has been set to **{newLevel.Name()}**. {explanation}");
+                await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx).SanitizeMentions()}'s {subject.Name()} has been set to **{newLevel.Name()}**. {explanation}");
             }
             else if (ctx.Match("all") || newValueFromCommand != null)
             {
@@ -449,9 +454,9 @@ namespace PluralKit.Bot
                 await _data.SaveMember(target);
                 
                 if(newLevel == PrivacyLevel.Private)
-                    await ctx.Reply($"All {target.Name.SanitizeMentions()}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see nothing on the member card.");
+                    await ctx.Reply($"All {target.NameFor(ctx).SanitizeMentions()}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see nothing on the member card.");
                 else 
-                    await ctx.Reply($"All {target.Name.SanitizeMentions()}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see everything on the member card.");
+                    await ctx.Reply($"All {target.NameFor(ctx).SanitizeMentions()}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see everything on the member card.");
             }
             else
             {
@@ -469,7 +474,7 @@ namespace PluralKit.Bot
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             
-            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.Name.SanitizeMentions()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
+            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx).SanitizeMentions()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
             await _data.DeleteMember(target);
             await ctx.Reply($"{Emojis.Success} Member deleted.");

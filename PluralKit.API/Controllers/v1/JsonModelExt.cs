@@ -44,7 +44,7 @@ namespace PluralKit.API
         {
             var o = new JObject();
             o.Add("id", member.Hid);
-            o.Add("name", member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name);
+            o.Add("name", member.NameFor(ctx));
             // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
             o.Add("color", member.Color);
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);

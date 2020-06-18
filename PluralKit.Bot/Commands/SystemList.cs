@@ -24,7 +24,7 @@ namespace PluralKit.Bot
             var renderer = GetRendererFor(ctx);
             var opts = GetOptions(ctx, target);
             
-            var members = (await _db.Execute(c => opts.Execute(c, target))).ToList();
+            var members = (await _db.Execute(c => opts.Execute(c, target, ctx.LookupContextFor(target)))).ToList();
             await ctx.Paginate(
                 members.ToAsyncEnumerable(),
                 members.Count,

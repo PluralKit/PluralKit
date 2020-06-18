@@ -47,7 +47,7 @@ namespace PluralKit.Bot {
                 var switchMembers = await _data.GetSwitchMembers(latestSwitch).ToListAsync();
                 if (switchMembers.Count > 0)
                     eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
-                        string.Join(", ", switchMembers.Select(m => m.Name)));
+                        string.Join(", ", switchMembers.Select(m => m.NameFor(ctx))));
             }
 
             if (system.Tag != null) eb.AddField("Tag", system.Tag.EscapeMarkdown());
@@ -70,7 +70,7 @@ namespace PluralKit.Bot {
         public DiscordEmbed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordUser sender, string content, DiscordChannel channel) {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
-            var name = member.NamePrivacy == PrivacyLevel.Public ? member.Name : member.DisplayName ?? member.Name;
+            var name = member.NameFor(LookupContext.ByNonOwner); 
             return new DiscordEmbedBuilder()
                 .WithAuthor($"#{channel.Name}: {name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarUrl))
                 .WithThumbnailUrl(member.AvatarUrl)
@@ -85,8 +85,8 @@ namespace PluralKit.Bot {
 
             // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
 
-            var name = member.NamePrivacy.CanAccess(ctx) ? member.Name : member.DisplayName ?? member.Name;
-            if (system.Name != null) name = $"{member.Name} ({system.Name})";
+            var name = member.NameFor(ctx);
+            if (system.Name != null) name = $"{name} ({system.Name})";
 
             DiscordColor color;
             try
@@ -142,19 +142,21 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public async Task<DiscordEmbed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone)
+        public async Task<DiscordEmbed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone, LookupContext ctx)
         {
             var members = await _data.GetSwitchMembers(sw).ToListAsync();
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new DiscordEmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
-                .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.Name)) : "*(no fronter)*")
+                .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "*(no fronter)*")
                 .AddField("Since", $"{DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({DateTimeFormats.DurationFormat.Format(timeSinceSwitch)} ago)")
                 .Build();
         }
 
         public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordClient client, FullMessage msg)
         {
+            var ctx = LookupContext.ByNonOwner;
+            
             var channel = await client.GetChannelAsync(msg.Message.Channel);
             var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
 
@@ -177,12 +179,12 @@ namespace PluralKit.Bot {
 
             // Put it all together
             var eb = new DiscordEmbedBuilder()
-                .WithAuthor(msg.Member.Name, iconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarUrl))
+                .WithAuthor(msg.Member.NameFor(ctx), iconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarUrl))
                 .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
-                .AddField("Member", $"{msg.Member.Name} (`{msg.Member.Hid}`)", true)
+                .AddField("Member", $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)", true)
                 .AddField("Sent by", userStr, inline: true)
                 .WithTimestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset());
 
@@ -193,7 +195,7 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<DiscordEmbed> CreateFrontPercentEmbed(FrontBreakdown breakdown, DateTimeZone tz)
+        public Task<DiscordEmbed> CreateFrontPercentEmbed(FrontBreakdown breakdown, DateTimeZone tz, LookupContext ctx)
         {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new DiscordEmbedBuilder()
@@ -212,7 +214,7 @@ namespace PluralKit.Bot {
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / actualPeriod;
-                eb.AddField(pair.Key?.Name ?? "*(no fronter)*", $"{frac*100:F0}% ({DateTimeFormats.DurationFormat.Format(pair.Value)})");
+                eb.AddField(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({DateTimeFormats.DurationFormat.Format(pair.Value)})");
             }
 
             if (membersOrdered.Count > maxEntriesToDisplay)

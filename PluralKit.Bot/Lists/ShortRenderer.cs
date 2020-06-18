@@ -22,11 +22,10 @@ namespace PluralKit.Bot
                     var proxyTagsString = m.ProxyTagsString().SanitizeMentions();
                     if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
                         proxyTagsString = "tags too long, see member card";
-                    var memberName = m.NamePrivacy.CanAccess(ctx) ? m.Name : (m.DisplayName ?? m.Name);
-                    return $"[`{m.Hid}`] **{memberName.SanitizeMentions()}** *({proxyTagsString})*";
+                    return $"[`{m.Hid}`] **{m.NameFor(ctx).SanitizeMentions()}** *({proxyTagsString})*";
                 }
 
-                return $"[`{m.Hid}`] **{m.Name.SanitizeMentions()}**";
+                return $"[`{m.Hid}`] **{m.NameFor(ctx).SanitizeMentions()}**";
             }
 
             var buf = new StringBuilder();

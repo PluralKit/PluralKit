@@ -20,5 +20,7 @@
         public static bool operator !=(MemberId left, MemberId right) => !left.Equals(right);
 
         public int CompareTo(MemberId other) => Value.CompareTo(other.Value);
+        
+        public override string ToString() => $"Member #{Value}";
     }
 }
