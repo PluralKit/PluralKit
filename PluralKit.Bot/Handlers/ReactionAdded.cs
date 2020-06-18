@@ -29,6 +29,9 @@ namespace PluralKit.Bot
         {
             // Only proxies in guild text channels
             if (evt.Channel.Type != ChannelType.Text) return;
+            
+            // Ignore reactions from bots (we can't DM them anyway)
+            if (evt.User.IsBot) return;
 
             FullMessage msg;
             switch (evt.Emoji.Name)
