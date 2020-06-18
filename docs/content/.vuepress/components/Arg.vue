@@ -21,6 +21,12 @@
     .cmd-block .cmd-arg {
         background-color: $argBgBlock;
     }
+        
+    // "Free" arguments in a standard text section needs extra margin
+    // might need tweaking to look good in all contexts, but this looks fine for now
+    p > .cmd-arg, li > .cmd-arg {
+        margin: 0.2rem 0.2rem 0.2rem 0.1rem;
+    }
 </style>
 
 <script>
