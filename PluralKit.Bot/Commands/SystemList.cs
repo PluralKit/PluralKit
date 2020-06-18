@@ -2,6 +2,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -33,7 +35,7 @@ namespace PluralKit.Bot
                 (eb, ms) =>
                 {
                     eb.WithFooter($"{opts.CreateFilterString()}. {members.Count} results.");
-                    renderer.RenderPage(eb, ctx.System.Zone, ms);
+                    renderer.RenderPage(eb, ctx.System?.Zone ?? DateTimeZone.Utc, ms);
                     return Task.CompletedTask;
                 });
         }
