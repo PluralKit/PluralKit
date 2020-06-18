@@ -20,6 +20,7 @@ module.exports = {
     
     themeConfig: {
         nav: [
+            { text: "THIS IS A WORK IN PROGRESS SITE. PLEASE SEE THE OFFICIAL DOCUMENTATION FOR COMPLETE INFORMATION.", link: "https://pluralkit.me" },
             { text: "Support server", link: "https://discord.gg/PczBt78" },
             { text: "Invite bot", link: "https://discordapp.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904" }
         ],
