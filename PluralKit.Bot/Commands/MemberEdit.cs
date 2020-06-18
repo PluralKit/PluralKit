@@ -443,6 +443,8 @@ namespace PluralKit.Bot
                     (MemberPrivacySubject.Pronouns, PrivacyLevel.Public) => "This member's pronouns are no longer hidden other systems.",
                     (MemberPrivacySubject.Metadata, PrivacyLevel.Public) => "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
                     (MemberPrivacySubject.Visibility, PrivacyLevel.Public) => "This member is no longer hidden from member lists.",
+                    
+                    _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {newLevel})")
                 };
                 
                 await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx).SanitizeMentions()}'s {subject.Name()} has been set to **{newLevel.Name()}**. {explanation}");
