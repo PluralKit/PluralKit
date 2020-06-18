@@ -3,6 +3,7 @@ obj/
 .env
 .vscode/
 .idea/
+tags
 
 pluralkit.conf
 pluralkit.*.conf
