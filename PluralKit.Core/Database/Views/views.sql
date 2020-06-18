@@ -46,5 +46,12 @@ select members.*,
                4,
                extract(month from members.birthday)::integer,
                extract(day from members.birthday)::integer
-           ) end as birthday_md
+           ) end as birthday_md,
+
+        -- Extract member description as seen by "the public"
+        case 
+            -- Privacy '1' = public; just return description as normal
+            when members.description_privacy = 1 then members.description
+            -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
+        end as public_description
 from members;

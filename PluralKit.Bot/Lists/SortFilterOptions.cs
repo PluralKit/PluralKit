@@ -54,12 +54,12 @@ namespace PluralKit.Bot
         
         public async Task<IEnumerable<ListedMember>> Execute(IPKConnection conn, PKSystem system, LookupContext ctx)
         {
-            var filtered = await QueryWithFilter(conn, system);
+            var filtered = await QueryWithFilter(conn, system, ctx);
             return Sort(filtered, ctx);
         }
 
-        private Task<IEnumerable<ListedMember>> QueryWithFilter(IPKConnection conn, PKSystem system) =>
-            conn.QueryMemberList(system.Id, PrivacyFilter switch
+        private Task<IEnumerable<ListedMember>> QueryWithFilter(IPKConnection conn, PKSystem system, LookupContext ctx) =>
+            conn.QueryMemberList(system.Id, ctx, PrivacyFilter switch
             {
                 PrivacyFilter.PrivateOnly => PrivacyLevel.Private,
                 PrivacyFilter.PublicOnly => PrivacyLevel.Public,
