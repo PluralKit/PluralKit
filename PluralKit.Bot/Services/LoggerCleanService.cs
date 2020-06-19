@@ -41,7 +41,7 @@ namespace PluralKit.Bot
             new LoggerBot("Logger#6278", 327424261180620801, ExtractLoggerB), 
             
             new LoggerBot("Dyno", 155149108183695360, ExtractDyno,  webhookName: "Dyno"),
-            new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja),
+            new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja, webhookName: "Auttaja"),
             new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot), 
             new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot), 
             new LoggerBot("Mantaro", 213466096718708737, ExtractMantaro), 
@@ -137,7 +137,7 @@ namespace PluralKit.Bot
             // Auttaja has an optional "compact mode" that logs without embeds
             // That one puts the ID in the message content, non-compact puts it in the embed description.
             // Regex also checks that this is a deletion.
-            var stringWithId = msg.Content ?? msg.Embeds.FirstOrDefault()?.Description;
+            var stringWithId = msg.Embeds.FirstOrDefault()?.Description ?? msg.Content;
             if (stringWithId == null) return null;
             
             var match = _auttajaRegex.Match(stringWithId);
