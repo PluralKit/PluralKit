@@ -122,7 +122,7 @@ namespace PluralKit.Bot
                 // User-facing errors, print to the channel properly formatted
                 var msg = evt.Message;
                 if (msg.Channel.Guild == null || msg.Channel.BotHasAllPermissions(Permissions.SendMessages))
-                    await msg.Channel.SendMessageAsync($"{Emojis.Error} {e.Message}");
+                    await msg.Channel.SendMessageFixedAsync($"{Emojis.Error} {e.Message}");
             }
 
             return false;

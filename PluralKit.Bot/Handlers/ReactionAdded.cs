@@ -108,15 +108,16 @@ namespace PluralKit.Bot
             {
                 // If the system has pings enabled, go ahead
                 var embed = new DiscordEmbedBuilder().WithDescription($"[Jump to pinged message]({evt.Message.JumpLink})");
-                await evt.Channel.SendMessageAsync($"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{evt.User.Id}>.", embed: embed.Build());
+                await evt.Channel.SendMessageFixedAsync($"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{evt.User.Id}>.", embed: embed.Build(),
+                    new IMention[] {new UserMention(msg.Message.Sender) });
             }
             else
             {
                 // If not, tell them in DMs (if we can)
                 try
                 {
-                    await guildUser.SendMessageAsync($"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:");
-                    await guildUser.SendMessageAsync($"`<@{msg.Message.Sender}>`");
+                    await guildUser.SendMessageFixedAsync($"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:");
+                    await guildUser.SendMessageFixedAsync($"`<@{msg.Message.Sender}>`");
                 }
                 catch (UnauthorizedException) { }
             }

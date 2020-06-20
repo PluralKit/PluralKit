@@ -130,14 +130,14 @@ namespace PluralKit.Bot
             if ((permissions & Permissions.ManageWebhooks) == 0)
             {
                 // todo: PKError-ify these
-                await channel.SendMessageAsync(
+                await channel.SendMessageFixedAsync(
                     $"{Emojis.Error} PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages. Please contact a server administrator to remedy this.");
                 return false;
             }
 
             if ((permissions & Permissions.ManageMessages) == 0)
             {
-                await channel.SendMessageAsync(
+                await channel.SendMessageFixedAsync(
                     $"{Emojis.Error} PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the original trigger message. Please contact a server administrator to remedy this.");
                 return false;
             }

@@ -105,5 +105,17 @@ namespace PluralKit.Bot
             // Workaround for https://github.com/DSharpPlus/DSharpPlus/issues/565
             return input?.Replace("%20", "+");
         }
+        
+        // Passing an empty list (counter-intuitively) *allows* all mentions through (even if non-null)
+        // So we add a single "bogus" user mention for ID=1 that'll never actually resolve, and thus block all (other) mentions
+        private static readonly IEnumerable<IMention> DenyAllMentions = new IMention[] {new UserMention(1)}; 
+
+        public static Task<DiscordMessage> SendMessageFixedAsync(this DiscordChannel channel, string content = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null) =>
+            channel.SendMessageAsync(content, embed: embed, mentions: mentions ?? DenyAllMentions);
+        
+        // This doesn't do anything by itself (DiscordMember.SendMessageAsync doesn't take a mentions argument)
+        // It's just here for consistency so we don't use the standard SendMessageAsync method >.>
+        public static Task<DiscordMessage> SendMessageFixedAsync(this DiscordMember member, string content = null, DiscordEmbed embed = null) =>
+            member.SendMessageAsync(content, embed: embed);
     }
 }

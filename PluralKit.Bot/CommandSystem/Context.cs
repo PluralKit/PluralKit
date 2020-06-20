@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -66,7 +67,7 @@ namespace PluralKit.Bot
         public bool HasNext(bool skipFlags = true) => RemainderOrNull(skipFlags) != null;
         public string FullCommand => _parameters.FullCommand;
 
-        public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null)
+        public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
         {
             if (!this.BotHasAllPermissions(Permissions.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
@@ -74,8 +75,7 @@ namespace PluralKit.Bot
 
             if (embed != null && !this.BotHasAllPermissions(Permissions.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
-            
-            return Channel.SendMessageAsync(text, embed: embed);
+            return Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
         }
 
         /// <summary>

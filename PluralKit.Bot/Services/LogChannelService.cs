@@ -44,7 +44,7 @@ namespace PluralKit.Bot {
                 await conn.QueryMember(proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content,
                 trigger.Channel);
             var url = $"https://discord.com/channels/{trigger.Channel.GuildId}/{trigger.ChannelId}/{hookMessage}";
-            await logChannel.SendMessageAsync(content: url, embed: embed);
+            await logChannel.SendMessageFixedAsync(content: url, embed: embed);
         }
 
         private async Task<DiscordChannel> FindLogChannel(ulong guild, ulong channel)
