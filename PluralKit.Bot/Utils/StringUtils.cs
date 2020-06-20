@@ -44,12 +44,6 @@ namespace PluralKit.Bot
             return false;
         }
 
-        public static string SanitizeMentions(this string input) =>
-            Regex.Replace(Regex.Replace(input, "<@[!&]?(\\d{17,19})>", "<\u200B@$1>"), "@(everyone|here)", "@\u200B$1");
-
-        public static string SanitizeEveryone(this string input) =>
-            Regex.Replace(input, "@(everyone|here)", "@\u200B$1");
-
         public static string EscapeMarkdown(this string input)
         {
             Regex pattern = new Regex(@"[*_~>`(||)\\]", RegexOptions.Multiline);

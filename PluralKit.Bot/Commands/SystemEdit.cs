@@ -44,7 +44,7 @@ namespace PluralKit.Bot
             if (newSystemName == null)
             {
                 if (ctx.System.Name != null)
-                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name.SanitizeMentions()}**. Type `pk;system name -clear` to clear it.");
+                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
                 else
                     await ctx.Reply("Your system currently does not have a name. Type `pk;system name <name>` to set one.");
                 return;
@@ -73,7 +73,7 @@ namespace PluralKit.Bot
                 if (ctx.System.Description == null)
                     await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
                 else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{ctx.System.Description.SanitizeMentions()}\n```");
+                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
                 else
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("System description")
@@ -104,7 +104,7 @@ namespace PluralKit.Bot
                 if (ctx.System.Tag == null)
                     await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
                 else
-                    await ctx.Reply($"Your current system tag is `{ctx.System.Tag.SanitizeMentions()}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                    await ctx.Reply($"Your current system tag is `{ctx.System.Tag}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
             }
             else
             {
@@ -114,7 +114,7 @@ namespace PluralKit.Bot
                         throw Errors.SystemNameTooLongError(newTag.Length);
                 ctx.System.Tag = newTag;
                 await _data.SaveSystem(ctx.System);
-                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied.");
+                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag}` when proxied.");
             }
         }
         
@@ -285,7 +285,7 @@ namespace PluralKit.Bot
 
                 if (!ctx.HasNext())
                     throw new PKSyntaxError($"You must pass a privacy level for `{subject}` (`public` or `private`)");
-                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument().SanitizeMentions()}` (must be `public` or `private`).");
+                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument()}` (must be `public` or `private`).");
             }
 
             string levelStr, levelExplanation, subjectStr;
@@ -320,7 +320,7 @@ namespace PluralKit.Bot
 
             }
             else
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
+                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be {subjectList}).");
 
             await _data.SaveSystem(ctx.System);
             if(subjectStr == "all"){

@@ -19,13 +19,13 @@ namespace PluralKit.Bot
             {
                 if (m.HasProxyTags)
                 {
-                    var proxyTagsString = m.ProxyTagsString().SanitizeMentions();
+                    var proxyTagsString = m.ProxyTagsString();
                     if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
                         proxyTagsString = "tags too long, see member card";
-                    return $"[`{m.Hid}`] **{m.NameFor(ctx).SanitizeMentions()}** *({proxyTagsString})*";
+                    return $"[`{m.Hid}`] **{m.NameFor(ctx)}** *({proxyTagsString})*";
                 }
 
-                return $"[`{m.Hid}`] **{m.NameFor(ctx).SanitizeMentions()}**";
+                return $"[`{m.Hid}`] **{m.NameFor(ctx)}**";
             }
 
             var buf = new StringBuilder();

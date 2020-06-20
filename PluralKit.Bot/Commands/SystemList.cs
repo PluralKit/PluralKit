@@ -44,10 +44,10 @@ namespace PluralKit.Bot
         {
             var title = new StringBuilder("Members of ");
             
-            if (target.Name != null) title.Append($"{target.Name.SanitizeMentions()} (`{target.Hid}`)");
+            if (target.Name != null) title.Append($"{target.Name} (`{target.Hid}`)");
             else title.Append($"`{target.Hid}`");
  
-            if (opts.Filter != null) title.Append($" matching **{opts.Filter.SanitizeMentions()}**");
+            if (opts.Filter != null) title.Append($" matching **{opts.Filter}**");
             
             return title.ToString();
         }

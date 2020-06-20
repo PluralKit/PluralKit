@@ -35,7 +35,7 @@ namespace PluralKit.Bot
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, newName);
             if (existingMember != null) {
-                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx).SanitizeMentions()}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
 
@@ -45,13 +45,13 @@ namespace PluralKit.Bot
 
             await ctx.Reply($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
-            if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set ({target.DisplayName.SanitizeMentions()}), and will be proxied using that name instead.");
+            if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
 
             if (ctx.Guild != null)
             {
                 var memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
                 if (memberGuildConfig.DisplayName != null)
-                    await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName.SanitizeMentions()}) in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name here.");
+                    await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.Guild.Name}), and will be proxied using that name here.");
             }
         }
 
@@ -82,7 +82,7 @@ namespace PluralKit.Bot
                     else
                         await ctx.Reply("This member does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{target.Description.SanitizeMentions()}\n```");
+                    await ctx.Reply($"```\n{target.Description}\n```");
                 else
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Member description")
@@ -124,7 +124,7 @@ namespace PluralKit.Bot
                     else
                         await ctx.Reply("This member does not have pronouns set.");
                 else
-                    await ctx.Reply($"**{target.NameFor(ctx).SanitizeMentions()}**'s pronouns are **{target.Pronouns.SanitizeMentions()}**."
+                    await ctx.Reply($"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**."
                         + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Hid} pronouns -clear`." : ""));
             }
             else
@@ -248,9 +248,9 @@ namespace PluralKit.Bot
             if (ctx.Guild != null)
             {
                 if (memberGuildConfig?.DisplayName != null)
-                    eb.AddField($"Server Name (in {ctx.Guild.Name.SanitizeMentions()})", $"**{memberGuildConfig.DisplayName}**");
+                    eb.AddField($"Server Name (in {ctx.Guild.Name})", $"**{memberGuildConfig.DisplayName}**");
                 else
-                    eb.AddField($"Server Name (in {ctx.Guild.Name.SanitizeMentions()})", memberGuildConfig?.DisplayName ?? "*(none)*");
+                    eb.AddField($"Server Name (in {ctx.Guild.Name})", memberGuildConfig?.DisplayName ?? "*(none)*");
             }
 
             return eb;
@@ -265,7 +265,7 @@ namespace PluralKit.Bot
                 {
                     var memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
                     if (memberGuildConfig.DisplayName != null)
-                        successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name.SanitizeMentions()}), and will be proxied using that name, \"{memberGuildConfig.DisplayName.SanitizeMentions()}\", here.";
+                        successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name}), and will be proxied using that name, \"{memberGuildConfig.DisplayName}\", here.";
                 }
 
                 await ctx.Reply(successStr);
@@ -277,7 +277,7 @@ namespace PluralKit.Bot
                 
                 target.DisplayName = null;
                 await _data.SaveMember(target);
-                await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx).SanitizeMentions()}\".");
+                await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\".");
             }
             else if (!ctx.HasNext())
             {
@@ -295,7 +295,7 @@ namespace PluralKit.Bot
                 target.DisplayName = newDisplayName;
                 await _data.SaveMember(target);
 
-                await PrintSuccess($"{Emojis.Success} Member display name changed. This member will now be proxied using the name \"{newDisplayName.SanitizeMentions()}\".");
+                await PrintSuccess($"{Emojis.Success} Member display name changed. This member will now be proxied using the name \"{newDisplayName}\".");
             }
         }
         
@@ -312,9 +312,9 @@ namespace PluralKit.Bot
                         new {member = target.Id, guild = ctx.Guild.Id}));
 
                 if (target.DisplayName != null)
-                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
+                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName}\" in this server ({ctx.Guild.Name}).");
                 else
-                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx).SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
+                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\" in this server ({ctx.Guild.Name}).");
             }
             else if (!ctx.HasNext())
             {
@@ -334,7 +334,7 @@ namespace PluralKit.Bot
                     c.ExecuteAsync("update member_guild set display_name = @newServerName where member = @member and guild = @guild",
                         new {member = target.Id, guild = ctx.Guild.Id, newServerName}));    
 
-                await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName.SanitizeMentions()}\" in this server ({ctx.Guild.Name.SanitizeMentions()}).");
+                await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.Guild.Name}).");
             }
         }
         
@@ -416,7 +416,7 @@ namespace PluralKit.Bot
 
                 if (!ctx.HasNext())
                     throw new PKSyntaxError($"You must pass a privacy level for `{subjectName}` (`public` or `private`)");
-                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument().SanitizeMentions()}` (must be `public` or `private`).");
+                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument()}` (must be `public` or `private`).");
             }
             
             // See if we have a subject given
@@ -455,7 +455,7 @@ namespace PluralKit.Bot
                     _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {newLevel})")
                 };
                 
-                await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx).SanitizeMentions()}'s {subject.Name()} has been set to **{newLevel.Name()}**. {explanation}");
+                await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx)}'s {subject.Name()} has been set to **{newLevel.Name()}**. {explanation}");
             }
             else if (ctx.Match("all") || newValueFromCommand != null)
             {
@@ -464,14 +464,14 @@ namespace PluralKit.Bot
                 await _data.SaveMember(target);
                 
                 if(newLevel == PrivacyLevel.Private)
-                    await ctx.Reply($"All {target.NameFor(ctx).SanitizeMentions()}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see nothing on the member card.");
+                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see nothing on the member card.");
                 else 
-                    await ctx.Reply($"All {target.NameFor(ctx).SanitizeMentions()}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see everything on the member card.");
+                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see everything on the member card.");
             }
             else
             {
                 var subjectList = "`name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`";
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
+                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be {subjectList}).");
             }
             
             // Name privacy only works given a display name
@@ -488,7 +488,7 @@ namespace PluralKit.Bot
             if (ctx.System == null) throw Errors.NoSystemError;
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             
-            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx).SanitizeMentions()}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
+            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
             await _data.DeleteMember(target);
             await ctx.Reply($"{Emojis.Success} Member deleted.");

@@ -159,7 +159,7 @@ namespace PluralKit.Bot
                 return ctx.Execute<Member>(MemberRandom, m => m.MemberRandom(ctx));
 
             ctx.Reply(
-                $"{Emojis.Error} Unknown command `{ctx.PeekArgument().SanitizeMentions()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
+                $"{Emojis.Error} Unknown command `{ctx.PeekArgument()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
             return Task.CompletedTask;
         }
 

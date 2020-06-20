@@ -103,7 +103,7 @@ namespace PluralKit.Bot {
             {
                 var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command as .");
                 if (!ulong.TryParse(guildIdStr, out var guildId))
-                    throw new PKSyntaxError($"Could not parse `{guildIdStr.SanitizeMentions()}` as an ID.");
+                    throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
                 // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
                 guild = await ctx.Rest.GetGuildAsync(guildId);
@@ -162,7 +162,7 @@ namespace PluralKit.Bot {
             
             // Generate the output embed
             var eb = new DiscordEmbedBuilder()
-                .WithTitle($"Permission check for **{guild.Name.SanitizeMentions()}**");
+                .WithTitle($"Permission check for **{guild.Name}**");
 
             if (permissionsMissing.Count == 0)
             {

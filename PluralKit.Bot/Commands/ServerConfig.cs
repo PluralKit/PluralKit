@@ -36,7 +36,7 @@ namespace PluralKit.Bot
                 .Build(), new {Id = ctx.Guild.Id, LogChannel = channel?.Id}));
 
             if (channel != null)
-                await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name.SanitizeMentions()}.");
+                await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
             else
                 await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
         }
@@ -51,7 +51,7 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                var channel = await ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
+                var channel = await ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument()}\" not found.");
                 if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
                 affectedChannels.Add(channel);
             }
@@ -85,7 +85,7 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                var channel = await ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument().SanitizeMentions()}\" not found.");
+                var channel = await ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument()}\" not found.");
                 if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
                 affectedChannels.Add(channel);
             }

@@ -28,7 +28,7 @@ namespace PluralKit.Bot
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, memberName);
             if (existingMember != null) {
-                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx).SanitizeMentions()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
@@ -42,7 +42,7 @@ namespace PluralKit.Bot
             memberCount++;
             
             // Send confirmation and space hint
-            await ctx.Reply($"{Emojis.Success} Member \"{memberName.SanitizeMentions()}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#members");
+            await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#members");
             if (memberName.Contains(" "))
                 await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
             if (memberCount >= Limits.MaxMemberCount)

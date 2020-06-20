@@ -62,7 +62,7 @@ namespace PluralKit.Bot
             }
 
             var eb = new DiscordEmbedBuilder()
-                .WithTitle($"{target.NameFor(ctx).SanitizeMentions()}'s {field}")
+                .WithTitle($"{target.NameFor(ctx)}'s {field}")
                 .WithImageUrl(currentValue);
             if (target.System == ctx.System?.Id)
                 eb.WithDescription($"To clear, use `pk;member {target.Hid} {cmd} clear`.");

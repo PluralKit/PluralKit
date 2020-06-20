@@ -66,7 +66,7 @@ namespace PluralKit.Bot
                     await ctx.Reply("This member does not have any proxy tags.");
                 else
                 {
-                    var tags = string.Join("\n", target.ProxyTags.Select(t => $"`{t.ProxyString}`".SanitizeMentions()));
+                    var tags = string.Join("\n", target.ProxyTags.Select(t => $"`{t.ProxyString}`"));
                     await ctx.Reply($"This member's proxy tags are:\n{tags}");
                 }
             }
@@ -88,7 +88,7 @@ namespace PluralKit.Bot
                 target.ProxyTags.Add(tagToAdd);
                 
                 await _data.SaveMember(target);
-                await ctx.Reply($"{Emojis.Success} Added proxy tags `{tagToAdd.ProxyString.SanitizeMentions()}`.");
+                await ctx.Reply($"{Emojis.Success} Added proxy tags `{tagToAdd.ProxyString}`.");
             }
             // Subcommand: "remove"
             else if (ctx.Match("remove", "delete"))
@@ -105,7 +105,7 @@ namespace PluralKit.Bot
                 target.ProxyTags.Remove(tagToRemove);
                 
                 await _data.SaveMember(target);
-                await ctx.Reply($"{Emojis.Success} Removed proxy tags `{tagToRemove.ProxyString.SanitizeMentions()}`.");
+                await ctx.Reply($"{Emojis.Success} Removed proxy tags `{tagToRemove.ProxyString}`.");
             }
             // Subcommand: bare proxy tag given
             else
@@ -117,7 +117,7 @@ namespace PluralKit.Bot
                 // already more than one proxy tag.
                 if (target.ProxyTags.Count > 1)
                 {
-                    var msg = await ctx.Reply($"This member already has more than one proxy tag set: {target.ProxyTagsString().SanitizeMentions()}\nDo you want to replace them?");
+                    var msg = await ctx.Reply($"This member already has more than one proxy tag set: {target.ProxyTagsString()}\nDo you want to replace them?");
                     if (!await ctx.PromptYesNo(msg))
                         throw Errors.GenericCancelled();
                 }
@@ -128,7 +128,7 @@ namespace PluralKit.Bot
                 target.ProxyTags = new[] {requestedTag};
                 
                 await _data.SaveMember(target);
-                await ctx.Reply($"{Emojis.Success} Member proxy tags set to `{requestedTag.ProxyString.SanitizeMentions()}`.");
+                await ctx.Reply($"{Emojis.Success} Member proxy tags set to `{requestedTag.ProxyString}`.");
             }
         }
     }
