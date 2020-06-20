@@ -26,7 +26,7 @@ namespace PluralKit.Bot
             var renderer = GetRendererFor(ctx);
             var opts = GetOptions(ctx, target);
             
-            var members = (await _db.Execute(c => opts.Execute(c, target))).ToList();
+            var members = (await _db.Execute(c => opts.Execute(c, target, ctx.LookupContextFor(target)))).ToList();
             await ctx.Paginate(
                 members.ToAsyncEnumerable(),
                 members.Count,
@@ -35,7 +35,7 @@ namespace PluralKit.Bot
                 (eb, ms) =>
                 {
                     eb.WithFooter($"{opts.CreateFilterString()}. {members.Count} results.");
-                    renderer.RenderPage(eb, ctx.System?.Zone ?? DateTimeZone.Utc, ms);
+                    renderer.RenderPage(eb, ctx.System?.Zone ?? DateTimeZone.Utc, ms, ctx.LookupContextFor(target));
                     return Task.CompletedTask;
                 });
         }

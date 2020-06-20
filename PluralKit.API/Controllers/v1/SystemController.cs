@@ -78,7 +78,7 @@ namespace PluralKit.API
 
             var members = _data.GetSystemMembers(system);
             return Ok(await members
-                .Where(m => m.MemberPrivacy.CanAccess(User.ContextFor(system)))
+                .Where(m => m.MemberVisibility.CanAccess(User.ContextFor(system)))
                 .Select(m => m.ToJson(User.ContextFor(system)))
                 .ToListAsync());
         }

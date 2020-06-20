@@ -52,14 +52,14 @@ namespace PluralKit.Bot
             return str.ToString();
         }
         
-        public async Task<IEnumerable<ListedMember>> Execute(IPKConnection conn, PKSystem system)
+        public async Task<IEnumerable<ListedMember>> Execute(IPKConnection conn, PKSystem system, LookupContext ctx)
         {
-            var filtered = await QueryWithFilter(conn, system);
-            return Sort(filtered);
+            var filtered = await QueryWithFilter(conn, system, ctx);
+            return Sort(filtered, ctx);
         }
 
-        private Task<IEnumerable<ListedMember>> QueryWithFilter(IPKConnection conn, PKSystem system) =>
-            conn.QueryMemberList(system.Id, PrivacyFilter switch
+        private Task<IEnumerable<ListedMember>> QueryWithFilter(IPKConnection conn, PKSystem system, LookupContext ctx) =>
+            conn.QueryMemberList(system.Id, ctx, PrivacyFilter switch
             {
                 PrivacyFilter.PrivateOnly => PrivacyLevel.Private,
                 PrivacyFilter.PublicOnly => PrivacyLevel.Public,
@@ -67,7 +67,7 @@ namespace PluralKit.Bot
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy filter {PrivacyFilter}")
             }, Filter, SearchInDescription);
 
-        private IEnumerable<ListedMember> Sort(IEnumerable<ListedMember> input)
+        private IEnumerable<ListedMember> Sort(IEnumerable<ListedMember> input, LookupContext ctx)
         {
             IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
                 Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
@@ -78,7 +78,7 @@ namespace PluralKit.Bot
                 // As for the OrderByDescending HasValue calls: https://www.jerriepelser.com/blog/orderby-with-null-values/
                 // We want nulls last no matter what, even if orders are reversed
                 SortProperty.Hid => input.OrderBy(m => m.Hid, ReverseMaybe(culture)),
-                SortProperty.Name => input.OrderBy(m => m.Name, ReverseMaybe(culture)),
+                SortProperty.Name => input.OrderBy(m => m.NameFor(ctx), ReverseMaybe(culture)),
                 SortProperty.CreationDate => input.OrderBy(m => m.Created, ReverseMaybe(Comparer<Instant>.Default)),
                 SortProperty.MessageCount => input.OrderByDescending(m => m.MessageCount, ReverseMaybe(Comparer<int>.Default)),
                 SortProperty.DisplayName => input
@@ -96,7 +96,7 @@ namespace PluralKit.Bot
                 _ => throw new ArgumentOutOfRangeException($"Unknown sort property {SortProperty}")
             })
                 // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
-                .ThenBy(m => m.Name, culture);
+                .ThenBy(m => m.NameFor(ctx), culture);
         }
 
         public static SortFilterOptions FromFlags(Context ctx)

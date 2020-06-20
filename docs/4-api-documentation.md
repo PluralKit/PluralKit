@@ -6,7 +6,7 @@ description: PluralKit's API documentation.
 nav_order: 4
 ---
 
-**2020-05-07**: The PluralKit API is now documented on Swagger: https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.0  
+**2020-05-07**: The PluralKit API is now documented on Swagger: https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.1
 Accompanying it is an [OpenAPI v3.0 definition](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml). It's mostly complete, but is still subject to change - so don't go generating API clients and mock servers with it quite yet. It may still be useful, though :) 
 
 # API documentation
@@ -59,12 +59,19 @@ The following three models (usually represented in JSON format) represent the va
 |color|color?|Yes|6-char hex (eg. `ff7000`), sans `#`.|
 |avatar_url|url?|Yes|Not validated server-side.|
 |birthday|date?|Yes|ISO-8601 (`YYYY-MM-DD`) format, year of `0001` or `0004` means hidden year. Birthdays set after 2020-02-10 use `0004` as a sentinel year, but both options are recognized as valid.|
-|prefix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
-|suffix|string?|Yes|Deprecated. Use `proxy_tags` instead.|
+|prefix|string?|Yes|**Deprecated.** Use `proxy_tags` instead.|
+|suffix|string?|Yes|**Deprecated.** Use `proxy_tags` instead.|
 |proxy_tags|ProxyTag[]|Yes (entire array)|An array of ProxyTag (see below) objects, each representing a single prefix/suffix pair.|
 |keep_proxy|bool|Yes|Whether to display a member's proxy tags in the proxied message.|
-|created|datetime|No||
-|privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|created|datetime|No|
+|privacy|string?|Yes|**Deprecated.** Use `<subject>_privacy` and `visibility` fields.|
+|visibility|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|name_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|description_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|avatar_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|birthday_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|pronoun_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|metadata_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 
 #### ProxyTag object
 
@@ -165,7 +172,12 @@ If the request is not authenticated with the system's token, members marked as p
         "proxy_tags": [{"prefix": "[", "suffix": "]"}],
         "keep_proxy": false,
         "created": "2019-01-01T15:00:00.654321Z",
-        "privacy": null
+        "visibility": null,
+        "name_privacy": null,
+        "description_privacy": null,
+        "birthday_privacy": null,
+        "pronoun_privacy": null,
+        "metadata_privacy": null
     }
 ]
 ```
@@ -220,6 +232,13 @@ If the system has chosen to hide its current fronters, this will return `403 For
             "description": "I am Craig, example user extraordinaire.",
             "proxy_tags": [{"prefix": "[", "suffix": "]"}],
             "keep_proxy": false,
+            "visibility": null,
+            "name_privacy": null,
+            "description_privacy": null,
+            "avatar_privacy": null,
+            "birthday_privacy": null,
+            "pronoun_privacy": null,
+            "metadata_privacy": null,
             "created": "2019-01-01T15:00:00.654321Z"
         }
     ]
@@ -284,7 +303,7 @@ Registers a new switch to your own system given a list of member IDs.
 
 ### GET /m/\<id>
 Queries a member's information by its 5-character member ID. If the member does not exist, will return `404 Not Found`.
-If this member is marked private, and the request isn't authenticated with the member's system's token, some fields (currently only `description`) will contain `null` rather than the true value. Regardless of privacy setting, a non-authenticated request will only receive `null` for the `privacy` field.
+If this member is marked private, and the request isn't authenticated with the member's system's token, some fields will contain `null` rather than the true value (corresponding with the privacy settings). Regardless of privacy setting, a non-authenticated request will only receive `null` for the privacy fields (and `visibility`).
 
 #### Example request
     GET https://api.pluralkit.me/v1/m/qwert
@@ -302,7 +321,13 @@ If this member is marked private, and the request isn't authenticated with the m
     "proxy_tags": [{"prefix": "[", "suffix": "]"}],
     "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z",
-    "privacy": "public"
+    "visibility": "public",
+    "name_privacy": "public",
+    "description_privacy": "private",
+    "avatar_privacy": "private",
+    "birthday_privacy": "private",
+    "pronoun_privacy": "public",
+    "metadata_privacy": "public"
 }
 ```
 
@@ -324,7 +349,13 @@ Creates a new member with the information given. Missing fields (except for name
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
     "keep_proxy": false,
-    "privacy": "public"
+    "visibility": "public",
+    "name_privacy": "public",
+    "description_privacy": "private",
+    "avatar_privacy": "private",
+    "birthday_privacy": "private",
+    "pronoun_privacy": "public",
+    "metadata_privacy": "private"
 }
 ```
 (note the absence of a `proxy_tags` field, which is cleared in the response)
@@ -343,7 +374,12 @@ Creates a new member with the information given. Missing fields (except for name
     "proxy_tags": [],
     "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z",
-    "privacy": "public"
+    "visibility": "public",
+    "name_privacy": "public",
+    "description_privacy": "private",
+    "birthday_privacy": "private",
+    "pronoun_privacy": "public",
+    "metadata_privacy": "private"
 }
 ```
 
@@ -365,7 +401,13 @@ Edits a member's information. Missing fields will keep their current values. Wil
     "pronouns": "they/them",
     "description": "I am Craig, cooler example user extraordinaire.",
     "keep_proxy": false,
-    "privacy": "public"
+    "visibility": "public",
+    "name_privacy": "public",
+    "description_privacy": "private",
+    "avatar_privacy": "private",
+    "birthday_privacy": "private",
+    "pronoun_privacy": "public",
+    "metadata_privacy": "private"
 }
 ```
 (note the absence of a `proxy_tags` field, which keeps its old value in the response)
@@ -384,7 +426,13 @@ Edits a member's information. Missing fields will keep their current values. Wil
     "proxy_tags": [{"prefix": "[", "suffix": "]"}],
     "keep_proxy": false,
     "created": "2019-01-01T15:00:00.654321Z",
-    "privacy": "public"
+    "visibility": "public",
+    "name_privacy": "public",
+    "description_privacy": "private",
+    "avatar_privacy": "private",
+    "birthday_privacy": "private",
+    "pronoun_privacy": "public",
+    "metadata_privacy": "private"
 }
 ```
 
@@ -459,12 +507,22 @@ The returned system and member's privacy settings will be respected, and as such
         "description": "I am Craig, example user extraordinaire.",
         "proxy_tags": [{"prefix": "[", "suffix": "]"}],
         "keep_proxy": false,
-        "created": "2019-01-01T15:00:00.654321Z"
+        "created": "2019-01-01T15:00:00.654321Z",
+        "visibility": "public",
+        "name_privacy": "public",
+        "description_privacy": "private",
+        "avatar_privacy": "private",
+        "birthday_privacy": "private",
+        "pronoun_privacy": "public",
+        "metadata_privacy": "private"
     }
 }
 ```
 
 ## Version history
+* 2020-06-17 (v1.1)
+  * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `avatar_privacy`, `birthday_privacy`, `pronoun_privacy`, `metadata_privacy`. All are strings and accept the values of `public`, `private` and `null`.
+  * The `privacy` field has now been deprecated and should not be used. It's still returned (mirroring the `visibility` field), and writing to it will write to *all privacy options*.
 * 2020-05-07
   * The API (v1) is now formally(ish) defined with OpenAPI v3.0. [The definition file can be found here.](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml)
 * 2020-02-10

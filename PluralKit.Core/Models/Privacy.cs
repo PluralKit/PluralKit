@@ -10,6 +10,9 @@
     {
         public static bool CanAccess(this PrivacyLevel level, LookupContext ctx) =>
             level == PrivacyLevel.Public || ctx == LookupContext.ByOwner;
+
+        public static string Name(this PrivacyLevel level) => 
+            level == PrivacyLevel.Public ? "public" : "private";
     }
 
     public enum LookupContext

@@ -47,7 +47,8 @@ namespace PluralKit.Bot
             var cmd = location == AvatarLocation.Server ? "serveravatar" : "avatar";
             
             var currentValue = location == AvatarLocation.Member ? target.AvatarUrl : guildData?.AvatarUrl;
-            if (string.IsNullOrEmpty(currentValue))
+            var canAccess = location != AvatarLocation.Member || target.AvatarPrivacy.CanAccess(ctx.LookupContextFor(target));
+            if (string.IsNullOrEmpty(currentValue) || !canAccess)
             {
                 if (location == AvatarLocation.Member)
                 {
@@ -61,7 +62,7 @@ namespace PluralKit.Bot
             }
 
             var eb = new DiscordEmbedBuilder()
-                .WithTitle($"{target.Name.SanitizeMentions()}'s {field}")
+                .WithTitle($"{target.NameFor(ctx).SanitizeMentions()}'s {field}")
                 .WithImageUrl(currentValue);
             if (target.System == ctx.System?.Id)
                 eb.WithDescription($"To clear, use `pk;member {target.Hid} {cmd} clear`.");

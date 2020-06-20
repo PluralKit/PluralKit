@@ -20,5 +20,7 @@
         public static bool operator !=(SystemId left, SystemId right) => !left.Equals(right);
 
         public int CompareTo(SystemId other) => Value.CompareTo(other.Value);
+
+        public override string ToString() => $"System #{Value}";
     }
 }

@@ -28,7 +28,7 @@ namespace PluralKit.Bot
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, memberName);
             if (existingMember != null) {
-                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.Name.SanitizeMentions()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
+                var msg = await ctx.Reply($"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx).SanitizeMentions()}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?");
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
@@ -59,7 +59,7 @@ namespace PluralKit.Bot
             //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
 
             // TODO: don't buffer these, find something else to do ig
-            var members = await _data.GetSystemMembers(ctx.System).Where(m => m.MemberPrivacy == PrivacyLevel.Public).ToListAsync();
+            var members = await _data.GetSystemMembers(ctx.System).Where(m => m.MemberVisibility == PrivacyLevel.Public).ToListAsync();
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count);

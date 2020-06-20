@@ -68,11 +68,11 @@ namespace PluralKit.Bot {
         public static PKError MemberLinkCancelled => new PKError("Member link cancelled.");
         public static PKError MemberUnlinkCancelled => new PKError("Member unlink cancelled.");
 
-        public static PKError SameSwitch(ICollection<PKMember> members)
+        public static PKError SameSwitch(ICollection<PKMember> members, LookupContext ctx)
         {
             if (members.Count == 0) return new PKError("There's already no one in front.");
-            if (members.Count == 1) return new PKError($"Member {members.First().Name.SanitizeMentions()} is already fronting.");
-            return new PKError($"Members {string.Join(", ", members.Select(m => m.Name.SanitizeMentions()))} are already fronting.");
+            if (members.Count == 1) return new PKError($"Member {members.First().NameFor(ctx).SanitizeMentions()} is already fronting.");
+            return new PKError($"Members {string.Join(", ", members.Select(m => m.NameFor(ctx).SanitizeMentions()))} are already fronting.");
         }
 
         public static PKError DuplicateSwitchMembers => new PKError("Duplicate members in member list.");

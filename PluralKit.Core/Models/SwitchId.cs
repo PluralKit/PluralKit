@@ -20,5 +20,7 @@
         public static bool operator !=(SwitchId left, SwitchId right) => !left.Equals(right);
 
         public int CompareTo(SwitchId other) => Value.CompareTo(other.Value);
+        
+        public override string ToString() => $"Switch #{Value}";
     }
 }
