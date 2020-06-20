@@ -48,7 +48,7 @@ namespace PluralKit.Bot
             
             var currentValue = location == AvatarLocation.Member ? target.AvatarUrl : guildData?.AvatarUrl;
             var canAccess = location != AvatarLocation.Member || target.AvatarPrivacy.CanAccess(ctx.LookupContextFor(target));
-            if (string.IsNullOrEmpty(currentValue) && !canAccess)
+            if (string.IsNullOrEmpty(currentValue) || !canAccess)
             {
                 if (location == AvatarLocation.Member)
                 {
