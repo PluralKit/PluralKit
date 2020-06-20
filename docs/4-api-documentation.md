@@ -68,6 +68,7 @@ The following three models (usually represented in JSON format) represent the va
 |visibility|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 |name_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 |description_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
+|avatar_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 |birthday_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 |pronoun_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
 |metadata_privacy|string?|Yes|Patching with `private` will set it to private; `public` or `null` will set it to public.|
@@ -234,6 +235,7 @@ If the system has chosen to hide its current fronters, this will return `403 For
             "visibility": null,
             "name_privacy": null,
             "description_privacy": null,
+            "avatar_privacy": null,
             "birthday_privacy": null,
             "pronoun_privacy": null,
             "metadata_privacy": null,
@@ -322,6 +324,7 @@ If this member is marked private, and the request isn't authenticated with the m
     "visibility": "public",
     "name_privacy": "public",
     "description_privacy": "private",
+    "avatar_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
     "metadata_privacy": "public"
@@ -349,6 +352,7 @@ Creates a new member with the information given. Missing fields (except for name
     "visibility": "public",
     "name_privacy": "public",
     "description_privacy": "private",
+    "avatar_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
     "metadata_privacy": "private"
@@ -400,6 +404,7 @@ Edits a member's information. Missing fields will keep their current values. Wil
     "visibility": "public",
     "name_privacy": "public",
     "description_privacy": "private",
+    "avatar_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
     "metadata_privacy": "private"
@@ -424,6 +429,7 @@ Edits a member's information. Missing fields will keep their current values. Wil
     "visibility": "public",
     "name_privacy": "public",
     "description_privacy": "private",
+    "avatar_privacy": "private",
     "birthday_privacy": "private",
     "pronoun_privacy": "public",
     "metadata_privacy": "private"
@@ -505,6 +511,7 @@ The returned system and member's privacy settings will be respected, and as such
         "visibility": "public",
         "name_privacy": "public",
         "description_privacy": "private",
+        "avatar_privacy": "private",
         "birthday_privacy": "private",
         "pronoun_privacy": "public",
         "metadata_privacy": "private"
@@ -514,7 +521,7 @@ The returned system and member's privacy settings will be respected, and as such
 
 ## Version history
 * 2020-06-17 (v1.1)
-  * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `metadata_privacy`. All are strings and accept the values of `public`, `private` and `null`
+  * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `avatar_privacy`, `birthday_privacy`, `pronoun_privacy`, `metadata_privacy`. All are strings and accept the values of `public`, `private` and `null`.
   * The `privacy` field has now been deprecated and should not be used. It's still returned (mirroring the `visibility` field), and writing to it will write to *all privacy options*.
 * 2020-05-07
   * The API (v1) is now formally(ish) defined with OpenAPI v3.0. [The definition file can be found here.](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml)

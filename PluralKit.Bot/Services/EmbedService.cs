@@ -72,8 +72,8 @@ namespace PluralKit.Bot {
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
             var name = member.NameFor(LookupContext.ByNonOwner); 
             return new DiscordEmbedBuilder()
-                .WithAuthor($"#{channel.Name}: {name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarUrl))
-                .WithThumbnailUrl(member.AvatarUrl)
+                .WithAuthor($"#{channel.Name}: {name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner)))
+                .WithThumbnailUrl(member.AvatarFor(LookupContext.ByNonOwner))
                 .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
                 .WithTimestamp(timestamp.ToDateTimeOffset())
@@ -103,7 +103,7 @@ namespace PluralKit.Bot {
             
             var guildSettings = guild != null ? await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(guild.Id, member.Id)) : null;
             var guildDisplayName = guildSettings?.DisplayName;
-            var avatar = guildSettings?.AvatarUrl ?? member.AvatarUrl;
+            var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
             var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
 
@@ -117,7 +117,7 @@ namespace PluralKit.Bot {
             var description = "";
             if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
             if (guildSettings?.AvatarUrl != null)
-                if (member.AvatarUrl != null) 
+                if (member.AvatarFor(ctx) != null) 
                     description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl}) to see the global avatar)*\n";
                 else
                     description += "*(this member has a server-specific avatar set)*\n";
@@ -179,7 +179,7 @@ namespace PluralKit.Bot {
 
             // Put it all together
             var eb = new DiscordEmbedBuilder()
-                .WithAuthor(msg.Member.NameFor(ctx), iconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarUrl))
+                .WithAuthor(msg.Member.NameFor(ctx), iconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarFor(ctx)))
                 .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
                 .AddField("System",

@@ -449,10 +449,11 @@ For example:
 When the **member list** is **private**, other users will not be able to view the full member list of your system, but they can still query individual members given their 5-letter ID. If **current fronter** is private, but **front history** isn't, someone can still see the current fronter by looking at the history (this combination doesn't make much sense).
 
 ### Member privacy
-There are also six options for configuring member privacy;
+There are also seven options for configuring member privacy;
 
 - Name
 - Description
+- Avatar
 - Birthday
 - Pronouns
 - Metadata *(message count, creation date, etc)*
@@ -468,8 +469,8 @@ To update a members privacy you can use the command:
 
     member <member> privacy <subject> <level>
 
-where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `birthday`, `pronouns`, `metadata`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.  
-`metatdata` will affect the message count, the date created, the last fronted, and the last message information.
+where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.  
+`metadata` will affect the message count, the date created, the last fronted, and the last message information.
 
 For example:
 

@@ -50,7 +50,7 @@ namespace PluralKit.API
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
             o.Add("birthday", member.BirthdayPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
             o.Add("pronouns", member.PronounPrivacy.CanAccess(ctx) ? member.Pronouns : null);
-            o.Add("avatar_url", member.AvatarUrl);
+            o.Add("avatar_url", member.AvatarPrivacy.CanAccess(ctx) ? member.AvatarUrl : null);
             o.Add("description", member.DescriptionPrivacy.CanAccess(ctx) ? member.Description : null);
             
             var tagArray = new JArray();
@@ -67,6 +67,7 @@ namespace PluralKit.API
             o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("pronoun_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
+            o.Add("avatar_privacy", ctx == LookupContext.ByOwner ? (member.AvatarPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             // o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
             o.Add("metadata_privacy", ctx == LookupContext.ByOwner ? (member.MetadataPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
 
@@ -122,6 +123,7 @@ namespace PluralKit.API
                                 
                 member.MemberVisibility = plevel;
                 member.NamePrivacy = plevel;
+                member.AvatarPrivacy = plevel;
                 member.DescriptionPrivacy = plevel;
                 member.BirthdayPrivacy = plevel;
                 member.PronounPrivacy = plevel;
@@ -133,6 +135,7 @@ namespace PluralKit.API
                 if (o.ContainsKey("visibility")) member.MemberVisibility = o.Value<string>("visibility").ParsePrivacy("member");
                 if (o.ContainsKey("name_privacy")) member.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
                 if (o.ContainsKey("description_privacy")) member.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("avatar_privacy")) member.AvatarPrivacy = o.Value<string>("avatar_privacy").ParsePrivacy("member");
                 if (o.ContainsKey("birthday_privacy")) member.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
                 if (o.ContainsKey("pronoun_privacy")) member.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
                 // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");

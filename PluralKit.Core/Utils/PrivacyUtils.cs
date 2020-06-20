@@ -6,6 +6,7 @@ namespace PluralKit.Core
         Visibility,
         Name,
         Description,
+        Avatar,
         Birthday,
         Pronouns,
         Metadata
@@ -17,6 +18,7 @@ namespace PluralKit.Core
         {
             MemberPrivacySubject.Name => "name",
             MemberPrivacySubject.Description => "description",
+            MemberPrivacySubject.Avatar => "avatar",
             MemberPrivacySubject.Pronouns => "pronouns",
             MemberPrivacySubject.Birthday => "birthday",
             MemberPrivacySubject.Metadata => "metadata",
@@ -31,6 +33,7 @@ namespace PluralKit.Core
             {
                 MemberPrivacySubject.Name => member.NamePrivacy = level,
                 MemberPrivacySubject.Description => member.DescriptionPrivacy = level,
+                MemberPrivacySubject.Avatar => member.AvatarPrivacy = level,
                 MemberPrivacySubject.Pronouns => member.PronounPrivacy = level,
                 MemberPrivacySubject.Birthday => member.BirthdayPrivacy= level,
                 MemberPrivacySubject.Metadata => member.MetadataPrivacy = level,
@@ -43,6 +46,7 @@ namespace PluralKit.Core
         {
             member.NamePrivacy = level;
             member.DescriptionPrivacy = level;
+            member.AvatarPrivacy = level;
             member.PronounPrivacy = level;
             member.BirthdayPrivacy = level;
             member.MetadataPrivacy = level;
@@ -61,6 +65,12 @@ namespace PluralKit.Core
                 case "text":
                 case "info":
                     subject = MemberPrivacySubject.Description;
+                    break;
+                case "avatar":
+                case "pfp":
+                case "pic":
+                case "icon":
+                    subject = MemberPrivacySubject.Avatar;
                     break;
                 case "birthday":
                 case "birth":

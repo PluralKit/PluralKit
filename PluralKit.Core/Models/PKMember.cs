@@ -25,6 +25,7 @@ namespace PluralKit.Core {
 
         public PrivacyLevel MemberVisibility { get; set; }
         public PrivacyLevel DescriptionPrivacy { get; set; }
+        public PrivacyLevel AvatarPrivacy { get; set; }
         public PrivacyLevel NamePrivacy { get; set; } //ignore setting if no display name is set
         public PrivacyLevel BirthdayPrivacy { get; set; }
         public PrivacyLevel PronounPrivacy { get; set; }

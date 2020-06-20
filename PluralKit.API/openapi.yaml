@@ -625,6 +625,19 @@ components:
                 Because of this, there is no way for an unauthorized user to tell the difference between a private description and a `null` description - this is intentional.
               example: public
               
+        avatar_privacy:
+          allOf:
+            - $ref: "#/components/schemas/PrivacySetting"
+            - description: |
+                The member's current avatar privacy setting, either "public" or "private".
+  
+                If this is set to "private", the field `avatar_url` will be returned as `null` on all requests not authorized with this system's token.
+  
+                In addition, this field will be returned as `null` if the request is not authorized with this system's token.
+  
+                Because of this, there is no way for an unauthorized user to tell the difference between a private avatar and a `null` avatar - this is intentional.
+              example: public
+              
         pronouns_privacy:
           allOf:
             - $ref: "#/components/schemas/PrivacySetting"

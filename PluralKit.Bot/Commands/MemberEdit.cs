@@ -378,12 +378,13 @@ namespace PluralKit.Bot
                 .WithTitle($"Current privacy settings for {member.NameFor(ctx)}")
                 .AddField("Name (replaces name with display name if member has one)",PrivacyLevelString(member.NamePrivacy))
                 .AddField("Description", PrivacyLevelString(member.DescriptionPrivacy))
+                .AddField("Avatar", PrivacyLevelString(member.AvatarPrivacy))
                 .AddField("Birthday", PrivacyLevelString(member.BirthdayPrivacy))
                 .AddField("Pronouns", PrivacyLevelString(member.PronounPrivacy))
                 // .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
                 .AddField("Meta (message count, last front, last message)", PrivacyLevelString(member.MetadataPrivacy))
                 .AddField("Visibility", PrivacyLevelString(member.MemberVisibility))
-                .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`."); 
+                .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`."); 
             return eb.Build();
         }
 
@@ -432,6 +433,7 @@ namespace PluralKit.Bot
                 {
                     (MemberPrivacySubject.Name, PrivacyLevel.Private) => "This member's name is now hidden from other systems, and will be replaced by the member's display name.",
                     (MemberPrivacySubject.Description, PrivacyLevel.Private) => "This member's description is now hidden from other systems.",
+                    (MemberPrivacySubject.Avatar, PrivacyLevel.Private) => "This member's avatar is now hidden from other systems.",
                     (MemberPrivacySubject.Birthday, PrivacyLevel.Private) => "This member's birthday is now hidden from other systems.",
                     (MemberPrivacySubject.Pronouns, PrivacyLevel.Private) => "This member's pronouns are now hidden from other systems.",
                     (MemberPrivacySubject.Metadata, PrivacyLevel.Private) => "This member's metadata (eg. created timestamp, message count, etc) is now hidden from other systems.",
@@ -439,6 +441,7 @@ namespace PluralKit.Bot
                     
                     (MemberPrivacySubject.Name, PrivacyLevel.Public) => "This member's name is no longer hidden from other systems.",
                     (MemberPrivacySubject.Description, PrivacyLevel.Public) => "This member's description is no longer hidden from other systems.",
+                    (MemberPrivacySubject.Avatar, PrivacyLevel.Public) => "This member's avatar is no longer hidden from other systems.",
                     (MemberPrivacySubject.Birthday, PrivacyLevel.Public) => "This member's birthday is no longer hidden from other systems.",
                     (MemberPrivacySubject.Pronouns, PrivacyLevel.Public) => "This member's pronouns are no longer hidden other systems.",
                     (MemberPrivacySubject.Metadata, PrivacyLevel.Public) => "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
@@ -462,7 +465,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var subjectList = "`name`, `description`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`";
+                var subjectList = "`name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`";
                 throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
             }
             
