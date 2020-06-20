@@ -399,6 +399,11 @@ namespace PluralKit.Bot
                 await ctx.Reply(embed: CreatePrivacyEmbed(ctx, target));
                 return;
             }
+            
+            // Get guild settings (mostly for warnings and such)
+            MemberGuildSettings guildSettings = null;
+            if (ctx.Guild != null)
+                guildSettings = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
 
             // Set Privacy Settings
             PrivacyLevel PopPrivacyLevel(string subjectName)
@@ -472,6 +477,10 @@ namespace PluralKit.Bot
             // Name privacy only works given a display name
             if (subject == MemberPrivacySubject.Name && newLevel == PrivacyLevel.Private && target.DisplayName == null)
                 await ctx.Reply($"{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.");
+            // Avatar privacy doesn't apply when proxying if no server avatar is set
+            if (subject == MemberPrivacySubject.Avatar && newLevel == PrivacyLevel.Private &&
+                guildSettings?.AvatarUrl == null)
+                await ctx.Reply($"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `pk;member {target.Hid} serveravatar`");
         }
         
         public async Task Delete(Context ctx, PKMember target)
