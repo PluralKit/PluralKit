@@ -15,7 +15,7 @@ namespace PluralKit.Core
             foreach (Match match in Regex.Matches(str, "(\\d{1,6})(\\w)"))
             {
                 var amount = int.Parse(match.Groups[1].Value);
-                var type = match.Groups[2].Value;
+                var type = match.Groups[2].Value.ToLowerInvariant();
 
                 if (type == "w") d += Duration.FromDays(7) * amount;
                 else if (type == "d") d += Duration.FromDays(1) * amount;
