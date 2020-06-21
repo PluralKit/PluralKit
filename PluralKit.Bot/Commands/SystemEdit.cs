@@ -226,7 +226,7 @@ namespace PluralKit.Bot
             if (zoneStr == null)
             {
                 await ctx.Reply(
-                    $"Your current system time zone is set to **{ctx.System.UiTz}**. It is currently **{DateTimeFormats.ZonedDateTimeFormat.Format(SystemClock.Instance.GetCurrentInstant().InZone(ctx.System.Zone))}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
+                    $"Your current system time zone is set to **{ctx.System.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.System)}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
                 return;
             }
 
@@ -235,7 +235,7 @@ namespace PluralKit.Bot
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
             var msg = await ctx.Reply(
-                $"This will change the system time zone to **{zone.Id}**. The current time is **{DateTimeFormats.ZonedDateTimeFormat.Format(currentTime)}**. Is this correct?");
+                $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             ctx.System.UiTz = zone.Id;
             await _data.SaveSystem(ctx.System);

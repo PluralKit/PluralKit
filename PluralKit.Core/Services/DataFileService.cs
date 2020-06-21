@@ -37,13 +37,13 @@ namespace PluralKit.Core
                 Name = m.Name,
                 DisplayName = m.DisplayName,
                 Description = m.Description,
-                Birthday = m.Birthday != null ? DateTimeFormats.DateExportFormat.Format(m.Birthday.Value) : null,
+                Birthday = m.Birthday?.FormatExport(),
                 Pronouns = m.Pronouns,
                 Color = m.Color,
                 AvatarUrl = m.AvatarUrl,
                 ProxyTags = m.ProxyTags,
                 KeepProxy = m.KeepProxy,
-                Created = DateTimeFormats.TimestampExportFormat.Format(m.Created),
+                Created = m.Created.FormatExport(),
                 MessageCount = m.MessageCount
             })) members.Add(member);
 
@@ -52,7 +52,7 @@ namespace PluralKit.Core
             var switchList = await _data.GetPeriodFronters(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
             switches.AddRange(switchList.Select(x => new DataFileSwitch
             {
-                Timestamp = DateTimeFormats.TimestampExportFormat.Format(x.TimespanStart),
+                Timestamp = x.TimespanStart.FormatExport(),
                 Members = x.Members.Select(m => m.Hid).ToList() // Look up member's HID using the member export from above
             }));
 
@@ -67,7 +67,7 @@ namespace PluralKit.Core
                 TimeZone = system.UiTz,
                 Members = members,
                 Switches = switches,
-                Created = DateTimeFormats.TimestampExportFormat.Format(system.Created),
+                Created = system.Created.FormatExport(),
                 LinkedAccounts = (await _data.GetSystemAccounts(system)).ToList()
             };
         }
@@ -333,16 +333,16 @@ namespace PluralKit.Core
                 tags.Add(new ProxyTag(Brackets[i * 2], Brackets[i * 2 + 1]));
 
             // Convert birthday from ISO timestamp format to ISO date
-            var convertedBirthdate = Birthday != null ? DateTimeFormats.DateExportFormat.Format(
-                LocalDate.FromDateTime(DateTimeFormats.TimestampExportFormat.Parse(Birthday).Value
-                    .ToDateTimeUtc())) : null;
+            var convertedBirthdate = Birthday != null
+                ? LocalDate.FromDateTime(DateTimeFormats.TimestampExportFormat.Parse(Birthday).Value.ToDateTimeUtc())
+                : (LocalDate?) null;
             
             return new DataFileMember
             {
                 Id = Guid.NewGuid().ToString(), // Note: this is only ever used for lookup purposes
                 Name = Name,
                 AvatarUrl = AvatarUrl,
-                Birthday = convertedBirthdate,
+                Birthday = convertedBirthdate?.FormatExport(),
                 Description = Description,
                 ProxyTags = tags,
                 KeepProxy = ShowBrackets,

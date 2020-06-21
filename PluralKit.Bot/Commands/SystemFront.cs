@@ -79,12 +79,12 @@ namespace PluralKit.Bot
                             // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
                             var switchDuration = lastSw.Value - sw.Timestamp;
                             stringToAdd =
-                                $"**{membersStr}** ({DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {DateTimeFormats.DurationFormat.Format(switchSince)} ago, for {DateTimeFormats.DurationFormat.Format(switchDuration)})\n";
+                                $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago, for {switchDuration.FormatDuration()})\n";
                         }
                         else
                         {
                             stringToAdd =
-                                $"**{membersStr}** ({DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {DateTimeFormats.DurationFormat.Format(switchSince)} ago)\n";
+                                $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago)\n";
                         }
                         try // Unfortunately the only way to test DiscordEmbedBuilder.Description max length is this
                         {

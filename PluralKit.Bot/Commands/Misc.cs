@@ -83,7 +83,7 @@ namespace PluralKit.Bot {
 
             embed
                 .AddField("Current shard", $"Shard #{shardId} (of {shardTotal} total, {shardUpTotal} are up)", true)
-                .AddField("Shard uptime", $"{DateTimeFormats.DurationFormat.Format(shardUptime)} ({shardInfo.DisconnectionCount} disconnections)", true)
+                .AddField("Shard uptime", $"{shardUptime.FormatDuration()} ({shardInfo.DisconnectionCount} disconnections)", true)
                 .AddField("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true)
                 .AddField("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true)
                 .AddField("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true)

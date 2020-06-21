@@ -17,7 +17,7 @@ namespace PluralKit.API
             o.Add("description", system.DescriptionFor(ctx));
             o.Add("tag", system.Tag);
             o.Add("avatar_url", system.AvatarUrl);
-            o.Add("created", DateTimeFormats.TimestampExportFormat.Format(system.Created));
+            o.Add("created", system.Created.FormatExport());
             o.Add("tz", system.UiTz);
             o.Add("description_privacy", ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
             o.Add("member_list_privacy", ctx == LookupContext.ByOwner ? system.MemberListPrivacy.ToJsonString() : null);
@@ -42,8 +42,6 @@ namespace PluralKit.API
         
         public static JObject ToJson(this PKMember member, LookupContext ctx)
         {
-            var bday = member.BirthdayFor(ctx);
-            var created = member.CreatedFor(ctx);
             var includePrivacy = ctx == LookupContext.ByOwner;
             
             var o = new JObject();
@@ -52,7 +50,7 @@ namespace PluralKit.API
             // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
             o.Add("color", member.Color);
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
-            o.Add("birthday", bday.HasValue ? DateTimeFormats.DateExportFormat.Format(bday.Value) : null);
+            o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
             o.Add("pronouns", member.PronounsFor(ctx));
             o.Add("avatar_url", member.AvatarFor(ctx));
             o.Add("description", member.DescriptionFor(ctx));
@@ -75,7 +73,7 @@ namespace PluralKit.API
             // o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy.LevelName()) : null);
             o.Add("metadata_privacy", includePrivacy ? (member.MetadataPrivacy.LevelName()) : null);
 
-            o.Add("created", created.HasValue ? DateTimeFormats.TimestampExportFormat.Format(created.Value) : null);
+            o.Add("created", member.CreatedFor(ctx)?.FormatExport());
 
             if (member.ProxyTags.Count > 0)
             {

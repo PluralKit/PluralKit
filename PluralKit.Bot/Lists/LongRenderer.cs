@@ -22,8 +22,6 @@ namespace PluralKit.Bot
 
         public void RenderPage(DiscordEmbedBuilder eb, DateTimeZone zone, IEnumerable<ListedMember> members, LookupContext ctx)
         {
-            string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(zone));
-
             foreach (var m in members)
             {
                 var profile = $"**ID**: {m.Hid}";
@@ -32,8 +30,8 @@ namespace PluralKit.Bot
                 if (_fields.ShowBirthday && m.BirthdayFor(ctx) != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                 if (_fields.ShowProxyTags && m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
                 if (_fields.ShowMessageCount && m.MessageCountFor(ctx) is {} count && count > 0) profile += $"\n**Message count:** {count}";
-                if (_fields.ShowLastMessage && m.MetadataPrivacy.TryGet(ctx, m.LastMessage, out var lastMsg)) profile += $"\n**Last message:** {FormatTimestamp(DiscordUtils.SnowflakeToInstant(lastMsg.Value))}";
-                if (_fields.ShowLastSwitch && m.MetadataPrivacy.TryGet(ctx, m.LastSwitchTime, out var lastSw)) profile += $"\n**Last switched in:** {FormatTimestamp(lastSw.Value)}";
+                if (_fields.ShowLastMessage && m.MetadataPrivacy.TryGet(ctx, m.LastMessage, out var lastMsg)) profile += $"\n**Last message:** {DiscordUtils.SnowflakeToInstant(lastMsg.Value).FormatZoned(zone)}";
+                if (_fields.ShowLastSwitch && m.MetadataPrivacy.TryGet(ctx, m.LastSwitchTime, out var lastSw)) profile += $"\n**Last switched in:** {lastSw.Value.FormatZoned(zone)}";
                 if (_fields.ShowDescription && m.DescriptionFor(ctx) is {} desc) profile += $"\n\n{desc}";
                 if (_fields.ShowPrivacy && m.MemberVisibility == PrivacyLevel.Private) profile += "\n*(this member is hidden)*";
 

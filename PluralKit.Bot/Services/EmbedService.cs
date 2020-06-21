@@ -39,7 +39,7 @@ namespace PluralKit.Bot {
                 .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnail(system.AvatarUrl)
-                .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
+                .WithFooter($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}");
  
             var latestSwitch = await _data.GetLatestSwitch(system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
@@ -112,7 +112,7 @@ namespace PluralKit.Bot {
                 .WithAuthor(name, iconUrl: DiscordUtils.WorkaroundForUrlBug(avatar))
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .WithColor(color)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {DateTimeFormats.ZonedDateTimeFormat.Format(member.Created.InZone(system.Zone))}":"")}");
+                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}":"")}");
 
             var description = "";
             if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
@@ -149,7 +149,7 @@ namespace PluralKit.Bot {
             return new DiscordEmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
                 .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "*(no fronter)*")
-                .AddField("Since", $"{DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(zone))} ({DateTimeFormats.DurationFormat.Format(timeSinceSwitch)} ago)")
+                .AddField("Since", $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)")
                 .Build();
         }
 
@@ -200,7 +200,7 @@ namespace PluralKit.Bot {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordUtils.Gray)
-                .WithFooter($"Since {DateTimeFormats.ZonedDateTimeFormat.Format(breakdown.RangeStart.InZone(tz))} ({DateTimeFormats.DurationFormat.Format(actualPeriod)} ago)");
+                .WithFooter($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)");
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
@@ -214,14 +214,15 @@ namespace PluralKit.Bot {
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / actualPeriod;
-                eb.AddField(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({DateTimeFormats.DurationFormat.Format(pair.Value)})");
+                eb.AddField(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({pair.Value.FormatDuration()})");
             }
 
             if (membersOrdered.Count > maxEntriesToDisplay)
             {
                 eb.AddField("(others)",
-                    DateTimeFormats.DurationFormat.Format(membersOrdered.Skip(maxEntriesToDisplay)
-                        .Aggregate(Duration.Zero, (prod, next) => prod + next.Value)), true);
+                    membersOrdered.Skip(maxEntriesToDisplay)
+                        .Aggregate(Duration.Zero, (prod, next) => prod + next.Value)
+                        .FormatDuration(), true);
             }
 
             return Task.FromResult(eb.Build());

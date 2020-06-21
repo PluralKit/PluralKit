@@ -103,10 +103,10 @@ namespace PluralKit.Bot
             // But, we do a prompt to confirm.
             var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
-            var lastSwitchTimeStr = DateTimeFormats.ZonedDateTimeFormat.Format(lastTwoSwitches[0].Timestamp.InZone(ctx.System.Zone));
-            var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
-            var newSwitchTimeStr = DateTimeFormats.ZonedDateTimeFormat.Format(time);
-            var newSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - time.ToInstant());
+            var lastSwitchTimeStr = lastTwoSwitches[0].Timestamp.FormatZoned(ctx.System);
+            var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
+            var newSwitchTimeStr = time.FormatZoned();
+            var newSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - time.ToInstant()).FormatDuration();
             
             // yeet
             var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
@@ -138,7 +138,7 @@ namespace PluralKit.Bot
 
             var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
-            var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
+            var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
 
             DiscordMessage msg;
             if (lastTwoSwitches.Count == 1)
@@ -150,7 +150,7 @@ namespace PluralKit.Bot
             {
                 var secondSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[1]);
                 var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
-                var secondSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
+                var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp).FormatDuration();
                 msg = await ctx.Reply(
                     $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?");
             }
