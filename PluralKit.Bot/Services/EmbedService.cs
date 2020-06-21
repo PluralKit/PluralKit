@@ -38,7 +38,7 @@ namespace PluralKit.Bot {
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)
-                .WithThumbnailUrl(system.AvatarUrl)
+                .WithThumbnail(system.AvatarUrl)
                 .WithFooter($"System ID: {system.Hid} | Created on {DateTimeFormats.ZonedDateTimeFormat.Format(system.Created.InZone(system.Zone))}");
  
             var latestSwitch = await _data.GetLatestSwitch(system.Id);
@@ -73,7 +73,7 @@ namespace PluralKit.Bot {
             var name = member.NameFor(LookupContext.ByNonOwner); 
             return new DiscordEmbedBuilder()
                 .WithAuthor($"#{channel.Name}: {name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner)))
-                .WithThumbnailUrl(member.AvatarFor(LookupContext.ByNonOwner))
+                .WithThumbnail(member.AvatarFor(LookupContext.ByNonOwner))
                 .WithDescription(content?.NormalizeLineEndSpacing())
                 .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
                 .WithTimestamp(timestamp.ToDateTimeOffset())
@@ -123,7 +123,7 @@ namespace PluralKit.Bot {
                     description += "*(this member has a server-specific avatar set)*\n";
             if (description != "") eb.WithDescription(description);
 
-            if (avatar != null) eb.WithThumbnailUrl(avatar);
+            if (avatar != null) eb.WithThumbnail(avatar);
 
             if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);

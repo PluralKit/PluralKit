@@ -166,7 +166,7 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Member color")
                         .WithColor(target.Color.ToDiscordColor().Value)
-                        .WithThumbnailUrl($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
+                        .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
                         .WithDescription($"This member's color is **#{target.Color}**."
                                          + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Hid} color -clear`." : ""))
                         .Build());
@@ -183,7 +183,7 @@ namespace PluralKit.Bot
                 await ctx.Reply(embed: new DiscordEmbedBuilder()
                     .WithTitle($"{Emojis.Success} Member color changed.")
                     .WithColor(target.Color.ToDiscordColor().Value)
-                    .WithThumbnailUrl($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
+                    .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
                     .Build());
             }
         }
