@@ -61,8 +61,8 @@ namespace PluralKit.Bot {
                     eb.AddField($"Members ({memberCount})", "Add one with `pk;member new`!", true);
             }
 
-            if (system.Description != null && system.DescriptionPrivacy.CanAccess(ctx))
-                eb.AddField("Description", system.Description.NormalizeLineEndSpacing().Truncate(1024), false);
+            if (system.DescriptionFor(ctx) is { } desc)
+                eb.AddField("Description", desc.NormalizeLineEndSpacing().Truncate(1024), false);
 
             return eb.Build();
         }
@@ -127,9 +127,9 @@ namespace PluralKit.Bot {
 
             if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
-            if (member.Birthday != null && member.BirthdayPrivacy.CanAccess(ctx)) eb.AddField("Birthdate", member.BirthdayString, true);
-            if (!member.Pronouns.EmptyOrNull() && member.PronounPrivacy.CanAccess(ctx)) eb.AddField("Pronouns", member.Pronouns.Truncate(1024), true);
-            if (member.MessageCount > 0 && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Message Count", member.MessageCount.ToString(), true);
+            if (member.BirthdayFor(ctx) != null) eb.AddField("Birthdate", member.BirthdayString, true);
+            if (member.PronounsFor(ctx) is {} pronouns) eb.AddField("Pronouns", pronouns.Truncate(1024), true);
+            if (member.MessageCountFor(ctx) is {} count && count > 0) eb.AddField("Message Count", member.MessageCount.ToString(), true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
             // --- For when this gets added to the member object itself or however they get added
             // if (member.LastMessage != null && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last message:" FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value)));
@@ -137,7 +137,7 @@ namespace PluralKit.Bot {
             // if (!member.Color.EmptyOrNull() && member.ColorPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
             if (!member.Color.EmptyOrNull()) eb.AddField("Color", $"#{member.Color}", true);
             
-            if (!member.Description.EmptyOrNull() && member.DescriptionPrivacy.CanAccess(ctx)) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
+            if (member.DescriptionFor(ctx) is {} desc) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
 
             return eb.Build();
         }

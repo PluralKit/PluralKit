@@ -75,6 +75,8 @@ namespace PluralKit.Core
                 case "birthday":
                 case "birth":
                 case "bday":
+                case "birthdate":
+                case "bdate":
                     subject = MemberPrivacySubject.Birthday;
                     break;
                 case "pronouns":

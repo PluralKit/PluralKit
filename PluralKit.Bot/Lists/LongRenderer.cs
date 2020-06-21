@@ -28,15 +28,14 @@ namespace PluralKit.Bot
             {
                 var profile = $"**ID**: {m.Hid}";
                 if (_fields.ShowDisplayName && m.DisplayName != null && m.NamePrivacy.CanAccess(ctx)) profile += $"\n**Display name**: {m.DisplayName}";
-                if (_fields.ShowPronouns && m.Pronouns != null && m.PronounPrivacy.CanAccess(ctx)) profile += $"\n**Pronouns**: {m.Pronouns}";
-                if (_fields.ShowBirthday && m.Birthday != null && m.BirthdayPrivacy.CanAccess(ctx)) profile += $"\n**Birthdate**: {m.BirthdayString}";
+                if (_fields.ShowPronouns && m.PronounsFor(ctx) is {} pronouns) profile += $"\n**Pronouns**: {pronouns}";
+                if (_fields.ShowBirthday && m.BirthdayFor(ctx) != null) profile += $"\n**Birthdate**: {m.BirthdayString}";
                 if (_fields.ShowProxyTags && m.ProxyTags.Count > 0) profile += $"\n**Proxy tags:** {m.ProxyTagsString()}";
-                if (_fields.ShowMessageCount && m.MessageCount > 0 && m.MetadataPrivacy.CanAccess(ctx)) profile += $"\n**Message count:** {m.MessageCount}";
-                if (_fields.ShowLastMessage && m.LastMessage != null && m.MetadataPrivacy.CanAccess(ctx)) profile += $"\n**Last message:** {FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value))}";
-                if (_fields.ShowLastSwitch && m.LastSwitchTime != null && m.MetadataPrivacy.CanAccess(ctx)) profile += $"\n**Last switched in:** {FormatTimestamp(m.LastSwitchTime.Value)}";
-                if (_fields.ShowDescription && m.Description != null && m.DescriptionPrivacy.CanAccess(ctx)) profile += $"\n\n{m.Description}";
-                if (_fields.ShowPrivacy && m.MemberVisibility == PrivacyLevel.Private)
-                    profile += "\n*(this member is hidden)*";
+                if (_fields.ShowMessageCount && m.MessageCountFor(ctx) is {} count && count > 0) profile += $"\n**Message count:** {count}";
+                if (_fields.ShowLastMessage && m.MetadataPrivacy.TryGet(ctx, m.LastMessage, out var lastMsg)) profile += $"\n**Last message:** {FormatTimestamp(DiscordUtils.SnowflakeToInstant(lastMsg.Value))}";
+                if (_fields.ShowLastSwitch && m.MetadataPrivacy.TryGet(ctx, m.LastSwitchTime, out var lastSw)) profile += $"\n**Last switched in:** {FormatTimestamp(lastSw.Value)}";
+                if (_fields.ShowDescription && m.DescriptionFor(ctx) is {} desc) profile += $"\n\n{desc}";
+                if (_fields.ShowPrivacy && m.MemberVisibility == PrivacyLevel.Private) profile += "\n*(this member is hidden)*";
 
                 eb.AddField(m.NameFor(ctx), profile.Truncate(1024));
             }

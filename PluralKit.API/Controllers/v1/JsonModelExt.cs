@@ -14,7 +14,7 @@ namespace PluralKit.API
             var o = new JObject();
             o.Add("id", system.Hid);
             o.Add("name", system.Name);
-            o.Add("description", system.DescriptionPrivacy.CanAccess(ctx) ? system.Description : null);
+            o.Add("description", system.DescriptionFor(ctx));
             o.Add("tag", system.Tag);
             o.Add("avatar_url", system.AvatarUrl);
             o.Add("created", DateTimeFormats.TimestampExportFormat.Format(system.Created));
@@ -22,7 +22,7 @@ namespace PluralKit.API
             o.Add("description_privacy", ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
             o.Add("member_list_privacy", ctx == LookupContext.ByOwner ? system.MemberListPrivacy.ToJsonString() : null);
             o.Add("front_privacy", ctx == LookupContext.ByOwner ? system.FrontPrivacy.ToJsonString() : null);
-            o.Add("front_history_privacy", ctx == LookupContext.ByOwner ? ctx == LookupContext.ByOwner ? system.FrontHistoryPrivacy.ToJsonString() : null : null);
+            o.Add("front_history_privacy", ctx == LookupContext.ByOwner ? system.FrontHistoryPrivacy.ToJsonString() : null);
             return o;
         }
 
@@ -42,16 +42,20 @@ namespace PluralKit.API
         
         public static JObject ToJson(this PKMember member, LookupContext ctx)
         {
+            var bday = member.BirthdayFor(ctx);
+            var created = member.CreatedFor(ctx);
+            var includePrivacy = ctx == LookupContext.ByOwner;
+            
             var o = new JObject();
             o.Add("id", member.Hid);
             o.Add("name", member.NameFor(ctx));
             // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
             o.Add("color", member.Color);
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
-            o.Add("birthday", member.BirthdayPrivacy.CanAccess(ctx) && member.Birthday.HasValue ? DateTimeFormats.DateExportFormat.Format(member.Birthday.Value) : null);
-            o.Add("pronouns", member.PronounPrivacy.CanAccess(ctx) ? member.Pronouns : null);
-            o.Add("avatar_url", member.AvatarPrivacy.CanAccess(ctx) ? member.AvatarUrl : null);
-            o.Add("description", member.DescriptionPrivacy.CanAccess(ctx) ? member.Description : null);
+            o.Add("birthday", bday.HasValue ? DateTimeFormats.DateExportFormat.Format(bday.Value) : null);
+            o.Add("pronouns", member.PronounsFor(ctx));
+            o.Add("avatar_url", member.AvatarFor(ctx));
+            o.Add("description", member.DescriptionFor(ctx));
             
             var tagArray = new JArray();
             foreach (var tag in member.ProxyTags) 
@@ -59,23 +63,19 @@ namespace PluralKit.API
             o.Add("proxy_tags", tagArray);
 
             o.Add("keep_proxy", member.KeepProxy);
-
-            o.Add("privacy", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
-
-            o.Add("visibility", ctx == LookupContext.ByOwner ? (member.MemberVisibility == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("name_privacy", ctx == LookupContext.ByOwner ? (member.NamePrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("description_privacy", ctx == LookupContext.ByOwner ? (member.DescriptionPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("birthday_privacy", ctx == LookupContext.ByOwner ? (member.BirthdayPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("pronoun_privacy", ctx == LookupContext.ByOwner ? (member.PronounPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("avatar_privacy", ctx == LookupContext.ByOwner ? (member.AvatarPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            // o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-            o.Add("metadata_privacy", ctx == LookupContext.ByOwner ? (member.MetadataPrivacy == PrivacyLevel.Private ? "private" : "public") : null);
-
-            if(member.MetadataPrivacy.CanAccess(ctx))
-                o.Add("created", DateTimeFormats.TimestampExportFormat.Format(member.Created));
-            else
-                o.Add("created", null);
             
+            o.Add("privacy", includePrivacy ? (member.MemberVisibility.LevelName()) : null);
+
+            o.Add("visibility", includePrivacy ? (member.MemberVisibility.LevelName()) : null);
+            o.Add("name_privacy", includePrivacy ? (member.NamePrivacy.LevelName()) : null);
+            o.Add("description_privacy", includePrivacy ? (member.DescriptionPrivacy.LevelName()) : null);
+            o.Add("birthday_privacy", includePrivacy ? (member.BirthdayPrivacy.LevelName()) : null);
+            o.Add("pronoun_privacy", includePrivacy ? (member.PronounPrivacy.LevelName()) : null);
+            o.Add("avatar_privacy", includePrivacy ? (member.AvatarPrivacy.LevelName()) : null);
+            // o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy.LevelName()) : null);
+            o.Add("metadata_privacy", includePrivacy ? (member.MetadataPrivacy.LevelName()) : null);
+
+            o.Add("created", created.HasValue ? DateTimeFormats.TimestampExportFormat.Format(created.Value) : null);
 
             if (member.ProxyTags.Count > 0)
             {
@@ -150,7 +150,7 @@ namespace PluralKit.API
             return input;
         }
 
-        private static string ToJsonString(this PrivacyLevel level) => level == PrivacyLevel.Private ? "private" : "public";
+        private static string ToJsonString(this PrivacyLevel level) => level.LevelName();
 
         private static PrivacyLevel ParsePrivacy(this string input, string errorName)
         {

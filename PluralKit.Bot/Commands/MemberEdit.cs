@@ -455,7 +455,7 @@ namespace PluralKit.Bot
                     _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {newLevel})")
                 };
                 
-                await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx)}'s {subject.Name()} has been set to **{newLevel.Name()}**. {explanation}");
+                await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx)}'s {subject.Name()} has been set to **{newLevel.LevelName()}**. {explanation}");
             }
             else if (ctx.Match("all") || newValueFromCommand != null)
             {
@@ -464,9 +464,9 @@ namespace PluralKit.Bot
                 await _data.SaveMember(target);
                 
                 if(newLevel == PrivacyLevel.Private)
-                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see nothing on the member card.");
+                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.LevelName()}**. Other accounts will now see nothing on the member card.");
                 else 
-                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.Name()}**. Other accounts will now see everything on the member card.");
+                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.LevelName()}**. Other accounts will now see everything on the member card.");
             }
             else
             {
