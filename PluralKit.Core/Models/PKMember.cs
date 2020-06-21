@@ -20,8 +20,8 @@ namespace PluralKit.Core {
         public string Description { get; set; }
         public ICollection<ProxyTag> ProxyTags { get; set; }
         public bool KeepProxy { get; set; }
-        public Instant Created { get; }
-        public int MessageCount { get; }
+        public Instant Created { get; set; }
+        public int MessageCount { get; set; }
 
         public PrivacyLevel MemberVisibility { get; set; }
         public PrivacyLevel DescriptionPrivacy { get; set; }
