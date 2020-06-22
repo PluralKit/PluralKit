@@ -22,7 +22,9 @@ namespace PluralKit.Core
         public SwitchId? LastSwitch { get; }
         public MemberId[] LastSwitchMembers { get; } = new MemberId[0];
         public Instant? LastSwitchTimestamp { get; }
-        public string? SystemTag { get; }
+        public string? SystemTagSuffix { get; }
+        public string? SystemTagPrefix { get; }
+
         public string? SystemAvatar { get; }
     }
 }

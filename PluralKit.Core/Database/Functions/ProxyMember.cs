@@ -19,9 +19,7 @@ namespace PluralKit.Core
         public string? ServerAvatar { get; }
         public string? Avatar { get; }
 
-        public string ProxyName(MessageContext ctx) => ctx.SystemTag != null
-            ? $"{ServerName ?? DisplayName ?? Name} {ctx.SystemTag}"
-            : ServerName ?? DisplayName ?? Name;
+        public string ProxyName(MessageContext ctx) => $"{ctx.SystemTagPrefix ?? ""}{ServerName ?? DisplayName ?? Name}{ctx.SystemTagSuffix ?? ""}";
 
         public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? Avatar ?? ctx.SystemAvatar;
 

@@ -13,7 +13,8 @@
         last_switch int,
         last_switch_members int[],
         last_switch_timestamp timestamp,
-        system_tag text,
+        system_tag_prefix text,
+        system_tag_suffix text,
         system_avatar text
     )
 as $$
@@ -36,7 +37,8 @@ as $$
         system_last_switch.switch as last_switch,
         system_last_switch.members as last_switch_members,
         system_last_switch.timestamp as last_switch_timestamp,
-        system.tag as system_tag,
+        system.tag_prefix as system_tag_prefix,
+        system.tag_suffix as system_tag_suffix,
         system.avatar_url as system_avatar
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
