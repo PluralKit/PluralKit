@@ -188,10 +188,11 @@ namespace PluralKit.Bot
         {
             var input = PeekArgument();
 
-            // Member references can have one or two forms, depending on
+            // Member references can have one of three forms, depending on
             // whether you're in a system or not:
             // - A member hid
             // - A textual name of a member *in your own system*
+            // - a textual display name of a member *in your own system*
 
             // First, if we have a system, try finding by member name in system
             if (_senderSystem != null && await _data.GetMemberByName(_senderSystem, input) is PKMember memberByName)
@@ -200,6 +201,10 @@ namespace PluralKit.Bot
             // Then, try member HID parsing:
             if (await _data.GetMemberByHid(input) is PKMember memberByHid)
                 return memberByHid;
+
+            // And if that again fails, we try finding a member with a display name matching the argument from the system
+            if (_senderSystem != null && await _data.GetMemberByDisplayName(_senderSystem, input) is PKMember memberByDisplayName)
+                return memberByDisplayName;
             
             // We didn't find anything, so we return null.
             return null;
