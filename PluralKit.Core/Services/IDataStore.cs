@@ -149,6 +149,12 @@ namespace PluralKit.Core {
         /// </para> 
         /// <returns>The <see cref="PKMember"/> with the given name, or null if no member was found.</returns>
         Task<PKMember> GetMemberByName(PKSystem system, string name);
+
+        /// <summary>
+        /// Gets a member by its display name within one system.
+        /// </summary>
+        /// <returns>The <see cref="PKMember"/> with the given name, or null if no member was found.</returns>
+        Task<PKMember> GetMemberByDisplayName(PKSystem system, string name);
         
         /// <summary>
         /// Gets all members inside a given system.
