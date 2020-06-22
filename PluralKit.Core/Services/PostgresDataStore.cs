@@ -141,6 +141,12 @@ namespace PluralKit.Core {
                 return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system.Id });
         }
 
+        public async Task<PKMember> GetMemberByDisplayName(PKSystem system, string name) {
+            // QueryFirst, since members can (in rare cases) share display names
+            using (var conn = await _conn.Obtain())
+                return await conn.QueryFirstOrDefaultAsync<PKMember>("select * from members where lower(display_name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system.Id });
+        }
+
         public IAsyncEnumerable<PKMember> GetSystemMembers(PKSystem system, bool orderByName)
         {
             var sql = "select * from members where system = @SystemID";
