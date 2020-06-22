@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Text.RegularExpressions;
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -35,6 +35,12 @@ namespace PluralKit.Bot
                 
                 // Skip blank tags (shouldn't ever happen in practice)
                 if (tag.Prefix == null && tag.Suffix == null) continue;
+
+                var prefixPattern = new Regex(@"^<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>");
+                var suffixPattern = new Regex(@"<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>$");
+
+                if(tag.Prefix == "<" && prefixPattern.IsMatch(input)) continue;
+                if(tag.Suffix == ">" && suffixPattern.IsMatch(input)) continue;
 
                 // Can we match with these tags?
                 if (TryMatchTagsInner(input, tag, out result.Content))
