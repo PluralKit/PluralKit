@@ -1,7 +1,7 @@
 title: PluralKit
 baseurl: ""
 url: "https://pluralkit.me"
-remote_theme: pmarsceill/just-the-docs
+theme: just-the-docs
 
 search_enabled: true
 aux_links:

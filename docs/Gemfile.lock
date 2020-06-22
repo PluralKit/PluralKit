@@ -191,6 +191,11 @@ GEM
       gemoji (~> 3.0)
       html-pipeline (~> 2.2)
       jekyll (>= 3.0, < 5.0)
+    just-the-docs (0.2.8)
+      bundler (~> 2.1.4)
+      jekyll (>= 3.8.5, < 4.1.0)
+      jekyll-seo-tag (~> 2.0)
+      rake (>= 12.3.1, < 13.1.0)
     kramdown (1.17.0)
     liquid (4.0.3)
     listen (3.2.1)
@@ -212,6 +217,7 @@ GEM
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
     public_suffix (3.1.1)
+    rake (13.0.1)
     rb-fsevent (0.10.4)
     rb-inotify (0.10.1)
       ffi (~> 1.0)
@@ -243,6 +249,7 @@ PLATFORMS
 
 DEPENDENCIES
   github-pages
+  just-the-docs
 
 BUNDLED WITH
    2.1.4
