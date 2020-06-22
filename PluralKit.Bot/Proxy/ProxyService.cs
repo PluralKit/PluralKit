@@ -84,7 +84,7 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task ExecuteProxy(IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
+        public async Task ExecuteProxy(IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
                                         ProxyMatch match)
         {
             // Send the webhook

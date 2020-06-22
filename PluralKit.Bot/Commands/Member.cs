@@ -80,11 +80,17 @@ namespace PluralKit.Bot
             //Get member off the argument stack
             var member = await ctx.MatchMember();
             var proxyMessage = ctx.RemainderOrNull(false);
+            var match = new ProxyMatch{
+                Content = proxyMessage,
+                Member = member,
+                ProxyTags = member.ProxyTags.FirstOrDefault()
+            }
+            await using var conn = await _db.Obtain();
             if (member != null) 
                 if (proxyMessage == null && ctx.Message.Attachments.Count == 0)
                     await ctx.Reply($"{Emojis.Error} Must have a message!");
                 else
-                await _proxy.HandleMessageAsync(ctx.Shard, await _cache.GetGuildDataCached(ctx.Guild.Id), await _cache.GetAccountDataCached(ctx.Author.Id), ctx.Message, false, member, proxyMessage);
+                await _proxy.ExecuteProxy(conn, ctx.Message, ctx.MessageContext, member);
                                     
             else 
                 //If member does not exist, error
