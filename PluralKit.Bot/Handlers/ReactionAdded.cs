@@ -13,11 +13,13 @@ namespace PluralKit.Bot
     {
         private IDataStore _data;
         private EmbedService _embeds;
+        private DiscordShardedClient _client;
 
-        public ReactionAdded(IDataStore data, EmbedService embeds)
+        public ReactionAdded(IDataStore data, EmbedService embeds, DiscordShardedClient client)
         {
             _data = data;
             _embeds = embeds;
+            _client = client;
         }
 
         public async Task Handle(MessageReactionAddEventArgs evt)
@@ -85,7 +87,7 @@ namespace PluralKit.Bot
             try
             {
                 await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, evt.Guild, LookupContext.ByNonOwner));
-                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(evt.Client, msg));
+                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(_client, evt.Client, msg));
             }
             catch (UnauthorizedException) { } // No permissions to DM, can't check for this :(
             
