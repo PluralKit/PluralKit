@@ -289,7 +289,7 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
             else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic", "guildavatar", "guildpic", "guildicon", "sicon"))
                 await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
-            else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname"))
+            else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))
                 await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
             else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
                 await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
