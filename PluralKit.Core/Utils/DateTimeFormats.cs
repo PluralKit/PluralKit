@@ -20,5 +20,12 @@ namespace PluralKit.Core {
         
         public static IPattern<LocalDateTime> LocalDateTimeFormat = LocalDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
         public static IPattern<ZonedDateTime> ZonedDateTimeFormat = ZonedDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss x", DateTimeZoneProviders.Tzdb);
+
+        public static string FormatExport(this Instant instant) => TimestampExportFormat.Format(instant);
+        public static string FormatExport(this LocalDate date) => DateExportFormat.Format(date);
+        public static string FormatZoned(this ZonedDateTime zdt) => ZonedDateTimeFormat.Format(zdt);
+        public static string FormatZoned(this Instant i, DateTimeZone zone) => i.InZone(zone).FormatZoned();
+        public static string FormatZoned(this Instant i, PKSystem sys) => i.FormatZoned(sys.Zone);
+        public static string FormatDuration(this Duration d) => DurationFormat.Format(d);
     }
 }

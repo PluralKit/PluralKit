@@ -14,9 +14,12 @@ namespace PluralKit.Bot
         public static GaugeOptions MembersOnline => new GaugeOptions {Name = "Members online", MeasurementUnit = Unit.None, Context = "Bot"};
         public static GaugeOptions Guilds => new GaugeOptions {Name = "Guilds", MeasurementUnit = Unit.None, Context = "Bot"};
         public static GaugeOptions Channels => new GaugeOptions {Name = "Channels", MeasurementUnit = Unit.None, Context = "Bot"};
-        public static GaugeOptions ShardsConnected => new GaugeOptions { Name = "Shards Connected", Context = "Bot" };
-        public static GaugeOptions WebhookCacheSize => new GaugeOptions { Name = "Webhook Cache Size", Context = "Bot" };
-        public static GaugeOptions WebhookRateLimitCacheSize => new GaugeOptions {Name = "Webhook Rate Limit Cache Size", Context = "Bot"};
+        public static GaugeOptions ShardLatency => new GaugeOptions { Name = "Shard Latency", Context = "Bot"  };
+        public static GaugeOptions ShardsConnected => new GaugeOptions { Name = "Shards Connected", Context = "Bot", MeasurementUnit = Unit.Connections };
+        public static MeterOptions WebhookCacheMisses => new MeterOptions { Name = "Webhook cache misses", Context = "Bot", MeasurementUnit = Unit.Calls };
+        public static GaugeOptions WebhookCacheSize => new GaugeOptions { Name = "Webhook Cache Size", Context = "Bot", MeasurementUnit = Unit.Items };
         public static TimerOptions WebhookResponseTime => new TimerOptions { Name = "Webhook Response Time", Context = "Bot", RateUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Requests, DurationUnit = TimeUnit.Seconds };
+        public static TimerOptions MessageContextQueryTime => new TimerOptions { Name = "Message context query duration", Context = "Bot", RateUnit = TimeUnit.Seconds, DurationUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Calls };
+        public static TimerOptions ProxyMembersQueryTime => new TimerOptions { Name = "Proxy member query duration", Context = "Bot", RateUnit = TimeUnit.Seconds, DurationUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Calls };
     }
 }

@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+
+using App.Metrics;
 
 using DSharpPlus;
 using DSharpPlus.EventArgs;
@@ -16,6 +19,7 @@ namespace PluralKit.Bot
 
         public class ShardInfo
         {
+            public bool HasAttachedListeners;
             public Instant LastConnectionTime;
             public Instant LastHeartbeatTime;
             public int DisconnectionCount;
@@ -23,13 +27,15 @@ namespace PluralKit.Bot
             public bool Connected;
         }
 
+        private IMetrics _metrics;
         private ILogger _logger;
         private DiscordShardedClient _client;
         private Dictionary<int, ShardInfo> _shardInfo = new Dictionary<int, ShardInfo>();
         
-        public ShardInfoService(ILogger logger, DiscordShardedClient client)
+        public ShardInfoService(ILogger logger, DiscordShardedClient client, IMetrics metrics)
         {
             _client = client;
+            _metrics = metrics;
             _logger = logger.ForContext<ShardInfoService>();
         }
 
@@ -40,12 +46,26 @@ namespace PluralKit.Bot
             _client.SocketOpened += RefreshShardList;
         }
 
+        private void ReportShardStatus()
+        {
+            foreach (var (id, shard) in _shardInfo)
+                _metrics.Measure.Gauge.SetValue(BotMetrics.ShardLatency, new MetricTags("shard", id.ToString()), shard.ShardLatency.TotalMilliseconds);
+            _metrics.Measure.Gauge.SetValue(BotMetrics.ShardsConnected, _shardInfo.Count(s => s.Value.Connected));
+        }
+
         private async Task RefreshShardList()
         {
             // This callback doesn't actually receive the shard that was opening, so we just try to check we have 'em all (so far)
             foreach (var (id, shard) in _client.ShardClients)
             {
-                if (_shardInfo.ContainsKey(id)) continue;
+                // Get or insert info in the client dict
+                if (_shardInfo.TryGetValue(id, out var info))
+                {
+                    // Skip adding listeners if we've seen this shard & already added listeners to it
+                    if (info.HasAttachedListeners) continue;
+                } else _shardInfo[id] = info = new ShardInfo();
+                
+                
                 // Call our own SocketOpened listener manually (and then attach the listener properly)
                 await SocketOpened(shard);
                 shard.SocketOpened += () => SocketOpened(shard);
@@ -56,6 +76,9 @@ namespace PluralKit.Bot
                 shard.Ready += Ready;
                 shard.SocketClosed += SocketClosed;
                 shard.Heartbeated += Heartbeated;
+                
+                // Register that we've seen it
+                info.HasAttachedListeners = true;
             }
         }
 
@@ -84,6 +107,7 @@ namespace PluralKit.Bot
             var info = TryGetShard(e.Client);
             // info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
+            ReportShardStatus();
             return Task.CompletedTask;
         }
 
@@ -94,6 +118,7 @@ namespace PluralKit.Bot
             var info = TryGetShard(e.Client);
             info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
+            ReportShardStatus();
             return Task.CompletedTask;
         }
 
@@ -104,6 +129,7 @@ namespace PluralKit.Bot
             var info = TryGetShard(e.Client);
             info.DisconnectionCount++;
             info.Connected = false;
+            ReportShardStatus();
             return Task.CompletedTask; 
         }
 

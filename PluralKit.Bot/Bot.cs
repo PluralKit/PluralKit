@@ -101,7 +101,7 @@ namespace PluralKit.Bot
 
             async Task HandleEventInner()
             {
-                var serviceScope = _services.BeginLifetimeScope();
+                await using var serviceScope = _services.BeginLifetimeScope();
                 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
                 var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
@@ -155,7 +155,7 @@ namespace PluralKit.Bot
                 if (reportChannel != null && reportChannel.BotHasAllPermissions(Permissions.SendMessages))
                 {
                     var eid = sentryEvent.EventId;
-                    await reportChannel.SendMessageAsync(
+                    await reportChannel.SendMessageFixedAsync(
                         $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{eid}`\nBe sure to include a description of what you were doing to make the error occur.");
                 }
             }

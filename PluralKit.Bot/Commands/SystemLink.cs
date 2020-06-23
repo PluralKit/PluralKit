@@ -1,6 +1,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using DSharpPlus.Entities;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -25,7 +27,8 @@ namespace PluralKit.Bot
             var existingAccount = await _data.GetSystemByAccount(account.Id);
             if (existingAccount != null) throw Errors.AccountInOtherSystem(existingAccount); 
 
-            var msg = await ctx.Reply($"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.");
+            var msg = await ctx.Reply($"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.",
+                mentions: new IMention[] { new UserMention(account) });
             if (!await ctx.PromptYesNo(msg, user: account)) throw Errors.MemberLinkCancelled;
             await _data.AddAccount(ctx.System, account.Id);
             await ctx.Reply($"{Emojis.Success} Account linked to system.");

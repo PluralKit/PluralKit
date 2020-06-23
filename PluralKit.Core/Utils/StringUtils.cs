@@ -6,18 +6,6 @@ namespace PluralKit.Core
 {
     public static class StringUtils
     {
-        public static string GenerateHid()
-        {
-            var rnd = new Random();
-            var charset = "abcdefghijklmnopqrstuvwxyz";
-            string hid = "";
-            for (int i = 0; i < 5; i++)
-            {
-                hid += charset[rnd.Next(charset.Length)];
-            }
-            return hid;
-        }
-
         public static string GenerateToken()
         {
             var buf = new byte[48]; // Results in a 64-byte Base64 string (no padding)

@@ -46,7 +46,7 @@ namespace PluralKit.Bot {
                 .Grant(Permissions.ManageWebhooks)
                 .Grant(Permissions.ReadMessageHistory)
                 .Grant(Permissions.SendMessages);
-            var invite = $"https://discordapp.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={(long)permissions}";
+            var invite = $"https://discord.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={(long)permissions}";
             await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }
         
@@ -83,7 +83,7 @@ namespace PluralKit.Bot {
 
             embed
                 .AddField("Current shard", $"Shard #{shardId} (of {shardTotal} total, {shardUpTotal} are up)", true)
-                .AddField("Shard uptime", $"{DateTimeFormats.DurationFormat.Format(shardUptime)} ({shardInfo.DisconnectionCount} disconnections)", true)
+                .AddField("Shard uptime", $"{shardUptime.FormatDuration()} ({shardInfo.DisconnectionCount} disconnections)", true)
                 .AddField("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true)
                 .AddField("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true)
                 .AddField("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true)
@@ -103,7 +103,7 @@ namespace PluralKit.Bot {
             {
                 var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command as .");
                 if (!ulong.TryParse(guildIdStr, out var guildId))
-                    throw new PKSyntaxError($"Could not parse `{guildIdStr.SanitizeMentions()}` as an ID.");
+                    throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
                 // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
                 guild = DiscordUtils.FindGuildInShards(ctx.Client, guildId);
@@ -162,7 +162,7 @@ namespace PluralKit.Bot {
             
             // Generate the output embed
             var eb = new DiscordEmbedBuilder()
-                .WithTitle($"Permission check for **{guild.Name.SanitizeMentions()}**");
+                .WithTitle($"Permission check for **{guild.Name}**");
 
             if (permissionsMissing.Count == 0)
             {
@@ -198,7 +198,7 @@ namespace PluralKit.Bot {
             ulong messageId;
             if (ulong.TryParse(word, out var id))
                 messageId = id;
-            else if (Regex.Match(word, "https://discordapp.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
+            else if (Regex.Match(word, "https://discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
                 messageId = ulong.Parse(match.Groups[1].Value);
             else throw new PKSyntaxError($"Could not parse `{word}` as a message ID or link.");
 

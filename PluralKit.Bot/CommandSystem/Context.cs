@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,6 +26,7 @@ namespace PluralKit.Bot
         private readonly DiscordClient _shard;
         private readonly DiscordMessage _message;
         private readonly Parameters _parameters;
+        private readonly MessageContext _messageContext;
 
         private readonly IDataStore _data;
         private readonly PKSystem _senderSystem;
@@ -33,7 +35,7 @@ namespace PluralKit.Bot
         private Command _currentCommand;
 
         public Context(ILifetimeScope provider, DiscordClient shard, DiscordMessage message, int commandParseOffset,
-                       PKSystem senderSystem)
+                       PKSystem senderSystem, MessageContext messageContext)
         {
             _rest = provider.Resolve<DiscordRestClient>();
             _client = provider.Resolve<DiscordShardedClient>();
@@ -41,6 +43,7 @@ namespace PluralKit.Bot
             _shard = shard;
             _data = provider.Resolve<IDataStore>();
             _senderSystem = senderSystem;
+            _messageContext = messageContext;
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
@@ -52,6 +55,7 @@ namespace PluralKit.Bot
         public DiscordGuild Guild => _message.Channel.Guild;
         public DiscordClient Shard => _shard;
         public DiscordShardedClient Client => _client;
+        public MessageContext MessageContext => _messageContext;
 
         public DiscordRestClient Rest => _rest;
 
@@ -63,7 +67,7 @@ namespace PluralKit.Bot
         public bool HasNext(bool skipFlags = true) => RemainderOrNull(skipFlags) != null;
         public string FullCommand => _parameters.FullCommand;
 
-        public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null)
+        public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
         {
             if (!this.BotHasAllPermissions(Permissions.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
@@ -71,8 +75,7 @@ namespace PluralKit.Bot
 
             if (embed != null && !this.BotHasAllPermissions(Permissions.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
-            
-            return Channel.SendMessageAsync(text, embed: embed);
+            return Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
         }
 
         /// <summary>
@@ -185,10 +188,11 @@ namespace PluralKit.Bot
         {
             var input = PeekArgument();
 
-            // Member references can have one or two forms, depending on
+            // Member references can have one of three forms, depending on
             // whether you're in a system or not:
             // - A member hid
             // - A textual name of a member *in your own system*
+            // - a textual display name of a member *in your own system*
 
             // First, if we have a system, try finding by member name in system
             if (_senderSystem != null && await _data.GetMemberByName(_senderSystem, input) is PKMember memberByName)
@@ -197,6 +201,10 @@ namespace PluralKit.Bot
             // Then, try member HID parsing:
             if (await _data.GetMemberByHid(input) is PKMember memberByHid)
                 return memberByHid;
+
+            // And if that again fails, we try finding a member with a display name matching the argument from the system
+            if (_senderSystem != null && await _data.GetMemberByDisplayName(_senderSystem, input) is PKMember memberByDisplayName)
+                return memberByDisplayName;
             
             // We didn't find anything, so we return null.
             return null;
@@ -224,12 +232,12 @@ namespace PluralKit.Bot
             if (input.Length == 5)
             {
                 if (_senderSystem != null)
-                    return $"Member with ID or name \"{input.SanitizeMentions()}\" not found.";
-                return $"Member with ID \"{input.SanitizeMentions()}\" not found."; // Accounts without systems can't query by name
+                    return $"Member with ID or name \"{input}\" not found.";
+                return $"Member with ID \"{input}\" not found."; // Accounts without systems can't query by name
             }
 
             if (_senderSystem != null)
-                return $"Member with name \"{input.SanitizeMentions()}\" not found. Note that a member ID is 5 characters long.";
+                return $"Member with name \"{input}\" not found. Note that a member ID is 5 characters long.";
             return $"Member not found. Note that a member ID is 5 characters long.";
         }
 
@@ -273,8 +281,11 @@ namespace PluralKit.Bot
         public LookupContext LookupContextFor(PKSystem target) => 
             System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
         
-        public LookupContext LookupContextFor(int systemId) => 
+        public LookupContext LookupContextFor(SystemId systemId) => 
             System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+
+        public LookupContext LookupContextFor(PKMember target) =>
+            System?.Id == target.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
 
         public Context CheckSystemPrivacy(PKSystem target, PrivacyLevel level)
         {

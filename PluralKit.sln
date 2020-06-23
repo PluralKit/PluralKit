@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.Core", "PluralKit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.API", "PluralKit.API\PluralKit.API.csproj", "{3420F8A9-125C-4F7F-A444-10DD16945754}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.Tests", "PluralKit.Tests\PluralKit.Tests.csproj", "{752FE725-5EE1-45E9-B721-0CDD28171AC8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{3420F8A9-125C-4F7F-A444-10DD16945754}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3420F8A9-125C-4F7F-A444-10DD16945754}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3420F8A9-125C-4F7F-A444-10DD16945754}.Release|Any CPU.Build.0 = Release|Any CPU
+		{752FE725-5EE1-45E9-B721-0CDD28171AC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{752FE725-5EE1-45E9-B721-0CDD28171AC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{752FE725-5EE1-45E9-B721-0CDD28171AC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{752FE725-5EE1-45E9-B721-0CDD28171AC8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

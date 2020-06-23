@@ -2,8 +2,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
-
 using NodaTime;
 
 using PluralKit.Core;
@@ -38,10 +36,10 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontPrivacy);
             
-            var sw = await _data.GetLatestSwitch(system);
+            var sw = await _data.GetLatestSwitch(system.Id);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
-            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone));
+            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system)));
         }
 
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
@@ -49,7 +47,7 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
-            var sws = _data.GetSwitches(system)
+            var sws = _data.GetSwitches(system.Id)
                 .Scan(new FrontHistoryEntry(null, null), (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
             var totalSwitches = await _data.GetSwitchCount(system);
             if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
@@ -70,7 +68,7 @@ namespace PluralKit.Bot
                         var sw = entry.ThisSwitch;
                         // Fetch member list and format
                         var members = await _data.GetSwitchMembers(sw).ToListAsync();
-                        var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.Name)) : "no fronter";
+                        var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "no fronter";
 
                         var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
 
@@ -81,12 +79,12 @@ namespace PluralKit.Bot
                             // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
                             var switchDuration = lastSw.Value - sw.Timestamp;
                             stringToAdd =
-                                $"**{membersStr}** ({DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {DateTimeFormats.DurationFormat.Format(switchSince)} ago, for {DateTimeFormats.DurationFormat.Format(switchDuration)})\n";
+                                $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago, for {switchDuration.FormatDuration()})\n";
                         }
                         else
                         {
                             stringToAdd =
-                                $"**{membersStr}** ({DateTimeFormats.ZonedDateTimeFormat.Format(sw.Timestamp.InZone(system.Zone))}, {DateTimeFormats.DurationFormat.Format(switchSince)} ago)\n";
+                                $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago)\n";
                         }
                         try // Unfortunately the only way to test DiscordEmbedBuilder.Description max length is this
                         {
@@ -115,7 +113,7 @@ namespace PluralKit.Bot
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
             
             var frontpercent = await _data.GetFrontBreakdown(system, rangeStart.Value.ToInstant(), now);
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone, ctx.LookupContextFor(system)));
         }
     }
 }

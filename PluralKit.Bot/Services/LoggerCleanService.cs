@@ -28,6 +28,7 @@ namespace PluralKit.Bot
         private static Regex _unbelievaboatRegex = new Regex("Message ID: (\\d{17,19})");
         private static Regex _vanessaRegex = new Regex("Message sent by <@!?(\\d{17,19})> deleted in");
         private static Regex _salRegex = new Regex("\\(ID: (\\d{17,19})\\)");
+        private static Regex _GearBotRegex = new Regex("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
 
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
@@ -40,23 +41,24 @@ namespace PluralKit.Bot
             new LoggerBot("Logger#6278", 327424261180620801, ExtractLoggerB), 
             
             new LoggerBot("Dyno", 155149108183695360, ExtractDyno,  webhookName: "Dyno"),
-            new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja),
+            new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja, webhookName: "Auttaja"),
             new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot), 
             new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot), 
             new LoggerBot("Mantaro", 213466096718708737, ExtractMantaro), 
             new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat, webhookName: "UnbelievaBoat"), 
             new LoggerBot("Vanessa", 310261055060443136, fuzzyExtractFunc: ExtractVanessa), 
-            new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL)
+            new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL),
+            new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot)
         }.ToDictionary(b => b.Id);
 
         private static readonly Dictionary<string, LoggerBot> _botsByWebhookName = _bots.Values
             .Where(b => b.WebhookName != null)
             .ToDictionary(b => b.WebhookName);
 
-        private DbConnectionFactory _db;
+        private IDatabase _db;
         private DiscordShardedClient _client;
         
-        public LoggerCleanService(DbConnectionFactory db, DiscordShardedClient client)
+        public LoggerCleanService(IDatabase db, DiscordShardedClient client)
         {
             _db = db;
             _client = client;
@@ -64,10 +66,8 @@ namespace PluralKit.Bot
 
         public ICollection<LoggerBot> Bots => _bots.Values;
 
-        public async ValueTask HandleLoggerBotCleanup(DiscordMessage msg, GuildConfig cachedGuild)
+        public async ValueTask HandleLoggerBotCleanup(DiscordMessage msg)
         {
-            // Bail if not enabled, or if we don't have permission here
-            if (!cachedGuild.LogCleanupEnabled) return;
             if (msg.Channel.Type != ChannelType.Text) return;
             if (!msg.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
  
@@ -137,7 +137,7 @@ namespace PluralKit.Bot
             // Auttaja has an optional "compact mode" that logs without embeds
             // That one puts the ID in the message content, non-compact puts it in the embed description.
             // Regex also checks that this is a deletion.
-            var stringWithId = msg.Content ?? msg.Embeds.FirstOrDefault()?.Description;
+            var stringWithId = msg.Embeds.FirstOrDefault()?.Description ?? msg.Content;
             if (stringWithId == null) return null;
             
             var match = _auttajaRegex.Match(stringWithId);
@@ -278,6 +278,17 @@ namespace PluralKit.Bot
             var authorField = embed.Fields.FirstOrDefault(f => f.Name == "Message Author");
             if (authorField == null) return null;
             var match = _salRegex.Match(authorField.Value);
+            return match.Success
+                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                : (FuzzyExtractResult?) null;
+        }
+
+        private static FuzzyExtractResult? ExtractGearBot(DiscordMessage msg)
+        {
+            // Simple text based message log.
+            // No message ID, but we have timestamp and author ID.
+            // Not using timestamp here though (seems to be same as message timestamp), might be worth implementing in the future.
+            var match = _GearBotRegex.Match(msg.Content);
             return match.Success
                 ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
                 : (FuzzyExtractResult?) null;

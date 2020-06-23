@@ -8,16 +8,17 @@ namespace PluralKit.Core {
     public class PKSystem
     {
         // Additions here should be mirrored in SystemStore::Save
-        [Key] [JsonIgnore] public int Id { get; set; }
-        [JsonProperty("id")] public string Hid { get; set; }
-        [JsonProperty("name")] public string Name { get; set; }
-        [JsonProperty("description")] public string Description { get; set; }
-        [JsonProperty("tag")] public string Tag { get; set; }
-        [JsonProperty("avatar_url")] public string AvatarUrl { get; set; }
-        [JsonIgnore] public string Token { get; set; }
-        [JsonProperty("created")] public Instant Created { get; set; }
-        [JsonProperty("tz")] public string UiTz { get; set; }
-        public PrivacyLevel DescriptionPrivacy { get; set; }
+        [Key] public SystemId Id { get; }
+        public string Hid { get; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Tag { get; set; }
+        public string AvatarUrl { get; set; }
+        public string Token { get; set; }
+        public Instant Created { get; }
+        public string UiTz { get; set; }
+        public bool PingsEnabled { get; set; }
+	    public PrivacyLevel DescriptionPrivacy { get; set; }
         public PrivacyLevel MemberListPrivacy { get; set; }
         public PrivacyLevel FrontPrivacy { get; set; }
         public PrivacyLevel FrontHistoryPrivacy { get; set; }

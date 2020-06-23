@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using App.Metrics;
+
+using Dapper;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -21,7 +21,7 @@ namespace PluralKit.Bot
         private IMetrics _metrics;
         private CpuStatService _cpu;
 
-        private IDataStore _data;
+        private IDatabase _db;
 
         private WebhookCacheService _webhookCache;
 
@@ -29,14 +29,14 @@ namespace PluralKit.Bot
 
         private ILogger _logger;
 
-        public PeriodicStatCollector(DiscordShardedClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, IDataStore data, CpuStatService cpu)
+        public PeriodicStatCollector(DiscordShardedClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, IDatabase db)
         {
             _client = client;
             _metrics = metrics;
             _webhookCache = webhookCache;
             _countHolder = countHolder;
-            _data = data;
             _cpu = cpu;
+            _db = db;
             _logger = logger.ForContext<PeriodicStatCollector>();
         }
 
@@ -78,10 +78,11 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(BotMetrics.MembersOnline, usersOnline.Count);
             
             // Aggregate DB stats
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, await _data.GetTotalSystems());
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, await _data.GetTotalMembers());
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, await _data.GetTotalSwitches());
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, await _data.GetTotalMessages());
+            var counts = await _db.Execute(c => c.QueryFirstAsync<Counts>("select (select count(*) from systems) as systems, (select count(*) from members) as members, (select count(*) from switches) as switches, (select count(*) from messages) as messages"));
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, counts.Systems);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, counts.Members);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, counts.Switches);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, counts.Messages);
             
             // Process info
             var process = Process.GetCurrentProcess();
@@ -100,6 +101,14 @@ namespace PluralKit.Bot
 
             stopwatch.Stop();
             _logger.Information("Updated metrics in {Time}", stopwatch.ElapsedDuration());
+        }
+
+        public class Counts
+        {
+            public int Systems { get; }
+            public int Members { get;  }
+            public int Switches { get; }
+            public int Messages { get; }
         }
     }
 }

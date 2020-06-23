@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Dapper;
+
 using DSharpPlus;
 using DSharpPlus.Entities;
 
@@ -16,12 +18,14 @@ namespace PluralKit.Bot
     public class SystemEdit
     {
         private IDataStore _data;
+        private IDatabase _db;
         private EmbedService _embeds;
 
-        public SystemEdit(IDataStore data, EmbedService embeds)
+        public SystemEdit(IDataStore data, EmbedService embeds, IDatabase db)
         {
             _data = data;
             _embeds = embeds;
+            _db = db;
         }
 
         public async Task Name(Context ctx)
@@ -40,7 +44,7 @@ namespace PluralKit.Bot
             if (newSystemName == null)
             {
                 if (ctx.System.Name != null)
-                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name.SanitizeMentions()}**. Type `pk;system name -clear` to clear it.");
+                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
                 else
                     await ctx.Reply("Your system currently does not have a name. Type `pk;system name <name>` to set one.");
                 return;
@@ -69,7 +73,7 @@ namespace PluralKit.Bot
                 if (ctx.System.Description == null)
                     await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
                 else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{ctx.System.Description.SanitizeMentions()}\n```");
+                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
                 else
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("System description")
@@ -100,7 +104,7 @@ namespace PluralKit.Bot
                 if (ctx.System.Tag == null)
                     await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
                 else
-                    await ctx.Reply($"Your current system tag is `{ctx.System.Tag.SanitizeMentions()}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                    await ctx.Reply($"Your current system tag is `{ctx.System.Tag}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
             }
             else
             {
@@ -110,7 +114,7 @@ namespace PluralKit.Bot
                         throw Errors.SystemNameTooLongError(newTag.Length);
                 ctx.System.Tag = newTag;
                 await _data.SaveSystem(ctx.System);
-                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag.SanitizeMentions()}` when proxied.");
+                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag}` when proxied.");
             }
         }
         
@@ -181,7 +185,7 @@ namespace PluralKit.Bot
         public async Task SystemProxy(Context ctx)
         {
             ctx.CheckSystem().CheckGuildContext();
-            var gs = await _data.GetSystemGuildSettings(ctx.System, ctx.Guild.Id);
+            var gs = await _db.Execute(c => c.QueryOrInsertSystemGuildConfig(ctx.Guild.Id, ctx.System.Id));
 
             bool newValue;
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
@@ -196,8 +200,9 @@ namespace PluralKit.Bot
                 return;
             }
 
-            gs.ProxyEnabled = newValue;
-            await _data.SetSystemGuildSettings(ctx.System, ctx.Guild.Id, gs);
+            await _db.Execute(c =>
+                c.ExecuteAsync("update system_guild set proxy_enabled = @newValue where system = @system and guild = @guild",
+                    new {newValue, system = ctx.System.Id, guild = ctx.Guild.Id}));
 
             if (newValue)
                 await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");
@@ -221,7 +226,7 @@ namespace PluralKit.Bot
             if (zoneStr == null)
             {
                 await ctx.Reply(
-                    $"Your current system time zone is set to **{ctx.System.UiTz}**. It is currently **{DateTimeFormats.ZonedDateTimeFormat.Format(SystemClock.Instance.GetCurrentInstant().InZone(ctx.System.Zone))}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
+                    $"Your current system time zone is set to **{ctx.System.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.System)}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
                 return;
             }
 
@@ -230,7 +235,7 @@ namespace PluralKit.Bot
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
             var msg = await ctx.Reply(
-                $"This will change the system time zone to **{zone.Id}**. The current time is **{DateTimeFormats.ZonedDateTimeFormat.Format(currentTime)}**. Is this correct?");
+                $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             ctx.System.UiTz = zone.Id;
             await _data.SaveSystem(ctx.System);
@@ -257,7 +262,7 @@ namespace PluralKit.Bot
                     .AddField("Member list", PrivacyLevelString(ctx.System.MemberListPrivacy))
                     .AddField("Current fronter(s)", PrivacyLevelString(ctx.System.FrontPrivacy))
                     .AddField("Front/switch history", PrivacyLevelString(ctx.System.FrontHistoryPrivacy))
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front` or `fronthistory`\n- `level` is either `public` or `private`.");
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, or `all` \n- `level` is either `public` or `private`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }
@@ -280,11 +285,11 @@ namespace PluralKit.Bot
 
                 if (!ctx.HasNext())
                     throw new PKSyntaxError($"You must pass a privacy level for `{subject}` (`public` or `private`)");
-                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument().SanitizeMentions()}` (must be `public` or `private`).");
+                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument()}` (must be `public` or `private`).");
             }
 
             string levelStr, levelExplanation, subjectStr;
-            var subjectList = "`description`, `members`, `front` or `fronthistory`";
+            var subjectList = "`description`, `members`, `front`, `fronthistory`, or `all`";
             if (ctx.Match("description", "desc", "text", "info"))
             {
                 subjectStr = "description";
@@ -305,12 +310,52 @@ namespace PluralKit.Bot
                 subjectStr = "front history";
                 ctx.System.FrontHistoryPrivacy = PopPrivacyLevel("fronthistory", out levelStr, out levelExplanation);
             }
+            else if (ctx.Match("all")){
+                subjectStr = "all";
+                PrivacyLevel level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
+                ctx.System.DescriptionPrivacy = level;
+                ctx.System.MemberListPrivacy = level;
+                ctx.System.FrontPrivacy = level;
+                ctx.System.FrontHistoryPrivacy = level;
+
+            }
             else
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument().SanitizeMentions()}` (must be {subjectList}).");
+                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be {subjectList}).");
 
             await _data.SaveSystem(ctx.System);
+            if(subjectStr == "all"){
+                if(levelStr == "private")
+                    await ctx.Reply($"All of your systems privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card.");
+                else 
+                    await ctx.Reply($"All of your systems privacy have been set to **{levelStr}**. Other accounts will now see everything on the member card.");
+            } 
+            //Handle other subjects
+            else
             await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
         }
+
+        public async Task SystemPing(Context ctx) 
+	    {
+	        ctx.CheckSystem();
+
+	        if (!ctx.HasNext()) 
+	        {
+		        if (ctx.System.PingsEnabled) {await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;s ping disable`.");}
+		        else {await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;s ping enable`.");}
+	        }
+            else {
+                if (ctx.Match("on", "enable")) {
+                    ctx.System.PingsEnabled = true;
+                    await _data.SaveSystem(ctx.System);
+                    await ctx.Reply("Reaction pings have now been enabled.");
+                }
+                if (ctx.Match("off", "disable")) {
+                    ctx.System.PingsEnabled = false;
+                    await _data.SaveSystem(ctx.System);
+                    await ctx.Reply("Reaction pings have now been disabled.");
+                }
+            }
+	    }
 
         public async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr) {
             // First, if we're given a flag emoji, we extract the flag emoji code from it.

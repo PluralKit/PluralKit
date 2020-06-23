@@ -189,5 +189,14 @@ namespace PluralKit.Bot
             // Workaround for https://github.com/DSharpPlus/DSharpPlus/issues/565
             return input?.Replace("%20", "+");
         }
+        
+        public static Task<DiscordMessage> SendMessageFixedAsync(this DiscordChannel channel, string content = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null) =>
+            // Passing an empty list blocks all mentions by default (null allows all through)
+            channel.SendMessageAsync(content, embed: embed, mentions: mentions ?? new IMention[0]);
+        
+        // This doesn't do anything by itself (DiscordMember.SendMessageAsync doesn't take a mentions argument)
+        // It's just here for consistency so we don't use the standard SendMessageAsync method >.>
+        public static Task<DiscordMessage> SendMessageFixedAsync(this DiscordMember member, string content = null, DiscordEmbed embed = null) =>
+            member.SendMessageAsync(content, embed: embed);
     }
 }

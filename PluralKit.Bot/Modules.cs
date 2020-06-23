@@ -6,6 +6,8 @@ using Autofac;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 using Sentry;
@@ -80,12 +82,17 @@ namespace PluralKit.Bot
                 .As<ISentryEnricher<MessageBulkDeleteEventArgs>>()
                 .As<ISentryEnricher<MessageReactionAddEventArgs>>()
                 .SingleInstance();
+            
+            // Proxy stuff
+            builder.RegisterType<ProxyMatcher>().AsSelf().SingleInstance();
+            builder.RegisterType<ProxyTagParser>().AsSelf().SingleInstance();
 
             // Utils
             builder.Register(c => new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(5)
             }).AsSelf().SingleInstance();
+            builder.RegisterInstance(SystemClock.Instance).As<IClock>();
         }
     }
 }

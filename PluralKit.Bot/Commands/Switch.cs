@@ -56,21 +56,21 @@ namespace PluralKit.Bot
             if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
 
             // Find the last switch and its members if applicable
-            var lastSwitch = await _data.GetLatestSwitch(ctx.System);
+            var lastSwitch = await _data.GetLatestSwitch(ctx.System.Id);
             if (lastSwitch != null)
             {
                 var lastSwitchMembers = _data.GetSwitchMembers(lastSwitch);
                 // Make sure the requested switch isn't identical to the last one
                 if (await lastSwitchMembers.Select(m => m.Id).SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
-                    throw Errors.SameSwitch(members);
+                    throw Errors.SameSwitch(members, ctx.LookupContextFor(ctx.System));
             }
 
-            await _data.AddSwitch(ctx.System, members);
+            await _data.AddSwitch(ctx.System.Id, members);
 
             if (members.Count == 0)
                 await ctx.Reply($"{Emojis.Success} Switch-out registered.");
             else
-                await ctx.Reply($"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.Name)).SanitizeMentions()}.");
+                await ctx.Reply($"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
         }
         
         public async Task SwitchMove(Context ctx)
@@ -87,7 +87,7 @@ namespace PluralKit.Bot
             if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _data.GetSwitches(ctx.System).Take(2).ToListAsync();
+            var lastTwoSwitches = await _data.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
             
             // If we don't have a switch to move, don't bother
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
@@ -102,14 +102,14 @@ namespace PluralKit.Bot
             // Now we can actually do the move, yay!
             // But, we do a prompt to confirm.
             var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
-            var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
-            var lastSwitchTimeStr = DateTimeFormats.ZonedDateTimeFormat.Format(lastTwoSwitches[0].Timestamp.InZone(ctx.System.Zone));
-            var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
-            var newSwitchTimeStr = DateTimeFormats.ZonedDateTimeFormat.Format(time);
-            var newSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - time.ToInstant());
+            var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+            var lastSwitchTimeStr = lastTwoSwitches[0].Timestamp.FormatZoned(ctx.System);
+            var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
+            var newSwitchTimeStr = time.FormatZoned();
+            var newSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - time.ToInstant()).FormatDuration();
             
             // yeet
-            var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr.SanitizeMentions()}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
+            var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
@@ -133,26 +133,26 @@ namespace PluralKit.Bot
             }
             
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _data.GetSwitches(ctx.System).Take(2).ToListAsync();
+            var lastTwoSwitches = await _data.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
             var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
-            var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.Name).ToListAsync());
-            var lastSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp);
+            var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+            var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
 
             DiscordMessage msg;
             if (lastTwoSwitches.Count == 1)
             {
                 msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
             }
             else
             {
                 var secondSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[1]);
-                var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.Name).ToListAsync());
-                var secondSwitchDeltaStr = DateTimeFormats.DurationFormat.Format(SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp);
+                var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+                var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp).FormatDuration();
                 msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr.SanitizeMentions()}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr.SanitizeMentions()} ({secondSwitchDeltaStr} ago). Is this okay?");
+                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?");
             }
 
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;

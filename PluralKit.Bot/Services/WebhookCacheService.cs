@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
+using App.Metrics;
+
 using DSharpPlus;
 using DSharpPlus.Entities;
 
@@ -18,11 +20,13 @@ namespace PluralKit.Bot
         private DiscordShardedClient _client;
         private ConcurrentDictionary<ulong, Lazy<Task<DiscordWebhook>>> _webhooks;
 
+        private IMetrics _metrics;
         private ILogger _logger;
 
-        public WebhookCacheService(DiscordShardedClient client, ILogger logger)
+        public WebhookCacheService(DiscordShardedClient client, ILogger logger, IMetrics metrics)
         {
             _client = client;
+            _metrics = metrics;
             _logger = logger.ForContext<WebhookCacheService>();
             _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<DiscordWebhook>>>();
         }
@@ -40,9 +44,26 @@ namespace PluralKit.Bot
             // We cache the webhook through a Lazy<Task<T>>, this way we make sure to only create one webhook per channel
             // If the webhook is requested twice before it's actually been found, the Lazy<T> wrapper will stop the
             // webhook from being created twice.
-            var lazyWebhookValue =    
-                _webhooks.GetOrAdd(channel.Id, new Lazy<Task<DiscordWebhook>>(() => GetOrCreateWebhook(channel)));
+            Lazy<Task<DiscordWebhook>> GetWebhookTaskInner()
+            {
+                Task<DiscordWebhook> Factory() => GetOrCreateWebhook(channel);
+                return _webhooks.GetOrAdd(channel.Id, new Lazy<Task<DiscordWebhook>>(Factory));
+            }
+            var lazyWebhookValue = GetWebhookTaskInner();
             
+            // If we've cached a failed Task, we need to clear it and try again
+            // This is so errors don't become "sticky" and *they* in turn get cached (not good)
+            // although, keep in mind this block gets hit the call *after* the task failed (since we only await it below)
+            if (lazyWebhookValue.IsValueCreated && lazyWebhookValue.Value.IsFaulted)
+            {
+                _logger.Warning(lazyWebhookValue.Value.Exception, "Cached webhook task for {Channel} faulted with below exception");
+                
+                // Specifically don't recurse here so we don't infinite-loop - if this one errors too, it'll "stick"
+                // until next time this function gets hit (which is okay, probably).
+                _webhooks.TryRemove(channel.Id, out _);
+                lazyWebhookValue = GetWebhookTaskInner();
+            }
+
             // It's possible to "move" a webhook to a different channel after creation
             // Here, we ensure it's actually still pointing towards the proper channel, and if not, wipe and refetch one.
             var webhook = await lazyWebhookValue.Value;
@@ -61,6 +82,7 @@ namespace PluralKit.Bot
         private async Task<DiscordWebhook> GetOrCreateWebhook(DiscordChannel channel)
         {
             _logger.Debug("Webhook for channel {Channel} not found in cache, trying to fetch", channel.Id);
+            _metrics.Measure.Meter.Mark(BotMetrics.WebhookCacheMisses);
             return await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
         }
 

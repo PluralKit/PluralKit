@@ -24,7 +24,8 @@ namespace PluralKit.Bot
         public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
         public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
-        public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory> <public|private>", "Changes your system's privacy settings");
+        public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
+        public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
         public static Command Autoproxy = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for this server");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
@@ -41,7 +42,7 @@ namespace PluralKit.Bot
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command MemberRandom = new Command("random", "random", "Looks up a random member from your system");
-        public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy [on|off]", "Sets whether a member is private or public");
+        public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -71,7 +72,7 @@ namespace PluralKit.Bot
 
         public static Command[] MemberCommands = {
             MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-            MemberColor, MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar, MemberServerAvatar,
+            MemberColor, MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy,
             MemberRandom
         };
 
@@ -100,7 +101,7 @@ namespace PluralKit.Bot
             if (ctx.Match("list", "l", "members"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("f", "find", "search", "query", "fd"))
-                return ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
+                return ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("link"))
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
@@ -158,7 +159,7 @@ namespace PluralKit.Bot
                 return ctx.Execute<Member>(MemberRandom, m => m.MemberRandom(ctx));
 
             ctx.Reply(
-                $"{Emojis.Error} Unknown command `{ctx.PeekArgument().SanitizeMentions()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
+                $"{Emojis.Error} Unknown command `{ctx.PeekArgument()}`. For a list of possible commands, see <https://pluralkit.me/commands>.");
             return Task.CompletedTask;
         }
 
@@ -188,7 +189,7 @@ namespace PluralKit.Bot
             else if (ctx.Match("list", "l", "members"))
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("find", "search", "query", "fd", "s"))
-                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, ctx.System));
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
@@ -204,6 +205,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx));
+            else if (ctx.Match("ping"))
+                await ctx.Execute<SystemEdit>(SystemPing, m => m.SystemPing(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
             else if (!ctx.HasNext()) // Bare command
@@ -225,7 +228,7 @@ namespace PluralKit.Bot
             else if (ctx.Match("list", "l", "members"))
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
             else if (ctx.Match("find", "search", "query", "fd", "s"))
-                await ctx.Execute<SystemList>(SystemFind, m => m.MemberFind(ctx, target));
+                await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
             else if (ctx.Match("f", "front", "fronter", "fronters"))
             {
                 if (ctx.Match("h", "history"))
@@ -252,6 +255,8 @@ namespace PluralKit.Bot
         {
             if (ctx.Match("new", "n", "add", "create", "register"))
                 await ctx.Execute<Member>(MemberNew, m => m.NewMember(ctx));
+            else if (ctx.Match("list"))
+                await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "members", MemberCommands);
             else if (await ctx.MatchMember() is PKMember target)
@@ -292,9 +297,9 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
-            else if (ctx.Match("private", "hidden"))
+            else if (ctx.Match("private", "hidden", "hide"))
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
-            else if (ctx.Match("public", "shown"))
+            else if (ctx.Match("public", "shown", "show"))
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));

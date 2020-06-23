@@ -17,6 +17,8 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;system rename [new name]` - Changes the name of your system.
 - `pk;system description [description]` - Changes the description of your system.
 - `pk;system avatar [avatar url]` - Changes the avatar of your system.
+- `pk;system privacy` - Displays your system's current privacy settings.
+- `pk;system privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system tag [tag]` - Changes the system tag of your system.
 - `pk;system timezone [location]` - Changes the time zone of your system.
 - `pk;system proxy [on|off]` - Toggles message proxying for a specific server. 
@@ -42,6 +44,8 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> description [description]` - Changes the description of a member.
 - `pk;member <name> avatar <avatar url|@mention>` - Changes the avatar of a member.
 - `pk;member <name> serveravatar <avatar url|@mention>` - Changes the avatar of a member in a specific server.
+- `pk;member <name> privacy` - Displays a members current privacy settings.
+- `pk;member <name> privacy <subject> <public|private>` - Changes a members privacy setting.
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
 - `pk;member <name> proxy add [tags]` - Adds a proxy tag pair to a member.
 - `pk;member <name> proxy remove [tags]` - Removes a proxy tag from a member.

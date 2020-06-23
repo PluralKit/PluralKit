@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 
 using Serilog;
-using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -23,12 +22,10 @@ namespace PluralKit.Core
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
-            builder.RegisterType<DbConnectionFactory>().AsSelf().SingleInstance();
+            builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
             builder.RegisterType<PostgresDataStore>().AsSelf().As<IDataStore>();
-            builder.RegisterType<SchemaService>().AsSelf();
             
             builder.Populate(new ServiceCollection().AddMemoryCache());
-            builder.RegisterType<ProxyCache>().AsSelf().SingleInstance();
         }
     }
 
@@ -100,18 +97,18 @@ namespace PluralKit.Core
 
             return new LoggerConfiguration()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
-                .MinimumLevel.Debug()
+                .MinimumLevel.Is(config.ConsoleLogLevel)
                 .WriteTo.Async(a =>
                 {
                     // Both the same output, except one is raw compact JSON and one is plain text.
                     // Output simultaneously. May remove the JSON formatter later, keeping it just in cast.
-                    // Flush interval is 250ms (down from 10s) to make "tail -f" easier. May be too low?
+                    // Flush interval is 50ms (down from 10s) to make "tail -f" easier. May be too low?
                     a.File(
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.log",
                         outputTemplate: outputTemplate,
                         rollingInterval: RollingInterval.Day,
-                        flushToDiskInterval: TimeSpan.FromMilliseconds(250),
-                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        flushToDiskInterval: TimeSpan.FromMilliseconds(50),
+                        restrictedToMinimumLevel: config.FileLogLevel,
                         formatProvider: new UTCTimestampFormatProvider(),
                         buffered: true);
                     
@@ -119,8 +116,8 @@ namespace PluralKit.Core
                         new RenderedCompactJsonFormatter(),
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
                         rollingInterval: RollingInterval.Day,
-                        flushToDiskInterval: TimeSpan.FromMilliseconds(250),
-                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        flushToDiskInterval: TimeSpan.FromMilliseconds(50),
+                        restrictedToMinimumLevel: config.FileLogLevel,
                         buffered: true);
                 })
                 // TODO: render as UTC in the console, too? or just in log files

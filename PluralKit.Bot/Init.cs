@@ -21,7 +21,7 @@ namespace PluralKit.Bot
         {
             // Load configuration and run global init stuff
             var config = InitUtils.BuildConfiguration(args).Build();
-            InitUtils.Init();
+            InitUtils.InitStatic();
             
             // Set up DI container and modules
             var services = BuildContainer(config);
@@ -35,7 +35,7 @@ namespace PluralKit.Bot
 
                 // "Connect to the database" (ie. set off database migrations and ensure state)
                 logger.Information("Connecting to database");
-                await services.Resolve<SchemaService>().ApplyMigrations();
+                await services.Resolve<IDatabase>().ApplyMigrations();
                 
                 // Init the bot instance itself, register handlers and such to the client before beginning to connect
                 logger.Information("Initializing bot");
