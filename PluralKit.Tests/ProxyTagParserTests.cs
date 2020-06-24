@@ -10,9 +10,6 @@ namespace PluralKit.Tests
 {
     public class ProxyTagParserTests
     {
-        private ProxyTagParser parser = new ProxyTagParser();
-
-
         public class Basics
         {
             private ProxyMember[] members = {
@@ -44,8 +41,6 @@ namespace PluralKit.Tests
             [Theory]
             [InlineData("[text inside]", "text inside")]
             [InlineData("A:text after", "text after")]
-            [InlineData("A: space after prefix", "space after prefix")]
-            [InlineData("[      lots and lots of spaces      ]", "lots and lots of spaces")]
             public void ContentBetweenTagsIsExtracted(string input, string expectedContent) =>
                 AssertMatch(members, input, content: expectedContent);
 
@@ -62,6 +57,12 @@ namespace PluralKit.Tests
             [InlineData("something A:prefix")]
             public void TagsOnlyMatchAtTheStartAndEnd(string input) =>
                 AssertNoMatch(members, input);
+            
+            [Theory]
+            [InlineData("[   text     ]", "   text     ")]
+            [InlineData("A: text", " text")]
+            public void WhitespaceInContentShouldNotBeTrimmed(string input, string expectedContent) =>
+                AssertMatch(members, input, content: expectedContent);
         }
 
         public class MentionPrefix

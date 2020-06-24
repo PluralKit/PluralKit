@@ -71,10 +71,10 @@ namespace PluralKit.Bot
             if (!isMatch) return false; 
             
             // We got a match, extract inner text
-            inner = input.Substring(prefix.Length, input.Length - prefix.Length - suffix.Length).Trim();
+            inner = input.Substring(prefix.Length, input.Length - prefix.Length - suffix.Length);
             
             // (see https://github.com/xSke/PluralKit/pull/181)
-            return inner != "\U0000fe0f";
+            return inner.Trim() != "\U0000fe0f";
         }
 
         private string? ExtractLeadingMention(ref string input)
