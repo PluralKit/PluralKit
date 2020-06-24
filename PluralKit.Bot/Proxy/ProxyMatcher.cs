@@ -9,6 +9,7 @@ namespace PluralKit.Bot
 {
     public class ProxyMatcher
     {
+        private static readonly char AutoproxyEscapeCharacter = '\\';
         private static readonly Duration LatchExpiryTime = Duration.FromHours(6);
 
         private readonly IClock _clock;
@@ -41,6 +42,10 @@ namespace PluralKit.Bot
                                        out ProxyMatch match)
         {
             match = default;
+
+            // Skip autoproxy match if we hit the escape character
+            if (messageContent.StartsWith(AutoproxyEscapeCharacter))
+                return false;
 
             // Find the member we should autoproxy (null if none)
             var member = ctx.AutoproxyMode switch
