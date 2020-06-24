@@ -2,7 +2,8 @@
 {
     public class SystemGuildSettings
     {
-        public SystemId Guild { get; }
+        public ulong Guild { get; }
+        public SystemId System { get; }
         public bool ProxyEnabled { get; } = true;
 
         public AutoproxyMode AutoproxyMode { get; } = AutoproxyMode.Off;
