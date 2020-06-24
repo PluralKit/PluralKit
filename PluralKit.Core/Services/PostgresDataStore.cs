@@ -346,7 +346,7 @@ namespace PluralKit.Core {
                 memberObjects = (
                     await conn.QueryAsync<PKMember>(
                         "select * from members where id = any(@Switches)", // lol postgres specific `= any()` syntax
-                        new { Switches = switchMembers.Select(m => m.Member).Distinct().ToList() })
+                        new { Switches = switchMembers.Select(m => m.Member.Value).Distinct().ToList() })
                 ).ToDictionary(m => m.Id);
             }
 
