@@ -1,6 +1,8 @@
 name: Build and deploy site to GitHub Pages
 on:
   push:
+    paths:
+      - "docs/**"
     branches:
       - main
 jobs:
