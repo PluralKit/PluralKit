@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -114,5 +115,15 @@ namespace PluralKit.Bot
         // It's just here for consistency so we don't use the standard SendMessageAsync method >.>
         public static Task<DiscordMessage> SendMessageFixedAsync(this DiscordMember member, string content = null, DiscordEmbed embed = null) =>
             member.SendMessageAsync(content, embed: embed);
+
+        public static bool TryGetCachedUser(this DiscordClient client, ulong id, out DiscordUser user)
+        {
+            user = null;
+            
+            var cache = (ConcurrentDictionary<ulong, DiscordUser>) typeof(BaseDiscordClient)
+                .GetProperty("UserCache", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.GetValue(client);
+            return cache != null && cache.TryGetValue(id, out user);
+        }
     }
 }

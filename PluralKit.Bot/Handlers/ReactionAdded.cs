@@ -29,6 +29,11 @@ namespace PluralKit.Bot
         {
             // Only proxies in guild text channels
             if (evt.Channel.Type != ChannelType.Text) return;
+
+            // Sometimes we get events from users that aren't in the user cache
+            // In that case we get a "broken" user object (where eg. calling IsBot throws an exception)
+            // We just ignore all of those for now, should be quite rare...
+            if (!evt.Client.TryGetCachedUser(evt.User.Id, out _)) return;
             
             // Ignore reactions from bots (we can't DM them anyway)
             if (evt.User.IsBot) return;
