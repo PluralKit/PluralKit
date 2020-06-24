@@ -18,7 +18,7 @@ namespace PluralKit.Core
 
         public static Task<SystemGuildSettings> QueryOrInsertSystemGuildConfig(this IPKConnection conn, ulong guild, SystemId system) =>
             conn.QueryFirstAsync<SystemGuildSettings>(
-                "insert into member_guild (guild, member) values (@guild, @member) on conflict (guild, member) do update set guild = @guild, member = @member returning *", 
+                "insert into system_guild (guild, system) values (@guild, @system) on conflict (guild, system) do update set guild = @guild, system = @system returning *", 
                 new {guild, system});
 
         public static Task<MemberGuildSettings> QueryOrInsertMemberGuildConfig(
