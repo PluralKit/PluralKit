@@ -126,7 +126,7 @@ namespace PluralKit.Bot
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember) =>
             _db.Execute(c => 
                 c.ExecuteAsync(
-                    "update system_guild set autoproxy_mode = @autoproxyMode, autoproxy_member = @autoproxyMember where guild = @guild and system = @system",
+                    "insert into system_guild (system, guild, autoproxy_mode, autoproxy_member) values (@system, @guild, @autoproxyMode, @autoproxyMember) on conflict (system, guild) do update set autoproxy_mode = @autoproxyMode, autoproxy_member = @autoproxyMember",
                     new {autoproxyMode, autoproxyMember, guild = ctx.Guild.Id, system = ctx.System.Id}));
     }
 }
