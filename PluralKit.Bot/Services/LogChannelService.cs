@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -53,9 +54,9 @@ namespace PluralKit.Bot {
             {
                 return await _rest.GetChannelAsync(channel);
             }
-            catch (NotFoundException)
+            catch (Exception e) when (e is NotFoundException || e is UnauthorizedException)  
             {
-                // Channel doesn't exist, let's remove it from the database too
+                // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too
                 _logger.Warning("Attempted to fetch missing log channel {LogChannel}, removing from database", channel);
                 await using var conn = await _db.Obtain();
                 await conn.ExecuteAsync("update servers set log_channel = null where server = @Guild",
