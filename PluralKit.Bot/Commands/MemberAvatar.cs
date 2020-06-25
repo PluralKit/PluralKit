@@ -144,7 +144,7 @@ namespace PluralKit.Bot
             {
                 AvatarLocation.Server => _db.Execute(c =>
                     c.ExecuteAsync(
-                        "update member_guild set avatar_url = @Avatar where member = @Member and guild = @Guild",
+                        "insert into member_guild(member, guild, avatar_url) values (@Member, @Guild, @Avatar) on conflict (member, guild) do update set avatar_url = @Avatar",
                         new {Avatar = avatar, Guild = ctx.Guild.Id, Member = target.Id})),
                 AvatarLocation.Member => _db.Execute(c =>
                     c.ExecuteAsync(

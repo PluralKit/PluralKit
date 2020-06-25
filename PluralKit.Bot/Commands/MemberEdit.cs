@@ -331,7 +331,7 @@ namespace PluralKit.Bot
                 var newServerName = ctx.RemainderOrNull();
                  
                 await _db.Execute(c =>
-                    c.ExecuteAsync("update member_guild set display_name = @newServerName where member = @member and guild = @guild",
+                    c.ExecuteAsync("insert into member_guild(member, guild, display_name) values (@member, @guild, @newServerName) on conflict (member, guild) do update set display_name = @newServerName",
                         new {member = target.Id, guild = ctx.Guild.Id, newServerName}));    
 
                 await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.Guild.Name}).");
