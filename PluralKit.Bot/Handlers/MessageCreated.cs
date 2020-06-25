@@ -62,9 +62,15 @@ namespace PluralKit.Bot
                 ctx = await conn.QueryMessageContext(evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id);
 
             // Try each handler until we find one that succeeds
-            var _ = await TryHandleLogClean(evt, ctx) ||
-                    await TryHandleCommand(evt, ctx) || 
-                    await TryHandleProxy(evt, ctx);
+            if (await TryHandleLogClean(evt, ctx)) 
+                return;
+            
+            // Only do command/proxy handling if it's a user account
+            if (evt.Message.Author.IsBot || evt.Message.WebhookMessage || evt.Message.Author.IsSystem == true) 
+                return;
+            if (await TryHandleCommand(evt, ctx))
+                return;
+            await TryHandleProxy(evt, ctx);
         }
 
         private async ValueTask<bool> TryHandleLogClean(MessageCreateEventArgs evt, MessageContext ctx)
