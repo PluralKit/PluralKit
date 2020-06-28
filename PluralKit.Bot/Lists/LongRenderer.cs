@@ -53,9 +53,16 @@ namespace PluralKit.Bot
             public bool ShowLastSwitch = false;
             public bool ShowLastMessage = false;
 
-            public static MemberFields FromFlags(Context ctx)
+            public static MemberFields FromFlags(Context ctx, SortFilterOptions opts)
             {
-                var def = new MemberFields();
+                var def = new MemberFields
+                {
+                    // Add some defaults depending on sort order
+                    ShowLastMessage = opts.SortProperty == SortProperty.LastMessage,
+                    ShowLastSwitch = opts.SortProperty == SortProperty.LastSwitch,
+                    ShowMessageCount = opts.SortProperty == SortProperty.MessageCount
+                };
+                
                 if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
                     def.ShowLastSwitch = true;
                 if (ctx.MatchFlag("with-message-count", "wmc"))

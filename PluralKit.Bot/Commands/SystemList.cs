@@ -22,10 +22,11 @@ namespace PluralKit.Bot
             if (target == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(target, target.MemberListPrivacy);
 
-            // GetRendererFor must be called before GetOptions as it consumes a potential positional full argument that'd otherwise land in the filter
-            var renderer = GetRendererFor(ctx);
+            // Must match full before calling the other flag parsers to make sure we consume the token before trying to match search terms, etc
+            var isFull = ctx.Match("f", "full", "big", "details", "long") || ctx.MatchFlag("f", "full");
             var opts = GetOptions(ctx, target);
-            
+            var renderer = GetRendererFor(ctx, isFull, opts);
+
             var members = (await _db.Execute(c => opts.Execute(c, target, ctx.LookupContextFor(target)))).ToList();
             await ctx.Paginate(
                 members.ToAsyncEnumerable(),
@@ -62,11 +63,10 @@ namespace PluralKit.Bot
             return opts;
         }
 
-        private IListRenderer GetRendererFor(Context ctx)
+        private IListRenderer GetRendererFor(Context ctx, bool isLongList, SortFilterOptions opts)
         {
-            var longList = ctx.Match("f", "full", "big", "details", "long") || ctx.MatchFlag("f", "full");
-            if (longList)
-                return new LongRenderer(LongRenderer.MemberFields.FromFlags(ctx));
+            if (isLongList)
+                return new LongRenderer(LongRenderer.MemberFields.FromFlags(ctx, opts));
             return new ShortRenderer();
         }
     }
