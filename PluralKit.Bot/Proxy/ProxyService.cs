@@ -56,9 +56,12 @@ namespace PluralKit.Bot
             // Permission check after proxy match so we don't get spammed when not actually proxying
             if (!await CheckBotPermissionsOrError(message.Channel)) return false;
             if (!CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx))) return false;
+            
+            // Check if we can mention everyone/here
+            var allowEveryone = (message.Channel.PermissionsInSync(message.Author) & Permissions.MentionEveryone) != 0;
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(conn, message, ctx, match);
+            await ExecuteProxy(conn, message, ctx, match, allowEveryone);
             return true;
         }
 
@@ -85,14 +88,13 @@ namespace PluralKit.Bot
         }
 
         private async Task ExecuteProxy(IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
-                                        ProxyMatch match)
+                                        ProxyMatch match, bool allowEveryone)
         {
             // Send the webhook
             var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
                 match.Member.ProxyAvatar(ctx),
-                match.ProxyContent, trigger.Attachments);
-
-                        
+                match.ProxyContent, trigger.Attachments, allowEveryone);
+            
             Task SaveMessage() => _data.AddMessage(conn, trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id, match.Member.Id);
             Task LogMessage() => _logChannel.LogMessage(ctx, match, trigger, id).AsTask();
             async Task DeleteMessage()

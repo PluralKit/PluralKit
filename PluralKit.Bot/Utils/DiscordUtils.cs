@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using DSharpPlus;
@@ -124,6 +126,63 @@ namespace PluralKit.Bot
                 .GetProperty("UserCache", BindingFlags.Instance | BindingFlags.NonPublic)
                 ?.GetValue(client);
             return cache != null && cache.TryGetValue(id, out user);
+        }
+        
+                private static readonly Regex USER_MENTION = new Regex("<@!?(\\d{17,19})>");
+        private static readonly Regex ROLE_MENTION = new Regex("<@&(\\d{17,19})>");
+        private static readonly Regex EVERYONE_HERE_MENTION = new Regex("@(everyone|here)");
+        public static DiscordColor? ToDiscordColor(this string color)
+        {
+            if (int.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
+                return new DiscordColor(colorInt);
+            throw new ArgumentException($"Invalid color string '{color}'.");
+        }
+        
+        public static bool HasMentionPrefix(string content, ref int argPos, out ulong mentionId)
+        {
+            mentionId = 0;
+            
+            // Roughly ported from Discord.Commands.MessageExtensions.HasMentionPrefix
+            if (string.IsNullOrEmpty(content) || content.Length <= 3 || (content[0] != '<' || content[1] != '@'))
+                return false;
+            int num = content.IndexOf('>');
+            if (num == -1 || content.Length < num + 2 || content[num + 1] != ' ' || !TryParseMention(content.Substring(0, num + 1), out mentionId))
+                return false;
+            argPos = num + 2;
+            return true;
+        }
+
+        public static bool TryParseMention(this string potentialMention, out ulong id)
+        {
+            if (ulong.TryParse(potentialMention, out id)) return true;
+
+            var match = USER_MENTION.Match(potentialMention);
+            if (match.Success && match.Index == 0 && match.Length == potentialMention.Length) 
+            {
+                id = ulong.Parse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static IEnumerable<IMention> ParseAllMentions(this string input, bool allowEveryone = false)
+        {
+            var mentions = new List<IMention>();
+            mentions.AddRange(USER_MENTION.Matches(input)
+                .Select(x => new UserMention(ulong.Parse(x.Groups[1].Value)) as IMention));
+            mentions.AddRange(ROLE_MENTION.Matches(input)
+                .Select(x => new RoleMention(ulong.Parse(x.Groups[1].Value)) as IMention));
+            if (EVERYONE_HERE_MENTION.IsMatch(input) && allowEveryone)
+                mentions.Add(new EveryoneMention());
+            return mentions;
+        }
+
+        public static string EscapeMarkdown(this string input)
+        {
+            Regex pattern = new Regex(@"[*_~>`(||)\\]", RegexOptions.Multiline);
+            if (input != null) return pattern.Replace(input, @"\$&");
+            else return input;
         }
     }
 }

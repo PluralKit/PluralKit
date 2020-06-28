@@ -42,13 +42,13 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<WebhookExecutorService>();
         }
 
-        public async Task<ulong> ExecuteWebhook(DiscordChannel channel, string name, string avatarUrl, string content, IReadOnlyList<DiscordAttachment> attachments)
+        public async Task<ulong> ExecuteWebhook(DiscordChannel channel, string name, string avatarUrl, string content, IReadOnlyList<DiscordAttachment> attachments, bool allowEveryone)
         {
             _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
             
             // Get a webhook, execute it
             var webhook = await _webhookCache.GetWebhook(channel);
-            var id = await ExecuteWebhookInner(channel, webhook, name, avatarUrl, content, attachments);
+            var id = await ExecuteWebhookInner(channel, webhook, name, avatarUrl, content, attachments, allowEveryone);
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
@@ -59,11 +59,14 @@ namespace PluralKit.Bot
         }
 
         private async Task<ulong> ExecuteWebhookInner(DiscordChannel channel, DiscordWebhook webhook, string name, string avatarUrl, string content,
-            IReadOnlyList<DiscordAttachment> attachments, bool hasRetried = false)
+            IReadOnlyList<DiscordAttachment> attachments, bool allowEveryone, bool hasRetried = false)
         {
+            content = content.Truncate(2000);
+            
             var dwb = new DiscordWebhookBuilder();
             dwb.WithUsername(FixClyde(name).Truncate(80));
-            dwb.WithContent(content.Truncate(2000));
+            dwb.WithContent(content);
+            dwb.AddMentions(content.ParseAllMentions(allowEveryone));
             if (avatarUrl != null) dwb.WithAvatarUrl(avatarUrl);
             
             var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
@@ -95,7 +98,7 @@ namespace PluralKit.Bot
                         _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
                         
                         var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(channel, webhook);
-                        return await ExecuteWebhookInner(channel, newWebhook, name, avatarUrl, content, attachments, hasRetried: true);
+                        return await ExecuteWebhookInner(channel, newWebhook, name, avatarUrl, content, attachments, allowEveryone, hasRetried: true);
                     }
 
                     throw;

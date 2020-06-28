@@ -80,7 +80,7 @@ namespace PluralKit.Bot
         private string? ExtractLeadingMention(ref string input)
         {
             var mentionPos = 0;
-            if (!StringUtils.HasMentionPrefix(input, ref mentionPos, out _)) return null;
+            if (!DiscordUtils.HasMentionPrefix(input, ref mentionPos, out _)) return null;
             
             var leadingMention = input.Substring(0, mentionPos);
             input = input.Substring(mentionPos);

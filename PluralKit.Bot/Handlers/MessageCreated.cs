@@ -91,7 +91,7 @@ namespace PluralKit.Bot
             // Check if message starts with the command prefix
             if (content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
             else if (content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
-            else if (StringUtils.HasMentionPrefix(content, ref argPos, out var id)) // Set argPos to the proper value
+            else if (DiscordUtils.HasMentionPrefix(content, ref argPos, out var id)) // Set argPos to the proper value
                 if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
                     argPos = -1;
 
