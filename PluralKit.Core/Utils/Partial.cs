@@ -30,6 +30,8 @@ namespace PluralKit.Core
         public IEnumerator<T> GetEnumerator() => ToArray().GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ToArray().GetEnumerator();
+
+        public static implicit operator Partial<T>(T val) => Present(val);
     }
 
     public class PartialConverter: JsonConverter

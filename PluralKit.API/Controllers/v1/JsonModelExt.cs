@@ -85,60 +85,64 @@ namespace PluralKit.API
             return o;
         }
 
-        public static void ApplyJson(this PKMember member, JObject o)
+        public static MemberPatch ToMemberPatch(JObject o)
         {
+            var patch = new MemberPatch();
+
             if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null) 
                 throw new JsonModelParseError("Member name can not be set to null.");
             
-            if (o.ContainsKey("name")) member.Name = o.Value<string>("name").BoundsCheckField(Limits.MaxMemberNameLength, "Member name");
-            if (o.ContainsKey("color")) member.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
-            if (o.ContainsKey("display_name")) member.DisplayName = o.Value<string>("display_name").NullIfEmpty().BoundsCheckField(Limits.MaxMemberNameLength, "Member display name");
-            if (o.ContainsKey("avatar_url")) member.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "Member avatar URL");
+            if (o.ContainsKey("name")) patch.Name = o.Value<string>("name").BoundsCheckField(Limits.MaxMemberNameLength, "Member name");
+            if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
+            if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty().BoundsCheckField(Limits.MaxMemberNameLength, "Member display name");
+            if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "Member avatar URL");
             if (o.ContainsKey("birthday"))
             {
                 var str = o.Value<string>("birthday").NullIfEmpty();
                 var res = DateTimeFormats.DateExportFormat.Parse(str);
-                if (res.Success) member.Birthday = res.Value;
-                else if (str == null) member.Birthday = null;
+                if (res.Success) patch.Birthday = res.Value;
+                else if (str == null) patch.Birthday = null;
                 else throw new JsonModelParseError("Could not parse member birthday.");
             }
 
-            if (o.ContainsKey("pronouns")) member.Pronouns = o.Value<string>("pronouns").NullIfEmpty().BoundsCheckField(Limits.MaxPronounsLength, "Member pronouns");
-            if (o.ContainsKey("description")) member.Description = o.Value<string>("description").NullIfEmpty().BoundsCheckField(Limits.MaxDescriptionLength, "Member descriptoin");
-            if (o.ContainsKey("keep_proxy")) member.KeepProxy = o.Value<bool>("keep_proxy");
+            if (o.ContainsKey("pronouns")) patch.Pronouns = o.Value<string>("pronouns").NullIfEmpty().BoundsCheckField(Limits.MaxPronounsLength, "Member pronouns");
+            if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty().BoundsCheckField(Limits.MaxDescriptionLength, "Member descriptoin");
+            if (o.ContainsKey("keep_proxy")) patch.KeepProxy = o.Value<bool>("keep_proxy");
 
             if (o.ContainsKey("prefix") || o.ContainsKey("suffix") && !o.ContainsKey("proxy_tags"))
-                member.ProxyTags = new[] {new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix"))};
+                patch.ProxyTags = new[] {new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix"))};
             else if (o.ContainsKey("proxy_tags"))
             {
-                member.ProxyTags = o.Value<JArray>("proxy_tags")
+                patch.ProxyTags = o.Value<JArray>("proxy_tags")
                     .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
-                    .ToList();
+                    .ToArray();
             }
             if(o.ContainsKey("privacy")) //TODO: Deprecate this completely in api v2
             {
                 var plevel = o.Value<string>("privacy").ParsePrivacy("member");
                                 
-                member.MemberVisibility = plevel;
-                member.NamePrivacy = plevel;
-                member.AvatarPrivacy = plevel;
-                member.DescriptionPrivacy = plevel;
-                member.BirthdayPrivacy = plevel;
-                member.PronounPrivacy = plevel;
+                patch.Visibility = plevel;
+                patch.NamePrivacy = plevel;
+                patch.AvatarPrivacy = plevel;
+                patch.DescriptionPrivacy = plevel;
+                patch.BirthdayPrivacy = plevel;
+                patch.PronounPrivacy = plevel;
                 // member.ColorPrivacy = plevel;
-                member.MetadataPrivacy = plevel;
+                patch.MetadataPrivacy = plevel;
             }
             else
             {
-                if (o.ContainsKey("visibility")) member.MemberVisibility = o.Value<string>("visibility").ParsePrivacy("member");
-                if (o.ContainsKey("name_privacy")) member.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("description_privacy")) member.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("avatar_privacy")) member.AvatarPrivacy = o.Value<string>("avatar_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("birthday_privacy")) member.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("pronoun_privacy")) member.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("visibility")) patch.Visibility = o.Value<string>("visibility").ParsePrivacy("member");
+                if (o.ContainsKey("name_privacy")) patch.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("avatar_privacy")) patch.AvatarPrivacy = o.Value<string>("avatar_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("birthday_privacy")) patch.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("pronoun_privacy")) patch.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
                 // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("metadata_privacy")) member.MetadataPrivacy = o.Value<string>("metadata_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("metadata_privacy")) patch.MetadataPrivacy = o.Value<string>("metadata_privacy").ParsePrivacy("member");
             }
+
+            return patch;
         }
 
         private static string BoundsCheckField(this string input, int maxLength, string nameInError)

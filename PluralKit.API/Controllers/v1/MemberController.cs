@@ -16,12 +16,14 @@ namespace PluralKit.API
     public class MemberController: ControllerBase
     {
         private IDataStore _data;
+        private IDatabase _db;
         private IAuthorizationService _auth;
 
-        public MemberController(IDataStore data, IAuthorizationService auth)
+        public MemberController(IDataStore data, IAuthorizationService auth, IDatabase db)
         {
             _data = data;
             _auth = auth;
+            _db = db;
         }
 
         [HttpGet("{hid}")]
@@ -48,18 +50,18 @@ namespace PluralKit.API
                 return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
 
             var member = await _data.CreateMember(system, properties.Value<string>("name"));
+            MemberPatch patch;
             try
             {
-                member.ApplyJson(properties);
+                patch = JsonModelExt.ToMemberPatch(properties);
             }
             catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
             }
             
-            // TODO: retire SaveMember
-            await _data.SaveMember(member);
-            return Ok(member.ToJson(User.ContextFor(member)));
+            var newMember = await _db.Execute(conn => conn.UpdateMember(member.Id, patch));
+            return Ok(member.ToJson(User.ContextFor(newMember)));
         }
 
         [HttpPatch("{hid}")]
@@ -72,18 +74,18 @@ namespace PluralKit.API
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
             if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
 
+            MemberPatch patch;
             try
             {
-                member.ApplyJson(changes);
+                patch = JsonModelExt.ToMemberPatch(changes);
             }
             catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
             }
             
-            // TODO: retire SaveMember
-            await _data.SaveMember(member);
-            return Ok(member.ToJson(User.ContextFor(member)));
+            var newMember = await _db.Execute(conn => conn.UpdateMember(member.Id, patch));
+            return Ok(member.ToJson(User.ContextFor(newMember)));
         }
         
         [HttpDelete("{hid}")]

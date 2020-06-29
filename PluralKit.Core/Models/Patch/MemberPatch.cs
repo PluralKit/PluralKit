@@ -8,6 +8,7 @@ namespace PluralKit.Core
     {
         public Partial<string> Name { get; set; }
         public Partial<string?> DisplayName { get; set; }
+        public Partial<string?> AvatarUrl { get; set; }
         public Partial<string?> Color { get; set; }
         public Partial<LocalDate?> Birthday { get; set; }
         public Partial<string?> Pronouns { get; set; }
@@ -26,6 +27,7 @@ namespace PluralKit.Core
         public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
             .With("name", Name)
             .With("display_name", DisplayName)
+            .With("avatar_url", AvatarUrl)
             .With("color", Color)
             .With("birthday", Birthday)
             .With("pronouns", Pronouns)

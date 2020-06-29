@@ -56,8 +56,6 @@ namespace PluralKit.Bot
                         throw Errors.GenericCancelled();
                 }
                 
-                target.ProxyTags = new ProxyTag[] { };
-                
                 var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(new ProxyTag[0])};
                 await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
                 

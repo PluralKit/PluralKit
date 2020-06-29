@@ -72,12 +72,10 @@ namespace PluralKit.Core
             };
         }
 
-        private PKMember ConvertMember(PKSystem system, DataFileMember fileMember)
+        private MemberPatch ToMemberPatch(DataFileMember fileMember)
         {
-            var newMember = new PKMember
+            var newMember = new MemberPatch
             {
-                Hid = fileMember.Id,
-                System = system.Id,
                 Name = fileMember.Name,
                 DisplayName = fileMember.DisplayName,
                 Description = fileMember.Description,
@@ -88,10 +86,10 @@ namespace PluralKit.Core
             };
 
             if (fileMember.Prefix != null || fileMember.Suffix != null)
-                newMember.ProxyTags = new List<ProxyTag> {new ProxyTag(fileMember.Prefix, fileMember.Suffix)};
+                newMember.ProxyTags = new[] {new ProxyTag(fileMember.Prefix, fileMember.Suffix)};
             else
                 // Ignore proxy tags where both prefix and suffix are set to null (would be invalid anyway)
-                newMember.ProxyTags = (fileMember.ProxyTags ?? new ProxyTag[] { }).Where(tag => !tag.IsEmpty).ToList();
+                newMember.ProxyTags = (fileMember.ProxyTags ?? new ProxyTag[] { }).Where(tag => !tag.IsEmpty).ToArray();
                 
             if (fileMember.Birthday != null)
             {
@@ -149,7 +147,7 @@ namespace PluralKit.Core
                     _logger.Debug(
                         "Importing member with identifier {FileId} to system {System} (is creating new member? {IsCreatingNewMember})",
                         fileMember.Id, system.Id, isCreatingNewMember);
-                    var newMember = await imp.AddMember(fileMember.Id, ConvertMember(system, fileMember));
+                    var newMember = await imp.AddMember(fileMember.Id, fileMember.Id, fileMember.Name, ToMemberPatch(fileMember));
 
                     if (isCreatingNewMember)
                         result.AddedNames.Add(newMember.Name);

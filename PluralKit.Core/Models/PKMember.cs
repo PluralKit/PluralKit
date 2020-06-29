@@ -9,27 +9,27 @@ namespace PluralKit.Core {
     public class PKMember
     {
         public MemberId Id { get; }
-        public string Hid { get; set; }
-        public SystemId System { get; set; }
-        public string Color { get; set; }
-        public string AvatarUrl { get; set; }
-        public string Name { get; set; }
-        public string DisplayName { get; set; }
-        public LocalDate? Birthday { get; set; }
-        public string Pronouns { get; set; }
-        public string Description { get; set; }
-        public ICollection<ProxyTag> ProxyTags { get; set; }
-        public bool KeepProxy { get; set; }
-        public Instant Created { get; set; }
-        public int MessageCount { get; set; }
+        public string Hid { get; }
+        public SystemId System { get; }
+        public string Color { get; }
+        public string AvatarUrl { get; }
+        public string Name { get; }
+        public string DisplayName { get; }
+        public LocalDate? Birthday { get; }
+        public string Pronouns { get; }
+        public string Description { get; }
+        public ICollection<ProxyTag> ProxyTags { get; }
+        public bool KeepProxy { get; }
+        public Instant Created { get; }
+        public int MessageCount { get; }
 
-        public PrivacyLevel MemberVisibility { get; set; }
-        public PrivacyLevel DescriptionPrivacy { get; set; }
-        public PrivacyLevel AvatarPrivacy { get; set; }
-        public PrivacyLevel NamePrivacy { get; set; } //ignore setting if no display name is set
-        public PrivacyLevel BirthdayPrivacy { get; set; }
-        public PrivacyLevel PronounPrivacy { get; set; }
-        public PrivacyLevel MetadataPrivacy { get; set; }
+        public PrivacyLevel MemberVisibility { get; }
+        public PrivacyLevel DescriptionPrivacy { get; }
+        public PrivacyLevel AvatarPrivacy { get; }
+        public PrivacyLevel NamePrivacy { get; } //ignore setting if no display name is set
+        public PrivacyLevel BirthdayPrivacy { get; }
+        public PrivacyLevel PronounPrivacy { get; }
+        public PrivacyLevel MetadataPrivacy { get; }
         // public PrivacyLevel ColorPrivacy { get; set; }
         
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden

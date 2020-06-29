@@ -100,10 +100,10 @@ namespace PluralKit.Bot
                 var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (description.IsLongerThan(Limits.MaxDescriptionLength))
                     throw Errors.DescriptionTooLongError(description.Length);
-                target.Description = description;
         
                 var patch = new MemberPatch {Description = Partial<string>.Present(description)};
                 await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} Member description changed.");
             }
         }
