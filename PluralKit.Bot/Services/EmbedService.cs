@@ -28,13 +28,15 @@ namespace PluralKit.Bot {
 
 
         
-        public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx) {
-            var accounts = await _data.GetSystemAccounts(system);
-
+        public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx)
+        {
+            await using var conn = await _db.Obtain();
+            
             // Fetch/render info for all accounts simultaneously
+            var accounts = await conn.GetLinkedAccounts(system.Id);
             var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
-            var memberCount = await _data.GetSystemMemberCount(system.Id, false);
+            var memberCount = await conn.GetSystemMemberCount(system.Id, PrivacyLevel.Public);
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)

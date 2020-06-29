@@ -1,9 +1,9 @@
 ﻿#nullable enable
+using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 using Dapper;
-
-using PluralKit.Core;
 
 namespace PluralKit.Core
 {
@@ -11,9 +11,23 @@ namespace PluralKit.Core
     {
         public static Task<PKSystem?> QuerySystem(this IPKConnection conn, SystemId id) =>
             conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where id = @id", new {id});
-        
+
+        public static Task<int> GetSystemMemberCount(this IPKConnection conn, SystemId id, PrivacyLevel? privacyFilter = null)
+        {
+            var query = new StringBuilder("select count(*) from members where system = @Id");
+            if (privacyFilter != null)
+                query.Append($" and member_visibility = {(int) privacyFilter.Value}");
+            return conn.QuerySingleAsync<int>(query.ToString(), new {Id = id});
+        }
+
+        public static Task<IEnumerable<ulong>> GetLinkedAccounts(this IPKConnection conn, SystemId id) =>
+            conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new {Id = id});
+
         public static Task<PKMember?> QueryMember(this IPKConnection conn, MemberId id) =>
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where id = @id", new {id});
+        
+        public static Task<PKMember?> QueryMemberByHid(this IPKConnection conn, string hid) =>
+            conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where hid = @hid", new {hid = hid.ToLowerInvariant()});
         
         public static Task<GuildConfig> QueryOrInsertGuildConfig(this IPKConnection conn, ulong guild) =>
             conn.QueryFirstAsync<GuildConfig>("insert into servers (id) values (@guild) on conflict (id) do update set id = @guild returning *", new {guild});

@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
 
+using Dapper;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,13 +17,11 @@ namespace PluralKit.API
     [Route( "v{version:apiVersion}/m" )]
     public class MemberController: ControllerBase
     {
-        private IDataStore _data;
         private IDatabase _db;
         private IAuthorizationService _auth;
 
-        public MemberController(IDataStore data, IAuthorizationService auth, IDatabase db)
+        public MemberController(IAuthorizationService auth, IDatabase db)
         {
-            _data = data;
             _auth = auth;
             _db = db;
         }
@@ -29,7 +29,7 @@ namespace PluralKit.API
         [HttpGet("{hid}")]
         public async Task<ActionResult<JObject>> GetMember(string hid)
         {
-            var member = await _data.GetMemberByHid(hid);
+            var member = await _db.Execute(conn => conn.QueryMemberByHid(hid));
             if (member == null) return NotFound("Member not found.");
 
             return Ok(member.ToJson(User.ContextFor(member)));
@@ -40,16 +40,17 @@ namespace PluralKit.API
         public async Task<ActionResult<JObject>> PostMember([FromBody] JObject properties)
         {
             var system = User.CurrentSystem();
-            
             if (!properties.ContainsKey("name"))
                 return BadRequest("Member name must be specified.");
 
+            await using var conn = await _db.Obtain();
+
             // Enforce per-system member limit
-            var memberCount = await _data.GetSystemMemberCount(system, true);
+            var memberCount = await conn.QuerySingleAsync<int>("select count(*) from members where system = @System", new {System = system});
             if (memberCount >= Limits.MaxMemberCount)
                 return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
 
-            var member = await _data.CreateMember(system, properties.Value<string>("name"));
+            var member = await conn.CreateMember(system, properties.Value<string>("name"));
             MemberPatch patch;
             try
             {
@@ -60,15 +61,17 @@ namespace PluralKit.API
                 return BadRequest(e.Message);
             }
             
-            var newMember = await _db.Execute(conn => conn.UpdateMember(member.Id, patch));
-            return Ok(member.ToJson(User.ContextFor(newMember)));
+            member = await conn.UpdateMember(member.Id, patch);
+            return Ok(member.ToJson(User.ContextFor(member)));
         }
 
         [HttpPatch("{hid}")]
         [Authorize]
         public async Task<ActionResult<JObject>> PatchMember(string hid, [FromBody] JObject changes)
         {
-            var member = await _data.GetMemberByHid(hid);
+            await using var conn = await _db.Obtain();
+
+            var member = await conn.QueryMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
             
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
@@ -84,7 +87,7 @@ namespace PluralKit.API
                 return BadRequest(e.Message);
             }
             
-            var newMember = await _db.Execute(conn => conn.UpdateMember(member.Id, patch));
+            var newMember = await conn.UpdateMember(member.Id, patch);
             return Ok(member.ToJson(User.ContextFor(newMember)));
         }
         
@@ -92,13 +95,15 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult> DeleteMember(string hid)
         {
-            var member = await _data.GetMemberByHid(hid);
+            await using var conn = await _db.Obtain();
+
+            var member = await conn.QueryMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
             
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
             if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
-            
-            await _data.DeleteMember(member);
+
+            await conn.DeleteMember(member.Id);
             return Ok();
         }
     }

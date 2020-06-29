@@ -18,23 +18,6 @@ namespace PluralKit.Core {
             _conn = conn;
             _logger = logger;
         }
-
-        public async Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag)
-        {
-            using (var conn = await _conn.Obtain())
-                // return await conn.QueryAsync<PKMember>("select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix ilike @Prefix and suffix ilike @Suffix", new
-                // {
-                //     System = system.Id,
-                //     Prefix = tag.Prefix.Replace("%", "\\%") + "%",
-                //     Suffix = "%" + tag.Suffix.Replace("%", "\\%")
-                // });
-                return await conn.QueryAsync<PKMember>("select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix = @Prefix and suffix = @Suffix", new
-                {
-                    System = system.Id,
-                    Prefix = tag.Prefix,
-                    Suffix = tag.Suffix
-                });
-        }
         
         public async Task<PKSystem> CreateSystem(string systemName = null) {
             PKSystem system;
@@ -72,35 +55,6 @@ namespace PluralKit.Core {
                 return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where systems.hid = @Hid", new { Hid = hid.ToLower() });
         }
 
-        public async Task<PKSystem> GetSystemByToken(string token) {
-            using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where token = @Token", new { Token = token });
-        }
-
-        public async Task<PKSystem> GetSystemById(int id)
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleOrDefaultAsync<PKSystem>("select * from systems where id = @Id", new { Id = id });
-        }
-
-        public async Task SaveSystem(PKSystem system) {
-            using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update systems set name = @Name, description = @Description, tag = @Tag, avatar_url = @AvatarUrl, token = @Token, ui_tz = @UiTz, description_privacy = @DescriptionPrivacy, member_list_privacy = @MemberListPrivacy, front_privacy = @FrontPrivacy, front_history_privacy = @FrontHistoryPrivacy, pings_enabled = @PingsEnabled where id = @Id", system);
-
-            _logger.Information("Updated system {@System}", system);
-        }
-
-        public async Task DeleteSystem(PKSystem system)
-        {
-            using var conn = await _conn.Obtain();
-            
-            // Fetch the list of accounts *before* deletion so we can cache-bust all of those
-            var accounts = (await conn.QueryAsync<ulong>("select uid from accounts where system = @Id", system)).ToArray();
-            await conn.ExecuteAsync("delete from systems where id = @Id", system);
-            
-            _logger.Information("Deleted system {System}", system.Id);
-        }
-
         public async Task<IEnumerable<ulong>> GetSystemAccounts(PKSystem system)
         {
             using (var conn = await _conn.Obtain())
@@ -113,23 +67,6 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("delete from switches where system = @Id", system);
         }
 
-        public async Task<PKMember> CreateMember(SystemId system, string name) {
-            PKMember member;
-            using (var conn = await _conn.Obtain())
-                member = await conn.QuerySingleAsync<PKMember>("insert into members (hid, system, name) values (find_free_member_hid(), @SystemId, @Name) returning *", new {
-                    SystemID = system,
-                    Name = name
-                });
-
-            _logger.Information("Created member {Member}", member.Id);
-            return member;
-        }
-
-        public async Task<PKMember> GetMemberById(MemberId id) {
-            using (var conn = await _conn.Obtain())
-                return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where id = @Id", new { Id = id });
-        }
-        
         public async Task<PKMember> GetMemberByHid(string hid) {
             using (var conn = await _conn.Obtain())
                 return await conn.QuerySingleOrDefaultAsync<PKMember>("select * from members where hid = @Hid", new { Hid = hid.ToLower() });
@@ -154,35 +91,6 @@ namespace PluralKit.Core {
             return _conn.QueryStreamAsync<PKMember>(sql, new { SystemID = system.Id });
         }
 
-        public async Task SaveMember(PKMember member) {
-            using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("update members set name = @Name, display_name = @DisplayName, description = @Description, color = @Color, avatar_url = @AvatarUrl, birthday = @Birthday, pronouns = @Pronouns, proxy_tags = @ProxyTags, keep_proxy = @KeepProxy, member_visibility = @MemberVisibility, description_privacy = @DescriptionPrivacy,  name_privacy = @NamePrivacy, avatar_privacy = @AvatarPrivacy, birthday_privacy = @BirthdayPrivacy, pronoun_privacy = @PronounPrivacy, metadata_privacy = @MetadataPrivacy where id = @Id", member);
-
-            _logger.Information("Updated member {@Member}", member);
-        }
-
-        public async Task DeleteMember(PKMember member) {
-            using (var conn = await _conn.Obtain())
-                await conn.ExecuteAsync("delete from members where id = @Id", member);
-
-            _logger.Information("Deleted member {@Member}", member);
-        }
-
-        public async Task<int> GetSystemMemberCount(SystemId id, bool includePrivate)
-        {
-            var query = "select count(*) from members where system = @Id";
-            if (!includePrivate) query += " and member_visibility = 1"; // 1 = public
-            
-            using (var conn = await _conn.Obtain())
-                return await conn.ExecuteScalarAsync<int>(query, new { id });
-        }
-
-        public async Task<ulong> GetTotalMembers()
-        {
-            using (var conn = await _conn.Obtain())
-                return await conn.ExecuteScalarAsync<ulong>("select count(id) from members");
-        }
-        
         public async Task AddMessage(IPKConnection conn, ulong senderId, ulong guildId, ulong channelId, ulong postedMessageId, ulong triggerMessageId, MemberId proxiedMemberId) {
             // "on conflict do nothing" in the (pretty rare) case of duplicate events coming in from Discord, which would lead to a DB error before
             await conn.ExecuteAsync("insert into messages(mid, guild, channel, member, sender, original_mid) values(@MessageId, @GuildId, @ChannelId, @MemberId, @SenderId, @OriginalMid) on conflict do nothing", new {

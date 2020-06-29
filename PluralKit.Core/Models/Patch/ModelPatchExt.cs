@@ -16,7 +16,12 @@ namespace PluralKit.Core
 
         public static Task DeleteSystem(this IPKConnection conn, SystemId id) =>
             conn.ExecuteAsync("delete from systems where id = @Id", new {Id = id});
-        
+
+        public static Task<PKMember> CreateMember(this IPKConnection conn, SystemId system, string memberName) =>
+            conn.QueryFirstAsync<PKMember>(
+                "insert into members (hid, system, name) values (find_free_member_hid(), @SystemId, @Name) returning *",
+                new {SystemId = system, Name = memberName});
+
         public static Task<PKMember> UpdateMember(this IPKConnection conn, MemberId id, MemberPatch patch)
         {
             var (query, pms) = patch.Apply(new UpdateQueryBuilder("members", "id = @id"))

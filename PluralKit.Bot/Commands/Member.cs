@@ -32,13 +32,15 @@ namespace PluralKit.Bot
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
             }
 
+            await using var conn = await _db.Obtain();
+
             // Enforce per-system member limit
-            var memberCount = await _data.GetSystemMemberCount(ctx.System.Id, true);
+            var memberCount = await conn.GetSystemMemberCount(ctx.System.Id);
             if (memberCount >= Limits.MaxMemberCount)
                 throw Errors.MemberLimitReachedError;
 
             // Create the member
-            var member = await _data.CreateMember(ctx.System.Id, memberName);
+            var member = await conn.CreateMember(ctx.System.Id, memberName);
             memberCount++;
             
             // Send confirmation and space hint

@@ -62,25 +62,13 @@ namespace PluralKit.Core {
         /// </summary>
         /// <returns>The <see cref="PKSystem"/> with the given linked account, or null if no system was found.</returns>
         Task<PKSystem> GetSystemByAccount(ulong linkedAccount);
-        
-        /// <summary>
-        /// Gets a system by its API token. 
-        /// </summary>
-        /// <returns>The <see cref="PKSystem"/> with the given API token, or null if no corresponding system was found.</returns> 
-        Task<PKSystem> GetSystemByToken(string apiToken);
-        
+
         /// <summary>
         /// Gets the Discord account IDs linked to a system.
         /// </summary>
         /// <returns>An enumerable of Discord account IDs linked to this system.</returns>
         Task<IEnumerable<ulong>> GetSystemAccounts(PKSystem system);
 
-        /// <summary>
-        /// Gets the member count of a system.
-        /// </summary>
-        /// <param name="includePrivate">Whether the returned count should include private members.</param>
-        Task<int> GetSystemMemberCount(SystemId system, bool includePrivate);
-        
         /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
         /// </summary>
@@ -132,28 +120,6 @@ namespace PluralKit.Core {
         /// <returns>An enumerable of <see cref="PKMember"/> structs representing each member in the system, in no particular order.</returns>
         IAsyncEnumerable<PKMember> GetSystemMembers(PKSystem system, bool orderByName = false);
 
-        /// <summary>
-        /// Creates a member, auto-generating its corresponding IDs.
-        /// </summary>
-        /// <param name="system">The system in which to create the member.</param>
-        /// <param name="name">The name of the member to create.</param>
-        /// <returns>The created system model.</returns>
-        Task<PKMember> CreateMember(SystemId system, string name);
-        
-        /// <summary>
-        /// Saves the information within the given <see cref="PKMember"/> struct to the data store.
-        /// </summary>
-        Task SaveMember(PKMember member);
-        
-        /// <summary>
-        /// Deletes the given member from the database.
-        /// </summary>
-        /// <para>
-        /// This will remove this member from any switches it's involved in, as well as all the messages
-        /// proxied by this member.
-        /// </para>
-        Task DeleteMember(PKMember member);
-        
         /// <summary>
         /// Gets a message and its information by its ID.
         /// </summary>
