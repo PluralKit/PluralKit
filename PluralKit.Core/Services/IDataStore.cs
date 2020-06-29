@@ -102,20 +102,6 @@ namespace PluralKit.Core {
         /// </summary>
         /// <exception>Throws an exception (TODO: which?) if the given account is not linked to the given system.</exception>
         Task RemoveAccount(PKSystem system, ulong accountToRemove);
-        
-        /// <summary>
-        /// Saves the information within the given <see cref="PKSystem"/> struct to the data store.
-        /// </summary>
-        Task SaveSystem(PKSystem system);
-        
-        /// <summary>
-        /// Deletes the given system from the database.
-        /// </summary>
-        /// <para>
-        /// This will also delete all the system's members, all system switches, and every message that has been proxied
-        /// by members in the system.
-        /// </para>
-        Task DeleteSystem(PKSystem system);
 
         /// <summary>
         /// Gets a member by its user-facing human ID.

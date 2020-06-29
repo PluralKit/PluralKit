@@ -10,18 +10,18 @@ namespace PluralKit.Core {
         // Additions here should be mirrored in SystemStore::Save
         [Key] public SystemId Id { get; }
         public string Hid { get; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Tag { get; set; }
-        public string AvatarUrl { get; set; }
-        public string Token { get; set; }
+        public string Name { get; }
+        public string Description { get; }
+        public string Tag { get; }
+        public string AvatarUrl { get; }
+        public string Token { get; }
         public Instant Created { get; }
         public string UiTz { get; set; }
-        public bool PingsEnabled { get; set; }
-	    public PrivacyLevel DescriptionPrivacy { get; set; }
-        public PrivacyLevel MemberListPrivacy { get; set; }
-        public PrivacyLevel FrontPrivacy { get; set; }
-        public PrivacyLevel FrontHistoryPrivacy { get; set; }
+        public bool PingsEnabled { get; }
+	    public PrivacyLevel DescriptionPrivacy { get; }
+        public PrivacyLevel MemberListPrivacy { get;}
+        public PrivacyLevel FrontPrivacy { get; }
+        public PrivacyLevel FrontHistoryPrivacy { get; }
         
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }

@@ -116,16 +116,17 @@ namespace PluralKit.Core
                 await _data.AddAccount(system, accountId);
             }
             
+            await using var conn = await _db.Obtain();
+
             // Apply system info
-            system.Name = data.Name;
-            if (data.Description != null) system.Description = data.Description;
-            if (data.Tag != null) system.Tag = data.Tag;
-            if (data.AvatarUrl != null) system.AvatarUrl = data.AvatarUrl;
-            if (data.TimeZone != null) system.UiTz = data.TimeZone ?? "UTC";
-            await _data.SaveSystem(system);
+            var patch = new SystemPatch {Name = data.Name};
+            if (data.Description != null) patch.Description = data.Description;
+            if (data.Tag != null) patch.Tag = data.Tag;
+            if (data.AvatarUrl != null) patch.AvatarUrl = data.AvatarUrl;
+            if (data.TimeZone != null) patch.UiTz = data.TimeZone ?? "UTC";
+            await conn.UpdateSystem(system.Id, patch);
             
             // -- Member/switch import --
-            await using var conn = await _db.Obtain();
             await using (var imp = await BulkImporter.Begin(system, conn))
             {
                 // Tally up the members that didn't exist before, and check member count on import

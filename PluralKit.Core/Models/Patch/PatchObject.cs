@@ -1,8 +1,6 @@
-﻿using PluralKit.Core;
-
-namespace PluralKit.Core
+﻿namespace PluralKit.Core
 {
-    public abstract class PatchObject<TKey, TObj>
+    public abstract class PatchObject
     {
         public abstract UpdateQueryBuilder Apply(UpdateQueryBuilder b);
     }

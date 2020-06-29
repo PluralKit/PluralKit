@@ -34,8 +34,9 @@ namespace PluralKit.Bot
 
             if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
-                ctx.System.Name = null;
-                await _data.SaveSystem(ctx.System);
+                var clearPatch = new SystemPatch {Name = null};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
+
                 await ctx.Reply($"{Emojis.Success} System name cleared.");
                 return;
             }
@@ -50,9 +51,12 @@ namespace PluralKit.Bot
                 return;
             }
             
-            if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength) throw Errors.SystemNameTooLongError(newSystemName.Length);
-            ctx.System.Name = newSystemName;
-            await _data.SaveSystem(ctx.System);
+            if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength)
+                throw Errors.SystemNameTooLongError(newSystemName.Length);
+            
+            var patch = new SystemPatch {Name = newSystemName};
+            await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+            
             await ctx.Reply($"{Emojis.Success} System name changed.");
         }
         
@@ -61,8 +65,9 @@ namespace PluralKit.Bot
 
             if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
-                ctx.System.Description = null;
-                await _data.SaveSystem(ctx.System);
+                var patch = new SystemPatch {Description = null};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} System description cleared.");
                 return;
             }
@@ -84,8 +89,10 @@ namespace PluralKit.Bot
             else
             {
                 if (newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
-                ctx.System.Description = newDescription;
-                await _data.SaveSystem(ctx.System);
+                
+                var patch = new SystemPatch {Description = newDescription};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} System description changed.");
             }
         }
@@ -96,8 +103,9 @@ namespace PluralKit.Bot
 
             if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
-                ctx.System.Tag = null;
-                await _data.SaveSystem(ctx.System);
+                var patch = new SystemPatch {Tag = null};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} System tag cleared.");
             } else if (!ctx.HasNext(skipFlags: false))
             {
@@ -112,8 +120,10 @@ namespace PluralKit.Bot
                 if (newTag != null)
                     if (newTag.Length > Limits.MaxSystemTagLength)
                         throw Errors.SystemNameTooLongError(newTag.Length);
-                ctx.System.Tag = newTag;
-                await _data.SaveSystem(ctx.System);
+                
+                var patch = new SystemPatch {Tag = newTag};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag}` when proxied.");
             }
         }
@@ -124,8 +134,9 @@ namespace PluralKit.Bot
             
             if (ctx.Match("clear") || ctx.MatchFlag("c", "clear"))
             {
-                ctx.System.AvatarUrl = null;
-                await _data.SaveSystem(ctx.System);
+                var patch = new SystemPatch {AvatarUrl = null};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} System avatar cleared.");
                 return;
             }
@@ -149,10 +160,12 @@ namespace PluralKit.Bot
             if (member != null)
             {
                 if (member.AvatarHash == null) throw Errors.UserHasNoAvatar;
-                ctx.System.AvatarUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
-                await _data.SaveSystem(ctx.System);
-            
-                var embed = new DiscordEmbedBuilder().WithImageUrl(ctx.System.AvatarUrl).Build();
+
+                var newUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
+                var patch = new SystemPatch {AvatarUrl = newUrl};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                
+                var embed = new DiscordEmbedBuilder().WithImageUrl(newUrl).Build();
                 await ctx.Reply(
                     $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
             }
@@ -163,8 +176,8 @@ namespace PluralKit.Bot
                 if (url?.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
                 await ctx.BusyIndicator(() => AvatarUtils.VerifyAvatarOrThrow(url));
 
-                ctx.System.AvatarUrl = url;
-                await _data.SaveSystem(ctx.System);
+                var patch = new SystemPatch {AvatarUrl = url};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
 
                 var embed = url != null ? new DiscordEmbedBuilder().WithImageUrl(url).Build() : null;
                 await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed);
@@ -178,7 +191,8 @@ namespace PluralKit.Bot
             if (!await ctx.ConfirmWithReply(ctx.System.Hid))
                 throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{ctx.System.Hid}`) *verbatim*.");
 
-            await _data.DeleteSystem(ctx.System);
+            await _db.Execute(conn => conn.DeleteSystem(ctx.System.Id));
+            
             await ctx.Reply($"{Emojis.Success} System deleted.");
         }
         
@@ -216,8 +230,9 @@ namespace PluralKit.Bot
 
             if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
             {
-                ctx.System.UiTz = "UTC";
-                await _data.SaveSystem(ctx.System);
+                var clearPatch = new SystemPatch {UiTz = "UTC"};
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
+
                 await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
                 return;
             }
@@ -237,8 +252,9 @@ namespace PluralKit.Bot
             var msg = await ctx.Reply(
                 $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?");
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
-            ctx.System.UiTz = zone.Id;
-            await _data.SaveSystem(ctx.System);
+            
+            var patch = new SystemPatch {UiTz = zone.Id};
+            await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
 
             await ctx.Reply($"System time zone changed to **{zone.Id}**.");
         }
@@ -290,39 +306,41 @@ namespace PluralKit.Bot
 
             string levelStr, levelExplanation, subjectStr;
             var subjectList = "`description`, `members`, `front`, `fronthistory`, or `all`";
+            
+            SystemPatch patch = new SystemPatch();
             if (ctx.Match("description", "desc", "text", "info"))
             {
                 subjectStr = "description";
-                ctx.System.DescriptionPrivacy = PopPrivacyLevel("description", out levelStr, out levelExplanation);
+                patch.DescriptionPrivacy = PopPrivacyLevel("description", out levelStr, out levelExplanation);
             } 
             else if (ctx.Match("members", "memberlist", "list", "mlist"))
             {
                 subjectStr = "member list";
-                ctx.System.MemberListPrivacy = PopPrivacyLevel("members", out levelStr, out levelExplanation);
+                patch.MemberListPrivacy = PopPrivacyLevel("members", out levelStr, out levelExplanation);
             }
             else if (ctx.Match("front", "fronter"))
             {
                 subjectStr = "fronter(s)";
-                ctx.System.FrontPrivacy = PopPrivacyLevel("front", out levelStr, out levelExplanation);
+                patch.FrontPrivacy = PopPrivacyLevel("front", out levelStr, out levelExplanation);
             } 
             else if (ctx.Match("switch", "switches", "fronthistory", "fh"))
             {
                 subjectStr = "front history";
-                ctx.System.FrontHistoryPrivacy = PopPrivacyLevel("fronthistory", out levelStr, out levelExplanation);
+                patch.FrontHistoryPrivacy = PopPrivacyLevel("fronthistory", out levelStr, out levelExplanation);
             }
             else if (ctx.Match("all")){
                 subjectStr = "all";
                 PrivacyLevel level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
-                ctx.System.DescriptionPrivacy = level;
-                ctx.System.MemberListPrivacy = level;
-                ctx.System.FrontPrivacy = level;
-                ctx.System.FrontHistoryPrivacy = level;
+                patch.DescriptionPrivacy = level;
+                patch.MemberListPrivacy = level;
+                patch.FrontPrivacy = level;
+                patch.FrontHistoryPrivacy = level;
 
             }
             else
                 throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be {subjectList}).");
 
-            await _data.SaveSystem(ctx.System);
+            await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
             if(subjectStr == "all"){
                 if(levelStr == "private")
                     await ctx.Reply($"All of your systems privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card.");
@@ -331,7 +349,7 @@ namespace PluralKit.Bot
             } 
             //Handle other subjects
             else
-            await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
+                await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
         }
 
         public async Task SystemPing(Context ctx) 
@@ -345,13 +363,15 @@ namespace PluralKit.Bot
 	        }
             else {
                 if (ctx.Match("on", "enable")) {
-                    ctx.System.PingsEnabled = true;
-                    await _data.SaveSystem(ctx.System);
+                    var patch = new SystemPatch {PingsEnabled = true};
+                    await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                    
                     await ctx.Reply("Reaction pings have now been enabled.");
                 }
                 if (ctx.Match("off", "disable")) {
-                    ctx.System.PingsEnabled = false;
-                    await _data.SaveSystem(ctx.System);
+                    var patch = new SystemPatch {PingsEnabled = false};
+                    await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                    
                     await ctx.Reply("Reaction pings have now been disabled.");
                 }
             }

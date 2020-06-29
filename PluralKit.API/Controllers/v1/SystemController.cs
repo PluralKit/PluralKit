@@ -41,13 +41,13 @@ namespace PluralKit.API
     public class SystemController : ControllerBase
     {
         private IDataStore _data;
-        private IDatabase _conn;
+        private IDatabase _db;
         private IAuthorizationService _auth;
 
-        public SystemController(IDataStore data, IDatabase conn, IAuthorizationService auth)
+        public SystemController(IDataStore data, IDatabase db, IAuthorizationService auth)
         {
             _data = data;
-            _conn = conn;
+            _db = db;
             _auth = auth;
         }
 
@@ -55,7 +55,7 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult<JObject>> GetOwnSystem()
         {
-            var system = await _conn.Execute(c => c.QuerySystem(User.CurrentSystem()));
+            var system = await _db.Execute(c => c.QuerySystem(User.CurrentSystem()));
             return system.ToJson(User.ContextFor(system));
         }
 
@@ -94,7 +94,7 @@ namespace PluralKit.API
             var auth = await _auth.AuthorizeAsync(User, system, "ViewFrontHistory");
             if (!auth.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view front history.");
 
-            using (var conn = await _conn.Obtain())
+            using (var conn = await _db.Obtain())
             {
                 var res = await conn.QueryAsync<SwitchesReturn>(
                     @"select *, array(
@@ -132,17 +132,19 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult<JObject>> EditSystem([FromBody] JObject changes)
         {
-            var system = await _conn.Execute(c => c.QuerySystem(User.CurrentSystem()));
+            var system = await _db.Execute(c => c.QuerySystem(User.CurrentSystem()));
+
+            SystemPatch patch;
             try
             {
-                system.ApplyJson(changes);
+                patch = JsonModelExt.ToSystemPatch(changes); 
             }
             catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
             }
 
-            await _data.SaveSystem(system);
+            await _db.Execute(conn => conn.UpdateSystem(system.Id, patch));
             return Ok(system.ToJson(User.ContextFor(system)));
         }
 
@@ -166,7 +168,7 @@ namespace PluralKit.API
 
             // Resolve member objects for all given IDs
             IEnumerable<PKMember> membersList;
-            using (var conn = await _conn.Obtain())
+            using (var conn = await _db.Obtain())
                 membersList = (await conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new {Hids = param.Members})).ToList();
             
             foreach (var member in membersList)

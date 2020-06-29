@@ -4,7 +4,7 @@ using NodaTime;
 
 namespace PluralKit.Core
 {
-    public class MemberPatch: PatchObject<MemberId, PKMember>
+    public class MemberPatch: PatchObject
     {
         public Partial<string> Name { get; set; }
         public Partial<string?> DisplayName { get; set; }
