@@ -319,9 +319,8 @@ namespace PluralKit.Bot
             {
                 CheckEditMemberPermission(ctx, target);
 
-                await _db.Execute(c =>
-                    c.ExecuteAsync("update member_guild set display_name = null where member = @member and guild = @guild",
-                        new {member = target.Id, guild = ctx.Guild.Id}));
+                var patch = new MemberGuildPatch {DisplayName = null};
+                await _db.Execute(conn => conn.UpsertMemberGuild(target.Id, ctx.Guild.Id, patch));
 
                 if (target.DisplayName != null)
                     await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName}\" in this server ({ctx.Guild.Name}).");
@@ -341,10 +340,9 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
                 
                 var newServerName = ctx.RemainderOrNull();
-                 
-                await _db.Execute(c =>
-                    c.ExecuteAsync("insert into member_guild(member, guild, display_name) values (@member, @guild, @newServerName) on conflict (member, guild) do update set display_name = @newServerName",
-                        new {member = target.Id, guild = ctx.Guild.Id, newServerName}));    
+                
+                var patch = new MemberGuildPatch {DisplayName = newServerName};
+                await _db.Execute(conn => conn.UpsertMemberGuild(target.Id, ctx.Guild.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.Guild.Name}).");
             }

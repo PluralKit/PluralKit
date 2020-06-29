@@ -139,19 +139,20 @@ namespace PluralKit.Bot
             else throw new Exception("Unexpected condition when parsing avatar command");
         }
 
-        private Task UpdateAvatar(AvatarLocation location, Context ctx, PKMember target, string? avatar) =>
-            location switch
+        private Task UpdateAvatar(AvatarLocation location, Context ctx, PKMember target, string? avatar)
+        {
+            switch (location)
             {
-                AvatarLocation.Server => _db.Execute(c =>
-                    c.ExecuteAsync(
-                        "insert into member_guild(member, guild, avatar_url) values (@Member, @Guild, @Avatar) on conflict (member, guild) do update set avatar_url = @Avatar",
-                        new {Avatar = avatar, Guild = ctx.Guild.Id, Member = target.Id})),
-                AvatarLocation.Member => _db.Execute(c =>
-                    c.ExecuteAsync(
-                        "update members set avatar_url = @Avatar where id = @Member",
-                        new {Avatar = avatar, Member = target.Id})),
-                _ => throw new ArgumentOutOfRangeException($"Unknown avatar location {location}")
-            };
+                case AvatarLocation.Server:
+                    var serverPatch = new MemberGuildPatch { AvatarUrl = avatar };
+                    return _db.Execute(c => c.UpsertMemberGuild(target.Id, ctx.Guild.Id, serverPatch));
+                case AvatarLocation.Member:
+                    var memberPatch = new MemberPatch { AvatarUrl = avatar };
+                    return _db.Execute(c => c.UpdateMember(target.Id, memberPatch));
+                default:
+                    throw new ArgumentOutOfRangeException($"Unknown avatar location {location}");
+            }
+        }
 
         private enum AvatarLocation
         {

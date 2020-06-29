@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Dapper;
-
 using DSharpPlus;
 using DSharpPlus.Entities;
 
@@ -30,10 +28,8 @@ namespace PluralKit.Bot
                 channel = await ctx.MatchChannel() ?? throw new PKSyntaxError("You must pass a #channel to set.");
             if (channel != null && channel.GuildId != ctx.Guild.Id) throw new PKError("That channel is not in this server!");
 
-            await _db.Execute(c => c.ExecuteAsync(QueryBuilder.Upsert("servers", "id")
-                .Constant("id", "@Id")
-                .Variable("log_channel", "@LogChannel")
-                .Build(), new {Id = ctx.Guild.Id, LogChannel = channel?.Id}));
+            var patch = new GuildPatch {LogChannel = channel?.Id};
+            await _db.Execute(conn => conn.UpsertGuild(ctx.Guild.Id, patch));
 
             if (channel != null)
                 await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
@@ -66,8 +62,9 @@ namespace PluralKit.Bot
                     blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
                 else
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
-                await conn.ExecuteAsync("update servers set log_blacklist = @LogBlacklist where id = @Id",
-                    new {ctx.Guild.Id, LogBlacklist = blacklist.ToArray()});
+                
+                var patch = new GuildPatch {LogBlacklist = blacklist.ToArray()};
+                await conn.UpsertGuild(ctx.Guild.Id, patch);
             }
 
             await ctx.Reply(
@@ -98,8 +95,9 @@ namespace PluralKit.Bot
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
                 else
                     blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
-                await conn.ExecuteAsync("update servers set blacklist = @Blacklist where id = @Id",
-                    new {ctx.Guild.Id, Blacklist = blacklist.ToArray()});
+                
+                var patch = new GuildPatch {Blacklist = blacklist.ToArray()};
+                await conn.UpsertGuild(ctx.Guild.Id, patch);
             }
 
             await ctx.Reply($"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
@@ -131,9 +129,9 @@ namespace PluralKit.Bot
                 return;
             }
 
-            await _db.Execute(c => c.ExecuteAsync("update servers set log_cleanup_enabled = @Value where id = @Id",
-                new {ctx.Guild.Id, Value = newValue}));
-            
+            var patch = new GuildPatch {LogCleanupEnabled = newValue};
+            await _db.Execute(conn => conn.UpsertGuild(ctx.Guild.Id, patch));
+
             if (newValue)
                 await ctx.Reply($"{Emojis.Success} Log cleanup has been **enabled** for this server. Messages deleted by PluralKit will now be cleaned up from logging channels managed by the following bots:\n- **{botList}**\n\n{Emojis.Note} Make sure PluralKit has the **Manage Messages** permission in the channels in question.\n{Emojis.Note} Also, make sure to blacklist the logging channel itself from the bots in question to prevent conflicts.");
             else

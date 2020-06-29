@@ -50,7 +50,7 @@ namespace PluralKit.Core
             else _updateFragment.Append(", ");
             
             _updateFragment.Append(fieldName);
-            _updateFragment.Append("=");
+            _updateFragment.Append(" = ");
             _updateFragment.Append(paramName);
             return this;
         }
@@ -71,7 +71,7 @@ namespace PluralKit.Core
             if (Type == QueryType.Update && _condition != null)
                 query.Append($" where {_condition}");
             
-            if (suffix != null)
+            if (!string.IsNullOrEmpty(suffix))
                 query.Append($" {suffix}");
             query.Append(";");
 

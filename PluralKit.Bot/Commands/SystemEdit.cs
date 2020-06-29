@@ -214,9 +214,8 @@ namespace PluralKit.Bot
                 return;
             }
 
-            await _db.Execute(c =>
-                c.ExecuteAsync("update system_guild set proxy_enabled = @newValue where system = @system and guild = @guild",
-                    new {newValue, system = ctx.System.Id, guild = ctx.Guild.Id}));
+            var patch = new SystemGuildPatch {ProxyEnabled = newValue};
+            await _db.Execute(conn => conn.UpsertSystemGuild(ctx.System.Id, ctx.Guild.Id, patch));
 
             if (newValue)
                 await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");

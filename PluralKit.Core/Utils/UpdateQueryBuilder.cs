@@ -6,34 +6,29 @@ namespace PluralKit.Core
 {
     public class UpdateQueryBuilder
     {
-        private readonly string _table;
-        private readonly string _condition;
+        private readonly QueryBuilder _qb;
         private readonly DynamicParameters _params = new DynamicParameters();
 
-        private bool _hasFields = false;
-        private readonly StringBuilder _setClause = new StringBuilder();
-
-        public UpdateQueryBuilder(string table, string condition)
+        private UpdateQueryBuilder(QueryBuilder qb)
         {
-            _table = table;
-            _condition = condition;
+            _qb = qb;
         }
+        
+        public static UpdateQueryBuilder Insert(string table) => new UpdateQueryBuilder(QueryBuilder.Insert(table));
+        public static UpdateQueryBuilder Update(string table, string condition) => new UpdateQueryBuilder(QueryBuilder.Update(table, condition));
+        public static UpdateQueryBuilder Upsert(string table, string conflictField) => new UpdateQueryBuilder(QueryBuilder.Upsert(table, conflictField));
 
         public UpdateQueryBuilder WithConstant<T>(string name, T value)
         {
             _params.Add(name, value);
+            _qb.Constant(name, $"@{name}");
             return this;
         }
 
         public UpdateQueryBuilder With<T>(string columnName, T value)
         {
             _params.Add(columnName, value);
-
-            if (_hasFields)
-                _setClause.Append(", ");
-            else _hasFields = true;
-
-            _setClause.Append($"{columnName} = @{columnName}");
+            _qb.Variable(columnName, $"@{columnName}");
             return this;
         }
 
@@ -42,10 +37,9 @@ namespace PluralKit.Core
             return partialValue.IsPresent ? With(columnName, partialValue.Value) : this;
         }
 
-        public (string Query, DynamicParameters Parameters) Build(string append = "")
+        public (string Query, DynamicParameters Parameters) Build(string suffix = "")
         {
-            var query = $"update {_table} set {_setClause} where {_condition} {append}";
-            return (query, _params);
+            return (_qb.Build(suffix), _params);
         }
     }
 }
