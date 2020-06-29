@@ -7,6 +7,8 @@ using Dapper;
 
 using DSharpPlus.Entities;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -40,8 +42,8 @@ namespace PluralKit.Bot
             }
 
             // Rename the member
-            target.Name = newName;
-            await _data.SaveMember(target);
+            var patch = new MemberPatch {Name = Partial<string>.Present(newName)};
+            await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
 
             await ctx.Reply($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
@@ -67,9 +69,9 @@ namespace PluralKit.Bot
             if (MatchClear(ctx))
             {
                 CheckEditMemberPermission(ctx, target);
-                target.Description = null;
-                
-                await _data.SaveMember(target);
+
+                var patch = new MemberPatch {Description = Partial<string>.Null()};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member description cleared.");
             } 
             else if (!ctx.HasNext())
@@ -100,7 +102,8 @@ namespace PluralKit.Bot
                     throw Errors.DescriptionTooLongError(description.Length);
                 target.Description = description;
         
-                await _data.SaveMember(target);
+                var patch = new MemberPatch {Description = Partial<string>.Present(description)};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member description changed.");
             }
         }
@@ -109,9 +112,8 @@ namespace PluralKit.Bot
             if (MatchClear(ctx))
             {
                 CheckEditMemberPermission(ctx, target);
-                target.Pronouns = null;
-                
-                await _data.SaveMember(target);
+                var patch = new MemberPatch {Pronouns = Partial<string>.Null()};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member pronouns cleared.");
             } 
             else if (!ctx.HasNext())
@@ -134,9 +136,10 @@ namespace PluralKit.Bot
                 var pronouns = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (pronouns.IsLongerThan(Limits.MaxPronounsLength))
                     throw Errors.MemberPronounsTooLongError(pronouns.Length);
-                target.Pronouns = pronouns;
-        
-                await _data.SaveMember(target);
+                
+                var patch = new MemberPatch {Pronouns = Partial<string>.Present(pronouns)};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} Member pronouns changed.");
             }
         }
@@ -147,8 +150,10 @@ namespace PluralKit.Bot
             if (MatchClear(ctx))
             {
                 CheckEditMemberPermission(ctx, target);
-                target.Color = null;
-                await _data.SaveMember(target);
+                
+                var patch = new MemberPatch {Color = Partial<string>.Null()};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} Member color cleared.");
             }
             else if (!ctx.HasNext())
@@ -177,12 +182,13 @@ namespace PluralKit.Bot
 
                 if (color.StartsWith("#")) color = color.Substring(1);
                 if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
-                target.Color = color.ToLower();
-                await _data.SaveMember(target);
+                
+                var patch = new MemberPatch {Color = Partial<string>.Present(color.ToLowerInvariant())};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
 
                 await ctx.Reply(embed: new DiscordEmbedBuilder()
                     .WithTitle($"{Emojis.Success} Member color changed.")
-                    .WithColor(target.Color.ToDiscordColor().Value)
+                    .WithColor(color.ToDiscordColor().Value)
                     .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
                     .Build());
             }
@@ -192,8 +198,10 @@ namespace PluralKit.Bot
             if (MatchClear(ctx))
             {
                 CheckEditMemberPermission(ctx, target);
-                target.Birthday = null;
-                await _data.SaveMember(target);
+                
+                var patch = new MemberPatch {Birthday = Partial<LocalDate?>.Null()};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+
                 await ctx.Reply($"{Emojis.Success} Member birthdate cleared.");
             } 
             else if (!ctx.HasNext())
@@ -215,8 +223,10 @@ namespace PluralKit.Bot
                 var birthdayStr = ctx.RemainderOrNull();
                 var birthday = DateUtils.ParseDate(birthdayStr, true);
                 if (birthday == null) throw Errors.BirthdayParseError(birthdayStr);
-                target.Birthday = birthday;
-                await _data.SaveMember(target);
+                
+                var patch = new MemberPatch {Birthday = Partial<LocalDate?>.Present(birthday)};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+
                 await ctx.Reply($"{Emojis.Success} Member birthdate changed.");
             }
         }
@@ -275,8 +285,9 @@ namespace PluralKit.Bot
             {
                 CheckEditMemberPermission(ctx, target);
                 
-                target.DisplayName = null;
-                await _data.SaveMember(target);
+                var patch = new MemberPatch {DisplayName = Partial<string>.Null()};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+
                 await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\".");
             }
             else if (!ctx.HasNext())
@@ -292,8 +303,9 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
                 
                 var newDisplayName = ctx.RemainderOrNull();
-                target.DisplayName = newDisplayName;
-                await _data.SaveMember(target);
+                
+                var patch = new MemberPatch {DisplayName = Partial<string>.Present(newDisplayName)};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
 
                 await PrintSuccess($"{Emojis.Success} Member display name changed. This member will now be proxied using the name \"{newDisplayName}\".");
             }
@@ -356,8 +368,8 @@ namespace PluralKit.Bot
                 return;
             };
 
-            target.KeepProxy = newValue;
-            await _data.SaveMember(target);
+            var patch = new MemberPatch {KeepProxy = Partial<bool>.Present(newValue)};
+            await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
             
             if (newValue)
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now be included in the resulting message when proxying.");
@@ -430,8 +442,9 @@ namespace PluralKit.Bot
                 newLevel = PopPrivacyLevel(subject.Name());
                 
                 // Set the level on the given subject
-                target.SetPrivacy(subject, newLevel);
-                await _data.SaveMember(target);
+                var patch = new MemberPatch();
+                patch.SetPrivacy(subject, newLevel);
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
 
                 // Print response
                 var explanation = (subject, newLevel) switch
@@ -460,8 +473,10 @@ namespace PluralKit.Bot
             else if (ctx.Match("all") || newValueFromCommand != null)
             {
                 newLevel = newValueFromCommand ?? PopPrivacyLevel("all");
-                target.SetAllPrivacy(newLevel);
-                await _data.SaveMember(target);
+                
+                var patch = new MemberPatch();
+                patch.SetAllPrivacy(newLevel);
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
                 
                 if(newLevel == PrivacyLevel.Private)
                     await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.LevelName()}**. Other accounts will now see nothing on the member card.");
@@ -490,7 +505,9 @@ namespace PluralKit.Bot
             
             await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
-            await _data.DeleteMember(target);
+            
+            await _db.Execute(conn => conn.DeleteMember(target.Id));
+            
             await ctx.Reply($"{Emojis.Success} Member deleted.");
         }
     }

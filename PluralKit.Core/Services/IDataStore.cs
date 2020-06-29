@@ -80,16 +80,6 @@ namespace PluralKit.Core {
         /// </summary>
         /// <param name="includePrivate">Whether the returned count should include private members.</param>
         Task<int> GetSystemMemberCount(SystemId system, bool includePrivate);
-
-        /// <summary>
-        /// Gets a list of members with proxy tags that conflict with the given tags.
-        ///
-        /// A set of proxy tags A conflict with proxy tags B if both A's prefix and suffix
-        /// are a "subset" of B's. In other words, if A's prefix *starts* with B's prefix
-        /// and A's suffix *ends* with B's suffix, the tag pairs are considered conflicting.
-        /// </summary>
-        /// <param name="system">The system to check in.</param>
-        Task<IEnumerable<PKMember>> GetConflictingProxies(PKSystem system, ProxyTag tag);
         
         /// <summary>
         /// Creates a system, auto-generating its corresponding IDs.
@@ -127,12 +117,6 @@ namespace PluralKit.Core {
         /// </para>
         Task DeleteSystem(PKSystem system);
 
-        /// <summary>
-        /// Gets a system by its internal member ID.
-        /// </summary>
-        /// <returns>The <see cref="PKMember"/> with the given internal ID, or null if no member was found.</returns>
-        Task<PKMember> GetMemberById(MemberId memberId);
-        
         /// <summary>
         /// Gets a member by its user-facing human ID.
         /// </summary>

@@ -57,6 +57,7 @@ namespace PluralKit.API
                 return BadRequest(e.Message);
             }
             
+            // TODO: retire SaveMember
             await _data.SaveMember(member);
             return Ok(member.ToJson(User.ContextFor(member)));
         }
@@ -80,6 +81,7 @@ namespace PluralKit.API
                 return BadRequest(e.Message);
             }
             
+            // TODO: retire SaveMember
             await _data.SaveMember(member);
             return Ok(member.ToJson(User.ContextFor(member)));
         }

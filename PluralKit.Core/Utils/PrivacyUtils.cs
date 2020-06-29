@@ -26,31 +26,31 @@ namespace PluralKit.Core
             _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
         };
 
-        public static void SetPrivacy(this PKMember member, MemberPrivacySubject subject, PrivacyLevel level)
+        public static void SetPrivacy(this MemberPatch member, MemberPrivacySubject subject, PrivacyLevel level)
         {
             // what do you mean switch expressions can't be statements >.>
             _ = subject switch
             {
-                MemberPrivacySubject.Name => member.NamePrivacy = level,
-                MemberPrivacySubject.Description => member.DescriptionPrivacy = level,
-                MemberPrivacySubject.Avatar => member.AvatarPrivacy = level,
-                MemberPrivacySubject.Pronouns => member.PronounPrivacy = level,
-                MemberPrivacySubject.Birthday => member.BirthdayPrivacy= level,
-                MemberPrivacySubject.Metadata => member.MetadataPrivacy = level,
-                MemberPrivacySubject.Visibility => member.MemberVisibility = level,
+                MemberPrivacySubject.Name => member.NamePrivacy = Partial<PrivacyLevel>.Present(level),
+                MemberPrivacySubject.Description => member.DescriptionPrivacy = Partial<PrivacyLevel>.Present(level),
+                MemberPrivacySubject.Avatar => member.AvatarPrivacy = Partial<PrivacyLevel>.Present(level),
+                MemberPrivacySubject.Pronouns => member.PronounPrivacy = Partial<PrivacyLevel>.Present(level),
+                MemberPrivacySubject.Birthday => member.BirthdayPrivacy= Partial<PrivacyLevel>.Present(level),
+                MemberPrivacySubject.Metadata => member.MetadataPrivacy = Partial<PrivacyLevel>.Present(level),
+                MemberPrivacySubject.Visibility => member.Visibility = Partial<PrivacyLevel>.Present(level),
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
             };
         }
 
-        public static void SetAllPrivacy(this PKMember member, PrivacyLevel level)
+        public static void SetAllPrivacy(this MemberPatch member, PrivacyLevel level)
         {
-            member.NamePrivacy = level;
-            member.DescriptionPrivacy = level;
-            member.AvatarPrivacy = level;
-            member.PronounPrivacy = level;
-            member.BirthdayPrivacy = level;
-            member.MetadataPrivacy = level;
-            member.MemberVisibility = level;
+            member.NamePrivacy = Partial<PrivacyLevel>.Present(level);
+            member.DescriptionPrivacy = Partial<PrivacyLevel>.Present(level);
+            member.AvatarPrivacy = Partial<PrivacyLevel>.Present(level);
+            member.PronounPrivacy = Partial<PrivacyLevel>.Present(level);
+            member.BirthdayPrivacy = Partial<PrivacyLevel>.Present(level);
+            member.MetadataPrivacy = Partial<PrivacyLevel>.Present(level);
+            member.Visibility = Partial<PrivacyLevel>.Present(level);
         }
         
         public static bool TryParseMemberPrivacy(string input, out MemberPrivacySubject subject)

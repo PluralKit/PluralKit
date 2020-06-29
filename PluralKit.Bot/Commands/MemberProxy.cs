@@ -1,17 +1,19 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 
+using Dapper;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
     public class MemberProxy
     {
-        private IDataStore _data;
+        private readonly IDatabase _db;
         
-        public MemberProxy(IDataStore data)
+        public MemberProxy(IDatabase db)
         {
-            _data = data;
+            _db = db;
         }
 
         public async Task Proxy(Context ctx, PKMember target)
@@ -30,10 +32,10 @@ namespace PluralKit.Bot
             
             async Task<bool> WarnOnConflict(ProxyTag newTag)
             {
-                var conflicts = (await _data.GetConflictingProxies(ctx.System, newTag))
-                    .Where(m => m.Id != target.Id)
-                    .ToList();
-
+                var query = "select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix = @Prefix and suffix = @Suffix and id != @Existing";
+                var conflicts = (await _db.Execute(conn => conn.QueryAsync<PKMember>(query,
+                    new {Prefix = newTag.Prefix, Suffix = newTag.Suffix, Existing = target.Id}))).ToList();
+                
                 if (conflicts.Count <= 0) return true;
 
                 var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}**");
@@ -56,7 +58,9 @@ namespace PluralKit.Bot
                 
                 target.ProxyTags = new ProxyTag[] { };
                 
-                await _data.SaveMember(target);
+                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(new ProxyTag[0])};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                
                 await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
             }
             // "Sub"command: no arguments; will print proxy tags
@@ -83,11 +87,11 @@ namespace PluralKit.Bot
                 if (!await WarnOnConflict(tagToAdd))
                     throw Errors.GenericCancelled();
 
-                // It's not guaranteed the list's mutable, so we force it to be
-                target.ProxyTags = target.ProxyTags.ToList();
-                target.ProxyTags.Add(tagToAdd);
-                
-                await _data.SaveMember(target);
+                var newTags = target.ProxyTags.ToList();
+                newTags.Add(tagToAdd);
+                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray())};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+
                 await ctx.Reply($"{Emojis.Success} Added proxy tags `{tagToAdd.ProxyString}`.");
             }
             // Subcommand: "remove"
@@ -100,11 +104,11 @@ namespace PluralKit.Bot
                 if (!target.ProxyTags.Contains(tagToRemove))
                     throw Errors.ProxyTagDoesNotExist(tagToRemove, target);
 
-                // It's not guaranteed the list's mutable, so we force it to be
-                target.ProxyTags = target.ProxyTags.ToList();
-                target.ProxyTags.Remove(tagToRemove);
-                
-                await _data.SaveMember(target);
+                var newTags = target.ProxyTags.ToList();
+                newTags.Remove(tagToRemove);
+                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray())};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+
                 await ctx.Reply($"{Emojis.Success} Removed proxy tags `{tagToRemove.ProxyString}`.");
             }
             // Subcommand: bare proxy tag given
@@ -125,9 +129,10 @@ namespace PluralKit.Bot
                 if (!await WarnOnConflict(requestedTag))
                     throw Errors.GenericCancelled();
 
-                target.ProxyTags = new[] {requestedTag};
+                var newTags = new[] {requestedTag};
+                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags)};
+                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
                 
-                await _data.SaveMember(target);
                 await ctx.Reply($"{Emojis.Success} Member proxy tags set to `{requestedTag.ProxyString}`.");
             }
         }
