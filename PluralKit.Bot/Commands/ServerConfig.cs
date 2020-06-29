@@ -94,9 +94,6 @@ namespace PluralKit.Bot
                         eb.Description += String.Join("\n", l);
                     });
 
-                //await ctx.Reply(embed: new DiscordEmbedBuilder()
-                //    .WithTitle($"Blacklisted channels for {ctx.Guild.Name}")
-                //    .WithDescription(String.Join("\n", blacklist)));
             }
         }
 
