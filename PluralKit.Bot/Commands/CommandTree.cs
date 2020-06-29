@@ -45,6 +45,8 @@ namespace PluralKit.Bot
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command MemberRandom = new Command("random", "random", "Looks up a random member from your system");
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
+        public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
+        public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -97,6 +99,8 @@ namespace PluralKit.Bot
                 return HandleSystemCommand(ctx);
             if (ctx.Match("member", "m"))
                 return HandleMemberCommand(ctx);
+            if (ctx.Match("group", "g"))
+                return HandleGroupCommand(ctx);
             if (ctx.Match("switch", "sw"))
                 return HandleSwitchCommand(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
@@ -310,6 +314,19 @@ namespace PluralKit.Bot
                 await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
             else 
                 await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName ,MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
+        }
+
+        private async Task HandleGroupCommand(Context ctx)
+        {
+            // Commands with no group argument
+            if (ctx.Match("n", "new"))
+                await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
+
+            if (await ctx.MatchGroup() is {} group)
+            {
+                // Commands with group argument
+                await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, group));
+            }
         }
 
         private async Task HandleSwitchCommand(Context ctx)

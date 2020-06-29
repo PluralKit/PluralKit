@@ -97,6 +97,26 @@ namespace PluralKit.Bot
             // Finally, we return the member value.
             return member;
         }
+        
+        public static async Task<PKGroup> PeekGroup(this Context ctx)
+        {
+            var input = ctx.PeekArgument();
+
+            await using var conn = await ctx.Database.Obtain();
+            if (await conn.QueryGroupByName(input) is {} byName)
+                return byName;
+            if (await conn.QueryGroupByHid(input) is {} byHid)
+                return byHid;
+
+            return null;
+        }
+
+        public static async Task<PKGroup> MatchGroup(this Context ctx)
+        {
+            var group = await ctx.PeekGroup();
+            if (group != null) ctx.PopArgument();
+            return group;
+        }
 
         public static string CreateMemberNotFoundError(this Context ctx, string input)
         {

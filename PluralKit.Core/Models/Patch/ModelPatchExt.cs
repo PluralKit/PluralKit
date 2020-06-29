@@ -60,5 +60,10 @@ namespace PluralKit.Core
                 .Build();
             return conn.ExecuteAsync(query, pms);
         }
+        
+        public static Task<PKGroup> CreateGroup(this IPKConnection conn, SystemId system, string name) =>
+            conn.QueryFirstAsync<PKGroup>(
+                "insert into groups (hid, system, name) values (find_free_group_hid(), @System, @Name) returning *",
+                new {System = system, Name = name});
     }
 }

@@ -11,3 +11,4 @@ drop function if exists proxy_members;
 drop function if exists generate_hid;
 drop function if exists find_free_system_hid;
 drop function if exists find_free_member_hid;
+drop function if exists find_free_group_hid;
