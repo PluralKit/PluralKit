@@ -89,9 +89,14 @@ namespace PluralKit.Bot
                     blacklist.Add($"<#{item}>");
                 }
 
-                await ctx.Reply(embed: new DiscordEmbedBuilder()
-                    .WithTitle($"Blacklisted channels for {ctx.Guild.Name}")
-                    .WithDescription(String.Join("\n", blacklist)));
+                await ctx.Paginate(blacklist.ToAsyncEnumerable(), blacklist.Count, 25, $"Blacklisted channels for {ctx.Guild.Name}", 
+                    async (eb, l) => {
+                        eb.Description += String.Join("\n", l);
+                    });
+
+                //await ctx.Reply(embed: new DiscordEmbedBuilder()
+                //    .WithTitle($"Blacklisted channels for {ctx.Guild.Name}")
+                //    .WithDescription(String.Join("\n", blacklist)));
             }
         }
 
