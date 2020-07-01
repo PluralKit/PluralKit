@@ -1,12 +1,10 @@
-﻿using System.Threading.Channels;
-
-using DSharpPlus;
+﻿using DSharpPlus;
 
 using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
-    public static class ContextChecks
+    public static class ContextChecksExt
     {
         public static Context CheckGuildContext(this Context ctx)
         {
