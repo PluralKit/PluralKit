@@ -7,7 +7,6 @@ using App.Metrics;
 
 using Autofac;
 
-
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
@@ -241,43 +240,6 @@ namespace PluralKit.Bot
             return $"Member not found. Note that a member ID is 5 characters long.";
         }
 
-        public Context CheckSystem()
-        {
-            if (_senderSystem == null)
-                throw Errors.NoSystemError;
-            return this;
-        }
-
-        public Context CheckNoSystem()
-        {
-            if (_senderSystem != null)
-                throw Errors.ExistingSystemError;
-            return this;
-        }
-
-        public Context CheckOwnMember(PKMember member)
-        {
-            if (member.System != _senderSystem.Id)
-                throw Errors.NotOwnMemberError;
-            return this;
-        }
-
-        public Context CheckAuthorPermission(Permissions neededPerms, string permissionName)
-        {
-            // TODO: can we always assume Author is a DiscordMember? I would think so, given they always come from a
-            // message received event...
-            var hasPerms = Channel.PermissionsInSync(Author);
-            if ((hasPerms & neededPerms) != neededPerms)
-                throw new PKError($"You must have the \"{permissionName}\" permission in this server to use this command.");
-            return this;
-        }
-
-        public Context CheckGuildContext()
-        {
-            if (Channel.Guild != null) return this;
-            throw new PKError("This command can not be run in a DM.");
-        }
-
         public LookupContext LookupContextFor(PKSystem target) => 
             System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
         
@@ -286,12 +248,6 @@ namespace PluralKit.Bot
 
         public LookupContext LookupContextFor(PKMember target) =>
             System?.Id == target.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-
-        public Context CheckSystemPrivacy(PKSystem target, PrivacyLevel level)
-        {
-            if (level.CanAccess(LookupContextFor(target))) return this;
-            throw new PKError("You do not have permission to access this information.");
-        }
 
         public async Task<DiscordChannel> MatchChannel()
         {
