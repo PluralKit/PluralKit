@@ -15,7 +15,7 @@ namespace PluralKit.Bot
         {
             var text = ctx.PeekArgument();
             if (text.TryParseMention(out var id))
-                return await ctx.Shard.GetUserAsync(id);
+                return await ctx.Shard.GetUser(id);
             return null;
         }
 
@@ -116,25 +116,14 @@ namespace PluralKit.Bot
         
         public static async Task<DiscordChannel> MatchChannel(this Context ctx)
         {
-            if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var channel)) 
+            if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id)) 
                 return null;
-
-            try
-            {
-                var discordChannel = await ctx.Shard.GetChannelAsync(channel);
-                if (discordChannel.Type != ChannelType.Text) return null;
-                
-                ctx.PopArgument();
-                return discordChannel;
-            }
-            catch (NotFoundException)
-            {
-                return null;
-            }
-            catch (UnauthorizedException)
-            {
-                return null;
-            }
+            
+            var channel = await ctx.Shard.GetChannel(id);
+            if (channel == null || channel.Type != ChannelType.Text) return null;
+            
+            ctx.PopArgument();
+            return channel;
         }
     }
 }

@@ -106,13 +106,13 @@ namespace PluralKit.Bot {
                     throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
                 // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
-                guild = await ctx.Rest.GetGuildAsync(guildId);
+                guild = await ctx.Rest.GetGuild(guildId);
                 if (guild == null)
                     throw Errors.GuildNotFound(guildId);
             }
             
             // Ensure people can't query guilds they're not in + get their own permissions (for view access checking)
-            var senderGuildUser = await guild.GetMemberAsync(ctx.Author.Id);
+            var senderGuildUser = await guild.GetMember(ctx.Author.Id);
             if (senderGuildUser == null)
                 throw new PKError("You must be a member of the guild you are querying.");
 

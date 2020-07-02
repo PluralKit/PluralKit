@@ -50,11 +50,9 @@ namespace PluralKit.Bot {
 
         private async Task<DiscordChannel> FindLogChannel(ulong guild, ulong channel)
         {
-            try
-            {
-                return await _rest.GetChannelAsync(channel);
-            }
-            catch (Exception e) when (e is NotFoundException || e is UnauthorizedException)  
+            var obj = await _rest.GetChannel(channel);
+            
+            if (obj == null)
             {
                 // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too
                 _logger.Warning("Attempted to fetch missing log channel {LogChannel}, removing from database", channel);
@@ -63,7 +61,7 @@ namespace PluralKit.Bot {
                     new {Guild = guild});
             }
 
-            return null;
+            return obj;
         }
     }
 }

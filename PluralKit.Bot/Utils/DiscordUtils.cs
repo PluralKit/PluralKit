@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 
 using NodaTime;
 
@@ -22,6 +23,10 @@ namespace PluralKit.Bot
         public static DiscordColor Gray = new DiscordColor(0x979c9f);
         
         public static Permissions DM_PERMISSIONS = (Permissions) 0b00000_1000110_1011100110000_000000;
+        
+        private static readonly Regex USER_MENTION = new Regex("<@!?(\\d{17,19})>");
+        private static readonly Regex ROLE_MENTION = new Regex("<@&(\\d{17,19})>");
+        private static readonly Regex EVERYONE_HERE_MENTION = new Regex("@(everyone|here)");
 
         private static readonly FieldInfo _roleIdsField = typeof(DiscordMember).GetField("_role_ids", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -58,7 +63,12 @@ namespace PluralKit.Bot
             // Just delegates to PermissionsInSync, but handles the case of a non-member User in a guild properly
             // This is a separate method because it requires an async call
             if (channel.Guild != null && !(user is DiscordMember))
-                return PermissionsInSync(channel, await channel.Guild.GetMemberAsync(user.Id));
+            {
+                var member = await channel.Guild.GetMember(user.Id);
+                if (member != null)
+                    return PermissionsInSync(channel, member);
+            }
+            
             return PermissionsInSync(channel, user);
         }
         
@@ -128,9 +138,6 @@ namespace PluralKit.Bot
             return cache != null && cache.TryGetValue(id, out user);
         }
         
-                private static readonly Regex USER_MENTION = new Regex("<@!?(\\d{17,19})>");
-        private static readonly Regex ROLE_MENTION = new Regex("<@&(\\d{17,19})>");
-        private static readonly Regex EVERYONE_HERE_MENTION = new Regex("@(everyone|here)");
         public static DiscordColor? ToDiscordColor(this string color)
         {
             if (int.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
@@ -183,6 +190,63 @@ namespace PluralKit.Bot
             Regex pattern = new Regex(@"[*_~>`(||)\\]", RegexOptions.Multiline);
             if (input != null) return pattern.Replace(input, @"\$&");
             else return input;
+        }
+
+        public static Task<DiscordUser> GetUser(this DiscordRestClient client, ulong id) => 
+            WrapDiscordCall(client.GetUserAsync(id));
+
+        public static Task<DiscordUser> GetUser(this DiscordClient client, ulong id) => 
+            WrapDiscordCall(client.GetUserAsync(id));
+
+        public static Task<DiscordChannel> GetChannel(this DiscordRestClient client, ulong id) => 
+            WrapDiscordCall(client.GetChannelAsync(id));
+        
+        public static Task<DiscordChannel> GetChannel(this DiscordClient client, ulong id) => 
+            WrapDiscordCall(client.GetChannelAsync(id));
+        
+        public static Task<DiscordGuild> GetGuild(this DiscordRestClient client, ulong id) => 
+            WrapDiscordCall(client.GetGuildAsync(id));
+        
+        public static Task<DiscordGuild> GetGuild(this DiscordClient client, ulong id) => 
+            WrapDiscordCall(client.GetGuildAsync(id));
+        
+        public static Task<DiscordMember> GetMember(this DiscordRestClient client, ulong guild, ulong user)
+        {
+            async Task<DiscordMember> Inner() => 
+                await (await client.GetGuildAsync(guild)).GetMemberAsync(user);
+            return WrapDiscordCall(Inner());
+        }
+        public static Task<DiscordMember> GetMember(this DiscordClient client, ulong guild, ulong user)
+        {
+            async Task<DiscordMember> Inner() => 
+                await (await client.GetGuildAsync(guild)).GetMemberAsync(user);
+            return WrapDiscordCall(Inner());
+        }
+
+        public static Task<DiscordMember> GetMember(this DiscordGuild guild, ulong user) => 
+            WrapDiscordCall(guild.GetMemberAsync(user));
+
+        public static Task<DiscordMessage> GetMessage(this DiscordChannel channel, ulong id) =>
+            WrapDiscordCall(channel.GetMessageAsync(id));
+
+        public static Task<DiscordMessage> GetMessage(this DiscordRestClient client, ulong channel, ulong message) =>
+            WrapDiscordCall(client.GetMessageAsync(channel, message));
+
+        private static async Task<T> WrapDiscordCall<T>(Task<T> t)
+            where T: class
+        {
+            try
+            {
+                return await t;
+            }
+            catch (NotFoundException)
+            {
+                return null;
+            }
+            catch (UnauthorizedException)
+            {
+                return null;
+            }
         }
     }
 }

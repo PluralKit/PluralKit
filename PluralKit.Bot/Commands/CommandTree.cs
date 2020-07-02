@@ -355,16 +355,11 @@ namespace PluralKit.Bot
             {
                 // Try to resolve the user ID to find the associated account,
                 // so we can print their username.
-                try
-                {
-                    var user = await ctx.Rest.GetUserAsync(id);
+                var user = await ctx.Shard.GetUser(id);
+                if (user != null)
                     return $"Account **{user.Username}#{user.Discriminator}** does not have a system registered.";
-                }
-                catch (NotFoundException)
-                {
-                    // User not found, just return ID
+                else
                     return $"Account with ID `{id}` not found.";
-                }
             }
 
             return $"System with ID `{input}` not found.";

@@ -86,7 +86,7 @@ namespace PluralKit.Bot
         private async ValueTask HandleQueryReaction(MessageReactionAddEventArgs evt, FullMessage msg)
         {
             // Try to DM the user info about the message
-            var member = await evt.Guild.GetMemberAsync(evt.User.Id);
+            var member = await evt.Guild.GetMember(evt.User.Id);
             try
             {
                 await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, evt.Guild, LookupContext.ByNonOwner));
@@ -105,9 +105,9 @@ namespace PluralKit.Bot
             
             // Check if the "pinger" has permission to send messages in this channel
             // (if not, PK shouldn't send messages on their behalf)
-            var guildUser = await evt.Guild.GetMemberAsync(evt.User.Id);
+            var guildUser = await evt.Guild.GetMember(evt.User.Id);
             var requiredPerms = Permissions.AccessChannels | Permissions.SendMessages;
-            if ((guildUser.PermissionsIn(evt.Channel) & requiredPerms) != requiredPerms) return;
+            if (guildUser == null || (guildUser.PermissionsIn(evt.Channel) & requiredPerms) != requiredPerms) return;
             
             if (msg.System.PingsEnabled)
             {

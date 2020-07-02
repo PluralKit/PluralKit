@@ -33,7 +33,7 @@ namespace PluralKit.Bot
 
         public async Task<DiscordWebhook> GetWebhook(DiscordClient client, ulong channelId)
         {
-            var channel = await client.GetChannelAsync(channelId);
+            var channel = await client.GetChannel(channelId);
             if (channel == null) return null;
             if (channel.Type == ChannelType.Text) return null;
             return await GetWebhook(channel);

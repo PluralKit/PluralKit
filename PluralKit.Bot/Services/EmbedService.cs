@@ -34,7 +34,7 @@ namespace PluralKit.Bot {
             
             // Fetch/render info for all accounts simultaneously
             var accounts = await conn.GetLinkedAccounts(system.Id);
-            var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUserAsync(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
             var memberCount = await conn.GetSystemMemberCount(system.Id, PrivacyLevel.Public);
             var eb = new DiscordEmbedBuilder()
@@ -159,18 +159,18 @@ namespace PluralKit.Bot {
         {
             var ctx = LookupContext.ByNonOwner;
             
-            var channel = await client.GetChannelAsync(msg.Message.Channel);
-            var serverMsg = channel != null ? await channel.GetMessageAsync(msg.Message.Mid) : null;
+            var channel = await client.GetChannel(msg.Message.Channel);
+            var serverMsg = channel != null ? await channel.GetMessage(msg.Message.Mid) : null;
 
             // Need this whole dance to handle cases where:
             // - the user is deleted (userInfo == null)
             // - the bot's no longer in the server we're querying (channel == null)
             // - the member is no longer in the server we're querying (memberInfo == null)
             DiscordMember memberInfo = null;
-            DiscordUser userInfo = null; 
-            if (channel != null) try { memberInfo = await channel.Guild.GetMemberAsync(msg.Message.Sender); } catch (NotFoundException) { }
+            DiscordUser userInfo = null;
+            if (channel != null) memberInfo = await channel.Guild.GetMember(msg.Message.Sender);
             if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
-            else try { userInfo = await client.GetUserAsync(msg.Message.Sender); } catch (NotFoundException) { }
+            else userInfo = await client.GetUser(msg.Message.Sender);
 
             // Calculate string displayed under "Sent by"
             string userStr;
