@@ -34,7 +34,7 @@ namespace PluralKit.Bot
             {
                 var query = "select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix = @Prefix and suffix = @Suffix and id != @Existing";
                 var conflicts = (await _db.Execute(conn => conn.QueryAsync<PKMember>(query,
-                    new {Prefix = newTag.Prefix, Suffix = newTag.Suffix, Existing = target.Id}))).ToList();
+                    new {Prefix = newTag.Prefix, Suffix = newTag.Suffix, Existing = target.Id, system = target.System}))).ToList();
                 
                 if (conflicts.Count <= 0) return true;
 
