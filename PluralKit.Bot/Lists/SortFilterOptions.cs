@@ -118,7 +118,7 @@ namespace PluralKit.Bot
                 p.Reverse = true;
 
             // Include description in filter?
-            if (ctx.MatchFlag("search-description", "filter-description", "in-description", "description", "desc"))
+            if (ctx.MatchFlag("search-description", "filter-description", "in-description", "sd", "description", "desc"))
                 p.SearchInDescription = true;
             
             // Privacy filter (default is public only)
