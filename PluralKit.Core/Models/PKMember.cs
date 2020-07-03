@@ -8,29 +8,31 @@ using NodaTime.Text;
 namespace PluralKit.Core {
     public class PKMember
     {
-        public MemberId Id { get; }
-        public string Hid { get; }
-        public SystemId System { get; }
-        public string Color { get; }
-        public string AvatarUrl { get; }
-        public string Name { get; }
-        public string DisplayName { get; }
-        public LocalDate? Birthday { get; }
-        public string Pronouns { get; }
-        public string Description { get; }
-        public ICollection<ProxyTag> ProxyTags { get; }
-        public bool KeepProxy { get; }
-        public Instant Created { get; }
-        public int MessageCount { get; }
+        // Dapper *can* figure out mapping to getter-only properties, but this doesn't work
+        // when trying to map to *subclasses* (eg. ListedMember). Adding private setters makes it work anyway.
+        public MemberId Id { get; private set; }
+        public string Hid { get; private set; }
+        public SystemId System { get; private set; }
+        public string Color { get; private set; }
+        public string AvatarUrl { get; private set; }
+        public string Name { get; private set; }
+        public string DisplayName { get; private set; }
+        public LocalDate? Birthday { get; private set; }
+        public string Pronouns { get; private set; }
+        public string Description { get; private set; }
+        public ICollection<ProxyTag> ProxyTags { get; private set; }
+        public bool KeepProxy { get; private set; }
+        public Instant Created { get; private set; }
+        public int MessageCount { get; private set; }
 
-        public PrivacyLevel MemberVisibility { get; }
-        public PrivacyLevel DescriptionPrivacy { get; }
-        public PrivacyLevel AvatarPrivacy { get; }
-        public PrivacyLevel NamePrivacy { get; } //ignore setting if no display name is set
-        public PrivacyLevel BirthdayPrivacy { get; }
-        public PrivacyLevel PronounPrivacy { get; }
-        public PrivacyLevel MetadataPrivacy { get; }
-        // public PrivacyLevel ColorPrivacy { get; set; }
+        public PrivacyLevel MemberVisibility { get; private set; }
+        public PrivacyLevel DescriptionPrivacy { get; private set; }
+        public PrivacyLevel AvatarPrivacy { get; private set; }
+        public PrivacyLevel NamePrivacy { get; private set; } //ignore setting if no display name is set
+        public PrivacyLevel BirthdayPrivacy { get; private set; }
+        public PrivacyLevel PronounPrivacy { get; private set; }
+        public PrivacyLevel MetadataPrivacy { get; private set; }
+        // public PrivacyLevel ColorPrivacy { get; private set; }
         
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
         /// Before Feb 10 2020, the sentinel year was 0001, now it is 0004.
