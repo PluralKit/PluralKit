@@ -192,6 +192,13 @@ namespace PluralKit.Bot
             else return input;
         }
 
+        public static string EscapeBacktickPair(this string input){
+            Regex doubleBacktick = new Regex(@"``", RegexOptions.Multiline);
+            //Run twice to catch any pairs that are created from the first pass, pairs shouldn't be created in the second as they are created from odd numbers of backticks, even numbers are all caught on the first pass
+            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, @"`‌﻿`"),@"`‌﻿`");
+            else return input;
+        }
+
         public static Task<DiscordUser> GetUser(this DiscordRestClient client, ulong id) => 
             WrapDiscordCall(client.GetUserAsync(id));
 

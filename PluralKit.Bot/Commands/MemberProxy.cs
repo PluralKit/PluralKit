@@ -68,7 +68,7 @@ namespace PluralKit.Bot
                     await ctx.Reply("This member does not have any proxy tags.");
                 else
                 {
-                    var tags = string.Join("\n", target.ProxyTags.Select(t => $"`{t.ProxyString}`"));
+                    var tags = string.Join("\n", target.ProxyTags.Select(t => $"``﻿{t.ProxyString.EscapeBacktickPair()}﻿``"));
                     await ctx.Reply($"This member's proxy tags are:\n{tags}");
                 }
             }
@@ -90,7 +90,7 @@ namespace PluralKit.Bot
                 var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray())};
                 await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
 
-                await ctx.Reply($"{Emojis.Success} Added proxy tags `{tagToAdd.ProxyString}`.");
+                await ctx.Reply($"{Emojis.Success} Added proxy tags ``﻿{tagToAdd.ProxyString.EscapeBacktickPair()}﻿``.");
             }
             // Subcommand: "remove"
             else if (ctx.Match("remove", "delete"))
@@ -107,7 +107,7 @@ namespace PluralKit.Bot
                 var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray())};
                 await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
 
-                await ctx.Reply($"{Emojis.Success} Removed proxy tags `{tagToRemove.ProxyString}`.");
+                await ctx.Reply($"{Emojis.Success} Removed proxy tags ``﻿{tagToRemove.ProxyString.EscapeBacktickPair()}﻿``.");
             }
             // Subcommand: bare proxy tag given
             else
@@ -131,7 +131,7 @@ namespace PluralKit.Bot
                 var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags)};
                 await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
                 
-                await ctx.Reply($"{Emojis.Success} Member proxy tags set to `{requestedTag.ProxyString}`.");
+                await ctx.Reply($"{Emojis.Success} Member proxy tags set to ``﻿{requestedTag.ProxyString.EscapeBacktickPair()}﻿``.");
             }
         }
     }
