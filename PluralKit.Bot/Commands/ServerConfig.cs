@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using DSharpPlus;
@@ -95,7 +95,24 @@ namespace PluralKit.Bot
                 $"Blacklisted channels for {ctx.Guild.Name}",
                 (eb, l) =>
                 {
-                    eb.Description = string.Join("\n", l.Select(c => c.Mention));
+                    DiscordChannel lastCategory = null;
+
+                    var fieldValue = new StringBuilder();
+                    foreach (var channel in l)
+                    {
+                        if (lastCategory != channel.Parent && fieldValue.Length > 0)
+                        {
+                            eb.AddField(lastCategory?.Name ?? "(no category)", fieldValue.ToString());
+                            fieldValue.Clear();
+                        }
+                        else fieldValue.Append("\n");
+
+                        fieldValue.Append(channel.Mention);
+                        lastCategory = channel.Parent;
+                    }
+
+                    eb.AddField(lastCategory?.Name ?? "(no category)", fieldValue.ToString());
+
                     return Task.CompletedTask;
                 });
         }
