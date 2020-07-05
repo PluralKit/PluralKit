@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -56,7 +57,7 @@ namespace PluralKit.Bot
             // although, keep in mind this block gets hit the call *after* the task failed (since we only await it below)
             if (lazyWebhookValue.IsValueCreated && lazyWebhookValue.Value.IsFaulted)
             {
-                _logger.Warning(lazyWebhookValue.Value.Exception, "Cached webhook task for {Channel} faulted with below exception");
+                _logger.Warning(lazyWebhookValue.Value.Exception, "Cached webhook task for {Channel} faulted with below exception", channel.Id);
                 
                 // Specifically don't recurse here so we don't infinite-loop - if this one errors too, it'll "stick"
                 // until next time this function gets hit (which is okay, probably).
@@ -83,7 +84,37 @@ namespace PluralKit.Bot
         {
             _logger.Debug("Webhook for channel {Channel} not found in cache, trying to fetch", channel.Id);
             _metrics.Measure.Meter.Mark(BotMetrics.WebhookCacheMisses);
-            return await FindExistingWebhook(channel) ?? await DoCreateWebhook(channel);
+            
+            _logger.Debug("Finding webhook for channel {Channel}", channel.Id);
+            var webhooks = await FetchChannelWebhooks(channel);
+
+            // If the channel has a webhook created by PK, just return that one
+            var ourWebhook = webhooks.FirstOrDefault(IsWebhookMine);
+            if (ourWebhook != null)
+                return ourWebhook;
+            
+            // We don't have one, so we gotta create a new one
+            // but first, make sure we haven't hit the webhook cap yet...
+            if (webhooks.Count >= 10)
+                throw new PKError("This channel has the maximum amount of possible webhooks (10) already created. A server admin must delete one or more webhooks so PluralKit can create one for proxying.");
+            
+            return await DoCreateWebhook(channel);
+        }
+
+        private async Task<IReadOnlyList<DiscordWebhook>> FetchChannelWebhooks(DiscordChannel channel)
+        {
+            try
+            {
+                return await channel.GetWebhooksAsync();
+            }
+            catch (HttpRequestException e)
+            {
+                _logger.Warning(e, "Error occurred while fetching webhook list");
+
+                // This happens sometimes when Discord returns a malformed request for the webhook list
+                // Nothing we can do than just assume that none exist.
+                return new DiscordWebhook[0];
+            }
         }
 
         private async Task<DiscordWebhook> FindExistingWebhook(DiscordChannel channel)
