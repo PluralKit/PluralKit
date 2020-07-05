@@ -88,7 +88,7 @@ namespace PluralKit.API
             }
             
             var newMember = await conn.UpdateMember(member.Id, patch);
-            return Ok(member.ToJson(User.ContextFor(newMember)));
+            return Ok(newMember.ToJson(User.ContextFor(newMember)));
         }
         
         [HttpDelete("{hid}")]
