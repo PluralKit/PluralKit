@@ -60,6 +60,7 @@ namespace PluralKit.Bot
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
         public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
         public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
+        public static Command BlacklistShow = new Command("blacklist show", "blacklist show", "Displays the current proxy blacklist");
         public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
         public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
         public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
@@ -142,7 +143,9 @@ namespace PluralKit.Bot
                     return ctx.Execute<ServerConfig>(BlacklistAdd, m => m.SetBlacklisted(ctx, true));
                 else if (ctx.Match("disable", "off", "remove", "allow"))
                     return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
-                else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove);
+                else if (ctx.Match("list", "show"))
+                    return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowBlacklisted(ctx));
+                else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove, BlacklistShow);
             if (ctx.Match("proxy", "enable", "disable"))
                 return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));

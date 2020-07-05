@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -71,7 +72,28 @@ namespace PluralKit.Bot
                 $"{Emojis.Success} Message logging for the given channels {(enable ? "enabled" : "disabled")}." +
                 (logChannel == null ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;log channel #your-log-channel`." : ""));
         }
-        
+
+        public async Task ShowBlacklisted(Context ctx)
+        {
+            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
+
+            await using (var conn = await _db.Obtain())
+            {
+                var guild = await conn.QueryOrInsertGuildConfig(ctx.Guild.Id);
+                List<string> blacklist = new List<string>();
+
+                foreach (ulong item in guild.Blacklist.ToHashSet()) {
+                    blacklist.Add($"<#{item}>");
+                }
+
+                await ctx.Paginate(blacklist.ToAsyncEnumerable(), blacklist.Count, 25, $"Blacklisted channels for {ctx.Guild.Name}", 
+                    async (eb, l) => {
+                        eb.Description += String.Join("\n", l);
+                    });
+
+            }
+        }
+
         public async Task SetBlacklisted(Context ctx, bool shouldAdd)
         {
             ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
