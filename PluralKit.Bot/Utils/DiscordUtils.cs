@@ -194,8 +194,8 @@ namespace PluralKit.Bot
 
         public static string EscapeBacktickPair(this string input){
             Regex doubleBacktick = new Regex(@"``", RegexOptions.Multiline);
-            Regex trippleBacktick = new Regex(@"```", RegexOptions.Multiline);
-            if(input != null) return trippleBacktick.Replace(doubleBacktick.Replace(input, @"`‌﻿`"),@"`‌﻿`﻿`");
+            //Run twice to catch any pairs that are created from the first pass, pairs shouldn't be created in the second as they are created from odd numbers of backticks, even numbers are all caught on the first pass
+            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, @"`‌﻿`"),@"`‌﻿`");
             else return input;
         }
 
