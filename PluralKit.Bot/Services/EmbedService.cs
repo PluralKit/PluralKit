@@ -107,7 +107,7 @@ namespace PluralKit.Bot {
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
-            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`{t.ProxyString}`"));
+            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"``﻿{t.ProxyString}﻿``"));
 
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
