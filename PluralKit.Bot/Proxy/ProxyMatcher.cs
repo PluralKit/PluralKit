@@ -35,7 +35,7 @@ namespace PluralKit.Bot
             
             // Edge case: If we got a match with blank inner text, we'd normally just send w/ attachments
             // However, if there are no attachments, the user probably intended something else, so we "un-match" and proceed to autoproxy
-            return hasAttachments || match.Content.Length > 0;
+            return hasAttachments || match.Content.Trim().Length > 0;
         }
 
         private bool TryMatchAutoproxy(MessageContext ctx, IReadOnlyCollection<ProxyMember> members, string messageContent,
