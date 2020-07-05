@@ -192,6 +192,13 @@ namespace PluralKit.Bot
             else return input;
         }
 
+        public static string EscapeBacktickPair(this string  input){
+            Regex pattern = new Regex(@"``", RegexOptions.Multiline);
+            Regex pattern2 = new Regex(@"[*_~>(||)\\]", RegexOptions.Multiline);
+            if(input != null) return pattern2.Replace(pattern.Replace(input, @"`﻿`"), @"\$&");
+            else return input;
+        }
+
         public static Task<DiscordUser> GetUser(this DiscordRestClient client, ulong id) => 
             WrapDiscordCall(client.GetUserAsync(id));
 
