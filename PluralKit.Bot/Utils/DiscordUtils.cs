@@ -192,10 +192,9 @@ namespace PluralKit.Bot
             else return input;
         }
 
-        public static string EscapeBacktickPair(this string  input){
+        public static string EscapeBacktickPair(this string input){
             Regex pattern = new Regex(@"``", RegexOptions.Multiline);
-            Regex pattern2 = new Regex(@"[*_~>(||)\\]", RegexOptions.Multiline);
-            if(input != null) return pattern2.Replace(pattern.Replace(input, @"`﻿`"), @"\$&");
+            if(input != null) return pattern.Replace(input, @"`‌﻿`");
             else return input;
         }
 

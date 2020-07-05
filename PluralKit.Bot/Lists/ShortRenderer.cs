@@ -22,7 +22,7 @@ namespace PluralKit.Bot
                     var proxyTagsString = m.ProxyTagsString();
                     if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
                         proxyTagsString = "tags too long, see member card";
-                    return $"[`{m.Hid}`] **{m.NameFor(ctx)}** *({proxyTagsString})*";
+                    return $"[`{m.Hid}`] **{m.NameFor(ctx)}** *(*{proxyTagsString}*)*";
                 }
 
                 return $"[`{m.Hid}`] **{m.NameFor(ctx)}**";
