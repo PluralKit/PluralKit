@@ -26,7 +26,8 @@ namespace PluralKit.Bot {
                 try
                 {
                     uri = new Uri(url);
-                    if (!uri.IsAbsoluteUri) throw Errors.InvalidUrl(url);
+                    if (!uri.IsAbsoluteUri || (uri.Scheme != "http" && uri.Scheme != "https")) 
+                        throw Errors.InvalidUrl(url);
                 }
                 catch (UriFormatException)
                 {
