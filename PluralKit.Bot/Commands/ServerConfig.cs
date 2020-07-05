@@ -87,8 +87,9 @@ namespace PluralKit.Bot
                 }
 
                 await ctx.Paginate(blacklist.ToAsyncEnumerable(), blacklist.Count, 25, $"Blacklisted channels for {ctx.Guild.Name}", 
-                    async (eb, l) => {
-                        eb.Description += String.Join("\n", l);
+                    (eb, l) => {
+                        eb.Description += string.Join("\n", l);
+                        return Task.CompletedTask;
                     });
 
             }
