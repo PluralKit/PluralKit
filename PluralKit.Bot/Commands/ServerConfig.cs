@@ -77,22 +77,27 @@ namespace PluralKit.Bot
         {
             ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
 
-            await using (var conn = await _db.Obtain())
+            var blacklist = await _db.Execute(c => c.QueryOrInsertGuildConfig(ctx.Guild.Id));
+            
+            // Resolve all channels from the cache and order by position
+            var channels = blacklist.Blacklist
+                .Select(id => ctx.Guild.GetChannel(id))
+                .OrderBy(c => c.Position)
+                .ToList();
+
+            if (channels.Count == 0)
             {
-                var guild = await conn.QueryOrInsertGuildConfig(ctx.Guild.Id);
-                List<string> blacklist = new List<string>();
-
-                foreach (ulong item in guild.Blacklist.ToHashSet()) {
-                    blacklist.Add($"<#{item}>");
-                }
-
-                await ctx.Paginate(blacklist.ToAsyncEnumerable(), blacklist.Count, 25, $"Blacklisted channels for {ctx.Guild.Name}", 
-                    (eb, l) => {
-                        eb.Description += string.Join("\n", l);
-                        return Task.CompletedTask;
-                    });
-
+                await ctx.Reply($"This server has no blacklisted channels.");
+                return;
             }
+
+            await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
+                $"Blacklisted channels for {ctx.Guild.Name}",
+                (eb, l) =>
+                {
+                    eb.Description = string.Join("\n", l.Select(c => c.Mention));
+                    return Task.CompletedTask;
+                });
         }
 
         public async Task SetBlacklisted(Context ctx, bool shouldAdd)
