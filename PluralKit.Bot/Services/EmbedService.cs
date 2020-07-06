@@ -159,7 +159,7 @@ namespace PluralKit.Bot {
         {
             var ctx = LookupContext.ByNonOwner;
             
-            var channel = await client.GetChannel(msg.Message.Channel);
+            var channel = await _client.FindChannel(msg.Message.Channel);
             var serverMsg = channel != null ? await channel.GetMessage(msg.Message.Mid) : null;
 
             // Need this whole dance to handle cases where:

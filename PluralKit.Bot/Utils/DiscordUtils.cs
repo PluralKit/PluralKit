@@ -239,6 +239,18 @@ namespace PluralKit.Bot
         public static Task<DiscordMessage> GetMessage(this DiscordRestClient client, ulong channel, ulong message) =>
             WrapDiscordCall(client.GetMessageAsync(channel, message));
 
+        public static async Task<DiscordChannel> FindChannel(this DiscordShardedClient client, ulong id)
+        {
+            DiscordChannel channel = null;
+            foreach (KeyValuePair<int, DiscordClient> entry in client.ShardClients) {
+                channel = await WrapDiscordCall(entry.Value.GetChannelAsync(id));
+                if (channel != null)
+                    if (channel.Guild != null) 
+                        return channel;
+            }
+            return null;
+        }
+
         private static async Task<T> WrapDiscordCall<T>(Task<T> t)
             where T: class
         {
