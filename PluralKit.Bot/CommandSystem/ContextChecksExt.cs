@@ -25,6 +25,13 @@ namespace PluralKit.Bot
             return ctx;
         }
         
+        public static Context CheckOwnGroup(this Context ctx, PKGroup group)
+        {
+            if (group.System != ctx.System?.Id)
+                throw Errors.NotOwnMemberError;
+            return ctx;
+        }
+        
         public static Context CheckSystem(this Context ctx)
         {
             if (ctx.System == null)

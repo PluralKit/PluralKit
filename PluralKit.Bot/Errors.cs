@@ -34,6 +34,7 @@ namespace PluralKit.Bot {
 
         public static PKError NotOwnSystemError => new PKError($"You can only run this command on your own system.");
         public static PKError NotOwnMemberError => new PKError($"You can only run this command on your own member.");
+        public static PKError NotOwnGroupError => new PKError($"You can only run this command on your own group.");
         public static PKError NoSystemError => new PKError("You do not have a system registered with PluralKit. To create one, type `pk;system new`.");
         public static PKError ExistingSystemError => new PKError("You already have a system registered with PluralKit. To view it, type `pk;system`. If you'd like to delete your system and start anew, type `pk;system delete`, or if you'd like to unlink this account from it, type `pk;unlink`.");
         public static PKError MissingMemberError => new PKSyntaxError("You need to specify a member to run this command on.");
@@ -105,7 +106,7 @@ namespace PluralKit.Bot {
         public static PKError ProxyNameTooShort(string name) => new PKError($"The webhook's name, `{name}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.");
         public static PKError ProxyNameTooLong(string name) => new PKError($"The webhook's name, {name}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name, display name or server display name, or use a shorter system tag.");
 
-        public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag ``﻿{tagToAdd.ProxyString.EscapeBacktickPair()}﻿``. The member currently has these tags: {member.ProxyTagsString()}");
+        public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag `` {tagToAdd.ProxyString.EscapeBacktickPair()}﻿``. The member currently has these tags: {member.ProxyTagsString()}");
         public static PKError ProxyTagDoesNotExist(ProxyTag tagToRemove, PKMember member) => new PKError($"That member does not have the proxy tag ``﻿{tagToRemove.ProxyString.EscapeBacktickPair()}﻿``. The member currently has these tags: {member.ProxyTagsString()}");
         public static PKError LegacyAlreadyHasProxyTag(ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString()}\nConsider using the ``pk;member {member.Hid} proxy add {requested.ProxyString.EscapeBacktickPair()}﻿`` command instead.");
         public static PKError EmptyProxyTags(PKMember member) => new PKError($"The example proxy `text` is equivalent to having no proxy tags at all, since there are no symbols or brackets on either end. If you'd like to clear your proxy tags, use `pk;member {member.Hid} proxy clear`.");

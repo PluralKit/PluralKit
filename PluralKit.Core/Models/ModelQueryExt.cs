@@ -35,6 +35,9 @@ namespace PluralKit.Core
         public static Task<PKGroup?> QueryGroupByHid(this IPKConnection conn, string hid) =>
             conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where hid = @hid", new {hid = hid.ToLowerInvariant()});
 
+        public static Task<IEnumerable<PKGroup>> QueryGroupsInSystem(this IPKConnection conn, SystemId system) =>
+            conn.QueryAsync<PKGroup>("select * from groups where system = @System", new {System = system});
+
         public static Task<GuildConfig> QueryOrInsertGuildConfig(this IPKConnection conn, ulong guild) =>
             conn.QueryFirstAsync<GuildConfig>("insert into servers (id) values (@guild) on conflict (id) do update set id = @guild returning *", new {guild});
 

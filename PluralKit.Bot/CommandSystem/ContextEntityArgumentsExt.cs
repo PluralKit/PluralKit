@@ -133,6 +133,21 @@ namespace PluralKit.Bot
             return $"Member not found. Note that a member ID is 5 characters long.";
         }
         
+        public static string CreateGroupNotFoundError(this Context ctx, string input)
+        {
+            // TODO: does this belong here?
+            if (input.Length == 5)
+            {
+                if (ctx.System != null)
+                    return $"Group with ID or name \"{input}\" not found.";
+                return $"Group with ID \"{input}\" not found."; // Accounts without systems can't query by name
+            }
+
+            if (ctx.System != null)
+                return $"Group with name \"{input}\" not found. Note that a group ID is 5 characters long.";
+            return $"Group not found. Note that a group ID is 5 characters long.";
+        }
+        
         public static async Task<DiscordChannel> MatchChannel(this Context ctx)
         {
             if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id)) 

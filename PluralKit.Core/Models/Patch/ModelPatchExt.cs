@@ -65,5 +65,13 @@ namespace PluralKit.Core
             conn.QueryFirstAsync<PKGroup>(
                 "insert into groups (hid, system, name) values (find_free_group_hid(), @System, @Name) returning *",
                 new {System = system, Name = name});
+        
+        public static Task<PKGroup> UpdateGroup(this IPKConnection conn, GroupId id, GroupPatch patch)
+        {
+            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("groups", "id = @id"))
+                .WithConstant("id", id)
+                .Build("returning *");
+            return conn.QueryFirstAsync<PKGroup>(query, pms);
+        }
     }
 }

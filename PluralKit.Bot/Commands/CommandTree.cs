@@ -47,6 +47,9 @@ namespace PluralKit.Bot
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
         public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
         public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
+        public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
+        public static Command GroupRename = new Command("group rename", "group <group> name <new name>", "Renames a group");
+        public static Command GroupDesc = new Command("group description", "group <group> description [description]", "Changes a group's description");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -321,12 +324,24 @@ namespace PluralKit.Bot
             // Commands with no group argument
             if (ctx.Match("n", "new"))
                 await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
-
-            if (await ctx.MatchGroup() is {} group)
+            else if (ctx.Match("list", "l"))
+                await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
+            else if (await ctx.MatchGroup() is {} target)
             {
                 // Commands with group argument
-                await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, group));
+                if (ctx.Match("rename", "name", "changename", "setname"))
+                    await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
+                else if (ctx.Match("description", "info", "bio", "text", "desc"))
+                    await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
+                else if (!ctx.HasNext())
+                    await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
+                else
+                    await PrintCommandNotFoundError(ctx, GroupInfo, GroupRename, GroupDesc);
             }
+            else if (!ctx.HasNext())
+                await PrintCommandNotFoundError(ctx, GroupInfo, GroupList, GroupNew, GroupRename, GroupDesc);
+            else
+                await ctx.Reply($"{Emojis.Error} {ctx.CreateGroupNotFoundError(ctx.PopArgument())}");
         }
 
         private async Task HandleSwitchCommand(Context ctx)
