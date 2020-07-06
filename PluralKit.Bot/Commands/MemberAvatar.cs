@@ -87,6 +87,8 @@ namespace PluralKit.Bot
         private async Task AvatarFromArg(AvatarLocation location, Context ctx, PKMember target, string url)
         {
             ctx.CheckSystem().CheckOwnMember(target);
+            if (url.StartsWith('<'))
+                url = url.TrimStart('<').TrimEnd('>');
             if (url.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
             await AvatarUtils.VerifyAvatarOrThrow(url);
 
