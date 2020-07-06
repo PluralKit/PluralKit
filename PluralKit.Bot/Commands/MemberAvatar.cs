@@ -95,6 +95,8 @@ namespace PluralKit.Bot
             var embed = new DiscordEmbedBuilder().WithImageUrl(url).Build();
             if (location == AvatarLocation.Server)
                 await ctx.Reply($"{Emojis.Success} Member server avatar changed. This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).", embed: embed);
+            else if (location == AvatarLocation.Member)
+                await ctx.Reply($"{Emojis.Success} Member avatar changed.", embed: embed);
         }
 
         private async Task AvatarFromAttachment(AvatarLocation location, Context ctx, PKMember target, DiscordAttachment attachment)
