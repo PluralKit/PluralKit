@@ -13,6 +13,8 @@ using DSharpPlus.Exceptions;
 
 using NodaTime;
 
+using PluralKit.Core;
+
 namespace PluralKit.Bot
 {
     public static class DiscordUtils
@@ -254,6 +256,26 @@ namespace PluralKit.Bot
             {
                 return null;
             }
+        }
+
+        public static DiscordEmbedBuilder WithSimpleLineContent(this DiscordEmbedBuilder eb, IEnumerable<string> lines)
+        {
+            static int CharacterLimit(int pageNumber) =>
+                // First chunk goes in description (2048 chars), rest go in embed values (1000 chars)
+                pageNumber == 0 ? 2048 : 1000;
+
+            var linesWithEnding = lines.Select(l => $"{l}\n");
+            var pages = StringUtils.JoinPages(linesWithEnding, CharacterLimit);
+
+            // Add the first page to the embed description
+            if (pages.Count > 0)
+                eb.WithDescription(pages[0]);
+            
+            // Add the rest to blank-named (\u200B) fields
+            for (var i = 1; i < pages.Count; i++)
+                eb.AddField("\u200B", pages[i]);
+
+            return eb;
         }
     }
 }
