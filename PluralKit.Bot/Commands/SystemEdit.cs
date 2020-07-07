@@ -32,7 +32,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var clearPatch = new SystemPatch {Name = null};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
@@ -63,7 +63,7 @@ namespace PluralKit.Bot
         public async Task Description(Context ctx) {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var patch = new SystemPatch {Description = null};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
@@ -101,7 +101,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var patch = new SystemPatch {Tag = null};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
@@ -226,7 +226,7 @@ namespace PluralKit.Bot
         {
             if (ctx.System == null) throw Errors.NoSystemError;
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var clearPatch = new SystemPatch {UiTz = "UTC"};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
