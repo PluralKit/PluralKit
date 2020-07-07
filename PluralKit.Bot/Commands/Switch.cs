@@ -23,22 +23,8 @@ namespace PluralKit.Bot
         public async Task SwitchDo(Context ctx)
         {
             ctx.CheckSystem();
-            var members = new List<PKMember>();
 
-            // Loop through all the given arguments
-            while (ctx.HasNext())
-            {
-                // and attempt to match a member 
-                var member = await ctx.MatchMember();
-                if (member == null)
-                    // if we can't, big error. Every member name must be valid.
-                    throw new PKError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));
-                
-                ctx.CheckOwnMember(member); // Ensure they're in our own system
-                members.Add(member); // Then add to the final output list
-            }
-
-            // Finally, do the actual switch
+            var members = await ctx.ParseMemberList(ctx.System.Id);
             await DoSwitchCommand(ctx, members);
         }
         public async Task SwitchOut(Context ctx)
