@@ -140,8 +140,10 @@ namespace PluralKit.Bot
 
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor(nameField)
-                .AddField("Description", target.Description)
                 .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
+
+            if (target.Description != null)
+                eb.AddField("Description", target.Description);
 
             await ctx.Reply(embed: eb.Build());
         }
