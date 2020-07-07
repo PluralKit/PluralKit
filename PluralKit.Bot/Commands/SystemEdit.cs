@@ -131,57 +131,56 @@ namespace PluralKit.Bot
         public async Task Avatar(Context ctx)
         {
             ctx.CheckSystem();
-            
-            if (ctx.Match("clear") || ctx.MatchFlag("c", "clear"))
+
+            async Task ClearIcon()
             {
-                var patch = new SystemPatch {AvatarUrl = null};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-                
-                await ctx.Reply($"{Emojis.Success} System avatar cleared.");
-                return;
+                await _db.Execute(c => c.UpdateSystem(ctx.System.Id, new SystemPatch {AvatarUrl = null}));
+                await ctx.Reply($"{Emojis.Success} System icon cleared.");
             }
-            else if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
+
+            async Task SetIcon(ParsedImage img)
+            {
+                if (img.Url.Length > Limits.MaxUriLength) 
+                    throw Errors.InvalidUrl(img.Url);
+                await AvatarUtils.VerifyAvatarOrThrow(img.Url);
+
+                await _db.Execute(c => c.UpdateSystem(ctx.System.Id, new SystemPatch {AvatarUrl = img.Url}));
+            
+                var msg = img.Source switch
+                {
+                    AvatarSource.User => $"{Emojis.Success} System icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon will need to be re-set.",
+                    AvatarSource.Url => $"{Emojis.Success} System icon changed to the image at the given URL.",
+                    AvatarSource.Attachment => $"{Emojis.Success} System icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon will stop working.",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            
+                // The attachment's already right there, no need to preview it.
+                var hasEmbed = img.Source != AvatarSource.Attachment;
+                await (hasEmbed 
+                    ? ctx.Reply(msg, embed: new DiscordEmbedBuilder().WithImageUrl(img.Url).Build()) 
+                    : ctx.Reply(msg));
+            }
+
+            async Task ShowIcon()
             {
                 if ((ctx.System.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
                     var eb = new DiscordEmbedBuilder()
-                        .WithTitle($"System avatar")
+                        .WithTitle("System icon")
                         .WithImageUrl(ctx.System.AvatarUrl)
-                        .WithDescription($"To clear, use `pk;system avatar clear`.");
+                        .WithDescription("To clear, use `pk;system icon clear`.");
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
-                    throw new PKSyntaxError($"This system does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-
-                return;
+                    throw new PKSyntaxError("This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
             }
 
-            var member = await ctx.MatchUser();
-            if (member != null)
-            {
-                if (member.AvatarHash == null) throw Errors.UserHasNoAvatar;
-
-                var newUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
-                var patch = new SystemPatch {AvatarUrl = newUrl};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-                
-                var embed = new DiscordEmbedBuilder().WithImageUrl(newUrl).Build();
-                await ctx.Reply(
-                    $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
-            }
+            if (ctx.MatchClear())
+                await ClearIcon();
+            else if (await ctx.MatchImage() is {} img)
+                await SetIcon(img);
             else
-            {
-                // They can't both be null - otherwise we would've hit the conditional at the very top
-                string url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.ProxyUrl;
-                if (url?.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
-                await ctx.BusyIndicator(() => AvatarUtils.VerifyAvatarOrThrow(url));
-
-                var patch = new SystemPatch {AvatarUrl = url};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-
-                var embed = url != null ? new DiscordEmbedBuilder().WithImageUrl(url).Build() : null;
-                await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed);
-            }
+                await ShowIcon();
         }
         
         public async Task Delete(Context ctx) {
