@@ -149,22 +149,9 @@ namespace PluralKit.Bot
         public async Task AddRemoveMembers(Context ctx, PKGroup target, AddRemoveOperation op)
         {
             ctx.CheckOwnGroup(target);
+
+            var members = await ParseMemberList(ctx);
             
-            // Parse all arguments
-            var members = new List<PKMember>();
-            while (ctx.HasNext())
-            {
-                var member = await ctx.MatchMember();
-                if (member == null)
-                    throw new PKSyntaxError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));;
-                if (member.System != target.System)
-                    throw new PKError($"Member **{member.Name}** (`{member.Hid}`) is not in your own system, so you can't add it to a group.");
-                members.Add(member);
-            }
-
-            if (members.Count == 0)
-                throw new PKSyntaxError("You must pass one or more members.");
-
             await using var conn = await _db.Obtain();
             if (op == AddRemoveOperation.Add)
             {
@@ -202,6 +189,26 @@ namespace PluralKit.Bot
         {
             Add,
             Remove
+        }
+
+        private static async Task<List<PKMember>> ParseMemberList(Context ctx)
+        {
+            // TODO: move this to a context extension and share with the switch command somewhere, after branch merge?
+            
+            var members = new List<PKMember>();
+            while (ctx.HasNext())
+            {
+                var member = await ctx.MatchMember();
+                if (member == null)
+                    throw new PKSyntaxError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));;
+                if (member.System != ctx.System.Id)
+                    throw new PKError($"Member **{member.Name}** (`{member.Hid}`) is not in your own system, so you can't add it to a group.");
+                members.Add(member);
+            }
+
+            if (members.Count == 0)
+                throw new PKSyntaxError("You must pass one or more members.");
+            return members;
         }
 
         private static async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
