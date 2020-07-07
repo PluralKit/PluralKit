@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using DSharpPlus.Entities;
 
+using NodaTime;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -174,6 +176,26 @@ namespace PluralKit.Bot
                 await conn.RemoveMembersFromGroup(target.Id, members.Select(m => m.Id));
                 await ctx.Reply($"{Emojis.Success} Members removed from group.");
             }
+        }
+
+        public async Task ListGroupMembers(Context ctx, PKGroup target)
+        {
+            await using var conn = await _db.Obtain();
+            var targetSystem = await GetGroupSystem(ctx, target, conn);
+            ctx.CheckSystemPrivacy(targetSystem, targetSystem.MemberListPrivacy);
+            
+            var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target.System));
+            opts.GroupFilter = target.Id;
+
+            var title = new StringBuilder($"Members of {target.Name} (`{target.Hid}`) in ");
+            if (targetSystem.Name != null) 
+                title.Append($"{targetSystem.Name} (`{targetSystem.Hid}`)");
+            else
+                title.Append($"`{targetSystem.Hid}`");
+            if (opts.Search != null) 
+                title.Append($" matching **{opts.Search}**");
+            
+            await ctx.RenderMemberList(ctx.LookupContextFor(target.System), _db, target.System, title.ToString(), opts);
         }
 
         public enum AddRemoveOperation

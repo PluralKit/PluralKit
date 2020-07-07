@@ -16,6 +16,7 @@ namespace PluralKit.Bot
         public bool Reverse { get; set; }
 
         public PrivacyLevel? PrivacyFilter { get; set; } = PrivacyLevel.Public;
+        public GroupId? GroupFilter { get; set; }
         public string? Search { get; set; }
         public bool SearchDescription { get; set; }
         
@@ -55,7 +56,7 @@ namespace PluralKit.Bot
                 PrivacyLevel.Public => "", // (default, no extra line needed)
                 _ => new ArgumentOutOfRangeException($"Couldn't find readable string for privacy filter {PrivacyFilter}")
             });
-            
+
             return str.ToString();
         }
 
@@ -63,6 +64,7 @@ namespace PluralKit.Bot
             new DatabaseViewsExt.MemberListQueryOptions
             {
                 PrivacyFilter = PrivacyFilter, 
+                GroupFilter = GroupFilter,
                 Search = Search,
                 SearchDescription = SearchDescription
             };
