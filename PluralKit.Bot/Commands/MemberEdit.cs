@@ -372,29 +372,6 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
         }
 
-        private DiscordEmbed CreatePrivacyEmbed(Context ctx, PKMember member)
-        {
-            string PrivacyLevelString(PrivacyLevel level) => level switch
-            {
-                PrivacyLevel.Private => "**Private** (visible only when queried by you)",
-                PrivacyLevel.Public => "**Public** (visible to everyone)",
-                _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
-            };
-
-            var eb = new DiscordEmbedBuilder()
-                .WithTitle($"Current privacy settings for {member.NameFor(ctx)}")
-                .AddField("Name (replaces name with display name if member has one)",PrivacyLevelString(member.NamePrivacy))
-                .AddField("Description", PrivacyLevelString(member.DescriptionPrivacy))
-                .AddField("Avatar", PrivacyLevelString(member.AvatarPrivacy))
-                .AddField("Birthday", PrivacyLevelString(member.BirthdayPrivacy))
-                .AddField("Pronouns", PrivacyLevelString(member.PronounPrivacy))
-                // .AddField("Color", PrivacyLevelString(target.ColorPrivacy))
-                .AddField("Meta (message count, last front, last message)", PrivacyLevelString(member.MetadataPrivacy))
-                .AddField("Visibility", PrivacyLevelString(member.MemberVisibility))
-                .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`."); 
-            return eb.Build();
-        }
-
         public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
         {
             if (ctx.System == null) throw Errors.NoSystemError;
@@ -403,7 +380,17 @@ namespace PluralKit.Bot
             // Display privacy settings
             if (!ctx.HasNext() && newValueFromCommand == null)
             {
-                await ctx.Reply(embed: CreatePrivacyEmbed(ctx, target));
+                await ctx.Reply(embed: new DiscordEmbedBuilder()
+                    .WithTitle($"Current privacy settings for {target.NameFor(ctx)}")
+                    .AddField("Name (replaces name with display name if member has one)",target.NamePrivacy.Explanation())
+                    .AddField("Description", target.DescriptionPrivacy.Explanation())
+                    .AddField("Avatar", target.AvatarPrivacy.Explanation())
+                    .AddField("Birthday", target.BirthdayPrivacy.Explanation())
+                    .AddField("Pronouns", target.PronounPrivacy.Explanation())
+                    .AddField("Meta (message count, last front, last message)",target.MetadataPrivacy.Explanation())
+                    .AddField("Visibility", target.MemberVisibility.Explanation())
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .Build()); 
                 return;
             }
             
@@ -412,37 +399,33 @@ namespace PluralKit.Bot
             if (ctx.Guild != null)
                 guildSettings = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
 
-            // Set Privacy Settings
-            PrivacyLevel PopPrivacyLevel(string subjectName)
+            async Task SetAll(PrivacyLevel level)
             {
-                if (ctx.Match("public", "show", "shown", "visible"))
-                    return PrivacyLevel.Public;
-
-                if (ctx.Match("private", "hide", "hidden"))
-                    return PrivacyLevel.Private;
-
-                if (!ctx.HasNext())
-                    throw new PKSyntaxError($"You must pass a privacy level for `{subjectName}` (`public` or `private`)");
-                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument()}` (must be `public` or `private`).");
+                await _db.Execute(c => c.UpdateMember(target.Id, new MemberPatch().WithAllPrivacy(level)));
+                
+                if (level == PrivacyLevel.Private)
+                    await ctx.Reply($"{Emojis.Success} All {target.NameFor(ctx)}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the member card.");
+                else 
+                    await ctx.Reply($"{Emojis.Success} All {target.NameFor(ctx)}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the member card.");
             }
-            
-            // See if we have a subject given
-            PrivacyLevel newLevel;
-            if (PrivacyUtils.TryParseMemberPrivacy(ctx.PeekArgument(), out var subject))
-            {
-                // We peeked before, pop it now
-                ctx.PopArgument();
-                
-                // Read the privacy level from args
-                newLevel = PopPrivacyLevel(subject.Name());
-                
-                // Set the level on the given subject
-                var patch = new MemberPatch();
-                patch.SetPrivacy(subject, newLevel);
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
 
-                // Print response
-                var explanation = (subject, newLevel) switch
+            async Task SetLevel(MemberPrivacySubject subject, PrivacyLevel level)
+            {
+                await _db.Execute(c => c.UpdateMember(target.Id, new MemberPatch().WithPrivacy(subject, level)));
+                
+                var subjectName = subject switch
+                {
+                    MemberPrivacySubject.Name => "name privacy",
+                    MemberPrivacySubject.Description => "description privacy",
+                    MemberPrivacySubject.Avatar => "avatar privacy",
+                    MemberPrivacySubject.Pronouns => "pronoun privacy",
+                    MemberPrivacySubject.Birthday => "birthday privacy",
+                    MemberPrivacySubject.Metadata => "metadata privacy",
+                    MemberPrivacySubject.Visibility => "visibility",
+                    _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
+                };
+                
+                var explanation = (subject, level) switch
                 {
                     (MemberPrivacySubject.Name, PrivacyLevel.Private) => "This member's name is now hidden from other systems, and will be replaced by the member's display name.",
                     (MemberPrivacySubject.Description, PrivacyLevel.Private) => "This member's description is now hidden from other systems.",
@@ -460,37 +443,24 @@ namespace PluralKit.Bot
                     (MemberPrivacySubject.Metadata, PrivacyLevel.Public) => "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
                     (MemberPrivacySubject.Visibility, PrivacyLevel.Public) => "This member is no longer hidden from member lists.",
                     
-                    _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {newLevel})")
+                    _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
                 };
                 
-                await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx)}'s {subject.Name()} has been set to **{newLevel.LevelName()}**. {explanation}");
-            }
-            else if (ctx.Match("all") || newValueFromCommand != null)
-            {
-                newLevel = newValueFromCommand ?? PopPrivacyLevel("all");
+                await ctx.Reply($"{Emojis.Success} {target.NameFor(ctx)}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}");
                 
-                var patch = new MemberPatch();
-                patch.SetAllPrivacy(newLevel);
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                // Name privacy only works given a display name
+                if (subject == MemberPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
+                    await ctx.Reply($"{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.");
                 
-                if(newLevel == PrivacyLevel.Private)
-                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.LevelName()}**. Other accounts will now see nothing on the member card.");
-                else 
-                    await ctx.Reply($"All {target.NameFor(ctx)}'s privacy settings have been set to **{newLevel.LevelName()}**. Other accounts will now see everything on the member card.");
+                // Avatar privacy doesn't apply when proxying if no server avatar is set
+                if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private && guildSettings?.AvatarUrl == null)
+                    await ctx.Reply($"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `pk;member {target.Hid} serveravatar`");
             }
+
+            if (ctx.Match("all") || newValueFromCommand != null)
+                await SetAll(newValueFromCommand ?? ctx.PopPrivacyLevel());
             else
-            {
-                var subjectList = "`name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`";
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be {subjectList}).");
-            }
-            
-            // Name privacy only works given a display name
-            if (subject == MemberPrivacySubject.Name && newLevel == PrivacyLevel.Private && target.DisplayName == null)
-                await ctx.Reply($"{Emojis.Warn} This member does not have a display name set, and name privacy **will not take effect**.");
-            // Avatar privacy doesn't apply when proxying if no server avatar is set
-            if (subject == MemberPrivacySubject.Avatar && newLevel == PrivacyLevel.Private &&
-                guildSettings?.AvatarUrl == null)
-                await ctx.Reply($"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `pk;member {target.Hid} serveravatar`");
+                await SetLevel(ctx.PopMemberPrivacySubject(), ctx.PopPrivacyLevel());
         }
         
         public async Task Delete(Context ctx, PKMember target)

@@ -13,6 +13,8 @@ using NodaTime.TimeZones;
 
 using PluralKit.Core;
 
+using Sentry.Protocol;
+
 namespace PluralKit.Bot
 {
     public class SystemEdit
@@ -261,93 +263,62 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (!ctx.HasNext())
+            Task PrintEmbed()
             {
-                string PrivacyLevelString(PrivacyLevel level) => level switch
-                {
-                    PrivacyLevel.Private => "**Private** (visible only when queried by you)",
-                    PrivacyLevel.Public => "**Public** (visible to everyone)",
-                    _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
-                };
-
                 var eb = new DiscordEmbedBuilder()
                     .WithTitle("Current privacy settings for your system")
-                    .AddField("Description", PrivacyLevelString(ctx.System.DescriptionPrivacy))
-                    .AddField("Member list", PrivacyLevelString(ctx.System.MemberListPrivacy))
-                    .AddField("Current fronter(s)", PrivacyLevelString(ctx.System.FrontPrivacy))
-                    .AddField("Front/switch history", PrivacyLevelString(ctx.System.FrontHistoryPrivacy))
+                    .AddField("Description", ctx.System.DescriptionPrivacy.Explanation())
+                    .AddField("Member list", ctx.System.MemberListPrivacy.Explanation())
+                    .AddField("Current fronter(s)", ctx.System.FrontPrivacy.Explanation())
+                    .AddField("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation())
                     .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, or `all` \n- `level` is either `public` or `private`.");
-                await ctx.Reply(embed: eb.Build());
-                return;
+                return ctx.Reply(embed: eb.Build());
             }
-            
-            PrivacyLevel PopPrivacyLevel(string subject, out string levelStr, out string levelExplanation)
+
+            async Task SetLevel(SystemPrivacySubject subject, PrivacyLevel level)
             {
-                if (ctx.Match("public", "show", "shown", "visible"))
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch().WithPrivacy(subject, level)));
+
+                var levelExplanation = level switch
                 {
-                    levelStr = "public";
-                    levelExplanation = "be able to query";
-                    return PrivacyLevel.Public;
-                }
+                    PrivacyLevel.Public => "be able to query",
+                    PrivacyLevel.Private => "*not* be able to query",
+                    _ => ""
+                };
 
-                if (ctx.Match("private", "hide", "hidden"))
+                var subjectStr = subject switch
                 {
-                    levelStr = "private";
-                    levelExplanation = "*not* be able to query";
-                    return PrivacyLevel.Private;
-                }
+                    SystemPrivacySubject.Description => "description",
+                    SystemPrivacySubject.Front => "front",
+                    SystemPrivacySubject.FrontHistory => "front history",
+                    SystemPrivacySubject.MemberList => "member list",
+                    _ => ""
+                };
 
-                if (!ctx.HasNext())
-                    throw new PKSyntaxError($"You must pass a privacy level for `{subject}` (`public` or `private`)");
-                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument()}` (must be `public` or `private`).");
+                var msg = $"System {subjectStr} privacy has been set to **{level.LevelName()}**. Other accounts will now {levelExplanation} your system {subjectStr}.";
+                await ctx.Reply($"{Emojis.Success} {msg}");
             }
 
-            string levelStr, levelExplanation, subjectStr;
-            var subjectList = "`description`, `members`, `front`, `fronthistory`, or `all`";
-            
-            SystemPatch patch = new SystemPatch();
-            if (ctx.Match("description", "desc", "text", "info"))
+            async Task SetAll(PrivacyLevel level)
             {
-                subjectStr = "description";
-                patch.DescriptionPrivacy = PopPrivacyLevel("description", out levelStr, out levelExplanation);
-            } 
-            else if (ctx.Match("members", "memberlist", "list", "mlist"))
-            {
-                subjectStr = "member list";
-                patch.MemberListPrivacy = PopPrivacyLevel("members", out levelStr, out levelExplanation);
-            }
-            else if (ctx.Match("front", "fronter"))
-            {
-                subjectStr = "fronter(s)";
-                patch.FrontPrivacy = PopPrivacyLevel("front", out levelStr, out levelExplanation);
-            } 
-            else if (ctx.Match("switch", "switches", "fronthistory", "fh"))
-            {
-                subjectStr = "front history";
-                patch.FrontHistoryPrivacy = PopPrivacyLevel("fronthistory", out levelStr, out levelExplanation);
-            }
-            else if (ctx.Match("all")){
-                subjectStr = "all";
-                PrivacyLevel level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
-                patch.DescriptionPrivacy = level;
-                patch.MemberListPrivacy = level;
-                patch.FrontPrivacy = level;
-                patch.FrontHistoryPrivacy = level;
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch().WithAllPrivacy(level)));
 
+                var msg = level switch
+                {
+                    PrivacyLevel.Private => $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, front history, or system description.",
+                    PrivacyLevel.Public => $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now be able to view everything.",
+                    _ => ""
+                };
+
+                await ctx.Reply($"{Emojis.Success} {msg}");
             }
+
+            if (!ctx.HasNext())
+                await PrintEmbed();
+            else if (ctx.Match("all"))
+                await SetAll(ctx.PopPrivacyLevel());
             else
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be {subjectList}).");
-
-            await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-            if(subjectStr == "all"){
-                if(levelStr == "private")
-                    await ctx.Reply($"All of your systems privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card.");
-                else 
-                    await ctx.Reply($"All of your systems privacy have been set to **{levelStr}**. Other accounts will now see everything on the member card.");
-            } 
-            //Handle other subjects
-            else
-                await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
+                await SetLevel(ctx.PopSystemPrivacySubject(), ctx.PopPrivacyLevel());
         }
 
         public async Task SystemPing(Context ctx) 
