@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 using Dapper;
 
@@ -73,5 +75,21 @@ namespace PluralKit.Core
                 .Build("returning *");
             return conn.QueryFirstAsync<PKGroup>(query, pms);
         }
+
+        public static async Task AddMembersToGroup(this IPKConnection conn, GroupId group, IEnumerable<MemberId> members)
+        {
+            await using var w = conn.BeginBinaryImport("copy group_members (group_id, member_id) from stdin (format binary)");
+            foreach (var member in members)
+            {
+                await w.StartRowAsync();
+                await w.WriteAsync(group.Value);
+                await w.WriteAsync(member.Value);
+            }
+            await w.CompleteAsync();
+        }
+        
+        public static Task RemoveMembersFromGroup(this IPKConnection conn, GroupId group, IEnumerable<MemberId> members) =>
+            conn.ExecuteAsync("delete from group_members where group_id = @Group and member_id = any(@Members)",
+                new {Group = group, Members = members.ToArray() });
     }
 }

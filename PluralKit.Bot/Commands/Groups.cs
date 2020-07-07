@@ -144,6 +144,44 @@ namespace PluralKit.Bot
             await ctx.Reply(embed: eb.Build());
         }
 
+        public async Task AddRemoveMembers(Context ctx, PKGroup target, AddRemoveOperation op)
+        {
+            ctx.CheckOwnGroup(target);
+            
+            // Parse all arguments
+            var members = new List<PKMember>();
+            while (ctx.HasNext())
+            {
+                var member = await ctx.MatchMember();
+                if (member == null)
+                    throw new PKSyntaxError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));;
+                if (member.System != target.System)
+                    throw new PKError($"Member **{member.Name}** (`{member.Hid}`) is not in your own system, so you can't add it to a group.");
+                members.Add(member);
+            }
+
+            if (members.Count == 0)
+                throw new PKSyntaxError("You must pass one or more members.");
+
+            await using var conn = await _db.Obtain();
+            if (op == AddRemoveOperation.Add)
+            {
+                await conn.AddMembersToGroup(target.Id, members.Select(m => m.Id));
+                await ctx.Reply($"{Emojis.Success} Members added to group.");
+            }
+            else if (op == AddRemoveOperation.Remove)
+            {
+                await conn.RemoveMembersFromGroup(target.Id, members.Select(m => m.Id));
+                await ctx.Reply($"{Emojis.Success} Members removed from group.");
+            }
+        }
+
+        public enum AddRemoveOperation
+        {
+            Add,
+            Remove
+        }
+
         private static async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
         {
             var system = ctx.System;

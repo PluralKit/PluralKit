@@ -50,6 +50,8 @@ namespace PluralKit.Bot
         public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
         public static Command GroupRename = new Command("group rename", "group <group> name <new name>", "Renames a group");
         public static Command GroupDesc = new Command("group description", "group <group> description [description]", "Changes a group's description");
+        public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
+        public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -333,6 +335,10 @@ namespace PluralKit.Bot
                     await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
                 else if (ctx.Match("description", "info", "bio", "text", "desc"))
                     await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
+                else if (ctx.Match("add", "a"))
+                    await ctx.Execute<Groups>(GroupAdd,g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
+                else if (ctx.Match("remove", "rem", "r"))
+                    await ctx.Execute<Groups>(GroupRemove, g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
                 else if (!ctx.HasNext())
                     await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
                 else
