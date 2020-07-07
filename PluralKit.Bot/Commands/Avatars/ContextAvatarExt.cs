@@ -30,6 +30,10 @@ namespace PluralKit.Bot
             var arg = ctx.RemainderOrNull();
             if (arg != null)
             {
+                // Allow surrounding the URL with <angle brackets> to "de-embed"
+                if (arg.StartsWith("<") && arg.EndsWith(">"))
+                    arg = arg.Substring(1, arg.Length - 2);
+                
                 if (!Uri.TryCreate(arg, UriKind.Absolute, out var uri))
                     throw Errors.InvalidUrl(arg);
 
