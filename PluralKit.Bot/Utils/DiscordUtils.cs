@@ -29,6 +29,14 @@ namespace PluralKit.Bot
         private static readonly Regex USER_MENTION = new Regex("<@!?(\\d{17,19})>");
         private static readonly Regex ROLE_MENTION = new Regex("<@&(\\d{17,19})>");
         private static readonly Regex EVERYONE_HERE_MENTION = new Regex("@(everyone|here)");
+        
+        // Discord uses Khan Academy's simple-markdown library for parsing Markdown,
+        // which uses the following regex for link detection: 
+        // ^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])
+        // Source: https://raw.githubusercontent.com/DJScias/Discord-Datamining/master/2020/2020-07-10/47efb8681861cb7c5ffa.js @ line 20633
+        // corresponding to: https://github.com/Khan/simple-markdown/blob/master/src/index.js#L1489
+        // I added <? and >? at the start/end; they need to be handled specially later...
+        private static readonly Regex UNBROKEN_LINK_REGEX = new Regex("<?(https?:\\/\\/[^\\s<]+[^<.,:;\"')\\]\\s])>?");
 
         private static readonly FieldInfo _roleIdsField = typeof(DiscordMember).GetField("_role_ids", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -197,7 +205,7 @@ namespace PluralKit.Bot
         public static string EscapeBacktickPair(this string input){
             Regex doubleBacktick = new Regex(@"``", RegexOptions.Multiline);
             //Run twice to catch any pairs that are created from the first pass, pairs shouldn't be created in the second as they are created from odd numbers of backticks, even numbers are all caught on the first pass
-            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, @"`‌﻿`"),@"`‌﻿`");
+            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, @"`‌ `"),@"`‌﻿`");
             else return input;
         }
 
@@ -277,5 +285,16 @@ namespace PluralKit.Bot
 
             return eb;
         }
+
+        public static string BreakLinkEmbeds(this string str) =>
+            // Encases URLs in <brackets>
+            UNBROKEN_LINK_REGEX.Replace(str, match =>
+            {
+                // Don't break already-broken links
+                // The regex will include the brackets in the match, so we can check for their presence here
+                if (match.Value.StartsWith("<") && match.Value.EndsWith(">"))
+                    return match.Value;
+                return $"<{match.Value}>";
+            });
     }
 }
