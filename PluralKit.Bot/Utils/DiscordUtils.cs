@@ -110,10 +110,10 @@ namespace PluralKit.Bot
             Instant.FromUtc(2015, 1, 1, 0, 0, 0) + Duration.FromMilliseconds(snowflake >> 22);
 
         public static ulong InstantToSnowflake(Instant time) =>
-            (ulong) (time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds >> 22;
+            (ulong) (time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds << 22;
 
         public static ulong InstantToSnowflake(DateTimeOffset time) =>
-            (ulong) (time - new DateTimeOffset(2015, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds >> 22;
+            (ulong) (time - new DateTimeOffset(2015, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds << 22;
 
         public static async Task CreateReactionsBulk(this DiscordMessage msg, string[] reactions)
         {
