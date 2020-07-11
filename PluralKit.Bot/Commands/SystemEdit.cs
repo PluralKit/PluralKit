@@ -13,6 +13,8 @@ using NodaTime.TimeZones;
 
 using PluralKit.Core;
 
+using Sentry.Protocol;
+
 namespace PluralKit.Bot
 {
     public class SystemEdit
@@ -32,7 +34,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var clearPatch = new SystemPatch {Name = null};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
@@ -63,7 +65,7 @@ namespace PluralKit.Bot
         public async Task Description(Context ctx) {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var patch = new SystemPatch {Description = null};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
@@ -101,7 +103,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var patch = new SystemPatch {Tag = null};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
@@ -131,59 +133,56 @@ namespace PluralKit.Bot
         public async Task Avatar(Context ctx)
         {
             ctx.CheckSystem();
-            
-            if (ctx.Match("clear") || ctx.MatchFlag("c", "clear"))
+
+            async Task ClearIcon()
             {
-                var patch = new SystemPatch {AvatarUrl = null};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-                
-                await ctx.Reply($"{Emojis.Success} System avatar cleared.");
-                return;
+                await _db.Execute(c => c.UpdateSystem(ctx.System.Id, new SystemPatch {AvatarUrl = null}));
+                await ctx.Reply($"{Emojis.Success} System icon cleared.");
             }
-            else if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
+
+            async Task SetIcon(ParsedImage img)
+            {
+                if (img.Url.Length > Limits.MaxUriLength) 
+                    throw Errors.InvalidUrl(img.Url);
+                await AvatarUtils.VerifyAvatarOrThrow(img.Url);
+
+                await _db.Execute(c => c.UpdateSystem(ctx.System.Id, new SystemPatch {AvatarUrl = img.Url}));
+            
+                var msg = img.Source switch
+                {
+                    AvatarSource.User => $"{Emojis.Success} System icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon will need to be re-set.",
+                    AvatarSource.Url => $"{Emojis.Success} System icon changed to the image at the given URL.",
+                    AvatarSource.Attachment => $"{Emojis.Success} System icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon will stop working.",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            
+                // The attachment's already right there, no need to preview it.
+                var hasEmbed = img.Source != AvatarSource.Attachment;
+                await (hasEmbed 
+                    ? ctx.Reply(msg, embed: new DiscordEmbedBuilder().WithImageUrl(img.Url).Build()) 
+                    : ctx.Reply(msg));
+            }
+
+            async Task ShowIcon()
             {
                 if ((ctx.System.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
                     var eb = new DiscordEmbedBuilder()
-                        .WithTitle($"System avatar")
+                        .WithTitle("System icon")
                         .WithImageUrl(ctx.System.AvatarUrl)
-                        .WithDescription($"To clear, use `pk;system avatar clear`.");
+                        .WithDescription("To clear, use `pk;system icon clear`.");
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
-                    throw new PKSyntaxError($"This system does not have an avatar set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-
-                return;
+                    throw new PKSyntaxError("This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
             }
 
-            var member = await ctx.MatchUser();
-            if (member != null)
-            {
-                if (member.AvatarHash == null) throw Errors.UserHasNoAvatar;
-
-                var newUrl = member.GetAvatarUrl(ImageFormat.Png, size: 256);
-                var patch = new SystemPatch {AvatarUrl = newUrl};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-                
-                var embed = new DiscordEmbedBuilder().WithImageUrl(newUrl).Build();
-                await ctx.Reply(
-                    $"{Emojis.Success} System avatar changed to {member.Username}'s avatar! {Emojis.Warn} Please note that if {member.Username} changes their avatar, the system's avatar will need to be re-set.", embed: embed);
-            }
+            if (ctx.MatchClear())
+                await ClearIcon();
+            else if (await ctx.MatchImage() is {} img)
+                await SetIcon(img);
             else
-            {
-                // They can't both be null - otherwise we would've hit the conditional at the very top
-                string url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.ProxyUrl;
-                if (url?.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
-                if (url.StartsWith('<'))
-                    url = url.TrimStart('<').TrimEnd('>');
-                await ctx.BusyIndicator(() => AvatarUtils.VerifyAvatarOrThrow(url));
-
-                var patch = new SystemPatch {AvatarUrl = url};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-
-                var embed = url != null ? new DiscordEmbedBuilder().WithImageUrl(url).Build() : null;
-                await ctx.Reply($"{Emojis.Success} System avatar changed.", embed: embed);
-            }
+                await ShowIcon();
         }
         
         public async Task Delete(Context ctx) {
@@ -229,7 +228,7 @@ namespace PluralKit.Bot
         {
             if (ctx.System == null) throw Errors.NoSystemError;
 
-            if (ctx.MatchFlag("c", "clear") || ctx.Match("clear"))
+            if (ctx.MatchClear())
             {
                 var clearPatch = new SystemPatch {UiTz = "UTC"};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
@@ -264,93 +263,62 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (!ctx.HasNext())
+            Task PrintEmbed()
             {
-                string PrivacyLevelString(PrivacyLevel level) => level switch
-                {
-                    PrivacyLevel.Private => "**Private** (visible only when queried by you)",
-                    PrivacyLevel.Public => "**Public** (visible to everyone)",
-                    _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
-                };
-
                 var eb = new DiscordEmbedBuilder()
                     .WithTitle("Current privacy settings for your system")
-                    .AddField("Description", PrivacyLevelString(ctx.System.DescriptionPrivacy))
-                    .AddField("Member list", PrivacyLevelString(ctx.System.MemberListPrivacy))
-                    .AddField("Current fronter(s)", PrivacyLevelString(ctx.System.FrontPrivacy))
-                    .AddField("Front/switch history", PrivacyLevelString(ctx.System.FrontHistoryPrivacy))
+                    .AddField("Description", ctx.System.DescriptionPrivacy.Explanation())
+                    .AddField("Member list", ctx.System.MemberListPrivacy.Explanation())
+                    .AddField("Current fronter(s)", ctx.System.FrontPrivacy.Explanation())
+                    .AddField("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation())
                     .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, or `all` \n- `level` is either `public` or `private`.");
-                await ctx.Reply(embed: eb.Build());
-                return;
+                return ctx.Reply(embed: eb.Build());
             }
-            
-            PrivacyLevel PopPrivacyLevel(string subject, out string levelStr, out string levelExplanation)
+
+            async Task SetLevel(SystemPrivacySubject subject, PrivacyLevel level)
             {
-                if (ctx.Match("public", "show", "shown", "visible"))
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch().WithPrivacy(subject, level)));
+
+                var levelExplanation = level switch
                 {
-                    levelStr = "public";
-                    levelExplanation = "be able to query";
-                    return PrivacyLevel.Public;
-                }
+                    PrivacyLevel.Public => "be able to query",
+                    PrivacyLevel.Private => "*not* be able to query",
+                    _ => ""
+                };
 
-                if (ctx.Match("private", "hide", "hidden"))
+                var subjectStr = subject switch
                 {
-                    levelStr = "private";
-                    levelExplanation = "*not* be able to query";
-                    return PrivacyLevel.Private;
-                }
+                    SystemPrivacySubject.Description => "description",
+                    SystemPrivacySubject.Front => "front",
+                    SystemPrivacySubject.FrontHistory => "front history",
+                    SystemPrivacySubject.MemberList => "member list",
+                    _ => ""
+                };
 
-                if (!ctx.HasNext())
-                    throw new PKSyntaxError($"You must pass a privacy level for `{subject}` (`public` or `private`)");
-                throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument()}` (must be `public` or `private`).");
+                var msg = $"System {subjectStr} privacy has been set to **{level.LevelName()}**. Other accounts will now {levelExplanation} your system {subjectStr}.";
+                await ctx.Reply($"{Emojis.Success} {msg}");
             }
 
-            string levelStr, levelExplanation, subjectStr;
-            var subjectList = "`description`, `members`, `front`, `fronthistory`, or `all`";
-            
-            SystemPatch patch = new SystemPatch();
-            if (ctx.Match("description", "desc", "text", "info"))
+            async Task SetAll(PrivacyLevel level)
             {
-                subjectStr = "description";
-                patch.DescriptionPrivacy = PopPrivacyLevel("description", out levelStr, out levelExplanation);
-            } 
-            else if (ctx.Match("members", "memberlist", "list", "mlist"))
-            {
-                subjectStr = "member list";
-                patch.MemberListPrivacy = PopPrivacyLevel("members", out levelStr, out levelExplanation);
-            }
-            else if (ctx.Match("front", "fronter"))
-            {
-                subjectStr = "fronter(s)";
-                patch.FrontPrivacy = PopPrivacyLevel("front", out levelStr, out levelExplanation);
-            } 
-            else if (ctx.Match("switch", "switches", "fronthistory", "fh"))
-            {
-                subjectStr = "front history";
-                patch.FrontHistoryPrivacy = PopPrivacyLevel("fronthistory", out levelStr, out levelExplanation);
-            }
-            else if (ctx.Match("all")){
-                subjectStr = "all";
-                PrivacyLevel level = PopPrivacyLevel("all", out levelStr, out levelExplanation);
-                patch.DescriptionPrivacy = level;
-                patch.MemberListPrivacy = level;
-                patch.FrontPrivacy = level;
-                patch.FrontHistoryPrivacy = level;
+                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch().WithAllPrivacy(level)));
 
+                var msg = level switch
+                {
+                    PrivacyLevel.Private => $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, front history, or system description.",
+                    PrivacyLevel.Public => $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now be able to view everything.",
+                    _ => ""
+                };
+
+                await ctx.Reply($"{Emojis.Success} {msg}");
             }
+
+            if (!ctx.HasNext())
+                await PrintEmbed();
+            else if (ctx.Match("all"))
+                await SetAll(ctx.PopPrivacyLevel());
             else
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be {subjectList}).");
-
-            await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
-            if(subjectStr == "all"){
-                if(levelStr == "private")
-                    await ctx.Reply($"All of your systems privacy settings have been set to **{levelStr}**. Other accounts will now see nothing on the member card.");
-                else 
-                    await ctx.Reply($"All of your systems privacy have been set to **{levelStr}**. Other accounts will now see everything on the member card.");
-            } 
-            //Handle other subjects
-            else
-                await ctx.Reply($"System {subjectStr} privacy has been set to **{levelStr}**. Other accounts will now {levelExplanation} your system {subjectStr}.");
+                await SetLevel(ctx.PopSystemPrivacySubject(), ctx.PopPrivacyLevel());
         }
 
         public async Task SystemPing(Context ctx) 

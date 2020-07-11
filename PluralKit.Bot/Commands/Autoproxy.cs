@@ -22,7 +22,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem().CheckGuildContext();
             
-            if (ctx.Match("off", "stop", "cancel", "no"))
+            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
                 await AutoproxyOff(ctx);
             else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
                 await AutoproxyLatch(ctx);

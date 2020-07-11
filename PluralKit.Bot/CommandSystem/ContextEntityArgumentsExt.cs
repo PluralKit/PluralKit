@@ -2,7 +2,6 @@
 
 using DSharpPlus;
 using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
 
 using PluralKit.Bot.Utils;
 using PluralKit.Core;

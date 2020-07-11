@@ -13,6 +13,8 @@ using DSharpPlus.Exceptions;
 
 using NodaTime;
 
+using PluralKit.Core;
+
 namespace PluralKit.Bot
 {
     public static class DiscordUtils
@@ -27,6 +29,14 @@ namespace PluralKit.Bot
         private static readonly Regex USER_MENTION = new Regex("<@!?(\\d{17,19})>");
         private static readonly Regex ROLE_MENTION = new Regex("<@&(\\d{17,19})>");
         private static readonly Regex EVERYONE_HERE_MENTION = new Regex("@(everyone|here)");
+        
+        // Discord uses Khan Academy's simple-markdown library for parsing Markdown,
+        // which uses the following regex for link detection: 
+        // ^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])
+        // Source: https://raw.githubusercontent.com/DJScias/Discord-Datamining/master/2020/2020-07-10/47efb8681861cb7c5ffa.js @ line 20633
+        // corresponding to: https://github.com/Khan/simple-markdown/blob/master/src/index.js#L1489
+        // I added <? and >? at the start/end; they need to be handled specially later...
+        private static readonly Regex UNBROKEN_LINK_REGEX = new Regex("<?(https?:\\/\\/[^\\s<]+[^<.,:;\"')\\]\\s])>?");
 
         private static readonly FieldInfo _roleIdsField = typeof(DiscordMember).GetField("_role_ids", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -100,10 +110,10 @@ namespace PluralKit.Bot
             Instant.FromUtc(2015, 1, 1, 0, 0, 0) + Duration.FromMilliseconds(snowflake >> 22);
 
         public static ulong InstantToSnowflake(Instant time) =>
-            (ulong) (time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds >> 22;
+            (ulong) (time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds << 22;
 
         public static ulong InstantToSnowflake(DateTimeOffset time) =>
-            (ulong) (time - new DateTimeOffset(2015, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds >> 22;
+            (ulong) (time - new DateTimeOffset(2015, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds << 22;
 
         public static async Task CreateReactionsBulk(this DiscordMessage msg, string[] reactions)
         {
@@ -195,7 +205,7 @@ namespace PluralKit.Bot
         public static string EscapeBacktickPair(this string input){
             Regex doubleBacktick = new Regex(@"``", RegexOptions.Multiline);
             //Run twice to catch any pairs that are created from the first pass, pairs shouldn't be created in the second as they are created from odd numbers of backticks, even numbers are all caught on the first pass
-            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, @"`‌﻿`"),@"`‌﻿`");
+            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, @"`‌ `"),@"`‌﻿`");
             else return input;
         }
 
@@ -267,5 +277,36 @@ namespace PluralKit.Bot
                 return null;
             }
         }
+
+        public static DiscordEmbedBuilder WithSimpleLineContent(this DiscordEmbedBuilder eb, IEnumerable<string> lines)
+        {
+            static int CharacterLimit(int pageNumber) =>
+                // First chunk goes in description (2048 chars), rest go in embed values (1000 chars)
+                pageNumber == 0 ? 2048 : 1000;
+
+            var linesWithEnding = lines.Select(l => $"{l}\n");
+            var pages = StringUtils.JoinPages(linesWithEnding, CharacterLimit);
+
+            // Add the first page to the embed description
+            if (pages.Count > 0)
+                eb.WithDescription(pages[0]);
+            
+            // Add the rest to blank-named (\u200B) fields
+            for (var i = 1; i < pages.Count; i++)
+                eb.AddField("\u200B", pages[i]);
+
+            return eb;
+        }
+
+        public static string BreakLinkEmbeds(this string str) =>
+            // Encases URLs in <brackets>
+            UNBROKEN_LINK_REGEX.Replace(str, match =>
+            {
+                // Don't break already-broken links
+                // The regex will include the brackets in the match, so we can check for their presence here
+                if (match.Value.StartsWith("<") && match.Value.EndsWith(">"))
+                    return match.Value;
+                return $"<{match.Value}>";
+            });
     }
 }

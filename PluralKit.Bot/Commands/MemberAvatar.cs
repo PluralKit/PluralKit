@@ -1,11 +1,7 @@
 #nullable enable
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
-using Dapper;
-
-using DSharpPlus;
 using DSharpPlus.Entities;
 
 using PluralKit.Core;
@@ -23,7 +19,6 @@ namespace PluralKit.Bot
         
         private async Task AvatarClear(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
         {
-            ctx.CheckSystem().CheckOwnMember(target);
             await UpdateAvatar(location, ctx, target, null);
             if (location == AvatarLocation.Server)
             {
@@ -43,9 +38,6 @@ namespace PluralKit.Bot
 
         private async Task AvatarShow(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? guildData)
         {
-            var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.Guild.Name})" : "avatar";
-            var cmd = location == AvatarLocation.Server ? "serveravatar" : "avatar";
-            
             var currentValue = location == AvatarLocation.Member ? target.AvatarUrl : guildData?.AvatarUrl;
             var canAccess = location != AvatarLocation.Member || target.AvatarPrivacy.CanAccess(ctx.LookupContextFor(target));
             if (string.IsNullOrEmpty(currentValue) || !canAccess)
@@ -60,56 +52,16 @@ namespace PluralKit.Bot
                 if (location == AvatarLocation.Server)
                     throw new PKError($"This member does not have a server avatar set. Type `pk;member {target.Hid} avatar` to see their global avatar.");
             }
-
+            
+            var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.Guild.Name})" : "avatar";
+            var cmd = location == AvatarLocation.Server ? "serveravatar" : "avatar";
+            
             var eb = new DiscordEmbedBuilder()
                 .WithTitle($"{target.NameFor(ctx)}'s {field}")
                 .WithImageUrl(currentValue);
             if (target.System == ctx.System?.Id)
                 eb.WithDescription($"To clear, use `pk;member {target.Hid} {cmd} clear`.");
             await ctx.Reply(embed: eb.Build());
-        }
-
-        private async Task AvatarFromUser(AvatarLocation location, Context ctx, PKMember target, DiscordUser user)
-        {
-            ctx.CheckSystem().CheckOwnMember(target);
-            if (user.AvatarHash == null) throw Errors.UserHasNoAvatar;
-            
-            var url = user.GetAvatarUrl(ImageFormat.Png, 256);
-            await UpdateAvatar(location, ctx, target, url);
-            
-            var embed = new DiscordEmbedBuilder().WithImageUrl(url).Build();
-            if (location == AvatarLocation.Server)
-                await ctx.Reply($"{Emojis.Success} Member server avatar changed to {user.Username}'s avatar! This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**). {Emojis.Warn} Please note that if {user.Username} changes their avatar, the member's server avatar will need to be re-set.", embed: embed);
-            else if (location == AvatarLocation.Member)
-                await ctx.Reply($"{Emojis.Success} Member avatar changed to {user.Username}'s avatar! {Emojis.Warn} Please note that if {user.Username} changes their avatar, the member's avatar will need to be re-set.", embed: embed);
-        }
-
-        private async Task AvatarFromArg(AvatarLocation location, Context ctx, PKMember target, string url)
-        {
-            ctx.CheckSystem().CheckOwnMember(target);
-            if (url.StartsWith('<'))
-                url = url.TrimStart('<').TrimEnd('>');
-            if (url.Length > Limits.MaxUriLength) throw Errors.InvalidUrl(url);
-            await AvatarUtils.VerifyAvatarOrThrow(url);
-
-            await UpdateAvatar(location, ctx, target, url);
-
-            var embed = new DiscordEmbedBuilder().WithImageUrl(url).Build();
-            if (location == AvatarLocation.Server)
-                await ctx.Reply($"{Emojis.Success} Member server avatar changed. This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).", embed: embed);
-            else if (location == AvatarLocation.Member)
-                await ctx.Reply($"{Emojis.Success} Member avatar changed.", embed: embed);
-        }
-
-        private async Task AvatarFromAttachment(AvatarLocation location, Context ctx, PKMember target, DiscordAttachment attachment)
-        {
-            ctx.CheckSystem().CheckOwnMember(target);
-            await AvatarUtils.VerifyAvatarOrThrow(attachment.Url);
-            await UpdateAvatar(location, ctx, target, attachment.Url);
-            if (location == AvatarLocation.Server)
-                await ctx.Reply($"{Emojis.Success} Member server avatar changed to attached image. This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**). Please note that if you delete the message containing the attachment, the avatar will stop working.");
-            else if (location == AvatarLocation.Member)
-                await ctx.Reply($"{Emojis.Success} Member avatar changed to attached image. Please note that if you delete the message containing the attachment, the avatar will stop working.");
         }
 
         public async Task ServerAvatar(Context ctx, PKMember target)
@@ -130,28 +82,77 @@ namespace PluralKit.Bot
 
         private async Task AvatarCommandTree(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? guildData)
         {
-            if (ctx.Match("clear", "remove", "reset") || ctx.MatchFlag("c", "clear"))
+            // First, see if we need to *clear*
+            if (ctx.MatchClear())
+            {
+                ctx.CheckSystem().CheckOwnMember(target);
                 await AvatarClear(location, ctx, target, guildData);
-            else if (ctx.RemainderOrNull() == null && ctx.Message.Attachments.Count == 0)
+                return;
+            }
+
+            // Then, parse an image from the command (from various sources...)
+            var avatarArg = await ctx.MatchImage();
+            if (avatarArg == null)
+            {
+                // If we didn't get any, just show the current avatar
                 await AvatarShow(location, ctx, target, guildData);
-            else if (await ctx.MatchUser() is {} user)
-                await AvatarFromUser(location, ctx, target, user);
-            else if (ctx.RemainderOrNull() is {} url)
-                await AvatarFromArg(location, ctx, target, url);
-            else if (ctx.Message.Attachments.FirstOrDefault() is {} attachment)
-                await AvatarFromAttachment(location, ctx, target, attachment);
-            else throw new Exception("Unexpected condition when parsing avatar command");
+                return;
+            }
+
+            ctx.CheckSystem().CheckOwnMember(target);
+            await ValidateUrl(avatarArg.Value.Url);
+            await UpdateAvatar(location, ctx, target, avatarArg.Value.Url);
+            await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
         }
 
-        private Task UpdateAvatar(AvatarLocation location, Context ctx, PKMember target, string? avatar)
+        private static Task ValidateUrl(string url)
+        {
+            if (url.Length > Limits.MaxUriLength)
+                throw Errors.InvalidUrl(url);
+            return AvatarUtils.VerifyAvatarOrThrow(url);
+        }
+
+        private Task PrintResponse(AvatarLocation location, Context ctx, PKMember target, ParsedImage avatar,
+                                   MemberGuildSettings? targetGuildData)
+        {
+            var typeFrag = location switch
+            {
+                AvatarLocation.Server => "server avatar",
+                AvatarLocation.Member => "avatar",
+                _ => throw new ArgumentOutOfRangeException(nameof(location))
+            };
+            
+            var serverFrag = location switch
+            {
+                AvatarLocation.Server => $" This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).",
+                AvatarLocation.Member when targetGuildData?.AvatarUrl != null => $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
+                _ => ""
+            };
+
+            var msg = avatar.Source switch
+            {
+                AvatarSource.User => $"{Emojis.Success} Member {typeFrag} changed to {avatar.SourceUser?.Username}'s avatar!{serverFrag}\n{Emojis.Warn} If {avatar.SourceUser?.Username} changes their avatar, the member's avatar will need to be re-set.",
+                AvatarSource.Url => $"{Emojis.Success} Member {typeFrag} changed to the image at the given URL.{serverFrag}",
+                AvatarSource.Attachment => $"{Emojis.Success} Member {typeFrag} changed to attached image.{serverFrag}\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            // The attachment's already right there, no need to preview it.
+            var hasEmbed = avatar.Source != AvatarSource.Attachment;
+            return hasEmbed 
+                ? ctx.Reply(msg, embed: new DiscordEmbedBuilder().WithImageUrl(avatar.Url).Build()) 
+                : ctx.Reply(msg);
+        }
+
+        private Task UpdateAvatar(AvatarLocation location, Context ctx, PKMember target, string? url)
         {
             switch (location)
             {
                 case AvatarLocation.Server:
-                    var serverPatch = new MemberGuildPatch { AvatarUrl = avatar };
+                    var serverPatch = new MemberGuildPatch { AvatarUrl = url };
                     return _db.Execute(c => c.UpsertMemberGuild(target.Id, ctx.Guild.Id, serverPatch));
                 case AvatarLocation.Member:
-                    var memberPatch = new MemberPatch { AvatarUrl = avatar };
+                    var memberPatch = new MemberPatch { AvatarUrl = url };
                     return _db.Execute(c => c.UpdateMember(target.Id, memberPatch));
                 default:
                     throw new ArgumentOutOfRangeException($"Unknown avatar location {location}");

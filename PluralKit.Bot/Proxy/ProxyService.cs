@@ -57,11 +57,14 @@ namespace PluralKit.Bot
             if (!await CheckBotPermissionsOrError(message.Channel)) return false;
             if (!CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx))) return false;
             
-            // Check if we can mention everyone/here
-            var allowEveryone = (message.Channel.PermissionsInSync(message.Author) & Permissions.MentionEveryone) != 0;
+            // Check if the sender account can mention everyone/here + embed links
+            // we need to "mirror" these permissions when proxying to prevent exploits
+            var senderPermissions = message.Channel.PermissionsInSync(message.Author);
+            var allowEveryone = (senderPermissions & Permissions.MentionEveryone) != 0;
+            var allowEmbeds = (senderPermissions & Permissions.EmbedLinks) != 0;
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(conn, message, ctx, match, allowEveryone);
+            await ExecuteProxy(conn, message, ctx, match, allowEveryone, allowEmbeds);
             return true;
         }
 
@@ -88,12 +91,14 @@ namespace PluralKit.Bot
         }
 
         private async Task ExecuteProxy(IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
-                                        ProxyMatch match, bool allowEveryone)
+                                        ProxyMatch match, bool allowEveryone, bool allowEmbeds)
         {
             // Send the webhook
+            var content = match.ProxyContent;
+            if (!allowEmbeds) content = content.BreakLinkEmbeds();
             var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
                 match.Member.ProxyAvatar(ctx),
-                match.ProxyContent, trigger.Attachments, allowEveryone);
+                content, trigger.Attachments, allowEveryone);
             
             Task SaveMessage() => _data.AddMessage(conn, trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id, match.Member.Id);
             Task LogMessage() => _logChannel.LogMessage(ctx, match, trigger, id).AsTask();

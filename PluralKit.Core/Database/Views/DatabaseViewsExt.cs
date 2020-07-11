@@ -11,31 +11,39 @@ namespace PluralKit.Core
     {
         public static Task<IEnumerable<SystemFronter>> QueryCurrentFronters(this IPKConnection conn, SystemId system) =>
             conn.QueryAsync<SystemFronter>("select * from system_fronters where system = @system", new {system});
-
-        public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system, LookupContext ctx, PrivacyLevel? privacyFilter = null, string? filter = null, bool includeDescriptionInNameFilter = false)
+        
+        public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system, MemberListQueryOptions opts)
         {
             StringBuilder query = new StringBuilder("select * from member_list where system = @system");
 
-            if (privacyFilter != null)
-                query.Append($" and member_visibility = {(int) privacyFilter}");
+            if (opts.PrivacyFilter != null)
+                query.Append($" and member_visibility = {(int) opts.PrivacyFilter}");
 
-            if (filter != null)
+            if (opts.Search != null)
             {
                 static string Filter(string column) => $"(position(lower(@filter) in lower(coalesce({column}, ''))) > 0)"; 
 
                 query.Append($" and ({Filter("name")} or {Filter("display_name")}");
-                if (includeDescriptionInNameFilter)
+                if (opts.SearchDescription)
                 {
                     // We need to account for the possibility of description privacy when searching
                     // If we're looking up from the outside, only search "public_description" (defined in the view; null if desc is private)
                     // If we're the owner, just search the full description
-                    var descriptionColumn = ctx == LookupContext.ByOwner ? "description" : "public_description";
+                    var descriptionColumn = opts.Context == LookupContext.ByOwner ? "description" : "public_description";
                     query.Append($"or {Filter(descriptionColumn)}");
                 }
                 query.Append(")");
             }
             
-            return conn.QueryAsync<ListedMember>(query.ToString(), new {system, filter});
+            return conn.QueryAsync<ListedMember>(query.ToString(), new {system, filter = opts.Search});
+        }
+        
+        public struct MemberListQueryOptions
+        {
+            public PrivacyLevel? PrivacyFilter;
+            public string? Search;
+            public bool SearchDescription;
+            public LookupContext Context;
         }
     }
 }

@@ -15,7 +15,7 @@ namespace PluralKit.Bot
         public static Command SystemRename = new Command("system name", "system rename [name]", "Renames your system");
         public static Command SystemDesc = new Command("system description", "system description [description]", "Changes your system's description");
         public static Command SystemTag = new Command("system tag", "system tag [tag]", "Changes your system's tag");
-        public static Command SystemAvatar = new Command("system avatar", "system avatar [url|@mention]", "Changes your system's avatar");
+        public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
         public static Command SystemProxy = new Command("system proxy", "system proxy [on|off]", "Enables or disables message proxying in a specific server");
