@@ -64,7 +64,7 @@ namespace PluralKit.Bot
         {
             var roleIdCache = _roleIdsField.GetValue(member) as List<ulong>;
             var currentRoleIds = member.Roles.Where(x => x != null).Select(x => x.Id);
-            var invalidRoleIds = roleIdCache.Where(x => !currentRoleIds.Contains(x));
+            var invalidRoleIds = roleIdCache.Where(x => !currentRoleIds.Contains(x)).ToList();
             roleIdCache.RemoveAll(x => invalidRoleIds.Contains(x));
         }
 
