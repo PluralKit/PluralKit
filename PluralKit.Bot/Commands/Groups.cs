@@ -31,7 +31,7 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
             var newGroup = await conn.CreateGroup(ctx.System.Id, groupName);
 
-            await ctx.Reply($"{Emojis.Success} Group \"**{groupName}**\" (`{newGroup.Hid}`) registered!\nYou can now start adding members to the group:\n- **pk;group {newGroup.Hid} add <members...>**");
+            await ctx.Reply($"{Emojis.Success} Group \"**{groupName}**\" (`{newGroup.Hid}`) registered!\nYou can now start adding members to the group like this:\n> **pk;group `{newGroup.Hid}` add `member1` `member2...`**");
         }
 
         public async Task RenameGroup(Context ctx, PKGroup target)
@@ -133,6 +133,7 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
             
             var system = await GetGroupSystem(ctx, target, conn);
+            var memberCount = await conn.QueryGroupMemberCount(target.Id, PrivacyLevel.Public);
 
             var nameField = target.Name;
             if (system.Name != null)
@@ -141,6 +142,11 @@ namespace PluralKit.Bot
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor(nameField)
                 .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
+
+            if (memberCount == 0)
+                eb.AddField("Members (0)", $"Add one with `pk;group {target.Hid} add <member>`!", true);
+            else
+                eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Hid} list`)", true);
 
             if (target.Description != null)
                 eb.AddField("Description", target.Description);
