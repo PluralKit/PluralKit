@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Exceptions;
 
+using Humanizer;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -330,7 +332,7 @@ namespace PluralKit.Bot
         {
             var commandListStr = CreatePotentialCommandList(potentialCommands);
             await ctx.Reply(
-                $"{Emojis.Error} Unknown command `pk;{ctx.FullCommand()}`. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
+                $"{Emojis.Error} Unknown command `pk;{ctx.FullCommand().Truncate(100)}`. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
         }
         
         private async Task PrintCommandExpectedError(Context ctx, params Command[] potentialCommands)
