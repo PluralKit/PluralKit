@@ -27,5 +27,11 @@ namespace PluralKit.Core
 
         public static int MessageCountFor(this PKMember member, LookupContext ctx) =>
             member.MetadataPrivacy.Get(ctx, member.MessageCount);
+
+        public static string DescriptionFor(this PKGroup group, LookupContext ctx) =>
+            group.DescriptionPrivacy.Get(ctx, group.Description);
+        
+        public static string IconFor(this PKGroup group, LookupContext ctx) =>
+            group.IconPrivacy.Get(ctx, group.Icon);
     }
 }

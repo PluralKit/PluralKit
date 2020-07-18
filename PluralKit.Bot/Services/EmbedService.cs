@@ -109,7 +109,7 @@ namespace PluralKit.Bot {
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
-            var groups = (await conn.QueryMemberGroups(member.Id)).ToList();
+            var groups = (await conn.QueryMemberGroups(member.Id)).Where(g => g.Visibility.CanAccess(ctx)).ToList();
 
             var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`` {t.ProxyString} ``"));
 

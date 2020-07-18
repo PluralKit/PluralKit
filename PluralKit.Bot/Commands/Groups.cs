@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -107,7 +108,11 @@ namespace PluralKit.Bot
             // TODO: integrate with the normal "search" system
             await using var conn = await _db.Obtain();
 
-            var groups = (await conn.QueryGroupsInSystem(system.Id)).ToList();
+            var pctx = LookupContext.ByNonOwner;
+            if (ctx.MatchFlag("a", "all") && system.Id == ctx.System.Id)
+                pctx = LookupContext.ByOwner;
+
+            var groups = (await conn.QueryGroupsInSystem(system.Id)).Where(g => g.Visibility.CanAccess(pctx)).ToList();
             if (groups.Count == 0)
             {
                 if (system.Id == ctx.System?.Id)
@@ -139,6 +144,7 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
             
             var system = await GetGroupSystem(ctx, target, conn);
+            var pctx = ctx.LookupContextFor(system);
             var memberCount = await conn.QueryGroupMemberCount(target.Id, PrivacyLevel.Public);
 
             var nameField = target.Name;
@@ -146,7 +152,7 @@ namespace PluralKit.Bot
                 nameField = $"{nameField} ({system.Name})";
 
             var eb = new DiscordEmbedBuilder()
-                .WithAuthor(nameField)
+                .WithAuthor(nameField, iconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx)))
                 .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
 
             if (memberCount == 0)
@@ -154,8 +160,11 @@ namespace PluralKit.Bot
             else
                 eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Hid} list`)", true);
 
-            if (target.Description != null)
-                eb.AddField("Description", target.Description);
+            if (target.DescriptionFor(pctx) is {} desc)
+                eb.AddField("Description", desc);
+
+            if (target.IconFor(pctx) is {} icon)
+                eb.WithThumbnail(icon);
 
             await ctx.Reply(embed: eb.Build());
         }
@@ -223,6 +232,66 @@ namespace PluralKit.Bot
             if (members.Count == 0)
                 throw new PKSyntaxError("You must pass one or more members.");
             return members;
+        }
+        
+        public async Task GroupPrivacy(Context ctx, PKGroup target, PrivacyLevel? newValueFromCommand)
+        {
+            ctx.CheckSystem().CheckOwnGroup(target);
+            // Display privacy settings
+            if (!ctx.HasNext() && newValueFromCommand == null)
+            {
+                await ctx.Reply(embed: new DiscordEmbedBuilder()
+                    .WithTitle($"Current privacy settings for {target.Name}")
+                    .AddField("Description", target.DescriptionPrivacy.Explanation())
+                    .AddField("Icon", target.IconPrivacy.Explanation())
+                    .AddField("Visibility", target.Visibility.Explanation())
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;group <group> privacy <subject> <level>`\n\n- `subject` is one of `description`, `icon`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .Build()); 
+                return;
+            }
+
+            async Task SetAll(PrivacyLevel level)
+            {
+                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch().WithAllPrivacy(level)));
+                
+                if (level == PrivacyLevel.Private)
+                    await ctx.Reply($"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the member card.");
+                else 
+                    await ctx.Reply($"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the member card.");
+            }
+
+            async Task SetLevel(GroupPrivacySubject subject, PrivacyLevel level)
+            {
+                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch().WithPrivacy(subject, level)));
+                
+                var subjectName = subject switch
+                {
+                    GroupPrivacySubject.Description => "description privacy",
+                    GroupPrivacySubject.Icon => "icon privacy",
+                    GroupPrivacySubject.Visibility => "visibility",
+                    _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
+                };
+                
+                var explanation = (subject, level) switch
+                {
+                    (GroupPrivacySubject.Description, PrivacyLevel.Private) => "This group's description is now hidden from other systems.",
+                    (GroupPrivacySubject.Icon, PrivacyLevel.Private) => "This group's icon is now hidden from other systems.",
+                    (GroupPrivacySubject.Visibility, PrivacyLevel.Private) => "This group is now hidden from group lists and member cards.",
+                    
+                    (GroupPrivacySubject.Description, PrivacyLevel.Public) => "This group's description is no longer hidden from other systems.",
+                    (GroupPrivacySubject.Icon, PrivacyLevel.Public) => "This group's icon is no longer hidden from other systems.",
+                    (GroupPrivacySubject.Visibility, PrivacyLevel.Public) => "This group is no longer hidden from group lists and member cards.",
+                    
+                    _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
+                };
+                
+                await ctx.Reply($"{Emojis.Success} {target.Name}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}");
+            }
+
+            if (ctx.Match("all") || newValueFromCommand != null)
+                await SetAll(newValueFromCommand ?? ctx.PopPrivacyLevel());
+            else
+                await SetLevel(ctx.PopGroupPrivacySubject(), ctx.PopPrivacyLevel());
         }
 
         private static async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)

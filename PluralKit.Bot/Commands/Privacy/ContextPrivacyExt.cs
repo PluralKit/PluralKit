@@ -35,5 +35,14 @@ namespace PluralKit.Bot
             ctx.PopArgument();
             return subject;
         }
+        
+        public static GroupPrivacySubject PopGroupPrivacySubject(this Context ctx)
+        {
+            if (!GroupPrivacyUtils.TryParseGroupPrivacy(ctx.PeekArgument(), out var subject))
+                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be `description`, `icon`, `visibility`, or `all).");
+            
+            ctx.PopArgument();
+            return subject;
+        }
     }
 }
