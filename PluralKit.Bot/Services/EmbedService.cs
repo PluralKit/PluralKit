@@ -107,7 +107,7 @@ namespace PluralKit.Bot {
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
-            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"``﻿{t.ProxyString}﻿``"));
+            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`` {t.ProxyString}﻿``"));
 
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
@@ -130,7 +130,7 @@ namespace PluralKit.Bot {
             if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
             if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
             if (member.BirthdayFor(ctx) != null) eb.AddField("Birthdate", member.BirthdayString, true);
-            if (member.PronounsFor(ctx) is {} pronouns) eb.AddField("Pronouns", pronouns.Truncate(1024), true);
+            if (member.PronounsFor(ctx) is {} pronouns && !string.IsNullOrWhiteSpace(pronouns)) eb.AddField("Pronouns", pronouns.Truncate(1024), true);
             if (member.MessageCountFor(ctx) is {} count && count > 0) eb.AddField("Message Count", member.MessageCount.ToString(), true);
             if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
             // --- For when this gets added to the member object itself or however they get added
