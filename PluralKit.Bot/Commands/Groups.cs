@@ -38,7 +38,14 @@ namespace PluralKit.Bot
                 throw new PKError($"System has reached the maximum number of groups ({Limits.MaxGroupCount}). Please delete unused groups first in order to create new ones.");
             
             var newGroup = await conn.CreateGroup(ctx.System.Id, groupName);
-            await ctx.Reply($"{Emojis.Success} Group \"**{groupName}**\" (`{newGroup.Hid}`) registered!\nYou can now start adding members to the group like this:\n> **pk;group `{newGroup.Hid}` add `member1` `member2...`**");
+            
+            var eb = new DiscordEmbedBuilder()
+                .WithDescription($"Your new group, **{groupName}**, has been created, with the group ID **`{newGroup.Hid}`**.\nBelow are a couple of useful commands:")
+                .AddField("View the group card", $"> pk;group **{newGroup.Hid}**")
+                .AddField("Add members to the group", $"> pk;group **{newGroup.Hid}** add **MemberName**\n> pk;group **{newGroup.Hid}** add **Member1** **Member2** **Member3** (and so on...)")
+                .AddField("Set the description", $"> pk;group **{newGroup.Hid}** description **This is my new group, and here is the description!**")
+                .AddField("Set the group icon", $"> pk;group **{newGroup.Hid}** icon\n*(with an image attached)*");
+            await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
         }
 
         public async Task RenameGroup(Context ctx, PKGroup target)
