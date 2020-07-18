@@ -183,13 +183,20 @@ namespace PluralKit.Bot
             return false;
         }
 
-        public static IEnumerable<IMention> ParseAllMentions(this string input, bool allowEveryone = false)
+        public static IEnumerable<IMention> ParseAllMentions(this string input, bool allowEveryone = false, DiscordGuild guild = null)
         {
             var mentions = new List<IMention>();
             mentions.AddRange(USER_MENTION.Matches(input)
                 .Select(x => new UserMention(ulong.Parse(x.Groups[1].Value)) as IMention));
+            
+            // Only allow role mentions through where the role is actually listed as *mentionable*
+            // (ie. any user can @ them, regardless of permissions)
+            // Still let the allowEveryone flag override this though (privileged users can @ *any* role)
+            // Original fix by Gwen
             mentions.AddRange(ROLE_MENTION.Matches(input)
-                .Select(x => new RoleMention(ulong.Parse(x.Groups[1].Value)) as IMention));
+                .Select(x => ulong.Parse(x.Groups[1].Value))
+                .Where(x => allowEveryone || guild != null && guild.GetRole(x).IsMentionable)
+                .Select(x => new RoleMention(x) as IMention));
             if (EVERYONE_HERE_MENTION.IsMatch(input) && allowEveryone)
                 mentions.Add(new EveryoneMention());
             return mentions;
