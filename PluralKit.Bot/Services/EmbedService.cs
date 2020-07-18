@@ -102,12 +102,16 @@ namespace PluralKit.Bot {
                 // for now we just default to a blank color, yolo
                 color = DiscordUtils.Gray;
             }
+
+            await using var conn = await _db.Obtain();
             
-            var guildSettings = guild != null ? await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(guild.Id, member.Id)) : null;
+            var guildSettings = guild != null ? await conn.QueryOrInsertMemberGuildConfig(guild.Id, member.Id) : null;
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
-            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`` {t.ProxyString}﻿``"));
+            var groups = (await conn.QueryMemberGroups(member.Id)).ToList();
+
+            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`` {t.ProxyString} ``"));
 
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
@@ -124,6 +128,9 @@ namespace PluralKit.Bot {
                 else
                     description += "*(this member has a server-specific avatar set)*\n";
             if (description != "") eb.WithDescription(description);
+
+            if (groups.Count > 0)
+                eb.AddField($"Groups ({groups.Count})", string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.Name}**")).Truncate(1000));
 
             if (avatar != null) eb.WithThumbnail(avatar);
 
