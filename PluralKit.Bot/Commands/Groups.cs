@@ -3,6 +3,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Dapper;
+
 using DSharpPlus.Entities;
 
 using NodaTime;
@@ -29,8 +31,12 @@ namespace PluralKit.Bot
                 throw new PKError($"Group name too long ({groupName.Length}/{Limits.MaxMemberNameLength} characters).");
             
             await using var conn = await _db.Obtain();
-            var newGroup = await conn.CreateGroup(ctx.System.Id, groupName);
 
+            var existingGroupCount = await conn.QuerySingleAsync<int>("select count(*) from groups where system = @System", ctx.System.Id);
+            if (existingGroupCount >= Limits.MaxGroupCount)
+                throw new PKError($"System has reached the maximum number of groups ({Limits.MaxGroupCount}). Please delete unused groups first in order to create new ones.");
+            
+            var newGroup = await conn.CreateGroup(ctx.System.Id, groupName);
             await ctx.Reply($"{Emojis.Success} Group \"**{groupName}**\" (`{newGroup.Hid}`) registered!\nYou can now start adding members to the group like this:\n> **pk;group `{newGroup.Hid}` add `member1` `member2...`**");
         }
 
