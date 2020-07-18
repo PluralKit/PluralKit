@@ -13,7 +13,7 @@
       <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00709" />
       <PackageReference Include="DSharpPlus.Rest" Version="4.0.0-nightly-00709" />
       <PackageReference Include="Humanizer.Core" Version="2.7.9" />
-      <PackageReference Include="Sentry" Version="2.0.0-beta7" />
+      <PackageReference Include="Sentry" Version="2.1.4" />
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0007" />
     </ItemGroup>
 </Project>
