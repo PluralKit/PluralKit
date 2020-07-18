@@ -7,17 +7,21 @@ using DSharpPlus.Exceptions;
 
 using PluralKit.Core;
 
+using Serilog;
+
 namespace PluralKit.Bot
 {
     public class ReactionAdded: IEventHandler<MessageReactionAddEventArgs>
     {
         private IDataStore _data;
         private EmbedService _embeds;
+        private ILogger _logger;
 
-        public ReactionAdded(IDataStore data, EmbedService embeds)
+        public ReactionAdded(IDataStore data, EmbedService embeds, ILogger logger)
         {
             _data = data;
             _embeds = embeds;
+            _logger = logger.ForContext<ReactionAdded>();
         }
 
         public async Task Handle(MessageReactionAddEventArgs evt)
@@ -94,9 +98,7 @@ namespace PluralKit.Bot
             }
             catch (UnauthorizedException) { } // No permissions to DM, can't check for this :(
             
-            // And finally remove the original reaction (if we can)
-            if (evt.Channel.BotHasAllPermissions(Permissions.ManageMessages))
-                await evt.Message.DeleteReactionAsync(evt.Emoji, evt.User);
+            await TryRemoveOriginalReaction(evt);
         }
 
         private async ValueTask HandlePingReaction(MessageReactionAddEventArgs evt, FullMessage msg)
@@ -126,10 +128,25 @@ namespace PluralKit.Bot
                 }
                 catch (UnauthorizedException) { }
             }
-            
-            // Finally, remove the original reaction (if we can)
-            if (evt.Channel.BotHasAllPermissions(Permissions.ManageMessages))
-                await evt.Message.DeleteReactionAsync(evt.Emoji, evt.User);
+
+            await TryRemoveOriginalReaction(evt);
+        }
+
+        private async Task TryRemoveOriginalReaction(MessageReactionAddEventArgs evt)
+        {
+            try
+            {
+                if (evt.Channel.BotHasAllPermissions(Permissions.ManageMessages))
+                    await evt.Message.DeleteReactionAsync(evt.Emoji, evt.User);
+            }
+            catch (UnauthorizedException)
+            {
+                var botPerms = evt.Channel.BotPermissions();
+                // So, in some cases (see Sentry issue 11K) the above check somehow doesn't work, and
+                // Discord returns a 403 Unauthorized. TODO: figure out the root cause here instead of a workaround
+                _logger.Warning("Attempted to remove reaction {Emoji} from user {User} on message {Channel}/{Message}, but got 403. Bot has permissions {Permissions} according to itself.",
+                    evt.Emoji.Id, evt.User.Id, evt.Channel.Id, evt.Message.Id, botPerms);
+            }
         }
     }
 }
