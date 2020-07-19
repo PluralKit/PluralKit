@@ -1,4 +1,7 @@
+using System;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Reflection;
 
 using DSharpPlus.Entities;
 
@@ -19,7 +22,8 @@ namespace PluralKit.Bot
                 .AddField("Useful tips", $"React with {Emojis.Error} on a proxied message to delete it (only if you sent it!)\nReact with {Emojis.RedQuestion} on a proxied message to look up information about it (like who sent it)\nReact with {Emojis.Bell} on a proxied message to \"ping\" the sender\nType **`pk;invite`** to get a link to invite this bot to your own server!")
                 .AddField("More information", "For a full list of commands, see [the command list](https://pluralkit.me/commands).\nFor a more in-depth explanation of message proxying, see [the documentation](https://pluralkit.me/guide#proxying).\nIf you're an existing user of Tupperbox, type `pk;import` and attach a Tupperbox export file (from `tul!export`) to import your data from there.")
                 .AddField("Support server", "We also have a Discord server for support, discussion, suggestions, announcements, etc: https://discord.gg/PczBt78")
-                .WithFooter($"By @Ske#6201 | Myriad by @Layl#8888 | GitHub: https://github.com/xSke/PluralKit/ | Website: https://pluralkit.me/")
+                .WithFooter($"By @Ske#6201 | Myriad by @Layl#8888 | GitHub: https://github.com/xSke/PluralKit/ ({typeof(Misc).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "GitHash")?.Value}) | Website: https://pluralkit.me/")
+                .WithTimestamp(DateTime.Now)
                 .WithColor(DiscordUtils.Blue)
                 .Build());
         }
