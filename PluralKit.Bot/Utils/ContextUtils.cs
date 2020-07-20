@@ -17,8 +17,11 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
-        public static async Task<bool> PromptYesNo(this Context ctx, DiscordMessage message, DiscordUser user = null, Duration? timeout = null)
+        public static async Task<bool> PromptYesNo(this Context ctx, String msgString, DiscordUser user = null, Duration? timeout = null, IEnumerable<IMention> mentions = null)
         {
+            DiscordMessage message;
+            if (ctx.MatchFlag("y", "yes")) return true;
+            else message = await ctx.Reply(msgString, mentions: mentions);
             var cts = new CancellationTokenSource();
             if (user == null) user = ctx.Author;
             if (timeout == null) timeout = Duration.FromMinutes(5);

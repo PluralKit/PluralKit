@@ -249,8 +249,7 @@ namespace PluralKit.Bot
             if (zone == null) throw Errors.InvalidTimeZone(zoneStr);
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
-            var msg = await ctx.Reply(
-                $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?");
+            var msg = $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?";
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             
             var patch = new SystemPatch {UiTz = zone.Id};
