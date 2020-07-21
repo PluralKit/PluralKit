@@ -95,7 +95,7 @@ namespace PluralKit.Bot
             var newSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - time.ToInstant()).FormatDuration();
             
             // yeet
-            var msg = await ctx.Reply($"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?");
+            var msg = $"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?";
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
@@ -110,7 +110,7 @@ namespace PluralKit.Bot
             if (ctx.Match("all", "clear"))
             {
                 // Subcommand: "delete all"
-                var purgeMsg = await ctx.Reply($"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?");
+                var purgeMsg = $"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?";
                 if (!await ctx.PromptYesNo(purgeMsg))
                     throw Errors.GenericCancelled();
                 await _data.DeleteAllSwitches(ctx.System);
@@ -126,19 +126,17 @@ namespace PluralKit.Bot
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
 
-            DiscordMessage msg;
+            string msg;
             if (lastTwoSwitches.Count == 1)
             {
-                msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?");
+                msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). You have no other switches logged. Is this okay?";
             }
             else
             {
                 var secondSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[1]);
                 var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
                 var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp).FormatDuration();
-                msg = await ctx.Reply(
-                    $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?");
+                msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?";
             }
 
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;
