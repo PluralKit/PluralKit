@@ -10,8 +10,8 @@ namespace PluralKit.Bot
             var p = new CardOptions();
 
             // Privacy filter (default is public fields only)
-            if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null; 
-            if (ctx.MatchFlag("s","safe")) p.PrivacyFilter = PrivacyLevel.Public;
+            if (ctx.MatchFlag("a", "all", "private")) p.PrivacyFilter = null; 
+            if (ctx.MatchFlag("s", "safe", "public")) p.PrivacyFilter = PrivacyLevel.Public;
 
             // PERM CHECK: If we're trying to access private fields of another system, error
             if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)
