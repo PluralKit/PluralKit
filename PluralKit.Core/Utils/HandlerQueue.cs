@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,12 +9,14 @@ namespace PluralKit.Core
 {
     public class HandlerQueue<T>
     {
-        private readonly List<HandlerEntry> _handlers = new List<HandlerEntry>();
+        private long _seq;
+        private readonly ConcurrentDictionary<long, HandlerEntry> _handlers = new ConcurrentDictionary<long, HandlerEntry>();
 
         public HandlerEntry Add(Func<T, Task<bool>> handler)
         {
             var entry = new HandlerEntry {Handler = handler};
-            _handlers.Add(entry);
+
+            _handlers[Interlocked.Increment(ref _seq)] = entry;
             return entry;
         }
 
@@ -31,7 +33,7 @@ namespace PluralKit.Core
             }
 
             var entry = new HandlerEntry {Handler = Handler};
-            _handlers.Add(entry);
+            _handlers[Interlocked.Increment(ref _seq)] = entry;
 
             // Wait for either the event task or the timeout task
             // If the timeout task finishes first, raise, otherwise pass event through
@@ -51,11 +53,14 @@ namespace PluralKit.Core
 
         public async Task<bool> TryHandle(T evt)
         {
-            // Saw spurious NREs in prod indicating `he` is null, add a special check for that for now
-            _handlers.RemoveAll(he => he == null || !he.Alive);
+            // First pass to clean up dead handlers
+            foreach (var (k, entry) in _handlers)
+                if (!entry.Alive)
+                    _handlers.TryRemove(k, out _);
 
+            // Now iterate and try handling until we find a good one
             var now = SystemClock.Instance.GetCurrentInstant();
-            foreach (var entry in _handlers)
+            foreach (var (_, entry) in _handlers)
             {
                 if (entry.Expiry < now) entry.Alive = false;
                 else if (entry.Alive && await entry.Handler(evt))
