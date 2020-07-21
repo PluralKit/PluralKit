@@ -51,7 +51,8 @@ namespace PluralKit.Core
 
         public async Task<bool> TryHandle(T evt)
         {
-            _handlers.RemoveAll(he => !he.Alive);
+            // Saw spurious NREs in prod indicating `he` is null, add a special check for that for now
+            _handlers.RemoveAll(he => he == null || !he.Alive);
 
             var now = SystemClock.Instance.GetCurrentInstant();
             foreach (var entry in _handlers)
