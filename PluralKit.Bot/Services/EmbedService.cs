@@ -28,9 +28,14 @@ namespace PluralKit.Bot {
 
 
         
-        public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx)
+        public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx, CardOptions opts)
         {
             await using var conn = await _db.Obtain();
+
+            if(opts.PrivacyFilter == PrivacyLevel.Public)
+            {
+                ctx = LookupContext.ByNonOwner;
+            }
             
             // Fetch/render info for all accounts simultaneously
             var accounts = await conn.GetLinkedAccounts(system.Id);
@@ -41,7 +46,7 @@ namespace PluralKit.Bot {
                 .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnail(system.AvatarUrl)
-                .WithFooter($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}");
+                .WithFooter($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}{opts.createFooter()}");
  
             var latestSwitch = await _data.GetLatestSwitch(system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
