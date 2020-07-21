@@ -93,7 +93,7 @@ namespace PluralKit.Bot
             var member = await evt.Guild.GetMember(evt.User.Id);
             try
             {
-                await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, evt.Guild, LookupContext.ByNonOwner));
+                await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, evt.Guild, LookupContext.ByNonOwner, new CardOptions()));
                 await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(evt.Client, msg));
             }
             catch (UnauthorizedException) { } // No permissions to DM, can't check for this :(

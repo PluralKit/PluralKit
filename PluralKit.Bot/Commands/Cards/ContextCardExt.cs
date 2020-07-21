@@ -15,7 +15,7 @@ namespace PluralKit.Bot
 
             // PERM CHECK: If we're trying to access private fields of another system, error
             if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)
-                throw new PKError("You cannot look up private fields of another system's member.");
+                throw new PKError("You cannot look up private fields of another system.");
             
             // Done!
             return p;

@@ -19,7 +19,7 @@ namespace PluralKit.Bot
             var str = new StringBuilder();
             str.Append(PrivacyFilter switch
             {
-                PrivacyLevel.Private => ", showing only private members",
+                null => "including private feilds",
                 PrivacyLevel.Public => "", // (default, no extra line needed)
                 _ => new ArgumentOutOfRangeException($"Couldn't find readable string for privacy filter {PrivacyFilter}")
             });
