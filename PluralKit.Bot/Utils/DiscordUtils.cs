@@ -256,6 +256,28 @@ namespace PluralKit.Bot
         public static Task<DiscordMessage> GetMessage(this DiscordRestClient client, ulong channel, ulong message) =>
             WrapDiscordCall(client.GetMessageAsync(channel, message));
 
+        public static DiscordGuild GetGuild(this DiscordShardedClient client, ulong id)
+        {
+            DiscordGuild guild;
+            foreach (DiscordClient shard in client.ShardClients.Values)
+            {
+                shard.Guilds.TryGetValue(id, out guild);
+                if (guild != null) return guild;
+            }
+            return null;
+        }
+
+        public static async Task<DiscordChannel> GetChannel(this DiscordShardedClient client, ulong id, ulong? guildId = null)
+        {
+            // we need to know the channel's guild ID to get the cached guild object, so we grab it from the API
+            if (guildId == null) {
+                var guild = await WrapDiscordCall(client.ShardClients.Values.FirstOrDefault().GetChannelAsync(id));
+                if (guild != null) guildId = guild.Id;
+                else return null; // we probably don't have the guild in cache if the API doesn't give it to us
+            }
+            return client.GetGuild(guildId.Value).GetChannel(id);
+        }
+
         private static async Task<T> WrapDiscordCall<T>(Task<T> t)
             where T: class
         {
