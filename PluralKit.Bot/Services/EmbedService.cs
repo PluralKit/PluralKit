@@ -158,8 +158,7 @@ namespace PluralKit.Bot {
         public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordClient client, FullMessage msg)
         {
             var ctx = LookupContext.ByNonOwner;
-            
-            var channel = await client.GetChannel(msg.Message.Channel);
+            var channel = await _client.GetChannel(msg.Message.Channel);
             var serverMsg = channel != null ? await channel.GetMessage(msg.Message.Mid) : null;
 
             // Need this whole dance to handle cases where:
