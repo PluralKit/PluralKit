@@ -61,7 +61,7 @@ namespace PluralKit.Bot
         }
 
         public static bool MatchClear(this Context ctx) =>
-            ctx.Match("clear", "remove", "reset") || ctx.MatchFlag("c", "clear");
+            ctx.Match("clear", "reset") || ctx.MatchFlag("c", "clear");
 
         public static async Task<List<PKMember>> ParseMemberList(this Context ctx, SystemId? restrictToSystem)
         {
