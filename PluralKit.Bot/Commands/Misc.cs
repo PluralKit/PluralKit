@@ -101,7 +101,7 @@ namespace PluralKit.Bot {
             }
             else
             {
-                var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command as .");
+                var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command in a server.");
                 if (!ulong.TryParse(guildIdStr, out var guildId))
                     throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
