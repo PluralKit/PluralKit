@@ -94,10 +94,12 @@ namespace PluralKit.Bot {
         public async Task PermCheckGuild(Context ctx)
         {
             DiscordGuild guild;
+            DiscordMember senderGuildUser;
 
             if (ctx.Guild != null && !ctx.HasNext())
             {
                 guild = ctx.Guild;
+                senderGuildUser = (DiscordMember)ctx.Author;
             }
             else
             {
@@ -106,14 +108,10 @@ namespace PluralKit.Bot {
                     throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
                 guild = ctx.Client.GetGuild(guildId);
-                if (guild == null)
-                    throw Errors.GuildNotFound(guildId);
+                if (guild == null) throw Errors.GuildNotFound(guildId);
+                senderGuildUser = await guild.GetMember(ctx.Author.Id);
+                if (senderGuildUser == null) throw Errors.GuildNotFound(guildId);
             }
-            
-            // Ensure people can't query guilds they're not in + get their own permissions (for view access checking)
-            var senderGuildUser = await guild.GetMember(ctx.Author.Id);
-            if (senderGuildUser == null)
-                throw new PKError("You must be a member of the guild you are querying.");
 
             var requiredPermissions = new []
             {
