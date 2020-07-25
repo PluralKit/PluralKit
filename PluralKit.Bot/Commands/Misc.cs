@@ -105,8 +105,7 @@ namespace PluralKit.Bot {
                 if (!ulong.TryParse(guildIdStr, out var guildId))
                     throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
-                // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
-                guild = await ctx.Rest.GetGuild(guildId);
+                guild = ctx.Client.GetGuild(guildId);
                 if (guild == null)
                     throw Errors.GuildNotFound(guildId);
             }
