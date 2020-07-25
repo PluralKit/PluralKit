@@ -94,7 +94,7 @@ namespace PluralKit.Bot {
         public async Task PermCheckGuild(Context ctx)
         {
             DiscordGuild guild;
-            DiscordMember senderGuildUser;
+            DiscordMember senderGuildUser = null;
 
             if (ctx.Guild != null && !ctx.HasNext())
             {
@@ -108,9 +108,8 @@ namespace PluralKit.Bot {
                     throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
                 guild = ctx.Client.GetGuild(guildId);
-                if (guild == null) throw Errors.GuildNotFound(guildId);
-                senderGuildUser = await guild.GetMember(ctx.Author.Id);
-                if (senderGuildUser == null) throw Errors.GuildNotFound(guildId);
+                if (guild != null) senderGuildUser = await guild.GetMember(ctx.Author.Id);
+                if (guild == null || senderGuildUser == null) throw Errors.GuildNotFound(guildId);
             }
 
             var requiredPermissions = new []
