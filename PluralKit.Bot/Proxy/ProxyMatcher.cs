@@ -56,7 +56,7 @@ namespace PluralKit.Bot
                 AutoproxyMode.Front when ctx.LastSwitchMembers.Length > 0 => 
                     members.FirstOrDefault(m => m.Id == ctx.LastSwitchMembers[0]),
                 
-                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx.LastMessage) =>
+                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx.LastMessage, ctx.LatchTimeout) =>
                     members.FirstOrDefault(m => m.Id == ctx.LastMessageMember.Value),
                 
                 _ => null
@@ -75,11 +75,11 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool IsLatchExpired(ulong? messageId)
+        private bool IsLatchExpired(ulong? messageId, int timeout)
         {
             if (messageId == null) return true;
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId.Value);
-            return _clock.GetCurrentInstant() - timestamp > LatchExpiryTime;
+            return _clock.GetCurrentInstant() - timestamp > Duration.FromHours(timeout);
         }
     }
 }

@@ -51,12 +51,22 @@ namespace PluralKit.Bot
 
         private async Task AutoproxyLatch(Context ctx)
         {
-            if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Latch)
-                await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
-            else
-            {
-                await UpdateAutoproxy(ctx, AutoproxyMode.Latch, null);
-                await ctx.Reply($"{Emojis.Success} Autoproxy set to latch mode in this server. Messages will now be autoproxied using the *last-proxied member* in this server.");
+            if (ctx.Match("timeout", "duration")){
+                if (!ctx.HasNext())
+                    await ctx.Reply($"The current latch duration for your system is {ctx.System.LatchTimeout}.");
+                else {
+                    if (!int.TryParse(ctx.RemainderOrNull(), out int newTimeout)) throw new PKError("Duration must be an integer.");
+                    await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch{LatchTimeout = newTimeout}));
+                    await ctx.Reply($"Latch duration set to {newTimeout} hours.");
+                }
+            } else {
+                if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Latch)
+                    await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
+                else
+                {
+                    await UpdateAutoproxy(ctx, AutoproxyMode.Latch, null);
+                    await ctx.Reply($"{Emojis.Success} Autoproxy set to latch mode in this server. Messages will now be autoproxied using the *last-proxied member* in this server.");
+                }
             }
         }
 
