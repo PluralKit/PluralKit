@@ -16,6 +16,8 @@ Webhooks exist outside of the normal Discord permissions system, and (with a few
 However, PluralKit will make an attempt to apply the sender account's permissions to proxied messages. For example, role mentions, `@everyone`, and `@here`
 will only function if the sender account has that permission. The same applies to link embeds.
 
+For external emojis to work in proxied messages, the @everyone role must have the "Use External Emojis" permission. If it still doesn't work, check if the permission was denied in channel-specific permission settings.
+
 ## Troubleshooting
 
 ### Permission checker command
