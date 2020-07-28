@@ -1,8 +1,10 @@
 ---
 layout: default
-title: Tips and Tricks
 permalink: /tips
-nav_order: 7
+title: Tips and Tricks
+
+# Next page on sidebar is the support server link, prevent that from showing up here
+next: false
 ---
 
 # Tips and Tricks

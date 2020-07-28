@@ -1,0 +1,6 @@
+# Configuration for Netlify (website deployment, etc)
+
+[build]
+base = "docs/"
+publish = "content/.vuepress/dist"
+command = "npm run build"

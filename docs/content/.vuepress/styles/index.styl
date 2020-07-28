@@ -1,0 +1,13 @@
+// For custom styles
+// See: https://vuepress.vuejs.org/config/#index-styl
+
+img
+  // Center images on page
+  display block
+  margin auto
+
+  // This is a strange hack to prevent "portrait" images from blowing up vertically
+  // We previously used `markdown-it-imsize`, but that'd start squashing the images on mobile...
+  // So, we set an arbitrary maximuim height for images. This may need to change in the future.
+  // (see the system/member cards in getting-started.md for examples of why this is necessary)
+  max-height 450px

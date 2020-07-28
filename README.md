@@ -80,19 +80,8 @@ alter table servers add column IF NOT EXISTS blacklist bigint[] not null default
 ```
 * Start PluralKit and let it finish the automatic database upgrades 
 
-# Building the docs
-The website and documentation are automatically built by GitHub Pages when pushed to the `master` branch. They use [Jekyll 3](https://jekyllrb.com), which requires [Ruby](https://www.ruby-lang.org) and [Bundler](https://bundler.io/).
-
-To build the docs locally, run:
-```
-$ cd docs/
-$ bundle install --path vendor/bundle
-$ bundle exec jekyll build
-```
-
-To run an auto-reloading server, substitute the last command with:
-
-    $ bundle exec jekyll serve 
+# Documentation
+See [the docs/ directory](./docs/README.md)
 
 # License
 This project is under the Apache License, Version 2.0. It is available at the following link: https://www.apache.org/licenses/LICENSE-2.0
