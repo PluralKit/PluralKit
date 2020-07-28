@@ -46,6 +46,17 @@ module.exports = {
           "/tips-and-tricks"
         ]
       },
+      {
+        title: "For server staff",
+        collapsable: false,
+        children: [
+          "/staff/permissions",
+          "/staff/moderation",
+          "/staff/disabling",
+          "/staff/logging",
+          "/staff/compatibility",
+        ]
+      },
       ["https://discord.gg/PczBt78", "Join the support server"],
     ]
   },
