@@ -90,7 +90,7 @@ namespace PluralKit.Bot
             // We're not actually properly disconnecting from the gateway (lol)  so it'll linger for a few minutes
             // Should be plenty of time for the bot to connect again next startup and set the real status
             if (_hasReceivedReady)
-                await _client.UpdateStatusAsync(new DiscordActivity("Restarting... (please wait)"));
+                await _client.UpdateStatusAsync(new DiscordActivity("Restarting... (please wait)"), UserStatus.Idle);
         }
 
         private Task HandleEvent<T>(T evt) where T: DiscordEventArgs
