@@ -13,7 +13,6 @@ namespace PluralKit.API
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("m")]
     [Route( "v{version:apiVersion}/m" )]
     public class MemberController: ControllerBase
     {
