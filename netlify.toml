@@ -2,5 +2,5 @@
 
 [build]
 base = "docs/"
-publish = "docs/content/.vuepress/dist"
+publish = "content/.vuepress/dist"
 command = "npm run build"
