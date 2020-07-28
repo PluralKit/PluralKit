@@ -18,7 +18,7 @@ module.exports = {
 
   themeConfig: {
     repo: 'xSke/PluralKit',
-    docsDir: 'docs',
+    docsDir: 'docs/content/',
     docsBranch: 'main',
     editLinks: true,
     editLinkText: 'Help us improve this page!',
