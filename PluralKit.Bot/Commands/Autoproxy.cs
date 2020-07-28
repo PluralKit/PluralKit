@@ -53,7 +53,7 @@ namespace PluralKit.Bot
         {
             if (ctx.Match("timeout", "duration")){
                 if (!ctx.HasNext())
-                    await ctx.Reply($"The current latch duration for your system is {ctx.System.LatchTimeout}.");
+                    await ctx.Reply($"The current latch timeout duration for your system is {ctx.System.LatchTimeout} hour(s).");
                 else {
                     if (!int.TryParse(ctx.RemainderOrNull(), out int newTimeout)) throw new PKError("Duration must be an integer.");
                     await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch{LatchTimeout = newTimeout}));
