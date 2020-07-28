@@ -55,30 +55,8 @@ $ docker-compose up -d
 (tip: use `scripts/run-test-db.sh` to run a temporary PostgreSQL database on your local system. Requires Docker.)
 
 # Upgrading database from legacy version
-There are a few adjustments to do for the new versions of PluralKit to work with a legacy PluralKit database :
-
-* Dump the database (you never know what may happen !)
-* Upgrade the database by firing those lines in psql (or by putting them in an sql file and giving it to postgres) :
-```sql
-do $$ begin
-    create type proxy_tag as (
-        prefix text,
-        suffix text
-    );
-exception when duplicate_object then null;
-end $$;
-
-alter table members add column IF NOT EXISTS display_name text;
-alter table members add column IF NOT EXISTS proxy_tags proxy_tag[] not null default array[]::proxy_tag[];
-alter table members add column IF NOT EXISTS keep_proxy bool not null default false;
-update members set proxy_tags = array[(members.prefix, members.suffix)]::proxy_tag[] where members.prefix is not null or members.suffix is not null;
-alter table members drop column IF EXISTS prefix cascade;
-alter table members drop column IF EXISTS suffix cascade;
-alter table messages add column IF NOT EXISTS original_mid bigint;
-alter table servers add column IF NOT EXISTS log_blacklist bigint[] not null default array[]::bigint[];
-alter table servers add column IF NOT EXISTS blacklist bigint[] not null default array[]::bigint[];
-```
-* Start PluralKit and let it finish the automatic database upgrades 
+If you have an instance of the Python version of the bot (from the `legacy` branch), you may need to take extra database migration steps.
+For more information, see [LEGACYMIGRATE.md](./LEGACYMIGRATE.md).
 
 # Documentation
 See [the docs/ directory](./docs/README.md)
