@@ -2,6 +2,9 @@
 layout: default
 permalink: /tips
 title: Tips and Tricks
+
+# Next page on sidebar is the support server link, prevent that from showing up here
+next: false
 ---
 
 # Tips and Tricks

@@ -13,7 +13,6 @@ module.exports = {
   markdown: {
     extendMarkdown: md => {
       md.use(require("markdown-it-custom-header-link"));
-      md.use(require("markdown-it-imsize"));
     }
   },
 
@@ -24,14 +23,15 @@ module.exports = {
     editLinks: true,
     editLinkText: 'Help us improve this page!',
     lastUpdated: "Last updated",
-    nextLinks: false,
-    prevLinks: false,
+    nextLinks: true,
+    prevLinks: true,
     nav: [
       { text: "Support server", link: "https://discord.gg/PczBt78" },
       { text: "Invite bot", link: "https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904" }
     ],
     sidebar: [
       "/",
+      ["https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904", "Add to your server"],
       {
         title: "Documentation",
         collapsable: false,
@@ -47,13 +47,11 @@ module.exports = {
         ]
       },
       ["https://discord.gg/PczBt78", "Join the support server"],
-      ["https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904", "Add to your server"],
     ]
   },
 
   plugins: [
     '@vuepress/plugin-back-to-top',
-    '@vuepress/plugin-medium-zoom',
     [
       '@vuepress/google-analytics',
       {

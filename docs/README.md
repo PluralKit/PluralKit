@@ -11,7 +11,7 @@ $ yarn
 $ yarn dev
 ```
 
-This will start a development server on http://localhost:8080/.
+This will start a development server on http://localhost:8080/. Note that changes to the sidebar or similar generally need a full restart (Ctrl-C) to take effect, while content-only changes will hot-reload.
 
 For a full HTML build, run `yarn build`. Files will be output in `content/.vuepress/dist` by default.
 

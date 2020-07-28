@@ -12,7 +12,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 # Commands
 ## System commands
 *Optionally replace `[system]` with a @mention, Discord account ID, or 5-character ID. For most commands, adding `-clear` will clear/delete the field.*
-- `pk;system [id]` - Shows information about a system.
+- `pk;system [system]` - Shows information about a system.
 - `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system rename [new name]` - Changes the name of your system.
 - `pk;system description [description]` - Changes the description of your system.

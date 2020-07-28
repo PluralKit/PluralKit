@@ -4,7 +4,7 @@ description: PluralKit's API documentation.
 permalink: /api
 ---
 
-**2020-05-07**: The PluralKit API is now documented on Swagger: https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.1
+**2020-05-07**: [The PluralKit API is now documented on Swagger.](https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.1)
 Accompanying it is an [OpenAPI v3.0 definition](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml). It's mostly complete, but is still subject to change - so don't go generating API clients and mock servers with it quite yet. It may still be useful, though :) 
 
 # API documentation

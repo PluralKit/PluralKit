@@ -2,6 +2,9 @@
 title: Getting Started
 description: A basic tutorial of how to set up the bot.
 permalink: /start
+
+# Previous page on sidebar is the invite link, prevent that from showing up here
+prev: false
 ---
 
 # Getting Started
@@ -9,7 +12,7 @@ permalink: /start
 ## The system
 The first thing you need to do to use PluralKit is to set up a system! Each account can have one system, but you can link one system to multiple accounts. To inspect a system, you can pull up its *system card*. Below is an example system with all options set, which you can also see by typing `pk;system exmpl` on Discord:
 
-![Example of a filled out system card](./assets/ExampleSystem.png =x600)
+![Example of a filled out system card](./assets/ExampleSystem.png)
 
 ### Parts of the system
 These are the parts of the system, reading the card top to bottom left to right like a book:
@@ -31,7 +34,7 @@ If you want to do tweak the system, [see the user guide](/guide#system-managemen
 ## Members
 Once you have created a system, the next thing you need to get started is to create a member! Like before, here is an example of a full member card with all options used:
 
-![Example of a filled out member card](./assets/ExampleMember.png =80%x)
+![Example of a filled out member card](./assets/ExampleMember.png)
 
 ### Parts to a member
 These are the parts of a member, reading the card top to bottom left to right like a book:
@@ -53,7 +56,7 @@ These are the parts of a member, reading the card top to bottom left to right li
 This is just as easy as creating a system, but there are a few more things you will want to do immediately after. First you run `pk;member new <name>`, so if you want to create a member named Myriad, you would run `pk;member new Myriad`.
 Next, for proxying later, you will want to set an avatar for your new member! This is done simply by using `pk;member <member> avatar <link to avatar>`. For example, 
 ```
-pk;member Myriad avatar http://pluralkit.me/assets/myriad.png
+pk;member Myriad avatar https://pluralkit.me/assets/myriad.png
 ```
 
 You can also leave out the image link, and instead attach an image with the command. That'll work too!
@@ -65,7 +68,7 @@ For more info on what you can do with members, check out [the member management 
 ## Proxies
 Proxies are probably the most important part of PluralKit, they are literally what the bot was made for. Below is an example of a proxied message:
 
-![Example of a proxy message](./assets/ExampleProxy.png =70%x)
+![Example of a proxy message](./assets/ExampleProxy.png)
 
 ### Parts to a proxy message
 1. **The name**: This is the member's name, display name, or server nickname, depending on what's set (server nickname overrides display name, which overrides the normal name). In this case, it's **Myriad "Big Boss" Kit**.
@@ -110,15 +113,15 @@ For a more detailed guide on proxying, have a look at the [proxying section of t
 ### Reactions
 When you come across a proxied message, or you have proxied a message, there are a few handy reactions you can add to the message for some more functionality!
 
-❌ (red X): This reaction will cause the message to be deleted, but only if you are using the account that sent the message.
+:x: (red X): This reaction will cause the message to be deleted, but only if you are using the account that sent the message.
 
-❓ (question mark): This reaction will DM you a message containing details on who sent the message, the member that it proxied, and the system it was from. When you react with this, you will receive a DM that looks like this:
+:question: (question mark): This reaction will DM you a message containing details on who sent the message, the member that it proxied, and the system it was from. When you react with this, you will receive a DM that looks like this:
 
-![Example of a message query](./assets/ExampleQuery.png =80%x)
+![Example of a message query](./assets/ExampleQuery.png)
 
-❗ (exclamation mark): This reaction will send a message to the channel the proxied message was sent in, pinging both you and the sender of the message. That message will look like this:
+:exclamation: (exclamation mark): This reaction will send a message to the channel the proxied message was sent in, pinging both you and the sender of the message. That message will look like this:
 
-![Example of a message query](./assets/ExamplePing.png =80%x)
+![Example of a message query](./assets/ExamplePing.png)
 
 ### More proxy examples
 How to read these examples: The smaller code block with "Example Message" in it is the message you would like to proxy, the larger code block immediately after it is the command you would need to set the member Myriad to respond to that proxy
