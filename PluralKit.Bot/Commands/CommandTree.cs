@@ -175,7 +175,7 @@ namespace PluralKit.Bot
                 await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System));
 
             // First, we match own-system-only commands (ie. no target system parameter)
-            else if (ctx.Match("new", "create", "make", "add", "register", "init"))
+            else if (ctx.Match("new", "create", "make", "add", "register", "init", "n"))
                 await ctx.Execute<System>(SystemNew, m => m.New(ctx));
             else if (ctx.Match("name", "rename", "changename"))
                 await ctx.Execute<SystemEdit>(SystemRename, m => m.Name(ctx));
