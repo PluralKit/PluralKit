@@ -1,8 +1,7 @@
 ---
 layout: default
-title: Tips and Tricks
 permalink: /tips
-nav_order: 7
+title: Tips and Tricks
 ---
 
 # Tips and Tricks

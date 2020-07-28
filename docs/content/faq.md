@@ -1,16 +1,10 @@
 ---
-layout: default
 title: FAQ
-permalink: /faq
 description: Frequently asked questions (and the answers to them).
-nav_order: 6
+permalink: /faq
 ---
 
 # Frequently asked questions
-{: .no_toc }
-
-1. TOC
-{:toc}
 
 ## Can I use this bot for kin/roleplay/other non-plurality uses? Can I use it if I'm not plural myself? Is that appropriating?
 Although this bot is designed with plural systems and their use cases in mind, the bot's feature set is still useful for many other types of communities, including role-playing and otherkin. By all means go ahead and use it for those communities, too. We don't gatekeep, and neither should you.

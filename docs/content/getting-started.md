@@ -1,23 +1,15 @@
 ---
-layout: default
 title: Getting Started
-permalink: /start
 description: A basic tutorial of how to set up the bot.
-nav_order: 1
+permalink: /start
 ---
 
 # Getting Started
-{: .no_toc }
-
-## Table of Contents
-{: .no_toc .text-delta }
-
-1. TOC
-{:toc}
 
 ## The system
 The first thing you need to do to use PluralKit is to set up a system! Each account can have one system, but you can link one system to multiple accounts. To inspect a system, you can pull up its *system card*. Below is an example system with all options set, which you can also see by typing `pk;system exmpl` on Discord:
-![Example of a filled out system card]({% link /assets/ExampleSystem.png %})
+
+![Example of a filled out system card](./assets/ExampleSystem.png =x600)
 
 ### Parts of the system
 These are the parts of the system, reading the card top to bottom left to right like a book:
@@ -38,7 +30,8 @@ If you want to do tweak the system, [see the user guide](/guide#system-managemen
 
 ## Members
 Once you have created a system, the next thing you need to get started is to create a member! Like before, here is an example of a full member card with all options used:
-![Example of a filled out member card]({% link /assets/ExampleMember.png %})
+
+![Example of a filled out member card](./assets/ExampleMember.png =80%x)
 
 ### Parts to a member
 These are the parts of a member, reading the card top to bottom left to right like a book:
@@ -72,7 +65,7 @@ For more info on what you can do with members, check out [the member management 
 ## Proxies
 Proxies are probably the most important part of PluralKit, they are literally what the bot was made for. Below is an example of a proxied message:
 
-![Example of a proxy message]({% link /assets/ExampleProxy.png %})
+![Example of a proxy message](./assets/ExampleProxy.png =70%x)
 
 ### Parts to a proxy message
 1. **The name**: This is the member's name, display name, or server nickname, depending on what's set (server nickname overrides display name, which overrides the normal name). In this case, it's **Myriad "Big Boss" Kit**.
@@ -120,10 +113,12 @@ When you come across a proxied message, or you have proxied a message, there are
 ❌ (red X): This reaction will cause the message to be deleted, but only if you are using the account that sent the message.
 
 ❓ (question mark): This reaction will DM you a message containing details on who sent the message, the member that it proxied, and the system it was from. When you react with this, you will receive a DM that looks like this:
-![Example of a message query]({% link /assets/ExampleQuery.png %})
+
+![Example of a message query](./assets/ExampleQuery.png =80%x)
 
 ❗ (exclamation mark): This reaction will send a message to the channel the proxied message was sent in, pinging both you and the sender of the message. That message will look like this:
-![Example of a message query]({% link /assets/ExamplePing.png %})
+
+![Example of a message query](./assets/ExamplePing.png =80%x)
 
 ### More proxy examples
 How to read these examples: The smaller code block with "Example Message" in it is the message you would like to proxy, the larger code block immediately after it is the command you would need to set the member Myriad to respond to that proxy

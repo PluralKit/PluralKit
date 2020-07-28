@@ -1,19 +1,13 @@
 ---
-layout: default
 title: User Guide
-permalink: /guide
 description: PluralKit's user guide contains a walkthrough of the bot's features, as well as how to use them.
-nav_order: 2
+permalink: /guide
+
+# To prevent sidebar from getting super long
+sidebarDepth: 1
 ---
 
 # User Guide
-{: .no_toc }
-
-## Table of Contents
-{: .no_toc .text-delta }
-
-1. TOC
-{:toc}
 
 ## Adding the bot to your server
 If you want to use PluralKit on a Discord server, you must first *add* it to the server in question. For this, you'll need the *Manage Server* permission on there.
