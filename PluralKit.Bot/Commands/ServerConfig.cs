@@ -25,9 +25,11 @@ namespace PluralKit.Bot
             ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
             
             DiscordChannel channel = null;
-            if (ctx.HasNext())
-                channel = await ctx.MatchChannel() ?? throw new PKSyntaxError("You must pass a #channel to set.");
-            if (channel != null && channel.GuildId != ctx.Guild.Id) throw new PKError("That channel is not in this server!");
+            if (!ctx.HasNext())
+                throw new PKSyntaxError("You must pass a #channel to set.");
+            var channelString = ctx.PeekArgument();
+            channel = await ctx.MatchChannel();
+            if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
 
             var patch = new GuildPatch {LogChannel = channel?.Id};
             await _db.Execute(conn => conn.UpsertGuild(ctx.Guild.Id, patch));
@@ -48,8 +50,9 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                var channel = await ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument()}\" not found.");
-                if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
+                var channelString = ctx.PeekArgument();
+                var channel = await ctx.MatchChannel();
+                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
                 affectedChannels.Add(channel);
             }
 
@@ -127,8 +130,9 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
-                var channel = await ctx.MatchChannel() ?? throw new PKSyntaxError($"Channel \"{ctx.PopArgument()}\" not found.");
-                if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Channel {ctx.Guild.Id} is not in this server.");
+                var channelString = ctx.PeekArgument();
+                var channel = await ctx.MatchChannel();
+                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
                 affectedChannels.Add(channel);
             }
             
