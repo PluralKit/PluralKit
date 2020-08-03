@@ -136,7 +136,7 @@ namespace PluralKit.Bot
                         profile.Append($"\n**Birthdate**: {m.BirthdayString}");
                     
                     if (m.ProxyTags.Count > 0) 
-                        profile.Append($"\n**Proxy tags:** {m.ProxyTagsString()}");
+                        profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
                     
                     if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is {} count && count > 0)
                         profile.Append($"\n**Message count:** {count}");
