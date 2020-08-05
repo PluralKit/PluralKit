@@ -28,7 +28,8 @@ namespace PluralKit.Bot
         public string CreateFilterString()
         {
             var str = new StringBuilder();
-            str.Append("Sorting by ");
+            str.Append("Sorting ");
+            if (SortProperty != SortProperty.Random) str.Append("by ");
             str.Append(SortProperty switch
             {
                 SortProperty.Name => "member name",
@@ -39,6 +40,7 @@ namespace PluralKit.Bot
                 SortProperty.LastSwitch => "last switch",
                 SortProperty.MessageCount => "message count",
                 SortProperty.Birthdate => "birthday",
+                SortProperty.Random => "randomly",
                 _ => new ArgumentOutOfRangeException($"Couldn't find readable string for sort property {SortProperty}")
             });
             
