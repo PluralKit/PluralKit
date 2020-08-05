@@ -25,4 +25,10 @@ namespace PluralKit.Core {
         
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }
+
+    public static class PKSystemExt
+    {
+        public static string DescriptionFor(this PKSystem system, LookupContext ctx) =>
+            system.DescriptionPrivacy.Get(ctx, system.Description);
+    }
 }
