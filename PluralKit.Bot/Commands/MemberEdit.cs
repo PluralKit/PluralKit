@@ -187,7 +187,7 @@ namespace PluralKit.Bot
                 await ctx.Reply(embed: new DiscordEmbedBuilder()
                     .WithTitle($"{Emojis.Success} Member color changed.")
                     .WithColor(color.ToDiscordColor().Value)
-                    .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
+                    .WithThumbnail($"https://fakeimg.pl/256x256/{color}/?text=%20")
                     .Build());
             }
         }
