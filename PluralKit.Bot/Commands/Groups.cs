@@ -103,6 +103,68 @@ namespace PluralKit.Bot
             }
         }
 
+        public async Task GroupIcon(Context ctx, PKGroup target)
+        {
+            async Task ClearIcon()
+            {
+                ctx.CheckOwnGroup(target);
+                
+                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch {Icon = null}));
+                await ctx.Reply($"{Emojis.Success} Group icon cleared.");
+            }
+
+            async Task SetIcon(ParsedImage img)
+            {
+                ctx.CheckOwnGroup(target);
+                
+                if (img.Url.Length > Limits.MaxUriLength) 
+                    throw Errors.InvalidUrl(img.Url);
+                await AvatarUtils.VerifyAvatarOrThrow(img.Url);
+
+                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch {Icon = img.Url}));
+            
+                var msg = img.Source switch
+                {
+                    AvatarSource.User => $"{Emojis.Success} Group icon changed to {img.SourceUser?.Username}'s avatar!\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the group icon will need to be re-set.",
+                    AvatarSource.Url => $"{Emojis.Success} Group icon changed to the image at the given URL.",
+                    AvatarSource.Attachment => $"{Emojis.Success} Group icon changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the group icon will stop working.",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            
+                // The attachment's already right there, no need to preview it.
+                var hasEmbed = img.Source != AvatarSource.Attachment;
+                await (hasEmbed 
+                    ? ctx.Reply(msg, embed: new DiscordEmbedBuilder().WithImageUrl(img.Url).Build()) 
+                    : ctx.Reply(msg));
+            }
+
+            async Task ShowIcon()
+            {
+                if ((target.Icon?.Trim() ?? "").Length > 0)
+                {
+                    var eb = new DiscordEmbedBuilder()
+                        .WithTitle("Group icon")
+                        .WithImageUrl(target.Icon);
+                    
+                    if (target.System == ctx.System?.Id)
+                    {
+                        eb.WithDescription($"To clear, use `pk;group {GroupReference(target)} icon -clear`.");
+                    }
+
+                    await ctx.Reply(embed: eb.Build());
+                }
+                else
+                    throw new PKSyntaxError("This group does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+            }
+
+            if (ctx.MatchClear())
+                await ClearIcon();
+            else if (await ctx.MatchImage() is {} img)
+                await SetIcon(img);
+            else
+                await ShowIcon();
+        }
+
         public async Task ListSystemGroups(Context ctx, PKSystem system)
         {
             if (system == null)
