@@ -75,6 +75,9 @@ namespace PluralKit.Core
                 .Build("returning *");
             return conn.QueryFirstAsync<PKGroup>(query, pms);
         }
+        
+        public static Task DeleteGroup(this IPKConnection conn, GroupId group) =>
+            conn.ExecuteAsync("delete from groups where id = @Id", new {Id = group });
 
         public static async Task AddMembersToGroup(this IPKConnection conn, GroupId group, IEnumerable<MemberId> members)
         {

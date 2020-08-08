@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Dapper;
 
 using DSharpPlus.Entities;
-
-using NodaTime;
 
 using PluralKit.Core;
 
@@ -29,7 +28,7 @@ namespace PluralKit.Bot
             
             var groupName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a group name.");
             if (groupName.Length > Limits.MaxGroupNameLength)
-                throw new PKError($"Group name too long ({groupName.Length}/{Limits.MaxMemberNameLength} characters).");
+                throw new PKError($"Group name too long ({groupName.Length}/{Limits.MaxGroupNameLength} characters).");
             
             await using var conn = await _db.Obtain();
 
@@ -41,10 +40,10 @@ namespace PluralKit.Bot
             
             var eb = new DiscordEmbedBuilder()
                 .WithDescription($"Your new group, **{groupName}**, has been created, with the group ID **`{newGroup.Hid}`**.\nBelow are a couple of useful commands:")
-                .AddField("View the group card", $"> pk;group **{newGroup.Hid}**")
-                .AddField("Add members to the group", $"> pk;group **{newGroup.Hid}** add **MemberName**\n> pk;group **{newGroup.Hid}** add **Member1** **Member2** **Member3** (and so on...)")
-                .AddField("Set the description", $"> pk;group **{newGroup.Hid}** description **This is my new group, and here is the description!**")
-                .AddField("Set the group icon", $"> pk;group **{newGroup.Hid}** icon\n*(with an image attached)*");
+                .AddField("View the group card", $"> pk;group **{GroupReference(newGroup)}**")
+                .AddField("Add members to the group", $"> pk;group **{GroupReference(newGroup)}** add **MemberName**\n> pk;group **{GroupReference(newGroup)}** add **Member1** **Member2** **Member3** (and so on...)")
+                .AddField("Set the description", $"> pk;group **{GroupReference(newGroup)}** description **This is my new group, and here is the description!**")
+                .AddField("Set the group icon", $"> pk;group **{GroupReference(newGroup)}** icon\n*(with an image attached)*");
             await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
         }
 
@@ -76,7 +75,7 @@ namespace PluralKit.Bot
             {
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {target.Hid} description <description>`.");
+                        await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {GroupReference(target)} description <description>`.");
                     else
                         await ctx.Reply("This group does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
@@ -85,8 +84,8 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Group description")
                         .WithDescription(target.Description)
-                        .AddField("\u200B", $"To print the description with formatting, type `pk;group {target.Hid} description -raw`." 
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {target.Hid} description -clear`." : ""))
+                        .AddField("\u200B", $"To print the description with formatting, type `pk;group {GroupReference(target)} description -raw`." 
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {GroupReference(target)} description -clear`." : ""))
                         .Build());
             }
             else
@@ -163,9 +162,9 @@ namespace PluralKit.Bot
                 .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
 
             if (memberCount == 0)
-                eb.AddField("Members (0)", $"Add one with `pk;group {target.Hid} add <member>`!", true);
+                eb.AddField("Members (0)", $"Add one with `pk;group {GroupReference(target)} add <member>`!", true);
             else
-                eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Hid} list`)", true);
+                eb.AddField($"Members ({memberCount})", $"(see `pk;group {GroupReference(target)} list`)", true);
 
             if (target.DescriptionFor(pctx) is {} desc)
                 eb.AddField("Description", desc);
@@ -252,7 +251,7 @@ namespace PluralKit.Bot
                     .AddField("Description", target.DescriptionPrivacy.Explanation())
                     .AddField("Icon", target.IconPrivacy.Explanation())
                     .AddField("Visibility", target.Visibility.Explanation())
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;group <group> privacy <subject> <level>`\n\n- `subject` is one of `description`, `icon`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .WithDescription($"To edit privacy settings, use the command:\n`pk;group **{GroupReference(target)}** privacy <subject> <level>`\n\n- `subject` is one of `description`, `icon`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                     .Build()); 
                 return;
             }
@@ -262,9 +261,9 @@ namespace PluralKit.Bot
                 await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch().WithAllPrivacy(level)));
                 
                 if (level == PrivacyLevel.Private)
-                    await ctx.Reply($"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the member card.");
+                    await ctx.Reply($"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the group card.");
                 else 
-                    await ctx.Reply($"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the member card.");
+                    await ctx.Reply($"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see everything on the group card.");
             }
 
             async Task SetLevel(GroupPrivacySubject subject, PrivacyLevel level)
@@ -301,12 +300,32 @@ namespace PluralKit.Bot
                 await SetLevel(ctx.PopGroupPrivacySubject(), ctx.PopPrivacyLevel());
         }
 
+        public async Task DeleteGroup(Context ctx, PKGroup target)
+        {
+            ctx.CheckOwnGroup(target);
+
+            await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete this group? If so, reply to this message with the group's ID (`{target.Hid}`).\n**Note: this action is permanent.**");
+            if (!await ctx.ConfirmWithReply(target.Hid))
+                throw new PKError($"Group deletion cancelled. Note that you must reply with your group ID (`{target.Hid}`) *verbatim*.");
+
+            await _db.Execute(conn => conn.DeleteGroup(target.Id));
+            
+            await ctx.Reply($"{Emojis.Success} Group deleted.");
+        }
+
         private static async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
         {
             var system = ctx.System;
             if (system?.Id == target.System)
                 return system;
             return await conn.QuerySystem(target.System)!;
+        }
+
+        private static string GroupReference(PKGroup group)
+        {
+            if (Regex.IsMatch(group.Name, "[A-Za-z0-9\\-_]+"))
+                return group.Name;
+            return group.Hid;
         }
     }
 }
