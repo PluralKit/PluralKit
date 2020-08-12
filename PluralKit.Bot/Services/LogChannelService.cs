@@ -37,8 +37,14 @@ namespace PluralKit.Bot {
             if (logChannel == null || logChannel.Type != ChannelType.Text) return;
             
             // Check bot permissions
-            if (!trigger.Channel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks)) return;
-            
+            if (!trigger.Channel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
+            {
+                _logger.Information(
+                    "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
+                    ctx.LogChannel.Value, trigger.Channel.GuildId, trigger.Channel.BotPermissions());
+                return;
+            }
+
             // Send embed!
             await using var conn = await _db.Obtain();
             var embed = _embed.CreateLoggedMessageEmbed(await conn.QuerySystem(ctx.SystemId.Value),
@@ -55,7 +61,7 @@ namespace PluralKit.Bot {
             if (obj == null)
             {
                 // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too
-                _logger.Warning("Attempted to fetch missing log channel {LogChannel}, removing from database", channel);
+                _logger.Warning("Attempted to fetch missing log channel {LogChannel} for guild {Guild}, removing from database", channel, guild);
                 await using var conn = await _db.Obtain();
                 await conn.ExecuteAsync("update servers set log_channel = null where id = @Guild",
                     new {Guild = guild});
