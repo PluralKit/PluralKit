@@ -40,7 +40,8 @@ namespace PluralKit.Bot
             if (ctx.MatchFlag("by-last-fronted", "by-last-front", "by-last-switch", "blf", "bls")) p.SortProperty = SortProperty.LastSwitch;
             if (ctx.MatchFlag("by-last-message", "blm", "blp")) p.SortProperty = SortProperty.LastMessage;
             if (ctx.MatchFlag("by-birthday", "by-birthdate", "bbd")) p.SortProperty = SortProperty.Birthdate;
-            
+            if (ctx.MatchFlag("random")) p.SortProperty = SortProperty.Random;
+
             // Sort reverse?
             if (ctx.MatchFlag("r", "rev", "reverse"))
                 p.Reverse = true;
