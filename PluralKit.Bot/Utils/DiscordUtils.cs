@@ -212,7 +212,7 @@ namespace PluralKit.Bot
         public static string EscapeBacktickPair(this string input){
             Regex doubleBacktick = new Regex(@"``", RegexOptions.Multiline);
             //Run twice to catch any pairs that are created from the first pass, pairs shouldn't be created in the second as they are created from odd numbers of backticks, even numbers are all caught on the first pass
-            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, @"`‌﻿`"),@"`‌﻿`");
+            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, "`‌\ufeff`"),"`‌\ufeff`");
             else return input;
         }
 
