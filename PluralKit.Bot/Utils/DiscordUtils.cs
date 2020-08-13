@@ -271,8 +271,8 @@ namespace PluralKit.Bot
         {
             // we need to know the channel's guild ID to get the cached guild object, so we grab it from the API
             if (guildId == null) {
-                var guild = await WrapDiscordCall(client.ShardClients.Values.FirstOrDefault().GetChannelAsync(id));
-                if (guild != null) guildId = guild.Id;
+                var channel = await WrapDiscordCall(client.ShardClients.Values.FirstOrDefault().GetChannelAsync(id));
+                if (channel != null) guildId = channel.GuildId;
                 else return null; // we probably don't have the guild in cache if the API doesn't give it to us
             }
             return client.GetGuild(guildId.Value).GetChannel(id);
