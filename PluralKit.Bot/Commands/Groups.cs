@@ -9,6 +9,8 @@ using Dapper;
 
 using DSharpPlus.Entities;
 
+using Humanizer;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -26,15 +28,25 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
             
+            // Check group name length
             var groupName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a group name.");
             if (groupName.Length > Limits.MaxGroupNameLength)
                 throw new PKError($"Group name too long ({groupName.Length}/{Limits.MaxGroupNameLength} characters).");
             
             await using var conn = await _db.Obtain();
-
-            var existingGroupCount = await conn.QuerySingleAsync<int>("select count(*) from groups where system = @System", ctx.System.Id);
+            
+            // Check group cap
+            var existingGroupCount = await conn.QuerySingleAsync<int>("select count(*) from groups where system = @System", new { System = ctx.System.Id });
             if (existingGroupCount >= Limits.MaxGroupCount)
                 throw new PKError($"System has reached the maximum number of groups ({Limits.MaxGroupCount}). Please delete unused groups first in order to create new ones.");
+
+            // Warn if there's already a group by this name
+            var existingGroup = await conn.QueryGroupByName(ctx.System.Id, groupName);
+            if (existingGroup != null) {
+                var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to create another group with the same name?";
+                if (!await ctx.PromptYesNo(msg))
+                    throw new PKError("Group creation cancelled.");
+            }
             
             var newGroup = await conn.CreateGroup(ctx.System.Id, groupName);
             
@@ -51,11 +63,21 @@ namespace PluralKit.Bot
         {
             ctx.CheckOwnGroup(target);
             
+            // Check group name length
             var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new group name.");
             if (newName.Length > Limits.MaxGroupNameLength)
                 throw new PKError($"New group name too long ({newName.Length}/{Limits.MaxMemberNameLength} characters).");
-
+            
             await using var conn = await _db.Obtain();
+            
+            // Warn if there's already a group by this name
+            var existingGroup = await conn.QueryGroupByName(ctx.System.Id, newName);
+            if (existingGroup != null && existingGroup.Id != target.Id) {
+                var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to rename this member to that name too?";
+                if (!await ctx.PromptYesNo(msg))
+                    throw new PKError("Group creation cancelled.");
+            }
+
             await conn.UpdateGroup(target.Id, new GroupPatch {Name = newName});
 
             await ctx.Reply($"{Emojis.Success} Group name changed from \"**{target.Name}**\" to \"**{newName}**\".");
@@ -173,14 +195,26 @@ namespace PluralKit.Bot
                 system = ctx.System;
             }
             
+            // should this be split off to a separate permission?
+            ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
+            
             // TODO: integrate with the normal "search" system
             await using var conn = await _db.Obtain();
 
             var pctx = LookupContext.ByNonOwner;
-            if (ctx.MatchFlag("a", "all") && system.Id == ctx.System.Id)
-                pctx = LookupContext.ByOwner;
+            if (ctx.MatchFlag("a", "all"))
+            {
+                if (system.Id == ctx.System.Id)
+                    pctx = LookupContext.ByOwner;
+                else
+                    throw new PKError("You do not have permission to access this information.");
+            }
+                
 
-            var groups = (await conn.QueryGroupsInSystem(system.Id)).Where(g => g.Visibility.CanAccess(pctx)).ToList();
+            var groups = (await conn.QueryGroupsInSystem(system.Id))
+                .Where(g => g.Visibility.CanAccess(pctx))
+                .ToList();
+            
             if (groups.Count == 0)
             {
                 if (system.Id == ctx.System?.Id)
@@ -195,14 +229,8 @@ namespace PluralKit.Bot
             
             Task Renderer(DiscordEmbedBuilder eb, IEnumerable<PKGroup> page)
             {
-                var sb = new StringBuilder();
-                foreach (var g in page)
-                {
-                    sb.Append($"[`{g.Hid}`] **{g.Name}**\n");
-                }
-
-                eb.WithDescription(sb.ToString());
-                eb.WithFooter($"{groups.Count} total");
+                eb.WithSimpleLineContent(page.Select(g => $"[`{g.Hid}`] **{g.Name}**"));
+                eb.WithFooter($"{groups.Count} total.");
                 return Task.CompletedTask;
             }
         }
@@ -244,23 +272,46 @@ namespace PluralKit.Bot
             var members = await ParseMemberList(ctx);
             
             await using var conn = await _db.Obtain();
+            
+            var existingMembersInGroup = (await conn.QueryMemberList(target.System,
+                new DatabaseViewsExt.MemberListQueryOptions {GroupFilter = target.Id}))
+                .Select(m => m.Id)
+                .ToHashSet();
+            
             if (op == AddRemoveOperation.Add)
             {
-                await conn.AddMembersToGroup(target.Id, members.Select(m => m.Id));
-                await ctx.Reply($"{Emojis.Success} Members added to group.");
+                var membersNotInGroup = members
+                    .Where(m => !existingMembersInGroup.Contains(m.Id))
+                    .Select(m => m.Id)
+                    .ToList();
+                await conn.AddMembersToGroup(target.Id, membersNotInGroup);
+                
+                if (membersNotInGroup.Count == members.Count)
+                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
+                else 
+                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group ({"members".ToQuantity(members.Count - membersNotInGroup.Count)} already in group).");
             }
             else if (op == AddRemoveOperation.Remove)
             {
-                await conn.RemoveMembersFromGroup(target.Id, members.Select(m => m.Id));
-                await ctx.Reply($"{Emojis.Success} Members removed from group.");
+                var membersInGroup = members
+                    .Where(m => existingMembersInGroup.Contains(m.Id))
+                    .Select(m => m.Id)
+                    .ToList();
+                await conn.RemoveMembersFromGroup(target.Id, membersInGroup);
+                
+                if (membersInGroup.Count == members.Count)
+                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
+                else 
+                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group ({"members".ToQuantity(members.Count - membersInGroup.Count)} already not in group).");
             }
         }
 
         public async Task ListGroupMembers(Context ctx, PKGroup target)
         {
             await using var conn = await _db.Obtain();
+            
             var targetSystem = await GetGroupSystem(ctx, target, conn);
-            ctx.CheckSystemPrivacy(targetSystem, targetSystem.MemberListPrivacy);
+            ctx.CheckSystemPrivacy(targetSystem, target.Visibility);
             
             var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target.System));
             opts.GroupFilter = target.Id;
@@ -313,7 +364,7 @@ namespace PluralKit.Bot
                     .AddField("Description", target.DescriptionPrivacy.Explanation())
                     .AddField("Icon", target.IconPrivacy.Explanation())
                     .AddField("Visibility", target.Visibility.Explanation())
-                    .WithDescription($"To edit privacy settings, use the command:\n`pk;group **{GroupReference(target)}** privacy <subject> <level>`\n\n- `subject` is one of `description`, `icon`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .WithDescription($"To edit privacy settings, use the command:\n> pk;group **{GroupReference(target)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                     .Build()); 
                 return;
             }
@@ -385,7 +436,7 @@ namespace PluralKit.Bot
 
         private static string GroupReference(PKGroup group)
         {
-            if (Regex.IsMatch(group.Name, "[A-Za-z0-9\\-_]+"))
+            if (Regex.IsMatch(group.Name, "^[A-Za-z0-9\\-_]+$"))
                 return group.Name;
             return group.Hid;
         }

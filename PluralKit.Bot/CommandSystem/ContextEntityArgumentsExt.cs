@@ -103,7 +103,7 @@ namespace PluralKit.Bot
             var input = ctx.PeekArgument();
 
             await using var conn = await ctx.Database.Obtain();
-            if (await conn.QueryGroupByName(input) is {} byName)
+            if (ctx.System != null && await conn.QueryGroupByName(ctx.System.Id, input) is {} byName)
                 return byName;
             if (await conn.QueryGroupByHid(input) is {} byHid)
                 return byHid;

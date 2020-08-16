@@ -28,7 +28,7 @@ namespace PluralKit.Bot
         public static Context CheckOwnGroup(this Context ctx, PKGroup group)
         {
             if (group.System != ctx.System?.Id)
-                throw Errors.NotOwnMemberError;
+                throw Errors.NotOwnGroupError;
             return ctx;
         }
         

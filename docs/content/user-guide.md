@@ -415,6 +415,62 @@ To look at the per-member breakdown of the front over a given time period, use t
 
 Note that in cases of switches with multiple members, each involved member will have the full length of the switch counted towards it. This means that the percentages may add up to over 100%.
 
+## Member groups
+PluralKit allows you to categorize system members in different **groups**.
+You can add members to a group, and each member can be in multiple groups.
+The groups a member is in will show on the group card.
+
+### Creating a new group
+To create a new group, use the `pk;group new` command:
+
+    pk;group new MyGroup
+    
+This will create a new group. Groups all have a 5-letter ID, similar to systems and members.
+
+### Adding and removing members to groups
+To add a member to a group, use the `pk;group <group> add` command, eg:
+
+    pk;group MyGroup add Craig
+    
+You can add multiple members to a group by separating them with spaces, eg:
+
+    pk;group MyGroup add Bob John Charlie
+
+Similarly, you can remove members from a group, eg:
+
+    pk;group MyGroup remove Bob Craig
+    
+### Listing members in a group
+To list all the members in a group, use the `pk;group <group> list` command.
+The syntax works the same as `pk;system list`, and also allows searching and sorting, eg:
+
+    pk;group MyGroup list
+    pk;group MyGroup list --by-message-count jo
+    
+### Listing all your groups
+In the same vein, you can list all the groups in your system with the `pk;group list` command:
+
+    pk;group list
+    
+### Group name, description, icon, delete
+(TODO: write this better)
+
+Groups can be renamed:
+
+    pk;group MyGroup rename SuperCoolGroup
+
+Groups can have icons that show in on the group card:
+    
+    pk;group MyGroup icon https://my.link.to/image.png
+    
+Groups can have descriptions:
+
+    pk;group MyGroup description This is my cool group description! :)
+    
+Groups can be deleted:
+
+    pk;group MyGroup delete
+
 ## Privacy
 There are various reasons you may not want information about your system or your members to be public. As such, there are a few controls to manage which information is publicly accessible or not.
 

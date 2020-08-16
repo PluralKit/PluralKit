@@ -29,8 +29,8 @@ namespace PluralKit.Core
         public static Task<PKMember?> QueryMemberByHid(this IPKConnection conn, string hid) =>
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where hid = @hid", new {hid = hid.ToLowerInvariant()});
         
-        public static Task<PKGroup?> QueryGroupByName(this IPKConnection conn, string name) =>
-            conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where lower(name) = lower(@name)", new {name = name});
+        public static Task<PKGroup?> QueryGroupByName(this IPKConnection conn, SystemId system, string name) =>
+            conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where system = @System and lower(Name) = lower(@Name)", new {System = system, Name = name});
         
         public static Task<PKGroup?> QueryGroupByHid(this IPKConnection conn, string hid) =>
             conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where hid = @hid", new {hid = hid.ToLowerInvariant()});

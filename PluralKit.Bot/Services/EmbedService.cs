@@ -128,10 +128,7 @@ namespace PluralKit.Bot {
                 else
                     description += "*(this member has a server-specific avatar set)*\n";
             if (description != "") eb.WithDescription(description);
-
-            if (groups.Count > 0)
-                eb.AddField($"Groups ({groups.Count})", string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.Name}**")).Truncate(1000));
-
+            
             if (avatar != null) eb.WithThumbnail(avatar);
 
             if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
@@ -145,7 +142,16 @@ namespace PluralKit.Bot {
             // if (member.LastSwitchTime != null && m.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last switched in:", FormatTimestamp(member.LastSwitchTime.Value));
             // if (!member.Color.EmptyOrNull() && member.ColorPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
             if (!member.Color.EmptyOrNull()) eb.AddField("Color", $"#{member.Color}", true);
-            
+
+            if (groups.Count > 0)
+            {
+                // More than 5 groups show in "compact" format without ID
+                var content = groups.Count > 5
+                    ? string.Join(", ", groups.Select(g => g.Name))
+                    : string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.Name}**"));
+                eb.AddField($"Groups ({groups.Count})", content.Truncate(1000));
+            }
+
             if (member.DescriptionFor(ctx) is {} desc) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
 
             return eb.Build();

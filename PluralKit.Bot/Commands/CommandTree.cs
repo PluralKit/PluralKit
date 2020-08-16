@@ -90,6 +90,18 @@ namespace PluralKit.Bot
             MemberRandom
         };
 
+        public static Command[] GroupCommands =
+        {
+            GroupInfo, GroupList, GroupNew, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc,
+            GroupIcon, GroupPrivacy, GroupDelete
+        };
+
+        public static Command[] GroupCommandsTargeted =
+        {
+            GroupInfo, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc, GroupIcon, GroupPrivacy,
+            GroupDelete
+        };
+
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
 
         public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
@@ -227,6 +239,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemPing, m => m.SystemPing(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
+            else if (ctx.Match("groups", "gs"))
+                await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System));
             else
@@ -262,6 +276,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, target));
             else if (ctx.Match("info", "view", "show"))
                 await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
+            else if (ctx.Match("groups", "gs"))
+                await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
             else if (!ctx.HasNext())
                 await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
             else
@@ -332,6 +348,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<Groups>(GroupNew, g => g.CreateGroup(ctx));
             else if (ctx.Match("list", "l"))
                 await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
+            else if (ctx.Match("commands", "help"))
+                await PrintCommandList(ctx, "groups", GroupCommands);
             else if (await ctx.MatchGroup() is {} target)
             {
                 // Commands with group argument
@@ -358,10 +376,10 @@ namespace PluralKit.Bot
                 else if (!ctx.HasNext())
                     await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
                 else
-                    await PrintCommandNotFoundError(ctx, GroupInfo, GroupRename, GroupDesc);
+                    await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
             }
             else if (!ctx.HasNext())
-                await PrintCommandNotFoundError(ctx, GroupInfo, GroupList, GroupNew, GroupRename, GroupDesc);
+                await PrintCommandNotFoundError(ctx, GroupCommands);
             else
                 await ctx.Reply($"{Emojis.Error} {ctx.CreateGroupNotFoundError(ctx.PopArgument())}");
         }

@@ -20,7 +20,8 @@ create table groups (
 
 create table group_members (
     group_id int not null references groups(id) on delete cascade,
-    member_id int not null references members(id) on delete cascade
+    member_id int not null references members(id) on delete cascade,
+    primary key (group_id, member_id)
 );
 
 update info set schema_version = 9;
