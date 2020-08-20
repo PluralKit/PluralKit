@@ -11,6 +11,7 @@ namespace PluralKit.Core
         public Partial<string> UiTz { get; set; }
         public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
         public Partial<PrivacyLevel> MemberListPrivacy { get; set; }
+        public Partial<PrivacyLevel> GroupListPrivacy { get; set; }
         public Partial<PrivacyLevel> FrontPrivacy { get; set; }
         public Partial<PrivacyLevel> FrontHistoryPrivacy { get; set; }
         public Partial<bool> PingsEnabled { get; set; }
@@ -24,6 +25,7 @@ namespace PluralKit.Core
             .With("ui_tz", UiTz)
             .With("description_privacy", DescriptionPrivacy)
             .With("member_list_privacy", MemberListPrivacy)
+            .With("group_list_privacy", GroupListPrivacy)
             .With("front_privacy", FrontPrivacy)
             .With("front_history_privacy", FrontHistoryPrivacy)
             .With("pings_enabled", PingsEnabled);

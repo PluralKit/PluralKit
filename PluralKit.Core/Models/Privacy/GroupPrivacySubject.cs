@@ -6,6 +6,7 @@ namespace PluralKit.Core
     {
         Description,
         Icon,
+        List,
         Visibility
     }
     
@@ -18,6 +19,7 @@ namespace PluralKit.Core
             {
                 GroupPrivacySubject.Description => group.DescriptionPrivacy = level,
                 GroupPrivacySubject.Icon => group.IconPrivacy = level,
+                GroupPrivacySubject.List => group.ListPrivacy = level,
                 GroupPrivacySubject.Visibility => group.Visibility = level,
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
             };
@@ -52,8 +54,12 @@ namespace PluralKit.Core
                 case "hidden":
                 case "shown":
                 case "visible":
-                case "list":
                     subject = GroupPrivacySubject.Visibility;
+                    break;
+                case "list":
+                case "listing":
+                case "members":
+                    subject = GroupPrivacySubject.List;
                     break;
                 default:
                     subject = default;

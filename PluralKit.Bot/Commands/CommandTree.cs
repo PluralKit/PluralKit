@@ -50,6 +50,7 @@ namespace PluralKit.Bot
         public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
         public static Command GroupMemberList = new Command("group members", "group <group> list", "Lists all members in a group");
         public static Command GroupRename = new Command("group rename", "group <group> name <new name>", "Renames a group");
+        public static Command GroupDisplayName = new Command("group displayname", "group <member> displayname [display name]", "Changes a group's display name");
         public static Command GroupDesc = new Command("group description", "group <group> description [description]", "Changes a group's description");
         public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
         public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
@@ -355,6 +356,8 @@ namespace PluralKit.Bot
                 // Commands with group argument
                 if (ctx.Match("rename", "name", "changename", "setname"))
                     await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
+                else if (ctx.Match("dn", "displayname", "nickname"))
+                    await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
                 else if (ctx.Match("description", "info", "bio", "text", "desc"))
                     await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
                 else if (ctx.Match("add", "a"))

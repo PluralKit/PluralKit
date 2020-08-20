@@ -10,11 +10,13 @@ namespace PluralKit.Core
         public SystemId System { get; }
 
         public string Name { get; } = null!;
+        public string? DisplayName { get; }
         public string? Description { get; }
         public string? Icon { get; }
 
         public PrivacyLevel DescriptionPrivacy { get; }
         public PrivacyLevel IconPrivacy { get; }
+        public PrivacyLevel ListPrivacy { get; }
         public PrivacyLevel Visibility { get; }
         
         public Instant Created { get; }

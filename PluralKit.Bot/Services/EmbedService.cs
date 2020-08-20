@@ -147,8 +147,8 @@ namespace PluralKit.Bot {
             {
                 // More than 5 groups show in "compact" format without ID
                 var content = groups.Count > 5
-                    ? string.Join(", ", groups.Select(g => g.Name))
-                    : string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.Name}**"));
+                    ? string.Join(", ", groups.Select(g => g.DisplayName ?? g.Name))
+                    : string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.DisplayName ?? g.Name}**"));
                 eb.AddField($"Groups ({groups.Count})", content.Truncate(1000));
             }
 

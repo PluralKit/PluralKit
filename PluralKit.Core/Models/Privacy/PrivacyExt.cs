@@ -16,8 +16,8 @@ namespace PluralKit.Core
         public static string Explanation(this PrivacyLevel level) =>
             level switch
             {
-                PrivacyLevel.Private => "**Private** (visible only when queried by you)",
-                PrivacyLevel.Public => "**Public** (visible to everyone)",
+                PrivacyLevel.Private => "Private *(visible only when queried by you)*",
+                PrivacyLevel.Public => "Public *(visible to everyone)*",
                 _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
             };
 

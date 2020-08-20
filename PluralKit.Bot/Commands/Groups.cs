@@ -80,7 +80,43 @@ namespace PluralKit.Bot
 
             await conn.UpdateGroup(target.Id, new GroupPatch {Name = newName});
 
-            await ctx.Reply($"{Emojis.Success} Group name changed from \"**{target.Name}**\" to \"**{newName}**\".");
+            await ctx.Reply($"{Emojis.Success} Group name changed from **{target.Name}** to **{newName}**.");
+        }
+
+        public async Task GroupDisplayName(Context ctx, PKGroup target)
+        {
+            if (ctx.MatchClear())
+            {
+                ctx.CheckOwnGroup(target);
+                
+                var patch = new GroupPatch {DisplayName = Partial<string>.Null()};
+                await _db.Execute(conn => conn.UpdateGroup(target.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} Group display name cleared.");
+            }
+            else if (!ctx.HasNext())
+            {
+                // No perms check, display name isn't covered by member privacy 
+                var eb = new DiscordEmbedBuilder()
+                    .AddField("Name", target.Name)
+                    .AddField("Display Name", target.DisplayName ?? "*(none)*");
+                
+                if (ctx.System?.Id == target.System)
+                    eb.WithDescription($"To change display name, type `pk;group {GroupReference(target)} displayname <display name>`.\nTo clear it, type `pk;group {GroupReference(target)} displayname -clear`.");
+                
+                await ctx.Reply(embed: eb.Build());
+            }
+            else
+            {
+                ctx.CheckOwnGroup(target);
+                
+                var newDisplayName = ctx.RemainderOrNull();
+                
+                var patch = new GroupPatch {DisplayName = Partial<string>.Present(newDisplayName)};
+                await _db.Execute(conn => conn.UpdateGroup(target.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} Group display name changed.");
+            }
         }
         
         public async Task GroupDescription(Context ctx, PKGroup target)
@@ -195,8 +231,7 @@ namespace PluralKit.Bot
                 system = ctx.System;
             }
             
-            // should this be split off to a separate permission?
-            ctx.CheckSystemPrivacy(system, system.MemberListPrivacy);
+            ctx.CheckSystemPrivacy(system, system.GroupListPrivacy);
             
             // TODO: integrate with the normal "search" system
             await using var conn = await _db.Obtain();
@@ -209,8 +244,7 @@ namespace PluralKit.Bot
                 else
                     throw new PKError("You do not have permission to access this information.");
             }
-                
-
+            
             var groups = (await conn.QueryGroupsInSystem(system.Id))
                 .Where(g => g.Visibility.CanAccess(pctx))
                 .ToList();
@@ -218,9 +252,10 @@ namespace PluralKit.Bot
             if (groups.Count == 0)
             {
                 if (system.Id == ctx.System?.Id)
-                    await ctx.Reply($"This system has no groups. To create one, use the command `pk;group new <name>`.");
+                    await ctx.Reply("This system has no groups. To create one, use the command `pk;group new <name>`.");
                 else
-                    await ctx.Reply($"This system has no groups.");
+                    await ctx.Reply("This system has no groups.");
+                
                 return;
             }
 
@@ -229,7 +264,13 @@ namespace PluralKit.Bot
             
             Task Renderer(DiscordEmbedBuilder eb, IEnumerable<PKGroup> page)
             {
-                eb.WithSimpleLineContent(page.Select(g => $"[`{g.Hid}`] **{g.Name}**"));
+                eb.WithSimpleLineContent(page.Select(g =>
+                {
+                    if (g.DisplayName != null)
+                        return $"[`{g.Hid}`] **{g.Name}** ({g.DisplayName})";
+                    else
+                        return $"[`{g.Hid}`] **{g.Name}**";
+                }));
                 eb.WithFooter($"{groups.Count} total.");
                 return Task.CompletedTask;
             }
@@ -251,10 +292,17 @@ namespace PluralKit.Bot
                 .WithAuthor(nameField, iconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx)))
                 .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
 
-            if (memberCount == 0)
-                eb.AddField("Members (0)", $"Add one with `pk;group {GroupReference(target)} add <member>`!", true);
-            else
-                eb.AddField($"Members ({memberCount})", $"(see `pk;group {GroupReference(target)} list`)", true);
+            if (target.DisplayName != null)
+                eb.AddField("Display Name", target.DisplayName);
+
+            if (target.ListPrivacy.CanAccess(pctx))
+            {
+                if (memberCount == 0 && pctx == LookupContext.ByOwner)
+                    // Only suggest the add command if this is actually the owner lol
+                    eb.AddField("Members (0)", $"Add one with `pk;group {GroupReference(target)} add <member>`!", true);
+                else
+                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {GroupReference(target)} list`)", true);
+            }
 
             if (target.DescriptionFor(pctx) is {} desc)
                 eb.AddField("Description", desc);
@@ -275,14 +323,15 @@ namespace PluralKit.Bot
             
             var existingMembersInGroup = (await conn.QueryMemberList(target.System,
                 new DatabaseViewsExt.MemberListQueryOptions {GroupFilter = target.Id}))
-                .Select(m => m.Id)
+                .Select(m => m.Id.Value)
                 .ToHashSet();
             
             if (op == AddRemoveOperation.Add)
             {
                 var membersNotInGroup = members
-                    .Where(m => !existingMembersInGroup.Contains(m.Id))
+                    .Where(m => !existingMembersInGroup.Contains(m.Id.Value))
                     .Select(m => m.Id)
+                    .Distinct()
                     .ToList();
                 await conn.AddMembersToGroup(target.Id, membersNotInGroup);
                 
@@ -294,8 +343,9 @@ namespace PluralKit.Bot
             else if (op == AddRemoveOperation.Remove)
             {
                 var membersInGroup = members
-                    .Where(m => existingMembersInGroup.Contains(m.Id))
+                    .Where(m => existingMembersInGroup.Contains(m.Id.Value))
                     .Select(m => m.Id)
+                    .Distinct()
                     .ToList();
                 await conn.RemoveMembersFromGroup(target.Id, membersInGroup);
                 
@@ -311,12 +361,12 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
             
             var targetSystem = await GetGroupSystem(ctx, target, conn);
-            ctx.CheckSystemPrivacy(targetSystem, target.Visibility);
+            ctx.CheckSystemPrivacy(targetSystem, target.ListPrivacy);
             
             var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target.System));
             opts.GroupFilter = target.Id;
 
-            var title = new StringBuilder($"Members of {target.Name} (`{target.Hid}`) in ");
+            var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");
             if (targetSystem.Name != null) 
                 title.Append($"{targetSystem.Name} (`{targetSystem.Hid}`)");
             else
@@ -363,8 +413,9 @@ namespace PluralKit.Bot
                     .WithTitle($"Current privacy settings for {target.Name}")
                     .AddField("Description", target.DescriptionPrivacy.Explanation())
                     .AddField("Icon", target.IconPrivacy.Explanation())
+                    .AddField("Member list", target.ListPrivacy.Explanation())
                     .AddField("Visibility", target.Visibility.Explanation())
-                    .WithDescription($"To edit privacy settings, use the command:\n> pk;group **{GroupReference(target)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .WithDescription($"To edit privacy settings, use the command:\n> pk;group **{GroupReference(target)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                     .Build()); 
                 return;
             }
@@ -387,6 +438,7 @@ namespace PluralKit.Bot
                 {
                     GroupPrivacySubject.Description => "description privacy",
                     GroupPrivacySubject.Icon => "icon privacy",
+                    GroupPrivacySubject.List => "member list",
                     GroupPrivacySubject.Visibility => "visibility",
                     _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
                 };
@@ -396,10 +448,12 @@ namespace PluralKit.Bot
                     (GroupPrivacySubject.Description, PrivacyLevel.Private) => "This group's description is now hidden from other systems.",
                     (GroupPrivacySubject.Icon, PrivacyLevel.Private) => "This group's icon is now hidden from other systems.",
                     (GroupPrivacySubject.Visibility, PrivacyLevel.Private) => "This group is now hidden from group lists and member cards.",
+                    (GroupPrivacySubject.List, PrivacyLevel.Private) => "This group's member list is now hidden from other systems.",
                     
                     (GroupPrivacySubject.Description, PrivacyLevel.Public) => "This group's description is no longer hidden from other systems.",
                     (GroupPrivacySubject.Icon, PrivacyLevel.Public) => "This group's icon is no longer hidden from other systems.",
                     (GroupPrivacySubject.Visibility, PrivacyLevel.Public) => "This group is no longer hidden from group lists and member cards.",
+                    (GroupPrivacySubject.List, PrivacyLevel.Public) => "This group's member list is no longer hidden from other systems.",
                     
                     _ => throw new InvalidOperationException($"Invalid subject/level tuple ({subject}, {level})")
                 };
