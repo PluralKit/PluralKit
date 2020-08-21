@@ -68,7 +68,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
 - `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
-- `pk;logclean <on/off>` - Enables or disables [log cleanup](/guide#log-cleanup).
+- `pk;logclean <on/off>` - Enables or disables [log cleanup](./staff/compatibility.md#log-cleanup).
 - `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
 
@@ -77,16 +77,16 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
-- `pk;permcheck [server id]` - [Checks the given server's permission setup](/tips#permission-checker-command) to check if it's compatible with PluralKit.
+- `pk;permcheck [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
 
 ## API
-*(for using the [PluralKit API](/api), useful for developers)*
+*(for using the [PluralKit API](./api-documentation.md), useful for developers)*
 - `pk;token` - DMs you a token for using the PluralKit API.
 - `pk;token refresh` - Refreshes your API token and invalidates the old one.
 
 ## Help
 - `pk;help` - Displays a basic help message describing how to use the bot.
-- `pk;help proxy` - Directs you to [this page](/guide#proxying).
+- `pk;help proxy` - Directs you to [this page](./user-guide.md#proxying).
 - `pk;system help` - Lists system-related commands.
 - `pk;member help` - Lists member-related commands.
 - `pk;switch help` - Lists switch-related commands.

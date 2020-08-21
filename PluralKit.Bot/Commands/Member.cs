@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using PluralKit.Core;
 
@@ -61,7 +62,11 @@ namespace PluralKit.Bot
             //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
 
             // TODO: don't buffer these, find something else to do ig
-            var members = await _data.GetSystemMembers(ctx.System).Where(m => m.MemberVisibility == PrivacyLevel.Public).ToListAsync();
+
+            List<PKMember> members;
+            if (ctx.MatchFlag("all", "a")) members = await _data.GetSystemMembers(ctx.System).ToListAsync();
+            else members = await _data.GetSystemMembers(ctx.System).Where(m => m.MemberVisibility == PrivacyLevel.Public).ToListAsync();
+            
             if (members == null || !members.Any())
                 throw Errors.NoMembersError;
             var randInt = randGen.Next(members.Count);

@@ -18,7 +18,7 @@ module.exports = {
 
   themeConfig: {
     repo: 'xSke/PluralKit',
-    docsDir: 'docs',
+    docsDir: 'docs/content/',
     docsBranch: 'main',
     editLinks: true,
     editLinkText: 'Help us improve this page!',
@@ -44,6 +44,17 @@ module.exports = {
           "/privacy-policy",
           "/faq",
           "/tips-and-tricks"
+        ]
+      },
+      {
+        title: "For server staff",
+        collapsable: false,
+        children: [
+          "/staff/permissions",
+          "/staff/moderation",
+          "/staff/disabling",
+          "/staff/logging",
+          "/staff/compatibility",
         ]
       },
       ["https://discord.gg/PczBt78", "Join the support server"],

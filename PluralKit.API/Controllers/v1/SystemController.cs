@@ -36,7 +36,6 @@ namespace PluralKit.API
 
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("s")]
     [Route( "v{version:apiVersion}/s" )]
     public class SystemController : ControllerBase
     {

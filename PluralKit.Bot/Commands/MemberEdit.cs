@@ -36,8 +36,8 @@ namespace PluralKit.Bot
 
             // Warn if there's already a member by this name
             var existingMember = await _data.GetMemberByName(ctx.System, newName);
-            if (existingMember != null) 
-            if (existingMember.Id != target.Id) {
+            if (existingMember != null && existingMember.Id != target.Id) 
+            {
                 var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?";
                 if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
             }
@@ -187,7 +187,7 @@ namespace PluralKit.Bot
                 await ctx.Reply(embed: new DiscordEmbedBuilder()
                     .WithTitle($"{Emojis.Success} Member color changed.")
                     .WithColor(color.ToDiscordColor().Value)
-                    .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
+                    .WithThumbnail($"https://fakeimg.pl/256x256/{color}/?text=%20")
                     .Build());
             }
         }

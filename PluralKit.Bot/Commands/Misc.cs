@@ -94,27 +94,23 @@ namespace PluralKit.Bot {
         public async Task PermCheckGuild(Context ctx)
         {
             DiscordGuild guild;
+            DiscordMember senderGuildUser = null;
 
             if (ctx.Guild != null && !ctx.HasNext())
             {
                 guild = ctx.Guild;
+                senderGuildUser = (DiscordMember)ctx.Author;
             }
             else
             {
-                var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command as .");
+                var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command in a server.");
                 if (!ulong.TryParse(guildIdStr, out var guildId))
                     throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
 
-                // TODO: will this call break for sharding if you try to request a guild on a different bot instance?
-                guild = await ctx.Rest.GetGuild(guildId);
-                if (guild == null)
-                    throw Errors.GuildNotFound(guildId);
+                guild = ctx.Client.GetGuild(guildId);
+                if (guild != null) senderGuildUser = await guild.GetMember(ctx.Author.Id);
+                if (guild == null || senderGuildUser == null) throw Errors.GuildNotFound(guildId);
             }
-            
-            // Ensure people can't query guilds they're not in + get their own permissions (for view access checking)
-            var senderGuildUser = await guild.GetMember(ctx.Author.Id);
-            if (senderGuildUser == null)
-                throw new PKError("You must be a member of the guild you are querying.");
 
             var requiredPermissions = new []
             {

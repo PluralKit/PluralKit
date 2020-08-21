@@ -25,7 +25,6 @@ namespace PluralKit.API
     
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("msg")]
     [Route( "v{version:apiVersion}/msg" )]
     public class MessageController: ControllerBase
     {

@@ -14,5 +14,5 @@ you'll need to update the branch references, like so:
 
 (steps from https://dev.to/rhymu8354/git-renaming-the-master-branch-137b)
 
-I'm going to re-branch `master` from `main`, leaving it at this notice's commit, and then delete in a week's time
-so people have a chance to migrate. Hopefully this doesn't cause too much breakage. (if it does, do yell at me in the issues)
+The `master` branch was fully deleted on 2020-07-28.
+If you get an error on pull on an old clone, that's why. The commands above should still work, though.

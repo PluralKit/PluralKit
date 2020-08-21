@@ -54,6 +54,10 @@ $ docker-compose up -d
 
 (tip: use `scripts/run-test-db.sh` to run a temporary PostgreSQL database on your local system. Requires Docker.)
 
+# Upgrading database from legacy version
+If you have an instance of the Python version of the bot (from the `legacy` branch), you may need to take extra database migration steps.
+For more information, see [LEGACYMIGRATE.md](./LEGACYMIGRATE.md).
+
 # Documentation
 See [the docs/ directory](./docs/README.md)
 

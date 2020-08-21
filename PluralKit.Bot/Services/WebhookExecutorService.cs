@@ -67,7 +67,8 @@ namespace PluralKit.Bot
             dwb.WithUsername(FixClyde(name).Truncate(80));
             dwb.WithContent(content);
             dwb.AddMentions(content.ParseAllMentions(allowEveryone, channel.Guild));
-            if (avatarUrl != null) dwb.WithAvatarUrl(avatarUrl);
+            if (!string.IsNullOrWhiteSpace(avatarUrl)) 
+                dwb.WithAvatarUrl(avatarUrl);
             
             var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)

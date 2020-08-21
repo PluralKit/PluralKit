@@ -54,16 +54,11 @@ namespace PluralKit.API
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddNewtonsoftJson(); // sorry MS, this just does *more*
 
-            services.AddApiVersioning(c =>
-            {
-                c.AssumeDefaultVersionWhenUnspecified = true;
-                c.DefaultApiVersion = ApiVersion.Parse("1.0");
-            });
+            services.AddApiVersioning();
             
             services.AddVersionedApiExplorer(c =>
             {
                 c.GroupNameFormat = "'v'VV";
-                c.DefaultApiVersion = ApiVersion.Parse("1.0");
                 c.ApiVersionParameterSource = new UrlSegmentApiVersionReader();
                 c.SubstituteApiVersionInUrl = true;
             });

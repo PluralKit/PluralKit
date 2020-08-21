@@ -29,7 +29,8 @@ namespace PluralKit.Bot
         public string CreateFilterString()
         {
             var str = new StringBuilder();
-            str.Append("Sorting by ");
+            str.Append("Sorting ");
+            if (SortProperty != SortProperty.Random) str.Append("by ");
             str.Append(SortProperty switch
             {
                 SortProperty.Name => "member name",
@@ -40,6 +41,7 @@ namespace PluralKit.Bot
                 SortProperty.LastSwitch => "last switch",
                 SortProperty.MessageCount => "message count",
                 SortProperty.Birthdate => "birthday",
+                SortProperty.Random => "randomly",
                 _ => new ArgumentOutOfRangeException($"Couldn't find readable string for sort property {SortProperty}")
             });
             
@@ -77,6 +79,8 @@ namespace PluralKit.Bot
             IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
                 opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
             
+            var randGen = new global::System.Random();
+
             var culture = StringComparer.InvariantCultureIgnoreCase;
             return (opts.SortProperty switch
             {
@@ -98,6 +102,8 @@ namespace PluralKit.Bot
                 SortProperty.LastSwitch => input
                     .OrderByDescending(m => m.LastSwitchTime.HasValue)
                     .ThenByDescending(m => m.LastSwitchTime, ReverseMaybe(Comparer<Instant?>.Default)),
+                SortProperty.Random => input
+                    .OrderBy(m => randGen.Next()),
                 _ => throw new ArgumentOutOfRangeException($"Unknown sort property {opts.SortProperty}")
             })
                 // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
@@ -114,7 +120,8 @@ namespace PluralKit.Bot
         CreationDate,
         LastSwitch,
         LastMessage,
-        Birthdate
+        Birthdate,
+        Random
     }
 
     public enum ListType

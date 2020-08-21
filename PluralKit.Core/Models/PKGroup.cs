@@ -21,4 +21,13 @@ namespace PluralKit.Core
         
         public Instant Created { get; private set; }
     }
+
+    public static class PKGroupExt
+    {
+        public static string? DescriptionFor(this PKGroup group, LookupContext ctx) =>
+            group.DescriptionPrivacy.Get(ctx, group.Description);
+        
+        public static string? IconFor(this PKGroup group, LookupContext ctx) =>
+            group.IconPrivacy.Get(ctx, group.Icon);
+    }
 }

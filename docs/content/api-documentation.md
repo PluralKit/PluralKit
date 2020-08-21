@@ -519,6 +519,8 @@ The returned system and member's privacy settings will be respected, and as such
 ```
 
 ## Version history
+* 2020-07-28
+  * The unversioned API endpoints have been removed.
 * 2020-06-17 (v1.1)
   * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `avatar_privacy`, `birthday_privacy`, `pronoun_privacy`, `metadata_privacy`. All are strings and accept the values of `public`, `private` and `null`.
   * The `privacy` field has now been deprecated and should not be used. It's still returned (mirroring the `visibility` field), and writing to it will write to *all privacy options*.
