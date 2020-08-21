@@ -97,6 +97,26 @@ namespace PluralKit.Bot
             // Finally, we return the member value.
             return member;
         }
+        
+        public static async Task<PKGroup> PeekGroup(this Context ctx)
+        {
+            var input = ctx.PeekArgument();
+
+            await using var conn = await ctx.Database.Obtain();
+            if (ctx.System != null && await conn.QueryGroupByName(ctx.System.Id, input) is {} byName)
+                return byName;
+            if (await conn.QueryGroupByHid(input) is {} byHid)
+                return byHid;
+
+            return null;
+        }
+
+        public static async Task<PKGroup> MatchGroup(this Context ctx)
+        {
+            var group = await ctx.PeekGroup();
+            if (group != null) ctx.PopArgument();
+            return group;
+        }
 
         public static string CreateMemberNotFoundError(this Context ctx, string input)
         {
@@ -111,6 +131,21 @@ namespace PluralKit.Bot
             if (ctx.System != null)
                 return $"Member with name \"{input}\" not found. Note that a member ID is 5 characters long.";
             return $"Member not found. Note that a member ID is 5 characters long.";
+        }
+        
+        public static string CreateGroupNotFoundError(this Context ctx, string input)
+        {
+            // TODO: does this belong here?
+            if (input.Length == 5)
+            {
+                if (ctx.System != null)
+                    return $"Group with ID or name \"{input}\" not found.";
+                return $"Group with ID \"{input}\" not found."; // Accounts without systems can't query by name
+            }
+
+            if (ctx.System != null)
+                return $"Group with name \"{input}\" not found. Note that a group ID is 5 characters long.";
+            return $"Group not found. Note that a group ID is 5 characters long.";
         }
         
         public static async Task<DiscordChannel> MatchChannel(this Context ctx)

@@ -33,6 +33,7 @@ namespace PluralKit.Bot
             builder.RegisterType<CommandTree>().AsSelf();
             builder.RegisterType<Autoproxy>().AsSelf();
             builder.RegisterType<Fun>().AsSelf();
+            builder.RegisterType<Groups>().AsSelf();
             builder.RegisterType<Help>().AsSelf();
             builder.RegisterType<ImportExport>().AsSelf();
             builder.RegisterType<Member>().AsSelf();

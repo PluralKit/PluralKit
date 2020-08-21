@@ -6,6 +6,7 @@ namespace PluralKit.Core
     {
         Description,
         MemberList,
+        GroupList,
         Front,
         FrontHistory
     }
@@ -21,6 +22,7 @@ namespace PluralKit.Core
                 SystemPrivacySubject.Front => system.FrontPrivacy = level,
                 SystemPrivacySubject.FrontHistory => system.FrontHistoryPrivacy = level,
                 SystemPrivacySubject.MemberList => system.MemberListPrivacy = level,
+                SystemPrivacySubject.GroupList => system.GroupListPrivacy = level,
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
             };
             
@@ -60,6 +62,10 @@ namespace PluralKit.Core
                 case "fronthistory":
                 case "fh":
                     subject = SystemPrivacySubject.FrontHistory;
+                    break;
+                case "groups":
+                case "gs":
+                    subject = SystemPrivacySubject.GroupList;
                     break;
                 default:
                     subject = default;

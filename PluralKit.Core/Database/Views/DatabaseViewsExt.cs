@@ -11,10 +11,17 @@ namespace PluralKit.Core
     {
         public static Task<IEnumerable<SystemFronter>> QueryCurrentFronters(this IPKConnection conn, SystemId system) =>
             conn.QueryAsync<SystemFronter>("select * from system_fronters where system = @system", new {system});
+
+        public static Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system) =>
+            conn.QueryAsync<ListedGroup>("select * from group_list where system = @System", new {System = system});
         
         public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system, MemberListQueryOptions opts)
         {
-            StringBuilder query = new StringBuilder("select * from member_list where system = @system");
+            StringBuilder query;
+            if (opts.GroupFilter == null)
+                query = new StringBuilder("select * from member_list where system = @system");
+            else
+                query = new StringBuilder("select member_list.* from group_members inner join member_list on member_list.id = group_members.member_id where group_id = @groupFilter");
 
             if (opts.PrivacyFilter != null)
                 query.Append($" and member_visibility = {(int) opts.PrivacyFilter}");
@@ -35,7 +42,7 @@ namespace PluralKit.Core
                 query.Append(")");
             }
             
-            return conn.QueryAsync<ListedMember>(query.ToString(), new {system, filter = opts.Search});
+            return conn.QueryAsync<ListedMember>(query.ToString(), new {system, filter = opts.Search, groupFilter = opts.GroupFilter});
         }
         
         public struct MemberListQueryOptions
@@ -44,6 +51,7 @@ namespace PluralKit.Core
             public string? Search;
             public bool SearchDescription;
             public LookupContext Context;
+            public GroupId? GroupFilter;
         }
     }
 }

@@ -112,3 +112,13 @@ begin
     end loop;
 end
 $$ language plpgsql volatile;
+
+create function find_free_group_hid() returns char(5) as $$
+declare new_hid char(5);
+begin
+    loop
+        new_hid := generate_hid();
+        if not exists (select 1 from groups where hid = new_hid) then return new_hid; end if;
+    end loop;
+end
+$$ language plpgsql volatile;

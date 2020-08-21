@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 using Dapper;
 
@@ -60,5 +62,37 @@ namespace PluralKit.Core
                 .Build();
             return conn.ExecuteAsync(query, pms);
         }
+        
+        public static Task<PKGroup> CreateGroup(this IPKConnection conn, SystemId system, string name) =>
+            conn.QueryFirstAsync<PKGroup>(
+                "insert into groups (hid, system, name) values (find_free_group_hid(), @System, @Name) returning *",
+                new {System = system, Name = name});
+        
+        public static Task<PKGroup> UpdateGroup(this IPKConnection conn, GroupId id, GroupPatch patch)
+        {
+            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("groups", "id = @id"))
+                .WithConstant("id", id)
+                .Build("returning *");
+            return conn.QueryFirstAsync<PKGroup>(query, pms);
+        }
+        
+        public static Task DeleteGroup(this IPKConnection conn, GroupId group) =>
+            conn.ExecuteAsync("delete from groups where id = @Id", new {Id = group });
+
+        public static async Task AddMembersToGroup(this IPKConnection conn, GroupId group, IEnumerable<MemberId> members)
+        {
+            await using var w = conn.BeginBinaryImport("copy group_members (group_id, member_id) from stdin (format binary)");
+            foreach (var member in members)
+            {
+                await w.StartRowAsync();
+                await w.WriteAsync(group.Value);
+                await w.WriteAsync(member.Value);
+            }
+            await w.CompleteAsync();
+        }
+        
+        public static Task RemoveMembersFromGroup(this IPKConnection conn, GroupId group, IEnumerable<MemberId> members) =>
+            conn.ExecuteAsync("delete from group_members where group_id = @Group and member_id = any(@Members)",
+                new {Group = group, Members = members.ToArray() });
     }
 }

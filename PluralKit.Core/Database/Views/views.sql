@@ -55,3 +55,9 @@ select members.*,
             -- Any other privacy (rn just '2'), return null description (missing case = null in SQL)
         end as public_description
 from members;
+
+create view group_list as
+select groups.*,
+    -- Find group member count
+    (select count(*) from group_members where group_id = groups.id) as member_count
+from groups;

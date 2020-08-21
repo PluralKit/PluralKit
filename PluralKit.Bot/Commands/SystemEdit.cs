@@ -268,9 +268,10 @@ namespace PluralKit.Bot
                     .WithTitle("Current privacy settings for your system")
                     .AddField("Description", ctx.System.DescriptionPrivacy.Explanation())
                     .AddField("Member list", ctx.System.MemberListPrivacy.Explanation())
+                    .AddField("Group list", ctx.System.GroupListPrivacy.Explanation())
                     .AddField("Current fronter(s)", ctx.System.FrontPrivacy.Explanation())
                     .AddField("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation())
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, or `all` \n- `level` is either `public` or `private`.");
+                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
                 return ctx.Reply(embed: eb.Build());
             }
 
@@ -291,6 +292,7 @@ namespace PluralKit.Bot
                     SystemPrivacySubject.Front => "front",
                     SystemPrivacySubject.FrontHistory => "front history",
                     SystemPrivacySubject.MemberList => "member list",
+                    SystemPrivacySubject.GroupList => "group list",
                     _ => ""
                 };
 
@@ -304,7 +306,7 @@ namespace PluralKit.Bot
 
                 var msg = level switch
                 {
-                    PrivacyLevel.Private => $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, front history, or system description.",
+                    PrivacyLevel.Private => $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, group list, front history, or system description.",
                     PrivacyLevel.Public => $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now be able to view everything.",
                     _ => ""
                 };

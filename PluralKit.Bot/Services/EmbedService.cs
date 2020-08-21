@@ -102,12 +102,16 @@ namespace PluralKit.Bot {
                 // for now we just default to a blank color, yolo
                 color = DiscordUtils.Gray;
             }
+
+            await using var conn = await _db.Obtain();
             
-            var guildSettings = guild != null ? await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(guild.Id, member.Id)) : null;
+            var guildSettings = guild != null ? await conn.QueryOrInsertMemberGuildConfig(guild.Id, member.Id) : null;
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
-            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`` {t.ProxyString}﻿``"));
+            var groups = (await conn.QueryMemberGroups(member.Id)).Where(g => g.Visibility.CanAccess(ctx)).ToList();
+
+            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`` {t.ProxyString} ``"));
 
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
@@ -124,7 +128,7 @@ namespace PluralKit.Bot {
                 else
                     description += "*(this member has a server-specific avatar set)*\n";
             if (description != "") eb.WithDescription(description);
-
+            
             if (avatar != null) eb.WithThumbnail(avatar);
 
             if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
@@ -138,7 +142,16 @@ namespace PluralKit.Bot {
             // if (member.LastSwitchTime != null && m.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last switched in:", FormatTimestamp(member.LastSwitchTime.Value));
             // if (!member.Color.EmptyOrNull() && member.ColorPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
             if (!member.Color.EmptyOrNull()) eb.AddField("Color", $"#{member.Color}", true);
-            
+
+            if (groups.Count > 0)
+            {
+                // More than 5 groups show in "compact" format without ID
+                var content = groups.Count > 5
+                    ? string.Join(", ", groups.Select(g => g.DisplayName ?? g.Name))
+                    : string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.DisplayName ?? g.Name}**"));
+                eb.AddField($"Groups ({groups.Count})", content.Truncate(1000));
+            }
+
             if (member.DescriptionFor(ctx) is {} desc) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
 
             return eb.Build();

@@ -22,6 +22,7 @@ namespace PluralKit.Core {
         public PrivacyLevel MemberListPrivacy { get;}
         public PrivacyLevel FrontPrivacy { get; }
         public PrivacyLevel FrontHistoryPrivacy { get; }
+        public PrivacyLevel GroupListPrivacy { get; }
         
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }

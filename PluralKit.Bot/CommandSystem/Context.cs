@@ -25,6 +25,7 @@ namespace PluralKit.Bot
         private readonly MessageContext _messageContext;
 
         private readonly IDataStore _data;
+        private readonly IDatabase _db;
         private readonly PKSystem _senderSystem;
         private readonly IMetrics _metrics;
 
@@ -40,6 +41,7 @@ namespace PluralKit.Bot
             _data = provider.Resolve<IDataStore>();
             _senderSystem = senderSystem;
             _messageContext = messageContext;
+            _db = provider.Resolve<IDatabase>();
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
@@ -61,6 +63,7 @@ namespace PluralKit.Bot
 
         // TODO: this is just here so the extension methods can access it; should it be public/private/?
         internal IDataStore DataStore => _data;
+        internal IDatabase Database => _db;
 
         public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
         {

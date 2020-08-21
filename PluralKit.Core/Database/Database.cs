@@ -20,7 +20,7 @@ namespace PluralKit.Core
     internal class Database: IDatabase
     {
         private const string RootPath = "PluralKit.Core.Database"; // "resource path" root for SQL files
-        private const int TargetSchemaVersion = 8;
+        private const int TargetSchemaVersion = 9;
         
         private readonly CoreConfig _config;
         private readonly ILogger _logger;
@@ -58,9 +58,11 @@ namespace PluralKit.Core
             SqlMapper.AddTypeHandler(new NumericIdHandler<SystemId, int>(i => new SystemId(i)));
             SqlMapper.AddTypeHandler(new NumericIdHandler<MemberId, int>(i => new MemberId(i)));
             SqlMapper.AddTypeHandler(new NumericIdHandler<SwitchId, int>(i => new SwitchId(i)));
+            SqlMapper.AddTypeHandler(new NumericIdHandler<GroupId, int>(i => new GroupId(i)));
             SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SystemId, int>(i => new SystemId(i)));
             SqlMapper.AddTypeHandler(new NumericIdArrayHandler<MemberId, int>(i => new MemberId(i)));
             SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SwitchId, int>(i => new SwitchId(i)));
+            SqlMapper.AddTypeHandler(new NumericIdArrayHandler<GroupId, int>(i => new GroupId(i)));
             
             // Register our custom types to Npgsql
             // Without these it'll still *work* but break at the first launch + probably cause other small issues
