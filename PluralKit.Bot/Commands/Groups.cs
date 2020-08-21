@@ -245,7 +245,7 @@ namespace PluralKit.Bot
                     throw new PKError("You do not have permission to access this information.");
             }
             
-            var groups = (await conn.QueryGroupsInSystem(system.Id))
+            var groups = (await conn.QueryGroupList(system.Id))
                 .Where(g => g.Visibility.CanAccess(pctx))
                 .ToList();
             
@@ -262,14 +262,14 @@ namespace PluralKit.Bot
             var title = system.Name != null ? $"Groups of {system.Name} (`{system.Hid}`)" : $"Groups of `{system.Hid}`";
             await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, 25, title, Renderer);
             
-            Task Renderer(DiscordEmbedBuilder eb, IEnumerable<PKGroup> page)
+            Task Renderer(DiscordEmbedBuilder eb, IEnumerable<ListedGroup> page)
             {
                 eb.WithSimpleLineContent(page.Select(g =>
                 {
                     if (g.DisplayName != null)
-                        return $"[`{g.Hid}`] **{g.Name}** ({g.DisplayName})";
+                        return $"[`{g.Hid}`] **{g.Name}** ({g.DisplayName}) ({"member".ToQuantity(g.MemberCount)})";
                     else
-                        return $"[`{g.Hid}`] **{g.Name}**";
+                        return $"[`{g.Hid}`] **{g.Name}** ({"member".ToQuantity(g.MemberCount)})";
                 }));
                 eb.WithFooter($"{groups.Count} total.");
                 return Task.CompletedTask;

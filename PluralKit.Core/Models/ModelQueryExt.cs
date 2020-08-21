@@ -34,10 +34,7 @@ namespace PluralKit.Core
         
         public static Task<PKGroup?> QueryGroupByHid(this IPKConnection conn, string hid) =>
             conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where hid = @hid", new {hid = hid.ToLowerInvariant()});
-
-        public static Task<IEnumerable<PKGroup>> QueryGroupsInSystem(this IPKConnection conn, SystemId system) =>
-            conn.QueryAsync<PKGroup>("select * from groups where system = @System", new {System = system});
-
+        
         public static Task<int> QueryGroupMemberCount(this IPKConnection conn, GroupId id,
                                                       PrivacyLevel? privacyFilter = null)
         {

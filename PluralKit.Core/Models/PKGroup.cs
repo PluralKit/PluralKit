@@ -5,20 +5,20 @@ namespace PluralKit.Core
 {
     public class PKGroup
     {
-        public GroupId Id { get; }
-        public string Hid { get; } = null!;
-        public SystemId System { get; }
+        public GroupId Id { get; private set; }
+        public string Hid { get; private set; } = null!;
+        public SystemId System { get; private set; }
 
-        public string Name { get; } = null!;
-        public string? DisplayName { get; }
-        public string? Description { get; }
-        public string? Icon { get; }
+        public string Name { get; private set; } = null!;
+        public string? DisplayName { get; private set; }
+        public string? Description { get; private set; }
+        public string? Icon { get; private set; }
 
-        public PrivacyLevel DescriptionPrivacy { get; }
-        public PrivacyLevel IconPrivacy { get; }
-        public PrivacyLevel ListPrivacy { get; }
-        public PrivacyLevel Visibility { get; }
+        public PrivacyLevel DescriptionPrivacy { get; private set; }
+        public PrivacyLevel IconPrivacy { get; private set; }
+        public PrivacyLevel ListPrivacy { get; private set; }
+        public PrivacyLevel Visibility { get; private set; }
         
-        public Instant Created { get; }
+        public Instant Created { get; private set; }
     }
 }

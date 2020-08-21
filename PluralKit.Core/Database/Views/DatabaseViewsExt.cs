@@ -11,6 +11,9 @@ namespace PluralKit.Core
     {
         public static Task<IEnumerable<SystemFronter>> QueryCurrentFronters(this IPKConnection conn, SystemId system) =>
             conn.QueryAsync<SystemFronter>("select * from system_fronters where system = @system", new {system});
+
+        public static Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system) =>
+            conn.QueryAsync<ListedGroup>("select * from group_list where system = @System", new {System = system});
         
         public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system, MemberListQueryOptions opts)
         {

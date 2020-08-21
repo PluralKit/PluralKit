@@ -26,6 +26,7 @@ create table group_members (
     primary key (group_id, member_id)
 );
 
-alter table systems add column group_list_privacy integer check (group_list_privacy in (1, 2)) not null default systems.member_list_privacy;
+alter table systems add column group_list_privacy integer check (group_list_privacy in (1, 2)) not null default 1;
+update systems set group_list_privacy = member_list_privacy;
 
 update info set schema_version = 9;
