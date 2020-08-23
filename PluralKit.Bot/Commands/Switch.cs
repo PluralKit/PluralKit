@@ -107,7 +107,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.Match("all", "clear"))
+            if (ctx.Match("all", "clear") || ctx.MatchFlag("all", "clear"))
             {
                 // Subcommand: "delete all"
                 var purgeMsg = $"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?";
