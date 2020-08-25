@@ -1,14 +1,19 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build
-
-WORKDIR /app
-COPY . /app
-RUN dotnet publish -c Release -o out -f netcoreapp3.1
-
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine
 WORKDIR /app
-RUN dotnet tool install --global dotnet-trace && dotnet tool install --global dotnet-dump && dotnet tool install --global dotnet-counters
-COPY --from=build /app/PluralKit.*/bin/Release/netcoreapp3.1 ./
 
+# Restore/fetch dependencies excluding app code to make use of caching
+COPY PluralKit.sln nuget.config /app/
+COPY PluralKit.API/PluralKit.API.csproj /app/PluralKit.API/
+COPY PluralKit.Bot/PluralKit.Bot.csproj /app/PluralKit.Bot/
+COPY PluralKit.Core/PluralKit.Core.csproj /app/PluralKit.Core/
+COPY PluralKit.Tests/PluralKit.Tests.csproj /app/PluralKit.Tests/
+RUN dotnet restore PluralKit.sln
+
+# Copy the rest of the code and build
+COPY . /app
+RUN dotnet build -c Release -o bin
+
+# Run :)
+# Allow overriding CMD from eg. docker-compose to run API layer too
 ENTRYPOINT ["dotnet"]
-CMD ["PluralKit.Bot.dll"]
-
+CMD ["bin/PluralKit.Bot.dll"]

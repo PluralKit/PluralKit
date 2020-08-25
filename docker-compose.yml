@@ -1,9 +1,13 @@
+# API port: 2838, InfluxDB port: 2839, both listen on localhost only
+# Reads `pluralkit.conf` from current directory, and logs to `/var/log/pluralkit`.
+
 version: "3"
+
 services:
   bot:
     image: pluralkit # This image is reused in the other containers due to the
     build: .         # build instruction right here
-    command: ["PluralKit.Bot.dll"]
+    command: ["bin/PluralKit.Bot.dll"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
       - "PluralKit:InfluxUrl=http://influx:8086"
@@ -12,35 +16,39 @@ services:
     volumes:
       - "./pluralkit.conf:/app/pluralkit.conf:ro"
       - "/var/log/pluralkit:/var/log/pluralkit"
-    links:
-      - db
-      - influx
-    restart: always
+    restart: unless-stopped
+
   api:
     image: pluralkit
-    command: ["PluralKit.API.dll"]
+    command: ["bin/PluralKit.API.dll"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
-    links:
-      - db
     ports:
       - "127.0.0.1:2838:5000"
-    restart: always
+    restart: unless-stopped
+
   db:
-    image: postgres:11-alpine
+    image: postgres:12-alpine
     volumes:
       - "db_data:/var/lib/postgresql/data"
-    restart: always
-    command: ["postgres", "-c", "max-connections=1000"]
+      - "/var/run/postgresql:/var/run/postgresql"
+    command: ["postgres",
+              "-c", "max-connections=1000",
+              "-c", "timezone='Etc/UTC'",
+              "-c", "max_wal_size=1GB",
+              "-c", "min_wal_size=80MB",
+              "-c", "shared_buffers=128MB"]
     environment:
       - "POSTGRES_PASSWORD=postgres"
+    restart: unless-stopped
+
   influx:
     image: influxdb:alpine
     volumes:
       - "influx_data:/var/lib/influxdb"
     ports:
-      - 2839:8086
-    restart: always
+      - 127.0.0.1:2839:8086
+    restart: unless-stopped
 
 volumes:
   db_data:

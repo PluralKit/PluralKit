@@ -1,18 +1,11 @@
-/.git/
-/.github/
-/.idea/
-/docs/
-/logs/
-/scripts/
+# Start by excluding everything
+*
 
-bin/
-obj/
+# Include project code and build files
+!PluralKit.*/
+!PluralKit.sln
+!nuget.config
 
-*.conf
-*.md
-*.sql
-*.gz
-*.tar
-
-Dockerfile
-docker-compose.yml
+# Re-exclude host build artifact directories
+**/bin
+**/obj
