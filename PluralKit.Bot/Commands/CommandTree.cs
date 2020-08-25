@@ -356,7 +356,7 @@ namespace PluralKit.Bot
                 // Commands with group argument
                 if (ctx.Match("rename", "name", "changename", "setname"))
                     await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
-                else if (ctx.Match("dn", "displayname", "nickname"))
+                else if (ctx.Match("nick", "dn", "displayname", "nickname"))
                     await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
                 else if (ctx.Match("description", "info", "bio", "text", "desc"))
                     await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
