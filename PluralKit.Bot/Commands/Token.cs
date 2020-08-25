@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 
 using PluralKit.Core;
 
@@ -17,20 +18,28 @@ namespace PluralKit.Bot
         public async Task GetToken(Context ctx)
         {
             ctx.CheckSystem();
-            
+
             // Get or make a token
             var token = ctx.System.Token ?? await MakeAndSetNewToken(ctx.System);
             
-            // If we're not already in a DM, reply with a reminder to check
-            if (!(ctx.Channel is DiscordDmChannel))
+            try
             {
-                await ctx.Reply($"{Emojis.Success} Check your DMs!");
-            }
+                // DM the user a security disclaimer, and then the token in a separate message (for easy copying on mobile)
+                var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
+                await dm.SendMessageFixedAsync(
+                    $"{Emojis.Warn} Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`.\n\nYour token is below:");
+                await dm.SendMessageFixedAsync(token);
 
-            // DM the user a security disclaimer, and then the token in a separate message (for easy copying on mobile)
-            var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
-            await dm.SendMessageFixedAsync($"{Emojis.Warn} Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`.\n\nYour token is below:");
-            await dm.SendMessageFixedAsync(token);
+                // If we're not already in a DM, reply with a reminder to check
+                if (!(ctx.Channel is DiscordDmChannel)) 
+                    await ctx.Reply($"{Emojis.Success} Check your DMs!");
+            }
+            catch (UnauthorizedException)
+            {
+                // Can't check for permission errors beforehand, so have to handle here :/
+                if (!(ctx.Channel is DiscordDmChannel))
+                    await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
+            }
         }
 
         private async Task<string> MakeAndSetNewToken(PKSystem system)
@@ -51,20 +60,27 @@ namespace PluralKit.Bot
                 await GetToken(ctx);
                 return;
             }
-            
-            // Make a new token from scratch
-            var token = await MakeAndSetNewToken(ctx.System);
-            
-            // If we're not already in a DM, reply with a reminder to check
-            if (!(ctx.Channel is DiscordDmChannel))
-            {
-                await ctx.Reply($"{Emojis.Success} Check your DMs!");
-            }
 
-            // DM the user an invalidation disclaimer, and then the token in a separate message (for easy copying on mobile)
-            var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
-            await dm.SendMessageFixedAsync($"{Emojis.Warn} Your previous API token has been invalidated. You will need to change it anywhere it's currently used.\n\nYour token is below:");
-            await dm.SendMessageFixedAsync(token);
+            try {
+                // DM the user an invalidation disclaimer, and then the token in a separate message (for easy copying on mobile)
+                var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
+                await dm.SendMessageFixedAsync($"{Emojis.Warn} Your previous API token has been invalidated. You will need to change it anywhere it's currently used.\n\nYour token is below:");
+                
+                // Make the new token after sending the first DM; this ensures if we can't DM, we also don't end up
+                // breaking their existing token as a side effect :)
+                var token = await MakeAndSetNewToken(ctx.System);
+                await dm.SendMessageFixedAsync(token);
+                
+                // If we're not already in a DM, reply with a reminder to check
+                if (!(ctx.Channel is DiscordDmChannel)) 
+                    await ctx.Reply($"{Emojis.Success} Check your DMs!");
+            }
+            catch (UnauthorizedException)
+            {
+                // Can't check for permission errors beforehand, so have to handle here :/
+                if (!(ctx.Channel is DiscordDmChannel))
+                    await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
+            }
         }
     }
 }
