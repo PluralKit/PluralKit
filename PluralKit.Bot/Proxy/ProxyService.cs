@@ -100,7 +100,7 @@ namespace PluralKit.Bot
                 match.Member.ProxyAvatar(ctx),
                 content, trigger.Attachments, allowEveryone);
             
-            Task SaveMessage() => _data.AddMessage(conn, trigger.Author.Id, trigger.Channel.GuildId, trigger.Channel.Id, id, trigger.Id, match.Member.Id);
+            Task SaveMessage() => _data.AddMessage(conn, trigger.Author.Id, trigger.Channel.GuildId, trigger.ChannelId, id, trigger.Id, match.Member.Id);
             Task LogMessage() => _logChannel.LogMessage(ctx, match, trigger, id).AsTask();
             async Task DeleteMessage()
             {
