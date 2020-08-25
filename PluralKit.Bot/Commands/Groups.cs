@@ -247,6 +247,7 @@ namespace PluralKit.Bot
             
             var groups = (await conn.QueryGroupList(system.Id))
                 .Where(g => g.Visibility.CanAccess(pctx))
+                .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
                 .ToList();
             
             if (groups.Count == 0)
