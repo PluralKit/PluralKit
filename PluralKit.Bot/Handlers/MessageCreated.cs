@@ -23,11 +23,11 @@ namespace PluralKit.Bot
         private readonly ProxyService _proxy;
         private readonly ILifetimeScope _services;
         private readonly IDatabase _db;
-        private readonly IDataStore _data;
+        private readonly BotConfig _config;
 
         public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean,
                               IMetrics metrics, ProxyService proxy, DiscordShardedClient client,
-                              CommandTree tree, ILifetimeScope services, IDatabase db, IDataStore data)
+                              CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config)
         {
             _lastMessageCache = lastMessageCache;
             _loggerClean = loggerClean;
@@ -37,7 +37,7 @@ namespace PluralKit.Bot
             _tree = tree;
             _services = services;
             _db = db;
-            _data = data;
+            _config = config;
         }
 
         public DiscordChannel ErrorChannelFor(MessageCreateEventArgs evt) => evt.Channel;
@@ -87,26 +87,19 @@ namespace PluralKit.Bot
             var content = evt.Message.Content;
             if (content == null) return false;
 
-            var argPos = -1;
-            // Check if message starts with the command prefix
-            if (content.StartsWith("pk;", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
-            else if (content.StartsWith("pk!", StringComparison.InvariantCultureIgnoreCase)) argPos = 3;
-            else if (DiscordUtils.HasMentionPrefix(content, ref argPos, out var id)) // Set argPos to the proper value
-                if (id != _client.CurrentUser.Id) // But undo it if it's someone else's ping
-                    argPos = -1;
+            // Check for command prefix
+            if (!HasCommandPrefix(content, out var cmdStart))
+                return false;
 
-            // If we didn't find a prefix, give up handling commands
-            if (argPos == -1) return false;
-
-            // Trim leading whitespace from command without actually modifying the wring
+            // Trim leading whitespace from command without actually modifying the string
             // This just moves the argPos pointer by however much whitespace is at the start of the post-argPos string
-            var trimStartLengthDiff = content.Substring(argPos).Length - content.Substring(argPos).TrimStart().Length;
-            argPos += trimStartLengthDiff;
+            var trimStartLengthDiff = content.Substring(cmdStart).Length - content.Substring(cmdStart).TrimStart().Length;
+            cmdStart += trimStartLengthDiff;
 
             try
             {
                 var system = ctx.SystemId != null ? await _db.Execute(c => c.QuerySystem(ctx.SystemId.Value)) : null;
-                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, argPos, system, ctx));
+                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, cmdStart, system, ctx));
             }
             catch (PKError)
             {
@@ -115,6 +108,26 @@ namespace PluralKit.Bot
             }
 
             return true;
+        }
+
+        private bool HasCommandPrefix(string message, out int argPos)
+        {
+            // First, try prefixes defined in the config
+            var prefixes = _config.Prefixes ?? BotConfig.DefaultPrefixes;
+            foreach (var prefix in prefixes)
+            {
+                if (!message.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase)) continue;
+                
+                argPos = prefix.Length;
+                return true;
+            }
+            
+            // Then, check mention prefix (must be the bot user, ofc)
+            argPos = -1;
+            if (DiscordUtils.HasMentionPrefix(message, ref argPos, out var id))
+                return id == _client.CurrentUser.Id;
+
+            return false;
         }
 
         private async ValueTask<bool> TryHandleProxy(MessageCreateEventArgs evt, MessageContext ctx)
