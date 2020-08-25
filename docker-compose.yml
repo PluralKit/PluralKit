@@ -34,7 +34,7 @@ services:
       - "/var/run/postgresql:/var/run/postgresql"
     command: ["postgres",
               "-c", "max-connections=1000",
-              "-c", "timezone='Etc/UTC'",
+              "-c", "timezone=Etc/UTC",
               "-c", "max_wal_size=1GB",
               "-c", "min_wal_size=80MB",
               "-c", "shared_buffers=128MB"]
