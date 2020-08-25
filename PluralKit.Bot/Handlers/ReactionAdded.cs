@@ -124,7 +124,7 @@ namespace PluralKit.Bot
                 try
                 {
                     await guildUser.SendMessageFixedAsync($"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:");
-                    await guildUser.SendMessageFixedAsync($"`<@{msg.Message.Sender}>`");
+                    await guildUser.SendMessageFixedAsync($"<@{msg.Message.Sender}>".AsCode());
                 }
                 catch (UnauthorizedException) { }
             }

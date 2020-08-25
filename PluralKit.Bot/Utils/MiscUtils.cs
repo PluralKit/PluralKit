@@ -14,7 +14,8 @@ using PluralKit.Core;
 namespace PluralKit.Bot
 {
     public static class MiscUtils {
-        public static string ProxyTagsString(this PKMember member) => string.Join(", ", member.ProxyTags.Select(t => $"``﻿{t.ProxyString.EscapeBacktickPair()}﻿``"));
+        public static string ProxyTagsString(this PKMember member, string separator = ", ") => 
+            string.Join(separator, member.ProxyTags.Select(t => t.ProxyString.AsCode()));
         
         public static bool IsOurProblem(this Exception e)
         {

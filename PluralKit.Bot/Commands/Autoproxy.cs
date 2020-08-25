@@ -35,7 +35,7 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext())
                 await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx));
             else
-                throw new PKSyntaxError($"Invalid autoproxy mode `{ctx.PopArgument().EscapeMarkdown()}`.");
+                throw new PKSyntaxError($"Invalid autoproxy mode {ctx.PopArgument().AsCode()}.");
         }
 
         private async Task AutoproxyOff(Context ctx)

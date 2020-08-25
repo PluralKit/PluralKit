@@ -96,20 +96,20 @@ namespace PluralKit.Bot {
         public static PKError ImportCancelled => new PKError("Import cancelled.");
         public static PKError MessageNotFound(ulong id) => new PKError($"Message with ID '{id}' not found. Are you sure it's a message proxied by PluralKit?");
         
-        public static PKError DurationParseError(string durationStr) => new PKError($"Could not parse '{durationStr}' as a valid duration. Try a format such as `30d`, `1d3h` or `20m30s`.");
+        public static PKError DurationParseError(string durationStr) => new PKError($"Could not parse {durationStr.AsCode()} as a valid duration. Try a format such as `30d`, `1d3h` or `20m30s`.");
         public static PKError FrontPercentTimeInFuture => new PKError("Cannot get the front percent between now and a time in the future.");
 
         public static PKError GuildNotFound(ulong guildId) => new PKError($"Guild with ID {guildId} not found. Note that you must be a member of the guild you are querying.");
 
         public static PKError DisplayNameTooLong(string displayName, int maxLength) => new PKError(
             $"Display name too long ({displayName.Length} > {maxLength} characters). Use a shorter display name, or shorten your system tag.");
-        public static PKError ProxyNameTooShort(string name) => new PKError($"The webhook's name, `{name}`, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.");
-        public static PKError ProxyNameTooLong(string name) => new PKError($"The webhook's name, {name}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name, display name or server display name, or use a shorter system tag.");
+        public static PKError ProxyNameTooShort(string name) => new PKError($"The webhook's name, {name.AsCode()}, is shorter than two characters, and thus cannot be proxied. Please change the member name or use a longer system tag.");
+        public static PKError ProxyNameTooLong(string name) => new PKError($"The webhook's name, {name.AsCode()}, is too long ({name.Length} > {Limits.MaxProxyNameLength} characters), and thus cannot be proxied. Please change the member name, display name or server display name, or use a shorter system tag.");
 
-        public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag `` {tagToAdd.ProxyString.EscapeBacktickPair()} ``. The member currently has these tags: {member.ProxyTagsString()}");
-        public static PKError ProxyTagDoesNotExist(ProxyTag tagToRemove, PKMember member) => new PKError($"That member does not have the proxy tag ``﻿{tagToRemove.ProxyString.EscapeBacktickPair()}﻿``. The member currently has these tags: {member.ProxyTagsString()}");
-        public static PKError LegacyAlreadyHasProxyTag(ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString()}\nConsider using the ``pk;member {member.Hid} proxy add {requested.ProxyString.EscapeBacktickPair()}﻿`` command instead.");
-        public static PKError EmptyProxyTags(PKMember member) => new PKError($"The example proxy `text` is equivalent to having no proxy tags at all, since there are no symbols or brackets on either end. If you'd like to clear your proxy tags, use `pk;member {member.Hid} proxy clear`.");
+        public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag {tagToAdd.ProxyString.AsCode()}. The member currently has these tags: {member.ProxyTagsString()}");
+        public static PKError ProxyTagDoesNotExist(ProxyTag tagToRemove, PKMember member) => new PKError($"That member does not have the proxy tag {tagToRemove.ProxyString.AsCode()}. The member currently has these tags: {member.ProxyTagsString()}");
+        public static PKError LegacyAlreadyHasProxyTag(ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString()}\nConsider using the {$"pk;member {member.Reference()} proxy add {requested.ProxyString}".AsCode()} command instead.");
+        public static PKError EmptyProxyTags(PKMember member) => new PKError($"The example proxy `text` is equivalent to having no proxy tags at all, since there are no symbols or brackets on either end. If you'd like to clear your proxy tags, use `pk;member {member.Reference()} proxy clear`.");
 
         public static PKError GenericCancelled() => new PKError("Operation cancelled.");
 

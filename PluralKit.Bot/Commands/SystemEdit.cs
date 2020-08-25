@@ -114,7 +114,7 @@ namespace PluralKit.Bot
                 if (ctx.System.Tag == null)
                     await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
                 else
-                    await ctx.Reply($"Your current system tag is `{ctx.System.Tag}`. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                    await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
             }
             else
             {
@@ -126,7 +126,7 @@ namespace PluralKit.Bot
                 var patch = new SystemPatch {Tag = newTag};
                 await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
                 
-                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with `{newTag}` when proxied.");
+                await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with {newTag.AsCode()} when proxied.");
             }
         }
         

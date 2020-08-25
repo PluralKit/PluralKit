@@ -15,13 +15,13 @@ namespace PluralKit.Bot
             if (!ctx.HasNext())
                 throw new PKSyntaxError("You must pass a privacy level (`public` or `private`)");
             
-            throw new PKSyntaxError($"Invalid privacy level `{ctx.PopArgument()}` (must be `public` or `private`).");
+            throw new PKSyntaxError($"Invalid privacy level {ctx.PopArgument().AsCode()} (must be `public` or `private`).");
         }
 
         public static SystemPrivacySubject PopSystemPrivacySubject(this Context ctx)
         {
             if (!SystemPrivacyUtils.TryParseSystemPrivacy(ctx.PeekArgument(), out var subject))
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be `description`, `members`, `front`, `fronthistory`, or `all`).");
+                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `members`, `front`, `fronthistory`, or `all`).");
             
             ctx.PopArgument();
             return subject;
@@ -30,7 +30,7 @@ namespace PluralKit.Bot
         public static MemberPrivacySubject PopMemberPrivacySubject(this Context ctx)
         {
             if (!MemberPrivacyUtils.TryParseMemberPrivacy(ctx.PeekArgument(), out var subject))
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all).");
+                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all).");
             
             ctx.PopArgument();
             return subject;
@@ -39,7 +39,7 @@ namespace PluralKit.Bot
         public static GroupPrivacySubject PopGroupPrivacySubject(this Context ctx)
         {
             if (!GroupPrivacyUtils.TryParseGroupPrivacy(ctx.PeekArgument(), out var subject))
-                throw new PKSyntaxError($"Invalid privacy subject `{ctx.PopArgument()}` (must be `description`, `icon`, `visibility`, or `all).");
+                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `icon`, `visibility`, or `all).");
             
             ctx.PopArgument();
             return subject;

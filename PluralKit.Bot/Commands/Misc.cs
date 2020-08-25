@@ -105,7 +105,7 @@ namespace PluralKit.Bot {
             {
                 var guildIdStr = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a server ID or run this command in a server.");
                 if (!ulong.TryParse(guildIdStr, out var guildId))
-                    throw new PKSyntaxError($"Could not parse `{guildIdStr}` as an ID.");
+                    throw new PKSyntaxError($"Could not parse {guildIdStr.AsCode()} as an ID.");
 
                 guild = ctx.Client.GetGuild(guildId);
                 if (guild != null) senderGuildUser = await guild.GetMember(ctx.Author.Id);
@@ -196,7 +196,7 @@ namespace PluralKit.Bot {
                 messageId = id;
             else if (Regex.Match(word, "https://discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
                 messageId = ulong.Parse(match.Groups[1].Value);
-            else throw new PKSyntaxError($"Could not parse `{word}` as a message ID or link.");
+            else throw new PKSyntaxError($"Could not parse {word.AsCode()} as a message ID or link.");
 
             var message = await _data.GetMessage(messageId);
             if (message == null) throw Errors.MessageNotFound(messageId);

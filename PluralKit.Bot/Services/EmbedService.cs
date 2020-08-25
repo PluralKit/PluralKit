@@ -110,9 +110,7 @@ namespace PluralKit.Bot {
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
             var groups = (await conn.QueryMemberGroups(member.Id)).Where(g => g.Visibility.CanAccess(ctx)).ToList();
-
-            var proxyTagsStr = string.Join('\n', member.ProxyTags.Select(t => $"`` {t.ProxyString} ``"));
-
+            
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
                 .WithAuthor(name, iconUrl: DiscordUtils.WorkaroundForUrlBug(avatar))
@@ -136,7 +134,7 @@ namespace PluralKit.Bot {
             if (member.BirthdayFor(ctx) != null) eb.AddField("Birthdate", member.BirthdayString, true);
             if (member.PronounsFor(ctx) is {} pronouns && !string.IsNullOrWhiteSpace(pronouns)) eb.AddField("Pronouns", pronouns.Truncate(1024), true);
             if (member.MessageCountFor(ctx) is {} count && count > 0) eb.AddField("Message Count", member.MessageCount.ToString(), true);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", string.Join('\n', proxyTagsStr).Truncate(1024), true);
+            if (member.HasProxyTags) eb.AddField("Proxy Tags", member.ProxyTagsString("\n").Truncate(1024), true);
             // --- For when this gets added to the member object itself or however they get added
             // if (member.LastMessage != null && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last message:" FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value)));
             // if (member.LastSwitchTime != null && m.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last switched in:", FormatTimestamp(member.LastSwitchTime.Value));

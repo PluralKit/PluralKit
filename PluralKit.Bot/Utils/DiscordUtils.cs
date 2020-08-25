@@ -209,11 +209,29 @@ namespace PluralKit.Bot
             else return input;
         }
 
-        public static string EscapeBacktickPair(this string input){
-            Regex doubleBacktick = new Regex(@"``", RegexOptions.Multiline);
-            //Run twice to catch any pairs that are created from the first pass, pairs shouldn't be created in the second as they are created from odd numbers of backticks, even numbers are all caught on the first pass
-            if(input != null) return doubleBacktick.Replace(doubleBacktick.Replace(input, "`‌\ufeff`"),"`‌\ufeff`");
-            else return input;
+        public static string EscapeBacktickPair(this string input)
+        {
+            if (input == null)
+                return null;
+            
+            // Break all pairs of backticks by placing a ZWNBSP (U+FEFF) between them.
+            // Run twice to catch any pairs that are created from the first pass
+            var escaped = input
+                .Replace("``", "`\ufeff`")
+                .Replace("``", "`\ufeff`");
+
+            // Escape the start/end of the string if necessary to better "connect" with other things
+            if (escaped.StartsWith("`")) escaped = "\ufeff" + escaped;
+            if (escaped.EndsWith("`")) escaped = escaped + "\ufeff";
+            
+            return escaped;
+        }
+
+        public static string AsCode(this string input)
+        {
+            // Inline code blocks started with two backticks need to end with two backticks
+            // So, surrounding with two backticks, then escaping all backtick pairs makes it impossible(!) to "break out"
+            return $"``{EscapeBacktickPair(input)}``";
         }
 
         public static Task<DiscordUser> GetUser(this DiscordRestClient client, ulong id) => 
