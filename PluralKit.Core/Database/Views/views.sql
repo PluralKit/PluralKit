@@ -58,6 +58,11 @@ from members;
 
 create view group_list as
 select groups.*,
-    -- Find group member count
-    (select count(*) from group_members where group_id = groups.id) as member_count
+    -- Find public group member count
+    (
+        select count(*) from group_members 
+            inner join members on group_members.member_id = members.id 
+        where 
+            group_members.group_id = groups.id and members.member_visibility = 1
+    ) as member_count
 from groups;
