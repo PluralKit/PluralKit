@@ -78,7 +78,7 @@ namespace PluralKit.Bot
                     throw Errors.LookupNotAllowed;
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This member does not have a description set. To set one, type `pk;member {target.Hid} description <description>`.");
+                        await ctx.Reply($"This member does not have a description set. To set one, type `pk;member {target.Reference()} description <description>`.");
                     else
                         await ctx.Reply("This member does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
@@ -87,8 +87,8 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Member description")
                         .WithDescription(target.Description)
-                        .AddField("\u200B", $"To print the description with formatting, type `pk;member {target.Hid} description -raw`." 
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Hid} description -clear`." : ""))
+                        .AddField("\u200B", $"To print the description with formatting, type `pk;member {target.Reference()} description -raw`." 
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} description -clear`." : ""))
                         .Build());
             }
             else
@@ -120,12 +120,12 @@ namespace PluralKit.Bot
                     throw Errors.LookupNotAllowed;
                 if (target.Pronouns == null)
                     if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This member does not have pronouns set. To set some, type `pk;member {target.Hid} pronouns <pronouns>`.");
+                        await ctx.Reply($"This member does not have pronouns set. To set some, type `pk;member {target.Reference()} pronouns <pronouns>`.");
                     else
                         await ctx.Reply("This member does not have pronouns set.");
                 else
                     await ctx.Reply($"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**."
-                        + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Hid} pronouns -clear`." : ""));
+                        + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Reference()} pronouns -clear`." : ""));
             }
             else
             {
@@ -162,7 +162,7 @@ namespace PluralKit.Bot
                 if (target.Color == null)
                     if (ctx.System?.Id == target.System)
                         await ctx.Reply(
-                            $"This member does not have a color set. To set one, type `pk;member {target.Hid} color <color>`.");
+                            $"This member does not have a color set. To set one, type `pk;member {target.Reference()} color <color>`.");
                     else
                         await ctx.Reply("This member does not have a color set.");
                 else
@@ -171,7 +171,7 @@ namespace PluralKit.Bot
                         .WithColor(target.Color.ToDiscordColor().Value)
                         .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
                         .WithDescription($"This member's color is **#{target.Color}**."
-                                         + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Hid} color -clear`." : ""))
+                                         + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} color -clear`." : ""))
                         .Build());
             }
             else
@@ -209,10 +209,10 @@ namespace PluralKit.Bot
                 
                 if (target.Birthday == null)
                     await ctx.Reply("This member does not have a birthdate set."
-                        + (ctx.System?.Id == target.System ? $" To set one, type `pk;member {target.Hid} birthdate <birthdate>`." : ""));
+                        + (ctx.System?.Id == target.System ? $" To set one, type `pk;member {target.Reference()} birthdate <birthdate>`." : ""));
                 else
                     await ctx.Reply($"This member's birthdate is **{target.BirthdayString}**."
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Hid} birthdate -clear`." : ""));
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} birthdate -clear`." : ""));
             }
             else
             {
@@ -293,7 +293,7 @@ namespace PluralKit.Bot
                 // No perms check, display name isn't covered by member privacy 
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change display name, type `pk;member {target.Hid} displayname <display name>`.\nTo clear it, type `pk;member {target.Hid} displayname -clear`.");
+                    eb.WithDescription($"To change display name, type `pk;member {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;member {target.Reference()} displayname -clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
@@ -330,7 +330,7 @@ namespace PluralKit.Bot
                 // No perms check, server name isn't covered by member privacy 
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change server name, type `pk;member {target.Hid} servername <server name>`.\nTo clear it, type `pk;member {target.Hid} servername -clear`.");
+                    eb.WithDescription($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
@@ -455,7 +455,7 @@ namespace PluralKit.Bot
                 
                 // Avatar privacy doesn't apply when proxying if no server avatar is set
                 if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private && guildSettings?.AvatarUrl == null)
-                    await ctx.Reply($"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `pk;member {target.Hid} serveravatar`");
+                    await ctx.Reply($"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `pk;member {target.Reference()} serveravatar`");
             }
 
             if (ctx.Match("all") || newValueFromCommand != null)

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -52,10 +51,10 @@ namespace PluralKit.Bot
             
             var eb = new DiscordEmbedBuilder()
                 .WithDescription($"Your new group, **{groupName}**, has been created, with the group ID **`{newGroup.Hid}`**.\nBelow are a couple of useful commands:")
-                .AddField("View the group card", $"> pk;group **{GroupReference(newGroup)}**")
-                .AddField("Add members to the group", $"> pk;group **{GroupReference(newGroup)}** add **MemberName**\n> pk;group **{GroupReference(newGroup)}** add **Member1** **Member2** **Member3** (and so on...)")
-                .AddField("Set the description", $"> pk;group **{GroupReference(newGroup)}** description **This is my new group, and here is the description!**")
-                .AddField("Set the group icon", $"> pk;group **{GroupReference(newGroup)}** icon\n*(with an image attached)*");
+                .AddField("View the group card", $"> pk;group **{newGroup.Reference()}**")
+                .AddField("Add members to the group", $"> pk;group **{newGroup.Reference()}** add **MemberName**\n> pk;group **{newGroup.Reference()}** add **Member1** **Member2** **Member3** (and so on...)")
+                .AddField("Set the description", $"> pk;group **{newGroup.Reference()}** description **This is my new group, and here is the description!**")
+                .AddField("Set the group icon", $"> pk;group **{newGroup.Reference()}** icon\n*(with an image attached)*");
             await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
         }
 
@@ -102,7 +101,7 @@ namespace PluralKit.Bot
                     .AddField("Display Name", target.DisplayName ?? "*(none)*");
                 
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change display name, type `pk;group {GroupReference(target)} displayname <display name>`.\nTo clear it, type `pk;group {GroupReference(target)} displayname -clear`.");
+                    eb.WithDescription($"To change display name, type `pk;group {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;group {target.Reference()} displayname -clear`.");
                 
                 await ctx.Reply(embed: eb.Build());
             }
@@ -133,7 +132,7 @@ namespace PluralKit.Bot
             {
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {GroupReference(target)} description <description>`.");
+                        await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {target.Reference()} description <description>`.");
                     else
                         await ctx.Reply("This group does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
@@ -142,8 +141,8 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Group description")
                         .WithDescription(target.Description)
-                        .AddField("\u200B", $"To print the description with formatting, type `pk;group {GroupReference(target)} description -raw`." 
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {GroupReference(target)} description -clear`." : ""))
+                        .AddField("\u200B", $"To print the description with formatting, type `pk;group {target.Reference()} description -raw`." 
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {target.Reference()} description -clear`." : ""))
                         .Build());
             }
             else
@@ -206,7 +205,7 @@ namespace PluralKit.Bot
                     
                     if (target.System == ctx.System?.Id)
                     {
-                        eb.WithDescription($"To clear, use `pk;group {GroupReference(target)} icon -clear`.");
+                        eb.WithDescription($"To clear, use `pk;group {target.Reference()} icon -clear`.");
                     }
 
                     await ctx.Reply(embed: eb.Build());
@@ -300,9 +299,9 @@ namespace PluralKit.Bot
             {
                 if (memberCount == 0 && pctx == LookupContext.ByOwner)
                     // Only suggest the add command if this is actually the owner lol
-                    eb.AddField("Members (0)", $"Add one with `pk;group {GroupReference(target)} add <member>`!", true);
+                    eb.AddField("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true);
                 else
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {GroupReference(target)} list`)", true);
+                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true);
             }
 
             if (target.DescriptionFor(pctx) is {} desc)
@@ -416,7 +415,7 @@ namespace PluralKit.Bot
                     .AddField("Icon", target.IconPrivacy.Explanation())
                     .AddField("Member list", target.ListPrivacy.Explanation())
                     .AddField("Visibility", target.Visibility.Explanation())
-                    .WithDescription($"To edit privacy settings, use the command:\n> pk;group **{GroupReference(target)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .WithDescription($"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                     .Build()); 
                 return;
             }
@@ -487,13 +486,6 @@ namespace PluralKit.Bot
             if (system?.Id == target.System)
                 return system;
             return await conn.QuerySystem(target.System)!;
-        }
-
-        private static string GroupReference(PKGroup group)
-        {
-            if (Regex.IsMatch(group.Name, "^[A-Za-z0-9\\-_]+$"))
-                return group.Name;
-            return group.Hid;
         }
     }
 }
