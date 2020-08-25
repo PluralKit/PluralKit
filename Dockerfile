@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.401
 WORKDIR /app
 
 # Restore/fetch dependencies excluding app code to make use of caching

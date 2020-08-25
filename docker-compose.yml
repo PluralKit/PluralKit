@@ -43,7 +43,7 @@ services:
     restart: unless-stopped
 
   influx:
-    image: influxdb:alpine
+    image: influxdb:1.8
     volumes:
       - "influx_data:/var/lib/influxdb"
     ports:
