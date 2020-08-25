@@ -1,4 +1,4 @@
-﻿-- SCHEMA VERSION 9: 2020-xx-xx --
+﻿-- SCHEMA VERSION 9: 2020-08-25 --
 -- Adds support for member groups.
 
 create table groups (
