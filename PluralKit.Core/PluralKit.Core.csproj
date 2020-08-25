@@ -4,6 +4,11 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugSymbols>true</DebugSymbols>
+      <DebugType>full</DebugType>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="App.Metrics" Version="3.2.0" />
       <PackageReference Include="App.Metrics.Reporting.InfluxDB" Version="3.2.0" />

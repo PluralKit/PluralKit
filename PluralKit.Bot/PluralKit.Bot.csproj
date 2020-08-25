@@ -5,6 +5,11 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugSymbols>true</DebugSymbols>
+      <DebugType>full</DebugType>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
     </ItemGroup>

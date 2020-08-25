@@ -9,6 +9,9 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <NoWarn>$(NoWarn);1591</NoWarn>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugType>full</DebugType>
+    </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
