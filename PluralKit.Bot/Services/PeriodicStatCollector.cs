@@ -78,11 +78,12 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(BotMetrics.MembersOnline, usersOnline.Count);
             
             // Aggregate DB stats
-            var counts = await _db.Execute(c => c.QueryFirstAsync<Counts>("select (select count(*) from systems) as systems, (select count(*) from members) as members, (select count(*) from switches) as switches, (select count(*) from messages) as messages"));
+            var counts = await _db.Execute(c => c.QueryFirstAsync<Counts>("select (select count(*) from systems) as systems, (select count(*) from members) as members, (select count(*) from switches) as switches, (select count(*) from messages) as messages, (select count(*) from groups) as groups"));
             _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, counts.Systems);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, counts.Members);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, counts.Switches);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, counts.Messages);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.GroupCount, counts.Groups);
             
             // Process info
             var process = Process.GetCurrentProcess();
@@ -109,6 +110,7 @@ namespace PluralKit.Bot
             public int Members { get;  }
             public int Switches { get; }
             public int Messages { get; }
+            public int Groups { get; }
         }
     }
 }
