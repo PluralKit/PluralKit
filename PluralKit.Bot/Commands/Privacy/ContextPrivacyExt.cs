@@ -21,7 +21,7 @@ namespace PluralKit.Bot
         public static SystemPrivacySubject PopSystemPrivacySubject(this Context ctx)
         {
             if (!SystemPrivacyUtils.TryParseSystemPrivacy(ctx.PeekArgument(), out var subject))
-                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `members`, `front`, `fronthistory`, or `all`).");
+                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `members`, `front`, `fronthistory`, `groups`, or `all`).");
             
             ctx.PopArgument();
             return subject;
