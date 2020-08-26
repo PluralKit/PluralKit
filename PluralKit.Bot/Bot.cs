@@ -21,6 +21,7 @@ using PluralKit.Core;
 using Sentry;
 
 using Serilog;
+using Serilog.Context;
 using Serilog.Events;
 
 namespace PluralKit.Bot
@@ -101,6 +102,19 @@ namespace PluralKit.Bot
 
             async Task HandleEventInner()
             {
+                // Mainly for testing ELK volume atm, no-op unless Elastic is configured
+                if (evt is MessageCreateEventArgs mc)
+                    using (LogContext.PushProperty("Elastic", "yes?"))
+                        _logger.Information("Received event {@Event}", new
+                        {
+                            Id = Guid.NewGuid(),
+                            Type = mc.GetType().Name.Replace("EventArgs", ""),
+                            MessageId = mc.Message.Id,
+                            ChannelId = mc.Channel.Id,
+                            GuildId = mc.Guild?.Id ?? 0,
+                            UserId = mc.Author.Id,
+                        });
+                    
                 await using var serviceScope = _services.BeginLifetimeScope();
                 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope

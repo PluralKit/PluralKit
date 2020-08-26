@@ -12,7 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 
 using Serilog;
+using Serilog.Events;
 using Serilog.Formatting.Compact;
+using Serilog.Sinks.Elasticsearch;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PluralKit.Core
@@ -95,7 +97,8 @@ namespace PluralKit.Core
         {
             var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
 
-            return new LoggerConfiguration()
+            var logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
                 .MinimumLevel.Is(config.ConsoleLogLevel)
                 .WriteTo.Async(a =>
@@ -111,7 +114,7 @@ namespace PluralKit.Core
                         restrictedToMinimumLevel: config.FileLogLevel,
                         formatProvider: new UTCTimestampFormatProvider(),
                         buffered: true);
-                    
+
                     a.File(
                         new RenderedCompactJsonFormatter(),
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
@@ -121,9 +124,26 @@ namespace PluralKit.Core
                         buffered: true);
                 })
                 // TODO: render as UTC in the console, too? or just in log files
-                .WriteTo.Async(a => 
-                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate: outputTemplate, formatProvider: new UTCTimestampFormatProvider()))
-                .CreateLogger();
+                .WriteTo.Async(a =>
+                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate: outputTemplate,
+                        formatProvider: new UTCTimestampFormatProvider()));
+
+            if (config.ElasticUrl != null)
+            {
+                var elasticConfig = new ElasticsearchSinkOptions(new Uri(config.ElasticUrl))
+                {
+                    AutoRegisterTemplate = true,
+                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
+                    MinimumLogEventLevel = LogEventLevel.Verbose,
+                    IndexFormat = "pluralkit-logs-{0:yyyy.MM.dd}"
+                };
+               
+                logger.WriteTo
+                    .Conditional(e => e.Properties.ContainsKey("Elastic"), 
+                        c => c.Elasticsearch(elasticConfig));
+            }
+
+            return logger.CreateLogger();
         }
     }
 
