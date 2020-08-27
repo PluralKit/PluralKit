@@ -1,6 +1,7 @@
 ﻿using Autofac.Extensions.DependencyInjection;
 
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using PluralKit.Core;
@@ -21,7 +22,10 @@ namespace PluralKit.API
                 .ConfigureWebHostDefaults(whb => whb
 
                     .UseConfiguration(InitUtils.BuildConfiguration(args).Build())
-                    .ConfigureKestrel(opts => { opts.ListenAnyIP(5000); })
+                    .ConfigureKestrel(opts =>
+                    {
+                        opts.ListenAnyIP(opts.ApplicationServices.GetRequiredService<ApiConfig>().Port);
+                    })
                     .UseStartup<Startup>());
     }
 }
