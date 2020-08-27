@@ -66,11 +66,11 @@ namespace PluralKit.Bot
                 
                 var routePath = NormalizeRoutePath(response.RequestMessage.RequestUri.LocalPath.Replace("/api/v7", ""));
                 var route = $"{response.RequestMessage.Method} {routePath}";
-                LogContext.PushProperty("DiscordRoute", route);
-
+                LogContext.PushProperty("RequestUrlRoute", route);
+                
                 _logger.Information(
-                    "{RequestMethod} {RequestUrl} -> {ResponseStatusCode} {ResponseStatusString} (in {RequestDurationMs:F1} ms)",
-                    response.RequestMessage.Method.Method,
+                    "HTTP {RequestMethod} {RequestUrl} -> {ResponseStatusCode} {ResponseStatusString} (in {RequestDurationMs:F1} ms)",
+                    response.RequestMessage.Method,
                     response.RequestMessage.RequestUri,
                     (int) response.StatusCode,
                     response.ReasonPhrase,
