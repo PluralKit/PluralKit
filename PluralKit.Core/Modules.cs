@@ -97,12 +97,21 @@ namespace PluralKit.Core
 
         private ILogger InitLogger(CoreConfig config)
         {
+            var consoleTemplate = "[{Timestamp:HH:mm:ss.fff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
             var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
-
-            var logger = new LoggerConfiguration()
+            
+            var logCfg = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
                 .MinimumLevel.Is(config.ConsoleLogLevel)
+                
+                // Actual formatting for these is handled in ScalarFormatting
+                .Destructure.AsScalar<SystemId>()
+                .Destructure.AsScalar<MemberId>()
+                .Destructure.AsScalar<GroupId>()
+                .Destructure.AsScalar<SwitchId>()
+                .Destructure.With<PatchObjectDestructuring>()
+                
                 .WriteTo.Async(a =>
                 {
                     // Both the same output, except one is raw compact JSON and one is plain text.
@@ -118,17 +127,18 @@ namespace PluralKit.Core
                         buffered: true);
 
                     a.File(
-                        new RenderedCompactJsonFormatter(),
+                        new RenderedCompactJsonFormatter(new ScalarFormatting.JsonValue()),
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
                         rollingInterval: RollingInterval.Day,
                         flushToDiskInterval: TimeSpan.FromMilliseconds(50),
                         restrictedToMinimumLevel: config.FileLogLevel,
                         buffered: true);
                 })
-                // TODO: render as UTC in the console, too? or just in log files
                 .WriteTo.Async(a =>
-                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate: outputTemplate,
-                        formatProvider: new UTCTimestampFormatProvider()));
+                    a.Console(
+                        theme: AnsiConsoleTheme.Code,
+                        outputTemplate: consoleTemplate,
+                        restrictedToMinimumLevel: config.ConsoleLogLevel));
 
             if (config.ElasticUrl != null)
             {
@@ -137,16 +147,17 @@ namespace PluralKit.Core
                     AutoRegisterTemplate = true,
                     AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
                     MinimumLogEventLevel = LogEventLevel.Verbose,
-                    IndexFormat = "pluralkit-logs-{0:yyyy.MM.dd}"
+                    IndexFormat = "pluralkit-logs-{0:yyyy.MM.dd}",
+                    CustomFormatter = new ScalarFormatting.Elasticsearch()
                 };
                
-                logger.WriteTo
+                logCfg.WriteTo
                     .Conditional(e => e.Properties.ContainsKey("Elastic"), 
                         c => c.Elasticsearch(elasticConfig));
             }
 
-            _fn.Invoke(logger);
-            return logger.CreateLogger();
+            _fn.Invoke(logCfg);
+            return Log.Logger = logCfg.CreateLogger();
         }
     }
 

@@ -175,14 +175,14 @@ namespace PluralKit.Bot
         
         private async Task UpdatePeriodic()
         {
-            _logger.Information("Running once-per-minute scheduled tasks");
+            _logger.Debug("Running once-per-minute scheduled tasks");
 
             await UpdateBotStatus();
 
             // Collect some stats, submit them to the metrics backend
             await _collector.CollectStats();
             await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
-            _logger.Information("Submitted metrics to backend");
+            _logger.Debug("Submitted metrics to backend");
         }
 
         private async Task UpdateBotStatus(DiscordClient specificShard = null)

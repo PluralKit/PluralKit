@@ -101,7 +101,7 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(BotMetrics.WebhookCacheSize, _webhookCache.CacheSize);
 
             stopwatch.Stop();
-            _logger.Information("Updated metrics in {Time}", stopwatch.ElapsedDuration());
+            _logger.Debug("Updated metrics in {Time}", stopwatch.ElapsedDuration());
         }
 
         public class Counts

@@ -81,7 +81,7 @@ namespace PluralKit.Bot
                 
                 _logger
                     .ForContext("RequestUrlRoute", endpoint)
-                    .Information(
+                    .Debug(
                     "HTTP: {RequestMethod} {RequestUrl} -> {ResponseStatusCode} {ResponseStatusString} (in {RequestDurationMs:F1} ms)",
                     response.RequestMessage.Method,
                     response.RequestMessage.RequestUri,

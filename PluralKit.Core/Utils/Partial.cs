@@ -10,10 +10,11 @@ using Newtonsoft.Json;
 namespace PluralKit.Core
 {
     [JsonConverter(typeof(PartialConverter))]
-    public struct Partial<T>: IEnumerable<T>
+    public struct Partial<T>: IEnumerable<T>, IPartial
     {
         public bool IsPresent { get; }
         public T Value { get; }
+        public object? RawValue => Value;
 
         private Partial(bool isPresent, T value)
         {
@@ -32,6 +33,12 @@ namespace PluralKit.Core
         IEnumerator IEnumerable.GetEnumerator() => ToArray().GetEnumerator();
 
         public static implicit operator Partial<T>(T val) => Present(val);
+    }
+
+    public interface IPartial
+    {
+        public bool IsPresent { get; }
+        public object? RawValue { get; }
     }
 
     public class PartialConverter: JsonConverter

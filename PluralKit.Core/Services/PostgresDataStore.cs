@@ -10,13 +10,15 @@ using Serilog;
 
 namespace PluralKit.Core {
     public class PostgresDataStore: IDataStore {
-        private IDatabase _conn;
-        private ILogger _logger;
+        private readonly IDatabase _conn;
+        private readonly ILogger _logger;
 
         public PostgresDataStore(IDatabase conn, ILogger logger)
         {
             _conn = conn;
-            _logger = logger;
+            _logger = logger
+                .ForContext<PostgresDataStore>()
+                .ForContext("Elastic", "yes?");
         }
         
         public async Task<PKSystem> CreateSystem(string systemName = null) {
@@ -24,7 +26,7 @@ namespace PluralKit.Core {
             using (var conn = await _conn.Obtain())
                 system = await conn.QuerySingleAsync<PKSystem>("insert into systems (hid, name) values (find_free_system_hid(), @Name) returning *", new { Name = systemName });
 
-            _logger.Information("Created system {System}", system.Id);
+            _logger.Information("Created {SystemId}", system.Id);
             // New system has no accounts, therefore nothing gets cached, therefore no need to invalidate caches right here
             return system;
         }
@@ -35,14 +37,14 @@ namespace PluralKit.Core {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
 
-            _logger.Information("Linked system {System} to account {Account}", system.Id, accountId);
+            _logger.Information("Linked account {UserId} to {SystemId}", system.Id, accountId);
         }
 
         public async Task RemoveAccount(PKSystem system, ulong accountId) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
 
-            _logger.Information("Unlinked system {System} from account {Account}", system.Id, accountId);
+            _logger.Information("Unlinked account {UserId} from {SystemId}", system.Id, accountId);
         }
 
         public async Task<PKSystem> GetSystemByAccount(ulong accountId) {
@@ -65,6 +67,7 @@ namespace PluralKit.Core {
         {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from switches where system = @Id", system);
+            _logger.Information("Deleted all switches in {SystemId}", system.Id);
         }
 
         public async Task<PKMember> GetMemberByHid(string hid) {
@@ -102,7 +105,7 @@ namespace PluralKit.Core {
                 OriginalMid = triggerMessageId
             });
 
-            _logger.Debug("Stored message {Message} in channel {Channel}", postedMessageId, channelId);
+            // todo: _logger.Debug("Stored message {Message} in channel {Channel}", postedMessageId, channelId);
         }
 
         public async Task<FullMessage> GetMessage(ulong id)
@@ -119,7 +122,7 @@ namespace PluralKit.Core {
         public async Task DeleteMessage(ulong id) {
             using (var conn = await _conn.Obtain())
                 if (await conn.ExecuteAsync("delete from messages where mid = @Id", new { Id = id }) > 0)
-                    _logger.Information("Deleted message {Message}", id);
+                    _logger.Information("Deleted message {MessageId} from database", id);
         }
 
         public async Task DeleteMessagesBulk(IReadOnlyCollection<ulong> ids)
@@ -130,7 +133,7 @@ namespace PluralKit.Core {
                 // Hence we map them to single longs, which *are* supported (this is ok since they're Technically (tm) stored as signed longs in the db anyway)
                 var foundCount = await conn.ExecuteAsync("delete from messages where mid = any(@Ids)", new {Ids = ids.Select(id => (long) id).ToArray()});
                 if (foundCount > 0)
-                    _logger.Information("Bulk deleted messages {Messages}, {FoundCount} found", ids, foundCount);
+                    _logger.Information("Bulk deleted messages ({FoundCount} found) from database: {MessageIds}", foundCount, ids);
             }
         }
 
@@ -155,8 +158,8 @@ namespace PluralKit.Core {
 
             // Finally we commit the tx, since the using block will otherwise rollback it
             await tx.CommitAsync();
-
-            _logger.Information("Registered switch {Switch} in system {System} with members {@Members}", sw.Id, system, members.Select(m => m.Id));
+            
+            _logger.Information("Created {SwitchId} in {SystemId}: {Members}", sw.Id, system, members.Select(m => m.Id));
         }
 
         public IAsyncEnumerable<PKSwitch> GetSwitches(SystemId system)
@@ -227,7 +230,7 @@ namespace PluralKit.Core {
                 await conn.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
                     new {Time = time, Id = sw.Id});
 
-            _logger.Information("Moved switch {Switch} to {Time}", sw.Id, time);
+            _logger.Information("Updated {SwitchId} timestamp: {SwitchTimestamp}", sw.Id, time);
         }
 
         public async Task DeleteSwitch(PKSwitch sw)
@@ -235,7 +238,7 @@ namespace PluralKit.Core {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = sw.Id});
 
-            _logger.Information("Deleted switch {Switch}");
+            _logger.Information("Deleted {Switch}", sw.Id);
         }
 
         public async Task<IEnumerable<SwitchListEntry>> GetPeriodFronters(PKSystem system, Instant periodStart, Instant periodEnd)

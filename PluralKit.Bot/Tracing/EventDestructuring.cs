@@ -22,7 +22,6 @@ namespace PluralKit.Bot
             var props = new List<LogEventProperty>
             {
                 new LogEventProperty("Type", new ScalarValue(dea.EventType())),
-                new LogEventProperty("Shard", new ScalarValue(dea.Client.ShardId))
             };
 
             void AddMessage(DiscordMessage msg)
@@ -47,6 +46,9 @@ namespace PluralKit.Bot
                 props.Add(new LogEventProperty("ReactingUserId", new ScalarValue(mra.User.Id)));
                 props.Add(new LogEventProperty("Emoji", new ScalarValue(mra.Emoji.GetDiscordName())));
             }
+            
+            // Want shard last, just for visual reasons
+            props.Add(new LogEventProperty("Shard", new ScalarValue(dea.Client.ShardId)));
 
             result = new StructureValue(props);
             return true;
