@@ -73,7 +73,7 @@ namespace PluralKit.Bot
 
             using (LogContext.PushProperty("Elastic", "yes?"))
             {
-                if ((int) response.StatusCode >= 400 && (int) response.StatusCode < 500)
+                if ((int) response.StatusCode >= 400)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     LogContext.PushProperty("ResponseBody", content);
