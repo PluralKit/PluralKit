@@ -56,6 +56,9 @@ namespace PluralKit.Bot
             if (response.RequestMessage.RequestUri.Host != "discord.com")
                 return;
             
+            var routePath = NormalizeRoutePath(response.RequestMessage.RequestUri.LocalPath.Replace("/api/v7", ""));
+            var route = $"{response.RequestMessage.Method} {routePath}";
+
             using (LogContext.PushProperty("Elastic", "yes?"))
             {
                 if ((int) response.StatusCode >= 400 && (int) response.StatusCode < 500)
@@ -64,8 +67,6 @@ namespace PluralKit.Bot
                     LogContext.PushProperty("ResponseBody", content);
                 }
                 
-                var routePath = NormalizeRoutePath(response.RequestMessage.RequestUri.LocalPath.Replace("/api/v7", ""));
-                var route = $"{response.RequestMessage.Method} {routePath}";
                 LogContext.PushProperty("RequestUrlRoute", route);
                 
                 _logger.Information(
@@ -77,8 +78,11 @@ namespace PluralKit.Bot
                     activity.Duration.TotalMilliseconds);
             }
 
-            var timer = _metrics.Provider.Timer.Instance(BotMetrics.DiscordApiRequests);
-            timer.Record(activity.Duration.Ticks / 10, TimeUnit.Microseconds, ((int) response.StatusCode).ToString());
+            var timer = _metrics.Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
+                new[] {"endpoint", "status_code"},
+                new[] {route, ((int) response.StatusCode).ToString()}
+            ));
+            timer.Record(activity.Duration.Ticks / 10, TimeUnit.Microseconds);
         }
 
         public void OnNext(KeyValuePair<string, object> value)
