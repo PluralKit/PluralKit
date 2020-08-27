@@ -103,19 +103,10 @@ namespace PluralKit.Bot
             async Task HandleEventInner()
             {
                 using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
+                _logger
+                    .ForContext("Elastic", "yes?")
+                    .Debug("Gateway event: {@Event}", evt);
                 
-                // Mainly for testing ELK volume atm, no-op unless Elastic is configured
-                if (evt is MessageCreateEventArgs mc)
-                    using (LogContext.PushProperty("Elastic", "yes?"))
-                        _logger.Information("Received event {@Event}", new
-                        {
-                            Type = mc.GetType().Name.Replace("EventArgs", ""),
-                            MessageId = mc.Message.Id,
-                            ChannelId = mc.Channel.Id,
-                            GuildId = mc.Guild?.Id ?? 0,
-                            UserId = mc.Author.Id,
-                        });
-                    
                 await using var serviceScope = _services.BeginLifetimeScope();
                 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
@@ -146,7 +137,13 @@ namespace PluralKit.Bot
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
 
-            _logger.Error(exc, "Exception in bot event handler (Sentry ID: {SentryEventId})", sentryEvent.EventId);
+            _logger
+                .ForContext("Elastic", "yes?")
+                .Error(exc, "Exception in event handler: {{SentryEventId}}", sentryEvent.EventId);
+
+            // If the event is us responding to our own error messages, don't bother logging
+            if (evt is MessageCreateEventArgs mc && mc.Author.Id == _client.CurrentUser.Id)
+                return;
 
             var shouldReport = exc.IsOurProblem();
             if (shouldReport)

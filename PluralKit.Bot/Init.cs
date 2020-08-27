@@ -116,7 +116,10 @@ namespace PluralKit.Bot
             var builder = new ContainerBuilder();
             builder.RegisterInstance(config);
             builder.RegisterModule(new ConfigModule<BotConfig>("Bot"));
-            builder.RegisterModule(new LoggingModule("bot"));
+            builder.RegisterModule(new LoggingModule("bot", cfg =>
+            {
+                cfg.Destructure.With<EventDestructuring>();
+            }));
             builder.RegisterModule(new MetricsModule());
             builder.RegisterModule<DataStoreModule>();
             builder.RegisterModule<BotModule>();

@@ -30,7 +30,7 @@ namespace PluralKit.Bot
 
         public void OnError(Exception error) { }
 
-        public string NormalizeRoutePath(string url)
+        private string NormalizeRoutePath(string url)
         {
             url = Regex.Replace(url, @"/channels/\d{17,19}", "/channels/{channel_id}");
             url = Regex.Replace(url, @"/messages/\d{17,19}", "/messages/{message_id}");
@@ -51,13 +51,25 @@ namespace PluralKit.Bot
             return url;
         }
 
-        public async Task HandleResponse(HttpResponseMessage response, Activity activity)
+        private string Endpoint(HttpRequestMessage req)
+        {
+            var routePath = NormalizeRoutePath(req.RequestUri.LocalPath.Replace("/api/v7", ""));
+            return $"{req.Method} {routePath}";
+        }
+        
+        private void HandleException(Exception exc, HttpRequestMessage req)
+        {
+            _logger
+                .ForContext("RequestUrlRoute", Endpoint(req))
+                .Error(exc, "HTTP error: {RequestMethod} {RequestUrl}", req.Method, req.RequestUri);
+        }
+
+        private async Task HandleResponse(HttpResponseMessage response, Activity activity)
         {
             if (response.RequestMessage.RequestUri.Host != "discord.com")
                 return;
             
-            var routePath = NormalizeRoutePath(response.RequestMessage.RequestUri.LocalPath.Replace("/api/v7", ""));
-            var route = $"{response.RequestMessage.Method} {routePath}";
+            var endpoint = Endpoint(response.RequestMessage);
 
             using (LogContext.PushProperty("Elastic", "yes?"))
             {
@@ -67,10 +79,10 @@ namespace PluralKit.Bot
                     LogContext.PushProperty("ResponseBody", content);
                 }
                 
-                LogContext.PushProperty("RequestUrlRoute", route);
-                
-                _logger.Information(
-                    "HTTP {RequestMethod} {RequestUrl} -> {ResponseStatusCode} {ResponseStatusString} (in {RequestDurationMs:F1} ms)",
+                _logger
+                    .ForContext("RequestUrlRoute", endpoint)
+                    .Information(
+                    "HTTP: {RequestMethod} {RequestUrl} -> {ResponseStatusCode} {ResponseStatusString} (in {RequestDurationMs:F1} ms)",
                     response.RequestMessage.Method,
                     response.RequestMessage.RequestUri,
                     (int) response.StatusCode,
@@ -80,32 +92,55 @@ namespace PluralKit.Bot
 
             var timer = _metrics.Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
                 new[] {"endpoint", "status_code"},
-                new[] {route, ((int) response.StatusCode).ToString()}
+                new[] {endpoint, ((int) response.StatusCode).ToString()}
             ));
             timer.Record(activity.Duration.Ticks / 10, TimeUnit.Microseconds);
         }
 
         public void OnNext(KeyValuePair<string, object> value)
         {
-            if (value.Key == "System.Net.Http.HttpRequestOut.Stop")
+            switch (value.Key)
             {
-                var data = Unsafe.As<TypedData>(value.Value);
-                var _ = HandleResponse(data.Response, Activity.Current);
+                case "System.Net.Http.HttpRequestOut.Stop":
+                {
+                    var data = Unsafe.As<ActivityStopData>(value.Value);
+                    if (data.Response != null)
+                    {
+                        var _ = HandleResponse(data.Response, Activity.Current);
+                    }
+
+                    break;
+                }
+                case "System.Net.Http.Exception":
+                {
+                    var data = Unsafe.As<ExceptionData>(value.Value);
+                    HandleException(data.Exception, data.Request);
+                    break;
+                }
             }
         }
-        
+
         public static void Install(IComponentContext services)
         {
             DiagnosticListener.AllListeners.Subscribe(new ListenerObserver(services));
         }
         
-        private class TypedData
+#pragma warning disable 649
+        private class ActivityStopData
         {
             // Field order here matters!
             public HttpResponseMessage Response;
             public HttpRequestMessage Request;
             public TaskStatus RequestTaskStatus;
         }
+        
+        private class ExceptionData
+        {
+            // Field order here matters!
+            public Exception Exception;
+            public HttpRequestMessage Request;
+        }
+#pragma warning restore 649
 
         public class ListenerObserver: IObserver<DiagnosticListener>
         {

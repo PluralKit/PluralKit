@@ -82,10 +82,12 @@ namespace PluralKit.Core
     public class LoggingModule: Module
     {
         private readonly string _component;
+        private readonly Action<LoggerConfiguration> _fn;
 
-        public LoggingModule(string component)
+        public LoggingModule(string component, Action<LoggerConfiguration> fn = null)
         {
             _component = component;
+            _fn = fn ?? (_ => { });
         }
 
         protected override void Load(ContainerBuilder builder)
@@ -143,6 +145,7 @@ namespace PluralKit.Core
                         c => c.Elasticsearch(elasticConfig));
             }
 
+            _fn.Invoke(logger);
             return logger.CreateLogger();
         }
     }
