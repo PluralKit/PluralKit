@@ -102,12 +102,13 @@ namespace PluralKit.Bot
 
             async Task HandleEventInner()
             {
+                using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
+                
                 // Mainly for testing ELK volume atm, no-op unless Elastic is configured
                 if (evt is MessageCreateEventArgs mc)
                     using (LogContext.PushProperty("Elastic", "yes?"))
                         _logger.Information("Received event {@Event}", new
                         {
-                            Id = Guid.NewGuid(),
                             Type = mc.GetType().Name.Replace("EventArgs", ""),
                             MessageId = mc.Message.Id,
                             ChannelId = mc.Channel.Id,
