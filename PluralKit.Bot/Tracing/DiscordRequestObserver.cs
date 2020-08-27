@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -19,6 +20,9 @@ namespace PluralKit.Bot
     {
         private readonly IMetrics _metrics;
         private readonly ILogger _logger;
+
+        private bool ShouldLogHeader(string name) =>
+            name.StartsWith("x-ratelimit");
 
         public DiscordRequestObserver(ILogger logger, IMetrics metrics)
         {
@@ -78,9 +82,15 @@ namespace PluralKit.Bot
                     var content = await response.Content.ReadAsStringAsync();
                     LogContext.PushProperty("ResponseBody", content);
                 }
+
+                var headers = response.Headers
+                    .Where(header => ShouldLogHeader(header.Key.ToLowerInvariant()))
+                    .ToDictionary(k => k.Key.ToLowerInvariant(),
+                        v => string.Join(';', v.Value));
                 
                 _logger
                     .ForContext("RequestUrlRoute", endpoint)
+                    .ForContext("ResponseHeaders", headers)
                     .Debug(
                     "HTTP: {RequestMethod} {RequestUrl} -> {ResponseStatusCode} {ResponseStatusString} (in {RequestDurationMs:F1} ms)",
                     response.RequestMessage.Method,
