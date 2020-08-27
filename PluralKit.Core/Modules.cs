@@ -92,7 +92,13 @@ namespace PluralKit.Core
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.Register(c => InitLogger(c.Resolve<CoreConfig>())).AsSelf().SingleInstance();
+            builder
+                .Register(c => InitLogger(c.Resolve<CoreConfig>()))
+                .AsSelf()
+                .SingleInstance()
+                // AutoActivate ensures logging is enabled as early as possible in the API startup flow
+                // since we set the Log.Logger global >.>
+                .AutoActivate();
         }
 
         private ILogger InitLogger(CoreConfig config)
@@ -103,6 +109,7 @@ namespace PluralKit.Core
             var logCfg = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
+                .Enrich.WithProperty("Component", _component)
                 .MinimumLevel.Is(config.ConsoleLogLevel)
                 
                 // Actual formatting for these is handled in ScalarFormatting
