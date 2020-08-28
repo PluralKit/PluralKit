@@ -79,7 +79,7 @@ namespace PluralKit.Bot
 
             await ctx.Reply(
                 $"{Emojis.Success} Message logging for the given channels {(enable ? "enabled" : "disabled")}." +
-                (logChannel == null ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;log channel #your-log-channel`." : ""));
+                (logChannel == null ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `{ctx.CommandPrefix}log channel #your-log-channel`." : ""));
         }
 
         public async Task ShowBlacklisted(Context ctx)
@@ -178,9 +178,9 @@ namespace PluralKit.Bot
 
                 var guildCfg = await _db.Execute(c => _repo.GetGuild(c, ctx.Guild.Id));
                 if (guildCfg.LogCleanupEnabled)
-                    eb.WithDescription("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
+                    eb.WithDescription($"Log cleanup is currently **on** for this server. To disable it, type `{ctx.CommandPrefix}logclean off`."); 
                 else 
-                    eb.WithDescription("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
+                    eb.WithDescription($"Log cleanup is currently **off** for this server. To enable it, type `{ctx.CommandPrefix}logclean on`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }

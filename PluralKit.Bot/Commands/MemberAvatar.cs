@@ -32,7 +32,7 @@ namespace PluralKit.Bot
             else
             {
                 if (mgs?.AvatarUrl != null)
-                    await ctx.Reply($"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Reference()} serveravatar clear` if you wish to clear that too.");
+                    await ctx.Reply($"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `{ctx.CommandPrefix}member {target.Reference()} serveravatar clear` if you wish to clear that too.");
                 else 
                     await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
             }
@@ -52,7 +52,7 @@ namespace PluralKit.Bot
                 }
 
                 if (location == AvatarLocation.Server)
-                    throw new PKError($"This member does not have a server avatar set. Type `pk;member {target.Reference()} avatar` to see their global avatar.");
+                    throw new PKError($"This member does not have a server avatar set. Type `{ctx.CommandPrefix}member {target.Reference()} avatar` to see their global avatar.");
             }
             
             var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.Guild.Name})" : "avatar";
@@ -62,7 +62,7 @@ namespace PluralKit.Bot
                 .WithTitle($"{target.NameFor(ctx)}'s {field}")
                 .WithImageUrl(currentValue);
             if (target.System == ctx.System?.Id)
-                eb.WithDescription($"To clear, use `pk;member {target.Reference()} {cmd} clear`.");
+                eb.WithDescription($"To clear, use `{ctx.CommandPrefix}member {target.Reference()} {cmd} clear`.");
             await ctx.Reply(embed: eb.Build());
         }
 

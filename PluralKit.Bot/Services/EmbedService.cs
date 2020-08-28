@@ -26,15 +26,14 @@ namespace PluralKit.Bot {
             _repo = repo;
         }
         
-        public async Task<DiscordEmbed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
+        public async Task<DiscordEmbed> CreateSystemEmbed(Context context, PKSystem system, LookupContext ctx)
         {
             await using var conn = await _db.Obtain();
             
             // Fetch/render info for all accounts simultaneously
             var accounts = await _repo.GetSystemAccounts(conn, system.Id);
-            var users = await Task.WhenAll(accounts.Select(async uid => (await cctx.Shard.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
-
-            var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
+            var users = await Task.WhenAll(accounts.Select(async uid => (await context.Shard.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var memberCount = context.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
 
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordUtils.Gray)
@@ -57,9 +56,9 @@ namespace PluralKit.Bot {
             if (system.MemberListPrivacy.CanAccess(ctx))
             {
                 if (memberCount > 0)
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
+                    eb.AddField($"Members ({memberCount})", $"(see `{context.CommandPrefix}system {system.Hid} list` or `{context.CommandPrefix}system {system.Hid} list full`)", true);
                 else
-                    eb.AddField($"Members ({memberCount})", "Add one with `pk;member new`!", true);
+                    eb.AddField($"Members ({memberCount})", $"Add one with `${context.CommandPrefix}member new`!", true);
             }
 
             if (system.DescriptionFor(ctx) is { } desc)

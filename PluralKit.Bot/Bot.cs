@@ -37,12 +37,13 @@ namespace PluralKit.Bot
         private readonly IMetrics _metrics;
         private readonly ErrorMessageService _errorMessageService;
         private readonly CommandMessageService _commandMessageService;
+        private readonly BotConfig _config;
 
         private bool _hasReceivedReady = false;
         private Timer _periodicTask; // Never read, just kept here for GC reasons
 
         public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics, 
-            ErrorMessageService errorMessageService, CommandMessageService commandMessageService)
+            ErrorMessageService errorMessageService, CommandMessageService commandMessageService, BotConfig config)
         {
             _client = client;
             _logger = logger.ForContext<Bot>();
@@ -51,6 +52,8 @@ namespace PluralKit.Bot
             _metrics = metrics;
             _errorMessageService = errorMessageService;
             _commandMessageService = commandMessageService;
+            _config = config;
+            _logger = logger.ForContext<Bot>();
         }
 
         public void Init()
@@ -200,7 +203,7 @@ namespace PluralKit.Bot
             try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
             {
                 Task UpdateStatus(DiscordClient shard) =>
-                    shard.UpdateStatusAsync(new DiscordActivity($"pk;help | in {totalGuilds} servers | shard #{shard.ShardId}")); 
+                    shard.UpdateStatusAsync(new DiscordActivity($"{(_config.Prefixes.Length > 0 ? _config.Prefixes[0] : BotConfig.DefaultPrefixes[0])}help | in {totalGuilds} servers | shard #{shard.ShardId}")); 
                 
                 if (specificShard != null)
                     await UpdateStatus(specificShard);

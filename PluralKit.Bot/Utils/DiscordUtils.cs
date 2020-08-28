@@ -161,7 +161,7 @@ namespace PluralKit.Bot
             throw new ArgumentException($"Invalid color string '{color}'.");
         }
 
-        public static bool HasMentionPrefix(string content, ref int argPos, out ulong mentionId)
+        public static bool HasMentionPrefix(string content, ref string arg, out ulong mentionId)
         {
             mentionId = 0;
 
@@ -172,8 +172,15 @@ namespace PluralKit.Bot
             if (num == -1 || content.Length < num + 2 || content[num + 1] != ' ' ||
                 !TryParseMention(content.Substring(0, num + 1), out mentionId))
                 return false;
-            argPos = num + 2;
+            arg = ExtractLeadingMention(content.Substring(0, num + 2), ref content);
             return true;
+        }
+
+        public static string ExtractLeadingMention(string mention, ref string input)
+        {            
+            var leadingMention = input.Substring(0, mention.Length);
+            input = input.Substring(mention.Length);
+            return leadingMention;
         }
 
         public static bool TryParseMention(this string potentialMention, out ulong id)

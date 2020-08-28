@@ -21,6 +21,7 @@ namespace PluralKit.Bot
         private readonly DiscordShardedClient _client;
         private readonly DiscordClient _shard;
         private readonly DiscordMessage _message;
+        private readonly string _commandPrefix;
         private readonly Parameters _parameters;
         private readonly MessageContext _messageContext;
 
@@ -32,13 +33,14 @@ namespace PluralKit.Bot
 
         private Command _currentCommand;
 
-        public Context(ILifetimeScope provider, DiscordClient shard, DiscordMessage message, int commandParseOffset,
+        public Context(ILifetimeScope provider, DiscordClient shard, DiscordMessage message, string commandPrefix, int commandParseOffset,
                        PKSystem senderSystem, MessageContext messageContext)
         {
             _rest = provider.Resolve<DiscordRestClient>();
             _client = provider.Resolve<DiscordShardedClient>();
             _message = message;
             _shard = shard;
+            _commandPrefix = commandPrefix;
             _senderSystem = senderSystem;
             _messageContext = messageContext;
             _db = provider.Resolve<IDatabase>();
@@ -56,6 +58,7 @@ namespace PluralKit.Bot
         public DiscordClient Shard => _shard;
         public DiscordShardedClient Client => _client;
         public MessageContext MessageContext => _messageContext;
+        public string CommandPrefix => _commandPrefix;
 
         public DiscordRestClient Rest => _rest;
 
@@ -97,7 +100,7 @@ namespace PluralKit.Bot
             }
             catch (PKSyntaxError e)
             {
-                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef.Usage}");
+                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> {this.CommandPrefix}{commandDef.Usage}");
             }
             catch (PKError e)
             {

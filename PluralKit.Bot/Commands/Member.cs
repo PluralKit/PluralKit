@@ -22,7 +22,7 @@ namespace PluralKit.Bot
         }
 
         public async Task NewMember(Context ctx) {
-            if (ctx.System == null) throw Errors.NoSystemError;
+            if (ctx.System == null) throw Errors.NoSystemError(ctx.CommandPrefix);
             var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
             
             // Hard name length cap

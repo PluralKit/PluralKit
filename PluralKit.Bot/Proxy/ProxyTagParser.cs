@@ -18,7 +18,8 @@ namespace PluralKit.Bot
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message
             // eg. @Ske [text] => [@Ske text]
-            var leadingMention = ExtractLeadingMention(ref input);
+            var mention = "";
+            var leadingMention = DiscordUtils.HasMentionPrefix(input, ref mention, out _) ? DiscordUtils.ExtractLeadingMention(mention, ref input) : null;
 
             // "Flatten" list of members to a list of tag-member pairs
             // Then order them by "tag specificity"
@@ -77,14 +78,5 @@ namespace PluralKit.Bot
             return inner.Trim() != "\U0000fe0f";
         }
 
-        private string? ExtractLeadingMention(ref string input)
-        {
-            var mentionPos = 0;
-            if (!DiscordUtils.HasMentionPrefix(input, ref mentionPos, out _)) return null;
-            
-            var leadingMention = input.Substring(0, mentionPos);
-            input = input.Substring(mentionPos);
-            return leadingMention;
-        }
     }
 }

@@ -26,7 +26,7 @@ namespace PluralKit.Bot
 
         public async Task Name(Context ctx, PKMember target) {
             // TODO: this method is pretty much a 1:1 copy/paste of the above creation method, find a way to clean?
-            if (ctx.System == null) throw Errors.NoSystemError;
+            if (ctx.System == null) throw Errors.NoSystemError(ctx.CommandPrefix);
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             
             var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new name for the member.");
@@ -78,7 +78,7 @@ namespace PluralKit.Bot
                     throw Errors.LookupNotAllowed;
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This member does not have a description set. To set one, type `pk;member {target.Reference()} description <description>`.");
+                        await ctx.Reply($"This member does not have a description set. To set one, type `{ctx.CommandPrefix}member {target.Reference()} description <description>`.");
                     else
                         await ctx.Reply("This member does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
@@ -87,8 +87,8 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Member description")
                         .WithDescription(target.Description)
-                        .AddField("\u200B", $"To print the description with formatting, type `pk;member {target.Reference()} description -raw`." 
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} description -clear`." : ""))
+                        .AddField("\u200B", $"To print the description with formatting, type `{ctx.CommandPrefix}member {target.Reference()} description -raw`." 
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `{ctx.CommandPrefix}member {target.Reference()} description -clear`." : ""))
                         .Build());
             }
             else
@@ -120,12 +120,12 @@ namespace PluralKit.Bot
                     throw Errors.LookupNotAllowed;
                 if (target.Pronouns == null)
                     if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This member does not have pronouns set. To set some, type `pk;member {target.Reference()} pronouns <pronouns>`.");
+                        await ctx.Reply($"This member does not have pronouns set. To set some, type `{ctx.CommandPrefix}member {target.Reference()} pronouns <pronouns>`.");
                     else
                         await ctx.Reply("This member does not have pronouns set.");
                 else
                     await ctx.Reply($"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**."
-                        + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Reference()} pronouns -clear`." : ""));
+                        + (ctx.System?.Id == target.System ? $" To clear them, type `{ctx.CommandPrefix}member {target.Reference()} pronouns -clear`." : ""));
             }
             else
             {
@@ -162,7 +162,7 @@ namespace PluralKit.Bot
                 if (target.Color == null)
                     if (ctx.System?.Id == target.System)
                         await ctx.Reply(
-                            $"This member does not have a color set. To set one, type `pk;member {target.Reference()} color <color>`.");
+                            $"This member does not have a color set. To set one, type `{ctx.CommandPrefix}member {target.Reference()} color <color>`.");
                     else
                         await ctx.Reply("This member does not have a color set.");
                 else
@@ -171,7 +171,7 @@ namespace PluralKit.Bot
                         .WithColor(target.Color.ToDiscordColor().Value)
                         .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
                         .WithDescription($"This member's color is **#{target.Color}**."
-                                         + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} color -clear`." : ""))
+                                         + (ctx.System?.Id == target.System ? $" To clear it, type `{ctx.CommandPrefix}member {target.Reference()} color -clear`." : ""))
                         .Build());
             }
             else
@@ -209,10 +209,10 @@ namespace PluralKit.Bot
                 
                 if (target.Birthday == null)
                     await ctx.Reply("This member does not have a birthdate set."
-                        + (ctx.System?.Id == target.System ? $" To set one, type `pk;member {target.Reference()} birthdate <birthdate>`." : ""));
+                        + (ctx.System?.Id == target.System ? $" To set one, type `{ctx.CommandPrefix}member {target.Reference()} birthdate <birthdate>`." : ""));
                 else
                     await ctx.Reply($"This member's birthdate is **{target.BirthdayString}**."
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} birthdate -clear`." : ""));
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `{ctx.CommandPrefix}member {target.Reference()} birthdate -clear`." : ""));
             }
             else
             {
@@ -293,7 +293,7 @@ namespace PluralKit.Bot
                 // No perms check, display name isn't covered by member privacy 
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change display name, type `pk;member {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;member {target.Reference()} displayname -clear`.");
+                    eb.WithDescription($"To change display name, type `{ctx.CommandPrefix}member {target.Reference()} displayname <display name>`.\nTo clear it, type `{ctx.CommandPrefix}member {target.Reference()} displayname -clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
@@ -330,7 +330,7 @@ namespace PluralKit.Bot
                 // No perms check, server name isn't covered by member privacy 
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.");
+                    eb.WithDescription($"To change server name, type `{ctx.CommandPrefix}member {target.Reference()} servername <server name>`.\nTo clear it, type `{ctx.CommandPrefix}member {target.Reference()} servername -clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
@@ -348,7 +348,7 @@ namespace PluralKit.Bot
         
         public async Task KeepProxy(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
+            if (ctx.System == null) throw Errors.NoSystemError(ctx.CommandPrefix);
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             bool newValue;
@@ -375,7 +375,7 @@ namespace PluralKit.Bot
 
         public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
+            if (ctx.System == null) throw Errors.NoSystemError(ctx.CommandPrefix);
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
             // Display privacy settings
@@ -390,7 +390,7 @@ namespace PluralKit.Bot
                     .AddField("Pronouns", target.PronounPrivacy.Explanation())
                     .AddField("Meta (message count, last front, last message)",target.MetadataPrivacy.Explanation())
                     .AddField("Visibility", target.MemberVisibility.Explanation())
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .WithDescription($"To edit privacy settings, use the command:\n`{ctx.CommandPrefix}member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                     .Build()); 
                 return;
             }
@@ -455,7 +455,7 @@ namespace PluralKit.Bot
                 
                 // Avatar privacy doesn't apply when proxying if no server avatar is set
                 if (subject == MemberPrivacySubject.Avatar && level == PrivacyLevel.Private && guildSettings?.AvatarUrl == null)
-                    await ctx.Reply($"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `pk;member {target.Reference()} serveravatar`");
+                    await ctx.Reply($"{Emojis.Warn} This member does not have a server avatar set, so *proxying* will **still show the member avatar**. If you want to hide your avatar when proxying here, set a server avatar: `{ctx.CommandPrefix}member {target.Reference()} serveravatar`");
             }
 
             if (ctx.Match("all") || newValueFromCommand != null)
@@ -466,7 +466,7 @@ namespace PluralKit.Bot
         
         public async Task Delete(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
+            if (ctx.System == null) throw Errors.NoSystemError(ctx.CommandPrefix);
             if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
             
             await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");

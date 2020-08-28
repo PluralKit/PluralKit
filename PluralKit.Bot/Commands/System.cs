@@ -18,7 +18,7 @@ namespace PluralKit.Bot
         }
         
         public async Task Query(Context ctx, PKSystem system) {
-            if (system == null) throw Errors.NoSystemError;
+            if (system == null) throw Errors.NoSystemError(ctx.CommandPrefix);
 
             await ctx.Reply(embed: await _embeds.CreateSystemEmbed(ctx, system, ctx.LookupContextFor(system)));
         }
@@ -39,7 +39,7 @@ namespace PluralKit.Bot
             });
             
             // TODO: better message, perhaps embed like in groups?
-            await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
+            await ctx.Reply($"{Emojis.Success} Your system has been created. Type `{ctx.CommandPrefix}system` to view it, and type `{ctx.CommandPrefix}system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
         }
     }
 }

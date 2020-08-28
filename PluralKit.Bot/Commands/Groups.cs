@@ -54,10 +54,10 @@ namespace PluralKit.Bot
             
             var eb = new DiscordEmbedBuilder()
                 .WithDescription($"Your new group, **{groupName}**, has been created, with the group ID **`{newGroup.Hid}`**.\nBelow are a couple of useful commands:")
-                .AddField("View the group card", $"> pk;group **{newGroup.Reference()}**")
-                .AddField("Add members to the group", $"> pk;group **{newGroup.Reference()}** add **MemberName**\n> pk;group **{newGroup.Reference()}** add **Member1** **Member2** **Member3** (and so on...)")
-                .AddField("Set the description", $"> pk;group **{newGroup.Reference()}** description **This is my new group, and here is the description!**")
-                .AddField("Set the group icon", $"> pk;group **{newGroup.Reference()}** icon\n*(with an image attached)*");
+                .AddField("View the group card", $"> {ctx.CommandPrefix}group **{newGroup.Reference()}**")
+                .AddField("Add members to the group", $"> {ctx.CommandPrefix}group **{newGroup.Reference()}** add **MemberName**\n> {ctx.CommandPrefix}group **{newGroup.Reference()}** add **Member1** **Member2** **Member3** (and so on...)")
+                .AddField("Set the description", $"> {ctx.CommandPrefix}group **{newGroup.Reference()}** description **This is my new group, and here is the description!**")
+                .AddField("Set the group icon", $"> {ctx.CommandPrefix}group **{newGroup.Reference()}** icon\n*(with an image attached)*");
             await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
         }
 
@@ -104,7 +104,7 @@ namespace PluralKit.Bot
                     .AddField("Display Name", target.DisplayName ?? "*(none)*");
                 
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change display name, type `pk;group {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;group {target.Reference()} displayname -clear`.");
+                    eb.WithDescription($"To change display name, type `{ctx.CommandPrefix}group {target.Reference()} displayname <display name>`.\nTo clear it, type `{ctx.CommandPrefix}group {target.Reference()} displayname -clear`.");
                 
                 await ctx.Reply(embed: eb.Build());
             }
@@ -135,7 +135,7 @@ namespace PluralKit.Bot
             {
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {target.Reference()} description <description>`.");
+                        await ctx.Reply($"This group does not have a description set. To set one, type `{ctx.CommandPrefix}group {target.Reference()} description <description>`.");
                     else
                         await ctx.Reply("This group does not have a description set.");
                 else if (ctx.MatchFlag("r", "raw"))
@@ -144,8 +144,8 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new DiscordEmbedBuilder()
                         .WithTitle("Group description")
                         .WithDescription(target.Description)
-                        .AddField("\u200B", $"To print the description with formatting, type `pk;group {target.Reference()} description -raw`." 
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {target.Reference()} description -clear`." : ""))
+                        .AddField("\u200B", $"To print the description with formatting, type `{ctx.CommandPrefix}group {target.Reference()} description -raw`." 
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `{ctx.CommandPrefix}group {target.Reference()} description -clear`." : ""))
                         .Build());
             }
             else
@@ -208,7 +208,7 @@ namespace PluralKit.Bot
                     
                     if (target.System == ctx.System?.Id)
                     {
-                        eb.WithDescription($"To clear, use `pk;group {target.Reference()} icon -clear`.");
+                        eb.WithDescription($"To clear, use `{ctx.CommandPrefix}group {target.Reference()} icon -clear`.");
                     }
 
                     await ctx.Reply(embed: eb.Build());
@@ -255,7 +255,7 @@ namespace PluralKit.Bot
             if (groups.Count == 0)
             {
                 if (system.Id == ctx.System?.Id)
-                    await ctx.Reply("This system has no groups. To create one, use the command `pk;group new <name>`.");
+                    await ctx.Reply($"This system has no groups. To create one, use the command `{ctx.CommandPrefix}group new <name>`.");
                 else
                     await ctx.Reply("This system has no groups.");
                 
@@ -302,9 +302,9 @@ namespace PluralKit.Bot
             {
                 if (memberCount == 0 && pctx == LookupContext.ByOwner)
                     // Only suggest the add command if this is actually the owner lol
-                    eb.AddField("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true);
+                    eb.AddField("Members (0)", $"Add one with `{ctx.CommandPrefix}group {target.Reference()} add <member>`!", true);
                 else
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true);
+                    eb.AddField($"Members ({memberCount})", $"(see `{ctx.CommandPrefix}group {target.Reference()} list`)", true);
             }
 
             if (target.DescriptionFor(pctx) is {} desc)
@@ -418,7 +418,7 @@ namespace PluralKit.Bot
                     .AddField("Icon", target.IconPrivacy.Explanation())
                     .AddField("Member list", target.ListPrivacy.Explanation())
                     .AddField("Visibility", target.Visibility.Explanation())
-                    .WithDescription($"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .WithDescription($"To edit privacy settings, use the command:\n> {ctx.CommandPrefix}group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                     .Build()); 
                 return;
             }

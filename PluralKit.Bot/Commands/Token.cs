@@ -29,7 +29,7 @@ namespace PluralKit.Bot
                 // DM the user a security disclaimer, and then the token in a separate message (for easy copying on mobile)
                 var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
                 await dm.SendMessageFixedAsync(
-                    $"{Emojis.Warn} Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`.\n\nYour token is below:");
+                    $"{Emojis.Warn} Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `{ctx.CommandPrefix}token refresh`.\n\nYour token is below:");
                 await dm.SendMessageFixedAsync(token);
 
                 // If we're not already in a DM, reply with a reminder to check

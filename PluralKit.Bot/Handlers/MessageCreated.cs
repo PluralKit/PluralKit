@@ -91,18 +91,17 @@ namespace PluralKit.Bot
             if (content == null) return false;
 
             // Check for command prefix
-            if (!HasCommandPrefix(content, out var cmdStart))
+            if (!HasCommandPrefix(content, out var arg))
                 return false;
 
             // Trim leading whitespace from command without actually modifying the string
             // This just moves the argPos pointer by however much whitespace is at the start of the post-argPos string
-            var trimStartLengthDiff = content.Substring(cmdStart).Length - content.Substring(cmdStart).TrimStart().Length;
-            cmdStart += trimStartLengthDiff;
+            var trimStartLengthDiff = content.Substring(arg.Length).Length - content.Substring(arg.Length).TrimStart().Length;
 
             try
             {
                 var system = ctx.SystemId != null ? await _db.Execute(c => _repo.GetSystem(c, ctx.SystemId.Value)) : null;
-                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, cmdStart, system, ctx));
+                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, arg, arg.Length + trimStartLengthDiff, system, ctx));
             }
             catch (PKError)
             {
@@ -113,23 +112,21 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool HasCommandPrefix(string message, out int argPos)
+        private bool HasCommandPrefix(string message, out string pfx)
         {
             // First, try prefixes defined in the config
             var prefixes = _config.Prefixes ?? BotConfig.DefaultPrefixes;
             foreach (var prefix in prefixes)
             {
                 if (!message.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase)) continue;
-                
-                argPos = prefix.Length;
+                pfx = prefix;
                 return true;
             }
             
             // Then, check mention prefix (must be the bot user, ofc)
-            argPos = -1;
-            if (DiscordUtils.HasMentionPrefix(message, ref argPos, out var id))
+            pfx = "";
+            if (DiscordUtils.HasMentionPrefix(message, ref pfx, out var id))
                 return id == _client.CurrentUser.Id;
-
             return false;
         }
 

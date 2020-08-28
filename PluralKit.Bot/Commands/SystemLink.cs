@@ -30,8 +30,7 @@ namespace PluralKit.Bot
                 throw Errors.AccountAlreadyLinked;
 
             var existingAccount = await _repo.GetSystemByAccount(conn, account.Id);
-            if (existingAccount != null)
-                throw Errors.AccountInOtherSystem(existingAccount); 
+            if (existingAccount != null) throw Errors.AccountInOtherSystem(ctx.CommandPrefix, existingAccount); 
 
             var msg = $"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.";
             var mentions = new IMention[] { new UserMention(account) };
@@ -54,7 +53,7 @@ namespace PluralKit.Bot
 
             var accountIds = (await _repo.GetSystemAccounts(conn, ctx.System.Id)).ToList();
             if (!accountIds.Contains(id)) throw Errors.AccountNotLinked;
-            if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount;
+            if (accountIds.Count == 1) throw Errors.UnlinkingLastAccount(ctx.CommandPrefix);
             
             var msg = $"Are you sure you want to unlink <@{id}> from your system?";
             if (!await ctx.PromptYesNo(msg)) throw Errors.MemberUnlinkCancelled;
