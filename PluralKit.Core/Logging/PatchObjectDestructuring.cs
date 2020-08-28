@@ -18,9 +18,9 @@ namespace PluralKit.Core
             {
                 var propValue = props.GetValue(po);
                 if (propValue is IPartial p && p.IsPresent)
-                    propList.Add(new LogEventProperty(props.Name, factory.CreatePropertyValue(p.RawValue)));
+                    propList.Add(new LogEventProperty(props.Name, factory.CreatePropertyValue(p.RawValue, true)));
                 else if (!(propValue is IPartial))
-                    propList.Add(new LogEventProperty(props.Name, factory.CreatePropertyValue(propValue)));
+                    propList.Add(new LogEventProperty(props.Name, factory.CreatePropertyValue(propValue, true)));
             }
 
             result = new StructureValue(propList);

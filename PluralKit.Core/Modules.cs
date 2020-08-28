@@ -117,6 +117,7 @@ namespace PluralKit.Core
                 .Destructure.AsScalar<MemberId>()
                 .Destructure.AsScalar<GroupId>()
                 .Destructure.AsScalar<SwitchId>()
+                .Destructure.ByTransforming<ProxyTag>(t => new { t.Prefix, t.Suffix })
                 .Destructure.With<PatchObjectDestructuring>()
                 
                 .WriteTo.Async(a =>
