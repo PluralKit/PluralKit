@@ -85,6 +85,7 @@ namespace PluralKit.Bot
             // Resolve all channels from the cache and order by position
             var channels = blacklist.Blacklist
                 .Select(id => ctx.Guild.GetChannel(id))
+                .Where(c => c != null)
                 .OrderBy(c => c.Position)
                 .ToList();
 
