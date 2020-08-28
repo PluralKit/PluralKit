@@ -37,14 +37,14 @@ namespace PluralKit.Core {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing", new { Id = accountId, SystemId = system.Id });
 
-            _logger.Information("Linked account {UserId} to {SystemId}", system.Id, accountId);
+            _logger.Information("Linked account {UserId} to {SystemId}", accountId, system.Id);
         }
 
         public async Task RemoveAccount(PKSystem system, ulong accountId) {
             using (var conn = await _conn.Obtain())
                 await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId", new { Id = accountId, SystemId = system.Id });
 
-            _logger.Information("Unlinked account {UserId} from {SystemId}", system.Id, accountId);
+            _logger.Information("Unlinked account {UserId} from {SystemId}", accountId, system.Id);
         }
 
         public async Task<PKSystem> GetSystemByAccount(ulong accountId) {

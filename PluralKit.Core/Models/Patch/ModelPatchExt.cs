@@ -31,7 +31,7 @@ namespace PluralKit.Core
                 "insert into members (hid, system, name) values (find_free_member_hid(), @SystemId, @Name) returning *",
                 new {SystemId = system, Name = memberName});
             Log.ForContext("Elastic", "yes?").Information("Created {MemberId} in {SystemId}: {MemberName}", 
-                system, member.Id, memberName);
+                member.Id, system, memberName);
             return member;
         }
 
