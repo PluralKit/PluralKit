@@ -139,7 +139,7 @@ namespace PluralKit.Bot
 
             _logger
                 .ForContext("Elastic", "yes?")
-                .Error(exc, "Exception in event handler: {{SentryEventId}}", sentryEvent.EventId);
+                .Error(exc, "Exception in event handler: {SentryEventId}", sentryEvent.EventId);
 
             // If the event is us responding to our own error messages, don't bother logging
             if (evt is MessageCreateEventArgs mc && mc.Author.Id == _client.CurrentUser.Id)
