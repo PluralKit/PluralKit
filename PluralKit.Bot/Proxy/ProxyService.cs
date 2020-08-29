@@ -21,21 +21,21 @@ namespace PluralKit.Bot
 
         private readonly LogChannelService _logChannel;
         private readonly IDatabase _db;
-        private readonly IDataStore _data;
+        private readonly ModelRepository _repo;
         private readonly ILogger _logger;
         private readonly WebhookExecutorService _webhookExecutor;
         private readonly ProxyMatcher _matcher;
         private readonly IMetrics _metrics;
 
-        public ProxyService(LogChannelService logChannel, IDataStore data, ILogger logger,
-                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher, IMetrics metrics)
+        public ProxyService(LogChannelService logChannel, ILogger logger,
+                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo)
         {
             _logChannel = logChannel;
-            _data = data;
             _webhookExecutor = webhookExecutor;
             _db = db;
             _matcher = matcher;
             _metrics = metrics;
+            _repo = repo;
             _logger = logger.ForContext<ProxyService>();
         }
 
@@ -48,7 +48,7 @@ namespace PluralKit.Bot
 
             List<ProxyMember> members;
             using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
-                members = (await conn.QueryProxyMembers(message.Author.Id, message.Channel.GuildId)).ToList();
+                members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.Channel.GuildId)).ToList();
             
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Count > 0,
                 allowAutoproxy)) return false;
@@ -99,8 +99,17 @@ namespace PluralKit.Bot
             var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
                 match.Member.ProxyAvatar(ctx),
                 content, trigger.Attachments, allowEveryone);
+
+            Task SaveMessage() => _repo.AddMessage(conn, new PKMessage
+            {
+                Channel = trigger.ChannelId,
+                Guild = trigger.Channel.GuildId,
+                Member = match.Member.Id,
+                Mid = id,
+                OriginalMid = trigger.Id,
+                Sender = trigger.Author.Id
+            });
             
-            Task SaveMessage() => _data.AddMessage(conn, trigger.Author.Id, trigger.Channel.GuildId, trigger.ChannelId, id, trigger.Id, match.Member.Id);
             Task LogMessage() => _logChannel.LogMessage(ctx, match, trigger, id).AsTask();
             async Task DeleteMessage()
             {

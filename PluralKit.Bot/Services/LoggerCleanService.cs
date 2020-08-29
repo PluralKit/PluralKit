@@ -16,19 +16,19 @@ namespace PluralKit.Bot
 {
     public class LoggerCleanService
     {
-        private static Regex _basicRegex = new Regex("(\\d{17,19})");
-        private static Regex _dynoRegex = new Regex("Message ID: (\\d{17,19})");
-        private static Regex _carlRegex = new Regex("ID: (\\d{17,19})");
-        private static Regex _circleRegex = new Regex("\\(`(\\d{17,19})`\\)");
-        private static Regex _loggerARegex = new Regex("Message = (\\d{17,19})");
-        private static Regex _loggerBRegex = new Regex("MessageID:(\\d{17,19})");
-        private static Regex _auttajaRegex = new Regex("Message (\\d{17,19}) deleted");
-        private static Regex _mantaroRegex = new Regex("Message \\(?ID:? (\\d{17,19})\\)? created by .* in channel .* was deleted\\.");
-        private static Regex _pancakeRegex = new Regex("Message from <@(\\d{17,19})> deleted in");
-        private static Regex _unbelievaboatRegex = new Regex("Message ID: (\\d{17,19})");
-        private static Regex _vanessaRegex = new Regex("Message sent by <@!?(\\d{17,19})> deleted in");
-        private static Regex _salRegex = new Regex("\\(ID: (\\d{17,19})\\)");
-        private static Regex _GearBotRegex = new Regex("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
+        private static readonly Regex _basicRegex = new Regex("(\\d{17,19})");
+        private static readonly Regex _dynoRegex = new Regex("Message ID: (\\d{17,19})");
+        private static readonly Regex _carlRegex = new Regex("ID: (\\d{17,19})");
+        private static readonly Regex _circleRegex = new Regex("\\(`(\\d{17,19})`\\)");
+        private static readonly Regex _loggerARegex = new Regex("Message = (\\d{17,19})");
+        private static readonly Regex _loggerBRegex = new Regex("MessageID:(\\d{17,19})");
+        private static readonly Regex _auttajaRegex = new Regex("Message (\\d{17,19}) deleted");
+        private static readonly Regex _mantaroRegex = new Regex("Message \\(?ID:? (\\d{17,19})\\)? created by .* in channel .* was deleted\\.");
+        private static readonly Regex _pancakeRegex = new Regex("Message from <@(\\d{17,19})> deleted in");
+        private static readonly Regex _unbelievaboatRegex = new Regex("Message ID: (\\d{17,19})");
+        private static readonly Regex _vanessaRegex = new Regex("Message sent by <@!?(\\d{17,19})> deleted in");
+        private static readonly Regex _salRegex = new Regex("\\(ID: (\\d{17,19})\\)");
+        private static readonly Regex _GearBotRegex = new Regex("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
 
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
@@ -55,7 +55,7 @@ namespace PluralKit.Bot
             .Where(b => b.WebhookName != null)
             .ToDictionary(b => b.WebhookName);
 
-        private IDatabase _db;
+        private readonly IDatabase _db;
         private DiscordShardedClient _client;
         
         public LoggerCleanService(IDatabase db, DiscordShardedClient client)

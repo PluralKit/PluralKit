@@ -6,16 +6,16 @@ using Dapper;
 
 namespace PluralKit.Core
 {
-    public static class DatabaseFunctionsExt
+    public partial class ModelRepository
     {
-        public static Task<MessageContext> QueryMessageContext(this IPKConnection conn, ulong account, ulong guild, ulong channel)
+        public Task<MessageContext> GetMessageContext(IPKConnection conn, ulong account, ulong guild, ulong channel)
         {
             return conn.QueryFirstAsync<MessageContext>("message_context", 
                 new { account_id = account, guild_id = guild, channel_id = channel }, 
                 commandType: CommandType.StoredProcedure);
         }  
         
-        public static Task<IEnumerable<ProxyMember>> QueryProxyMembers(this IPKConnection conn, ulong account, ulong guild)
+        public Task<IEnumerable<ProxyMember>> GetProxyMembers(IPKConnection conn, ulong account, ulong guild)
         {
             return conn.QueryAsync<ProxyMember>("proxy_members", 
                 new { account_id = account, guild_id = guild }, 

@@ -8,9 +8,9 @@ namespace PluralKit.Core
     {
         private readonly string? _conflictField;
         private readonly string? _condition;
-        private StringBuilder _insertFragment = new StringBuilder();
-        private StringBuilder _valuesFragment = new StringBuilder();
-        private StringBuilder _updateFragment = new StringBuilder();
+        private readonly StringBuilder _insertFragment = new StringBuilder();
+        private readonly StringBuilder _valuesFragment = new StringBuilder();
+        private readonly StringBuilder _updateFragment = new StringBuilder();
         private bool _firstInsert = true;
         private bool _firstUpdate = true;
         public QueryType Type { get; }

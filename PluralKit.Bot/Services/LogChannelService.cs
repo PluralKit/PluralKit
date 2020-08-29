@@ -15,16 +15,16 @@ namespace PluralKit.Bot {
     public class LogChannelService {
         private readonly EmbedService _embed;
         private readonly IDatabase _db;
-        private readonly IDataStore _data;
+        private readonly ModelRepository _repo;
         private readonly ILogger _logger;
         private readonly DiscordRestClient _rest;
 
-        public LogChannelService(EmbedService embed, ILogger logger, DiscordRestClient rest, IDatabase db, IDataStore data)
+        public LogChannelService(EmbedService embed, ILogger logger, DiscordRestClient rest, IDatabase db, ModelRepository repo)
         {
             _embed = embed;
             _rest = rest;
             _db = db;
-            _data = data;
+            _repo = repo;
             _logger = logger.ForContext<LogChannelService>();
         }
 
@@ -47,8 +47,8 @@ namespace PluralKit.Bot {
 
             // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateLoggedMessageEmbed(await conn.QuerySystem(ctx.SystemId.Value),
-                await conn.QueryMember(proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content,
+            var embed = _embed.CreateLoggedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value),
+                await _repo.GetMember(conn, proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content,
                 trigger.Channel);
             var url = $"https://discord.com/channels/{trigger.Channel.GuildId}/{trigger.ChannelId}/{hookMessage}";
             await logChannel.SendMessageFixedAsync(content: url, embed: embed);

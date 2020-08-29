@@ -16,19 +16,21 @@ namespace PluralKit.API
     [Route( "v{version:apiVersion}/m" )]
     public class MemberController: ControllerBase
     {
-        private IDatabase _db;
-        private IAuthorizationService _auth;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
+        private readonly IAuthorizationService _auth;
 
-        public MemberController(IAuthorizationService auth, IDatabase db)
+        public MemberController(IAuthorizationService auth, IDatabase db, ModelRepository repo)
         {
             _auth = auth;
             _db = db;
+            _repo = repo;
         }
 
         [HttpGet("{hid}")]
         public async Task<ActionResult<JObject>> GetMember(string hid)
         {
-            var member = await _db.Execute(conn => conn.QueryMemberByHid(hid));
+            var member = await _db.Execute(conn => _repo.GetMemberByHid(conn, hid));
             if (member == null) return NotFound("Member not found.");
 
             return Ok(member.ToJson(User.ContextFor(member)));
@@ -49,7 +51,7 @@ namespace PluralKit.API
             if (memberCount >= Limits.MaxMemberCount)
                 return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
 
-            var member = await conn.CreateMember(system, properties.Value<string>("name"));
+            var member = await _repo.CreateMember(conn, system, properties.Value<string>("name"));
             MemberPatch patch;
             try
             {
@@ -60,7 +62,7 @@ namespace PluralKit.API
                 return BadRequest(e.Message);
             }
             
-            member = await conn.UpdateMember(member.Id, patch);
+            member = await _repo.UpdateMember(conn, member.Id, patch);
             return Ok(member.ToJson(User.ContextFor(member)));
         }
 
@@ -70,7 +72,7 @@ namespace PluralKit.API
         {
             await using var conn = await _db.Obtain();
 
-            var member = await conn.QueryMemberByHid(hid);
+            var member = await _repo.GetMemberByHid(conn, hid);
             if (member == null) return NotFound("Member not found.");
             
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
@@ -86,7 +88,7 @@ namespace PluralKit.API
                 return BadRequest(e.Message);
             }
             
-            var newMember = await conn.UpdateMember(member.Id, patch);
+            var newMember = await _repo.UpdateMember(conn, member.Id, patch);
             return Ok(newMember.ToJson(User.ContextFor(newMember)));
         }
         
@@ -96,13 +98,13 @@ namespace PluralKit.API
         {
             await using var conn = await _db.Obtain();
 
-            var member = await conn.QueryMemberByHid(hid);
+            var member = await _repo.GetMemberByHid(conn, hid);
             if (member == null) return NotFound("Member not found.");
             
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
             if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
 
-            await conn.DeleteMember(member.Id);
+            await _repo.DeleteMember(conn, member.Id);
             return Ok();
         }
     }

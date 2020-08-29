@@ -13,18 +13,20 @@ namespace PluralKit.API
     [Route( "v{version:apiVersion}/a" )]
     public class AccountController: ControllerBase
     {
-        private IDataStore _data;
-
-        public AccountController(IDataStore data)
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
+        public AccountController(IDatabase db, ModelRepository repo)
         {
-            _data = data;
+            _db = db;
+            _repo = repo;
         }
 
         [HttpGet("{aid}")]
         public async Task<ActionResult<JObject>> GetSystemByAccount(ulong aid)
         {
-            var system = await _data.GetSystemByAccount(aid);
-            if (system == null) return NotFound("Account not found.");
+            var system = await _db.Execute(c => _repo.GetSystemByAccount(c, aid));
+            if (system == null)
+                return NotFound("Account not found.");
             
             return Ok(system.ToJson(User.ContextFor(system)));
         }

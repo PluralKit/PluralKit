@@ -18,11 +18,11 @@ namespace PluralKit.Bot
     {
         public static readonly string WebhookName = "PluralKit Proxy Webhook";
             
-        private DiscordShardedClient _client;
-        private ConcurrentDictionary<ulong, Lazy<Task<DiscordWebhook>>> _webhooks;
+        private readonly DiscordShardedClient _client;
+        private readonly ConcurrentDictionary<ulong, Lazy<Task<DiscordWebhook>>> _webhooks;
 
-        private IMetrics _metrics;
-        private ILogger _logger;
+        private readonly IMetrics _metrics;
+        private readonly ILogger _logger;
 
         public WebhookCacheService(DiscordShardedClient client, ILogger logger, IMetrics metrics)
         {

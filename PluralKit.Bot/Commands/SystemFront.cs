@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,19 +11,21 @@ namespace PluralKit.Bot
 {
     public class SystemFront
     {
-        private IDataStore _data;
-        private EmbedService _embeds;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
+        private readonly EmbedService _embeds;
 
-        public SystemFront(IDataStore data, EmbedService embeds)
+        public SystemFront(EmbedService embeds, IDatabase db, ModelRepository repo)
         {
-            _data = data;
             _embeds = embeds;
+            _db = db;
+            _repo = repo;
         }
         
         struct FrontHistoryEntry
         {
-            public Instant? LastTime;
-            public PKSwitch ThisSwitch;
+            public readonly Instant? LastTime;
+            public readonly PKSwitch ThisSwitch;
 
             public FrontHistoryEntry(Instant? lastTime, PKSwitch thisSwitch)
             {
@@ -35,8 +38,10 @@ namespace PluralKit.Bot
         {
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontPrivacy);
+
+            await using var conn = await _db.Obtain();
             
-            var sw = await _data.GetLatestSwitch(system.Id);
+            var sw = await _repo.GetLatestSwitch(conn, system.Id);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system)));
@@ -47,11 +52,16 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
-            var sws = _data.GetSwitches(system.Id)
-                .Scan(new FrontHistoryEntry(null, null), (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
-            var totalSwitches = await _data.GetSwitchCount(system);
-            if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
+            // Gotta be careful here: if we dispose of the connection while the IAE is alive, boom 
+            await using var conn = await _db.Obtain();
             
+            var totalSwitches = await _repo.GetSwitchCount(conn, system.Id);
+            if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
+
+            var sws = _repo.GetSwitches(conn, system.Id)
+                .Scan(new FrontHistoryEntry(null, null),
+                    (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
+
             var embedTitle = system.Name != null ? $"Front history of {system.Name} (`{system.Hid}`)" : $"Front history of `{system.Hid}`";
 
             await ctx.Paginate(
@@ -66,8 +76,11 @@ namespace PluralKit.Bot
                         var lastSw = entry.LastTime;
 
                         var sw = entry.ThisSwitch;
+                        
                         // Fetch member list and format
-                        var members = await _data.GetSwitchMembers(sw).ToListAsync();
+                        await using var conn = await _db.Obtain();
+                        
+                        var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id)).ToListAsync();
                         var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "no fronter";
 
                         var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
@@ -111,8 +124,8 @@ namespace PluralKit.Bot
             var rangeStart = DateUtils.ParseDateTime(durationStr, true, system.Zone);
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
-            
-            var frontpercent = await _data.GetFrontBreakdown(system, rangeStart.Value.ToInstant(), now);
+
+            var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, rangeStart.Value.ToInstant(), now));
             await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone, ctx.LookupContextFor(system)));
         }
     }

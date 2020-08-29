@@ -17,17 +17,17 @@ namespace PluralKit.Bot
 {
     public class PeriodicStatCollector
     {
-        private DiscordShardedClient _client;
-        private IMetrics _metrics;
-        private CpuStatService _cpu;
+        private readonly DiscordShardedClient _client;
+        private readonly IMetrics _metrics;
+        private readonly CpuStatService _cpu;
 
-        private IDatabase _db;
+        private readonly IDatabase _db;
 
-        private WebhookCacheService _webhookCache;
+        private readonly WebhookCacheService _webhookCache;
 
-        private DbConnectionCountHolder _countHolder;
+        private readonly DbConnectionCountHolder _countHolder;
 
-        private ILogger _logger;
+        private readonly ILogger _logger;
 
         public PeriodicStatCollector(DiscordShardedClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, IDatabase db)
         {

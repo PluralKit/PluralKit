@@ -10,7 +10,7 @@ namespace PluralKit.Bot
     // TODO: is this still needed after the D#+ migration?
     public class LastMessageCacheService
     {
-        private IDictionary<ulong, ulong> _cache = new ConcurrentDictionary<ulong, ulong>();
+        private readonly IDictionary<ulong, ulong> _cache = new ConcurrentDictionary<ulong, ulong>();
 
         public void AddMessage(ulong channel, ulong message)
         {

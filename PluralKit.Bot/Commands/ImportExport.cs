@@ -15,7 +15,7 @@ namespace PluralKit.Bot
 {
     public class ImportExport
     {
-        private DataFileService _dataFiles;
+        private readonly DataFileService _dataFiles;
         public ImportExport(DataFileService dataFiles)
         {
             _dataFiles = dataFiles;

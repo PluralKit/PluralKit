@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -207,11 +206,19 @@ namespace PluralKit.Core
             await using var conn = await db.Obtain();
             await func(conn);
         }
-        
+
         public static async Task<T> Execute<T>(this IDatabase db, Func<IPKConnection, Task<T>> func)
         {
             await using var conn = await db.Obtain();
             return await func(conn);
+        }
+        
+        public static async IAsyncEnumerable<T> Execute<T>(this IDatabase db, Func<IPKConnection, IAsyncEnumerable<T>> func)
+        {
+            await using var conn = await db.Obtain();
+            
+            await foreach (var val in func(conn))
+                yield return val;
         }
     }
 }

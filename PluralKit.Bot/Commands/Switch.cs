@@ -13,11 +13,13 @@ namespace PluralKit.Bot
 {
     public class Switch
     {
-        private IDataStore _data;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public Switch(IDataStore data)
+        public Switch(IDatabase db, ModelRepository repo)
         {
-            _data = data;
+            _db = db;
+            _repo = repo;
         }
 
         public async Task SwitchDo(Context ctx)
@@ -42,16 +44,17 @@ namespace PluralKit.Bot
             if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
 
             // Find the last switch and its members if applicable
-            var lastSwitch = await _data.GetLatestSwitch(ctx.System.Id);
+            await using var conn = await _db.Obtain();
+            var lastSwitch = await _repo.GetLatestSwitch(conn, ctx.System.Id);
             if (lastSwitch != null)
             {
-                var lastSwitchMembers = _data.GetSwitchMembers(lastSwitch);
+                var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastSwitch.Id);
                 // Make sure the requested switch isn't identical to the last one
                 if (await lastSwitchMembers.Select(m => m.Id).SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
                     throw Errors.SameSwitch(members, ctx.LookupContextFor(ctx.System));
             }
 
-            await _data.AddSwitch(ctx.System.Id, members);
+            await _repo.AddSwitch(conn, ctx.System.Id, members.Select(m => m.Id).ToList());
 
             if (members.Count == 0)
                 await ctx.Reply($"{Emojis.Success} Switch-out registered.");
@@ -68,12 +71,14 @@ namespace PluralKit.Bot
             
             var result = DateUtils.ParseDateTime(timeToMove, true, tz);
             if (result == null) throw Errors.InvalidDateTime(timeToMove);
+
+            await using var conn = await _db.Obtain();
             
             var time = result.Value;
             if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _data.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
+            var lastTwoSwitches = await _repo.GetSwitches(conn, ctx.System.Id).Take(2).ToListAsync();
             
             // If we don't have a switch to move, don't bother
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
@@ -87,7 +92,7 @@ namespace PluralKit.Bot
             
             // Now we can actually do the move, yay!
             // But, we do a prompt to confirm.
-            var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id);
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
             var lastSwitchTimeStr = lastTwoSwitches[0].Timestamp.FormatZoned(ctx.System);
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
@@ -99,7 +104,7 @@ namespace PluralKit.Bot
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
-            await _data.MoveSwitch(lastTwoSwitches[0], time.ToInstant());
+            await _repo.MoveSwitch(conn, lastTwoSwitches[0].Id, time.ToInstant());
             await ctx.Reply($"{Emojis.Success} Switch moved.");
         }
         
@@ -113,16 +118,18 @@ namespace PluralKit.Bot
                 var purgeMsg = $"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?";
                 if (!await ctx.PromptYesNo(purgeMsg))
                     throw Errors.GenericCancelled();
-                await _data.DeleteAllSwitches(ctx.System);
+                await _db.Execute(c => _repo.DeleteAllSwitches(c, ctx.System.Id));
                 await ctx.Reply($"{Emojis.Success} Cleared system switches!");
                 return;
             }
             
+            await using var conn = await _db.Obtain();
+
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _data.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
+            var lastTwoSwitches = await _repo.GetSwitches(conn, ctx.System.Id).Take(2).ToListAsync();
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
-            var lastSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[0]);
+            var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id);
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
 
@@ -133,14 +140,14 @@ namespace PluralKit.Bot
             }
             else
             {
-                var secondSwitchMembers = _data.GetSwitchMembers(lastTwoSwitches[1]);
+                var secondSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[1].Id);
                 var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
                 var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp).FormatDuration();
                 msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?";
             }
 
             if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;
-            await _data.DeleteSwitch(lastTwoSwitches[0]);
+            await _repo.DeleteSwitch(conn, lastTwoSwitches[0].Id);
             
             await ctx.Reply($"{Emojis.Success} Switch deleted.");
         }

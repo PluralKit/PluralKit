@@ -25,7 +25,7 @@ namespace PluralKit.Core
         {
             builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
             builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
-            builder.RegisterType<PostgresDataStore>().AsSelf().As<IDataStore>();
+            builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
             
             builder.Populate(new ServiceCollection().AddMemoryCache());
         }
@@ -33,7 +33,7 @@ namespace PluralKit.Core
 
     public class ConfigModule<T>: Module where T: new()
     {
-        private string _submodule;
+        private readonly string _submodule;
 
         public ConfigModule(string submodule = null)
         {

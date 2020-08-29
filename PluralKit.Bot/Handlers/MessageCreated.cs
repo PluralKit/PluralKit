@@ -23,11 +23,12 @@ namespace PluralKit.Bot
         private readonly ProxyService _proxy;
         private readonly ILifetimeScope _services;
         private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
         private readonly BotConfig _config;
 
         public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean,
                               IMetrics metrics, ProxyService proxy, DiscordShardedClient client,
-                              CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config)
+                              CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config, ModelRepository repo)
         {
             _lastMessageCache = lastMessageCache;
             _loggerClean = loggerClean;
@@ -38,6 +39,7 @@ namespace PluralKit.Bot
             _services = services;
             _db = db;
             _config = config;
+            _repo = repo;
         }
 
         public DiscordChannel ErrorChannelFor(MessageCreateEventArgs evt) => evt.Channel;
@@ -59,7 +61,7 @@ namespace PluralKit.Bot
             MessageContext ctx;
             await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-                ctx = await conn.QueryMessageContext(evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id);
+                ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id);
 
             // Try each handler until we find one that succeeds
             if (await TryHandleLogClean(evt, ctx)) 
@@ -98,7 +100,7 @@ namespace PluralKit.Bot
 
             try
             {
-                var system = ctx.SystemId != null ? await _db.Execute(c => c.QuerySystem(ctx.SystemId.Value)) : null;
+                var system = ctx.SystemId != null ? await _db.Execute(c => _repo.GetSystem(c, ctx.SystemId.Value)) : null;
                 await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, cmdStart, system, ctx));
             }
             catch (PKError)

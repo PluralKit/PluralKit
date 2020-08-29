@@ -18,21 +18,23 @@ using DSharpPlus.Entities;
 namespace PluralKit.Bot {
     public class Misc
     {
-        private BotConfig _botConfig;
-        private IMetrics _metrics;
-        private CpuStatService _cpu;
-        private ShardInfoService _shards;
-        private IDataStore _data;
-        private EmbedService _embeds;
+        private readonly BotConfig _botConfig;
+        private readonly IMetrics _metrics;
+        private readonly CpuStatService _cpu;
+        private readonly ShardInfoService _shards;
+        private readonly EmbedService _embeds;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, IDataStore data, EmbedService embeds)
+        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, EmbedService embeds, ModelRepository repo, IDatabase db)
         {
             _botConfig = botConfig;
             _metrics = metrics;
             _cpu = cpu;
             _shards = shards;
-            _data = data;
             _embeds = embeds;
+            _repo = repo;
+            _db = db;
         }
         
         public async Task Invite(Context ctx)
@@ -198,7 +200,7 @@ namespace PluralKit.Bot {
                 messageId = ulong.Parse(match.Groups[1].Value);
             else throw new PKSyntaxError($"Could not parse {word.AsCode()} as a message ID or link.");
 
-            var message = await _data.GetMessage(messageId);
+            var message = await _db.Execute(c => _repo.GetMessage(c, messageId));
             if (message == null) throw Errors.MessageNotFound(messageId);
 
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(ctx.Shard, message));

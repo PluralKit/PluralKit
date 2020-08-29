@@ -47,12 +47,14 @@ namespace PluralKit.Bot
             // - A @mention of an account connected to the system (<@uid>)
             // - A system hid
 
+            await using var conn = await ctx.Database.Obtain();
+            
             // Direct IDs and mentions are both handled by the below method:
             if (input.TryParseMention(out var id))
-                return await ctx.DataStore.GetSystemByAccount(id);
+                return await ctx.Repository.GetSystemByAccount(conn, id);
 
             // Finally, try HID parsing
-            var system = await ctx.DataStore.GetSystemByHid(input);
+            var system = await ctx.Repository.GetSystemByHid(conn, input);
             return system;
         }
 
@@ -67,15 +69,16 @@ namespace PluralKit.Bot
             // - a textual display name of a member *in your own system*
 
             // First, if we have a system, try finding by member name in system
-            if (ctx.System != null && await ctx.DataStore.GetMemberByName(ctx.System, input) is PKMember memberByName)
+            await using var conn = await ctx.Database.Obtain();
+            if (ctx.System != null && await ctx.Repository.GetMemberByName(conn, ctx.System.Id, input) is PKMember memberByName)
                 return memberByName;
 
             // Then, try member HID parsing:
-            if (await ctx.DataStore.GetMemberByHid(input) is PKMember memberByHid)
+            if (await ctx.Repository.GetMemberByHid(conn, input) is PKMember memberByHid)
                 return memberByHid;
 
             // And if that again fails, we try finding a member with a display name matching the argument from the system
-            if (ctx.System != null && await ctx.DataStore.GetMemberByDisplayName(ctx.System, input) is PKMember memberByDisplayName)
+            if (ctx.System != null && await ctx.Repository.GetMemberByDisplayName(conn, ctx.System.Id, input) is PKMember memberByDisplayName)
                 return memberByDisplayName;
             
             // We didn't find anything, so we return null.
@@ -103,9 +106,9 @@ namespace PluralKit.Bot
             var input = ctx.PeekArgument();
 
             await using var conn = await ctx.Database.Obtain();
-            if (ctx.System != null && await conn.QueryGroupByName(ctx.System.Id, input) is {} byName)
+            if (ctx.System != null && await ctx.Repository.GetGroupByName(conn, ctx.System.Id, input) is {} byName)
                 return byName;
-            if (await conn.QueryGroupByHid(input) is {} byHid)
+            if (await ctx.Repository.GetGroupByHid(conn, input) is {} byHid)
                 return byHid;
 
             return null;

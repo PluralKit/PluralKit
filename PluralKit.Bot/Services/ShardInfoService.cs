@@ -16,7 +16,6 @@ namespace PluralKit.Bot
 {
     public class ShardInfoService
     {
-
         public class ShardInfo
         {
             public bool HasAttachedListeners;
@@ -27,10 +26,10 @@ namespace PluralKit.Bot
             public bool Connected;
         }
 
-        private IMetrics _metrics;
-        private ILogger _logger;
-        private DiscordShardedClient _client;
-        private Dictionary<int, ShardInfo> _shardInfo = new Dictionary<int, ShardInfo>();
+        private readonly IMetrics _metrics;
+        private readonly ILogger _logger;
+        private readonly DiscordShardedClient _client;
+        private readonly Dictionary<int, ShardInfo> _shardInfo = new Dictionary<int, ShardInfo>();
         
         public ShardInfoService(ILogger logger, DiscordShardedClient client, IMetrics metrics)
         {

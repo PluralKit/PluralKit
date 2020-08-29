@@ -29,10 +29,10 @@ namespace PluralKit.Bot
     
     public class WebhookExecutorService
     {
-        private WebhookCacheService _webhookCache;
-        private ILogger _logger;
-        private IMetrics _metrics;
-        private HttpClient _client;
+        private readonly WebhookCacheService _webhookCache;
+        private readonly ILogger _logger;
+        private readonly IMetrics _metrics;
+        private readonly HttpClient _client;
 
         public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client)
         {

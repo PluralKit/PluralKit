@@ -15,13 +15,13 @@ namespace PluralKit.Bot
 {
     public class MemberEdit
     {
-        private readonly IDataStore _data;
         private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public MemberEdit(IDataStore data, IDatabase db)
+        public MemberEdit(IDatabase db, ModelRepository repo)
         {
-            _data = data;
             _db = db;
+            _repo = repo;
         }
 
         public async Task Name(Context ctx, PKMember target) {
@@ -35,7 +35,7 @@ namespace PluralKit.Bot
             if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
 
             // Warn if there's already a member by this name
-            var existingMember = await _data.GetMemberByName(ctx.System, newName);
+            var existingMember = await _db.Execute(conn => _repo.GetMemberByName(conn, ctx.System.Id, newName));
             if (existingMember != null && existingMember.Id != target.Id) 
             {
                 var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?";
@@ -44,7 +44,7 @@ namespace PluralKit.Bot
 
             // Rename the member
             var patch = new MemberPatch {Name = Partial<string>.Present(newName)};
-            await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+            await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
             await ctx.Reply($"{Emojis.Success} Member renamed.");
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
@@ -52,7 +52,7 @@ namespace PluralKit.Bot
 
             if (ctx.Guild != null)
             {
-                var memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
+                var memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
                 if (memberGuildConfig.DisplayName != null)
                     await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.Guild.Name}), and will be proxied using that name here.");
             }
@@ -69,7 +69,7 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
 
                 var patch = new MemberPatch {Description = Partial<string>.Null()};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member description cleared.");
             } 
             else if (!ctx.HasNext())
@@ -100,7 +100,7 @@ namespace PluralKit.Bot
                     throw Errors.DescriptionTooLongError(description.Length);
         
                 var patch = new MemberPatch {Description = Partial<string>.Present(description)};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} Member description changed.");
             }
@@ -111,7 +111,7 @@ namespace PluralKit.Bot
             {
                 CheckEditMemberPermission(ctx, target);
                 var patch = new MemberPatch {Pronouns = Partial<string>.Null()};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member pronouns cleared.");
             } 
             else if (!ctx.HasNext())
@@ -136,7 +136,7 @@ namespace PluralKit.Bot
                     throw Errors.MemberPronounsTooLongError(pronouns.Length);
                 
                 var patch = new MemberPatch {Pronouns = Partial<string>.Present(pronouns)};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} Member pronouns changed.");
             }
@@ -150,7 +150,7 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
                 
                 var patch = new MemberPatch {Color = Partial<string>.Null()};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} Member color cleared.");
             }
@@ -182,7 +182,7 @@ namespace PluralKit.Bot
                 if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
                 
                 var patch = new MemberPatch {Color = Partial<string>.Present(color.ToLowerInvariant())};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
                 await ctx.Reply(embed: new DiscordEmbedBuilder()
                     .WithTitle($"{Emojis.Success} Member color changed.")
@@ -198,7 +198,7 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
                 
                 var patch = new MemberPatch {Birthday = Partial<LocalDate?>.Null()};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Member birthdate cleared.");
             } 
@@ -223,7 +223,7 @@ namespace PluralKit.Bot
                 if (birthday == null) throw Errors.BirthdayParseError(birthdayStr);
                 
                 var patch = new MemberPatch {Birthday = Partial<LocalDate?>.Present(birthday)};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Member birthdate changed.");
             }
@@ -235,7 +235,7 @@ namespace PluralKit.Bot
             
             MemberGuildSettings memberGuildConfig = null;
             if (ctx.Guild != null)
-                memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
+                memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
 
             var eb = new DiscordEmbedBuilder().WithTitle($"Member names")
                 .WithFooter($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name.");
@@ -271,7 +271,7 @@ namespace PluralKit.Bot
                 var successStr = text;
                 if (ctx.Guild != null)
                 {
-                    var memberGuildConfig = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
+                    var memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
                     if (memberGuildConfig.DisplayName != null)
                         successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name}), and will be proxied using that name, \"{memberGuildConfig.DisplayName}\", here.";
                 }
@@ -284,7 +284,7 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
                 
                 var patch = new MemberPatch {DisplayName = Partial<string>.Null()};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
                 await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\".");
             }
@@ -303,7 +303,7 @@ namespace PluralKit.Bot
                 var newDisplayName = ctx.RemainderOrNull();
                 
                 var patch = new MemberPatch {DisplayName = Partial<string>.Present(newDisplayName)};
-                await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
                 await PrintSuccess($"{Emojis.Success} Member display name changed. This member will now be proxied using the name \"{newDisplayName}\".");
             }
@@ -318,7 +318,7 @@ namespace PluralKit.Bot
                 CheckEditMemberPermission(ctx, target);
 
                 var patch = new MemberGuildPatch {DisplayName = null};
-                await _db.Execute(conn => conn.UpsertMemberGuild(target.Id, ctx.Guild.Id, patch));
+                await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.Guild.Id, patch));
 
                 if (target.DisplayName != null)
                     await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName}\" in this server ({ctx.Guild.Name}).");
@@ -340,7 +340,7 @@ namespace PluralKit.Bot
                 var newServerName = ctx.RemainderOrNull();
                 
                 var patch = new MemberGuildPatch {DisplayName = newServerName};
-                await _db.Execute(conn => conn.UpsertMemberGuild(target.Id, ctx.Guild.Id, patch));
+                await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.Guild.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.Guild.Name}).");
             }
@@ -365,7 +365,7 @@ namespace PluralKit.Bot
             };
 
             var patch = new MemberPatch {KeepProxy = Partial<bool>.Present(newValue)};
-            await _db.Execute(conn => conn.UpdateMember(target.Id, patch));
+            await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
             
             if (newValue)
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now be included in the resulting message when proxying.");
@@ -398,11 +398,11 @@ namespace PluralKit.Bot
             // Get guild settings (mostly for warnings and such)
             MemberGuildSettings guildSettings = null;
             if (ctx.Guild != null)
-                guildSettings = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
+                guildSettings = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
 
             async Task SetAll(PrivacyLevel level)
             {
-                await _db.Execute(c => c.UpdateMember(target.Id, new MemberPatch().WithAllPrivacy(level)));
+                await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch().WithAllPrivacy(level)));
                 
                 if (level == PrivacyLevel.Private)
                     await ctx.Reply($"{Emojis.Success} All {target.NameFor(ctx)}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the member card.");
@@ -412,7 +412,7 @@ namespace PluralKit.Bot
 
             async Task SetLevel(MemberPrivacySubject subject, PrivacyLevel level)
             {
-                await _db.Execute(c => c.UpdateMember(target.Id, new MemberPatch().WithPrivacy(subject, level)));
+                await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch().WithPrivacy(subject, level)));
                 
                 var subjectName = subject switch
                 {
@@ -472,7 +472,7 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;
             
-            await _db.Execute(conn => conn.DeleteMember(target.Id));
+            await _db.Execute(conn => _repo.DeleteMember(conn, target.Id));
             
             await ctx.Reply($"{Emojis.Success} Member deleted.");
         }

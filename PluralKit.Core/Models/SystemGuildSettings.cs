@@ -1,5 +1,13 @@
 ﻿namespace PluralKit.Core
 {
+    public enum AutoproxyMode
+    {
+        Off = 1,
+        Front = 2,
+        Latch = 3,
+        Member = 4
+    }
+    
     public class SystemGuildSettings
     {
         public ulong Guild { get; }

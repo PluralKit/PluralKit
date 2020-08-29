@@ -28,17 +28,19 @@ namespace PluralKit.API
     [Route( "v{version:apiVersion}/msg" )]
     public class MessageController: ControllerBase
     {
-        private IDataStore _data;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public MessageController(IDataStore _data)
+        public MessageController(ModelRepository repo, IDatabase db)
         {
-            this._data = _data;
+            _repo = repo;
+            _db = db;
         }
 
         [HttpGet("{mid}")]
         public async Task<ActionResult<MessageReturn>> GetMessage(ulong mid)
         {
-            var msg = await _data.GetMessage(mid);
+            var msg = await _db.Execute(c => _repo.GetMessage(c, mid));
             if (msg == null) return NotFound("Message not found.");
 
             return new MessageReturn

@@ -12,10 +12,12 @@ namespace PluralKit.Bot
     public class Autoproxy
     {
         private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public Autoproxy(IDatabase db)
+        public Autoproxy(IDatabase db, ModelRepository repo)
         {
             _db = db;
+            _repo = repo;
         }
 
         public async Task AutoproxyRoot(Context ctx)
@@ -87,8 +89,8 @@ namespace PluralKit.Bot
             var fronters = ctx.MessageContext.LastSwitchMembers;
             var relevantMember = ctx.MessageContext.AutoproxyMode switch
             {
-                AutoproxyMode.Front => fronters.Length > 0 ? await _db.Execute(c => c.QueryMember(fronters[0])) : null,
-                AutoproxyMode.Member => await _db.Execute(c => c.QueryMember(ctx.MessageContext.AutoproxyMember.Value)),
+                AutoproxyMode.Front => fronters.Length > 0 ? await _db.Execute(c => _repo.GetMember(c, fronters[0])) : null,
+                AutoproxyMode.Member => await _db.Execute(c => _repo.GetMember(c, ctx.MessageContext.AutoproxyMember.Value)),
                 _ => null
             };
 
@@ -126,7 +128,7 @@ namespace PluralKit.Bot
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
         {
             var patch = new SystemGuildPatch {AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember};
-            return _db.Execute(conn => conn.UpsertSystemGuild(ctx.System.Id, ctx.Guild.Id, patch));
+            return _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
         }
     }
 }

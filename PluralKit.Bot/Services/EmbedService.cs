@@ -15,40 +15,38 @@ using PluralKit.Core;
 namespace PluralKit.Bot {
     public class EmbedService
     {
-        private IDataStore _data;
-        private IDatabase _db;
-        private DiscordShardedClient _client;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
+        private readonly DiscordShardedClient _client;
 
-        public EmbedService(DiscordShardedClient client, IDataStore data, IDatabase db)
+        public EmbedService(DiscordShardedClient client, IDatabase db, ModelRepository repo)
         {
             _client = client;
-            _data = data;
             _db = db;
+            _repo = repo;
         }
-
-
         
         public async Task<DiscordEmbed> CreateSystemEmbed(DiscordClient client, PKSystem system, LookupContext ctx)
         {
             await using var conn = await _db.Obtain();
             
             // Fetch/render info for all accounts simultaneously
-            var accounts = await conn.GetLinkedAccounts(system.Id);
+            var accounts = await _repo.GetSystemAccounts(conn, system.Id);
             var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
-            var memberCount = await conn.GetSystemMemberCount(system.Id, PrivacyLevel.Public);
+            var memberCount = await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public);
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordUtils.Gray)
                 .WithTitle(system.Name ?? null)
                 .WithThumbnail(system.AvatarUrl)
                 .WithFooter($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}");
  
-            var latestSwitch = await _data.GetLatestSwitch(system.Id);
+            var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
-                var switchMembers = await _data.GetSwitchMembers(latestSwitch).ToListAsync();
-                if (switchMembers.Count > 0)
-                    eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
+                var switchMembers = await _repo.GetSwitchMembers(conn, latestSwitch.Id).ToListAsync();
+                                                                                                              if (switchMembers.Count > 0)
+                                                                                                                  eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
                         string.Join(", ", switchMembers.Select(m => m.NameFor(ctx))));
             }
 
@@ -105,11 +103,13 @@ namespace PluralKit.Bot {
 
             await using var conn = await _db.Obtain();
             
-            var guildSettings = guild != null ? await conn.QueryOrInsertMemberGuildConfig(guild.Id, member.Id) : null;
+            var guildSettings = guild != null ? await _repo.GetMemberGuild(conn, guild.Id, member.Id) : null;
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
-            var groups = (await conn.QueryMemberGroups(member.Id)).Where(g => g.Visibility.CanAccess(ctx)).ToList();
+            var groups = await _repo.GetMemberGroups(conn, member.Id)
+                .Where(g => g.Visibility.CanAccess(ctx))
+                .ToListAsync();
             
             var eb = new DiscordEmbedBuilder()
                 // TODO: add URL of website when that's up
@@ -157,7 +157,7 @@ namespace PluralKit.Bot {
 
         public async Task<DiscordEmbed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone, LookupContext ctx)
         {
-            var members = await _data.GetSwitchMembers(sw).ToListAsync();
+            var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new DiscordEmbedBuilder()
                 .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
