@@ -109,6 +109,7 @@ namespace PluralKit.Bot {
 
             var groups = await _repo.GetMemberGroups(conn, member.Id)
                 .Where(g => g.Visibility.CanAccess(ctx))
+                .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
                 .ToListAsync();
             
             var eb = new DiscordEmbedBuilder()
