@@ -34,7 +34,7 @@ namespace PluralKit.Bot
         private async ValueTask TryHandleProxyMessageReactions(MessageReactionAddEventArgs evt)
         {
             // Only proxies in guild text channels
-            if (evt.Channel.Type != ChannelType.Text) return;
+            if (evt.Channel == null || evt.Channel.Type != ChannelType.Text) return;
 
             // Sometimes we get events from users that aren't in the user cache
             // In that case we get a "broken" user object (where eg. calling IsBot throws an exception)
