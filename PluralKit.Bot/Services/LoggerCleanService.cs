@@ -94,16 +94,16 @@ namespace PluralKit.Bot
                     var fuzzy = bot.FuzzyExtractFunc(msg);
                     if (fuzzy == null) return;
 
-                    using var conn = await _db.Obtain();
-                    var mid = await conn.QuerySingleOrDefaultAsync<ulong?>(
-                        "select mid from messages where sender = @User and mid > @ApproxID and guild = @Guild limit 1",
-                        new
-                        {
-                            fuzzy.Value.User,
-                            Guild = msg.Channel.GuildId,
-                            ApproxId = DiscordUtils.InstantToSnowflake(
-                                fuzzy.Value.ApproxTimestamp - TimeSpan.FromSeconds(3))
-                        });
+                    var mid = await _db.Execute(conn =>
+                        conn.QuerySingleOrDefaultAsync<ulong?>(
+                            "select mid from messages where sender = @User and mid > @ApproxID and guild = @Guild limit 1",
+                            new
+                            {
+                                fuzzy.Value.User,
+                                Guild = msg.Channel.GuildId,
+                                ApproxId = DiscordUtils.InstantToSnowflake(
+                                    fuzzy.Value.ApproxTimestamp - TimeSpan.FromSeconds(3))
+                            }));
                     if (mid == null) return; // If we didn't find a corresponding message, bail
                     // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
                     await msg.DeleteAsync();
@@ -114,10 +114,8 @@ namespace PluralKit.Bot
                     var extractedId = bot.ExtractFunc(msg);
                     if (extractedId == null) return; // If we didn't find anything, bail.
 
-                    using var conn = await _db.Obtain();
-                    // We do this through an inline query instead of through DataStore since we don't need all the joins it does
-                    var mid = await conn.QuerySingleOrDefaultAsync<ulong?>(
-                        "select mid from messages where original_mid = @Mid", new {Mid = extractedId.Value});
+                    var mid = await _db.Execute(conn => conn.QuerySingleOrDefaultAsync<ulong?>(
+                        "select mid from messages where original_mid = @Mid", new {Mid = extractedId.Value}));
                     if (mid == null) return;
 
                     // If we've gotten this far, we found a logged deletion of a trigger message. Just yeet it!
