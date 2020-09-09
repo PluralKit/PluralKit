@@ -112,6 +112,9 @@ namespace PluralKit.Core
                 .Enrich.WithProperty("Component", _component)
                 .MinimumLevel.Is(config.ConsoleLogLevel)
                 
+                // Don't want App.Metrics spam
+                .MinimumLevel.Override("App.Metrics", LogEventLevel.Information)
+                
                 // Actual formatting for these is handled in ScalarFormatting
                 .Destructure.AsScalar<SystemId>()
                 .Destructure.AsScalar<MemberId>()
