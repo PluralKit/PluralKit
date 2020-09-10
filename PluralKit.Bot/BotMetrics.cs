@@ -21,5 +21,6 @@ namespace PluralKit.Bot
         public static TimerOptions WebhookResponseTime => new TimerOptions { Name = "Webhook Response Time", Context = "Bot", RateUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Requests, DurationUnit = TimeUnit.Seconds };
         public static TimerOptions MessageContextQueryTime => new TimerOptions { Name = "Message context query duration", Context = "Bot", RateUnit = TimeUnit.Seconds, DurationUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Calls };
         public static TimerOptions ProxyMembersQueryTime => new TimerOptions { Name = "Proxy member query duration", Context = "Bot", RateUnit = TimeUnit.Seconds, DurationUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Calls };
+        public static TimerOptions DiscordApiRequests => new TimerOptions { Name = "Discord API requests", MeasurementUnit = Unit.Requests, Context = "Bot"};
     }
 }

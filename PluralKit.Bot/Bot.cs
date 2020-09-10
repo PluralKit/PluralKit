@@ -21,6 +21,7 @@ using PluralKit.Core;
 using Sentry;
 
 using Serilog;
+using Serilog.Context;
 using Serilog.Events;
 
 namespace PluralKit.Bot
@@ -101,6 +102,11 @@ namespace PluralKit.Bot
 
             async Task HandleEventInner()
             {
+                using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
+                _logger
+                    .ForContext("Elastic", "yes?")
+                    .Debug("Gateway event: {@Event}", evt);
+                
                 await using var serviceScope = _services.BeginLifetimeScope();
                 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
@@ -131,7 +137,13 @@ namespace PluralKit.Bot
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
 
-            _logger.Error(exc, "Exception in bot event handler (Sentry ID: {SentryEventId})", sentryEvent.EventId);
+            _logger
+                .ForContext("Elastic", "yes?")
+                .Error(exc, "Exception in event handler: {SentryEventId}", sentryEvent.EventId);
+
+            // If the event is us responding to our own error messages, don't bother logging
+            if (evt is MessageCreateEventArgs mc && mc.Author.Id == _client.CurrentUser.Id)
+                return;
 
             var shouldReport = exc.IsOurProblem();
             if (shouldReport)
@@ -163,14 +175,14 @@ namespace PluralKit.Bot
         
         private async Task UpdatePeriodic()
         {
-            _logger.Information("Running once-per-minute scheduled tasks");
+            _logger.Debug("Running once-per-minute scheduled tasks");
 
             await UpdateBotStatus();
 
             // Collect some stats, submit them to the metrics backend
             await _collector.CollectStats();
             await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
-            _logger.Information("Submitted metrics to backend");
+            _logger.Debug("Submitted metrics to backend");
         }
 
         private async Task UpdateBotStatus(DiscordClient specificShard = null)

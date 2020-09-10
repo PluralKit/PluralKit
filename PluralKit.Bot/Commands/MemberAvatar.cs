@@ -11,10 +11,12 @@ namespace PluralKit.Bot
     public class MemberAvatar
     {
         private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public MemberAvatar(IDatabase db)
+        public MemberAvatar(IDatabase db, ModelRepository repo)
         {
             _db = db;
+            _repo = repo;
         }
         
         private async Task AvatarClear(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
@@ -67,14 +69,14 @@ namespace PluralKit.Bot
         public async Task ServerAvatar(Context ctx, PKMember target)
         {
             ctx.CheckGuildContext();
-            var guildData = await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id));
+            var guildData = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
             await AvatarCommandTree(AvatarLocation.Server, ctx, target, guildData);
         }
         
         public async Task Avatar(Context ctx, PKMember target)
         {
             var guildData = ctx.Guild != null ?
-                await _db.Execute(c => c.QueryOrInsertMemberGuildConfig(ctx.Guild.Id, target.Id))
+                await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id))
                 : null;
 
             await AvatarCommandTree(AvatarLocation.Member, ctx, target, guildData);
@@ -150,10 +152,10 @@ namespace PluralKit.Bot
             {
                 case AvatarLocation.Server:
                     var serverPatch = new MemberGuildPatch { AvatarUrl = url };
-                    return _db.Execute(c => c.UpsertMemberGuild(target.Id, ctx.Guild.Id, serverPatch));
+                    return _db.Execute(c => _repo.UpsertMemberGuild(c, target.Id, ctx.Guild.Id, serverPatch));
                 case AvatarLocation.Member:
                     var memberPatch = new MemberPatch { AvatarUrl = url };
-                    return _db.Execute(c => c.UpdateMember(target.Id, memberPatch));
+                    return _db.Execute(c => _repo.UpdateMember(c, target.Id, memberPatch));
                 default:
                     throw new ArgumentOutOfRangeException($"Unknown avatar location {location}");
             }

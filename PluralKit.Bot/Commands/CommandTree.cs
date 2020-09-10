@@ -49,7 +49,7 @@ namespace PluralKit.Bot
         public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
         public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
         public static Command GroupMemberList = new Command("group members", "group <group> list", "Lists all members in a group");
-        public static Command GroupRename = new Command("group rename", "group <group> name <new name>", "Renames a group");
+        public static Command GroupRename = new Command("group rename", "group <group> rename <new name>", "Renames a group");
         public static Command GroupDisplayName = new Command("group displayname", "group <member> displayname [display name]", "Changes a group's display name");
         public static Command GroupDesc = new Command("group description", "group <group> description [description]", "Changes a group's description");
         public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
@@ -240,7 +240,7 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemPing, m => m.SystemPing(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
-            else if (ctx.Match("groups", "gs"))
+            else if (ctx.Match("groups", "gs", "g"))
                 await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System));

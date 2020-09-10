@@ -21,6 +21,6 @@
 
         public int CompareTo(GroupId other) => Value.CompareTo(other.Value);
         
-        public override string ToString() => $"Member #{Value}";
+        public override string ToString() => $"Group #{Value}";
     }
 }

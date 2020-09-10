@@ -7,7 +7,7 @@ namespace PluralKit.Bot
 {
     public class CpuStatService
     {
-        private ILogger _logger;
+        private readonly ILogger _logger;
         
         public double LastCpuMeasure { get; private set; }
 

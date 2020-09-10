@@ -10,9 +10,11 @@ namespace PluralKit.Bot
     public class Token
     {
         private readonly IDatabase _db;
-        public Token(IDatabase db)
+        private readonly ModelRepository _repo;
+        public Token(IDatabase db, ModelRepository repo)
         {
             _db = db;
+            _repo = repo;
         }
 
         public async Task GetToken(Context ctx)
@@ -45,7 +47,7 @@ namespace PluralKit.Bot
         private async Task<string> MakeAndSetNewToken(PKSystem system)
         {
             var patch = new SystemPatch {Token = StringUtils.GenerateToken()};
-            system = await _db.Execute(conn => conn.UpdateSystem(system.Id, patch));
+            system = await _db.Execute(conn => _repo.UpdateSystem(conn, system.Id, patch));
             return system.Token;
         }
         

@@ -36,15 +36,15 @@ namespace PluralKit.Bot
         private struct WordPosition
         {
             // Start of the word
-            internal int startPos;
+            internal readonly int startPos;
             
             // End of the word
-            internal int endPos;
+            internal readonly int endPos;
             
             // How much to advance word pointer afterwards to point at the start of the *next* word
-            internal int advanceAfterWord;
+            internal readonly int advanceAfterWord;
 
-            internal bool wasQuoted;
+            internal readonly bool wasQuoted;
 
             public WordPosition(int startPos, int endPos, int advanceAfterWord, bool wasQuoted)
             {

@@ -6,13 +6,15 @@ namespace PluralKit.Bot
 {
     public class System
     {
-        private IDataStore _data;
-        private EmbedService _embeds;
+        private readonly EmbedService _embeds;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
         
-        public System(EmbedService embeds, IDataStore data)
+        public System(EmbedService embeds, IDatabase db, ModelRepository repo)
         {
             _embeds = embeds;
-            _data = data;
+            _db = db;
+            _repo = repo;
         }
         
         public async Task Query(Context ctx, PKSystem system) {
@@ -28,9 +30,15 @@ namespace PluralKit.Bot
             var systemName = ctx.RemainderOrNull();
             if (systemName != null && systemName.Length > Limits.MaxSystemNameLength)
                 throw Errors.SystemNameTooLongError(systemName.Length);
+
+            var system = _db.Execute(async c =>
+            {
+                var system = await _repo.CreateSystem(c, systemName);
+                await _repo.AddAccount(c, system.Id, ctx.Author.Id);
+                return system;
+            });
             
-            var system = await _data.CreateSystem(systemName);
-            await _data.AddAccount(system, ctx.Author.Id);
+            // TODO: better message, perhaps embed like in groups?
             await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
         }
     }

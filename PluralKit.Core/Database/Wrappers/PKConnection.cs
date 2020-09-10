@@ -64,7 +64,11 @@ namespace PluralKit.Core
         protected override async ValueTask<DbTransaction> BeginDbTransactionAsync(IsolationLevel level, CancellationToken ct) => new PKTransaction(await Inner.BeginTransactionAsync(level, ct));
 
         public override void Open() => throw SyncError(nameof(Open));
-        public override void Close() => throw SyncError(nameof(Close));
+        public override void Close()
+        {
+            // Don't throw SyncError here, Dapper calls sync Close() internally so that sucks
+            Inner.Close();
+        }
 
         IDbTransaction IPKConnection.BeginTransaction() => throw SyncError(nameof(BeginTransaction));
         IDbTransaction IPKConnection.BeginTransaction(IsolationLevel level) => throw SyncError(nameof(BeginTransaction));

@@ -41,6 +41,9 @@ namespace PluralKit.Bot
                 logger.Information("Initializing bot");
                 var bot = services.Resolve<Bot>();
                 bot.Init();
+                
+                // Install observer for request/responses
+                DiscordRequestObserver.Install(services);
 
                 // Start the Discord shards themselves (handlers already set up)
                 logger.Information("Connecting to Discord");
@@ -113,7 +116,10 @@ namespace PluralKit.Bot
             var builder = new ContainerBuilder();
             builder.RegisterInstance(config);
             builder.RegisterModule(new ConfigModule<BotConfig>("Bot"));
-            builder.RegisterModule(new LoggingModule("bot"));
+            builder.RegisterModule(new LoggingModule("bot", cfg =>
+            {
+                cfg.Destructure.With<EventDestructuring>();
+            }));
             builder.RegisterModule(new MetricsModule());
             builder.RegisterModule<DataStoreModule>();
             builder.RegisterModule<BotModule>();

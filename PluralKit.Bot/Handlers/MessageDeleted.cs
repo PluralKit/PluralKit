@@ -12,28 +12,29 @@ namespace PluralKit.Bot
     // Double duty :)
     public class MessageDeleted: IEventHandler<MessageDeleteEventArgs>, IEventHandler<MessageBulkDeleteEventArgs>
     {
-        private readonly IDataStore _data;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
         private readonly ILogger _logger;
 
-        public MessageDeleted(IDataStore data, ILogger logger)
+        public MessageDeleted(ILogger logger, IDatabase db, ModelRepository repo)
         {
-            _data = data;
+            _db = db;
+            _repo = repo;
             _logger = logger.ForContext<MessageDeleted>();
         }
         
         public async Task Handle(MessageDeleteEventArgs evt)
         {
             // Delete deleted webhook messages from the data store
-            // (if we don't know whether it's a webhook, delete it just to be safe)
-            if (!evt.Message.WebhookMessage) return;
-            await _data.DeleteMessage(evt.Message.Id);
+            // Most of the data in the given message is wrong/missing, so always delete just to be sure.
+            await _db.Execute(c => _repo.DeleteMessage(c, evt.Message.Id));
         }
 
         public async Task Handle(MessageBulkDeleteEventArgs evt)
         {
             // Same as above, but bulk
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}", evt.Messages.Count, evt.Channel.Id);
-            await _data.DeleteMessagesBulk(evt.Messages.Select(m => m.Id).ToList());
+            await _db.Execute(c => _repo.DeleteMessagesBulk(c, evt.Messages.Select(m => m.Id).ToList()));
         }
     }
 }

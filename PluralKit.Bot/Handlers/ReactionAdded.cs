@@ -13,14 +13,16 @@ namespace PluralKit.Bot
 {
     public class ReactionAdded: IEventHandler<MessageReactionAddEventArgs>
     {
-        private IDataStore _data;
-        private EmbedService _embeds;
-        private ILogger _logger;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
+        private readonly EmbedService _embeds;
+        private readonly ILogger _logger;
 
-        public ReactionAdded(IDataStore data, EmbedService embeds, ILogger logger)
+        public ReactionAdded(EmbedService embeds, ILogger logger, IDatabase db, ModelRepository repo)
         {
-            _data = data;
             _embeds = embeds;
+            _db = db;
+            _repo = repo;
             _logger = logger.ForContext<ReactionAdded>();
         }
 
@@ -32,7 +34,7 @@ namespace PluralKit.Bot
         private async ValueTask TryHandleProxyMessageReactions(MessageReactionAddEventArgs evt)
         {
             // Only proxies in guild text channels
-            if (evt.Channel.Type != ChannelType.Text) return;
+            if (evt.Channel == null || evt.Channel.Type != ChannelType.Text) return;
 
             // Sometimes we get events from users that aren't in the user cache
             // In that case we get a "broken" user object (where eg. calling IsBot throws an exception)
@@ -42,18 +44,21 @@ namespace PluralKit.Bot
             // Ignore reactions from bots (we can't DM them anyway)
             if (evt.User.IsBot) return;
 
+            Task<FullMessage> GetMessage() => 
+                _db.Execute(c => _repo.GetMessage(c, evt.Message.Id));
+
             FullMessage msg;
             switch (evt.Emoji.Name)
             {
                 // Message deletion
                 case "\u274C": // Red X
-                    if ((msg = await _data.GetMessage(evt.Message.Id)) != null)
+                    if ((msg = await GetMessage()) != null)
                         await HandleDeleteReaction(evt, msg);
                     break;                
                 
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
-                    if ((msg = await _data.GetMessage(evt.Message.Id)) != null) 
+                    if ((msg = await GetMessage()) != null) 
                         await HandleQueryReaction(evt, msg);
                     break;
                 
@@ -62,7 +67,7 @@ namespace PluralKit.Bot
                 case "\U0001F3D3": // Ping pong paddle (lol)
                 case "\u23F0": // Alarm clock
                 case "\u2757": // Exclamation mark
-                    if ((msg = await _data.GetMessage(evt.Message.Id)) != null)
+                    if ((msg = await GetMessage()) != null)
                         await HandlePingReaction(evt, msg);
                     break;
             }
@@ -84,7 +89,7 @@ namespace PluralKit.Bot
                 // Message was deleted by something/someone else before we got to it
             }
 
-            await _data.DeleteMessage(evt.Message.Id);
+            await _db.Execute(c => _repo.DeleteMessage(c, evt.Message.Id));
         }
 
         private async ValueTask HandleQueryReaction(MessageReactionAddEventArgs evt, FullMessage msg)

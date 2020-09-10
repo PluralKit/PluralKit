@@ -17,10 +17,12 @@ namespace PluralKit.Bot
     public class Groups
     {
         private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public Groups(IDatabase db)
+        public Groups(IDatabase db, ModelRepository repo)
         {
             _db = db;
+            _repo = repo;
         }
 
         public async Task CreateGroup(Context ctx)
@@ -40,14 +42,14 @@ namespace PluralKit.Bot
                 throw new PKError($"System has reached the maximum number of groups ({Limits.MaxGroupCount}). Please delete unused groups first in order to create new ones.");
 
             // Warn if there's already a group by this name
-            var existingGroup = await conn.QueryGroupByName(ctx.System.Id, groupName);
+            var existingGroup = await _repo.GetGroupByName(conn, ctx.System.Id, groupName);
             if (existingGroup != null) {
                 var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to create another group with the same name?";
                 if (!await ctx.PromptYesNo(msg))
                     throw new PKError("Group creation cancelled.");
             }
             
-            var newGroup = await conn.CreateGroup(ctx.System.Id, groupName);
+            var newGroup = await _repo.CreateGroup(conn, ctx.System.Id, groupName);
             
             var eb = new DiscordEmbedBuilder()
                 .WithDescription($"Your new group, **{groupName}**, has been created, with the group ID **`{newGroup.Hid}`**.\nBelow are a couple of useful commands:")
@@ -70,14 +72,14 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
             
             // Warn if there's already a group by this name
-            var existingGroup = await conn.QueryGroupByName(ctx.System.Id, newName);
+            var existingGroup = await _repo.GetGroupByName(conn, ctx.System.Id, newName);
             if (existingGroup != null && existingGroup.Id != target.Id) {
                 var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to rename this member to that name too?";
                 if (!await ctx.PromptYesNo(msg))
                     throw new PKError("Group creation cancelled.");
             }
 
-            await conn.UpdateGroup(target.Id, new GroupPatch {Name = newName});
+            await _repo.UpdateGroup(conn, target.Id, new GroupPatch {Name = newName});
 
             await ctx.Reply($"{Emojis.Success} Group name changed from **{target.Name}** to **{newName}**.");
         }
@@ -89,7 +91,7 @@ namespace PluralKit.Bot
                 ctx.CheckOwnGroup(target);
                 
                 var patch = new GroupPatch {DisplayName = Partial<string>.Null()};
-                await _db.Execute(conn => conn.UpdateGroup(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Group display name cleared.");
             }
@@ -112,7 +114,7 @@ namespace PluralKit.Bot
                 var newDisplayName = ctx.RemainderOrNull();
                 
                 var patch = new GroupPatch {DisplayName = Partial<string>.Present(newDisplayName)};
-                await _db.Execute(conn => conn.UpdateGroup(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Group display name changed.");
             }
@@ -125,7 +127,7 @@ namespace PluralKit.Bot
                 ctx.CheckOwnGroup(target);
 
                 var patch = new GroupPatch {Description = Partial<string>.Null()};
-                await _db.Execute(conn => conn.UpdateGroup(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Group description cleared.");
             } 
             else if (!ctx.HasNext())
@@ -154,7 +156,7 @@ namespace PluralKit.Bot
                     throw Errors.DescriptionTooLongError(description.Length);
         
                 var patch = new GroupPatch {Description = Partial<string>.Present(description)};
-                await _db.Execute(conn => conn.UpdateGroup(target.Id, patch));
+                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} Group description changed.");
             }
@@ -166,7 +168,7 @@ namespace PluralKit.Bot
             {
                 ctx.CheckOwnGroup(target);
                 
-                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch {Icon = null}));
+                await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {Icon = null}));
                 await ctx.Reply($"{Emojis.Success} Group icon cleared.");
             }
 
@@ -178,7 +180,7 @@ namespace PluralKit.Bot
                     throw Errors.InvalidUrl(img.Url);
                 await AvatarUtils.VerifyAvatarOrThrow(img.Url);
 
-                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch {Icon = img.Url}));
+                await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {Icon = img.Url}));
             
                 var msg = img.Source switch
                 {
@@ -282,8 +284,7 @@ namespace PluralKit.Bot
             
             var system = await GetGroupSystem(ctx, target, conn);
             var pctx = ctx.LookupContextFor(system);
-
-            var memberCount = ctx.MatchPrivateFlag(pctx) ? await conn.QueryGroupMemberCount(target.Id, PrivacyLevel.Public) : await conn.QueryGroupMemberCount(target.Id);
+            var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(conn, target.Id);
 
             var nameField = target.Name;
             if (system.Name != null)
@@ -334,7 +335,7 @@ namespace PluralKit.Bot
                     .Select(m => m.Id)
                     .Distinct()
                     .ToList();
-                await conn.AddMembersToGroup(target.Id, membersNotInGroup);
+                await _repo.AddMembersToGroup(conn, target.Id, membersNotInGroup);
                 
                 if (membersNotInGroup.Count == members.Count)
                     await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
@@ -348,7 +349,7 @@ namespace PluralKit.Bot
                     .Select(m => m.Id)
                     .Distinct()
                     .ToList();
-                await conn.RemoveMembersFromGroup(target.Id, membersInGroup);
+                await _repo.RemoveMembersFromGroup(conn, target.Id, membersInGroup);
                 
                 if (membersInGroup.Count == members.Count)
                     await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
@@ -423,7 +424,7 @@ namespace PluralKit.Bot
 
             async Task SetAll(PrivacyLevel level)
             {
-                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch().WithAllPrivacy(level)));
+                await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch().WithAllPrivacy(level)));
                 
                 if (level == PrivacyLevel.Private)
                     await ctx.Reply($"{Emojis.Success} All {target.Name}'s privacy settings have been set to **{level.LevelName()}**. Other accounts will now see nothing on the group card.");
@@ -433,7 +434,7 @@ namespace PluralKit.Bot
 
             async Task SetLevel(GroupPrivacySubject subject, PrivacyLevel level)
             {
-                await _db.Execute(c => c.UpdateGroup(target.Id, new GroupPatch().WithPrivacy(subject, level)));
+                await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch().WithPrivacy(subject, level)));
                 
                 var subjectName = subject switch
                 {
@@ -476,17 +477,17 @@ namespace PluralKit.Bot
             if (!await ctx.ConfirmWithReply(target.Hid))
                 throw new PKError($"Group deletion cancelled. Note that you must reply with your group ID (`{target.Hid}`) *verbatim*.");
 
-            await _db.Execute(conn => conn.DeleteGroup(target.Id));
+            await _db.Execute(conn => _repo.DeleteGroup(conn, target.Id));
             
             await ctx.Reply($"{Emojis.Success} Group deleted.");
         }
 
-        private static async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
+        private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
         {
             var system = ctx.System;
             if (system?.Id == target.System)
                 return system;
-            return await conn.QuerySystem(target.System)!;
+            return await _repo.GetSystem(conn, target.System)!;
         }
     }
 }

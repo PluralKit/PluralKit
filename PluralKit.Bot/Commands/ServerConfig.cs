@@ -12,12 +12,14 @@ namespace PluralKit.Bot
 {
     public class ServerConfig
     {
-        private IDatabase _db;
-        private LoggerCleanService _cleanService;
-        public ServerConfig(LoggerCleanService cleanService, IDatabase db)
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
+        private readonly LoggerCleanService _cleanService;
+        public ServerConfig(LoggerCleanService cleanService, IDatabase db, ModelRepository repo)
         {
             _cleanService = cleanService;
             _db = db;
+            _repo = repo;
         }
 
         public async Task SetLogChannel(Context ctx)
@@ -32,7 +34,7 @@ namespace PluralKit.Bot
             if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
 
             var patch = new GuildPatch {LogChannel = channel?.Id};
-            await _db.Execute(conn => conn.UpsertGuild(ctx.Guild.Id, patch));
+            await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, patch));
 
             if (channel != null)
                 await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
@@ -59,7 +61,7 @@ namespace PluralKit.Bot
             ulong? logChannel = null;
             await using (var conn = await _db.Obtain())
             {
-                var config = await conn.QueryOrInsertGuildConfig(ctx.Guild.Id);
+                var config = await _repo.GetGuild(conn, ctx.Guild.Id);
                 logChannel = config.LogChannel;
                 var blacklist = config.LogBlacklist.ToHashSet();
                 if (enable)
@@ -68,7 +70,7 @@ namespace PluralKit.Bot
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
                 
                 var patch = new GuildPatch {LogBlacklist = blacklist.ToArray()};
-                await conn.UpsertGuild(ctx.Guild.Id, patch);
+                await _repo.UpsertGuild(conn, ctx.Guild.Id, patch);
             }
 
             await ctx.Reply(
@@ -80,11 +82,12 @@ namespace PluralKit.Bot
         {
             ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
 
-            var blacklist = await _db.Execute(c => c.QueryOrInsertGuildConfig(ctx.Guild.Id));
+            var blacklist = await _db.Execute(c => _repo.GetGuild(c, ctx.Guild.Id));
             
             // Resolve all channels from the cache and order by position
             var channels = blacklist.Blacklist
                 .Select(id => ctx.Guild.GetChannel(id))
+                .Where(c => c != null)
                 .OrderBy(c => c.Position)
                 .ToList();
 
@@ -138,7 +141,7 @@ namespace PluralKit.Bot
             
             await using (var conn = await _db.Obtain())
             {
-                var guild = await conn.QueryOrInsertGuildConfig(ctx.Guild.Id);
+                var guild = await _repo.GetGuild(conn, ctx.Guild.Id);
                 var blacklist = guild.Blacklist.ToHashSet();
                 if (shouldAdd)
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
@@ -146,7 +149,7 @@ namespace PluralKit.Bot
                     blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
                 
                 var patch = new GuildPatch {Blacklist = blacklist.ToArray()};
-                await conn.UpsertGuild(ctx.Guild.Id, patch);
+                await _repo.UpsertGuild(conn, ctx.Guild.Id, patch);
             }
 
             await ctx.Reply($"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
@@ -169,7 +172,7 @@ namespace PluralKit.Bot
                     .WithTitle("Log cleanup settings")
                     .AddField("Supported bots", botList);
 
-                var guildCfg = await _db.Execute(c => c.QueryOrInsertGuildConfig(ctx.Guild.Id));
+                var guildCfg = await _db.Execute(c => _repo.GetGuild(c, ctx.Guild.Id));
                 if (guildCfg.LogCleanupEnabled)
                     eb.WithDescription("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
                 else 
@@ -179,7 +182,7 @@ namespace PluralKit.Bot
             }
 
             var patch = new GuildPatch {LogCleanupEnabled = newValue};
-            await _db.Execute(conn => conn.UpsertGuild(ctx.Guild.Id, patch));
+            await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, patch));
 
             if (newValue)
                 await ctx.Reply($"{Emojis.Success} Log cleanup has been **enabled** for this server. Messages deleted by PluralKit will now be cleaned up from logging channels managed by the following bots:\n- **{botList}**\n\n{Emojis.Note} Make sure PluralKit has the **Manage Messages** permission in the channels in question.\n{Emojis.Note} Also, make sure to blacklist the logging channel itself from the bots in question to prevent conflicts.");

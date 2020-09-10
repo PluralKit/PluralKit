@@ -14,22 +14,24 @@ namespace PluralKit.Core
 {
     public class DataFileService
     {
-        private IDataStore _data;
-        private IDatabase _db;
-        private ILogger _logger;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
+        private readonly ILogger _logger;
 
-        public DataFileService(ILogger logger, IDataStore data, IDatabase db)
+        public DataFileService(ILogger logger, IDatabase db, ModelRepository repo)
         {
-            _data = data;
             _db = db;
+            _repo = repo;
             _logger = logger.ForContext<DataFileService>();
         }
 
         public async Task<DataFileSystem> ExportSystem(PKSystem system)
         {
+            await using var conn = await _db.Obtain();
+            
             // Export members
             var members = new List<DataFileMember>();
-            var pkMembers = _data.GetSystemMembers(system); // Read all members in the system
+            var pkMembers = _repo.GetSystemMembers(conn, system.Id); // Read all members in the system
             
             await foreach (var member in pkMembers.Select(m => new DataFileMember
             {
@@ -49,7 +51,7 @@ namespace PluralKit.Core
 
             // Export switches
             var switches = new List<DataFileSwitch>();
-            var switchList = await _data.GetPeriodFronters(system, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
+            var switchList = await _repo.GetPeriodFronters(conn, system.Id, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
             switches.AddRange(switchList.Select(x => new DataFileSwitch
             {
                 Timestamp = x.TimespanStart.FormatExport(),
@@ -68,7 +70,7 @@ namespace PluralKit.Core
                 Members = members,
                 Switches = switches,
                 Created = system.Created.FormatExport(),
-                LinkedAccounts = (await _data.GetSystemAccounts(system)).ToList()
+                LinkedAccounts = (await _repo.GetSystemAccounts(conn, system.Id)).ToList()
             };
         }
 
@@ -102,6 +104,8 @@ namespace PluralKit.Core
         
         public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system, ulong accountId)
         {
+            await using var conn = await _db.Obtain();
+            
             var result = new ImportResult {
                 AddedNames = new List<string>(),
                 ModifiedNames = new List<string>(),
@@ -112,26 +116,24 @@ namespace PluralKit.Core
             // If we don't already have a system to save to, create one
             if (system == null)
             {
-                system = result.System = await _data.CreateSystem(data.Name);
-                await _data.AddAccount(system, accountId);
+                system = result.System = await _repo.CreateSystem(conn, data.Name);
+                await _repo.AddAccount(conn, system.Id, accountId);
             }
             
-            await using var conn = await _db.Obtain();
-
             // Apply system info
             var patch = new SystemPatch {Name = data.Name};
             if (data.Description != null) patch.Description = data.Description;
             if (data.Tag != null) patch.Tag = data.Tag;
             if (data.AvatarUrl != null) patch.AvatarUrl = data.AvatarUrl;
             if (data.TimeZone != null) patch.UiTz = data.TimeZone ?? "UTC";
-            await conn.UpdateSystem(system.Id, patch);
+            await _repo.UpdateSystem(conn, system.Id, patch);
             
             // -- Member/switch import --
             await using (var imp = await BulkImporter.Begin(system, conn))
             {
                 // Tally up the members that didn't exist before, and check member count on import
                 // If creating the unmatched members would put us over the member limit, abort before creating any members
-                var memberCountBefore = await conn.GetSystemMemberCount(system.Id);
+                var memberCountBefore = await _repo.GetSystemMemberCount(conn, system.Id);
                 var membersToAdd = data.Members.Count(m => imp.IsNewMember(m.Id, m.Name));
                 if (memberCountBefore + membersToAdd > Limits.MaxMemberCount)
                 {

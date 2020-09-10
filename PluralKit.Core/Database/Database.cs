@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -26,6 +25,7 @@ namespace PluralKit.Core
         private readonly ILogger _logger;
         private readonly IMetrics _metrics;
         private readonly DbConnectionCountHolder _countHolder;
+        private readonly string _connectionString;
 
         public Database(CoreConfig config, DbConnectionCountHolder countHolder, ILogger logger,
                         IMetrics metrics)
@@ -34,6 +34,11 @@ namespace PluralKit.Core
             _countHolder = countHolder;
             _metrics = metrics;
             _logger = logger;
+            
+            _connectionString = new NpgsqlConnectionStringBuilder(_config.Database)
+            {
+                Pooling = true, MaxPoolSize = 500, Enlist = false, NoResetOnClose = true
+            }.ConnectionString;
         }
         
         public static void InitStatic()
@@ -77,7 +82,7 @@ namespace PluralKit.Core
             
             // Create a connection and open it
             // We wrap it in PKConnection for tracing purposes
-            var conn = new PKConnection(new NpgsqlConnection(_config.Database), _countHolder, _logger, _metrics);
+            var conn = new PKConnection(new NpgsqlConnection(_connectionString), _countHolder, _logger, _metrics);
             await conn.OpenAsync();
             return conn;
         }
@@ -207,11 +212,19 @@ namespace PluralKit.Core
             await using var conn = await db.Obtain();
             await func(conn);
         }
-        
+
         public static async Task<T> Execute<T>(this IDatabase db, Func<IPKConnection, Task<T>> func)
         {
             await using var conn = await db.Obtain();
             return await func(conn);
+        }
+        
+        public static async IAsyncEnumerable<T> Execute<T>(this IDatabase db, Func<IPKConnection, IAsyncEnumerable<T>> func)
+        {
+            await using var conn = await db.Obtain();
+            
+            await foreach (var val in func(conn))
+                yield return val;
         }
     }
 }

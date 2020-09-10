@@ -15,7 +15,7 @@ namespace PluralKit.Bot
 {
     public class Context
     {
-        private ILifetimeScope _provider;
+        private readonly ILifetimeScope _provider;
 
         private readonly DiscordRestClient _rest;
         private readonly DiscordShardedClient _client;
@@ -24,8 +24,8 @@ namespace PluralKit.Bot
         private readonly Parameters _parameters;
         private readonly MessageContext _messageContext;
 
-        private readonly IDataStore _data;
         private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
         private readonly PKSystem _senderSystem;
         private readonly IMetrics _metrics;
 
@@ -38,10 +38,10 @@ namespace PluralKit.Bot
             _client = provider.Resolve<DiscordShardedClient>();
             _message = message;
             _shard = shard;
-            _data = provider.Resolve<IDataStore>();
             _senderSystem = senderSystem;
             _messageContext = messageContext;
             _db = provider.Resolve<IDatabase>();
+            _repo = provider.Resolve<ModelRepository>();
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
@@ -61,9 +61,8 @@ namespace PluralKit.Bot
         
         public Parameters Parameters => _parameters;
 
-        // TODO: this is just here so the extension methods can access it; should it be public/private/?
-        internal IDataStore DataStore => _data;
         internal IDatabase Database => _db;
+        internal ModelRepository Repository => _repo;
 
         public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
         {

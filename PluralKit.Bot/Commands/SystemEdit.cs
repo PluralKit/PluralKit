@@ -19,15 +19,13 @@ namespace PluralKit.Bot
 {
     public class SystemEdit
     {
-        private IDataStore _data;
-        private IDatabase _db;
-        private EmbedService _embeds;
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
-        public SystemEdit(IDataStore data, EmbedService embeds, IDatabase db)
+        public SystemEdit(IDatabase db, ModelRepository repo)
         {
-            _data = data;
-            _embeds = embeds;
             _db = db;
+            _repo = repo;
         }
 
         public async Task Name(Context ctx)
@@ -37,7 +35,7 @@ namespace PluralKit.Bot
             if (ctx.MatchClear())
             {
                 var clearPatch = new SystemPatch {Name = null};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, clearPatch));
 
                 await ctx.Reply($"{Emojis.Success} System name cleared.");
                 return;
@@ -57,7 +55,7 @@ namespace PluralKit.Bot
                 throw Errors.SystemNameTooLongError(newSystemName.Length);
             
             var patch = new SystemPatch {Name = newSystemName};
-            await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
             
             await ctx.Reply($"{Emojis.Success} System name changed.");
         }
@@ -68,7 +66,7 @@ namespace PluralKit.Bot
             if (ctx.MatchClear())
             {
                 var patch = new SystemPatch {Description = null};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} System description cleared.");
                 return;
@@ -93,7 +91,7 @@ namespace PluralKit.Bot
                 if (newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
                 
                 var patch = new SystemPatch {Description = newDescription};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} System description changed.");
             }
@@ -106,7 +104,7 @@ namespace PluralKit.Bot
             if (ctx.MatchClear())
             {
                 var patch = new SystemPatch {Tag = null};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} System tag cleared.");
             } else if (!ctx.HasNext(skipFlags: false))
@@ -124,7 +122,7 @@ namespace PluralKit.Bot
                         throw Errors.SystemNameTooLongError(newTag.Length);
                 
                 var patch = new SystemPatch {Tag = newTag};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with {newTag.AsCode()} when proxied.");
             }
@@ -136,7 +134,7 @@ namespace PluralKit.Bot
 
             async Task ClearIcon()
             {
-                await _db.Execute(c => c.UpdateSystem(ctx.System.Id, new SystemPatch {AvatarUrl = null}));
+                await _db.Execute(c => _repo.UpdateSystem(c, ctx.System.Id, new SystemPatch {AvatarUrl = null}));
                 await ctx.Reply($"{Emojis.Success} System icon cleared.");
             }
 
@@ -146,7 +144,7 @@ namespace PluralKit.Bot
                     throw Errors.InvalidUrl(img.Url);
                 await AvatarUtils.VerifyAvatarOrThrow(img.Url);
 
-                await _db.Execute(c => c.UpdateSystem(ctx.System.Id, new SystemPatch {AvatarUrl = img.Url}));
+                await _db.Execute(c => _repo.UpdateSystem(c, ctx.System.Id, new SystemPatch {AvatarUrl = img.Url}));
             
                 var msg = img.Source switch
                 {
@@ -192,7 +190,7 @@ namespace PluralKit.Bot
             if (!await ctx.ConfirmWithReply(ctx.System.Hid))
                 throw new PKError($"System deletion cancelled. Note that you must reply with your system ID (`{ctx.System.Hid}`) *verbatim*.");
 
-            await _db.Execute(conn => conn.DeleteSystem(ctx.System.Id));
+            await _db.Execute(conn => _repo.DeleteSystem(conn, ctx.System.Id));
             
             await ctx.Reply($"{Emojis.Success} System deleted.");
         }
@@ -200,7 +198,7 @@ namespace PluralKit.Bot
         public async Task SystemProxy(Context ctx)
         {
             ctx.CheckSystem().CheckGuildContext();
-            var gs = await _db.Execute(c => c.QueryOrInsertSystemGuildConfig(ctx.Guild.Id, ctx.System.Id));
+            var gs = await _db.Execute(c => _repo.GetSystemGuild(c, ctx.Guild.Id, ctx.System.Id));
 
             bool newValue;
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
@@ -216,7 +214,7 @@ namespace PluralKit.Bot
             }
 
             var patch = new SystemGuildPatch {ProxyEnabled = newValue};
-            await _db.Execute(conn => conn.UpsertSystemGuild(ctx.System.Id, ctx.Guild.Id, patch));
+            await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
 
             if (newValue)
                 await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");
@@ -231,7 +229,7 @@ namespace PluralKit.Bot
             if (ctx.MatchClear())
             {
                 var clearPatch = new SystemPatch {UiTz = "UTC"};
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, clearPatch));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, clearPatch));
 
                 await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
                 return;
@@ -253,7 +251,7 @@ namespace PluralKit.Bot
             if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
             
             var patch = new SystemPatch {UiTz = zone.Id};
-            await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
 
             await ctx.Reply($"System time zone changed to **{zone.Id}**.");
         }
@@ -277,7 +275,7 @@ namespace PluralKit.Bot
 
             async Task SetLevel(SystemPrivacySubject subject, PrivacyLevel level)
             {
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch().WithPrivacy(subject, level)));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, new SystemPatch().WithPrivacy(subject, level)));
 
                 var levelExplanation = level switch
                 {
@@ -302,7 +300,7 @@ namespace PluralKit.Bot
 
             async Task SetAll(PrivacyLevel level)
             {
-                await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, new SystemPatch().WithAllPrivacy(level)));
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, new SystemPatch().WithAllPrivacy(level)));
 
                 var msg = level switch
                 {
@@ -334,13 +332,13 @@ namespace PluralKit.Bot
             else {
                 if (ctx.Match("on", "enable")) {
                     var patch = new SystemPatch {PingsEnabled = true};
-                    await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                    await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                     
                     await ctx.Reply("Reaction pings have now been enabled.");
                 }
                 if (ctx.Match("off", "disable")) {
                     var patch = new SystemPatch {PingsEnabled = false};
-                    await _db.Execute(conn => conn.UpdateSystem(ctx.System.Id, patch));
+                    await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                     
                     await ctx.Reply("Reaction pings have now been disabled.");
                 }

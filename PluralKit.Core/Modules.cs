@@ -12,7 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 
 using Serilog;
+using Serilog.Events;
 using Serilog.Formatting.Compact;
+using Serilog.Sinks.Elasticsearch;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PluralKit.Core
@@ -23,7 +25,7 @@ namespace PluralKit.Core
         {
             builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
             builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
-            builder.RegisterType<PostgresDataStore>().AsSelf().As<IDataStore>();
+            builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
             
             builder.Populate(new ServiceCollection().AddMemoryCache());
         }
@@ -31,7 +33,7 @@ namespace PluralKit.Core
 
     public class ConfigModule<T>: Module where T: new()
     {
-        private string _submodule;
+        private readonly string _submodule;
 
         public ConfigModule(string submodule = null)
         {
@@ -80,24 +82,47 @@ namespace PluralKit.Core
     public class LoggingModule: Module
     {
         private readonly string _component;
+        private readonly Action<LoggerConfiguration> _fn;
 
-        public LoggingModule(string component)
+        public LoggingModule(string component, Action<LoggerConfiguration> fn = null)
         {
             _component = component;
+            _fn = fn ?? (_ => { });
         }
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.Register(c => InitLogger(c.Resolve<CoreConfig>())).AsSelf().SingleInstance();
+            builder
+                .Register(c => InitLogger(c.Resolve<CoreConfig>()))
+                .AsSelf()
+                .SingleInstance()
+                // AutoActivate ensures logging is enabled as early as possible in the API startup flow
+                // since we set the Log.Logger global >.>
+                .AutoActivate();
         }
 
         private ILogger InitLogger(CoreConfig config)
         {
+            var consoleTemplate = "[{Timestamp:HH:mm:ss.fff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
             var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
-
-            return new LoggerConfiguration()
+            
+            var logCfg = new LoggerConfiguration()
+                .Enrich.FromLogContext()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
+                .Enrich.WithProperty("Component", _component)
                 .MinimumLevel.Is(config.ConsoleLogLevel)
+                
+                // Don't want App.Metrics spam
+                .MinimumLevel.Override("App.Metrics", LogEventLevel.Information)
+                
+                // Actual formatting for these is handled in ScalarFormatting
+                .Destructure.AsScalar<SystemId>()
+                .Destructure.AsScalar<MemberId>()
+                .Destructure.AsScalar<GroupId>()
+                .Destructure.AsScalar<SwitchId>()
+                .Destructure.ByTransforming<ProxyTag>(t => new { t.Prefix, t.Suffix })
+                .Destructure.With<PatchObjectDestructuring>()
+                
                 .WriteTo.Async(a =>
                 {
                     // Both the same output, except one is raw compact JSON and one is plain text.
@@ -111,19 +136,39 @@ namespace PluralKit.Core
                         restrictedToMinimumLevel: config.FileLogLevel,
                         formatProvider: new UTCTimestampFormatProvider(),
                         buffered: true);
-                    
+
                     a.File(
-                        new RenderedCompactJsonFormatter(),
+                        new RenderedCompactJsonFormatter(new ScalarFormatting.JsonValue()),
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.json",
                         rollingInterval: RollingInterval.Day,
                         flushToDiskInterval: TimeSpan.FromMilliseconds(50),
                         restrictedToMinimumLevel: config.FileLogLevel,
                         buffered: true);
                 })
-                // TODO: render as UTC in the console, too? or just in log files
-                .WriteTo.Async(a => 
-                    a.Console(theme: AnsiConsoleTheme.Code, outputTemplate: outputTemplate, formatProvider: new UTCTimestampFormatProvider()))
-                .CreateLogger();
+                .WriteTo.Async(a =>
+                    a.Console(
+                        theme: AnsiConsoleTheme.Code,
+                        outputTemplate: consoleTemplate,
+                        restrictedToMinimumLevel: config.ConsoleLogLevel));
+
+            if (config.ElasticUrl != null)
+            {
+                var elasticConfig = new ElasticsearchSinkOptions(new Uri(config.ElasticUrl))
+                {
+                    AutoRegisterTemplate = true,
+                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
+                    MinimumLogEventLevel = LogEventLevel.Verbose,
+                    IndexFormat = "pluralkit-logs-{0:yyyy.MM.dd}",
+                    CustomFormatter = new ScalarFormatting.Elasticsearch()
+                };
+               
+                logCfg.WriteTo
+                    .Conditional(e => e.Properties.ContainsKey("Elastic"), 
+                        c => c.Elasticsearch(elasticConfig));
+            }
+
+            _fn.Invoke(logCfg);
+            return Log.Logger = logCfg.CreateLogger();
         }
     }
 

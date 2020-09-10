@@ -15,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-using PluralKit.API;
 using PluralKit.Core;
 
 namespace PluralKit.API
@@ -91,7 +90,7 @@ namespace PluralKit.API
         {
             builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build())
                 .As<IConfiguration>();
-            builder.RegisterModule(new ConfigModule<object>());
+            builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
             builder.RegisterModule(new LoggingModule("api"));
             builder.RegisterModule(new MetricsModule("API"));
             builder.RegisterModule<DataStoreModule>();

@@ -25,6 +25,7 @@
       <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.0" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="4.1.1" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="4.1.1" />
+      <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
       <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="5.4.1" />
       <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="5.1.1" />
       <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="5.4.1" />
