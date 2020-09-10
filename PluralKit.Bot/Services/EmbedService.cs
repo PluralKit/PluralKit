@@ -32,7 +32,7 @@ namespace PluralKit.Bot {
             
             // Fetch/render info for all accounts simultaneously
             var accounts = await _repo.GetSystemAccounts(conn, system.Id);
-            var users = await Task.WhenAll(accounts.Select(async uid => (await client.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var users = await Task.WhenAll(accounts.Select(async uid => (await cctx.Shard.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
 
             var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
 
