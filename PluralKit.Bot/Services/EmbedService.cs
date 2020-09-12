@@ -203,7 +203,10 @@ namespace PluralKit.Bot {
 
             var roles = memberInfo?.Roles?.ToList();
             if (roles != null && roles.Count > 0)
-                eb.AddField($"Account roles ({roles.Count})", string.Join(", ", roles.Select(role => role.Name)));
+            {
+                var rolesString = string.Join(", ", roles.Select(role => role.Name));
+                eb.AddField($"Account roles ({roles.Count})", rolesString.Truncate(1024));
+            }
             
             return eb.Build();
         }
