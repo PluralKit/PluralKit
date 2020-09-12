@@ -39,7 +39,9 @@ namespace PluralKit.Bot
 
                 if (uri.Scheme != "http" && uri.Scheme != "https")
                     throw Errors.InvalidUrl(arg);
-                return new ParsedImage {Url = TryRewriteCdnUrl(uri.ToString()), Source = AvatarSource.Url};
+                
+                // ToString URL-decodes, which breaks URLs to spaces; AbsoluteUri doesn't
+                return new ParsedImage {Url = TryRewriteCdnUrl(uri.AbsoluteUri), Source = AvatarSource.Url};
             }
             
             // If we have an attachment, use that 
