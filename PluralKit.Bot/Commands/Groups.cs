@@ -284,7 +284,7 @@ namespace PluralKit.Bot
             
             var system = await GetGroupSystem(ctx, target, conn);
             var pctx = ctx.LookupContextFor(system);
-            var memberCount = await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public);
+            var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(conn, target.Id);
 
             var nameField = target.Name;
             if (system.Name != null)
