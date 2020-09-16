@@ -44,11 +44,7 @@ namespace PluralKit.Bot
                     if (!response.IsSuccessStatusCode) throw Errors.InvalidImportFile;
                     var json = await response.Content.ReadAsStringAsync();
 
-                    var settings = new JsonSerializerSettings
-                    {
-                        MissingMemberHandling = MissingMemberHandling.Error
-                    };
-                    
+                    var settings = new JsonSerializerSettings();
 
                     DataFileSystem data;
                     
