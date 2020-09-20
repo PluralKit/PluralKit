@@ -50,6 +50,7 @@ namespace PluralKit.Bot
 
         public async Task Handle(MessageCreateEventArgs evt)
         {
+            if (evt.Author?.Id == _client.CurrentUser?.Id) return;
             if (evt.Message.MessageType != MessageType.Default) return;
             if (IsDuplicateMessage(evt.Message)) return;
             

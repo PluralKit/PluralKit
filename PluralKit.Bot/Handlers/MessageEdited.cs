@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 
 using App.Metrics;
 
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 
 using PluralKit.Core;
@@ -16,18 +17,22 @@ namespace PluralKit.Bot
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly IMetrics _metrics;
+        private readonly DiscordShardedClient _client;
 
-        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics, ModelRepository repo)
+        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics, ModelRepository repo, DiscordShardedClient client)
         {
             _lastMessageCache = lastMessageCache;
             _proxy = proxy;
             _db = db;
             _metrics = metrics;
             _repo = repo;
+            _client = client;
         }
 
         public async Task Handle(MessageUpdateEventArgs evt)
         {
+            if (evt.Author?.Id == _client.CurrentUser?.Id) return;
+            
             // Edit message events sometimes arrive with missing data; double-check it's all there
             if (evt.Message.Content == null || evt.Author == null || evt.Channel.Guild == null) return;
             
