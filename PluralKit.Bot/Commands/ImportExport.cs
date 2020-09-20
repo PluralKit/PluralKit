@@ -9,6 +9,8 @@ using Newtonsoft.Json;
 using DSharpPlus.Exceptions;
 using DSharpPlus.Entities;
 
+using Newtonsoft.Json.Linq;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -16,6 +18,12 @@ namespace PluralKit.Bot
     public class ImportExport
     {
         private readonly DataFileService _dataFiles;
+        private readonly JsonSerializerSettings _settings = new JsonSerializerSettings
+        {
+            // Otherwise it'll mess up/reformat the ISO strings for ???some??? reason >.>
+            DateParseHandling = DateParseHandling.None
+        };
+        
         public ImportExport(DataFileService dataFiles)
         {
             _dataFiles = dataFiles;
@@ -41,51 +49,22 @@ namespace PluralKit.Bot
                         throw Errors.InvalidImportFile;
                     }
 
-                    if (!response.IsSuccessStatusCode) throw Errors.InvalidImportFile;
-                    var json = await response.Content.ReadAsStringAsync();
-
-                    var settings = new JsonSerializerSettings();
+                    if (!response.IsSuccessStatusCode) 
+                        throw Errors.InvalidImportFile;
 
                     DataFileSystem data;
-                    
-                    // TODO: can we clean up this mess?
                     try
                     {
-                        data = JsonConvert.DeserializeObject<DataFileSystem>(json, settings);
+                        var json = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync(), _settings);
+                        data = await LoadSystem(ctx, json);
                     }
                     catch (JsonException)
                     {
-                        try
-                        {
-                            var tupperbox = JsonConvert.DeserializeObject<TupperboxProfile>(json, settings);
-                            if (!tupperbox.Valid) throw Errors.InvalidImportFile;
-                            
-                            var res = tupperbox.ToPluralKit();
-                            if (res.HadGroups || res.HadIndividualTags)
-                            {
-                                var issueStr =
-                                    $"{Emojis.Warn} The following potential issues were detected converting your Tupperbox input file:";
-                                if (res.HadGroups)
-                                    issueStr +=
-                                        "\n- PluralKit does not support member groups. Members will be imported without groups.";
-                                if (res.HadIndividualTags)
-                                    issueStr +=
-                                        "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, those tags will be applied to the members' *display names*/nicknames instead.";
-
-                                var msg = $"{issueStr}\n\nDo you want to proceed with the import?";
-                                if (!await ctx.PromptYesNo(msg)) throw Errors.ImportCancelled;
-                            }
-                            
-                            data = res.System;
-                        }
-                        catch (JsonException)
-                        {
-                            throw Errors.InvalidImportFile;
-                        }
+                        throw Errors.InvalidImportFile;
                     }
-                    
-                    
-                    if (!data.Valid) throw Errors.InvalidImportFile;
+
+                    if (!data.Valid) 
+                        throw Errors.InvalidImportFile;
 
                     if (data.LinkedAccounts != null && !data.LinkedAccounts.Contains(ctx.Author.Id))
                     {
@@ -111,7 +90,39 @@ namespace PluralKit.Bot
                 }
             });
         }
-        
+
+        private async Task<DataFileSystem> LoadSystem(Context ctx, JObject json)
+        {
+            if (json.ContainsKey("tuppers"))
+                return await ImportFromTupperbox(ctx, json);
+
+            return json.ToObject<DataFileSystem>();
+        }
+
+        private async Task<DataFileSystem> ImportFromTupperbox(Context ctx, JObject json)
+        {
+            var tupperbox = json.ToObject<TupperboxProfile>();
+            if (!tupperbox.Valid)
+                throw Errors.InvalidImportFile;
+                            
+            var res = tupperbox.ToPluralKit();
+            if (res.HadGroups || res.HadIndividualTags)
+            {
+                var issueStr =
+                    $"{Emojis.Warn} The following potential issues were detected converting your Tupperbox input file:";
+                if (res.HadGroups)
+                    issueStr += "\n- PluralKit does not support member groups. Members will be imported without groups.";
+                if (res.HadIndividualTags)
+                    issueStr += "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, those tags will be applied to the members' *display names*/nicknames instead.";
+
+                var msg = $"{issueStr}\n\nDo you want to proceed with the import?";
+                if (!await ctx.PromptYesNo(msg))
+                    throw Errors.ImportCancelled;
+            }
+
+            return res.System;
+        }
+
         public async Task Export(Context ctx)
         {
             ctx.CheckSystem();
