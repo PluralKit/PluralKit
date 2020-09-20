@@ -33,16 +33,18 @@ namespace PluralKit.Bot
         private readonly ILifetimeScope _services;
         private readonly PeriodicStatCollector _collector;
         private readonly IMetrics _metrics;
+        private readonly ErrorMessageService _errorMessageService;
 
         private bool _hasReceivedReady = false;
         private Timer _periodicTask; // Never read, just kept here for GC reasons
 
-        public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics)
+        public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics, ErrorMessageService errorMessageService)
         {
             _client = client;
             _services = services;
             _collector = collector;
             _metrics = metrics;
+            _errorMessageService = errorMessageService;
             _logger = logger.ForContext<Bot>();
         }
 
@@ -164,12 +166,8 @@ namespace PluralKit.Bot
 
                 // Once we've sent it to Sentry, report it to the user (if we have permission to)
                 var reportChannel = handler.ErrorChannelFor(evt);
-                if (reportChannel != null && reportChannel.BotHasAllPermissions(Permissions.SendMessages))
-                {
-                    var eid = sentryEvent.EventId;
-                    await reportChannel.SendMessageFixedAsync(
-                        $"{Emojis.Error} Internal error occurred. Please join the support server (<https://discord.gg/PczBt78>), and send the developer this ID: `{eid}`\nBe sure to include a description of what you were doing to make the error occur.");
-                }
+                if (reportChannel != null && reportChannel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
+                    await _errorMessageService.SendErrorMessage(reportChannel, sentryEvent.EventId.ToString());
             }
         }
         
