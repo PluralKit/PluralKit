@@ -77,6 +77,7 @@ namespace PluralKit.Bot
         private bool IsLatchExpired(MessageContext ctx)
         {
             if (ctx.LastMessage == null) return true;
+            if (ctx.LatchTimeout == 0) return false;
             var timestamp = DiscordUtils.SnowflakeToInstant(ctx.LastMessage.Value);
             return _clock.GetCurrentInstant() - timestamp > Duration.FromHours(ctx.LatchTimeout);
         }
