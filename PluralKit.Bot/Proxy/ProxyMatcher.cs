@@ -55,13 +55,13 @@ namespace PluralKit.Bot
                 AutoproxyMode.Front when ctx.LastSwitchMembers.Length > 0 => 
                     members.FirstOrDefault(m => m.Id == ctx.LastSwitchMembers[0]),
                 
-                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx.LastMessage) =>
+                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx) =>
                     members.FirstOrDefault(m => m.Id == ctx.LastMessageMember.Value),
                 
                 _ => null
             };
 
-            if (member == null) return false;
+            if (member == null || (ctx.AutoproxyMode != AutoproxyMode.Member && member.DisableAutoproxy)) return false;
             match = new ProxyMatch
             {
                 Content = messageContent,

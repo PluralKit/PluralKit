@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using Newtonsoft.Json;
 
@@ -24,6 +24,7 @@ namespace PluralKit.Core {
         public bool KeepProxy { get; private set; }
         public Instant Created { get; private set; }
         public int MessageCount { get; private set; }
+        public bool DisableAutoproxy { get; private set; }
 
         public PrivacyLevel MemberVisibility { get; private set; }
         public PrivacyLevel DescriptionPrivacy { get; private set; }

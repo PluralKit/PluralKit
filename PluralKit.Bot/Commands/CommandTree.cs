@@ -42,6 +42,7 @@ namespace PluralKit.Bot
         public static Command MemberServerAvatar = new Command("member serveravatar", "member <member> serveravatar [url|@mention]", "Changes a member's avatar in the current server");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
+        public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Disables latch/front autoproxy for a member");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command MemberRandom = new Command("random", "random", "Looks up a random member from your system");
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
@@ -351,6 +352,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
+            else if (ctx.Match("autoproxy"))
+                await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
             else if (ctx.Match("private", "hidden", "hide"))
