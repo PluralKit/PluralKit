@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 namespace PluralKit.Core
 {
     public class SystemPatch: PatchObject
@@ -9,6 +9,7 @@ namespace PluralKit.Core
         public Partial<string?> AvatarUrl { get; set; }
         public Partial<string?> Token { get; set; }
         public Partial<string> UiTz { get; set; }
+        public Partial<int> LatchTimeout { get; set; }
         public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
         public Partial<PrivacyLevel> MemberListPrivacy { get; set; }
         public Partial<PrivacyLevel> GroupListPrivacy { get; set; }
@@ -23,6 +24,7 @@ namespace PluralKit.Core
             .With("avatar_url", AvatarUrl)
             .With("token", Token)
             .With("ui_tz", UiTz)
+            .With("latch_timeout", LatchTimeout)
             .With("description_privacy", DescriptionPrivacy)
             .With("member_list_privacy", MemberListPrivacy)
             .With("group_list_privacy", GroupListPrivacy)

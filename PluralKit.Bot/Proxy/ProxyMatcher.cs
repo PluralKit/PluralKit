@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 using NodaTime;
@@ -10,7 +10,6 @@ namespace PluralKit.Bot
     public class ProxyMatcher
     {
         private static readonly char AutoproxyEscapeCharacter = '\\';
-        private static readonly Duration LatchExpiryTime = Duration.FromHours(6);
 
         private readonly IClock _clock;
         private readonly ProxyTagParser _parser;
@@ -75,11 +74,11 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool IsLatchExpired(ulong? messageId)
+        private bool IsLatchExpired(MessageContext ctx)
         {
-            if (messageId == null) return true;
-            var timestamp = DiscordUtils.SnowflakeToInstant(messageId.Value);
-            return _clock.GetCurrentInstant() - timestamp > LatchExpiryTime;
+            if (ctx.LastMessage == null) return true;
+            var timestamp = DiscordUtils.SnowflakeToInstant(ctx.LastMessage.Value);
+            return _clock.GetCurrentInstant() - timestamp > Duration.FromHours(ctx.LatchTimeout);
         }
     }
 }

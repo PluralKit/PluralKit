@@ -1,4 +1,4 @@
-﻿create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
+create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
     returns table (
         system_id int,
         log_channel bigint,
@@ -14,7 +14,8 @@
         last_switch_members int[],
         last_switch_timestamp timestamp,
         system_tag text,
-        system_avatar text
+        system_avatar text,
+        latch_timeout integer
     )
 as $$
     -- CTEs to query "static" (accessible only through args) data
@@ -37,7 +38,8 @@ as $$
         system_last_switch.members as last_switch_members,
         system_last_switch.timestamp as last_switch_timestamp,
         system.tag as system_tag,
-        system.avatar_url as system_avatar
+        system.avatar_url as system_avatar,
+        system.latch_timeout as latch_timeout
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder
