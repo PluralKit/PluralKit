@@ -63,6 +63,9 @@ namespace PluralKit.Bot
         public static Command SwitchDelete = new Command("switch delete", "switch delete [all]", "Deletes the latest switch (or them all)");
         public static Command Link = new Command("link", "link <account>", "Links your system to another account");
         public static Command Unlink = new Command("unlink", "unlink [account]", "Unlinks your system from an account");
+        public static Command ApiUrl = new Command("api url", "api url", "Show the API url for this PluralKit instance");
+        public static Command ApiTokenGet = new Command("api token", "api token", "Gets your system's API token");
+        public static Command ApiTokenRefresh = new Command("api token refresh", "api token refresh", "Resets your system's API token");
         public static Command TokenGet = new Command("token", "token", "Gets your system's API token");
         public static Command TokenRefresh = new Command("token refresh", "token refresh", "Resets your system's API token");
         public static Command Import = new Command("import", "import [fileurl]", "Imports system information from a data file");
@@ -106,13 +109,16 @@ namespace PluralKit.Bot
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
 
         public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
+
+        public static Command[] ApiCommands = {ApiUrl, ApiTokenGet, ApiTokenRefresh};
         
         private DiscordShardedClient _client;
+		private readonly CoreConfig _config;
 
-        public CommandTree(DiscordShardedClient client)
+        public CommandTree(DiscordShardedClient client, CoreConfig config)
         {
-            
             _client = client;
+            _config = config;
         }
 
         public Task ExecuteCommand(Context ctx)
@@ -135,11 +141,26 @@ namespace PluralKit.Bot
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
                 return ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx));
-            if (ctx.Match("token"))
+            if (ctx.Match("api")) {
+                if (_config.ApiUrl == "") return ctx.Reply($"{Emojis.Error} This instance does not have an API url set.");
+                if (ctx.Match("token")) {
+                    if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
+                        return ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx));
+                    else
+                        return ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx));
+                } else if (ctx.Match("url")){
+                    return ctx.Execute<Api>(ApiUrl, m => m.GetUrl(ctx));
+                } else {
+                    return PrintCommandNotFoundError(ctx, ApiUrl, ApiTokenGet, ApiTokenRefresh);
+                }
+            }
+            if (ctx.Match("token")) {
+                if (_config.ApiUrl == "") return ctx.Reply($"{Emojis.Error} This instance does not have an API url set.");
                 if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
-                    return ctx.Execute<Token>(TokenRefresh, m => m.RefreshToken(ctx));
+                    return ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx, true));
                 else
-                    return ctx.Execute<Token>(TokenGet, m => m.GetToken(ctx));
+                    return ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx, true));
+            }
             if (ctx.Match("import"))
                 return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
             if (ctx.Match("export"))

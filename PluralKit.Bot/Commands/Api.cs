@@ -7,17 +7,25 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
-    public class Token
+    public class Api
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
-        public Token(IDatabase db, ModelRepository repo)
+		private readonly CoreConfig _config;
+
+        public Api(IDatabase db, ModelRepository repo, CoreConfig config)
         {
             _db = db;
             _repo = repo;
+			_config = config;
         }
 
-        public async Task GetToken(Context ctx)
+		public async Task GetUrl(Context ctx) {
+			var GetTokenMessage = ctx.System != null ? "\nUse the **pk;api token** command to get an API authorization token." : "";
+			await ctx.Reply($"The API url for this instance is {_config.ApiUrl}.\nAPI documentation can be found at <https://pluralkit.me/api>.{GetTokenMessage}");
+		}
+
+        public async Task GetToken(Context ctx, bool deprecated = false)
         {
             ctx.CheckSystem();
 
@@ -42,6 +50,8 @@ namespace PluralKit.Bot
                 if (!(ctx.Channel is DiscordDmChannel))
                     await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
             }
+
+			if (deprecated) await ctx.Reply($"{Emojis.Note} This command is deprecated. Please start using `pk;api token` instead.");
         }
 
         private async Task<string> MakeAndSetNewToken(PKSystem system)
@@ -51,7 +61,7 @@ namespace PluralKit.Bot
             return system.Token;
         }
         
-        public async Task RefreshToken(Context ctx)
+        public async Task RefreshToken(Context ctx, bool deprecated = false)
         {
             ctx.CheckSystem();
             
@@ -83,6 +93,8 @@ namespace PluralKit.Bot
                 if (!(ctx.Channel is DiscordDmChannel))
                     await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
             }
+
+			if (deprecated) await ctx.Reply($"{Emojis.Note} This command is deprecated. Please start using `pk;api token refresh` instead.");
         }
     }
 }
