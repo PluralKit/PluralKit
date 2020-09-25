@@ -68,7 +68,7 @@ namespace PluralKit.Bot
             // It's possible to "move" a webhook to a different channel after creation
             // Here, we ensure it's actually still pointing towards the proper channel, and if not, wipe and refetch one.
             var webhook = await lazyWebhookValue.Value;
-            if (webhook.ChannelId != channel.Id) return await InvalidateAndRefreshWebhook(channel, webhook);
+            if (webhook.ChannelId != channel.Id && webhook.ChannelId != 0) return await InvalidateAndRefreshWebhook(channel, webhook);
             return webhook;
         }
 
