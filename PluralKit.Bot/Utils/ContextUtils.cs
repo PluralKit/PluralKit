@@ -17,6 +17,12 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
+        public static async Task<bool> ConfirmClear(this Context ctx, string toClear)
+        {
+            if (!(await ctx.PromptYesNo($"{Emojis.Warn} Are you sure you want to clear {toClear}?"))) throw Errors.GenericCancelled();
+            else return true;
+        }
+
         public static async Task<bool> PromptYesNo(this Context ctx, String msgString, DiscordUser user = null, Duration? timeout = null, IEnumerable<IMention> mentions = null)
         {
             DiscordMessage message;

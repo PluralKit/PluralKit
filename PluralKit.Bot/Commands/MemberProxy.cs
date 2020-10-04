@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -46,7 +46,7 @@ namespace PluralKit.Bot
             }
             
             // "Sub"command: clear flag
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear())
             {
                 // If we already have multiple tags, this would clear everything, so prompt that
                 if (target.ProxyTags.Count > 1)
