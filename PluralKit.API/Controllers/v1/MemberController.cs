@@ -40,18 +40,21 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult<JObject>> PostMember([FromBody] JObject properties)
         {
-            var system = User.CurrentSystem();
             if (!properties.ContainsKey("name"))
                 return BadRequest("Member name must be specified.");
+            
+            var systemId = User.CurrentSystem();
 
             await using var conn = await _db.Obtain();
+            var systemData = await _repo.GetSystem(conn, systemId);
 
             // Enforce per-system member limit
-            var memberCount = await conn.QuerySingleAsync<int>("select count(*) from members where system = @System", new {System = system});
-            if (memberCount >= Limits.MaxMemberCount)
-                return BadRequest($"Member limit reached ({memberCount} / {Limits.MaxMemberCount}).");
+            var memberCount = await conn.QuerySingleAsync<int>("select count(*) from members where system = @System", new {System = systemId});
+            var memberLimit = systemData?.MemberLimitOverride ?? Limits.MaxMemberCount;
+            if (memberCount >= memberLimit)
+                return BadRequest($"Member limit reached ({memberCount} / {memberLimit}).");
 
-            var member = await _repo.CreateMember(conn, system, properties.Value<string>("name"));
+            var member = await _repo.CreateMember(conn, systemId, properties.Value<string>("name"));
             MemberPatch patch;
             try
             {

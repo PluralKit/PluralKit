@@ -37,8 +37,9 @@ namespace PluralKit.Bot
 
             // Enforce per-system member limit
             var memberCount = await _repo.GetSystemMemberCount(conn, ctx.System.Id);
-            if (memberCount >= Limits.MaxMemberCount)
-                throw Errors.MemberLimitReachedError;
+            var memberLimit = ctx.System.MemberLimitOverride ?? Limits.MaxMemberCount;
+            if (memberCount >= memberLimit)
+                throw Errors.MemberLimitReachedError(memberLimit);
 
             // Create the member
             var member = await _repo.CreateMember(conn, ctx.System.Id, memberName);
