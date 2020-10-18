@@ -53,12 +53,28 @@ namespace PluralKit.Bot
 
         private async Task AutoproxyLatch(Context ctx)
         {
-            if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Latch)
-                await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
-            else
+
+            if (ctx.Match("timeout", "duration"))
             {
-                await UpdateAutoproxy(ctx, AutoproxyMode.Latch, null);
-                await ctx.Reply($"{Emojis.Success} Autoproxy set to latch mode in this server. Messages will now be autoproxied using the *last-proxied member* in this server.");
+                if (!ctx.HasNext())
+                    await ctx.Reply($"The current latch timeout duration for your system is {ctx.System.LatchTimeout} hour(s).");
+                else {
+                    int newTimeout = 6;
+                    if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = 0;
+                    else if (ctx.Match("reset", "default")) newTimeout = 6;
+                    else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeout)) throw new PKError("Duration must be an integer.");
+                    await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, new SystemPatch{LatchTimeout = newTimeout}));
+                    var resp = (newTimeout != 0) ? $"Latch duration set to {newTimeout} hours." : "Latch timeout disabled.";
+                    await ctx.Reply(resp);
+                }
+            } else {
+                if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Latch)
+                    await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
+                else
+                {
+                    await UpdateAutoproxy(ctx, AutoproxyMode.Latch, null);
+                    await ctx.Reply($"{Emojis.Success} Autoproxy set to latch mode in this server. Messages will now be autoproxied using the *last-proxied member* in this server.");
+                }
             }
         }
 

@@ -28,7 +28,7 @@ namespace PluralKit.Bot
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
         public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
         public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
-        public static Command Autoproxy = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for this server");
+        public static Command Autoproxy = new Command("autoproxy", "autoproxy [off|front|latch [timeout [duration|off|reset]]|member]", "Sets your system's autoproxy mode for this server");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
         public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
