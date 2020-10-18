@@ -62,7 +62,7 @@ namespace PluralKit.Bot
                 _ => null
             };
 
-            if (member == null) return false;
+            if (member == null || (ctx.AutoproxyMode != AutoproxyMode.Member && member.DisableAutoproxy)) return false;
             match = new ProxyMatch
             {
                 Content = messageContent,

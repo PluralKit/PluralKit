@@ -373,6 +373,36 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
         }
 
+        public async Task MemberAutoproxy(Context ctx, PKMember target)
+        {
+            if (ctx.System == null) throw Errors.NoSystemError;
+            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+
+            bool newValue;
+            // having the internal boolvalue be *opposite* to the user-facing bool value is confusing
+            // maybe let's *not* do that at some point
+            if (ctx.Match("on", "enabled", "true", "yes") || ctx.MatchFlag("on", "enabled", "true", "yes")) newValue = false;
+            else if (ctx.Match("off", "disabled", "false", "no") || ctx.MatchFlag("off", "disabled", "false", "no")) newValue = true;
+            else if (ctx.HasNext()) throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else
+            {
+                if (target.DisableAutoproxy)
+                    await ctx.Reply("Latch/front autoproxy are **disabled** for this member. This member will not be automatically proxied when autoproxy is set to latch or front mode.");
+                else
+                    await ctx.Reply("Latch/front autoproxy are **enabled** for this member. This member will be automatically proxied when autoproxy is set to latch or front mode.");
+                return;
+            };
+
+            var patch = new MemberPatch {DisableAutoproxy = Partial<bool>.Present(newValue)};
+            await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
+
+            // again, this is confusing
+            if (!newValue)
+                await ctx.Reply($"{Emojis.Success} Latch / front autoproxy have been **enabled** for this member.");
+            else
+                await ctx.Reply($"{Emojis.Success} Latch / front autoproxy have been **disabled** for this member.");
+        }
+
         public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
         {
             if (ctx.System == null) throw Errors.NoSystemError;

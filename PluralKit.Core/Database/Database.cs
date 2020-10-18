@@ -19,7 +19,7 @@ namespace PluralKit.Core
     internal class Database: IDatabase
     {
         private const string RootPath = "PluralKit.Core.Database"; // "resource path" root for SQL files
-        private const int TargetSchemaVersion = 10;
+        private const int TargetSchemaVersion = 11;
         
         private readonly CoreConfig _config;
         private readonly ILogger _logger;
