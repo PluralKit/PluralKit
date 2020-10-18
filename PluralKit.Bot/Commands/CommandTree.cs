@@ -189,9 +189,9 @@ namespace PluralKit.Bot
             if (ctx.Match("random", "r"))
                 return ctx.Execute<Member>(MemberRandom, m => m.MemberRandom(ctx));
 
-            ctx.Reply(
+            // remove compiler warning
+            return ctx.Reply(
                 $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
-            return Task.CompletedTask;
         }
 
         private async Task HandleSystemCommand(Context ctx)
