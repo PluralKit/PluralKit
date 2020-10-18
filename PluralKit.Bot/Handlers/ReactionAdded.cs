@@ -48,12 +48,15 @@ namespace PluralKit.Bot
                 _db.Execute(c => _repo.GetMessage(c, evt.Message.Id));
 
             FullMessage msg;
+            CommandMessage cmdmsg;
             switch (evt.Emoji.Name)
             {
                 // Message deletion
                 case "\u274C": // Red X
                     if ((msg = await GetMessage()) != null)
                         await HandleDeleteReaction(evt, msg);
+                    else if ((cmdmsg = await _db.Execute(conn => _repo.GetCommandMessage(conn, evt.Message.Id))) != null)
+                        await HandleCommandDeleteReaction(evt, cmdmsg);
                     break;                
                 
                 case "\u2753": // Red question mark
@@ -90,6 +93,25 @@ namespace PluralKit.Bot
             }
 
             await _db.Execute(c => _repo.DeleteMessage(c, evt.Message.Id));
+        }
+
+        private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEventArgs evt, CommandMessage msg)
+        {
+            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
+
+            // Can only delete your own message
+            if (msg.author_id != evt.User.Id) return;
+
+            try
+            {
+                await evt.Message.DeleteAsync();
+            }
+            catch (NotFoundException)
+            {
+                // Message was deleted by something/someone else before we got to it
+            }
+
+            // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
         }
 
         private async ValueTask HandleQueryReaction(MessageReactionAddEventArgs evt, FullMessage msg)

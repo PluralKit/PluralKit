@@ -4,7 +4,7 @@
 create table command_message
 (
 	message_id bigint primary key,
-	invoker_id bigint not null,
+	author_id bigint not null,
 	timestamp timestamp not null default now()
 );
 
