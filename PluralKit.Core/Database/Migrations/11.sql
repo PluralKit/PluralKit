@@ -10,7 +10,7 @@ create table command_message
 
 create function cleanup_command_message() returns void as $$
 begin
-    delete from command_message where timestamp < now() - interval '1 hour';
+    delete from command_message where timestamp < now() - interval '2 hours';
 end;
 $$ language plpgsql;
 
