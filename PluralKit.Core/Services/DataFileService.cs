@@ -206,7 +206,8 @@ namespace PluralKit.Core
         [JsonIgnore] public bool Valid =>
             TimeZoneValid &&
             Members != null &&
-            Members.Count <= Limits.MaxMemberCount &&
+            // no need to check this here, it is checked later as part of the import
+            // Members.Count <= Limits.MaxMemberCount &&
             Members.All(m => m.Valid) &&
             Switches != null &&
             Switches.Count < 10000 &&
