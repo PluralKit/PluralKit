@@ -141,8 +141,9 @@ namespace PluralKit.Bot
             try
             {
                 var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
-                await dm.SendFileAsync("system.json", stream, $"{Emojis.Success} Here you go!");
-
+                var msg = await dm.SendFileAsync("system.json", stream, $"{Emojis.Success} Here you go!");
+                await dm.SendMessageAsync($"<{msg.Attachments[0].Url}>");
+                
                 // If the original message wasn't posted in DMs, send a public reminder
                 if (!(ctx.Channel is DiscordDmChannel))
                     await ctx.Reply($"{Emojis.Success} Check your DMs!");

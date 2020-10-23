@@ -38,8 +38,9 @@ namespace PluralKit.Bot
             
             // Check group cap
             var existingGroupCount = await conn.QuerySingleAsync<int>("select count(*) from groups where system = @System", new { System = ctx.System.Id });
-            if (existingGroupCount >= Limits.MaxGroupCount)
-                throw new PKError($"System has reached the maximum number of groups ({Limits.MaxGroupCount}). Please delete unused groups first in order to create new ones.");
+            var groupLimit = ctx.System.GroupLimitOverride ?? Limits.MaxGroupCount;
+            if (existingGroupCount >= groupLimit)
+                throw new PKError($"System has reached the maximum number of groups ({groupLimit}). Please delete unused groups first in order to create new ones.");
 
             // Warn if there's already a group by this name
             var existingGroup = await _repo.GetGroupByName(conn, ctx.System.Id, groupName);

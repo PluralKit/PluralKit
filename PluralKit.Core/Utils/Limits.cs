@@ -5,8 +5,8 @@ namespace PluralKit.Core {
 
         public static readonly int MaxSystemNameLength = 100;
         public static readonly int MaxSystemTagLength = MaxProxyNameLength - 1;
-        public static readonly int MaxMemberCount = 1500;
-        public static readonly int MaxMembersWarnThreshold = MaxMemberCount - 50;
+        public static readonly int MaxMemberCount = 1000;
+        public static int MaxMembersWarnThreshold (int memberLimit) => memberLimit - 50;
         public static readonly int MaxGroupCount = 250;
         public static readonly int MaxDescriptionLength = 1000;
         public static readonly int MaxMemberNameLength = 100; // Fair bit larger than MaxProxyNameLength for bookkeeping

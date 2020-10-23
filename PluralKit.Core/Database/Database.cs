@@ -19,7 +19,7 @@ namespace PluralKit.Core
     internal class Database: IDatabase
     {
         private const string RootPath = "PluralKit.Core.Database"; // "resource path" root for SQL files
-        private const int TargetSchemaVersion = 9;
+        private const int TargetSchemaVersion = 11;
         
         private readonly CoreConfig _config;
         private readonly ILogger _logger;
@@ -37,7 +37,10 @@ namespace PluralKit.Core
             
             _connectionString = new NpgsqlConnectionStringBuilder(_config.Database)
             {
-                Pooling = true, MaxPoolSize = 500, Enlist = false, NoResetOnClose = true
+                Pooling = true, MaxPoolSize = 500, Enlist = false, NoResetOnClose = true,
+                
+                // Lower timeout than default (15s -> 2s), should ideally fail-fast instead of hanging
+                Timeout = 2
             }.ConnectionString;
         }
         

@@ -64,7 +64,7 @@ namespace PluralKit.Bot
         internal IDatabase Database => _db;
         internal ModelRepository Repository => _repo;
 
-        public Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
+        public async Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
         {
             if (!this.BotHasAllPermissions(Permissions.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
@@ -72,7 +72,12 @@ namespace PluralKit.Bot
 
             if (embed != null && !this.BotHasAllPermissions(Permissions.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
-            return Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
+            var msg = await Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
+            if (embed != null) 
+                // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
+                // This may need to be changed at some point but works well enough for now
+                await _db.Execute(conn => _repo.SaveCommandMessage(conn, msg.Id, Author.Id));
+            return msg;
         }
         
         public async Task Execute<T>(Command commandDef, Func<T, Task> handler)
