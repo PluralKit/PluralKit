@@ -32,7 +32,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("your system's name"))
             {
                 var clearPatch = new SystemPatch {Name = null};
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, clearPatch));
@@ -63,7 +63,7 @@ namespace PluralKit.Bot
         public async Task Description(Context ctx) {
             ctx.CheckSystem();
 
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("your system's description"))
             {
                 var patch = new SystemPatch {Description = null};
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
@@ -101,7 +101,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("your system's tag"))
             {
                 var patch = new SystemPatch {Tag = null};
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
@@ -175,7 +175,7 @@ namespace PluralKit.Bot
                     throw new PKSyntaxError("This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
             }
 
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("your system's icon"))
                 await ClearIcon();
             else if (await ctx.MatchImage() is {} img)
                 await SetIcon(img);
@@ -226,7 +226,7 @@ namespace PluralKit.Bot
         {
             if (ctx.System == null) throw Errors.NoSystemError;
 
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear())
             {
                 var clearPatch = new SystemPatch {UiTz = "UTC"};
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, clearPatch));

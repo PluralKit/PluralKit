@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -87,7 +87,7 @@ namespace PluralKit.Bot
 
         public async Task GroupDisplayName(Context ctx, PKGroup target)
         {
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this group's display name"))
             {
                 ctx.CheckOwnGroup(target);
                 
@@ -123,7 +123,7 @@ namespace PluralKit.Bot
         
         public async Task GroupDescription(Context ctx, PKGroup target)
         {
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this group's description"))
             {
                 ctx.CheckOwnGroup(target);
 
@@ -217,7 +217,7 @@ namespace PluralKit.Bot
                     throw new PKSyntaxError("This group does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
             }
 
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this group's icon"))
                 await ClearIcon();
             else if (await ctx.MatchImage() is {} img)
                 await SetIcon(img);

@@ -85,7 +85,7 @@ namespace PluralKit.Bot
         private async Task AvatarCommandTree(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? guildData)
         {
             // First, see if we need to *clear*
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this member's avatar"))
             {
                 ctx.CheckSystem().CheckOwnMember(target);
                 await AvatarClear(location, ctx, target, guildData);
