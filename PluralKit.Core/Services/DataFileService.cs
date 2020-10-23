@@ -119,7 +119,9 @@ namespace PluralKit.Core
                 system = result.System = await _repo.CreateSystem(conn, data.Name);
                 await _repo.AddAccount(conn, system.Id, accountId);
             }
-            
+
+            var memberLimit = system.MemberLimitOverride ?? Limits.MaxMemberCount;
+
             // Apply system info
             var patch = new SystemPatch {Name = data.Name};
             if (data.Description != null) patch.Description = data.Description;
@@ -135,10 +137,10 @@ namespace PluralKit.Core
                 // If creating the unmatched members would put us over the member limit, abort before creating any members
                 var memberCountBefore = await _repo.GetSystemMemberCount(conn, system.Id);
                 var membersToAdd = data.Members.Count(m => imp.IsNewMember(m.Id, m.Name));
-                if (memberCountBefore + membersToAdd > Limits.MaxMemberCount)
+                if (memberCountBefore + membersToAdd > memberLimit)
                 {
                     result.Success = false;
-                    result.Message = $"Import would exceed the maximum number of members ({Limits.MaxMemberCount}).";
+                    result.Message = $"Import would exceed the maximum number of members ({memberLimit}).";
                     return result;
                 }
                 
@@ -204,7 +206,8 @@ namespace PluralKit.Core
         [JsonIgnore] public bool Valid =>
             TimeZoneValid &&
             Members != null &&
-            Members.Count <= Limits.MaxMemberCount &&
+            // no need to check this here, it is checked later as part of the import
+            // Members.Count <= Limits.MaxMemberCount &&
             Members.All(m => m.Valid) &&
             Switches != null &&
             Switches.Count < 10000 &&
