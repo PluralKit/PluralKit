@@ -86,6 +86,15 @@ as $$
     where accounts.uid = account_id
 $$ language sql stable rows 10;
 
+create function has_private_members(system_hid int) returns bool as $$
+declare m int;
+begin
+    m := count(id) from members where system = system_hid and member_visibility = 2;
+    if m > 0 then return true;
+    else return false;
+    end if;
+end
+$$ language plpgsql;
 
 create function generate_hid() returns char(5) as $$
     select string_agg(substr('abcdefghijklmnopqrstuvwxyz', ceil(random() * 26)::integer, 1), '') from generate_series(1, 5)
