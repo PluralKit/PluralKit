@@ -48,16 +48,17 @@ namespace PluralKit.Bot
             memberCount++;
             
             // Send confirmation and space hint
-            await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#members");
+            await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
             if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new {System = ctx.System.Id}))) //if has private members
                 await ctx.Reply($"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
+
             if (memberName.Contains(" "))
                 await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
-            if (memberCount >= Limits.MaxMemberCount)
-                await ctx.Reply($"{Emojis.Warn} You have reached the per-system member limit ({Limits.MaxMemberCount}). You will be unable to create additional members until existing members are deleted.");
-            else if (memberCount >= Limits.MaxMembersWarnThreshold)
-                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {Limits.MaxMemberCount} members). Please review your member list for unused or duplicate members.");
+            if (memberCount >= memberLimit)
+                await ctx.Reply($"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). You will be unable to create additional members until existing members are deleted.");
+            else if (memberCount >= Limits.MaxMembersWarnThreshold(memberLimit))
+                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
         }
         
         public async Task MemberRandom(Context ctx)

@@ -17,10 +17,10 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
-        public static async Task<bool> PromptYesNo(this Context ctx, String msgString, DiscordUser user = null, Duration? timeout = null, IEnumerable<IMention> mentions = null)
+        public static async Task<bool> PromptYesNo(this Context ctx, String msgString, DiscordUser user = null, Duration? timeout = null, IEnumerable<IMention> mentions = null, bool matchFlag = true)
         {
             DiscordMessage message;
-            if (ctx.MatchFlag("y", "yes")) return true;
+            if (matchFlag && ctx.MatchFlag("y", "yes")) return true;
             else message = await ctx.Reply(msgString, mentions: mentions);
             var cts = new CancellationTokenSource();
             if (user == null) user = ctx.Author;
