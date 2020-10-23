@@ -105,7 +105,7 @@ namespace PluralKit.Bot
             
             // aaaand *now* we do the move
             await _repo.MoveSwitch(conn, lastTwoSwitches[0].Id, time.ToInstant());
-            await ctx.Reply($"{Emojis.Success} Switch moved.");
+            await ctx.Reply($"{Emojis.Success} Switch moved to {newSwitchTimeStr} ({newSwitchDeltaStr} ago).");
         }
         
         public async Task SwitchDelete(Context ctx)
