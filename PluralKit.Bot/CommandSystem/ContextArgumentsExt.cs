@@ -63,9 +63,9 @@ namespace PluralKit.Bot
         public static async Task<bool> MatchClear(this Context ctx, string toClear = null)
         {
             var matched = ctx.Match("clear", "reset") || ctx.MatchFlag("c", "clear");
-            Console.WriteLine(toClear);
-            if (matched && toClear != null) return await ctx.ConfirmClear(toClear);
-            else return matched;
+            if (matched && toClear != null) 
+                return await ctx.ConfirmClear(toClear);
+            return matched;
         }
 
         public static async Task<List<PKMember>> ParseMemberList(this Context ctx, SystemId? restrictToSystem)

@@ -26,7 +26,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
             
-            if (await ctx.MatchClear())
+            if (await ctx.MatchClear("the server log channel"))
             {
                 await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, new GuildPatch {LogChannel = null}));
                 await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
