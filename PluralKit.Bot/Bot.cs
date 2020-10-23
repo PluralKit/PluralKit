@@ -36,13 +36,13 @@ namespace PluralKit.Bot
         private readonly PeriodicStatCollector _collector;
         private readonly IMetrics _metrics;
         private readonly ErrorMessageService _errorMessageService;
-        private readonly IDatabase _db;
+        private readonly CommandMessageService _commandMessageService;
 
         private bool _hasReceivedReady = false;
         private Timer _periodicTask; // Never read, just kept here for GC reasons
 
         public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics, 
-            ErrorMessageService errorMessageService, IDatabase db)
+            ErrorMessageService errorMessageService, CommandMessageService commandMessageService)
         {
             _client = client;
             _logger = logger.ForContext<Bot>();
@@ -50,7 +50,7 @@ namespace PluralKit.Bot
             _collector = collector;
             _metrics = metrics;
             _errorMessageService = errorMessageService;
-            _db = db;
+            _commandMessageService = commandMessageService;
         }
 
         public void Init()
@@ -183,7 +183,7 @@ namespace PluralKit.Bot
             await UpdateBotStatus();
 
             // Clean up message cache in postgres
-            await _db.Execute(conn => conn.QueryAsync("select from cleanup_command_message()"));
+            await _commandMessageService.CleanupOldMessages();
 
             // Collect some stats, submit them to the metrics backend
             await _collector.CollectStats();

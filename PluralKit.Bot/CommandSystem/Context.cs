@@ -28,6 +28,7 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly PKSystem _senderSystem;
         private readonly IMetrics _metrics;
+        private readonly CommandMessageService _commandMessageService;
 
         private Command _currentCommand;
 
@@ -44,6 +45,7 @@ namespace PluralKit.Bot
             _repo = provider.Resolve<ModelRepository>();
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
+            _commandMessageService = provider.Resolve<CommandMessageService>();
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
         }
 
@@ -73,10 +75,14 @@ namespace PluralKit.Bot
             if (embed != null && !this.BotHasAllPermissions(Permissions.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
             var msg = await Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
-            if (embed != null) 
+
+            if (embed != null)
+            {
                 // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
                 // This may need to be changed at some point but works well enough for now
-                await _db.Execute(conn => _repo.SaveCommandMessage(conn, msg.Id, Author.Id));
+                await _commandMessageService.RegisterMessage(msg.Id, Author.Id);
+            }
+
             return msg;
         }
         

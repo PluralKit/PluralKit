@@ -15,14 +15,16 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly CommandMessageService _commandMessageService;
         private readonly EmbedService _embeds;
         private readonly ILogger _logger;
 
-        public ReactionAdded(EmbedService embeds, ILogger logger, IDatabase db, ModelRepository repo)
+        public ReactionAdded(EmbedService embeds, ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService)
         {
             _embeds = embeds;
             _db = db;
             _repo = repo;
+            _commandMessageService = commandMessageService;
             _logger = logger.ForContext<ReactionAdded>();
         }
 
@@ -43,40 +45,54 @@ namespace PluralKit.Bot
             
             // Ignore reactions from bots (we can't DM them anyway)
             if (evt.User.IsBot) return;
-
-            Task<FullMessage> GetMessage() => 
-                _db.Execute(c => _repo.GetMessage(c, evt.Message.Id));
-
-            FullMessage msg;
-            CommandMessage cmdmsg;
+            
             switch (evt.Emoji.Name)
             {
                 // Message deletion
                 case "\u274C": // Red X
-                    if ((msg = await GetMessage()) != null)
-                        await HandleDeleteReaction(evt, msg);
-                    else if ((cmdmsg = await _db.Execute(conn => _repo.GetCommandMessage(conn, evt.Message.Id))) != null)
-                        await HandleCommandDeleteReaction(evt, cmdmsg);
-                    break;                
-                
+                {
+                    await using var conn = await _db.Obtain();
+                    var msg = await _repo.GetMessage(conn, evt.Message.Id);
+                    if (msg != null)
+                    {
+                        await HandleProxyDeleteReaction(evt, msg);
+                        break;
+                    }
+
+                    var commandMsg = await _commandMessageService.GetCommandMessage(conn, evt.Message.Id);
+                    if (commandMsg != null) 
+                        await HandleCommandDeleteReaction(evt, commandMsg);
+
+                    break;
+                }
+
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
-                    if ((msg = await GetMessage()) != null) 
+                {
+                    await using var conn = await _db.Obtain();
+                    var msg = await _repo.GetMessage(conn, evt.Message.Id);
+                    if (msg != null)
                         await HandleQueryReaction(evt, msg);
+                    
                     break;
-                
+                }
+
                 case "\U0001F514": // Bell
                 case "\U0001F6CE": // Bellhop bell
                 case "\U0001F3D3": // Ping pong paddle (lol)
                 case "\u23F0": // Alarm clock
                 case "\u2757": // Exclamation mark
-                    if ((msg = await GetMessage()) != null)
+                {
+                    await using var conn = await _db.Obtain();
+                    var msg = await _repo.GetMessage(conn, evt.Message.Id);
+                    if (msg != null)
                         await HandlePingReaction(evt, msg);
                     break;
+                }
             }
         }
 
-        private async ValueTask HandleDeleteReaction(MessageReactionAddEventArgs evt, FullMessage msg)
+        private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEventArgs evt, FullMessage msg)
         {
             if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
             
@@ -97,10 +113,12 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEventArgs evt, CommandMessage msg)
         {
-            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
+            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) 
+                return;
 
             // Can only delete your own message
-            if (msg.author_id != evt.User.Id) return;
+            if (msg.AuthorId != evt.User.Id) 
+                return;
 
             try
             {
