@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ namespace PluralKit.Core
     {
         public Task<PKSystem?> GetSystem(IPKConnection conn, SystemId id) =>
             conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where id = @id", new {id});
+
+        public Task<PKSystem?> GetSystemByGuid(IPKConnection conn, Guid id) =>
+            conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where uuid = @id", new {id});
 
         public Task<PKSystem?> GetSystemByAccount(IPKConnection conn, ulong accountId) =>
             conn.QuerySingleOrDefaultAsync<PKSystem?>(

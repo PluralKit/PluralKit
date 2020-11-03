@@ -1,4 +1,6 @@
-﻿using Dapper.Contrib.Extensions;
+﻿using System;
+
+using Dapper.Contrib.Extensions;
 
 using Newtonsoft.Json;
 
@@ -9,6 +11,7 @@ namespace PluralKit.Core {
     {
         // Additions here should be mirrored in SystemStore::Save
         [Key] public SystemId Id { get; }
+        public Guid Uuid { get; }
         public string Hid { get; }
         public string Name { get; }
         public string Description { get; }

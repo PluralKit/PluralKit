@@ -21,9 +21,9 @@ namespace PluralKit.Core
         
         private readonly PKConnection _ourConnection;
         private readonly ILogger _logger;
-        private readonly IMetrics _metrics;
+        private readonly IMetrics? _metrics;
         
-        public PKCommand(NpgsqlCommand inner, PKConnection ourConnection, ILogger logger, IMetrics metrics)
+        public PKCommand(NpgsqlCommand inner, PKConnection ourConnection, ILogger logger, IMetrics? metrics)
         {
             Inner = inner;
             _ourConnection = ourConnection;
@@ -114,8 +114,9 @@ namespace PluralKit.Core
                 
                 // One "BCL compatible tick" is 100 nanoseconds
                 var micros = elapsed.BclCompatibleTicks / 10;
-                _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", CommandText))
-                    .Record(micros, TimeUnit.Microseconds, CommandText);
+                if (_metrics != null)
+                    _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", CommandText))
+                        .Record(micros, TimeUnit.Microseconds, CommandText);
             }
         }
         

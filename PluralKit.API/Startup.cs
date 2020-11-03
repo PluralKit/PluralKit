@@ -15,6 +15,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
+using Newtonsoft.Json.Serialization;
+
+using PluralKit.API.Middleware;
 using PluralKit.Core;
 
 namespace PluralKit.API
@@ -37,21 +40,33 @@ namespace PluralKit.API
             
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("EditSystem", p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
-                options.AddPolicy("EditMember", p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
+                options.AddPolicy(AuthPolicies.EditSystem, p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
+                options.AddPolicy(AuthPolicies.EditMember, p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
+                options.AddPolicy(AuthPolicies.DeleteMember, p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
                 
-                options.AddPolicy("ViewMembers", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.MemberListPrivacy)));
-                options.AddPolicy("ViewFront", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontPrivacy)));
-                options.AddPolicy("ViewFrontHistory", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontHistoryPrivacy)));
+                options.AddPolicy(AuthPolicies.ViewMembers, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.MemberListPrivacy)));
+                options.AddPolicy(AuthPolicies.ViewGroups, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.GroupListPrivacy)));
+                options.AddPolicy(AuthPolicies.ViewFront, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontPrivacy)));
+                options.AddPolicy(AuthPolicies.ViewFrontHistory, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontHistoryPrivacy)));
             });
             services.AddSingleton<IAuthenticationHandler, SystemTokenAuthenticationHandler>();
             services.AddSingleton<IAuthorizationHandler, MemberOwnerHandler>();
             services.AddSingleton<IAuthorizationHandler, SystemOwnerHandler>();
             services.AddSingleton<IAuthorizationHandler, SystemPrivacyHandler>();
             
-            services.AddControllers()
+            services.AddControllers(opts =>
+                {
+                    opts.Filters.Add(new ApiErrorExceptionFilter());
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
-                .AddNewtonsoftJson(); // sorry MS, this just does *more*
+                // sorry MS, this just does *more*
+                .AddNewtonsoftJson(opts =>
+                {
+                    opts.SerializerSettings.ContractResolver = new DefaultContractResolver
+                    {
+                        NamingStrategy = new SnakeCaseNamingStrategy()
+                    };
+                });
 
             services.AddApiVersioning();
             
@@ -86,7 +101,7 @@ namespace PluralKit.API
             services.AddSwaggerGenNewtonsoftSupport();
         }
 
-        public void ConfigureContainer(ContainerBuilder builder)
+        public virtual void ConfigureContainer(ContainerBuilder builder)
         {
             builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build())
                 .As<IConfiguration>();

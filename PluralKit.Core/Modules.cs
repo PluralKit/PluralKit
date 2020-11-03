@@ -25,6 +25,7 @@ namespace PluralKit.Core
         {
             builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
             builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
+            builder.RegisterType<DatabaseMigrator>().As<DatabaseMigrator>().SingleInstance();
             builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
             
             builder.Populate(new ServiceCollection().AddMemoryCache());

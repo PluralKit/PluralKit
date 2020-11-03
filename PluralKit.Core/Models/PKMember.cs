@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using Newtonsoft.Json;
 
@@ -12,6 +13,7 @@ namespace PluralKit.Core {
         // when trying to map to *subclasses* (eg. ListedMember). Adding private setters makes it work anyway.
         public MemberId Id { get; private set; }
         public string Hid { get; private set; }
+        public Guid Uuid { get; private set; }
         public SystemId System { get; private set; }
         public string Color { get; private set; }
         public string AvatarUrl { get; private set; }

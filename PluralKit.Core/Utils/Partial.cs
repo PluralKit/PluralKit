@@ -78,6 +78,9 @@ namespace PluralKit.Core
         public static Partial<TOut> Map<TIn, TOut>(this Partial<TIn> pt, Func<TIn, TOut> fn) =>
             pt.IsPresent ? Partial<TOut>.Present(fn.Invoke(pt.Value)) : Partial<TOut>.Absent;
 
+        public static Partial<TOut> Then<TIn, TOut>(this Partial<TIn> pt, Func<TIn, Partial<TOut>> fn) =>
+            pt.IsPresent ? fn.Invoke(pt.Value) : Partial<TOut>.Absent;
+
         public static void Apply<T>(this Partial<T> pt, DynamicParameters bag, QueryBuilder qb, string fieldName)
         {
             if (!pt.IsPresent) return;

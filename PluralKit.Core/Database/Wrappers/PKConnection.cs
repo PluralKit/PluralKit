@@ -15,20 +15,20 @@ using Serilog;
 
 namespace PluralKit.Core
 {
-    internal class PKConnection: DbConnection, IPKConnection
+    public class PKConnection: DbConnection, IPKConnection
     {
         public NpgsqlConnection Inner { get; }
         public Guid ConnectionId { get; }
 
         private readonly DbConnectionCountHolder _countHolder;
         private readonly ILogger _logger;
-        private readonly IMetrics _metrics;
+        private readonly IMetrics? _metrics;
 
         private bool _hasOpened;
         private bool _hasClosed;
         private Instant _openTime;
 
-        public PKConnection(NpgsqlConnection inner, DbConnectionCountHolder countHolder, ILogger logger, IMetrics metrics)
+        public PKConnection(NpgsqlConnection inner, DbConnectionCountHolder countHolder, ILogger logger, IMetrics? metrics)
         {
             Inner = inner;
             ConnectionId = Guid.NewGuid();

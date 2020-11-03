@@ -7,6 +7,21 @@ namespace PluralKit.API
 {
     public static class AuthExt
     {
+        public static bool TryGetCurrentSystem(this ClaimsPrincipal user, out SystemId currentSystem)
+        {
+            currentSystem = default;
+            
+            var claim = user.FindFirst(PKClaims.SystemId);
+            if (claim == null)
+                return false;
+
+            if (!int.TryParse(claim.Value, out var id))
+                throw new ArgumentException("User has non-integer system ID claim");
+            
+            currentSystem = new SystemId(id);
+            return true;
+        }
+        
         public static SystemId CurrentSystem(this ClaimsPrincipal user)
         {
             var claim = user.FindFirst(PKClaims.SystemId);
