@@ -29,10 +29,11 @@ namespace PluralKit.Bot
         public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
         public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
         public static Command AutoproxyStatus = new Command("autoproxy", "autoproxy", "Shows your system's current autoproxy mode for this server");
-        public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxy for your system in the current server.");
-        public static Command AutoproxyLatch = new Command("autoproxy latch", "autoproxy latch", "Sets the autoproxy mode for your system in the current server to latch mode.");
-        public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets the autoproxy mode for your system in the current server to front mode.");
-        public static Command AutoproxyMember = new Command("autoproxy", "autoproxy <member>", "Sets the autoproxy mode for your system in the current server to a specific member.");
+        public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxy for your system in the current server");
+        public static Command AutoproxyLatch = new Command("autoproxy latch", "autoproxy latch", "Sets the autoproxy mode for your system in the current server to latch mode");
+        public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets the autoproxy mode for your system in the current server to front mode");
+        public static Command AutoproxyMember = new Command("autoproxy", "autoproxy <member>", "Sets the autoproxy mode for your system in the current server to a specific member");
+        public static Command AutoproxyTimeout = new Command("autoproxy timeout", "autoproxy timeout [<duration>|disable|reset]", "Changes or disables the latch timeout duration for your system");
         public static Command AutoproxyAccount = new Command("autoproxy account", "autoproxy account [on|off]", "Enables or disables autoproxy globally for the current account");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
@@ -111,7 +112,12 @@ namespace PluralKit.Bot
 
         public static Command[] AutoproxyCommands =
         {
-            AutoproxyStatus, AutoproxyOff, AutoproxyLatch, AutoproxyFront, AutoproxyMember, AutoproxyAccount
+            AutoproxyStatus, AutoproxyOff, AutoproxyLatch, AutoproxyFront, AutoproxyMember, AutoproxyTimeout, AutoproxyAccount
+        };
+
+        public static Command[] AutoproxyModeCommands =
+        {
+            AutoproxyStatus, AutoproxyOff, AutoproxyLatch, AutoproxyFront
         };
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
@@ -418,8 +424,11 @@ namespace PluralKit.Bot
                 await ctx.Execute<Autoproxy>(AutoproxyLatch, m => m.AutoproxyLatch(ctx));
             else if (ctx.Match("front", "fronter", "switch"))
                 await ctx.Execute<Autoproxy>(AutoproxyFront, m => m.AutoproxyFront(ctx));
+            else if (ctx.Match("timeout", "duration"))
+                await ctx.Execute<Autoproxy>(AutoproxyTimeout, m => m.AutoproxyLatchTimeout(ctx));
             else if (ctx.Match("member"))
-                throw new PKSyntaxError("Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
+                // we can't throw a syntax error here, so we emulate catching one
+                await ctx.Reply($"{Emojis.Error} Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.\n\n**Command usage:** \n>>> {CreatePotentialCommandList(AutoproxyModeCommands)}");
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
             else if (await ctx.MatchMember() is PKMember member)
@@ -469,7 +478,7 @@ namespace PluralKit.Bot
         private async Task PrintCommandList(Context ctx, string subject, params Command[] commands)
         {
             var str = CreatePotentialCommandList(commands);
-            await ctx.Reply($"Here is a list of commands related to {subject}: \n{str}\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
+            await ctx.Reply($"Here is a list of commands related to {subject}: \n{str}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
         }
 
         private async Task<string> CreateSystemNotFoundError(Context ctx)

@@ -369,13 +369,14 @@ The default timeout duration for latch mode is 6 hours. It is possible to change
 
     pk;autoproxy timeout <new duration>
 
-To reset the duration, use the following command:
-
-    pk;autoproxy timeout reset
-
 To disable timeout (never timeout), use the following command:
 
     pk;autoproxy timeout disable
+
+To reset the duration to the default of 6 hours, use the following command:
+
+    pk;autoproxy timeout reset
+
 
 ### Disabling autoproxy per-account
 
