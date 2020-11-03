@@ -28,7 +28,12 @@ namespace PluralKit.Bot
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
         public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
         public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
-        public static Command Autoproxy = new Command("autoproxy", "autoproxy [off|front|latch [timeout [duration|off|reset]]|member]", "Sets your system's autoproxy mode for this server");
+        public static Command AutoproxyStatus = new Command("autoproxy", "autoproxy", "Shows your system's current autoproxy mode for this server");
+        public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxy for your system in the current server.");
+        public static Command AutoproxyLatch = new Command("autoproxy latch", "autoproxy latch", "Sets the autoproxy mode for your system in the current server to latch mode.");
+        public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets the autoproxy mode for your system in the current server to front mode.");
+        public static Command AutoproxyMember = new Command("autoproxy", "autoproxy <member>", "Sets the autoproxy mode for your system in the current server to a specific member.");
+        public static Command AutoproxyAccount = new Command("autoproxy account", "autoproxy account [on|off]", "Enables or disables autoproxy globally for the current account");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
         public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
@@ -104,6 +109,11 @@ namespace PluralKit.Bot
             GroupDelete
         };
 
+        public static Command[] AutoproxyCommands =
+        {
+            AutoproxyStatus, AutoproxyOff, AutoproxyLatch, AutoproxyFront, AutoproxyMember, AutoproxyAccount
+        };
+
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
 
         public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
@@ -127,7 +137,7 @@ namespace PluralKit.Bot
             if (ctx.Match("switch", "sw"))
                 return HandleSwitchCommand(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
-                return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
+                return HandleAutoproxyCommand(ctx);
             if (ctx.Match("list", "l", "members"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("f", "find", "search", "query", "fd"))
@@ -388,6 +398,37 @@ namespace PluralKit.Bot
                 await PrintCommandNotFoundError(ctx, GroupCommands);
             else
                 await ctx.Reply($"{Emojis.Error} {ctx.CreateGroupNotFoundError(ctx.PopArgument())}");
+        }
+
+        private async Task HandleAutoproxyCommand(Context ctx)
+        {
+            // check account first
+            // this is ugly, but someone may want to disable autoproxy in DMs (since this is global)
+            if (ctx.Match("account"))
+            {
+                await ctx.Execute<Autoproxy>(AutoproxyAccount, m => m.AutoproxyAccount(ctx)); //doc
+                return;
+            }
+
+            ctx.CheckSystem().CheckGuildContext();
+            
+            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
+                await ctx.Execute<Autoproxy>(AutoproxyOff, m => m.AutoproxyOff(ctx));
+            else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
+                await ctx.Execute<Autoproxy>(AutoproxyLatch, m => m.AutoproxyLatch(ctx));
+            else if (ctx.Match("front", "fronter", "switch"))
+                await ctx.Execute<Autoproxy>(AutoproxyFront, m => m.AutoproxyFront(ctx));
+            else if (ctx.Match("member"))
+                throw new PKSyntaxError("Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
+            else if (ctx.Match("commands", "help"))
+                await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+            else if (await ctx.MatchMember() is PKMember member)
+                await ctx.Execute<Autoproxy>(AutoproxyMember, m => m.AutoproxyMember(ctx, member));
+            else if (!ctx.HasNext())
+                await ctx.Execute<Autoproxy>(AutoproxyStatus, m => m.CreateAutoproxyStatusEmbed(ctx));
+            else
+                await PrintCommandNotFoundError(ctx, AutoproxyCommands);
+                // throw new PKSyntaxError($"Invalid autoproxy mode {ctx.PopArgument().AsCode()}.");
         }
 
         private async Task HandleSwitchCommand(Context ctx)

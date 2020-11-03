@@ -68,7 +68,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;autoproxy off` - Disables autoproxy for your system in the current server.
 - `pk;autoproxy front|latch|<member>` - Sets the [autoproxy mode](/guide/#front-mode) for your system in the current server.
 - `pk;autoproxy timeout [reset|off|<duration>]` - Sets the [latch timeout duration](/guide/#latch-timeout) for your system.
-- `pk;autoproxy account [enable|disable]` - Enables or disables autoproxy globally for the [current account](/guide/#disabling-autoproxy-per-account).
+- `pk;autoproxy account [on|off]` - Enables or disables autoproxy globally for the [current account](/guide/#disabling-autoproxy-per-account).
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*

@@ -20,35 +20,7 @@ namespace PluralKit.Bot
             _repo = repo;
         }
 
-        public async Task AutoproxyRoot(Context ctx)
-        {
-            // check account first
-            // this is ugly, but someone may want to disable autoproxy in DMs (since this is global)
-            if (ctx.Match("account"))
-            {
-                await AutoproxyAccount(ctx);
-                return;
-            }
-
-            ctx.CheckSystem().CheckGuildContext();
-            
-            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
-                await AutoproxyOff(ctx);
-            else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
-                await AutoproxyLatch(ctx);
-            else if (ctx.Match("front", "fronter", "switch"))
-                await AutoproxyFront(ctx);
-            else if (ctx.Match("member"))
-                throw new PKSyntaxError("Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
-            else if (await ctx.MatchMember() is PKMember member)
-                await AutoproxyMember(ctx, member);
-            else if (!ctx.HasNext())
-                await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx));
-            else
-                throw new PKSyntaxError($"Invalid autoproxy mode {ctx.PopArgument().AsCode()}.");
-        }
-
-        private async Task AutoproxyOff(Context ctx)
+        public async Task AutoproxyOff(Context ctx)
         {
             if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Off)
                 await ctx.Reply($"{Emojis.Note} Autoproxy is already off in this server.");
@@ -59,7 +31,7 @@ namespace PluralKit.Bot
             }
         }
 
-        private async Task AutoproxyLatch(Context ctx)
+        public async Task AutoproxyLatch(Context ctx)
         {
 
             if (ctx.Match("timeout", "duration"))
@@ -90,7 +62,7 @@ namespace PluralKit.Bot
             }
         }
 
-        private async Task AutoproxyFront(Context ctx)
+        public async Task AutoproxyFront(Context ctx)
         {
             if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Front)
                 await ctx.Reply($"{Emojis.Note} Autoproxy is already set to front mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
@@ -101,7 +73,7 @@ namespace PluralKit.Bot
             }
         }
 
-        private async Task AutoproxyMember(Context ctx, PKMember member)
+        public async Task AutoproxyMember(Context ctx, PKMember member)
         {
             ctx.CheckOwnMember(member);
 
@@ -109,7 +81,7 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** in this server.");
         }
 
-        private async Task AutoproxyAccount(Context ctx)
+        public async Task AutoproxyAccount(Context ctx)
         {
             if (ctx.Match("enable", "on"))
                 await AutoproxyEnableDisable(ctx, false);
@@ -137,7 +109,7 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
         }
 
-        private async Task<DiscordEmbed> CreateAutoproxyStatusEmbed(Context ctx)
+        public async Task CreateAutoproxyStatusEmbed(Context ctx)
         {
             var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member\n**pk;autoproxy front** - Autoproxies as current (first) fronter\n**pk;autoproxy <member>** - Autoproxies as a specific member";
             var eb = new DiscordEmbedBuilder().WithTitle($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
@@ -180,7 +152,7 @@ namespace PluralKit.Bot
 
             if (ctx.MessageContext.DisableAutoproxy) eb.AddField("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`.");
 
-            return eb.Build();
+            await ctx.Reply(embed: eb.Build());
         }
 
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
