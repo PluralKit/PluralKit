@@ -305,6 +305,17 @@ If you'd like to "ping" the account behind a proxied message without having to q
 you can react to the message with the :bell: or :exclamation: emoji (or even :ping_pong:), and PluralKit will ping the relevant member and account in the same
 channel on your behalf with a link to the message you reacted to.
 
+### Disabling front/latch autoproxy on a per-member basis
+If a system uses front or latch mode autoproxy, but one member prefers to send messages through the account (and not proxy), you can disable the front and latch modes for that specific member.
+
+    pk;member <name> autoproxy off
+
+To re-enable front / latch modes for that member, use the following command:
+
+    pk;member <name> autoproxy on
+
+This will *not* disable member mode autoproxy. If you do not wish to autoproxy, please turn off autoproxy instead of setting autoproxy to a specific member.
+
 ### Disabling proxying on a per-server basis
 If you need to disable proxying messages for your system entirely in a specific server (for example, if you'd like to
 use a different proxy bot there), you can type `pk;system proxy on/off` to do that.
@@ -314,19 +325,24 @@ Since the messages will be posted by PluralKit's webhook, there's no way to dele
 To delete a PluralKit-proxied message, you can react to it with the :x: emoji. Note that this only works if the message has
 been sent from your own account.
 
-### Autoproxying
-The bot's *autoproxy* feature allows you to have messages be proxied without directly including the proxy tags. Autoproxy can be set up in various ways. There are three autoproxy modes currently implemented:
+## Autoproxy
+The bot's *autoproxy* feature allows you to have messages be proxied without directly including the proxy tags.
 
 To see your system's current autoproxy settings, simply use the command:
+
     pk;autoproxy
     
 To disable autoproxying for the current server, use the command:
+
     pk;autoproxy off
     
 *(hint: `pk;autoproxy` can be shortened to `pk;ap` in all related commands)*
 
+Autoproxy can be set up in various ways. There are three autoproxy modes currently implemented:
+
 #### Front mode
 This autoproxy mode will proxy messages as the current *first* fronter of the system. If you register a switch with `Alice` and `Bob`, messages without proxy tags will be autoproxied as `Alice`.
+
 To enable front-mode autoproxying for a given server, use the following command:
 
     pk;autoproxy front
@@ -339,12 +355,43 @@ To enable latch-mode autoproxying for a given server, use the following command:
 
     pk;autoproxy latch
     
+By default, latch mode "expires" 6 hours after the last message in the server has been sent. It is possible to [change this duration or remove it](#latch-timeout).
+
 #### Member mode 
 This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
 
 To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words) or 5-letter ID:
 
     pk;autoproxy <member>
+
+### Latch timeout
+The default timeout duration for latch mode is 6 hours. It is possible to change this:
+
+    pk;autoproxy timeout <new duration>
+
+To reset the duration, use the following command:
+
+    pk;autoproxy timeout reset
+
+To disable timeout (never timeout), use the following command:
+
+    pk;autoproxy timeout disable
+
+### Disabling autoproxy per-account
+
+It is possible to fully disable autoproxy for a certain account linked to your system. For example, you might want to do this if a specific member's name is shown on the account.
+
+To disable autoproxy for the current account, use the following command:
+
+    pk;autoproxy account disable
+
+To re-enable autoproxy for the current account, use the following command:
+
+    pk;autoproxy account enable
+
+::: tip
+This subcommand can also be run in DMs.
+:::
 
 ## Managing switches
 PluralKit allows you to log member switches through the bot.
