@@ -338,6 +338,10 @@ To disable autoproxying for the current server, use the command:
     
 *(hint: `pk;autoproxy` can be shortened to `pk;ap` in all related commands)*
 
+::: tip
+To disable autoproxy for a single message, add a backslash (`\`) to the beginning of your message.
+:::
+
 Autoproxy can be set up in various ways. There are three autoproxy modes currently implemented:
 
 #### Front mode
