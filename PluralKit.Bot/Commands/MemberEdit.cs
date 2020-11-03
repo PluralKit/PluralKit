@@ -393,7 +393,7 @@ namespace PluralKit.Bot
                 return;
             };
 
-            var patch = new MemberPatch {DisableAutoproxy = Partial<bool>.Present(newValue)};
+            var patch = new MemberPatch {DisableAutoproxy = newValue};
             await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
             // again, this is confusing
