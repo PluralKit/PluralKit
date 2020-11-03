@@ -62,6 +62,15 @@ namespace PluralKit.Core
             _logger.Information("Linked account {UserId} to {SystemId}", accountId, system);
         }
 
+        public async Task UpdateAccount(IPKConnection conn, ulong id, AccountPatch patch)
+        {
+            _logger.Information("Updated account {accountId}: {@AccountPatch}", id, patch);
+            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("accounts", "uid = @uid"))
+                .WithConstant("uid", id)
+                .Build();
+            await conn.ExecuteAsync(query, pms);
+        }
+
         public async Task RemoveAccount(IPKConnection conn, SystemId system, ulong accountId)
         {
             await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId",

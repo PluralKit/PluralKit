@@ -25,5 +25,6 @@ namespace PluralKit.Core
         public string? SystemTag { get; }
         public string? SystemAvatar { get; }
         public int LatchTimeout { get; }
+        public bool DisableAutoproxy { get; }
     }
 }

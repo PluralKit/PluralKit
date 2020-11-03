@@ -15,12 +15,13 @@
         last_switch_timestamp timestamp,
         system_tag text,
         system_avatar text,
-        latch_timeout integer
+        latch_timeout integer,
+        disable_autoproxy bool
     )
 as $$
     -- CTEs to query "static" (accessible only through args) data
     with
-        system as (select systems.* from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
+        system as (select systems.*, disable_autoproxy as account_disable_autoproxy from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id),
         last_message as (select * from messages where messages.guild = guild_id and messages.sender = account_id order by mid desc limit 1)
     select
@@ -39,7 +40,8 @@ as $$
         system_last_switch.timestamp as last_switch_timestamp,
         system.tag as system_tag,
         system.avatar_url as system_avatar,
-        system.latch_timeout as latch_timeout
+        system.latch_timeout as latch_timeout,
+        system.account_disable_autoproxy as disable_autoproxy
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder

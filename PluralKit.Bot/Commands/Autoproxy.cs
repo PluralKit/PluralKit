@@ -22,6 +22,14 @@ namespace PluralKit.Bot
 
         public async Task AutoproxyRoot(Context ctx)
         {
+            // check account first
+            // this is ugly, but someone may want to disable autoproxy in DMs (since this is global)
+            if (ctx.Match("account"))
+            {
+                await AutoproxyAccount(ctx);
+                return;
+            }
+
             ctx.CheckSystem().CheckGuildContext();
             
             if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
@@ -97,6 +105,34 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** in this server.");
         }
 
+        private async Task AutoproxyAccount(Context ctx)
+        {
+            if (ctx.Match("enable", "on"))
+                await AutoproxyEnableDisable(ctx, false);
+            else if (ctx.Match("disable", "off"))
+                await AutoproxyEnableDisable(ctx, true);
+            else
+            {
+                var statusString = ctx.MessageContext.DisableAutoproxy ? "disabled" : "enabled";
+                await ctx.Reply(embed: new DiscordEmbedBuilder()
+                    .WithDescription($"Autoproxy is currently **{statusString}** for account <@{ctx.Author.Id}>.")
+                    .Build());
+            }
+        }
+
+        private async Task AutoproxyEnableDisable(Context ctx, bool disable)
+        {
+            var statusString = disable ? "disabled" : "enabled";
+            if (ctx.MessageContext.DisableAutoproxy == disable)
+            {
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+                return;
+            }
+            var patch = new AccountPatch { DisableAutoproxy = disable };
+            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.Author.Id, patch));
+            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+        }
+
         private async Task<DiscordEmbed> CreateAutoproxyStatusEmbed(Context ctx)
         {
             var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member\n**pk;autoproxy front** - Autoproxies as current (first) fronter\n**pk;autoproxy <member>** - Autoproxies as a specific member";
@@ -137,6 +173,8 @@ namespace PluralKit.Bot
                 
                 default: throw new ArgumentOutOfRangeException();
             }
+
+            if (ctx.MessageContext.DisableAutoproxy) eb.AddField("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`.");
 
             return eb.Build();
         }
