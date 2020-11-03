@@ -331,7 +331,7 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
-            else if (ctx.Match("autoproxy"))
+            else if (ctx.Match("autoproxy", "ap"))
                 await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
