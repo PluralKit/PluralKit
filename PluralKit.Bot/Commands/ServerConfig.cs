@@ -26,20 +26,24 @@ namespace PluralKit.Bot
         {
             ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
             
-            DiscordChannel channel = null;
+            if (await ctx.MatchClear("the server log channel"))
+            {
+                await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, new GuildPatch {LogChannel = null}));
+                await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
+                return;
+            }
+            
             if (!ctx.HasNext())
-                throw new PKSyntaxError("You must pass a #channel to set.");
+                throw new PKSyntaxError("You must pass a #channel to set, or `clear` to clear it.");
+            
+            DiscordChannel channel = null;
             var channelString = ctx.PeekArgument();
             channel = await ctx.MatchChannel();
             if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
 
-            var patch = new GuildPatch {LogChannel = channel?.Id};
+            var patch = new GuildPatch {LogChannel = channel.Id};
             await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, patch));
-
-            if (channel != null)
-                await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
-            else
-                await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
+            await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
         }
 
         public async Task SetLogEnabled(Context ctx, bool enable)

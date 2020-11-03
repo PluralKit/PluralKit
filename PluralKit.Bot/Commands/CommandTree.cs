@@ -56,13 +56,13 @@ namespace PluralKit.Bot
         public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
         public static Command GroupMemberList = new Command("group members", "group <group> list", "Lists all members in a group");
         public static Command GroupRename = new Command("group rename", "group <group> rename <new name>", "Renames a group");
-        public static Command GroupDisplayName = new Command("group displayname", "group <member> displayname [display name]", "Changes a group's display name");
+        public static Command GroupDisplayName = new Command("group displayname", "group <group> displayname [display name]", "Changes a group's display name");
         public static Command GroupDesc = new Command("group description", "group <group> description [description]", "Changes a group's description");
         public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
         public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
         public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
-        public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
         public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");
+        public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -200,9 +200,9 @@ namespace PluralKit.Bot
             if (ctx.Match("random", "r"))
                 return ctx.Execute<Member>(MemberRandom, m => m.MemberRandom(ctx));
 
-            ctx.Reply(
+            // remove compiler warning
+            return ctx.Reply(
                 $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
-            return Task.CompletedTask;
         }
 
         private async Task HandleSystemCommand(Context ctx)
@@ -395,7 +395,7 @@ namespace PluralKit.Bot
                     await PrintCommandNotFoundError(ctx, GroupCommandsTargeted);
             }
             else if (!ctx.HasNext())
-                await PrintCommandNotFoundError(ctx, GroupCommands);
+                await PrintCommandExpectedError(ctx, GroupCommands);
             else
                 await ctx.Reply($"{Emojis.Error} {ctx.CreateGroupNotFoundError(ctx.PopArgument())}");
         }

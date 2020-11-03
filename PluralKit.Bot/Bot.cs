@@ -9,6 +9,8 @@ using App.Metrics;
 
 using Autofac;
 
+using Dapper;
+
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -34,18 +36,21 @@ namespace PluralKit.Bot
         private readonly PeriodicStatCollector _collector;
         private readonly IMetrics _metrics;
         private readonly ErrorMessageService _errorMessageService;
+        private readonly CommandMessageService _commandMessageService;
 
         private bool _hasReceivedReady = false;
         private Timer _periodicTask; // Never read, just kept here for GC reasons
 
-        public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics, ErrorMessageService errorMessageService)
+        public Bot(DiscordShardedClient client, ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics, 
+            ErrorMessageService errorMessageService, CommandMessageService commandMessageService)
         {
             _client = client;
+            _logger = logger.ForContext<Bot>();
             _services = services;
             _collector = collector;
             _metrics = metrics;
             _errorMessageService = errorMessageService;
-            _logger = logger.ForContext<Bot>();
+            _commandMessageService = commandMessageService;
         }
 
         public void Init()
@@ -176,6 +181,9 @@ namespace PluralKit.Bot
             _logger.Debug("Running once-per-minute scheduled tasks");
 
             await UpdateBotStatus();
+
+            // Clean up message cache in postgres
+            await _commandMessageService.CleanupOldMessages();
 
             // Collect some stats, submit them to the metrics backend
             await _collector.CollectStats();

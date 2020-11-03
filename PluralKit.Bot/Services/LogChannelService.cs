@@ -1,11 +1,9 @@
-using System;
 using System.Threading.Tasks;
 
 using Dapper;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
 
 using PluralKit.Core;
 

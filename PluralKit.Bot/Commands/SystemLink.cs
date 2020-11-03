@@ -35,7 +35,7 @@ namespace PluralKit.Bot
 
             var msg = $"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.";
             var mentions = new IMention[] { new UserMention(account) };
-            if (!await ctx.PromptYesNo(msg, user: account, mentions: mentions)) throw Errors.MemberLinkCancelled;
+            if (!await ctx.PromptYesNo(msg, user: account, mentions: mentions, matchFlag: false)) throw Errors.MemberLinkCancelled;
             await _repo.AddAccount(conn, ctx.System.Id, account.Id);
             await ctx.Reply($"{Emojis.Success} Account linked to system.");
         }

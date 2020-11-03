@@ -64,7 +64,7 @@ namespace PluralKit.Bot
         }
 
         public async Task Description(Context ctx, PKMember target) {
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this member's description"))
             {
                 CheckEditMemberPermission(ctx, target);
 
@@ -107,7 +107,7 @@ namespace PluralKit.Bot
         }
         
         public async Task Pronouns(Context ctx, PKMember target) {
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this member's pronouns"))
             {
                 CheckEditMemberPermission(ctx, target);
                 var patch = new MemberPatch {Pronouns = Partial<string>.Null()};
@@ -145,7 +145,7 @@ namespace PluralKit.Bot
         public async Task Color(Context ctx, PKMember target)
         {
             var color = ctx.RemainderOrNull();
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear())
             {
                 CheckEditMemberPermission(ctx, target);
                 
@@ -193,7 +193,7 @@ namespace PluralKit.Bot
         }
         public async Task Birthday(Context ctx, PKMember target)
         {
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this member's birthday"))
             {
                 CheckEditMemberPermission(ctx, target);
                 
@@ -279,7 +279,7 @@ namespace PluralKit.Bot
                 await ctx.Reply(successStr);
             }
             
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this member's display name"))
             {
                 CheckEditMemberPermission(ctx, target);
                 
@@ -313,7 +313,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckGuildContext();
             
-            if (ctx.MatchClear())
+            if (await ctx.MatchClear("this member's server name"))
             {
                 CheckEditMemberPermission(ctx, target);
 

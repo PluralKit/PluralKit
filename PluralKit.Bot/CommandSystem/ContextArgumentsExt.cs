@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -60,8 +60,13 @@ namespace PluralKit.Bot
             return potentialMatches.Any(potentialMatch => flags.Contains(potentialMatch));
         }
 
-        public static bool MatchClear(this Context ctx) =>
-            ctx.Match("clear", "reset") || ctx.MatchFlag("c", "clear");
+        public static async Task<bool> MatchClear(this Context ctx, string toClear = null)
+        {
+            var matched = ctx.Match("clear", "reset") || ctx.MatchFlag("c", "clear");
+            if (matched && toClear != null) 
+                return await ctx.ConfirmClear(toClear);
+            return matched;
+        }
 
         public static async Task<List<PKMember>> ParseMemberList(this Context ctx, SystemId? restrictToSystem)
         {

@@ -74,6 +74,7 @@ namespace PluralKit.Bot
             builder.RegisterType<LastMessageCacheService>().AsSelf().SingleInstance();
             builder.RegisterType<LoggerCleanService>().AsSelf().SingleInstance();
             builder.RegisterType<ErrorMessageService>().AsSelf().SingleInstance();
+            builder.RegisterType<CommandMessageService>().AsSelf().SingleInstance();
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
