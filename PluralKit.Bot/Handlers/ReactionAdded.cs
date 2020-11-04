@@ -179,19 +179,8 @@ namespace PluralKit.Bot
 
         private async Task TryRemoveOriginalReaction(MessageReactionAddEventArgs evt)
         {
-            try
-            {
-                if (evt.Channel.BotHasAllPermissions(Permissions.ManageMessages))
-                    await evt.Message.DeleteReactionAsync(evt.Emoji, evt.User);
-            }
-            catch (UnauthorizedException)
-            {
-                var botPerms = evt.Channel.BotPermissions();
-                // So, in some cases (see Sentry issue 11K) the above check somehow doesn't work, and
-                // Discord returns a 403 Unauthorized. TODO: figure out the root cause here instead of a workaround
-                _logger.Warning("Attempted to remove reaction {Emoji} from user {User} on message {Channel}/{Message}, but got 403. Bot has permissions {Permissions} according to itself.",
-                    evt.Emoji.Id, evt.User.Id, evt.Channel.Id, evt.Message.Id, botPerms);
-            }
+            if (evt.Channel.BotHasAllPermissions(Permissions.ManageMessages | Permissions.ReadMessageHistory))
+                await evt.Message.DeleteReactionAsync(evt.Emoji, evt.User);
         }
     }
 }
