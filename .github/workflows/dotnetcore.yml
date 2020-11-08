@@ -7,6 +7,19 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:12-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v1
       with:
@@ -14,6 +27,8 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.100
+        dotnet-version: 5.0.100-rc.2.20479.15
     - name: Build and test with dotnet
       run: dotnet test --configuration Release
+      env:
+        "PluralKit:Database": "Host=localhost;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
