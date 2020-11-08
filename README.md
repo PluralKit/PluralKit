@@ -63,4 +63,4 @@ For more information, see [LEGACYMIGRATE.md](./LEGACYMIGRATE.md).
 See [the docs/ directory](./docs/README.md)
 
 # License
-This project is under the Apache License, Version 2.0. It is available at the following link: https://www.apache.org/licenses/LICENSE-2.0
+This project is under the GNU Affero General Public License, Version 3. It is available at the following link: https://www.gnu.org/licenses/agpl-3.0.en.html

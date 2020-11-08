@@ -6,7 +6,7 @@
     "dev": "vuepress dev content",
     "build": "vuepress build content"
   },
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "@vuepress/plugin-back-to-top": "^1.3.1",
     "@vuepress/plugin-google-analytics": "^1.5.2",
