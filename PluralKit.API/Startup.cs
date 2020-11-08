@@ -62,7 +62,7 @@ namespace PluralKit.API
                 // sorry MS, this just does *more*
                 .AddNewtonsoftJson(opts =>
                 {
-                    opts.SerializerSettings.ContractResolver = new DefaultContractResolver
+                    opts.SerializerSettings.ContractResolver = new PartialContractResolver
                     {
                         NamingStrategy = new SnakeCaseNamingStrategy()
                     };
@@ -103,8 +103,7 @@ namespace PluralKit.API
 
         public virtual void ConfigureContainer(ContainerBuilder builder)
         {
-            builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build())
-                .As<IConfiguration>();
+            builder.RegisterInstance(Configuration).As<IConfiguration>();
             builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
             builder.RegisterModule(new LoggingModule("api"));
             builder.RegisterModule(new MetricsModule("API"));

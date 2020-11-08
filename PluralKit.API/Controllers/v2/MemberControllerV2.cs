@@ -61,6 +61,10 @@ namespace PluralKit.API.v2
             var dbPatch = patch.ToMemberPatch();
             if (Validate(dbPatch) is ApiError e)
                 throw new ApiErrorException(HttpStatusCode.BadRequest, e);
+            
+            if (dbPatch.Equals(new MemberPatch()))
+                // no-op if nothing was included in patch at all
+                return Ok(member.ToApiMember(User.ContextFor(member)));
 
             var newMember = await Database.Execute(c => Repo.UpdateMember(c, member.Id, dbPatch));
             return Ok(newMember.ToApiMember(User.ContextFor(newMember)));

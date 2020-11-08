@@ -33,9 +33,13 @@ namespace PluralKit.API.v2
             var dbPatch = patch.ToSystemPatch();
             if (Validate(dbPatch) is ApiError e)
                 return BadRequest(e);
+
+            if (dbPatch.Equals(new SystemPatch()))
+                // no-op if nothing was included in patch at all
+                return Ok(system.ToApiSystem(User.ContextFor(system)));
             
             var newSystem = await Database.Execute(c => Repo.UpdateSystem(c, system.Id, dbPatch));
-            return Ok(newSystem);
+            return Ok(newSystem.ToApiSystem(User.ContextFor(system)));
         }
 
         [HttpGet("{id}/members")]
