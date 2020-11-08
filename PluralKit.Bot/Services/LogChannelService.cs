@@ -35,7 +35,7 @@ namespace PluralKit.Bot {
             if (logChannel == null || logChannel.Type != ChannelType.Text) return;
             
             // Check bot permissions
-            if (!trigger.Channel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
+            if (!logChannel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
             {
                 _logger.Information(
                     "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
