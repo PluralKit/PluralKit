@@ -35,7 +35,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;unlink [account]` - Unlinks an account from this system.
 
 ## Member commands
-*Replace `<name>` with a member's name or 5-character ID. For most commands, adding `-clear` will clear/delete the field.*
+*Replace `<name>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;member <name>` - Shows information about a member.
 - `pk;member new <name>` - Creates a new system member.
 - `pk;member <name> rename <new name>` - Changes the name of a member.
@@ -57,7 +57,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;random` - Shows the member card of a randomly selected member in your system.
 
 ## Group commands
-*Replace `<name>` with a group's name or 5-character ID. For most commands, adding `-clear` will clear/delete the field.*
+*Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;group <name>` - Shows information about a group.
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
