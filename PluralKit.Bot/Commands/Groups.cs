@@ -320,7 +320,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckOwnGroup(target);
 
-            var members = await ParseMemberList(ctx);
+            var members = await ctx.ParseMemberList(ctx.System.Id);
             
             await using var conn = await _db.Obtain();
             
@@ -384,26 +384,6 @@ namespace PluralKit.Bot
         {
             Add,
             Remove
-        }
-
-        private static async Task<List<PKMember>> ParseMemberList(Context ctx)
-        {
-            // TODO: move this to a context extension and share with the switch command somewhere, after branch merge?
-            
-            var members = new List<PKMember>();
-            while (ctx.HasNext())
-            {
-                var member = await ctx.MatchMember();
-                if (member == null)
-                    throw new PKSyntaxError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));;
-                if (member.System != ctx.System.Id)
-                    throw new PKError($"Member **{member.Name}** (`{member.Hid}`) is not in your own system, so you can't add it to a group.");
-                members.Add(member);
-            }
-
-            if (members.Count == 0)
-                throw new PKSyntaxError("You must pass one or more members.");
-            return members;
         }
         
         public async Task GroupPrivacy(Context ctx, PKGroup target, PrivacyLevel? newValueFromCommand)
