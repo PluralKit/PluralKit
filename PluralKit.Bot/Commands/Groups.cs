@@ -339,9 +339,12 @@ namespace PluralKit.Bot
                 await _repo.AddMembersToGroup(conn, target.Id, membersNotInGroup);
                 
                 if (membersNotInGroup.Count == members.Count)
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
-                else 
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group ({"members".ToQuantity(members.Count - membersNotInGroup.Count)} already in group).");
+                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member added to group." : $"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
+                else
+                    if (membersNotInGroup.Count == 0)
+                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not added to group (member already in group)." : $"{Emojis.Error} No members added to group (members already in group).");
+                    else
+                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group ({"members".ToQuantity(members.Count - membersNotInGroup.Count)} already in group).");
             }
             else if (op == AddRemoveOperation.Remove)
             {
@@ -353,9 +356,12 @@ namespace PluralKit.Bot
                 await _repo.RemoveMembersFromGroup(conn, target.Id, membersInGroup);
                 
                 if (membersInGroup.Count == members.Count)
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
-                else 
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group ({"members".ToQuantity(members.Count - membersInGroup.Count)} already not in group).");
+                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member removed from group." : $"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
+                else
+                    if (membersInGroup.Count == 0)
+                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not removed from group (member already not in group)." : $"{Emojis.Error} No members removed from group (members already not in group).");
+                    else
+                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group ({"members".ToQuantity(members.Count - membersInGroup.Count)} already not in group).");
             }
         }
 
@@ -385,7 +391,7 @@ namespace PluralKit.Bot
             Add,
             Remove
         }
-        
+
         public async Task GroupPrivacy(Context ctx, PKGroup target, PrivacyLevel? newValueFromCommand)
         {
             ctx.CheckSystem().CheckOwnGroup(target);
