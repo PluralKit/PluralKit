@@ -165,13 +165,11 @@ namespace PluralKit.Bot
 
         private string FixClyde(string name)
         {
-            // Check if the name contains "Clyde" - if not, do nothing
-            var match = Regex.Match(name, "clyde", RegexOptions.IgnoreCase);
-            if (!match.Success) return name;
+            static string Replacement(Match m) => m.Groups[1].Value + "\u200A" + m.Groups[2].Value;
 
-            // Put a hair space (\u200A) between the "c" and the "lyde" in the match to avoid Discord matching it
+            // Adds a Unicode hair space (\u200A) between the "c" and the "lyde" to avoid Discord matching it
             // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
-            return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
+            return Regex.Replace(name, "(c)(lyde)", Replacement, RegexOptions.IgnoreCase);
         }
     }
 }
