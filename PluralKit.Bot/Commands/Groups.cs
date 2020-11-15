@@ -320,7 +320,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckOwnGroup(target);
 
-            var members = await ParseMemberList(ctx);
+            var members = await ctx.ParseMemberList(ctx.System.Id);
             
             await using var conn = await _db.Obtain();
             
@@ -339,9 +339,12 @@ namespace PluralKit.Bot
                 await _repo.AddMembersToGroup(conn, target.Id, membersNotInGroup);
                 
                 if (membersNotInGroup.Count == members.Count)
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
-                else 
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group ({"members".ToQuantity(members.Count - membersNotInGroup.Count)} already in group).");
+                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member added to group." : $"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
+                else
+                    if (membersNotInGroup.Count == 0)
+                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not added to group (member already in group)." : $"{Emojis.Error} No members added to group (members already in group).");
+                    else
+                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group ({"members".ToQuantity(members.Count - membersNotInGroup.Count)} already in group).");
             }
             else if (op == AddRemoveOperation.Remove)
             {
@@ -353,9 +356,12 @@ namespace PluralKit.Bot
                 await _repo.RemoveMembersFromGroup(conn, target.Id, membersInGroup);
                 
                 if (membersInGroup.Count == members.Count)
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
-                else 
-                    await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group ({"members".ToQuantity(members.Count - membersInGroup.Count)} already not in group).");
+                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member removed from group." : $"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
+                else
+                    if (membersInGroup.Count == 0)
+                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not removed from group (member already not in group)." : $"{Emojis.Error} No members removed from group (members already not in group).");
+                    else
+                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group ({"members".ToQuantity(members.Count - membersInGroup.Count)} already not in group).");
             }
         }
 
@@ -386,26 +392,6 @@ namespace PluralKit.Bot
             Remove
         }
 
-        private static async Task<List<PKMember>> ParseMemberList(Context ctx)
-        {
-            // TODO: move this to a context extension and share with the switch command somewhere, after branch merge?
-            
-            var members = new List<PKMember>();
-            while (ctx.HasNext())
-            {
-                var member = await ctx.MatchMember();
-                if (member == null)
-                    throw new PKSyntaxError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));;
-                if (member.System != ctx.System.Id)
-                    throw new PKError($"Member **{member.Name}** (`{member.Hid}`) is not in your own system, so you can't add it to a group.");
-                members.Add(member);
-            }
-
-            if (members.Count == 0)
-                throw new PKSyntaxError("You must pass one or more members.");
-            return members;
-        }
-        
         public async Task GroupPrivacy(Context ctx, PKGroup target, PrivacyLevel? newValueFromCommand)
         {
             ctx.CheckSystem().CheckOwnGroup(target);
