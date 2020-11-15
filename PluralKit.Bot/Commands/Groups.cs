@@ -270,9 +270,9 @@ namespace PluralKit.Bot
                 eb.WithSimpleLineContent(page.Select(g =>
                 {
                     if (g.DisplayName != null)
-                        return $"[`{g.Hid}`] **{g.Name}** ({g.DisplayName}) ({"member".ToQuantity(g.MemberCount)})";
+                        return $"[`{g.Hid}`] **{g.Name.EscapeMarkdown()}** ({g.DisplayName.EscapeMarkdown()}) ({"member".ToQuantity(g.MemberCount)})";
                     else
-                        return $"[`{g.Hid}`] **{g.Name}** ({"member".ToQuantity(g.MemberCount)})";
+                        return $"[`{g.Hid}`] **{g.Name.EscapeMarkdown()}** ({"member".ToQuantity(g.MemberCount)})";
                 }));
                 eb.WithFooter($"{groups.Count} total.");
                 return Task.CompletedTask;
