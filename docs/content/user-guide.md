@@ -129,10 +129,11 @@ You can't do much with PluralKit without having registered members with your sys
 As the one exception to the rule above, if the name consists of multiple words you must *not* enclose it in double quotes.
 
 ### Looking up member info
-To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), or by their 5-character *member ID*, like so:
+To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5-character *member ID*, or by their *display name*, like so:
 
     pk;member John
     pk;member qazws
+    pk;member J
 
 Member IDs are the only way to address a member in another system, and you can find it in various places - for example the system's member list, or on a message info card gotten by reacting to messages with a question mark.
 

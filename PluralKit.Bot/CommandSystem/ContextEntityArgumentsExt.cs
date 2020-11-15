@@ -110,6 +110,8 @@ namespace PluralKit.Bot
                 return byName;
             if (await ctx.Repository.GetGroupByHid(conn, input) is {} byHid)
                 return byHid;
+            if (await ctx.Repository.GetGroupByDisplayName(conn, ctx.System.Id, input) is {} byDisplayName)
+                return byDisplayName;
 
             return null;
         }
