@@ -61,3 +61,4 @@ You cannot look up private members of another system.
 |-with-last-message|-with-last-proxy, -wlm, -wlp|Show each member's last message date|
 |-with-message-count|-wmc|Show each member's message count|
 |-with-created|-wc|Show each member's creation date|
+|-with-avatar|-wa, -wi, -ia, -ii, -img|Show each member's avatar URL|

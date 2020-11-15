@@ -65,6 +65,8 @@ namespace PluralKit.Bot
                 p.IncludeMessageCount = true;
             if (ctx.MatchFlag("with-created", "wc"))
                 p.IncludeCreated = true;
+            if (ctx.MatchFlag("with-avatar", "with-image", "wa", "wi", "ia", "ii", "img"))
+                p.IncludeAvatar = true;
             
             // Always show the sort property, too
             if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
@@ -151,6 +153,9 @@ namespace PluralKit.Bot
                     if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                         profile.Append($"\n**Created on:** {created.FormatZoned(zone)}");
                     
+                    if (opts.IncludeAvatar)
+                        profile.Append($"\n**Avatar URL:** {m.AvatarUrl}");
+
                     if (m.DescriptionFor(lookupCtx) is {} desc) 
                         profile.Append($"\n\n{desc}");
                     
