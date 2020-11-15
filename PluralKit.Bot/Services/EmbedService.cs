@@ -52,7 +52,7 @@ namespace PluralKit.Bot {
             }
 
             if (system.Tag != null) eb.AddField("Tag", system.Tag.EscapeMarkdown());
-            eb.AddField("Linked accounts", string.Join(", ", users).Truncate(1000), true);
+            eb.AddField("Linked accounts", string.Join("\n", users).Truncate(1000), true);
 
             if (system.MemberListPrivacy.CanAccess(ctx))
             {
