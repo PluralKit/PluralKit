@@ -39,7 +39,7 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<ProxyService>();
         }
 
-        public async Task<bool> HandleIncomingMessage(DiscordMessage message, MessageContext ctx, bool allowAutoproxy)
+        public async Task<bool> HandleIncomingMessage(DiscordClient shard, DiscordMessage message, MessageContext ctx, bool allowAutoproxy)
         {
             if (!ShouldProxy(message, ctx)) return false;
 
@@ -64,7 +64,7 @@ namespace PluralKit.Bot
             var allowEmbeds = (senderPermissions & Permissions.EmbedLinks) != 0;
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(conn, message, ctx, match, allowEveryone, allowEmbeds);
+            await ExecuteProxy(shard, conn, message, ctx, match, allowEveryone, allowEmbeds);
             return true;
         }
 
@@ -90,7 +90,7 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task ExecuteProxy(IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
+        private async Task ExecuteProxy(DiscordClient shard, IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
                                         ProxyMatch match, bool allowEveryone, bool allowEmbeds)
         {
             // Send the webhook
@@ -100,10 +100,10 @@ namespace PluralKit.Bot
                 match.Member.ProxyAvatar(ctx),
                 content, trigger.Attachments, allowEveryone);
 
-            await HandleProxyExecutedActions(conn, ctx, trigger, proxyMessage, match);
+            await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
         }
 
-        private async Task HandleProxyExecutedActions(IPKConnection conn, MessageContext ctx,
+        private async Task HandleProxyExecutedActions(DiscordClient shard, IPKConnection conn, MessageContext ctx,
                                                       DiscordMessage triggerMessage, DiscordMessage proxyMessage,
                                                       ProxyMatch match)
         {
@@ -117,7 +117,7 @@ namespace PluralKit.Bot
                 Sender = triggerMessage.Author.Id
             });
             
-            Task LogMessageToChannel() => _logChannel.LogMessage(ctx, match, triggerMessage, proxyMessage.Id).AsTask();
+            Task LogMessageToChannel() => _logChannel.LogMessage(shard, ctx, match, triggerMessage, proxyMessage.Id).AsTask();
             
             async Task DeleteProxyTriggerMessage()
             {

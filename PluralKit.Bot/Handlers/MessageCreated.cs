@@ -73,7 +73,7 @@ namespace PluralKit.Bot
                 return;
             if (await TryHandleCommand(shard, evt, ctx))
                 return;
-            await TryHandleProxy(evt, ctx);
+            await TryHandleProxy(shard, evt, ctx);
         }
 
         private async ValueTask<bool> TryHandleLogClean(MessageCreateEventArgs evt, MessageContext ctx)
@@ -133,11 +133,11 @@ namespace PluralKit.Bot
             return false;
         }
 
-        private async ValueTask<bool> TryHandleProxy(MessageCreateEventArgs evt, MessageContext ctx)
+        private async ValueTask<bool> TryHandleProxy(DiscordClient shard, MessageCreateEventArgs evt, MessageContext ctx)
         {
             try
             {
-                return await _proxy.HandleIncomingMessage(evt.Message, ctx, allowAutoproxy: true);
+                return await _proxy.HandleIncomingMessage(shard, evt.Message, ctx, allowAutoproxy: true);
             }
             catch (PKError e)
             {
