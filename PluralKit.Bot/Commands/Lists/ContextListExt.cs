@@ -153,8 +153,8 @@ namespace PluralKit.Bot
                     if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                         profile.Append($"\n**Created on:** {created.FormatZoned(zone)}");
                     
-                    if (opts.IncludeAvatar)
-                        profile.Append($"\n**Avatar URL:** {m.AvatarUrl}");
+                    if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is {} avatar)
+                        profile.Append($"\n**Avatar URL:** {avatar}");
 
                     if (m.DescriptionFor(lookupCtx) is {} desc) 
                         profile.Append($"\n\n{desc}");
