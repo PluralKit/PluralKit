@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using DSharpPlus;
@@ -35,14 +36,28 @@ namespace PluralKit.Bot
 
         private async ValueTask TryHandleProxyMessageReactions(MessageReactionAddEventArgs evt)
         {
-            // Only proxies in guild text channels
-            if (evt.Channel == null || evt.Channel.Type != ChannelType.Text) return;
 
             // Sometimes we get events from users that aren't in the user cache
             // In that case we get a "broken" user object (where eg. calling IsBot throws an exception)
             // We just ignore all of those for now, should be quite rare...
             if (!evt.Client.TryGetCachedUser(evt.User.Id, out _)) return;
-            
+
+            // check if it's a command message first
+            // since this can happen in DMs as well
+            if (evt.Emoji.Name == "\u274c")
+            {
+                await using var conn = await _db.Obtain();
+                var commandMsg = await _commandMessageService.GetCommandMessage(conn, evt.Message.Id);
+                if (commandMsg != null)
+                {
+                    await HandleCommandDeleteReaction(evt, commandMsg);
+                    return;
+                }
+            }
+
+            // Only proxies in guild text channels
+            if (evt.Channel == null || evt.Channel.Type != ChannelType.Text) return;
+
             // Ignore reactions from bots (we can't DM them anyway)
             if (evt.User.IsBot) return;
             
@@ -54,18 +69,10 @@ namespace PluralKit.Bot
                     await using var conn = await _db.Obtain();
                     var msg = await _repo.GetMessage(conn, evt.Message.Id);
                     if (msg != null)
-                    {
                         await HandleProxyDeleteReaction(evt, msg);
-                        break;
-                    }
-
-                    var commandMsg = await _commandMessageService.GetCommandMessage(conn, evt.Message.Id);
-                    if (commandMsg != null) 
-                        await HandleCommandDeleteReaction(evt, commandMsg);
-
+                    
                     break;
                 }
-
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
                 {
@@ -113,7 +120,7 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEventArgs evt, CommandMessage msg)
         {
-            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) 
+            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages) && evt.Channel.Guild != null)
                 return;
 
             // Can only delete your own message
