@@ -96,45 +96,69 @@ namespace PluralKit.Bot
             // Send the webhook
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
-            var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
+            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
                 match.Member.ProxyAvatar(ctx),
                 content, trigger.Attachments, allowEveryone);
 
-            Task SaveMessage() => _repo.AddMessage(conn, new PKMessage
+            await HandleProxyExecutedActions(conn, ctx, trigger, proxyMessage, match);
+        }
+
+        private async Task HandleProxyExecutedActions(IPKConnection conn, MessageContext ctx,
+                                                      DiscordMessage triggerMessage, DiscordMessage proxyMessage,
+                                                      ProxyMatch match)
+        {
+            Task SaveMessageInDatabase() => _repo.AddMessage(conn, new PKMessage
             {
-                Channel = trigger.ChannelId,
-                Guild = trigger.Channel.GuildId,
+                Channel = triggerMessage.ChannelId,
+                Guild = triggerMessage.Channel.GuildId,
                 Member = match.Member.Id,
-                Mid = id,
-                OriginalMid = trigger.Id,
-                Sender = trigger.Author.Id
+                Mid = proxyMessage.Id,
+                OriginalMid = triggerMessage.Id,
+                Sender = triggerMessage.Author.Id
             });
             
-            Task LogMessage() => _logChannel.LogMessage(ctx, match, trigger, id).AsTask();
-            async Task DeleteMessage()
+            Task LogMessageToChannel() => _logChannel.LogMessage(ctx, match, triggerMessage, proxyMessage.Id).AsTask();
+            
+            async Task DeleteProxyTriggerMessage()
             {
                 // Wait a second or so before deleting the original message
                 await Task.Delay(MessageDeletionDelay);
                 try
                 {
-                    await trigger.DeleteAsync();
+                    await triggerMessage.DeleteAsync();
                 }
                 catch (NotFoundException)
                 {
-                    // If it's already deleted, we just log and swallow the exception
-                    _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", trigger.Id);
+                    _logger.Debug("Trigger message {TriggerMessageId} was already deleted when we attempted to; deleting proxy message {ProxyMessageId} also", 
+                        triggerMessage.Id, proxyMessage.Id);
+                    await HandleTriggerAlreadyDeleted(proxyMessage);
+                    // Swallow the exception, we don't need it
                 }
             }
             
             // Run post-proxy actions (simultaneously; order doesn't matter)
             // Note that only AddMessage is using our passed-in connection, careful not to pass it elsewhere and run into conflicts
             await Task.WhenAll(
-                DeleteMessage(),
-                SaveMessage(),
-                LogMessage()
+                DeleteProxyTriggerMessage(),
+                SaveMessageInDatabase(),
+                LogMessageToChannel()
             );
         }
-        
+
+        private async Task HandleTriggerAlreadyDeleted(DiscordMessage proxyMessage)
+        {
+            // If a trigger message is deleted before we get to delete it, we can assume a mod bot or similar got to it
+            // In this case we should also delete the now-proxied message.
+            // This is going to hit the message delete event handler also, so that'll do the cleanup for us
+
+            try
+            {
+                await proxyMessage.DeleteAsync();
+            }
+            catch (NotFoundException) { }
+            catch (UnauthorizedException) { }
+        }
+
         private async Task<bool> CheckBotPermissionsOrError(DiscordChannel channel)
         {
             var permissions = channel.BotPermissions();
