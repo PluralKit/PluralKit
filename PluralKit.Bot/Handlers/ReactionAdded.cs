@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 
 using DSharpPlus;
@@ -29,18 +28,18 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<ReactionAdded>();
         }
 
-        public async Task Handle(MessageReactionAddEventArgs evt)
+        public async Task Handle(DiscordClient shard, MessageReactionAddEventArgs evt)
         { 
-            await TryHandleProxyMessageReactions(evt);
+            await TryHandleProxyMessageReactions(shard, evt);
         }
 
-        private async ValueTask TryHandleProxyMessageReactions(MessageReactionAddEventArgs evt)
+        private async ValueTask TryHandleProxyMessageReactions(DiscordClient shard, MessageReactionAddEventArgs evt)
         {
 
             // Sometimes we get events from users that aren't in the user cache
             // In that case we get a "broken" user object (where eg. calling IsBot throws an exception)
             // We just ignore all of those for now, should be quite rare...
-            if (!evt.Client.TryGetCachedUser(evt.User.Id, out _)) return;
+            if (!shard.TryGetCachedUser(evt.User.Id, out _)) return;
 
             // check if it's a command message first
             // since this can happen in DMs as well
@@ -79,7 +78,7 @@ namespace PluralKit.Bot
                     await using var conn = await _db.Obtain();
                     var msg = await _repo.GetMessage(conn, evt.Message.Id);
                     if (msg != null)
-                        await HandleQueryReaction(evt, msg);
+                        await HandleQueryReaction(shard, evt, msg);
                     
                     break;
                 }
@@ -139,14 +138,14 @@ namespace PluralKit.Bot
             // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
         }
 
-        private async ValueTask HandleQueryReaction(MessageReactionAddEventArgs evt, FullMessage msg)
+        private async ValueTask HandleQueryReaction(DiscordClient shard, MessageReactionAddEventArgs evt, FullMessage msg)
         {
             // Try to DM the user info about the message
             var member = await evt.Guild.GetMember(evt.User.Id);
             try
             {
                 await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, evt.Guild, LookupContext.ByNonOwner));
-                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(evt.Client, msg));
+                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(shard, msg));
             }
             catch (UnauthorizedException) { } // No permissions to DM, can't check for this :(
             

@@ -48,7 +48,7 @@ namespace PluralKit.Bot
             // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
             _lastMessageCache.GetLastMessage(evt.ChannelId) == evt.Id;
 
-        public async Task Handle(MessageCreateEventArgs evt)
+        public async Task Handle(DiscordClient shard, MessageCreateEventArgs evt)
         {
             if (evt.Author?.Id == _client.CurrentUser?.Id) return;
             if (evt.Message.MessageType != MessageType.Default) return;
@@ -71,7 +71,7 @@ namespace PluralKit.Bot
             // Only do command/proxy handling if it's a user account
             if (evt.Message.Author.IsBot || evt.Message.WebhookMessage || evt.Message.Author.IsSystem == true) 
                 return;
-            if (await TryHandleCommand(evt, ctx))
+            if (await TryHandleCommand(shard, evt, ctx))
                 return;
             await TryHandleProxy(evt, ctx);
         }
@@ -85,7 +85,7 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async ValueTask<bool> TryHandleCommand(MessageCreateEventArgs evt, MessageContext ctx)
+        private async ValueTask<bool> TryHandleCommand(DiscordClient shard, MessageCreateEventArgs evt, MessageContext ctx)
         {
             var content = evt.Message.Content;
             if (content == null) return false;
@@ -102,7 +102,7 @@ namespace PluralKit.Bot
             try
             {
                 var system = ctx.SystemId != null ? await _db.Execute(c => _repo.GetSystem(c, ctx.SystemId.Value)) : null;
-                await _tree.ExecuteCommand(new Context(_services, evt.Client, evt.Message, cmdStart, system, ctx));
+                await _tree.ExecuteCommand(new Context(_services, shard, evt.Message, cmdStart, system, ctx));
             }
             catch (PKError)
             {

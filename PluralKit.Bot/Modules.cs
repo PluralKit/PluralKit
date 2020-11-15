@@ -24,7 +24,8 @@ namespace PluralKit.Bot
                 Token = c.Resolve<BotConfig>().Token,
                 TokenType = TokenType.Bot,
                 MessageCacheSize = 0,
-                LargeThreshold = 50
+                LargeThreshold = 50,
+                LoggerFactory = c.Resolve<Microsoft.Extensions.Logging.ILoggerFactory>()
             }).AsSelf();
             builder.Register(c => new DiscordShardedClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();
             builder.Register(c => new DiscordRestClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();

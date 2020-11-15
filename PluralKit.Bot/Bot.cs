@@ -9,8 +9,6 @@ using App.Metrics;
 
 using Autofac;
 
-using Dapper;
-
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -24,7 +22,6 @@ using Sentry;
 
 using Serilog;
 using Serilog.Context;
-using Serilog.Events;
 
 namespace PluralKit.Bot
 {
@@ -55,9 +52,6 @@ namespace PluralKit.Bot
 
         public void Init()
         {
-            // Attach the handlers we need
-            _client.DebugLogger.LogMessageReceived += FrameworkLog;
-            
             // HandleEvent takes a type parameter, automatically inferred by the event type
             // It will then look up an IEventHandler<TypeOfEvent> in the DI container and call that object's handler method
             // For registering new ones, see Modules.cs 
@@ -68,12 +62,12 @@ namespace PluralKit.Bot
             _client.MessageReactionAdded += HandleEvent;
 
             // Update shard status for shards immediately on connect
-            _client.Ready += args =>
+            _client.Ready += (client, _) =>
             {
                 _hasReceivedReady = true;
-                return UpdateBotStatus(args.Client);
+                return UpdateBotStatus(client);
             }; 
-            _client.Resumed += args => UpdateBotStatus(args.Client); 
+            _client.Resumed += (client, _) => UpdateBotStatus(client); 
             
             // Init the shard stuff
             _services.Resolve<ShardInfoService>().Init();
@@ -101,7 +95,7 @@ namespace PluralKit.Bot
                 await _client.UpdateStatusAsync(new DiscordActivity("Restarting... (please wait)"), UserStatus.Idle);
         }
 
-        private Task HandleEvent<T>(T evt) where T: DiscordEventArgs
+        private Task HandleEvent<T>(DiscordClient shard, T evt) where T: DiscordEventArgs
         {
             // We don't want to stall the event pipeline, so we'll "fork" inside here
             var _ = HandleEventInner();
@@ -118,7 +112,7 @@ namespace PluralKit.Bot
                 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
                 var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
-                sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), evt);
+                sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), shard, evt);
                 
                 // Find an event handler that can handle the type of event (<T>) we're given
                 var handler = serviceScope.Resolve<IEventHandler<T>>();
@@ -129,7 +123,7 @@ namespace PluralKit.Bot
                     // the TryHandle call returns true if it's handled the event
                     // Usually it won't, so just pass it on to the main handler
                     if (queue == null || !await queue.TryHandle(evt))
-                        await handler.Handle(evt);
+                        await handler.Handle(shard, evt);
                 }
                 catch (Exception exc)
                 {
@@ -208,24 +202,6 @@ namespace PluralKit.Bot
                     await Task.WhenAll(_client.ShardClients.Values.Select(UpdateStatus));
             }
             catch (WebSocketException) { }
-        }
-        
-        public void FrameworkLog(object sender, DebugLogMessageEventArgs args)
-        {
-            // Bridge D#+ logging to Serilog
-            LogEventLevel level = LogEventLevel.Verbose;
-            if (args.Level == LogLevel.Critical)
-                level = LogEventLevel.Fatal;
-            else if (args.Level == LogLevel.Debug)
-                level = LogEventLevel.Debug;
-            else if (args.Level == LogLevel.Error)
-                level = LogEventLevel.Error;
-            else if (args.Level == LogLevel.Info)
-                level = LogEventLevel.Information;
-            else if (args.Level == LogLevel.Warning)
-                level = LogEventLevel.Warning;
-
-            _logger.Write(level, args.Exception, "D#+ {Source}: {Message}", args.Application, args.Message);
         }
     }
 }

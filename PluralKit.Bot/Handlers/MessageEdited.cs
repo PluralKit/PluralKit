@@ -29,7 +29,7 @@ namespace PluralKit.Bot
             _client = client;
         }
 
-        public async Task Handle(MessageUpdateEventArgs evt)
+        public async Task Handle(DiscordClient shard, MessageUpdateEventArgs evt)
         {
             if (evt.Author?.Id == _client.CurrentUser?.Id) return;
             

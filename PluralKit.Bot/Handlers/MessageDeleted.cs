@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using DSharpPlus;
 using DSharpPlus.EventArgs;
 
 using PluralKit.Core;
@@ -23,14 +24,14 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<MessageDeleted>();
         }
         
-        public async Task Handle(MessageDeleteEventArgs evt)
+        public async Task Handle(DiscordClient shard, MessageDeleteEventArgs evt)
         {
             // Delete deleted webhook messages from the data store
             // Most of the data in the given message is wrong/missing, so always delete just to be sure.
             await _db.Execute(c => _repo.DeleteMessage(c, evt.Message.Id));
         }
 
-        public async Task Handle(MessageBulkDeleteEventArgs evt)
+        public async Task Handle(DiscordClient shard, MessageBulkDeleteEventArgs evt)
         {
             // Same as above, but bulk
             _logger.Information("Bulk deleting {Count} messages in channel {Channel}", evt.Messages.Count, evt.Channel.Id);
