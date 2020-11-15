@@ -41,3 +41,8 @@ In most cases, PluralKit will match log messages by the ID of the deleted messag
 :::
 
 If you want support for another logging bot, [let me know on the support server](https://discord.gg/PczBt78).
+
+## Chat filter bots
+If PluralKit detects that a proxy trigger message has already been deleted when it attempts to delete it itself, it'll also delete the trigger message.  This ensures compatibility in *most* cases with moderation bots that filter messages (eg. swear words, links, invites, etc). The bot will delete the original trigger message, and then PluralKit will clean up the proxied message as well.
+
+Due to the timing aspect, this may not work 100% of the time, especially if there's server lag involved, but it's hopefully good enough.
