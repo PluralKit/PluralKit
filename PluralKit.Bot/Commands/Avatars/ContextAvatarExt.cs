@@ -15,7 +15,7 @@ namespace PluralKit.Bot
         // This lets us add resizing parameters to "borrow" their media proxy server to downsize the image
         // which in turn makes it more likely to be underneath the size limit!
         private static readonly Regex DiscordCdnUrl = new Regex(@"^https?://(?:cdn\.discordapp\.com|media\.discordapp\.net)/attachments/(\d{17,19})/(\d{17,19})/([^/\\&\?]+)\.(png|jpg|jpeg|webp)(\?.*)?$");
-        private static readonly string DiscordMediaUrlReplacement = "https://media.discordapp.net/attachments/$1/$2/$3.$4?width=256&height=256&format=jpeg";
+        private static readonly string DiscordMediaUrlReplacement = "https://media.discordapp.net/attachments/$1/$2/$3.$4?width=256&height=256";
         
         public static async Task<ParsedImage?> MatchImage(this Context ctx)
         {
