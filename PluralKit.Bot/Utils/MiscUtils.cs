@@ -35,7 +35,10 @@ namespace PluralKit.Bot
             if (e is BadRequestException bre && bre.WebResponse.Response.Contains("<center>nginx</center>")) return false;
             if (e is NotFoundException ne && ne.WebResponse.Response.Contains("<center>nginx</center>")) return false;
             if (e is UnauthorizedException ue && ue.WebResponse.Response.Contains("<center>nginx</center>")) return false;
-            
+
+            // 500s? also not our problem :^)
+            if (e is ServerErrorException) return false;
+
             // Webhook server errors are also *not our problem*
             // (this includes rate limit errors, WebhookRateLimited is a subclass)
             if (e is WebhookExecutionErrorOnDiscordsEnd) return false;
