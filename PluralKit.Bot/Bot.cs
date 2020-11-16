@@ -106,7 +106,7 @@ namespace PluralKit.Bot
                 using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
                 _logger
                     .ForContext("Elastic", "yes?")
-                    .Debug("Gateway event: {@Event}", evt);
+                    .Verbose("Gateway event: {@Event}", evt);
                 
                 await using var serviceScope = _services.BeginLifetimeScope();
                 
