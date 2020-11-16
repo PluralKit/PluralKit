@@ -117,12 +117,16 @@ namespace PluralKit.Bot
                 // Find an event handler that can handle the type of event (<T>) we're given
                 var handler = serviceScope.Resolve<IEventHandler<T>>();
                 var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
+
                 try
                 {
+                    using var timer = _metrics.Measure.Timer.Time(BotMetrics.EventsHandled, 
+                            new MetricTags("event", typeof(T).Name.Replace("EventArgs", "")));
+
                     // Delegate to the queue to see if it wants to handle this event
                     // the TryHandle call returns true if it's handled the event
                     // Usually it won't, so just pass it on to the main handler
-                    if (queue == null || !await queue.TryHandle(evt))
+                    if (queue == null || !await queue.TryHandle(evt)) 
                         await handler.Handle(shard, evt);
                 }
                 catch (Exception exc)
@@ -135,6 +139,8 @@ namespace PluralKit.Bot
         private async Task HandleError<T>(IEventHandler<T> handler, T evt, ILifetimeScope serviceScope, Exception exc)
             where T: DiscordEventArgs
         {
+            _metrics.Measure.Meter.Mark(BotMetrics.BotErrors, exc.GetType().FullName);
+            
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
 
