@@ -60,7 +60,8 @@ namespace PluralKit.Bot
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
-        public static Command SwitchDelete = new Command("switch delete", "switch delete [all]", "Deletes the latest switch (or them all)");
+        public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
+        public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
         public static Command Link = new Command("link", "link <account>", "Links your system to another account");
         public static Command Unlink = new Command("unlink", "unlink [account]", "Unlinks your system from an account");
         public static Command TokenGet = new Command("token", "token", "Gets your system's API token");
@@ -104,7 +105,7 @@ namespace PluralKit.Bot
             GroupDelete
         };
 
-        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
+        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
 
         public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
 
