@@ -21,7 +21,7 @@ namespace PluralKit.Bot
         public static TimerOptions WebhookResponseTime => new TimerOptions { Name = "Webhook Response Time", Context = "Bot", RateUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Requests, DurationUnit = TimeUnit.Seconds };
         public static TimerOptions MessageContextQueryTime => new TimerOptions { Name = "Message context query duration", Context = "Bot", RateUnit = TimeUnit.Seconds, DurationUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Calls };
         public static TimerOptions ProxyMembersQueryTime => new TimerOptions { Name = "Proxy member query duration", Context = "Bot", RateUnit = TimeUnit.Seconds, DurationUnit = TimeUnit.Seconds, MeasurementUnit = Unit.Calls };
-        public static TimerOptions DiscordApiRequests => new TimerOptions { Name = "Discord API requests", MeasurementUnit = Unit.Requests, Context = "Bot"};
+        public static TimerOptions DiscordApiRequests => new TimerOptions { Name = "Discord API requests", MeasurementUnit = Unit.Requests, DurationUnit = TimeUnit.Milliseconds, Context = "Bot"};
         public static MeterOptions BotErrors => new MeterOptions { Name = "Bot errors", MeasurementUnit = Unit.Errors, RateUnit = TimeUnit.Seconds, Context = "Bot"};
         public static MeterOptions ErrorMessagesSent => new MeterOptions { Name = "Error messages sent", MeasurementUnit = Unit.Errors, RateUnit = TimeUnit.Seconds, Context = "Bot"};
         public static TimerOptions EventsHandled => new TimerOptions { Name = "Events handled", MeasurementUnit = Unit.Errors, RateUnit = TimeUnit.Seconds, DurationUnit = TimeUnit.Seconds, Context = "Bot"};
