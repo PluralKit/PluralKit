@@ -107,6 +107,8 @@ namespace PluralKit.Bot
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
 
         public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
+
+        public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
         
         private DiscordShardedClient _client;
 
@@ -126,6 +128,8 @@ namespace PluralKit.Bot
                 return HandleGroupCommand(ctx);
             if (ctx.Match("switch", "sw"))
                 return HandleSwitchCommand(ctx);
+            if (ctx.Match("commands"))
+                return CommandHelpRoot(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
                 return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
             if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
@@ -151,8 +155,6 @@ namespace PluralKit.Bot
                 else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
             if (ctx.Match("explain"))
                 return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
-            if (ctx.Match("commands"))
-                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
             if (ctx.Match("message", "msg"))
                 return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("log"))
@@ -174,7 +176,9 @@ namespace PluralKit.Bot
                     return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
                 else if (ctx.Match("list", "show"))
                     return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowBlacklisted(ctx));
-                else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove, BlacklistShow);
+                else if (ctx.Match("commands"))
+                    return PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                else return PrintCommandExpectedError(ctx, BlacklistCommands);
             if (ctx.Match("proxy", "enable", "disable"))
                 return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
@@ -402,6 +406,51 @@ namespace PluralKit.Bot
                 await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
             else
                 await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchDelete, SystemFronter, SystemFrontHistory);
+        }
+
+        private async Task CommandHelpRoot(Context ctx)
+        {   
+            if (!ctx.HasNext())
+            {
+                await ctx.Reply($"{Emojis.Error} You need to pass a target command.\nAvailable command help targets: `system`, `member`, `group`, `switch`, `log`, `blacklist`.\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
+                return;
+            }
+
+            switch (ctx.PeekArgument()) {
+                case "system":
+                case "systems":
+                case "s":
+                    await PrintCommandList(ctx, "systems", SystemCommands);
+                    break;
+                case "member":
+                case "members":
+                case "m":
+                    await PrintCommandList(ctx, "members", MemberCommands);
+                    break;
+                case "group":
+                case "groups":
+                case "g":
+                    await PrintCommandList(ctx, "groups", GroupCommands);
+                    break;
+                case "switch":
+                case "switches":
+                case "switching":
+                case "sw":
+                    await PrintCommandList(ctx, "switching", SwitchCommands);
+                    break;
+                case "log":
+                    await PrintCommandList(ctx, "message logging", LogCommands);
+                    break;
+                case "blacklist":
+                case "bl":
+                    await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                    break;
+                // case "autoproxy": (add this when #232 is merged)
+                // todo: are there any commands that still need to be added?
+                default:
+                    await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
+                    break;
+            }
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)
