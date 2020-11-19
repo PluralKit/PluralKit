@@ -71,6 +71,7 @@ namespace PluralKit.Bot
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
         public static Command Message = new Command("message", "message <id|link>", "Looks up a proxied message");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
+        public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
         public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
         public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
@@ -105,7 +106,7 @@ namespace PluralKit.Bot
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
 
-        public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
+        public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
         
         private DiscordShardedClient _client;
 
@@ -127,10 +128,8 @@ namespace PluralKit.Bot
                 return HandleSwitchCommand(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
                 return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
-            if (ctx.Match("list", "l", "members"))
+            if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-            if (ctx.Match("f", "find", "search", "query", "fd"))
-                return ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("link"))
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
@@ -163,6 +162,8 @@ namespace PluralKit.Bot
                     return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true));
                 else if (ctx.Match("disable", "off"))
                     return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
+                else if (ctx.Match("commands"))
+                    return PrintCommandList(ctx, "message logging", LogCommands);
                 else return PrintCommandExpectedError(ctx, LogCommands);
             if (ctx.Match("logclean"))
                 return ctx.Execute<ServerConfig>(LogClean, m => m.SetLogCleanup(ctx));

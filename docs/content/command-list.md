@@ -81,6 +81,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
 - `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
+- `pk;log channel -clear` - Clears the currently set log channel.
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
 - `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
 - `pk;logclean <on/off>` - Enables or disables [log cleanup](./staff/compatibility.md#log-cleanup).
