@@ -62,7 +62,9 @@ create function proxy_members(account_id bigint, guild_id bigint)
         name text,
         
         server_avatar text,
-        avatar text
+        avatar text,
+
+        allow_autoproxy bool
     )
 as $$
     select
@@ -78,7 +80,9 @@ as $$
         
         -- Avatar info
         member_guild.avatar_url as server_avatar,
-        members.avatar_url as avatar
+        members.avatar_url as avatar,
+
+        members.allow_autoproxy as allow_autoproxy
     from accounts
         inner join systems on systems.id = accounts.system
         inner join members on members.system = systems.id

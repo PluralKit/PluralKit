@@ -49,6 +49,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
 - `pk;member <name> proxy add [tags]` - Adds a proxy tag pair to a member.
 - `pk;member <name> proxy remove [tags]` - Removes a proxy tag from a member.
+- `pk;member <name> autoproxy [on|off]` - Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.
 - `pk;member <name> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
 - `pk;member <name> pronouns [pronouns]` - Changes the pronouns of a member.
 - `pk;member <name> color [color]` - Changes the color of a member.

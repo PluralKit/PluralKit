@@ -347,6 +347,18 @@ To enable member-mode autoproxying for a given server, use the following command
 
     pk;autoproxy <member>
 
+### Disabling front/latch autoproxy on a per-member basis
+If a system uses front or latch mode autoproxy, but one member prefers to send messages through the account (and not proxy), you can disable the front and latch modes for that specific member.
+
+    pk;member <name> autoproxy off
+
+To re-enable front / latch modes for that member, use the following command:
+
+    pk;member <name> autoproxy on
+
+This will *not* disable member mode autoproxy. If you do not wish to autoproxy, please turn off autoproxy instead of setting autoproxy to a specific member.
+
+
 ## Managing switches
 PluralKit allows you to log member switches through the bot.
 Essentially, this means you can mark one or more members as *the current fronter(s)* for the duration until the next switch.
