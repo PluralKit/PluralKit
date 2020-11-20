@@ -22,7 +22,17 @@ namespace PluralKit.Bot
 
         public async Task AutoproxyRoot(Context ctx)
         {
-            ctx.CheckSystem().CheckGuildContext();
+            ctx.CheckSystem();
+
+            // check account first
+            // this is ugly, but someone may want to disable autoproxy in DMs (since this is global)
+            if (ctx.Match("account", "ac"))
+            {
+                await AutoproxyAccount(ctx);
+                return;
+            }
+
+            ctx.CheckGuildContext();
             
             if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
                 await AutoproxyOff(ctx);
@@ -122,7 +132,38 @@ namespace PluralKit.Bot
                 default: throw new ArgumentOutOfRangeException();
             }
 
+            if (!ctx.MessageContext.AllowAutoproxy) 
+                eb.AddField("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`.");
+
             return eb.Build();
+        }
+
+        private async Task AutoproxyAccount(Context ctx)
+        {
+            if (ctx.Match("enable", "on"))
+                await AutoproxyEnableDisable(ctx, true);
+            else if (ctx.Match("disable", "off"))
+                await AutoproxyEnableDisable(ctx, false);
+            else if (ctx.HasNext())
+                throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else
+            {
+                var statusString = ctx.MessageContext.AllowAutoproxy ? "enabled" : "disabled";
+                await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+            }
+        }
+
+        private async Task AutoproxyEnableDisable(Context ctx, bool allow)
+        {
+            var statusString = allow ? "enabled" : "disabled";
+            if (ctx.MessageContext.AllowAutoproxy == allow)
+            {
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+                return;
+            }
+            var patch = new AccountPatch { AllowAutoproxy = allow };
+            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.Author.Id, patch));
+            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
         }
 
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)

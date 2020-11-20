@@ -358,6 +358,22 @@ To re-enable front / latch modes for that member, use the following command:
 
 This will *not* disable member mode autoproxy. If you do not wish to autoproxy, please turn off autoproxy instead of setting autoproxy to a specific member.
 
+### Disabling autoproxy per-account
+
+It is possible to fully disable autoproxy for a certain account linked to your system. For example, you might want to do this if a specific member's name is shown on the account.
+
+To disable autoproxy for the current account, use the following command:
+
+    pk;autoproxy account disable
+
+To re-enable autoproxy for the current account, use the following command:
+
+    pk;autoproxy account enable
+
+::: tip
+This subcommand can also be run in DMs.
+:::
+
 
 ## Managing switches
 PluralKit allows you to log member switches through the bot.

@@ -137,7 +137,7 @@ namespace PluralKit.Bot
         {
             try
             {
-                return await _proxy.HandleIncomingMessage(shard, evt.Message, ctx, allowAutoproxy: true);
+                return await _proxy.HandleIncomingMessage(shard, evt.Message, ctx, allowAutoproxy: ctx.AllowAutoproxy);
             }
             catch (PKError e)
             {
