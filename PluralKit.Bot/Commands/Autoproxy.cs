@@ -174,6 +174,7 @@ namespace PluralKit.Bot
 
         private async Task AutoproxyAccount(Context ctx)
         {
+            // todo: this might be useful elsewhere, consider moving it to ctx.MatchToggle
             if (ctx.Match("enable", "on"))
                 await AutoproxyEnableDisable(ctx, true);
             else if (ctx.Match("disable", "off"))

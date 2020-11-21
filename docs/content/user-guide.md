@@ -315,16 +315,22 @@ Since the messages will be posted by PluralKit's webhook, there's no way to dele
 To delete a PluralKit-proxied message, you can react to it with the :x: emoji. Note that this only works if the message has
 been sent from your own account.
 
-### Autoproxying
+## Autoproxy
 The bot's *autoproxy* feature allows you to have messages be proxied without directly including the proxy tags. Autoproxy can be set up in various ways. There are three autoproxy modes currently implemented:
 
 To see your system's current autoproxy settings, simply use the command:
+
     pk;autoproxy
     
 To disable autoproxying for the current server, use the command:
+
     pk;autoproxy off
     
 *(hint: `pk;autoproxy` can be shortened to `pk;ap` in all related commands)*
+
+::: tip
+To disable autoproxy for a single message, add a backslash (`\`) to the beginning of your message.
+:::
 
 #### Front mode
 This autoproxy mode will proxy messages as the current *first* fronter of the system. If you register a switch with `Alice` and `Bob`, messages without proxy tags will be autoproxied as `Alice`.
@@ -340,7 +346,14 @@ To enable latch-mode autoproxying for a given server, use the following command:
 
     pk;autoproxy latch
     
-::: tip
+#### Member mode 
+This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
+
+To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words) or 5-letter ID:
+
+    pk;autoproxy <member>
+
+### Changing the latch timeout duration
 By default, latch mode times out after 6 hours. It is possible to change this:
 
     pk;autoproxy timeout <new duration>
@@ -352,14 +365,6 @@ To reset the duration, use the following command:
 To disable timeout (never timeout), use the following command:
 
     pk;autoproxy timeout disable
-:::
-
-#### Member mode 
-This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
-
-To enable member-mode autoproxying for a given server, use the following command, where `<member>` is a member name (in "quotes" if multiple words) or 5-letter ID:
-
-    pk;autoproxy <member>
 
 ### Disabling front/latch autoproxy on a per-member basis
 If a system uses front or latch mode autoproxy, but one member prefers to send messages through the account (and not proxy), you can disable the front and latch modes for that specific member.
