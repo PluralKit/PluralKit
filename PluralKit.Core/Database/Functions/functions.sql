@@ -15,7 +15,8 @@
         last_switch_timestamp timestamp,
         system_tag text,
         system_avatar text,
-        allow_autoproxy bool
+        allow_autoproxy bool,
+        latch_timeout integer
     )
 as $$
     -- CTEs to query "static" (accessible only through args) data
@@ -39,7 +40,8 @@ as $$
         system_last_switch.timestamp as last_switch_timestamp,
         system.tag as system_tag,
         system.avatar_url as system_avatar,
-        system.account_autoproxy as allow_autoproxy
+        system.account_autoproxy as allow_autoproxy,
+        system.latch_timeout as latch_timeout
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder

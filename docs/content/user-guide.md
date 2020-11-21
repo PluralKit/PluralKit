@@ -340,6 +340,20 @@ To enable latch-mode autoproxying for a given server, use the following command:
 
     pk;autoproxy latch
     
+::: tip
+By default, latch mode times out after 6 hours. It is possible to change this:
+
+    pk;autoproxy timeout <new duration>
+
+To reset the duration, use the following command:
+
+    pk;autoproxy timeout reset
+
+To disable timeout (never timeout), use the following command:
+
+    pk;autoproxy timeout disable
+:::
+
 #### Member mode 
 This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
 

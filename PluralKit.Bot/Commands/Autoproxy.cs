@@ -25,10 +25,15 @@ namespace PluralKit.Bot
             ctx.CheckSystem();
 
             // check account first
-            // this is ugly, but someone may want to disable autoproxy in DMs (since this is global)
+            // this is ugly, but these global options should be available in DMs
             if (ctx.Match("account", "ac"))
             {
                 await AutoproxyAccount(ctx);
+                return;
+            }
+            else if (ctx.Match("timeout", "tm"))
+            {
+                await AutoproxyTimeout(ctx);
                 return;
             }
 
@@ -136,6 +141,35 @@ namespace PluralKit.Bot
                 eb.AddField("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`.");
 
             return eb.Build();
+        }
+
+        private async Task AutoproxyTimeout(Context ctx)
+        {
+            if (!ctx.HasNext())
+            {
+                if (ctx.System.LatchTimeout == -1)
+                    await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {PluralKit.Bot.ProxyMatcher.DefaultLatchExpiryTime} hour(s).");
+                else if (ctx.System.LatchTimeout == 0)
+                    await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never timeout.");
+                else
+                    await ctx.Reply($"The current latch timeout duration for your system is {ctx.System.LatchTimeout} hour(s).");
+                return;
+            }
+
+            // todo: somehow parse a more human-friendly date format
+            int newTimeout;
+            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = 0;
+            else if (ctx.Match("reset", "default")) newTimeout = -1;
+            else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeout)) throw new PKError("Duration must be an integer.");
+
+            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, new SystemPatch{LatchTimeout = newTimeout}));
+            
+            if (newTimeout == -1)
+                await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({PluralKit.Bot.ProxyMatcher.DefaultLatchExpiryTime} hours).");
+            else if (newTimeout == 0)
+                await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never timeout.");
+            else
+                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout} hours.");
         }
 
         private async Task AutoproxyAccount(Context ctx)
