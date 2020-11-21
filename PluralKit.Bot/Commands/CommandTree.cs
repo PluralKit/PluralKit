@@ -28,7 +28,9 @@ namespace PluralKit.Bot
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
         public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
         public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
-        public static Command Autoproxy = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for this server");
+        public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for this server");
+        public static Command AutoproxyTimeout = new Command("autoproxy", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
+        public static Command AutoproxyAccount = new Command("autoproxy", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
         public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
@@ -108,6 +110,8 @@ namespace PluralKit.Bot
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
 
+        public static Command[] AutoproxyCommands = {AutoproxySet, AutoproxyTimeout, AutoproxyAccount};
+        
         public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
 
         public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
@@ -133,7 +137,7 @@ namespace PluralKit.Bot
             if (ctx.Match("commands", "cmd", "c"))
                 return CommandHelpRoot(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
-                return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
+                return HandleAutoproxyCommand(ctx);
             if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("link"))
@@ -455,6 +459,26 @@ namespace PluralKit.Bot
                     await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
                     break;
             }
+        }
+
+        private Task HandleAutoproxyCommand(Context ctx)
+        {
+            // todo: merge this with the changes from #251
+            if (ctx.Match("commands"))
+                return PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+
+            // ctx.CheckSystem();
+            // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
+            // so we just emulate checking and throwing an error.
+            if (ctx.System == null)
+                return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
+
+            if (ctx.Match("account", "ac"))
+                return ctx.Execute<Autoproxy>(AutoproxyAccount, m => m.AutoproxyAccount(ctx));
+            else if (ctx.Match("timeout", "tm"))
+                return ctx.Execute<Autoproxy>(AutoproxyTimeout, m => m.AutoproxyTimeout(ctx));
+            else
+                return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)

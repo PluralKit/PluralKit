@@ -20,23 +20,9 @@ namespace PluralKit.Bot
             _repo = repo;
         }
 
-        public async Task AutoproxyRoot(Context ctx)
+        public async Task SetAutoproxyMode(Context ctx)
         {
-            ctx.CheckSystem();
-
-            // check account first
-            // this is ugly, but these global options should be available in DMs
-            if (ctx.Match("account", "ac"))
-            {
-                await AutoproxyAccount(ctx);
-                return;
-            }
-            else if (ctx.Match("timeout", "tm"))
-            {
-                await AutoproxyTimeout(ctx);
-                return;
-            }
-
+            // no need to check account here, it's already done at CommandTree
             ctx.CheckGuildContext();
             
             if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
@@ -143,7 +129,7 @@ namespace PluralKit.Bot
             return eb.Build();
         }
 
-        private async Task AutoproxyTimeout(Context ctx)
+        public async Task AutoproxyTimeout(Context ctx)
         {
             if (!ctx.HasNext())
             {
@@ -172,7 +158,7 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout} hours.");
         }
 
-        private async Task AutoproxyAccount(Context ctx)
+        public async Task AutoproxyAccount(Context ctx)
         {
             // todo: this might be useful elsewhere, consider moving it to ctx.MatchToggle
             if (ctx.Match("enable", "on"))
