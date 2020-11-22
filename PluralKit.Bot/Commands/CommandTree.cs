@@ -43,7 +43,7 @@ namespace PluralKit.Bot
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
-        public static Command MemberRandom = new Command("random", "random", "Looks up a random member from your system");
+        public static Command MemberRandom = new Command("random", "random", "Shows the info card of a randomly selected member in your system.");
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
         public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
         public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
@@ -57,6 +57,8 @@ namespace PluralKit.Bot
         public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
         public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");
         public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
+        public static Command GroupMemberRandom = new Command("group random", "group <group> random", "Shows the info card of a randomly selected member in a group.");
+        public static Command GroupRandom = new Command("random", "random group", "Shows the info card of a randomly selected group in your system.");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
@@ -102,7 +104,7 @@ namespace PluralKit.Bot
         public static Command[] GroupCommandsTargeted =
         {
             GroupInfo, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc, GroupIcon, GroupPrivacy,
-            GroupDelete
+            GroupDelete, GroupMemberRandom
         };
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
@@ -193,7 +195,10 @@ namespace PluralKit.Bot
             if (ctx.Match("permcheck"))
                 return ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
             if (ctx.Match("random", "r"))
-                return ctx.Execute<Member>(MemberRandom, m => m.MemberRandom(ctx));
+                if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
+                return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx));
+            else
+                return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx));
 
             // remove compiler warning
             return ctx.Reply(
@@ -372,6 +377,8 @@ namespace PluralKit.Bot
                     await ctx.Execute<Groups>(GroupRemove, g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
                 else if (ctx.Match("members", "list", "ms", "l"))
                     await ctx.Execute<Groups>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
+                else if (ctx.Match("random"))
+                    await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
                 else if (ctx.Match("privacy"))
                     await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
                 else if (ctx.Match("public", "pub"))
