@@ -20,8 +20,7 @@ namespace PluralKit.Bot
 
         public async Task Proxy(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            ctx.CheckSystem().CheckOwnMember(target);
 
             ProxyTag ParseProxyTags(string exampleProxy)
             {
