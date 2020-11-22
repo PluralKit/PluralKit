@@ -75,12 +75,13 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
 - `pk;switch delete` - Deletes the latest switch.
-- `pk;switch delete all` - Deletes every logged switch.
+- `pk;switch delete all` - Deletes all logged switches.
 - `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
 - `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
+- `pk;log channel -clear` - Clears the currently set log channel.
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
 - `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
 - `pk;logclean <on/off>` - Enables or disables [log cleanup](./staff/compatibility.md#log-cleanup).
