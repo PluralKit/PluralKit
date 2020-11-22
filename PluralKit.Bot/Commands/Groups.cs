@@ -177,8 +177,6 @@ namespace PluralKit.Bot
             {
                 ctx.CheckOwnGroup(target);
                 
-                if (img.Url.Length > Limits.MaxUriLength) 
-                    throw Errors.InvalidUrl(img.Url);
                 await AvatarUtils.VerifyAvatarOrThrow(img.Url);
 
                 await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {Icon = img.Url}));
