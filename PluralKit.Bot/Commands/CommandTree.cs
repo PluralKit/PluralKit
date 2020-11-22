@@ -453,7 +453,10 @@ namespace PluralKit.Bot
                 case "bl":
                     await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
                     break;
-                // case "autoproxy": (add this when #232 is merged)
+                case "autoproxy":
+                case "ap":
+                    await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+                    break;
                 // todo: are there any commands that still need to be added?
                 default:
                     await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
