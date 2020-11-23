@@ -39,6 +39,9 @@ namespace PluralKit.Bot
         public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
         public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "Changes a member's avatar");
+        public static Command MemberGroups = new Command("member group", "member <member> group", "Shows the groups a member is in");
+        public static Command MemberGroupAdd = new Command("member group", "member <member> group add <group> [group 2] [group 3...]", "Adds a member to one or more groups");
+        public static Command MemberGroupRemove = new Command("member group", "member <member> group remove <group> [group 2] [group 3...]", "Removes a member from one or more groups");
         public static Command MemberServerAvatar = new Command("member serveravatar", "member <member> serveravatar [url|@mention]", "Changes a member's avatar in the current server");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
@@ -89,8 +92,8 @@ namespace PluralKit.Bot
 
         public static Command[] MemberCommands = {
             MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-            MemberColor, MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy,
-            MemberRandom
+            MemberColor, MemberBirthday, MemberProxy, MemberKeepProxy, MemberGroups, MemberGroupAdd, MemberGroupRemove,
+            MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy, MemberRandom
         };
 
         public static Command[] GroupCommands =
@@ -328,6 +331,13 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
             else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
                 await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
+            else if (ctx.Match("group", "groups"))
+                if (ctx.Match("add", "a"))
+                    await ctx.Execute<MemberGroup>(MemberGroupAdd, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Add));
+                else if (ctx.Match("remove", "rem"))
+                    await ctx.Execute<MemberGroup>(MemberGroupRemove, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Remove));
+                else 
+                    await ctx.Execute<MemberGroup>(MemberGroups, m => m.List(ctx, target));
             else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic", "guildavatar", "guildpic", "guildicon", "sicon"))
                 await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
             else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))

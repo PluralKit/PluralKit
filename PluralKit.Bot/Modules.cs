@@ -40,6 +40,7 @@ namespace PluralKit.Bot
             builder.RegisterType<Member>().AsSelf();
             builder.RegisterType<MemberAvatar>().AsSelf();
             builder.RegisterType<MemberEdit>().AsSelf();
+            builder.RegisterType<MemberGroup>().AsSelf();
             builder.RegisterType<MemberProxy>().AsSelf();
             builder.RegisterType<Misc>().AsSelf();
             builder.RegisterType<ServerConfig>().AsSelf();
