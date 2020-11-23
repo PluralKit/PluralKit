@@ -11,6 +11,9 @@ namespace PluralKit.Bot {
     public static class AvatarUtils {
         public static async Task VerifyAvatarOrThrow(string url)
         {
+            if (url.Length > Limits.MaxUriLength) 
+                throw Errors.UrlTooLong(url);
+
             // List of MIME types we consider acceptable
             var acceptableMimeTypes = new[]
             {
