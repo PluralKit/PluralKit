@@ -320,7 +320,9 @@ namespace PluralKit.Bot
         {
             ctx.CheckOwnGroup(target);
 
-            var members = await ctx.ParseMemberList(ctx.System.Id);
+            var members = (await ctx.ParseMemberList(ctx.System.Id))
+                .Select(m => m.Id)
+                .ToList();
             
             await using var conn = await _db.Obtain();
             
@@ -329,40 +331,27 @@ namespace PluralKit.Bot
                 .Select(m => m.Id.Value)
                 .ToHashSet();
             
+            List<MemberId> toAction;
+
             if (op == AddRemoveOperation.Add)
             {
-                var membersNotInGroup = members
-                    .Where(m => !existingMembersInGroup.Contains(m.Id.Value))
-                    .Select(m => m.Id)
+                toAction = members
+                    .Where(m => !existingMembersInGroup.Contains(m.Value))
                     .Distinct()
                     .ToList();
-                await _repo.AddMembersToGroup(conn, target.Id, membersNotInGroup);
-                
-                if (membersNotInGroup.Count == members.Count)
-                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member added to group." : $"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
-                else
-                    if (membersNotInGroup.Count == 0)
-                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not added to group (member already in group)." : $"{Emojis.Error} No members added to group (members already in group).");
-                    else
-                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group ({"members".ToQuantity(members.Count - membersNotInGroup.Count)} already in group).");
+                await _repo.AddMembersToGroup(conn, target.Id, toAction);
             }
             else if (op == AddRemoveOperation.Remove)
             {
-                var membersInGroup = members
-                    .Where(m => existingMembersInGroup.Contains(m.Id.Value))
-                    .Select(m => m.Id)
+                toAction = members
+                    .Where(m => existingMembersInGroup.Contains(m.Value))
                     .Distinct()
                     .ToList();
-                await _repo.RemoveMembersFromGroup(conn, target.Id, membersInGroup);
-                
-                if (membersInGroup.Count == members.Count)
-                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member removed from group." : $"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
-                else
-                    if (membersInGroup.Count == 0)
-                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not removed from group (member already not in group)." : $"{Emojis.Error} No members removed from group (members already not in group).");
-                    else
-                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group ({"members".ToQuantity(members.Count - membersInGroup.Count)} already not in group).");
+                await _repo.RemoveMembersFromGroup(conn, target.Id, toAction);
             }
+            else return; // otherwise toAction "may be undefined"
+
+            await ctx.Reply(MiscUtils.GroupAddRemoveResponse<MemberId>(members, toAction, op));
         }
 
         public async Task ListGroupMembers(Context ctx, PKGroup target)

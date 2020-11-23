@@ -20,20 +20,6 @@ namespace PluralKit.Bot
             _repo = repo;
         }
 
-        private String groupTerm(int groups) => groups == 1 ? "group" : "groups";
-        
-        private String Response(List<GroupId> groupList, List<GroupId> actionedOn, Groups.AddRemoveOperation op)
-        {
-            var opStr = op == Groups.AddRemoveOperation.Add ? "added to" : "removed from";
-            var inStr = op == Groups.AddRemoveOperation.Add ? "in" : "not in";
-            var notActionedOn = groupList.Count - actionedOn.Count;
-
-            if (notActionedOn == 0)
-                return $"{Emojis.Success} Member {opStr} {groupTerm(actionedOn.Count)}.";
-            else
-                return $"{Emojis.Success} Member {opStr} {actionedOn.Count} {groupTerm(actionedOn.Count)} (member already {inStr} {notActionedOn} {groupTerm(notActionedOn)}).";
-        }
-
         public async Task AddRemove(Context ctx, PKMember target, Groups.AddRemoveOperation op)
         {
             ctx.CheckSystem().CheckOwnMember(target);
@@ -67,7 +53,7 @@ namespace PluralKit.Bot
             }
             else return; // otherwise toAction "may be unassigned"
 
-            await ctx.Reply(Response(groups, toAction, op));
+            await ctx.Reply(MiscUtils.GroupAddRemoveResponse<GroupId>(groups, toAction, op));
         }
 
         public async Task List(Context ctx, PKMember target)
