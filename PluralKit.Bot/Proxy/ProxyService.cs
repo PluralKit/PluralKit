@@ -74,7 +74,7 @@ namespace PluralKit.Bot
             if (ctx.SystemId == null) return false;
             
             // Make sure channel is a guild text channel and this is a normal message
-            if (msg.Channel.Type != ChannelType.Text || msg.MessageType != MessageType.Default) return false;
+            if ((msg.Channel.Type != ChannelType.Text && msg.Channel.Type != ChannelType.News) || msg.MessageType != MessageType.Default) return false;
             
             // Make sure author is a normal user
             if (msg.Author.IsSystem == true || msg.Author.IsBot || msg.WebhookMessage) return false;
