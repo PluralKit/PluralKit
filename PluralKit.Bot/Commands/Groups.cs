@@ -322,6 +322,7 @@ namespace PluralKit.Bot
 
             var members = (await ctx.ParseMemberList(ctx.System.Id))
                 .Select(m => m.Id)
+                .Distinct()
                 .ToList();
             
             await using var conn = await _db.Obtain();
@@ -329,6 +330,7 @@ namespace PluralKit.Bot
             var existingMembersInGroup = (await conn.QueryMemberList(target.System,
                 new DatabaseViewsExt.MemberListQueryOptions {GroupFilter = target.Id}))
                 .Select(m => m.Id.Value)
+                .Distinct()
                 .ToHashSet();
             
             List<MemberId> toAction;
@@ -337,7 +339,6 @@ namespace PluralKit.Bot
             {
                 toAction = members
                     .Where(m => !existingMembersInGroup.Contains(m.Value))
-                    .Distinct()
                     .ToList();
                 await _repo.AddMembersToGroup(conn, target.Id, toAction);
             }
@@ -345,7 +346,6 @@ namespace PluralKit.Bot
             {
                 toAction = members
                     .Where(m => existingMembersInGroup.Contains(m.Value))
-                    .Distinct()
                     .ToList();
                 await _repo.RemoveMembersFromGroup(conn, target.Id, toAction);
             }

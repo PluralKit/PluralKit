@@ -26,11 +26,13 @@ namespace PluralKit.Bot
 
             var groups = (await ctx.ParseGroupList(ctx.System.Id))
                 .Select(g => g.Id)
+                .Distinct()
                 .ToList();
 
             await using var conn = await _db.Obtain();
             var existingGroups = (await _repo.GetMemberGroups(conn, target.Id).ToListAsync())
                 .Select(g => g.Id)
+                .Distinct()
                 .ToList();
 
             List<GroupId> toAction;
