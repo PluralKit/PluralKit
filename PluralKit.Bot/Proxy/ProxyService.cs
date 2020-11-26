@@ -96,7 +96,7 @@ namespace PluralKit.Bot
             // Send the webhook
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
-            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
+            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, FixSingleCharacterName(match.Member.ProxyName(ctx)),
                 match.Member.ProxyAvatar(ctx),
                 content, trigger.Attachments, allowEveryone);
 
@@ -185,9 +185,15 @@ namespace PluralKit.Bot
             return true;
         }
 
+        private string FixSingleCharacterName(string proxyName)
+        {
+            if (proxyName.Length == 1) return proxyName += "\u17b5";
+            else return proxyName;
+        }
+
         private bool CheckProxyNameBoundsOrError(string proxyName)
         {
-            if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
+            // if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
 
             // TODO: this never returns false as it throws instead, should this happen?
