@@ -55,7 +55,9 @@ namespace PluralKit.Bot
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
             if (!await CheckBotPermissionsOrError(message.Channel)) return false;
-            if (!CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx))) return false;
+
+            // this method throws, so no need to wrap it in an if statement
+            CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx));
             
             // Check if the sender account can mention everyone/here + embed links
             // we need to "mirror" these permissions when proxying to prevent exploits
@@ -191,13 +193,9 @@ namespace PluralKit.Bot
             else return proxyName;
         }
 
-        private bool CheckProxyNameBoundsOrError(string proxyName)
+        private void CheckProxyNameBoundsOrError(string proxyName)
         {
-            // if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
-
-            // TODO: this never returns false as it throws instead, should this happen?
-            return true;
         }
     }
 }
