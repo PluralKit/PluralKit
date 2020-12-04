@@ -24,10 +24,9 @@ namespace PluralKit.Bot
             _repo = repo;
         }
 
-        public async Task Name(Context ctx, PKMember target) {
-            // TODO: this method is pretty much a 1:1 copy/paste of the above creation method, find a way to clean?
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+        public async Task Name(Context ctx, PKMember target) 
+        {
+            ctx.CheckSystem().CheckOwnMember(target);            
             
             var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new name for the member.");
 
@@ -58,15 +57,10 @@ namespace PluralKit.Bot
             }
         }
 
-        private void CheckEditMemberPermission(Context ctx, PKMember target)
-        {
-            if (target.System != ctx.System?.Id) throw Errors.NotOwnMemberError;
-        }
-
         public async Task Description(Context ctx, PKMember target) {
             if (await ctx.MatchClear("this member's description"))
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
 
                 var patch = new MemberPatch {Description = Partial<string>.Null()};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
@@ -93,7 +87,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
 
                 var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (description.IsLongerThan(Limits.MaxDescriptionLength))
@@ -109,7 +103,8 @@ namespace PluralKit.Bot
         public async Task Pronouns(Context ctx, PKMember target) {
             if (await ctx.MatchClear("this member's pronouns"))
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
+
                 var patch = new MemberPatch {Pronouns = Partial<string>.Null()};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member pronouns cleared.");
@@ -129,7 +124,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
 
                 var pronouns = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (pronouns.IsLongerThan(Limits.MaxPronounsLength))
@@ -147,7 +142,7 @@ namespace PluralKit.Bot
             var color = ctx.RemainderOrNull();
             if (await ctx.MatchClear())
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
                 
                 var patch = new MemberPatch {Color = Partial<string>.Null()};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
@@ -176,7 +171,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
 
                 if (color.StartsWith("#")) color = color.Substring(1);
                 if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
@@ -195,7 +190,7 @@ namespace PluralKit.Bot
         {
             if (await ctx.MatchClear("this member's birthday"))
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
                 
                 var patch = new MemberPatch {Birthday = Partial<LocalDate?>.Null()};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
@@ -216,7 +211,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
                 
                 var birthdayStr = ctx.RemainderOrNull();
                 var birthday = DateUtils.ParseDate(birthdayStr, true);
@@ -281,7 +276,7 @@ namespace PluralKit.Bot
             
             if (await ctx.MatchClear("this member's display name"))
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
                 
                 var patch = new MemberPatch {DisplayName = Partial<string>.Null()};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
@@ -298,7 +293,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
                 
                 var newDisplayName = ctx.RemainderOrNull();
                 
@@ -315,7 +310,7 @@ namespace PluralKit.Bot
             
             if (await ctx.MatchClear("this member's server name"))
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
 
                 var patch = new MemberGuildPatch {DisplayName = null};
                 await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.Guild.Id, patch));
@@ -335,7 +330,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                CheckEditMemberPermission(ctx, target);
+                ctx.CheckOwnMember(target);
                 
                 var newServerName = ctx.RemainderOrNull();
                 
@@ -348,8 +343,7 @@ namespace PluralKit.Bot
         
         public async Task KeepProxy(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            ctx.CheckSystem().CheckOwnMember(target);
 
             bool newValue;
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
@@ -375,8 +369,7 @@ namespace PluralKit.Bot
 
         public async Task Privacy(Context ctx, PKMember target, PrivacyLevel? newValueFromCommand)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            ctx.CheckSystem().CheckOwnMember(target);
 
             // Display privacy settings
             if (!ctx.HasNext() && newValueFromCommand == null)
@@ -466,8 +459,7 @@ namespace PluralKit.Bot
         
         public async Task Delete(Context ctx, PKMember target)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
+            ctx.CheckSystem().CheckOwnMember(target);
             
             await ctx.Reply($"{Emojis.Warn} Are you sure you want to delete \"{target.NameFor(ctx)}\"? If so, reply to this message with the member's ID (`{target.Hid}`). __***This cannot be undone!***__");
             if (!await ctx.ConfirmWithReply(target.Hid)) throw Errors.MemberDeleteCancelled;

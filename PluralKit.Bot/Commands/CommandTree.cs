@@ -60,7 +60,8 @@ namespace PluralKit.Bot
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
-        public static Command SwitchDelete = new Command("switch delete", "switch delete [all]", "Deletes the latest switch (or them all)");
+        public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
+        public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
         public static Command Link = new Command("link", "link <account>", "Links your system to another account");
         public static Command Unlink = new Command("unlink", "unlink [account]", "Unlinks your system from an account");
         public static Command TokenGet = new Command("token", "token", "Gets your system's API token");
@@ -71,6 +72,7 @@ namespace PluralKit.Bot
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
         public static Command Message = new Command("message", "message <id|link>", "Looks up a proxied message");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
+        public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
         public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
         public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
@@ -103,9 +105,11 @@ namespace PluralKit.Bot
             GroupDelete
         };
 
-        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
+        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
 
-        public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
+        public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
+
+        public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
         
         private DiscordShardedClient _client;
 
@@ -125,12 +129,12 @@ namespace PluralKit.Bot
                 return HandleGroupCommand(ctx);
             if (ctx.Match("switch", "sw"))
                 return HandleSwitchCommand(ctx);
+            if (ctx.Match("commands", "cmd", "c"))
+                return CommandHelpRoot(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
                 return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
-            if (ctx.Match("list", "l", "members"))
+            if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-            if (ctx.Match("f", "find", "search", "query", "fd"))
-                return ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("link"))
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
@@ -152,8 +156,6 @@ namespace PluralKit.Bot
                 else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
             if (ctx.Match("explain"))
                 return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
-            if (ctx.Match("commands"))
-                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
             if (ctx.Match("message", "msg"))
                 return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("log"))
@@ -163,6 +165,8 @@ namespace PluralKit.Bot
                     return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true));
                 else if (ctx.Match("disable", "off"))
                     return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
+                else if (ctx.Match("commands"))
+                    return PrintCommandList(ctx, "message logging", LogCommands);
                 else return PrintCommandExpectedError(ctx, LogCommands);
             if (ctx.Match("logclean"))
                 return ctx.Execute<ServerConfig>(LogClean, m => m.SetLogCleanup(ctx));
@@ -173,7 +177,9 @@ namespace PluralKit.Bot
                     return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
                 else if (ctx.Match("list", "show"))
                     return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowBlacklisted(ctx));
-                else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove, BlacklistShow);
+                else if (ctx.Match("commands"))
+                    return PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                else return PrintCommandExpectedError(ctx, BlacklistCommands);
             if (ctx.Match("proxy", "enable", "disable"))
                 return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
@@ -401,6 +407,51 @@ namespace PluralKit.Bot
                 await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
             else
                 await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchDelete, SystemFronter, SystemFrontHistory);
+        }
+
+        private async Task CommandHelpRoot(Context ctx)
+        {   
+            if (!ctx.HasNext())
+            {
+                await ctx.Reply($"{Emojis.Error} You need to pass a target command.\nAvailable command help targets: `system`, `member`, `group`, `switch`, `log`, `blacklist`.\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
+                return;
+            }
+
+            switch (ctx.PeekArgument()) {
+                case "system":
+                case "systems":
+                case "s":
+                    await PrintCommandList(ctx, "systems", SystemCommands);
+                    break;
+                case "member":
+                case "members":
+                case "m":
+                    await PrintCommandList(ctx, "members", MemberCommands);
+                    break;
+                case "group":
+                case "groups":
+                case "g":
+                    await PrintCommandList(ctx, "groups", GroupCommands);
+                    break;
+                case "switch":
+                case "switches":
+                case "switching":
+                case "sw":
+                    await PrintCommandList(ctx, "switching", SwitchCommands);
+                    break;
+                case "log":
+                    await PrintCommandList(ctx, "message logging", LogCommands);
+                    break;
+                case "blacklist":
+                case "bl":
+                    await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                    break;
+                // case "autoproxy": (add this when #232 is merged)
+                // todo: are there any commands that still need to be added?
+                default:
+                    await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
+                    break;
+            }
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)

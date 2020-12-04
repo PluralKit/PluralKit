@@ -1,9 +1,9 @@
 # Proxy logging
-If you want to log every proxied message to a separate channel for moderation purposes, you can use the `pk;log` command with the channel name.For example:
+If you want to log every proxied message to a separate channel for moderation purposes, you can use the `pk;log channel` command with the channel name.For example:
 
-    pk;log #proxy-log
+    pk;log channel #proxy-log
     
-This requires you to have the *Manage Server* permission on the server. To disable logging, use the `pk;log` command with no channel name.
+This requires you to have the *Manage Server* permission on the server. To disable logging, use the `pk;log channel` command with the `-clear` flag as the channel name.
 
 Log messages have the following format:
 

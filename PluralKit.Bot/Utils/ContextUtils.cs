@@ -79,7 +79,7 @@ namespace PluralKit.Bot {
 
         public static async Task<MessageReactionAddEventArgs> AwaitReaction(this Context ctx, DiscordMessage message, DiscordUser user = null, Func<MessageReactionAddEventArgs, bool> predicate = null, TimeSpan? timeout = null) {
             var tcs = new TaskCompletionSource<MessageReactionAddEventArgs>();
-            Task Inner(MessageReactionAddEventArgs args) {
+            Task Inner(DiscordClient _, MessageReactionAddEventArgs args) {
                 if (message.Id != args.Message.Id) return Task.CompletedTask; // Ignore reactions for different messages
                 if (user != null && user.Id != args.User.Id) return Task.CompletedTask; // Ignore messages from other users if a user was defined
                 if (predicate != null && !predicate.Invoke(args)) return Task.CompletedTask; // Check predicate

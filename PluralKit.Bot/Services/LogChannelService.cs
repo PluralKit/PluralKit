@@ -15,27 +15,25 @@ namespace PluralKit.Bot {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly ILogger _logger;
-        private readonly DiscordRestClient _rest;
 
-        public LogChannelService(EmbedService embed, ILogger logger, DiscordRestClient rest, IDatabase db, ModelRepository repo)
+        public LogChannelService(EmbedService embed, ILogger logger, IDatabase db, ModelRepository repo)
         {
             _embed = embed;
-            _rest = rest;
             _db = db;
             _repo = repo;
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async ValueTask LogMessage(MessageContext ctx, ProxyMatch proxy, DiscordMessage trigger, ulong hookMessage)
+        public async ValueTask LogMessage(DiscordClient client, MessageContext ctx, ProxyMatch proxy, DiscordMessage trigger, ulong hookMessage)
         {
             if (ctx.SystemId == null || ctx.LogChannel == null || ctx.InLogBlacklist) return;
             
             // Find log channel and check if valid
-            var logChannel = await FindLogChannel(trigger.Channel.GuildId, ctx.LogChannel.Value);
+            var logChannel = await FindLogChannel(client, trigger.Channel.GuildId, ctx.LogChannel.Value);
             if (logChannel == null || logChannel.Type != ChannelType.Text) return;
             
             // Check bot permissions
-            if (!trigger.Channel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
+            if (!logChannel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
             {
                 _logger.Information(
                     "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
@@ -52,9 +50,10 @@ namespace PluralKit.Bot {
             await logChannel.SendMessageFixedAsync(content: url, embed: embed);
         }
 
-        private async Task<DiscordChannel> FindLogChannel(ulong guild, ulong channel)
+        private async Task<DiscordChannel> FindLogChannel(DiscordClient client, ulong guild, ulong channel)
         {
-            var obj = await _rest.GetChannel(channel);
+            // MUST use this client here, otherwise we get strange cache issues where the guild doesn't exist... >.>
+            var obj = await client.GetChannel(channel);
             
             if (obj == null)
             {

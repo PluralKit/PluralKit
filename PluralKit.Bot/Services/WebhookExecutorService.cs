@@ -42,23 +42,23 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<WebhookExecutorService>();
         }
 
-        public async Task<ulong> ExecuteWebhook(DiscordChannel channel, string name, string avatarUrl, string content, IReadOnlyList<DiscordAttachment> attachments, bool allowEveryone)
+        public async Task<DiscordMessage> ExecuteWebhook(DiscordChannel channel, string name, string avatarUrl, string content, IReadOnlyList<DiscordAttachment> attachments, bool allowEveryone)
         {
             _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
             
             // Get a webhook, execute it
             var webhook = await _webhookCache.GetWebhook(channel);
-            var id = await ExecuteWebhookInner(channel, webhook, name, avatarUrl, content, attachments, allowEveryone);
+            var webhookMessage = await ExecuteWebhookInner(channel, webhook, name, avatarUrl, content, attachments, allowEveryone);
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
             _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id,
                 channel.Id);
             
-            return id;
+            return webhookMessage;
         }
 
-        private async Task<ulong> ExecuteWebhookInner(DiscordChannel channel, DiscordWebhook webhook, string name, string avatarUrl, string content,
+        private async Task<DiscordMessage> ExecuteWebhookInner(DiscordChannel channel, DiscordWebhook webhook, string name, string avatarUrl, string content,
             IReadOnlyList<DiscordAttachment> attachments, bool allowEveryone, bool hasRetried = false)
         {
             content = content.Truncate(2000);
@@ -77,11 +77,11 @@ namespace PluralKit.Bot
                 await AddAttachmentsToBuilder(dwb, attachmentChunks[0]);
             }
             
-            DiscordMessage response;
+            DiscordMessage webhookMessage;
             using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime)) {
                 try
                 {
-                    response = await webhook.ExecuteAsync(dwb);
+                    webhookMessage = await webhook.ExecuteAsync(dwb);
                 }
                 catch (JsonReaderException)
                 {
@@ -109,7 +109,7 @@ namespace PluralKit.Bot
             // We don't care about whether the sending succeeds, and we don't want to *wait* for it, so we just fork it off
             var _ = TrySendRemainingAttachments(webhook, name, avatarUrl, attachmentChunks);
 
-            return response.Id;
+            return webhookMessage;
         }
 
         private async Task TrySendRemainingAttachments(DiscordWebhook webhook, string name, string avatarUrl, IReadOnlyList<IReadOnlyCollection<DiscordAttachment>> attachmentChunks)
@@ -165,13 +165,11 @@ namespace PluralKit.Bot
 
         private string FixClyde(string name)
         {
-            // Check if the name contains "Clyde" - if not, do nothing
-            var match = Regex.Match(name, "clyde", RegexOptions.IgnoreCase);
-            if (!match.Success) return name;
+            static string Replacement(Match m) => m.Groups[1].Value + "\u200A" + m.Groups[2].Value;
 
-            // Put a hair space (\u200A) between the "c" and the "lyde" in the match to avoid Discord matching it
+            // Adds a Unicode hair space (\u200A) between the "c" and the "lyde" to avoid Discord matching it
             // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
-            return name.Substring(0, match.Index + 1) + '\u200A' + name.Substring(match.Index + 1);
+            return Regex.Replace(name, "(c)(lyde)", Replacement, RegexOptions.IgnoreCase);
         }
     }
 }

@@ -100,6 +100,10 @@ namespace PluralKit.Core
                 // AutoActivate ensures logging is enabled as early as possible in the API startup flow
                 // since we set the Log.Logger global >.>
                 .AutoActivate();
+
+            builder.Register(c => new Microsoft.Extensions.Logging.LoggerFactory().AddSerilog(c.Resolve<ILogger>()))
+                .As<Microsoft.Extensions.Logging.ILoggerFactory>()
+                .SingleInstance();
         }
 
         private ILogger InitLogger(CoreConfig config)
@@ -112,9 +116,10 @@ namespace PluralKit.Core
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
                 .Enrich.WithProperty("Component", _component)
                 .MinimumLevel.Is(config.ConsoleLogLevel)
-                
-                // Don't want App.Metrics spam
+
+                // Don't want App.Metrics/D#+ spam
                 .MinimumLevel.Override("App.Metrics", LogEventLevel.Information)
+                .MinimumLevel.Override("DSharpPlus", LogEventLevel.Debug)
                 
                 // Actual formatting for these is handled in ScalarFormatting
                 .Destructure.AsScalar<SystemId>()

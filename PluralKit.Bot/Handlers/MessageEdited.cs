@@ -29,7 +29,7 @@ namespace PluralKit.Bot
             _client = client;
         }
 
-        public async Task Handle(MessageUpdateEventArgs evt)
+        public async Task Handle(DiscordClient shard, MessageUpdateEventArgs evt)
         {
             if (evt.Author?.Id == _client.CurrentUser?.Id) return;
             
@@ -44,7 +44,7 @@ namespace PluralKit.Bot
             await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
                 ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id);
-            await _proxy.HandleIncomingMessage(evt.Message, ctx, allowAutoproxy: false);
+            await _proxy.HandleIncomingMessage(shard, evt.Message, ctx, allowAutoproxy: false);
         }
     }
 }

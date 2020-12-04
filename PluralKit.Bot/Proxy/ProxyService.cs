@@ -39,7 +39,7 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<ProxyService>();
         }
 
-        public async Task<bool> HandleIncomingMessage(DiscordMessage message, MessageContext ctx, bool allowAutoproxy)
+        public async Task<bool> HandleIncomingMessage(DiscordClient shard, DiscordMessage message, MessageContext ctx, bool allowAutoproxy)
         {
             if (!ShouldProxy(message, ctx)) return false;
 
@@ -64,7 +64,7 @@ namespace PluralKit.Bot
             var allowEmbeds = (senderPermissions & Permissions.EmbedLinks) != 0;
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(conn, message, ctx, match, allowEveryone, allowEmbeds);
+            await ExecuteProxy(shard, conn, message, ctx, match, allowEveryone, allowEmbeds);
             return true;
         }
 
@@ -74,7 +74,7 @@ namespace PluralKit.Bot
             if (ctx.SystemId == null) return false;
             
             // Make sure channel is a guild text channel and this is a normal message
-            if (msg.Channel.Type != ChannelType.Text || msg.MessageType != MessageType.Default) return false;
+            if ((msg.Channel.Type != ChannelType.Text && msg.Channel.Type != ChannelType.News) || msg.MessageType != MessageType.Default) return false;
             
             // Make sure author is a normal user
             if (msg.Author.IsSystem == true || msg.Author.IsBot || msg.WebhookMessage) return false;
@@ -90,51 +90,75 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task ExecuteProxy(IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
+        private async Task ExecuteProxy(DiscordClient shard, IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
                                         ProxyMatch match, bool allowEveryone, bool allowEmbeds)
         {
             // Send the webhook
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
-            var id = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
+            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
                 match.Member.ProxyAvatar(ctx),
                 content, trigger.Attachments, allowEveryone);
 
-            Task SaveMessage() => _repo.AddMessage(conn, new PKMessage
+            await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
+        }
+
+        private async Task HandleProxyExecutedActions(DiscordClient shard, IPKConnection conn, MessageContext ctx,
+                                                      DiscordMessage triggerMessage, DiscordMessage proxyMessage,
+                                                      ProxyMatch match)
+        {
+            Task SaveMessageInDatabase() => _repo.AddMessage(conn, new PKMessage
             {
-                Channel = trigger.ChannelId,
-                Guild = trigger.Channel.GuildId,
+                Channel = triggerMessage.ChannelId,
+                Guild = triggerMessage.Channel.GuildId,
                 Member = match.Member.Id,
-                Mid = id,
-                OriginalMid = trigger.Id,
-                Sender = trigger.Author.Id
+                Mid = proxyMessage.Id,
+                OriginalMid = triggerMessage.Id,
+                Sender = triggerMessage.Author.Id
             });
             
-            Task LogMessage() => _logChannel.LogMessage(ctx, match, trigger, id).AsTask();
-            async Task DeleteMessage()
+            Task LogMessageToChannel() => _logChannel.LogMessage(shard, ctx, match, triggerMessage, proxyMessage.Id).AsTask();
+            
+            async Task DeleteProxyTriggerMessage()
             {
                 // Wait a second or so before deleting the original message
                 await Task.Delay(MessageDeletionDelay);
                 try
                 {
-                    await trigger.DeleteAsync();
+                    await triggerMessage.DeleteAsync();
                 }
                 catch (NotFoundException)
                 {
-                    // If it's already deleted, we just log and swallow the exception
-                    _logger.Warning("Attempted to delete already deleted proxy trigger message {Message}", trigger.Id);
+                    _logger.Debug("Trigger message {TriggerMessageId} was already deleted when we attempted to; deleting proxy message {ProxyMessageId} also", 
+                        triggerMessage.Id, proxyMessage.Id);
+                    await HandleTriggerAlreadyDeleted(proxyMessage);
+                    // Swallow the exception, we don't need it
                 }
             }
             
             // Run post-proxy actions (simultaneously; order doesn't matter)
             // Note that only AddMessage is using our passed-in connection, careful not to pass it elsewhere and run into conflicts
             await Task.WhenAll(
-                DeleteMessage(),
-                SaveMessage(),
-                LogMessage()
+                DeleteProxyTriggerMessage(),
+                SaveMessageInDatabase(),
+                LogMessageToChannel()
             );
         }
-        
+
+        private async Task HandleTriggerAlreadyDeleted(DiscordMessage proxyMessage)
+        {
+            // If a trigger message is deleted before we get to delete it, we can assume a mod bot or similar got to it
+            // In this case we should also delete the now-proxied message.
+            // This is going to hit the message delete event handler also, so that'll do the cleanup for us
+
+            try
+            {
+                await proxyMessage.DeleteAsync();
+            }
+            catch (NotFoundException) { }
+            catch (UnauthorizedException) { }
+        }
+
         private async Task<bool> CheckBotPermissionsOrError(DiscordChannel channel)
         {
             var permissions = channel.BotPermissions();

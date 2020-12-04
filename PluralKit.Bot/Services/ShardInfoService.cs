@@ -42,7 +42,7 @@ namespace PluralKit.Bot
         {
             // We initialize this before any shards are actually created and connected
             // This means the client won't know the shard count, so we attach a listener every time a shard gets connected
-            _client.SocketOpened += RefreshShardList;
+            _client.SocketOpened += (_, __) => RefreshShardList();
         }
 
         private void ReportShardStatus()
@@ -66,8 +66,8 @@ namespace PluralKit.Bot
                 
                 
                 // Call our own SocketOpened listener manually (and then attach the listener properly)
-                await SocketOpened(shard);
-                shard.SocketOpened += () => SocketOpened(shard);
+                await SocketOpened(shard, null);
+                shard.SocketOpened += SocketOpened;
                 
                 // Register listeners for new shards
                 _logger.Information("Attaching listeners to new shard #{Shard}", shard.ShardId);
@@ -81,11 +81,11 @@ namespace PluralKit.Bot
             }
         }
 
-        private Task SocketOpened(DiscordClient e)
+        private Task SocketOpened(DiscordClient shard, SocketEventArgs _)
         {
             // We do nothing else here, since this kinda doesn't mean *much*? It's only really started once we get Ready/Resumed
             // And it doesn't get fired first time around since we don't have time to add the event listener before it's fired'
-            _logger.Information("Shard #{Shard} opened socket", e.ShardId);
+            _logger.Information("Shard #{Shard} opened socket", shard.ShardId);
             return Task.CompletedTask;
         }
 
@@ -99,45 +99,45 @@ namespace PluralKit.Bot
             return info;
         }
 
-        private Task Resumed(ReadyEventArgs e)
+        private Task Resumed(DiscordClient shard, ReadyEventArgs e)
         {
-            _logger.Information("Shard #{Shard} resumed connection", e.Client.ShardId);
+            _logger.Information("Shard #{Shard} resumed connection", shard.ShardId);
             
-            var info = TryGetShard(e.Client);
+            var info = TryGetShard(shard);
             // info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
             ReportShardStatus();
             return Task.CompletedTask;
         }
 
-        private Task Ready(ReadyEventArgs e)
+        private Task Ready(DiscordClient shard, ReadyEventArgs e)
         {
-            _logger.Information("Shard #{Shard} sent Ready event", e.Client.ShardId);
+            _logger.Information("Shard #{Shard} sent Ready event", shard.ShardId);
             
-            var info = TryGetShard(e.Client);
+            var info = TryGetShard(shard);
             info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
             ReportShardStatus();
             return Task.CompletedTask;
         }
 
-        private Task SocketClosed(SocketCloseEventArgs e)
+        private Task SocketClosed(DiscordClient shard, SocketCloseEventArgs e)
         {
-            _logger.Warning("Shard #{Shard} disconnected ({CloseCode}: {CloseMessage})", e.Client.ShardId, e.CloseCode, e.CloseMessage);
+            _logger.Warning("Shard #{Shard} disconnected ({CloseCode}: {CloseMessage})", shard.ShardId, e.CloseCode, e.CloseMessage);
             
-            var info = TryGetShard(e.Client);
+            var info = TryGetShard(shard);
             info.DisconnectionCount++;
             info.Connected = false;
             ReportShardStatus();
             return Task.CompletedTask; 
         }
 
-        private Task Heartbeated(HeartbeatEventArgs e)
+        private Task Heartbeated(DiscordClient shard, HeartbeatEventArgs e)
         {
             var latency = Duration.FromMilliseconds(e.Ping);
-            _logger.Information("Shard #{Shard} received heartbeat (latency: {Latency} ms)", e.Client.ShardId, latency.Milliseconds);
+            _logger.Information("Shard #{Shard} received heartbeat (latency: {Latency} ms)", shard.ShardId, latency.Milliseconds);
 
-            var info = TryGetShard(e.Client);
+            var info = TryGetShard(shard);
             info.LastHeartbeatTime = e.Timestamp.ToInstant();
             info.Connected = true;
             info.ShardLatency = latency;

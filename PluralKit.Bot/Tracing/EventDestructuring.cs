@@ -48,7 +48,8 @@ namespace PluralKit.Bot
             }
             
             // Want shard last, just for visual reasons
-            props.Add(new LogEventProperty("Shard", new ScalarValue(dea.Client.ShardId)));
+            // TODO: D#+ update means we can't pull shard ID out of this, what do?
+            // props.Add(new LogEventProperty("Shard", new ScalarValue(dea.Client.ShardId)));
 
             result = new StructureValue(props);
             return true;

@@ -10,7 +10,7 @@ namespace PluralKit.Bot
 {
     public interface ISentryEnricher<T> where T: DiscordEventArgs
     {
-        void Enrich(Scope scope, T evt);
+        void Enrich(Scope scope, DiscordClient shard, T evt);
     }
 
     public class SentryEnricher:
@@ -23,7 +23,7 @@ namespace PluralKit.Bot
         // TODO: should this class take the Scope by dependency injection instead?
         // Would allow us to create a centralized "chain of handlers" where this class could just be registered as an entry in
         
-        public void Enrich(Scope scope, MessageCreateEventArgs evt)
+        public void Enrich(Scope scope, DiscordClient shard, MessageCreateEventArgs evt)
         {
             scope.AddBreadcrumb(evt.Message.Content, "event.message", data: new Dictionary<string, string>
             {
@@ -32,7 +32,7 @@ namespace PluralKit.Bot
                 {"guild", evt.Channel.GuildId.ToString()},
                 {"message", evt.Message.Id.ToString()},
             });
-            scope.SetTag("shard", evt.Client.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
 
             // Also report information about the bot's permissions in the channel
             // We get a lot of permission errors so this'll be useful for determining problems
@@ -40,7 +40,7 @@ namespace PluralKit.Bot
             scope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
         }
 
-        public void Enrich(Scope scope, MessageDeleteEventArgs evt)
+        public void Enrich(Scope scope, DiscordClient shard, MessageDeleteEventArgs evt)
         {
             scope.AddBreadcrumb("", "event.messageDelete",
                 data: new Dictionary<string, string>()
@@ -49,10 +49,10 @@ namespace PluralKit.Bot
                     {"guild", evt.Channel.GuildId.ToString()},
                     {"message", evt.Message.Id.ToString()},
                 });
-            scope.SetTag("shard", evt.Client.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
 
-        public void Enrich(Scope scope, MessageUpdateEventArgs evt)
+        public void Enrich(Scope scope, DiscordClient shard, MessageUpdateEventArgs evt)
         {
             scope.AddBreadcrumb(evt.Message.Content ?? "<unknown>", "event.messageEdit",
                 data: new Dictionary<string, string>()
@@ -61,10 +61,10 @@ namespace PluralKit.Bot
                     {"guild", evt.Channel.GuildId.ToString()},
                     {"message", evt.Message.Id.ToString()}
                 });
-            scope.SetTag("shard", evt.Client.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
 
-        public void Enrich(Scope scope, MessageBulkDeleteEventArgs evt)
+        public void Enrich(Scope scope, DiscordClient shard, MessageBulkDeleteEventArgs evt)
         {
             scope.AddBreadcrumb("", "event.messageDelete",
                 data: new Dictionary<string, string>()
@@ -73,10 +73,10 @@ namespace PluralKit.Bot
                     {"guild", evt.Channel.Id.ToString()},
                     {"messages", string.Join(",", evt.Messages.Select(m => m.Id))},
                 });
-            scope.SetTag("shard", evt.Client.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
 
-        public void Enrich(Scope scope, MessageReactionAddEventArgs evt)
+        public void Enrich(Scope scope, DiscordClient shard, MessageReactionAddEventArgs evt)
         {
             scope.AddBreadcrumb("", "event.reaction",
                 data: new Dictionary<string, string>()
@@ -87,7 +87,7 @@ namespace PluralKit.Bot
                     {"message", evt.Message.Id.ToString()},
                     {"reaction", evt.Emoji.Name}
                 });
-            scope.SetTag("shard", evt.Client.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
     }
 }

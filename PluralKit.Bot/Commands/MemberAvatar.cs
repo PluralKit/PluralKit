@@ -85,7 +85,7 @@ namespace PluralKit.Bot
         private async Task AvatarCommandTree(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? guildData)
         {
             // First, see if we need to *clear*
-            if (await ctx.MatchClear("this member's avatar"))
+            if (await ctx.MatchClear(location == AvatarLocation.Server ? "this member's server avatar" : "this member's avatar"))
             {
                 ctx.CheckSystem().CheckOwnMember(target);
                 await AvatarClear(location, ctx, target, guildData);
@@ -102,16 +102,9 @@ namespace PluralKit.Bot
             }
 
             ctx.CheckSystem().CheckOwnMember(target);
-            await ValidateUrl(avatarArg.Value.Url);
+            await AvatarUtils.VerifyAvatarOrThrow(avatarArg.Value.Url);
             await UpdateAvatar(location, ctx, target, avatarArg.Value.Url);
             await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
-        }
-
-        private static Task ValidateUrl(string url)
-        {
-            if (url.Length > Limits.MaxUriLength)
-                throw Errors.InvalidUrl(url);
-            return AvatarUtils.VerifyAvatarOrThrow(url);
         }
 
         private Task PrintResponse(AvatarLocation location, Context ctx, PKMember target, ParsedImage avatar,

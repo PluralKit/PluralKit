@@ -110,6 +110,8 @@ namespace PluralKit.Bot
                 return byName;
             if (await ctx.Repository.GetGroupByHid(conn, input) is {} byHid)
                 return byHid;
+            if (await ctx.Repository.GetGroupByDisplayName(conn, ctx.System.Id, input) is {} byDisplayName)
+                return byDisplayName;
 
             return null;
         }
@@ -157,7 +159,7 @@ namespace PluralKit.Bot
                 return null;
             
             var channel = await ctx.Shard.GetChannel(id);
-            if (channel == null || channel.Type != ChannelType.Text) return null;
+            if (channel == null || !(channel.Type == ChannelType.Text || channel.Type == ChannelType.News)) return null;
             
             ctx.PopArgument();
             return channel;

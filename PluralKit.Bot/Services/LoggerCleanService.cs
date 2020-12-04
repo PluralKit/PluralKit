@@ -29,6 +29,7 @@ namespace PluralKit.Bot
         private static readonly Regex _vanessaRegex = new Regex("Message sent by <@!?(\\d{17,19})> deleted in");
         private static readonly Regex _salRegex = new Regex("\\(ID: (\\d{17,19})\\)");
         private static readonly Regex _GearBotRegex = new Regex("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
+        private static readonly Regex _GiselleRegex = new Regex("\\*\\*Message ID\\*\\*: `(\\d{17,19})`");
 
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
@@ -48,7 +49,8 @@ namespace PluralKit.Bot
             new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat, webhookName: "UnbelievaBoat"), 
             new LoggerBot("Vanessa", 310261055060443136, fuzzyExtractFunc: ExtractVanessa), 
             new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL),
-            new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot)
+            new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot),
+            new LoggerBot("GiselleBot", 356831787445387285, ExtractGiselleBot)
         }.ToDictionary(b => b.Id);
 
         private static readonly Dictionary<string, LoggerBot> _botsByWebhookName = _bots.Values
@@ -292,6 +294,13 @@ namespace PluralKit.Bot
                 : (FuzzyExtractResult?) null;
         }
 
+        private static ulong? ExtractGiselleBot(DiscordMessage msg)
+        {
+            var embed = msg.Embeds.FirstOrDefault();
+            if (embed?.Title == null || embed.Title != "🗑 Message Deleted") return null;
+            var match = _GiselleRegex.Match(embed?.Description);
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+        }
 
         public class LoggerBot
         {

@@ -52,28 +52,30 @@ namespace PluralKit.Bot
             url = Regex.Replace(url, @"/reactions/[^{/]+/\d{17,19}", "/reactions/{emoji}/{user_id}");
             url = Regex.Replace(url, @"/reactions/[^{/]+", "/reactions/{emoji}");
             url = Regex.Replace(url, @"/invites/[^{/]+", "/invites/{invite_code}");
+            
+            // catch-all for missed IDs
+            url = Regex.Replace(url, @"\d{17,19}", "{snowflake}");
+            
             return url;
         }
 
-        private string Endpoint(HttpRequestMessage req)
+        private string GetEndpointName(HttpRequestMessage req)
         {
-            var routePath = NormalizeRoutePath(req.RequestUri.LocalPath.Replace("/api/v7", ""));
+            var localPath = Regex.Replace(req.RequestUri.LocalPath, @"/api/v\d+", "");
+            var routePath = NormalizeRoutePath(localPath);
             return $"{req.Method} {routePath}";
         }
         
         private void HandleException(Exception exc, HttpRequestMessage req)
         {
             _logger
-                .ForContext("RequestUrlRoute", Endpoint(req))
+                .ForContext("RequestUrlRoute", GetEndpointName(req))
                 .Error(exc, "HTTP error: {RequestMethod} {RequestUrl}", req.Method, req.RequestUri);
         }
 
         private async Task HandleResponse(HttpResponseMessage response, Activity activity)
         {
-            if (response.RequestMessage.RequestUri.Host != "discord.com")
-                return;
-            
-            var endpoint = Endpoint(response.RequestMessage);
+            var endpoint = GetEndpointName(response.RequestMessage);
 
             using (LogContext.PushProperty("Elastic", "yes?"))
             {
@@ -100,11 +102,24 @@ namespace PluralKit.Bot
                     activity.Duration.TotalMilliseconds);
             }
 
-            var timer = _metrics.Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
-                new[] {"endpoint", "status_code"},
-                new[] {endpoint, ((int) response.StatusCode).ToString()}
-            ));
-            timer.Record(activity.Duration.Ticks / 10, TimeUnit.Microseconds);
+            if (IsDiscordApiRequest(response))
+            {
+                var timer = _metrics.Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
+                    new[] {"endpoint", "status_code"},
+                    new[] {endpoint, ((int) response.StatusCode).ToString()}
+                ));
+                timer.Record(activity.Duration.Ticks / 10, TimeUnit.Microseconds);
+            }
+        }
+
+        private static bool IsDiscordApiRequest(HttpResponseMessage response)
+        {
+            // Assume any properly authorized request is coming from D#+ and not some sort of user
+            var authHeader = response.RequestMessage.Headers.Authorization;
+            if (authHeader == null || authHeader.Scheme != "Bot")
+                return false;
+
+            return response.RequestMessage.RequestUri.AbsoluteUri.StartsWith("https://discord.com/api/");
         }
 
         public void OnNext(KeyValuePair<string, object> value)
