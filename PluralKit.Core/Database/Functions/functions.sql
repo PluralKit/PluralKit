@@ -14,12 +14,14 @@
         last_switch_members int[],
         last_switch_timestamp timestamp,
         system_tag text,
-        system_avatar text
+        system_avatar text,
+        allow_autoproxy bool,
+        latch_timeout integer
     )
 as $$
     -- CTEs to query "static" (accessible only through args) data
     with
-        system as (select systems.* from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
+        system as (select systems.*, allow_autoproxy as account_autoproxy from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id),
         last_message as (select * from messages where messages.guild = guild_id and messages.sender = account_id order by mid desc limit 1)
     select
@@ -37,7 +39,9 @@ as $$
         system_last_switch.members as last_switch_members,
         system_last_switch.timestamp as last_switch_timestamp,
         system.tag as system_tag,
-        system.avatar_url as system_avatar
+        system.avatar_url as system_avatar,
+        system.account_autoproxy as allow_autoproxy,
+        system.latch_timeout as latch_timeout
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder
@@ -62,7 +66,9 @@ create function proxy_members(account_id bigint, guild_id bigint)
         name text,
         
         server_avatar text,
-        avatar text
+        avatar text,
+
+        allow_autoproxy bool
     )
 as $$
     select
@@ -78,7 +84,9 @@ as $$
         
         -- Avatar info
         member_guild.avatar_url as server_avatar,
-        members.avatar_url as avatar
+        members.avatar_url as avatar,
+
+        members.allow_autoproxy as allow_autoproxy
     from accounts
         inner join systems on systems.id = accounts.system
         inner join members on members.system = systems.id

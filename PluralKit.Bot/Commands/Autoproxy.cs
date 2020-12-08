@@ -20,9 +20,10 @@ namespace PluralKit.Bot
             _repo = repo;
         }
 
-        public async Task AutoproxyRoot(Context ctx)
+        public async Task SetAutoproxyMode(Context ctx)
         {
-            ctx.CheckSystem().CheckGuildContext();
+            // no need to check account here, it's already done at CommandTree
+            ctx.CheckGuildContext();
             
             if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
                 await AutoproxyOff(ctx);
@@ -122,7 +123,68 @@ namespace PluralKit.Bot
                 default: throw new ArgumentOutOfRangeException();
             }
 
+            if (!ctx.MessageContext.AllowAutoproxy) 
+                eb.AddField("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`.");
+
             return eb.Build();
+        }
+
+        public async Task AutoproxyTimeout(Context ctx)
+        {
+            if (!ctx.HasNext())
+            {
+                if (ctx.System.LatchTimeout == -1)
+                    await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {PluralKit.Bot.ProxyMatcher.DefaultLatchExpiryTime} hour(s).");
+                else if (ctx.System.LatchTimeout == 0)
+                    await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never timeout.");
+                else
+                    await ctx.Reply($"The current latch timeout duration for your system is {ctx.System.LatchTimeout} hour(s).");
+                return;
+            }
+
+            // todo: somehow parse a more human-friendly date format
+            int newTimeout;
+            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = 0;
+            else if (ctx.Match("reset", "default")) newTimeout = -1;
+            else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeout)) throw new PKError("Duration must be an integer.");
+
+            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, new SystemPatch{LatchTimeout = newTimeout}));
+            
+            if (newTimeout == -1)
+                await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({PluralKit.Bot.ProxyMatcher.DefaultLatchExpiryTime} hours).");
+            else if (newTimeout == 0)
+                await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never timeout.");
+            else
+                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout} hours.");
+        }
+
+        public async Task AutoproxyAccount(Context ctx)
+        {
+            // todo: this might be useful elsewhere, consider moving it to ctx.MatchToggle
+            if (ctx.Match("enable", "on"))
+                await AutoproxyEnableDisable(ctx, true);
+            else if (ctx.Match("disable", "off"))
+                await AutoproxyEnableDisable(ctx, false);
+            else if (ctx.HasNext())
+                throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else
+            {
+                var statusString = ctx.MessageContext.AllowAutoproxy ? "enabled" : "disabled";
+                await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+            }
+        }
+
+        private async Task AutoproxyEnableDisable(Context ctx, bool allow)
+        {
+            var statusString = allow ? "enabled" : "disabled";
+            if (ctx.MessageContext.AllowAutoproxy == allow)
+            {
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+                return;
+            }
+            var patch = new AccountPatch { AllowAutoproxy = allow };
+            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.Author.Id, patch));
+            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
         }
 
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)

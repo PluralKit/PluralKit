@@ -28,7 +28,9 @@ namespace PluralKit.Bot
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
         public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
         public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
-        public static Command Autoproxy = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for this server");
+        public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
+        public static Command AutoproxyTimeout = new Command("autoproxy", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
+        public static Command AutoproxyAccount = new Command("autoproxy", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
         public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
@@ -45,6 +47,7 @@ namespace PluralKit.Bot
         public static Command MemberServerAvatar = new Command("member serveravatar", "member <member> serveravatar [url|@mention]", "Changes a member's avatar in the current server");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
+        public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command MemberRandom = new Command("random", "random", "Shows the info card of a randomly selected member in your system.");
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
@@ -94,7 +97,7 @@ namespace PluralKit.Bot
 
         public static Command[] MemberCommands = {
             MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-            MemberColor, MemberBirthday, MemberProxy, MemberKeepProxy, MemberGroups, MemberGroupAdd, MemberGroupRemove,
+            MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberGroups, MemberGroupAdd, MemberGroupRemove,
             MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy, MemberRandom
         };
 
@@ -112,6 +115,8 @@ namespace PluralKit.Bot
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
 
+        public static Command[] AutoproxyCommands = {AutoproxySet, AutoproxyTimeout, AutoproxyAccount};
+        
         public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
 
         public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
@@ -137,7 +142,7 @@ namespace PluralKit.Bot
             if (ctx.Match("commands", "cmd", "c"))
                 return CommandHelpRoot(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
-                return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
+                return HandleAutoproxyCommand(ctx);
             if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("link"))
@@ -349,6 +354,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
             else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
                 await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
+            else if (ctx.Match("autoproxy", "ap"))
+                await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
             else if (ctx.Match("privacy"))
@@ -463,12 +470,35 @@ namespace PluralKit.Bot
                 case "bl":
                     await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
                     break;
-                // case "autoproxy": (add this when #232 is merged)
+                case "autoproxy":
+                case "ap":
+                    await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+                    break;
                 // todo: are there any commands that still need to be added?
                 default:
                     await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
                     break;
             }
+        }
+
+        private Task HandleAutoproxyCommand(Context ctx)
+        {
+            // todo: merge this with the changes from #251
+            if (ctx.Match("commands"))
+                return PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+
+            // ctx.CheckSystem();
+            // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
+            // so we just emulate checking and throwing an error.
+            if (ctx.System == null)
+                return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
+
+            if (ctx.Match("account", "ac"))
+                return ctx.Execute<Autoproxy>(AutoproxyAccount, m => m.AutoproxyAccount(ctx));
+            else if (ctx.Match("timeout", "tm"))
+                return ctx.Execute<Autoproxy>(AutoproxyTimeout, m => m.AutoproxyTimeout(ctx));
+            else
+                return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)

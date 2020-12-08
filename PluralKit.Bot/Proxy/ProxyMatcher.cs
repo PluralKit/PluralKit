@@ -10,7 +10,7 @@ namespace PluralKit.Bot
     public class ProxyMatcher
     {
         private static readonly char AutoproxyEscapeCharacter = '\\';
-        private static readonly Duration LatchExpiryTime = Duration.FromHours(6);
+        public static readonly int DefaultLatchExpiryTime = 6;
 
         private readonly IClock _clock;
         private readonly ProxyTagParser _parser;
@@ -56,13 +56,13 @@ namespace PluralKit.Bot
                 AutoproxyMode.Front when ctx.LastSwitchMembers.Length > 0 => 
                     members.FirstOrDefault(m => m.Id == ctx.LastSwitchMembers[0]),
                 
-                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx.LastMessage) =>
+                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx) =>
                     members.FirstOrDefault(m => m.Id == ctx.LastMessageMember.Value),
                 
                 _ => null
             };
 
-            if (member == null) return false;
+            if (member == null || (ctx.AutoproxyMode != AutoproxyMode.Member && !member.AllowAutoproxy)) return false;
             match = new ProxyMatch
             {
                 Content = messageContent,
@@ -75,11 +75,15 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool IsLatchExpired(ulong? messageId)
+        private bool IsLatchExpired(MessageContext ctx)
         {
-            if (messageId == null) return true;
-            var timestamp = DiscordUtils.SnowflakeToInstant(messageId.Value);
-            return _clock.GetCurrentInstant() - timestamp > LatchExpiryTime;
+            if (ctx.LastMessage == null) return true;
+            if (ctx.LatchTimeout == 0) return false;
+            
+            var timeout = Duration.FromHours(ctx.LatchTimeout == -1 ? DefaultLatchExpiryTime : ctx.LatchTimeout);
+
+            var timestamp = DiscordUtils.SnowflakeToInstant(ctx.LastMessage.Value);
+            return _clock.GetCurrentInstant() - timestamp > timeout;
         }
     }
 }

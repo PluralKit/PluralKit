@@ -16,6 +16,7 @@ namespace PluralKit.Core
         public Partial<ProxyTag[]> ProxyTags { get; set; }
         public Partial<bool> KeepProxy { get; set; }
         public Partial<int> MessageCount { get; set; }
+        public Partial<bool> AllowAutoproxy { get; set; }
         public Partial<PrivacyLevel> Visibility { get; set; }
         public Partial<PrivacyLevel> NamePrivacy { get; set; }
         public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
@@ -35,6 +36,7 @@ namespace PluralKit.Core
             .With("proxy_tags", ProxyTags)
             .With("keep_proxy", KeepProxy)
             .With("message_count", MessageCount)
+            .With("allow_autoproxy", AllowAutoproxy)
             .With("member_visibility", Visibility)
             .With("name_privacy", NamePrivacy)
             .With("description_privacy", DescriptionPrivacy)

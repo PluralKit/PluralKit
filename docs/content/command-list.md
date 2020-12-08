@@ -49,6 +49,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
 - `pk;member <name> proxy add [tags]` - Adds a proxy tag pair to a member.
 - `pk;member <name> proxy remove [tags]` - Removes a proxy tag from a member.
+- `pk;member <name> autoproxy [on|off]` - Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.
 - `pk;member <name> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
 - `pk;member <name> pronouns [pronouns]` - Changes the pronouns of a member.
 - `pk;member <name> color [color]` - Changes the color of a member.
@@ -77,6 +78,11 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;switch delete` - Deletes the latest switch.
 - `pk;switch delete all` - Deletes all logged switches.
 - `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
+
+## Autoproxy commands
+- `pk;autoproxy [off|front|latch|<member>]` - Sets your system's autoproxy mode for the current server.
+- `pk;autoproxy timeout [<duration>|off|reset]` - Sets the latch timeout duration for your system.
+- `pk;autoproxy account [on|off]` - Toggles autoproxy globally for the current account.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
