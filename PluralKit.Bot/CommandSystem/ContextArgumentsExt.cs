@@ -86,8 +86,33 @@ namespace PluralKit.Bot
                 
                 members.Add(member); // Then add to the final output list
             }
+            if (members.Count == 0) throw new PKSyntaxError($"You must input at least one member.");
             
             return members;
+        }
+
+        public static async Task<List<PKGroup>> ParseGroupList(this Context ctx, SystemId? restrictToSystem)
+        {
+            var groups = new List<PKGroup>();
+
+            // Loop through all the given arguments
+            while (ctx.HasNext())
+            {
+                // and attempt to match a group 
+                var group = await ctx.MatchGroup();
+                if (group == null)
+                    // if we can't, big error. Every group name must be valid.
+                    throw new PKError(ctx.CreateGroupNotFoundError(ctx.PopArgument()));
+
+                if (restrictToSystem != null && group.System != restrictToSystem)
+                    throw Errors.NotOwnGroupError; // TODO: name *which* group?
+                
+                groups.Add(group); // Then add to the final output list
+            }
+            
+            if (groups.Count == 0) throw new PKSyntaxError($"You must input at least one group.");
+
+            return groups;
         }
     }
 }

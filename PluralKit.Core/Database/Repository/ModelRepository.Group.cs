@@ -30,11 +30,6 @@ namespace PluralKit.Core
             return conn.QuerySingleOrDefaultAsync<int>(query.ToString(), new {Id = id, PrivacyFilter = privacyFilter});
         }
         
-        public IAsyncEnumerable<PKGroup> GetMemberGroups(IPKConnection conn, MemberId id) =>
-            conn.QueryStreamAsync<PKGroup>(
-                "select groups.* from group_members inner join groups on group_members.group_id = groups.id where group_members.member_id = @Id",
-                new {Id = id});
-        
         public async Task<PKGroup> CreateGroup(IPKConnection conn, SystemId system, string name)
         {
             var group = await conn.QueryFirstAsync<PKGroup>(

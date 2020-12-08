@@ -1,5 +1,6 @@
 module.exports = {
   title: 'PluralKit',
+  theme: 'default-prefers-color-scheme',
 
   base: "/",
   head: [

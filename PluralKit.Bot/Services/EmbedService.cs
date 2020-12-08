@@ -157,6 +157,42 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
+        public async Task<DiscordEmbed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
+        {
+            await using var conn = await _db.Obtain();
+            
+            var pctx = ctx.LookupContextFor(system);
+            var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(conn, target.Id);
+
+            var nameField = target.Name;
+            if (system.Name != null)
+                nameField = $"{nameField} ({system.Name})";
+
+            var eb = new DiscordEmbedBuilder()
+                .WithAuthor(nameField, iconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx)))
+                .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
+
+            if (target.DisplayName != null)
+                eb.AddField("Display Name", target.DisplayName);
+
+            if (target.ListPrivacy.CanAccess(pctx))
+            {
+                if (memberCount == 0 && pctx == LookupContext.ByOwner)
+                    // Only suggest the add command if this is actually the owner lol
+                    eb.AddField("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true);
+                else
+                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true);
+            }
+
+            if (target.DescriptionFor(pctx) is {} desc)
+                eb.AddField("Description", desc);
+
+            if (target.IconFor(pctx) is {} icon)
+                eb.WithThumbnail(icon);
+
+            return eb.Build();
+        }
+
         public async Task<DiscordEmbed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone, LookupContext ctx)
         {
             var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());

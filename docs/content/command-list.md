@@ -55,7 +55,6 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> color [color]` - Changes the color of a member.
 - `pk;member <name> birthdate [birthdate]` - Changes the birthday of a member.
 - `pk;member <name> delete` - Deletes a member.
-- `pk;random` - Shows the member card of a randomly selected member in your system.
 
 ## Group commands
 *Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -63,6 +62,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
 - `pk;group <group> list` - Lists all members in a group.
+- `pk;group <group> random` - Shows the info card of a randomly selected member in a group.
 - `pk;group <group> rename <new name>` - Renames a group.
 - `pk;group <group> displayname [display name]` - Shows or changes a group's display name.
 - `pk;group <group> description [description]` - Shows or changes a group's description.
@@ -95,6 +95,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
 
 ## Utility
+- `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
 - `pk;message <message id / message link>` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
