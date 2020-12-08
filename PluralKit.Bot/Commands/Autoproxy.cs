@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 
-using Dapper;
-
 using DSharpPlus.Entities;
+
+using Humanizer;
+
+using NodaTime;
 
 using PluralKit.Core;
 
@@ -133,29 +135,35 @@ namespace PluralKit.Bot
         {
             if (!ctx.HasNext())
             {
-                if (ctx.System.LatchTimeout == -1)
-                    await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {PluralKit.Bot.ProxyMatcher.DefaultLatchExpiryTime} hour(s).");
-                else if (ctx.System.LatchTimeout == 0)
-                    await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never timeout.");
+                var timeout = ctx.System.LatchTimeout.HasValue
+                    ? Duration.FromSeconds(ctx.System.LatchTimeout.Value) 
+                    : (Duration?) null;
+                
+                if (timeout == null)
+                    await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize()}.");
+                else if (timeout == Duration.Zero)
+                    await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never time out.");
                 else
-                    await ctx.Reply($"The current latch timeout duration for your system is {ctx.System.LatchTimeout} hour(s).");
+                    await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize()}.");
                 return;
             }
 
             // todo: somehow parse a more human-friendly date format
-            int newTimeout;
-            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = 0;
-            else if (ctx.Match("reset", "default")) newTimeout = -1;
-            else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeout)) throw new PKError("Duration must be an integer.");
+            int newTimeoutHours;
+            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeoutHours = 0;
+            else if (ctx.Match("reset", "default")) newTimeoutHours = -1;
+            else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeoutHours)) throw new PKError("Duration must be a number of hours.");
 
-            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, new SystemPatch{LatchTimeout = newTimeout}));
+            var newTimeout = newTimeoutHours > -1 ? Duration.FromHours(newTimeoutHours) : (Duration?) null;
+            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, 
+                new SystemPatch { LatchTimeout = (int?) newTimeout?.TotalSeconds }));
             
-            if (newTimeout == -1)
-                await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({PluralKit.Bot.ProxyMatcher.DefaultLatchExpiryTime} hours).");
-            else if (newTimeout == 0)
-                await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never timeout.");
+            if (newTimeoutHours == -1)
+                await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize()}).");
+            else if (newTimeoutHours == 0)
+                await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
             else
-                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout} hours.");
+                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize()} hours.");
         }
 
         public async Task AutoproxyAccount(Context ctx)

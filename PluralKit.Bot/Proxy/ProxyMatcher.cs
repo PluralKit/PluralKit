@@ -10,7 +10,7 @@ namespace PluralKit.Bot
     public class ProxyMatcher
     {
         private static readonly char AutoproxyEscapeCharacter = '\\';
-        public static readonly int DefaultLatchExpiryTime = 6;
+        public static readonly Duration DefaultLatchExpiryTime = Duration.FromHours(6);
 
         private readonly IClock _clock;
         private readonly ProxyTagParser _parser;
@@ -79,8 +79,10 @@ namespace PluralKit.Bot
         {
             if (ctx.LastMessage == null) return true;
             if (ctx.LatchTimeout == 0) return false;
-            
-            var timeout = Duration.FromHours(ctx.LatchTimeout == -1 ? DefaultLatchExpiryTime : ctx.LatchTimeout);
+
+            var timeout = ctx.LatchTimeout.HasValue
+                ? Duration.FromSeconds(ctx.LatchTimeout.Value) 
+                : DefaultLatchExpiryTime;
 
             var timestamp = DiscordUtils.SnowflakeToInstant(ctx.LastMessage.Value);
             return _clock.GetCurrentInstant() - timestamp > timeout;

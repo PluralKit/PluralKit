@@ -15,7 +15,7 @@ namespace PluralKit.Core
         public Partial<PrivacyLevel> FrontPrivacy { get; set; }
         public Partial<PrivacyLevel> FrontHistoryPrivacy { get; set; }
         public Partial<bool> PingsEnabled { get; set; }
-        public Partial<int> LatchTimeout { get; set; }
+        public Partial<int?> LatchTimeout { get; set; }
 
         public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
             .With("name", Name)
