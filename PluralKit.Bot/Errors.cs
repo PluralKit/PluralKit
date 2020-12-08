@@ -45,7 +45,6 @@ namespace PluralKit.Bot {
         public static PKError MemberNameTooLongError(int length) => new PKError($"Member name too long ({length}/{Limits.MaxMemberNameLength} characters).");
         public static PKError MemberPronounsTooLongError(int length) => new PKError($"Member pronouns too long ({length}/{Limits.MaxMemberNameLength} characters).");
         public static PKError MemberLimitReachedError(int limit) => new PKError($"System has reached the maximum number of members ({limit}). Please delete unused members first in order to create new ones.");
-        public static PKError NoMembersError => new PKError("Your system has no members! Please create at least one member before using this command.");
 
         public static PKError InvalidColorError(string color) => new PKError($"\"{color}\" is not a valid color. Color must be in 6-digit RGB hex format (eg. #ff0000).");
         public static PKError BirthdayParseError(string birthday) => new PKError($"\"{birthday}\" could not be parsed as a valid date. Try a format like \"2016-12-24\" or \"May 3 1996\".");

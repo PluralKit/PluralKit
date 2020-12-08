@@ -18,11 +18,13 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly EmbedService _embeds;
 
-        public Groups(IDatabase db, ModelRepository repo)
+        public Groups(IDatabase db, ModelRepository repo, EmbedService embeds)
         {
             _db = db;
             _repo = repo;
+            _embeds = embeds;
         }
 
         public async Task CreateGroup(Context ctx)
@@ -280,38 +282,8 @@ namespace PluralKit.Bot
         public async Task ShowGroupCard(Context ctx, PKGroup target)
         {
             await using var conn = await _db.Obtain();
-            
             var system = await GetGroupSystem(ctx, target, conn);
-            var pctx = ctx.LookupContextFor(system);
-            var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(conn, target.Id);
-
-            var nameField = target.Name;
-            if (system.Name != null)
-                nameField = $"{nameField} ({system.Name})";
-
-            var eb = new DiscordEmbedBuilder()
-                .WithAuthor(nameField, iconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx)))
-                .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
-
-            if (target.DisplayName != null)
-                eb.AddField("Display Name", target.DisplayName);
-
-            if (target.ListPrivacy.CanAccess(pctx))
-            {
-                if (memberCount == 0 && pctx == LookupContext.ByOwner)
-                    // Only suggest the add command if this is actually the owner lol
-                    eb.AddField("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true);
-                else
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true);
-            }
-
-            if (target.DescriptionFor(pctx) is {} desc)
-                eb.AddField("Description", desc);
-
-            if (target.IconFor(pctx) is {} icon)
-                eb.WithThumbnail(icon);
-
-            await ctx.Reply(embed: eb.Build());
+            await ctx.Reply(embed: await _embeds.CreateGroupEmbed(ctx, system, target));
         }
 
         public async Task AddRemoveMembers(Context ctx, PKGroup target, AddRemoveOperation op)

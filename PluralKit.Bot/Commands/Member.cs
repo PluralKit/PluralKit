@@ -61,29 +61,6 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
         }
         
-        public async Task MemberRandom(Context ctx)
-        {
-            ctx.CheckSystem();
-
-            var randGen = new global::System.Random(); 
-            //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
-
-            // TODO: don't buffer these, find something else to do ig
-            
-            var members = await _db.Execute(c =>
-            {
-                if (ctx.MatchFlag("all", "a"))
-                    return _repo.GetSystemMembers(c, ctx.System.Id);
-                return _repo.GetSystemMembers(c, ctx.System.Id)
-                    .Where(m => m.MemberVisibility == PrivacyLevel.Public);
-            }).ToListAsync();
-            
-            if (members == null || !members.Any())
-                throw Errors.NoMembersError;
-            var randInt = randGen.Next(members.Count);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
-        }
-
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _db.Execute(c => _repo.GetSystem(c, target.System));
