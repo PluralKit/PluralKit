@@ -55,7 +55,9 @@ namespace PluralKit.Bot
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
             if (!await CheckBotPermissionsOrError(message.Channel)) return false;
-            if (!CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx))) return false;
+
+            // this method throws, so no need to wrap it in an if statement
+            CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx));
             
             // Check if the sender account can mention everyone/here + embed links
             // we need to "mirror" these permissions when proxying to prevent exploits
@@ -96,7 +98,7 @@ namespace PluralKit.Bot
             // Send the webhook
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
-            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
+            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, FixSingleCharacterName(match.Member.ProxyName(ctx)),
                 match.Member.ProxyAvatar(ctx),
                 content, trigger.Attachments, allowEveryone);
 
@@ -185,13 +187,15 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool CheckProxyNameBoundsOrError(string proxyName)
+        private string FixSingleCharacterName(string proxyName)
         {
-            if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
-            if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+            if (proxyName.Length == 1) return proxyName += "\u17b5";
+            else return proxyName;
+        }
 
-            // TODO: this never returns false as it throws instead, should this happen?
-            return true;
+        private void CheckProxyNameBoundsOrError(string proxyName)
+        {
+            if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
         }
     }
 }
