@@ -47,7 +47,7 @@ export default function App() {
           localStorage.setItem('user', JSON.stringify(data));
           setIsSubmit(true);
           setIsLoading(false);
-          history.push("/dash");
+          history.push("/pk-webs/dash");
       })
         .catch (error => { 
           console.log(error);
@@ -64,7 +64,7 @@ export default function App() {
         <Navigation isSubmit={isSubmit} setIsSubmit={setIsSubmit} />
           <BS.Container>
             <Switch>
-            <Route path="/dash" >
+            <Route path="/pk-webs/dash" >
               { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash/>
               }
               </Route>
