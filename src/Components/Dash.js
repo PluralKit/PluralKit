@@ -1,5 +1,4 @@
 import React from 'react';
-import * as BS from 'react-bootstrap'
 
 import System from './System.js'
 import Memberlist from './Memberlist.js'

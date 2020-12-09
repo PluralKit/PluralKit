@@ -65,10 +65,10 @@ export default function App() {
           <BS.Container>
             <Switch>
             <Route path="/dash" >
-              { !localStorage.getItem('token') || isInvalid ? <Redirect to="/"/> : <Dash/>
+              { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash/>
               }
               </Route>
-              <Route exact path="/">
+              <Route exact path="/pk-webs">
                 { isLoading ? <Loading /> :
             <BS.Card className="mb-3 mt-3">
             <BS.Card.Header className="d-flex align-items-center justify-content-between">
