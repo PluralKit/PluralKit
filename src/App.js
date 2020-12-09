@@ -79,12 +79,12 @@ export default function App() {
               { isSubmit && !localStorage.getItem('user') ? <BS.Alert variant="danger">Something went wrong, please try again.</BS.Alert> : ""}
               { isInvalid ? <BS.Alert variant="danger">Invalid token.</BS.Alert> : "" }
             <BS.Form.Row>
-                <BS.Col xs={10}>
+                <BS.Col xs={12} md={10}>
                     <BS.Form.Label>Enter your token here. You can get your token by using <b>"pk;token"</b>.</BS.Form.Label>
                 </BS.Col>
             </BS.Form.Row>
             <BS.Form.Row>
-              <BS.Col xs={10}>
+              <BS.Col xs={12} md={10}>
                 <BS.Form.Control required name="pkToken" type="text" ref={register} placeholder="token" />
               </BS.Col>
               <BS.Col>
