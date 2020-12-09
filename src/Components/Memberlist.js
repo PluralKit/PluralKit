@@ -56,7 +56,7 @@ export default function Memberlist() {
         <BS.Alert variant="danger">Error fetching members.</BS.Alert> :
         <>
         <BS.Row className="justify-content-md-center">
-        <BS.Col xs={12} md={4}>
+        <BS.Col xs={12} lg={4}>
         <BS.Form inline>
             <BS.Form.Control className="w-100" value={value} onChange={e => setValue(e.target.value)} placeholder="Search"/>
         </BS.Form>

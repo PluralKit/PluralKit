@@ -6,7 +6,7 @@ import { FaUser } from "react-icons/fa";
 
 export default function MemberCard(props) {
 
-    const { toHTML } = require('discord-markdown');
+    const { toHTML } = require('../Functions/discord-parser.js');
 
     const [ desc, setDesc ] = useState("");
     const [ color, setColor ] = useState("");
@@ -33,7 +33,7 @@ export default function MemberCard(props) {
         <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} className="float-right" roundedCircle />}
         </BS.Accordion.Toggle>
         <BS.Accordion.Collapse eventKey={member.id}>
-            <BS.Card.Body style={{'border-left': `5px solid #${color}` }}>
+            <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
             <BS.Row>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {member.id}</BS.Col>
                 { member.display_name ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>AKA: </b>{member.display_name}</BS.Col> : "" }

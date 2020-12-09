@@ -17,11 +17,11 @@ export default function Navigation(props) {
     }
 
     return (
-        <BS.Navbar className="mb-3 d-flex align-items-center justify-content-between light" expand="md">
+        <BS.Navbar className="mb-3 align-items-center justify-content-between">
             <BS.Navbar.Brand>
                 pk-web
             </BS.Navbar.Brand>
-            <BS.Nav className="mr-md-2">
+            <BS.Nav className="mr-lg-2 d-flex align-items-center row">
             <Toggle
                 defaultChecked={true}
                 icons={false}
@@ -29,7 +29,7 @@ export default function Navigation(props) {
                 {darkMode.value ? <FaMoon className="m-1"/> : <FaSun className="m-1"/>}
             </BS.Nav>
             <BS.Form inline>
-            { localStorage.getItem('token') ? <BS.Button className=" mr-md-2" variant="primary" onClick={logOut}>Log Out</BS.Button> : "" }
+            { localStorage.getItem('token') ? <BS.Button className=" mr-lg-2" variant="primary" onClick={logOut}>Log Out</BS.Button> : "" }
             </BS.Form>
         </BS.Navbar>
     )

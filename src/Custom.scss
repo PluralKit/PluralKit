@@ -1,3 +1,4 @@
+
 .dark-mode {
     background-color: $gray-800;
     transition: background-color 0.3s ease;
@@ -6,17 +7,17 @@
   .dark-mode .card  {
     color: $white;
     background-color: $gray-800;
-    border: 1px solid $gray-900 !important;
+    border: 1px solid #191c1f !important;
     transition: background-color 0.3s ease;
   }
-  
+
   .dark-mode .card-body  {
     color: $white;
     background-color: $gray-800;
     transition: background-color 0.3s ease;
   }
 
-  .dark-mode .card .card-header {
+  .dark-mode .card-header {
     color: $gray-100;
     background-color: $gray-900;
     transition: background-color 0.3s ease;
@@ -36,25 +37,96 @@
     color: $gray-100 !important;
   }
 
-  .dark-mode .form-control {
-    color: $gray-100;
-    border-color: #000000;
-    background-color: $gray-900;
-    transition: background-color 0.3s ease;
-  }
-
-  .dark-mode .form-control:focus {
+  .dark-mode .card .form-control {
     color: $gray-200;
-    border-color: #000000;
+    border-color: #191c1f;
     background-color: $gray-900;
     transition: background-color 0.3s ease;
   }
 
   .dark-mode .alert-danger {
     color: $white;
-    background-color: $red;
+    background-color: $danger;
     border: $gray-900;
     transition: background-color 0.3s ease;
+  }
+
+  code {
+    color: black !important;
+    background-color: $gray-300;
+    padding: 5px 7px;
+    border-radius: 3px;
+    margin: 3px;
+    display: inline-block;
+  }
+
+  .dark-mode code{
+    color: white !important;
+    background-color: $gray-900;
+    transition: background-color 0.3s ease;
+  }
+
+  pre {
+    margin: 2px !important;
+  }
+  
+  code.hljs {
+    display: block;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    margin: 3px 3px 7px 3px;
+  }
+
+  .d-spoiler {
+    color: $gray-300 !important;
+    background-color: $gray-300;
+    padding: 3px 5px;
+    border-radius: 3px;
+    margin: 3px;
+    display: inline-block;
+    transition-delay: 6000s;
+  }
+
+  .d-spoiler::selection {
+    color: $gray-300;
+  }
+
+ .dark-mode .d-spoiler {
+    color: $gray-900 !important;
+    background-color: $gray-900;
+    padding: 3px 5px;
+    border-radius: 3px;
+    margin: 3px;
+    display: inline-block;
+    transition-delay: 6000s;
+  }
+
+  .dark-mode .d-spoiler::selection {
+    color: $gray-900;
+  }
+
+  .d-spoiler:active {
+    color: $gray-900 !important;
+    background-color: $gray-200;
+    transition-delay: 0s;
+    transition: background-color 0.2s ease;
+  }
+
+  .dark-mode .d-spoiler:active {
+    color: $gray-200 !important;
+    background-color: $gray-700;
+    transition-delay: 0s;
+    transition: background-color 0.2s ease;
+  }
+  
+  blockquote {
+    border-left: 6px solid $gray-200;
+    padding: 2px 5px 2px 15px;
+    margin: 7px !important;
+    margin-left: 9px !important;
+  }
+
+  .dark-mode blockquote {
+    border-left: 6px solid $gray-700;
   }
 
   @import "~bootstrap/scss/bootstrap";
