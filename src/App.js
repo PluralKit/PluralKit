@@ -4,7 +4,7 @@ import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
 import * as fetch from 'node-fetch';
 
-import './App.css';
+import './App.scss';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { FaLock } from "react-icons/fa";
 
@@ -57,7 +57,7 @@ export default function App() {
           setIsLoading(false);
         })
       };
-  
+
 
   return (
       <Router history={history}>
@@ -79,12 +79,12 @@ export default function App() {
               { isSubmit && !localStorage.getItem('user') ? <BS.Alert variant="danger">Something went wrong, please try again.</BS.Alert> : ""}
               { isInvalid ? <BS.Alert variant="danger">Invalid token.</BS.Alert> : "" }
             <BS.Form.Row>
-                <BS.Col xs={12} md={10}>
+                <BS.Col xs={12} lg={10}>
                     <BS.Form.Label>Enter your token here. You can get your token by using <b>"pk;token"</b>.</BS.Form.Label>
                 </BS.Col>
             </BS.Form.Row>
             <BS.Form.Row>
-              <BS.Col xs={12} md={10}>
+              <BS.Col xs={12} lg={10}>
                 <BS.Form.Control required name="pkToken" type="text" ref={register} placeholder="token" />
               </BS.Col>
               <BS.Col>

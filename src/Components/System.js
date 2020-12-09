@@ -26,11 +26,10 @@ export default function System(props) {
                </BS.Card.Header>
                <BS.Card.Body>
                <BS.Row>
-                    <BS.Col xs={12} md={4}><b>ID:</b> {user.id}</BS.Col>
-                    <BS.Col xs={12} md={4}><b>Tag:</b> {user.tag}</BS.Col>
-                    <BS.Col xs={12} md={4}><b>Timezone:</b> {user.tz}</BS.Col>
+                    <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {user.id}</BS.Col>
+                    <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Tag:</b> {user.tag}</BS.Col>
+                    <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Timezone:</b> {user.tz}</BS.Col>
                 </BS.Row>
-                <br/>
                 <p><b>Description:</b></p>
                 <p dangerouslySetInnerHTML={{__html: desc}}></p>
                 </BS.Card.Body>

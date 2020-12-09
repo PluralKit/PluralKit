@@ -1,0 +1,60 @@
+.dark-mode {
+    background-color: $gray-800;
+    transition: background-color 0.3s ease;
+  }
+
+  .dark-mode .card  {
+    color: $white;
+    background-color: $gray-800;
+    border: 1px solid $gray-900 !important;
+    transition: background-color 0.3s ease;
+  }
+  
+  .dark-mode .card-body  {
+    color: $white;
+    background-color: $gray-800;
+    transition: background-color 0.3s ease;
+  }
+
+  .dark-mode .card .card-header {
+    color: $gray-100;
+    background-color: $gray-900;
+    transition: background-color 0.3s ease;
+  }
+  
+  .navbar-light {
+    background-color: $gray-100;
+  }
+
+  .dark-mode .navbar-light {
+    color: $gray-100;
+    background-color: $gray-900;
+    transition: background-color 0.3s ease;
+  }
+
+  .dark-mode .navbar-brand {
+    color: $gray-100 !important;
+  }
+
+  .dark-mode .form-control {
+    color: $gray-100;
+    border-color: #000000;
+    background-color: $gray-900;
+    transition: background-color 0.3s ease;
+  }
+
+  .dark-mode .form-control:focus {
+    color: $gray-200;
+    border-color: #000000;
+    background-color: $gray-900;
+    transition: background-color 0.3s ease;
+  }
+
+  .dark-mode .alert-danger {
+    color: $white;
+    background-color: $red;
+    border: $gray-900;
+    transition: background-color 0.3s ease;
+  }
+
+  @import "~bootstrap/scss/bootstrap";

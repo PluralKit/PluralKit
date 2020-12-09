@@ -10,12 +10,15 @@
     "bootstrap": "^4.5.3",
     "discord-markdown": "^2.4.1",
     "node-fetch": "^2.6.1",
+    "node-sass": "^4.14.1",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.0",
     "react-dom": "^17.0.1",
     "react-icons": "^4.1.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
+    "react-toggle": "^4.1.1",
+    "use-dark-mode": "^2.3.1",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
