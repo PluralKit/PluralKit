@@ -6,7 +6,7 @@ import './index.css';
 import App from './App';
 
 ReactDOM.render(
-  <Router history={history}>
+  <Router history={history} basename="/pk-webs">
     <App />
   </Router>,
   document.getElementById('root')

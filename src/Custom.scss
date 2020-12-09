@@ -8,7 +8,7 @@
     color: $white;
     background-color: $gray-800;
     border: 1px solid #191c1f !important;
-    transition: background-color 0.3s ease;
+    
   }
 
   .dark-mode .card-body  {
@@ -22,7 +22,7 @@
     background-color: $gray-900;
     transition: background-color 0.3s ease;
   }
-  
+
   .navbar-light {
     background-color: $gray-100;
   }
@@ -37,12 +37,19 @@
     color: $gray-100 !important;
   }
 
-  .dark-mode .card .form-control {
+  .dark-mode .form-control {
     color: $gray-200;
     border-color: #191c1f;
     background-color: $gray-900;
     transition: background-color 0.3s ease;
   }
+
+  .dark-mode .form-control:focus {
+    color: $gray-200;
+    border-color: #191c1f;
+    background-color: $gray-900;
+  }
+
 
   .dark-mode .alert-danger {
     color: $white;

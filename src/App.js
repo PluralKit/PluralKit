@@ -60,7 +60,7 @@ export default function App() {
 
 
   return (
-      <Router history={history}>
+      <Router history={history} basename="/pk-webs">
         <Navigation isSubmit={isSubmit} setIsSubmit={setIsSubmit} />
           <BS.Container>
             <Switch>
