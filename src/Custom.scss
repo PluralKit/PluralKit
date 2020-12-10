@@ -23,11 +23,11 @@
     transition: background-color 0.3s ease;
   }
 
-  .navbar-light {
+  .navbar {
     background-color: $gray-100;
   }
 
-  .dark-mode .navbar-light {
+  .dark-mode .navbar {
     color: $gray-100;
     background-color: $gray-900;
     transition: background-color 0.3s ease;
@@ -44,12 +44,30 @@
     transition: background-color 0.3s ease;
   }
 
+  .dark-mode .form-control:disabled {
+    color: $gray-200;
+    border-color: #191c1f;
+    background-color: $gray-900;
+    transition: background-color 0.3s ease;
+  }
+
   .dark-mode .form-control:focus {
     color: $gray-200;
     border-color: #191c1f;
     background-color: $gray-900;
   }
 
+  .dark-mode .btn-light {
+    background-color: $gray-900;
+    border-color: #191c1f;
+    color: $gray-100;
+  }
+
+  .dark-mode .btn-light:focus {
+    background-color: $gray-900;
+    border-color: #191c1f;
+    color: $gray-100;
+  }
 
   .dark-mode .alert-danger {
     color: $white;

@@ -1,4 +1,3 @@
-import react from 'react';
 import * as BS from 'react-bootstrap'
 import useDarkMode from 'use-dark-mode';
 import Toggle from 'react-toggle'

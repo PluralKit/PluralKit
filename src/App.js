@@ -39,7 +39,7 @@ export default function App() {
      setIsLoading(true);
      
       fetch(`${API_URL}s/`,{
-        method: 'get',
+        method: 'GET',
         headers: {
           'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
         }}).then ( res => res.json()

@@ -6,12 +6,12 @@ import defaultAvatar from '../default_discord_avatar.png'
 
 export default function System(props) {
 
-    const { toHTML } = require('../Functions/discord-parser.js');
-
     const [ desc, setDesc ] = useState("");
     const user = JSON.parse(localStorage.getItem("user"));
 
     useEffect(() => {
+    const { toHTML } = require('../Functions/discord-parser.js');
+
     if (user.description) {
         setDesc(toHTML(user.description));
     } else setDesc("(no description)");

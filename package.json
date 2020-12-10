@@ -4,22 +4,27 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@hookform/resolvers": "^1.1.2",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
+    "autosize": "^4.0.2",
     "bootstrap": "^4.5.3",
     "discord-markdown": "^2.4.1",
+    "moment": "^2.29.1",
     "node-fetch": "^2.6.1",
     "node-sass": "^4.14.1",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.0",
     "react-dom": "^17.0.1",
     "react-icons": "^4.1.0",
+    "react-moment": "^1.0.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
     "react-toggle": "^4.1.1",
     "use-dark-mode": "^2.3.1",
-    "web-vitals": "^0.2.4"
+    "web-vitals": "^0.2.4",
+    "yup": "^0.32.8"
   },
   "scripts": {
     "predeploy": "npm run build",
