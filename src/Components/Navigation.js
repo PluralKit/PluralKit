@@ -4,15 +4,16 @@ import Toggle from 'react-toggle'
 import { FaSun, FaMoon } from "react-icons/fa";
 
 import "react-toggle/style.css"
+import history from "../History.js";
 
-export default function Navigation(props) {
+export default function Navigation() {
         
     const darkMode = useDarkMode(false);
 
     function logOut() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        props.setIsSubmit(false);
+        history.push('/pk-webs');
     }
 
     return (

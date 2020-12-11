@@ -4,7 +4,6 @@ import { useForm, Controller } from "react-hook-form";
 import autosize from 'autosize';
 import moment from 'moment';
 
-import Loading from "./Loading.js";
 import API_URL from "../Constants/constants.js";
 
 import defaultAvatar from '../default_discord_avatar.png'
@@ -12,7 +11,7 @@ import { FaUser } from "react-icons/fa";
 
 export default function MemberCard(props) {
 
-    const { register, handleSubmit, errors, control } = useForm();
+    const { register, handleSubmit, control } = useForm();
 
     const [member, setMember] = useState(props.member);
 
@@ -28,6 +27,8 @@ export default function MemberCard(props) {
     const [ editMode, setEditMode ] = useState(false);
     const [ privacyMode, setPrivacyMode ] = useState(false);
     const [ privacyView, setPrivacyView ] = useState(false);
+
+    const [ errorAlert, setErrorAlert ] = useState(false);
   
 
     useEffect(() => {
@@ -41,10 +42,10 @@ export default function MemberCard(props) {
             setBirthdate(member.birthday)
             if (member.birthday.startsWith('0004-')) {
                 var bday = member.birthday.replace('0004-','');
-                var bdaymoment = moment(bday, 'MM DD').format('MMM D');
+                var bdaymoment = moment(bday, 'MM-DD').format('MMM D');
                 setBirthday(bdaymoment);
             } else {
-                var birthdaymoment =  moment(bday, 'YYYY MM DD').format('MMM D, YYYY');
+                var birthdaymoment =  moment(member.birthday, 'YYYY-MM-DD').format('MMM D, YYYY');
                 setBirthday(birthdaymoment);
             }
         } else { setBirthday('');
@@ -61,8 +62,7 @@ export default function MemberCard(props) {
 
         if (member.color) {
             setColor(member.color);
-        } else { setColor('');
-    }
+        } else setColor('');
 
         if (member.description) {
             setDesc(toHTML(member.description));
@@ -78,7 +78,6 @@ export default function MemberCard(props) {
     })
 
     const submitEdit = data => {
-
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -86,14 +85,14 @@ export default function MemberCard(props) {
               'Content-Type': 'application/json',
               'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
             }}).then (res => res.json()
-            ).then (data => setMember(data), setEditMode(false)
-              ).catch (error => { 
-              console.error(error);
-            })
+            ).then (data => { setMember(prevState => {return {...prevState, ...data}}); setEditMode(false)}
+            ).catch (error => {
+                console.error(error);
+                setErrorAlert(true);
+            });
     }
 
     const submitPrivacy = data => {
-
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -101,49 +100,50 @@ export default function MemberCard(props) {
               'Content-Type': 'application/json',
               'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
             }}).then (res => res.json()
-            ).then (data => setMember(data),
-            setPrivacyMode(false)
-              ).catch (error => { 
-              console.error(error);
-            })
+            ).then (data => { setMember(prevState => {return {...prevState, ...data}}); setPrivacyMode(false)}
+            ).catch (error => {
+                console.error(error);
+                setErrorAlert(true);
+             })
     }
 
     return (
-       <> 
-        <BS.Accordion.Toggle className="d-flex align-items-center justify-content-between" as={BS.Card.Header} eventKey={member.id}>
-            <BS.Card.Title className="float-left"><FaUser className="mr-4" /> <b>{member.name}</b> ({member.id})</BS.Card.Title>
+       <>
+       <BS.Card.Header className="d-flex align-items-center justify-content-between">
+        <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>
             { member.avatar_url ? <BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} className="float-right" roundedCircle /> : 
-        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} className="float-right" roundedCircle />}
-        </BS.Accordion.Toggle>
+        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} className="float-right" roundedCircle />}     
+        </BS.Card.Header>
         <BS.Accordion.Collapse eventKey={member.id}>
             <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
+                { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
                 { editMode ?
                 <BS.Form onSubmit={handleSubmit(submitEdit)}>
                 <BS.Form.Row>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-                    <Controller as={<BS.Form.Control placeholder={member.name}/>} name="name" control={control}/>
+                    <Controller as={<BS.Form.Control />} name="name" control={control}  defaultValue={member.name} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>AKA: </BS.Form.Label>
-                    <Controller as={<BS.Form.Control placeholder={displayName}/>} name="display_name" control={control}/>
+                    <Controller as={<BS.Form.Control />} name="display_name" control={control}  defaultValue={displayName} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Birthday:</BS.Form.Label>
-                    <Controller as={<BS.Form.Control placeholder={birthdate} pattern="/^\d{4}(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])$/g"/>} name="birthday" control={control}/>
+                    <Controller as={<BS.Form.Control  pattern="^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$"/>} name="birthday" control={control}  defaultValue={birthdate}/>
                     <BS.Form.Text>(YYYY-MM-DD)</BS.Form.Text>
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Pronouns:</BS.Form.Label>
-                    <Controller as={<BS.Form.Control placeholder={pronouns}/>} name="pronouns" control={control}/>
+                    <Controller as={<BS.Form.Control/>} name="pronouns" control={control}  defaultValue={pronouns} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar url:</BS.Form.Label> 
-                    <Controller as={<BS.Form.Control type="url" placeholder={avatar}/>} name="avatar_url" control={control} />
+                    <Controller as={<BS.Form.Control type="url"/>} name="avatar_url" control={control}  defaultValue={avatar} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Color:</BS.Form.Label> 
-                    <Controller as={<BS.Form.Control placeholder={color} pattern="/[A-Fa-f0-9]{6}$/g"/>} name="color" control={control}/>
+                    <Controller as={<BS.Form.Control  pattern="[A-Fa-f0-9]{6}"/>} name="color" control={control}  defaultValue={color} />
                     <BS.Form.Text>(hexcode)</BS.Form.Text>
                 </BS.Col>
             </BS.Form.Row>
@@ -203,7 +203,7 @@ export default function MemberCard(props) {
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
-                    <BS.Col className="mb-lg-2" xs={12} lg={3}>
+                    <BS.Col className="mb-3" xs={12} lg={3}>
                     <BS.Form.Label>Meta:</BS.Form.Label>
                         <BS.Form.Control name="metadata_privacy" as="select" ref={register}>
                             <option>public</option>
@@ -221,9 +221,9 @@ export default function MemberCard(props) {
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Description:</b> {member.description_privacy}</BS.Col> 
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Birthday:</b> {member.birthday_privacy}</BS.Col>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> {member.pronoun_privacy}</BS.Col>
-                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Meta:</b> {member.metadata_privacy}</BS.Col>
+                <BS.Col className="mb-3" xs={12} lg={3}><b>Meta:</b> {member.metadata_privacy}</BS.Col>
             </BS.Row>
-            <BS.Button variant="light" onClick={() => setPrivacyView(false)}>Cancel</BS.Button>  <BS.Button variant="primary" onClick={() => setPrivacyMode(true)}>Edit</BS.Button>
+            <BS.Button variant="light" onClick={() => setPrivacyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setPrivacyMode(true)}>Edit</BS.Button>
             <hr/></> : "" }
             <p><b>Description:</b></p>
             <p dangerouslySetInnerHTML={{__html: desc}}></p>

@@ -61,11 +61,11 @@ export default function App() {
 
   return (
       <Router history={history} basename="/pk-webs">
-        <Navigation isSubmit={isSubmit} setIsSubmit={setIsSubmit} />
+        <Navigation/>
           <BS.Container>
             <Switch>
             <Route path="/pk-webs/dash" >
-              { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash/>
+              { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash />
               }
               </Route>
               <Route exact path="/pk-webs">

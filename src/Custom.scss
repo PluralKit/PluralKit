@@ -69,6 +69,40 @@
     color: $gray-100;
   }
 
+  .card-header .btn-link {
+    color: $gray-900;
+  }
+
+  .card-header .btn-link:focus {
+    color: $gray-900;
+    text-decoration: none;
+  }
+  
+  .card-header .btn-link:hover {
+    color: $gray-900;
+    text-decoration: none;
+  }
+  
+
+  .card-header .btn-link { 
+    font-size: 1.25rem !important;
+    font-weight: 500;
+  }
+
+  .dark-mode .btn-link {
+    color: $white;
+  }
+
+  .dark-mode .btn-link:focus {
+    color: $white;
+    text-decoration: none;
+  }
+
+  .dark-mode .btn-link:hover {
+    color: $white;
+    text-decoration: none;
+  }
+
   .dark-mode .alert-danger {
     color: $white;
     background-color: $danger;

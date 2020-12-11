@@ -5,7 +5,7 @@ import MemberCard from './MemberCard.js'
 import Loading from "./Loading.js";
 import API_URL from "../Constants/constants.js";
 
-export default function Memberlist() {
+export default function Memberlist(props) {
     
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user.id;
@@ -44,8 +44,8 @@ export default function Memberlist() {
         }
         return false;
       }).sort((a, b) => a.name.localeCompare(b.name)).map((member) => <BS.Card key={member.id}>
-        <MemberCard 
-        member={member}
+        <MemberCard
+        member={member} 
         />
     </BS.Card>
     );
