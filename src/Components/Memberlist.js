@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallBack } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import  * as BS from 'react-bootstrap'
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
@@ -35,7 +35,7 @@ export default function Memberlist(props) {
 
     const {register, handleSubmit} = useForm();
 
-  const fetchMembers = useCallBack( () => {
+  const fetchMembers = useCallback( () => {
     setIsLoading(true);
     setIsError(false);
 
