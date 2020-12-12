@@ -12,6 +12,7 @@ import Dash from './Components/Dash.js'
 import history from "./History.js";
 import Loading from "./Components/Loading.js";
 import Navigation from "./Components/Navigation.js";
+import Footer from './Components/Footer.js'
 
 import API_URL from "./Constants/constants.js";
 
@@ -62,6 +63,7 @@ export default function App() {
   return (
       <Router history={history} basename="/pk-webs">
         <Navigation/>
+        <div class="filler">
           <BS.Container>
             <Switch>
             <Route path="/pk-webs/dash" >
@@ -98,6 +100,8 @@ export default function App() {
               </Route>
             </Switch>
           </BS.Container>
+          </div>
+          <Footer />
       </Router>
   );
 }

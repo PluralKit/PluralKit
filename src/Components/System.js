@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import  * as BS from 'react-bootstrap'
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import autosize from 'autosize';
 import moment from 'moment';
 import 'moment-timezone';
@@ -12,7 +12,16 @@ import { FaAddressCard } from "react-icons/fa";
 
 export default function System(props) {
 
-    const { register, handleSubmit,control } = useForm();
+    const {
+        register: registerEdit,
+        handleSubmit: handleSubmitEdit
+      } = useForm();
+
+
+    const {
+        register: registerPrivacy,
+        handleSubmit: handleSubmitPrivacy
+      } = useForm();
 
     const [ user, setUser ] = useState(JSON.parse(localStorage.getItem('user')));
 
@@ -104,30 +113,30 @@ const submitPrivacy = data => {
                <BS.Card.Body>
                { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
                { editMode ?  
-               <BS.Form onSubmit={handleSubmit(submitEdit)}>
+               <BS.Form onSubmit={handleSubmitEdit(submitEdit)}>
                 {/* <BS.Form.Text className='mb-4'>Note: changes here may take a while to be reflected on the bot. This is due to the bot caching data.<br/> Try editing a member after to make the changes show up.</BS.Form.Text> */}
                 <BS.Form.Row>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-               <Controller as={<BS.Form.Control/>} name="name" control={control}  defaultValue={user.name}/>
+               <BS.Form.Control name="name" ref={registerEdit}  defaultValue={user.name}/>
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Tag:</BS.Form.Label>
-                    <Controller as={<BS.Form.Control/>} name="y" control={control}  defaultValue={tag}/>
+                    <BS.Form.Control name="tag" ref={registerEdit}  defaultValue={tag}/>
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Timezone:</BS.Form.Label>
-                    <Controller as={<BS.Form.Control/>} name="tz" control={control}  defaultValue={timezone}/>
+                    <BS.Form.Control name="tz" ref={registerEdit}  defaultValue={timezone}/>
                     { invalidTimezone ? <BS.Form.Text>Please enter a valid <a href='https://xske.github.io/tz/' rel="noreferrer" target="_blank">timezone</a></BS.Form.Text> : "" }
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar url:</BS.Form.Label> 
-                    <Controller as={<BS.Form.Control/>} name="avatar_url" control={control}  defaultValue={avatar}/>
+                    <BS.Form.Control name="avatar_url" ref={registerEdit}   defaultValue={avatar}/>
                 </BS.Col>
                 </BS.Form.Row>
                 <BS.Form.Group className="mt-3">
                 <BS.Form.Label>Description:</BS.Form.Label>
-                <Controller as={<BS.Form.Control maxLength="1000" as="textarea" />} name="description" control={control} defaultValue={editDesc}/>
+                <BS.Form.Control maxLength="1000" as="textarea" name="description" ref={registerEdit} defaultValue={editDesc}/>
             </BS.Form.Group>
                 <BS.Button variant="light" onClick={() => setEditMode(false)}>Cancel</BS.Button>  <BS.Button variant="primary" type="submit">Submit</BS.Button>
                 </BS.Form> :
@@ -137,34 +146,34 @@ const submitPrivacy = data => {
                     <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Timezone:</b> {timezone}</BS.Col>
                     { privacyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
                 </BS.Row>
-                { privacyMode ? <BS.Form onSubmit={handleSubmit(submitPrivacy)}>
+                { privacyMode ? <BS.Form onSubmit={handleSubmitPrivacy(submitPrivacy)}>
                 <hr/>
                 <h5>Editing privacy settings</h5>
                     <BS.Form.Row>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control name="description_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="description_privacy" as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Member list:</BS.Form.Label>
-                        <BS.Form.Control name="member_list_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="member_list_privacy" as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Front:</BS.Form.Label>
-                        <BS.Form.Control name="front_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="front_privacy" as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Front history:</BS.Form.Label>
-                        <BS.Form.Control name="front_history_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="front_history_privacy" as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>

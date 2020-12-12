@@ -1,191 +1,234 @@
+html {
+  position: relative;
+  min-height: 100vh;
+}
+
+body {
+  padding-bottom: 60px;
+}
+
+.filler {
+  flex: 1 1 auto;
+}
 
 .dark-mode {
-    background-color: $gray-800;
-    transition: background-color 0.3s ease;
-  }
+  background-color: $gray-800;
+  transition: background-color 0.3s ease;
+}
 
-  .dark-mode .card  {
-    color: $white;
-    background-color: $gray-800;
-    border: 1px solid #191c1f !important;
-    
-  }
+.dark-mode .card {
+  color: $white;
+  background-color: $gray-800;
+  border: 1px solid #191c1f !important;
+}
 
-  .dark-mode .card-body  {
-    color: $white;
-    background-color: $gray-800;
-    transition: background-color 0.3s ease;
-  }
+.dark-mode .card-body {
+  color: $white;
+  background-color: $gray-800;
+  transition: background-color 0.3s ease;
+}
 
-  .dark-mode .card-header {
-    color: $gray-100;
-    background-color: $gray-900;
-    transition: background-color 0.3s ease;
-  }
+.dark-mode .card-header {
+  color: $gray-100;
+  background-color: $gray-900;
+  transition: background-color 0.3s ease;
+}
 
-  .navbar {
-    background-color: $gray-100;
-  }
+.navbar {
+  background-color: $gray-100;
+}
 
-  .dark-mode .navbar {
-    color: $gray-100;
-    background-color: $gray-900;
-    transition: background-color 0.3s ease;
-  }
+.dark-mode .navbar {
+  color: $gray-100;
+  background-color: $gray-900;
+  transition: background-color 0.3s ease;
+}
 
-  .dark-mode .navbar-brand {
-    color: $gray-100 !important;
-  }
+.dark-mode .navbar-brand {
+  color: $gray-100 !important;
+}
 
-  .dark-mode .form-control {
-    color: $gray-200;
-    border-color: #191c1f;
-    background-color: $gray-900;
-    transition: background-color 0.3s ease;
-  }
+.dark-mode .form-label {
+  color: $white !important;
+}
 
-  .dark-mode .form-control:disabled {
-    color: $gray-200;
-    border-color: #191c1f;
-    background-color: $gray-900;
-    transition: background-color 0.3s ease;
-  }
+.dark-mode .form-control {
+  color: $gray-200;
+  border-color: #191c1f;
+  background-color: $gray-900;
+  transition: background-color 0.3s ease;
+}
 
-  .dark-mode .form-control:focus {
-    color: $gray-200;
-    border-color: #191c1f;
-    background-color: $gray-900;
-  }
+.dark-mode .form-control:disabled {
+  color: $gray-600;
+  border-color: #191c1f;
+  background-color: $gray-900;
+  transition: background-color 0.3s ease;
+}
 
-  .dark-mode .btn-light {
-    background-color: $gray-900;
-    border-color: #191c1f;
-    color: $gray-100;
-  }
+.dark-mode .form-control:focus {
+  color: $gray-200;
+  border-color: #191c1f;
+  background-color: $gray-900;
+}
 
-  .dark-mode .btn-light:focus {
-    background-color: $gray-900;
-    border-color: #191c1f;
-    color: $gray-100;
-  }
+.dark-mode .btn-light {
+  background-color: $gray-900;
+  border-color: #191c1f;
+  color: $gray-100;
+}
 
-  .card-header .btn-link {
-    color: $gray-900;
-  }
+.dark-mode .btn-light:focus {
+  background-color: $gray-900;
+  border-color: #191c1f;
+  color: $gray-100;
+}
 
-  .card-header .btn-link:focus {
-    color: $gray-900;
-    text-decoration: none;
-  }
-  
-  .card-header .btn-link:hover {
-    color: $gray-900;
-    text-decoration: none;
-  }
-  
+.card-header .btn-link {
+  color: $gray-900;
+}
 
-  .card-header .btn-link { 
-    font-size: 1.25rem !important;
-    font-weight: 500;
-  }
+.card-header .btn-link:focus {
+  color: $gray-900;
+  text-decoration: none;
+}
 
-  .dark-mode .btn-link {
-    color: $white;
-  }
+.card-header .btn-link:hover {
+  color: $gray-900;
+  text-decoration: none;
+}
 
-  .dark-mode .btn-link:focus {
-    color: $white;
-    text-decoration: none;
-  }
+.card-header .btn-link {
+  font-size: 1.25rem !important;
+  font-weight: 500;
+}
 
-  .dark-mode .btn-link:hover {
-    color: $white;
-    text-decoration: none;
-  }
+.dark-mode .btn-link {
+  color: $white;
+}
 
-  .dark-mode .alert-danger {
-    color: $white;
-    background-color: $danger;
-    border: $gray-900;
-    transition: background-color 0.3s ease;
-  }
+.dark-mode .btn-link:focus {
+  color: $white;
+  text-decoration: none;
+}
 
-  code {
-    color: black !important;
-    background-color: $gray-300;
-    padding: 5px 7px;
-    border-radius: 3px;
-    margin: 3px;
-    display: inline-block;
-  }
+.dark-mode .btn-link:hover {
+  color: $white;
+  text-decoration: none;
+}
 
-  .dark-mode code{
-    color: white !important;
-    background-color: $gray-900;
-    transition: background-color 0.3s ease;
-  }
+.dark-mode .alert-danger {
+  color: $white;
+  background-color: $danger;
+  border: $gray-900;
+  transition: background-color 0.3s ease;
+}
 
-  pre {
-    margin: 2px !important;
-  }
-  
-  code.hljs {
-    display: block;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    margin: 3px 3px 7px 3px;
-  }
+.dark-mode .alert-light {
+  color: $white;
+  background-color: $gray-900;
+  border: #191c1f;
+  transition: background-color 0.3s ease;
+}
 
-  .d-spoiler {
-    color: $gray-300 !important;
-    background-color: $gray-300;
-    padding: 3px 5px;
-    border-radius: 3px;
-    margin: 3px;
-    display: inline-block;
-    transition-delay: 6000s;
-  }
+code {
+  color: black !important;
+  background-color: $gray-300;
+  padding: 5px 7px;
+  border-radius: 3px;
+  margin: 3px;
+  display: inline-block;
+}
 
-  .d-spoiler::selection {
-    color: $gray-300;
-  }
+.dark-mode code {
+  color: white !important;
+  background-color: $gray-900;
+  transition: background-color 0.3s ease;
+}
 
- .dark-mode .d-spoiler {
-    color: $gray-900 !important;
-    background-color: $gray-900;
-    padding: 3px 5px;
-    border-radius: 3px;
-    margin: 3px;
-    display: inline-block;
-    transition-delay: 6000s;
-  }
+pre {
+  margin: 2px !important;
+}
 
-  .dark-mode .d-spoiler::selection {
-    color: $gray-900;
-  }
+code.hljs {
+  display: block;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin: 3px 3px 7px 3px;
+}
 
-  .d-spoiler:active {
-    color: $gray-900 !important;
-    background-color: $gray-200;
-    transition-delay: 0s;
-    transition: background-color 0.2s ease;
-  }
+.d-spoiler {
+  color: $gray-300 !important;
+  background-color: $gray-300;
+  padding: 3px 5px;
+  border-radius: 3px;
+  margin: 3px;
+  display: inline-block;
+  transition-delay: 6000s;
+}
 
-  .dark-mode .d-spoiler:active {
-    color: $gray-200 !important;
-    background-color: $gray-700;
-    transition-delay: 0s;
-    transition: background-color 0.2s ease;
-  }
-  
-  blockquote {
-    border-left: 6px solid $gray-200;
-    padding: 2px 5px 2px 15px;
-    margin: 7px !important;
-    margin-left: 9px !important;
-  }
+.d-spoiler::selection {
+  color: $gray-300;
+}
 
-  .dark-mode blockquote {
-    border-left: 6px solid $gray-700;
-  }
+.dark-mode .d-spoiler {
+  color: $gray-900 !important;
+  background-color: $gray-900;
+  padding: 3px 5px;
+  border-radius: 3px;
+  margin: 3px;
+  display: inline-block;
+  transition-delay: 6000s;
+}
 
-  @import "~bootstrap/scss/bootstrap";
+.dark-mode .d-spoiler::selection {
+  color: $gray-900;
+}
+
+.d-spoiler:active {
+  color: $gray-900 !important;
+  background-color: $gray-200;
+  transition-delay: 0s;
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode .d-spoiler:active {
+  color: $gray-200 !important;
+  background-color: $gray-700;
+  transition-delay: 0s;
+  transition: background-color 0.2s ease;
+}
+
+blockquote {
+  border-left: 6px solid $gray-200;
+  padding: 2px 5px 2px 15px;
+  margin: 7px !important;
+  margin-left: 9px !important;
+}
+
+.dark-mode blockquote {
+  border-left: 6px solid $gray-700;
+}
+
+.popup-content {
+  background: none !important;
+  border: none !important;
+  width: 100% !important;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.popup-overlay {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+.dark-mode .nav-link {
+  color: $white !important;
+}
+
+.footer {
+  position: absolute !important;
+  width: 100% !important;
+  bottom: 0px !important;
+}
+
+@import "~bootstrap/scss/bootstrap";

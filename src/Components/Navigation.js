@@ -17,7 +17,7 @@ export default function Navigation() {
     }
 
     return (
-        <BS.Navbar className="mb-3 align-items-center justify-content-between">
+        <BS.Navbar className="mb-5 align-items-center justify-content-between">
             <BS.Navbar.Brand>
                 pk-web
             </BS.Navbar.Brand>
