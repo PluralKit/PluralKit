@@ -3,7 +3,6 @@ import  * as BS from 'react-bootstrap'
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import { useForm } from "react-hook-form";
-import autosize from 'autosize';
 
 import MemberCard from './MemberCard.js'
 import Loading from "./Loading.js";
@@ -58,10 +57,6 @@ export default function Memberlist(props) {
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers])
-
-  useEffect(() => {
-    autosize(document.querySelector('textarea'));
-})
 
     function addProxyField() {
       setProxyTags(oldTags => [...oldTags, {prefix: '', suffix: ''}] )

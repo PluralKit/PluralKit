@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import moment from 'moment';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
+import autosize from 'autosize';
 
 import API_URL from "../Constants/constants.js";
 
@@ -56,6 +57,10 @@ export default function MemberCard(props) {
         register: registerProxy,
         handleSubmit: handleSubmitProxy,
         } = useForm();
+
+        useEffect(() => {
+            autosize(document.querySelector('textarea'));
+        })
 
     useEffect(() => {
         const { toHTML } = require('../Functions/discord-parser.js');

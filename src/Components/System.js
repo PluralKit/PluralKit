@@ -80,7 +80,7 @@ const submitEdit = data => {
             'Content-Type': 'application/json',
             'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
         }}).then (res => res.json()
-        ).then ( data => { setUser(prevState => {return {...prevState, ...data}}); localStorage.setItem('user', JSON.stringify(user)); setEditMode(false)}
+        ).then ( () => { setUser(prevState => {return {...prevState, ...data}}); localStorage.setItem('user', JSON.stringify(user)); setEditMode(false)}
         ).catch (error => {
             console.error(error);
             setErrorAlert(true);
@@ -114,7 +114,8 @@ const submitPrivacy = data => {
                { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
                { editMode ?  
                <BS.Form onSubmit={handleSubmitEdit(submitEdit)}>
-                {/* <BS.Form.Text className='mb-4'>Note: changes here may take a while to be reflected on the bot. This is due to the bot caching data.<br/> Try editing a member after to make the changes show up.</BS.Form.Text> */}
+                <BS.Form.Text className='mb-4'><b>Note:</b> if you refresh the page, the old data might show up again, this is due to the bot caching data.<br/>
+                Try editing a member to clear the cache, or wait a few minutes before refreshing.</BS.Form.Text>
                 <BS.Form.Row>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
