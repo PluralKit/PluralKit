@@ -111,16 +111,16 @@ export default function Memberlist(props) {
         <BS.Alert variant="danger">Error fetching members.</BS.Alert> :
         <>
         <BS.Row noGutters="true" className="justify-content-md-center">
-        <BS.Col xs={12} lg={4}>
-        <BS.Form inline>
-            <BS.Form.Control value={value} className="w-100" onChange={e => setValue(e.target.value)} placeholder="Search"/>
+        <BS.Col className="mb-3" xs={12} lg={4}>
+        <BS.Form>
+            <BS.Form.Control value={value} onChange={e => setValue(e.target.value)} placeholder="Search"/>
         </BS.Form>
         </BS.Col>
-        <BS.Col xs={12} lg={2}>
-          <BS.Button type="primary" className="ml-2" block onClick={() => fetchMembers()}>Refresh</BS.Button>
+        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={2}>
+          <BS.Button type="primary" className="m-0" block onClick={() => fetchMembers()}>Refresh</BS.Button>
         </BS.Col>
         </BS.Row>
-        <BS.Card className="mt-3 w-100">
+        <BS.Card className="w-100">
           <BS.Card.Header className="d-flex align-items-center justify-content-between">
             <BS.Button variant="link" className="float-left" onClick={() => setOpen(o => !o)}><FaPlus className="mr-4"/>Add Member</BS.Button> 
             <Popup open={open} position="top-center" modal>
