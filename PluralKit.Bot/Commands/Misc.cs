@@ -25,8 +25,9 @@ namespace PluralKit.Bot {
         private readonly EmbedService _embeds;
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly ProxyService _proxy;
 
-        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, EmbedService embeds, ModelRepository repo, IDatabase db)
+        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, EmbedService embeds, ModelRepository repo, IDatabase db, ProxyService proxy)
         {
             _botConfig = botConfig;
             _metrics = metrics;
@@ -35,6 +36,7 @@ namespace PluralKit.Bot {
             _embeds = embeds;
             _repo = repo;
             _db = db;
+            _proxy = proxy;
         }
         
         public async Task Invite(Context ctx)
@@ -189,7 +191,21 @@ namespace PluralKit.Bot {
             // Send! :)
             await ctx.Reply(embed: eb.Build());
         }
-        
+
+        public async Task DebugProxy(Context ctx)
+        {
+            try
+            {
+                await _proxy.HandleIncomingMessage(ctx.Shard, ctx.Message, ctx.MessageContext, allowAutoproxy: true, isCheckingProxy: true);
+            }
+            catch (ProxyRejection e)
+            {
+                await ctx.Reply($"{Emojis.Error} Error found: `{e.Message}`");
+                return;
+            }
+            await ctx.Reply($"{Emojis.Success} No issues found!");
+        }
+
         public async Task GetMessage(Context ctx)
         {
             var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a message ID or link.");

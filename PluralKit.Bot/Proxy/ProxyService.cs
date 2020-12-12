@@ -39,7 +39,7 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<ProxyService>();
         }
 
-        public async Task<bool> HandleIncomingMessage(DiscordClient shard, DiscordMessage message, MessageContext ctx, bool allowAutoproxy)
+        public async Task<bool> HandleIncomingMessage(DiscordClient shard, DiscordMessage message, MessageContext ctx, bool allowAutoproxy, bool isCheckingProxy = false)
         {
             if (!ShouldProxy(message, ctx)) return false;
 
@@ -51,10 +51,10 @@ namespace PluralKit.Bot
                 members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.Channel.GuildId)).ToList();
             
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Count > 0,
-                allowAutoproxy)) return false;
+                allowAutoproxy)) throw new ProxyRejection("no matched members");
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
-            if (!await CheckBotPermissionsOrError(message.Channel)) return false;
+            if (!await CheckBotPermissionsOrError(message.Channel)) throw new ProxyRejection("bot missing required proxy permissions");
 
             // this method throws, so no need to wrap it in an if statement
             CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx));
@@ -66,27 +66,28 @@ namespace PluralKit.Bot
             var allowEmbeds = (senderPermissions & Permissions.EmbedLinks) != 0;
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(shard, conn, message, ctx, match, allowEveryone, allowEmbeds);
+            if (!isCheckingProxy) await ExecuteProxy(shard, conn, message, ctx, match, allowEveryone, allowEmbeds);
             return true;
         }
 
         private bool ShouldProxy(DiscordMessage msg, MessageContext ctx)
         {
             // Make sure author has a system
-            if (ctx.SystemId == null) return false;
+            if (ctx.SystemId == null) throw new ProxyRejection("author has no system");
             
             // Make sure channel is a guild text channel and this is a normal message
-            if ((msg.Channel.Type != ChannelType.Text && msg.Channel.Type != ChannelType.News) || msg.MessageType != MessageType.Default) return false;
+            if ((msg.Channel.Type != ChannelType.Text && msg.Channel.Type != ChannelType.News) || msg.MessageType != MessageType.Default) throw new ProxyRejection("invalid channel type");
             
             // Make sure author is a normal user
-            if (msg.Author.IsSystem == true || msg.Author.IsBot || msg.WebhookMessage) return false;
+            if (msg.Author.IsSystem == true || msg.Author.IsBot || msg.WebhookMessage) throw new ProxyRejection("invalid message type");
             
             // Make sure proxying is enabled here
-            if (!ctx.ProxyEnabled || ctx.InBlacklist) return false;
+            if (!ctx.ProxyEnabled) throw new ProxyRejection("proxying is disabled");
+            if (ctx.InBlacklist) throw new ProxyRejection("channel is blacklisted");
             
             // Make sure we have either an attachment or message content
             var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
-            if (isMessageBlank && msg.Attachments.Count == 0) return false;
+            if (isMessageBlank && msg.Attachments.Count == 0) throw new ProxyRejection("nothing to send");
             
             // All good!
             return true;
@@ -196,6 +197,13 @@ namespace PluralKit.Bot
         private void CheckProxyNameBoundsOrError(string proxyName)
         {
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+        }
+    }
+
+    public class ProxyRejection : PKError
+    {
+        public ProxyRejection(string message) : base(message)
+        {
         }
     }
 }

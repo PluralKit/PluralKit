@@ -141,6 +141,9 @@ namespace PluralKit.Bot
             }
             catch (PKError e)
             {
+                // ProxyRejection errors are used for proxy debugging, so ignoring them here
+                if (e is ProxyRejection) return false;
+
                 // User-facing errors, print to the channel properly formatted
                 var msg = evt.Message;
                 if (msg.Channel.Guild == null || msg.Channel.BotHasAllPermissions(Permissions.SendMessages))
