@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallBack } from 'react';
 import  * as BS from 'react-bootstrap'
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
@@ -35,15 +35,7 @@ export default function Memberlist(props) {
 
     const {register, handleSubmit} = useForm();
 
-    useEffect(() => {
-      fetchMembers();
-    }, [userId, newMember])
-
-    useEffect(() => {
-      autosize(document.querySelector('textarea'));
-  })
-
-  function fetchMembers() {
+  const fetchMembers = useCallBack( () => {
     setIsLoading(true);
     setIsError(false);
 
@@ -53,7 +45,7 @@ export default function Memberlist(props) {
       'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
     }}).then ( res => res.json()
     ).then (data => { 
-      { newMember ? setMembers([...data, newMember]) : setMembers(data)}
+      newMember ? setMembers([...data, newMember]) : setMembers(data)
       setIsLoading(false);
   })
     .catch (error => { 
@@ -61,7 +53,15 @@ export default function Memberlist(props) {
         setIsError(true);
         setIsLoading(false);
     })
-  }
+  }, [newMember, userId])
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers])
+
+  useEffect(() => {
+    autosize(document.querySelector('textarea'));
+})
 
     function addProxyField() {
       setProxyTags(oldTags => [...oldTags, {prefix: '', suffix: ''}] )

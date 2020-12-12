@@ -1,4 +1,3 @@
-import react from 'react'
 import * as BS from 'react-bootstrap'
 
 export default function Navigation() {
