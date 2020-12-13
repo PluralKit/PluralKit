@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'openDyslexic';
+  src: url('https://dl.dropboxusercontent.com/s/qfpakpjedhsrdb9/OpenDyslexicAlta-Regular.ttf');
+}
+
 html {
   position: relative;
   min-height: 100vh;
@@ -5,6 +10,10 @@ html {
 
 body {
   padding-bottom: 60px;
+}
+
+.opendyslexic {
+  font-family: "OpenDyslexic";  
 }
 
 .dark-mode {
@@ -231,6 +240,18 @@ blockquote {
   background-color: $gray-900 !important;
   color: $white !important;
   border-color: #191c1f !important;
+}
+
+.toggles {
+  position: absolute !important;
+  right: 50%; 
+  margin-right: -100px; ;
+}
+
+.d-emoji {
+  height: 25px;
+  width: auto;
+  image-rendering: crisp-edges;
 }
 
 

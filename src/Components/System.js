@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import autosize from 'autosize';
 import moment from 'moment';
 import 'moment-timezone';
+import Popup from 'reactjs-popup';
 
 import API_URL from "../Constants/constants.js";
 
@@ -107,7 +108,13 @@ const submitPrivacy = data => {
            <BS.Card className="mb-3 mt-3 w-100" >
                <BS.Card.Header className="d-flex align-items-center justify-content-between">
                   <BS.Card.Title className="float-left"><FaAddressCard className="mr-3" /> {user.name}</BS.Card.Title> 
-                  { user.avatar_url ? <BS.Image src={`${user.avatar_url}`} style={{width: 50, height: 50}} className="float-right" roundedCircle /> : 
+                  { user.avatar_url ? <Popup trigger={<BS.Image src={`${user.avatar_url}`} style={{width: 50, height: 50}} tabindex="0" className="float-right" roundedCircle />} className="avatar" modal>
+                {close => (
+                    <div className="text-center w-100 m-0" onClick={() => close()}>
+                    <BS.Image src={`${user.avatar_url}`} style={{width: 500, height: 'auto'}} thumbnail />
+                    </div>
+                )}
+            </Popup> : 
                <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} className="float-right" roundedCircle />}
                </BS.Card.Header>
                <BS.Card.Body>

@@ -198,8 +198,14 @@ export default function MemberCard(props) {
        <LazyLoad offset={100}>
            <BS.Card.Header className="d-flex align-items-center justify-content-between">
         <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>
-            { member.avatar_url ? <BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} className="float-right" roundedCircle /> : 
-        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} className="float-right" roundedCircle />}     
+            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabindex="0" className="float-right" roundedCircle />} className="avatar" modal>
+                {close => (
+                    <div className="text-center w-100 m-0" onClick={() => close()}>
+                    <BS.Image src={`${member.avatar_url}`} style={{width: 500, height: 'auto'}} thumbnail />
+                    </div>
+                )}
+            </Popup> : 
+        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabindex="0" className="float-right" roundedCircle />}
         </BS.Card.Header>
         <BS.Accordion.Collapse eventKey={member.id}>
             <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>

@@ -101,12 +101,6 @@ export default function Memberlist(props) {
 
     const active = currentPage;
     const pageAmount = Math.ceil(members.length / membersPerPage);
-    const pageNumbers = [];
-    for ( let i = currentPage; (i <= currentPage + 1) && (i < pageAmount); i++ ) {
-      pageNumbers.push(
-      <BS.Pagination.Item key={i}  onClick={() => setCurrentPage(i)} active={i === active}>{i}</BS.Pagination.Item>
-      );
-    }
       
       const memberList = currentMembers.map((member, index) => <BS.Card key={member.id}>
         <MemberCard
@@ -150,10 +144,11 @@ export default function Memberlist(props) {
           <BS.Pagination className="ml-auto mr-auto">
           { currentPage === 1 ? <BS.Pagination.Prev disabled/> : <BS.Pagination.Prev onClick={() => setCurrentPage(currentPage - 1)} />}
           <BS.Pagination.Item  onClick={() => setCurrentPage(1)} active={1 === active}>{1}</BS.Pagination.Item>
-          <BS.Pagination.Ellipsis />
-          { currentPage > 1 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 1)} active={currentPage - 1 === active}>{currentPage - 1}</BS.Pagination.Item> : "" }
-          {pageNumbers}
-          <BS.Pagination.Ellipsis />
+          <BS.Pagination.Ellipsis disabled />
+          { currentPage > 1 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</BS.Pagination.Item> : "" }
+          <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage)} active={currentPage === active}>{currentPage}</BS.Pagination.Item>
+          { currentPage < pageAmount ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</BS.Pagination.Item> : "" }
+          <BS.Pagination.Ellipsis disabled />
           <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount)} active={pageAmount === active}>{pageAmount}</BS.Pagination.Item>
           { currentPage === pageAmount ? <BS.Pagination.Next disabled /> :<BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />}
           </BS.Pagination>

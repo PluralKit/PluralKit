@@ -1,18 +1,22 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import { Router, Switch, Route, Redirect } from 'react-router-dom';
 import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
 import * as fetch from 'node-fetch';
+import Toggle from 'react-toggle'
 
 import './App.scss';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { FaLock } from "react-icons/fa";
+import { FaCog } from "react-icons/fa";
+
 
 import Dash from './Components/Dash.js'
 import history from "./History.js";
 import Loading from "./Components/Loading.js";
 import Navigation from "./Components/Navigation.js";
 import Footer from './Components/Footer.js'
+import Profile from './Components/Profile.js'
 
 import API_URL from "./Constants/constants.js";
 
@@ -21,6 +25,8 @@ export default function App() {
   const [isLoading, setIsLoading ] = useState(false);
   const [isSubmit, setIsSubmit ] = useState(false);
   const [isInvalid, setIsInvalid] = useState(false);
+  const [, updateState] = useState();
+  const forceUpdate = useCallback(() => updateState({}), []);
 
   const { register, handleSubmit } = useForm();
 
@@ -34,6 +40,7 @@ export default function App() {
     localStorage.setItem('token', data.pkToken);
     logIn();
   };
+
 
  function logIn() {
      setIsInvalid(false);
@@ -61,11 +68,12 @@ export default function App() {
 
 
   return (
+    <div className={localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}>
       <Router history={history} basename="/pk-webs">
         <Navigation/>
           <BS.Container>
             <Switch>
-            <Route path="/pk-webs/dash" >
+            <Route exact path="/pk-webs/dash" >
               { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash />
               }
               </Route>
@@ -97,9 +105,42 @@ export default function App() {
           </BS.Card>
           }
               </Route>
+              <Route exact path="/pk-webs/profile">
+                <Profile />
+              </Route>
+              <Route exact path="/pk-webs/settings">
+              <BS.Card>
+            <BS.Card.Header className="d-flex align-items-center justify-content-between">
+            <BS.Card.Title><FaCog className="mr-3" />Settings</BS.Card.Title>
+            </BS.Card.Header>
+            <BS.Card.Body>
+            <p>Change how you view and use pk-webs here, changes will be saved after refreshing. You will have to apply them again in different browsers and on different devices.</p>
+            <hr/>
+            <BS.Row>
+            <BS.Col xs={12} lg={4} className="mx-lg-2 d-flex align-items-center row">
+            { localStorage.getItem('opendyslexic') ? 
+                <Toggle className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() =>  {
+                    localStorage.removeItem('opendyslexic');
+                    forceUpdate()}} /> :
+                <Toggle className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                    localStorage.setItem('opendyslexic', 'true')
+                    forceUpdate()}} />  }
+                Use opendyslexic?
+            </BS.Col>
+            </BS.Row>
+            </BS.Card.Body>
+        </BS.Card>
+              </Route>
             </Switch>
           </BS.Container>
           <Footer />
       </Router>
+      </div>
   );
 }
