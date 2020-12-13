@@ -5,6 +5,7 @@ import moment from 'moment';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import autosize from 'autosize';
+import LazyLoad from 'react-lazyload';
 
 import API_URL from "../Constants/constants.js";
 
@@ -193,8 +194,9 @@ export default function MemberCard(props) {
     }    
 
     return (
-       memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> : <>
-       <BS.Card.Header className="d-flex align-items-center justify-content-between">
+       memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> :
+       <LazyLoad offset={100}>
+           <BS.Card.Header className="d-flex align-items-center justify-content-between">
         <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>
             { member.avatar_url ? <BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} className="float-right" roundedCircle /> : 
         <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} className="float-right" roundedCircle />}     
@@ -361,6 +363,7 @@ export default function MemberCard(props) {
                 { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button>}
             </> } </BS.Card.Body>
         </BS.Accordion.Collapse>
-        </>
+        </LazyLoad>
+        
     )
 }

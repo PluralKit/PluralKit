@@ -63,7 +63,6 @@ export default function App() {
   return (
       <Router history={history} basename="/pk-webs">
         <Navigation/>
-        <div class="filler">
           <BS.Container>
             <Switch>
             <Route path="/pk-webs/dash" >
@@ -100,7 +99,6 @@ export default function App() {
               </Route>
             </Switch>
           </BS.Container>
-          </div>
           <Footer />
       </Router>
   );

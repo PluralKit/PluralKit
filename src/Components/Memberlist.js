@@ -21,6 +21,8 @@ export default function Memberlist(props) {
 
     const [proxyView, setProxyView] = useState(false);
     const [privacyView, setPrivacyView] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [membersPerPage, setMembersPerPage] = useState(25);
 
     const [open, setOpen] = useState(false);
     const closeModal = () => setOpen(false);
@@ -37,6 +39,7 @@ export default function Memberlist(props) {
   const fetchMembers = useCallback( () => {
     setIsLoading(true);
     setIsError(false);
+    setMembersPerPage(25);
 
      fetch(`${API_URL}s/${userId}/members`,{
     method: 'get',
@@ -87,13 +90,26 @@ export default function Memberlist(props) {
         });
     }
 
-    const memberList = members.filter(member => {
-        if (!value) return true;
-        if (member.name.toLowerCase().includes(value.toLowerCase())) {
-          return true;
-        }
-        return false;
-      }).sort((a, b) => a.name.localeCompare(b.name)).map((member) => <BS.Card key={member.id}>
+    const indexOfLastMember = currentPage * membersPerPage;
+    const indexOfFirstMember = indexOfLastMember - membersPerPage;
+    const currentMembers =  members.filter(member => {
+      if (!value) return true;
+      if (member.name.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false;
+    }).sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
+
+    const active = currentPage;
+    const pageAmount = Math.ceil(members.length / membersPerPage);
+    const pageNumbers = [];
+    for ( let i = currentPage; (i <= currentPage + 3) && (i < pageAmount); i++ ) {
+      pageNumbers.push(
+      <BS.Pagination.Item key={i}  onClick={() => setCurrentPage(i)} active={i === active}>{i}</BS.Pagination.Item>
+      );
+    }
+      
+      const memberList = currentMembers.map((member, index) => <BS.Card key={member.id}>
         <MemberCard
         member={member} 
         />
@@ -106,14 +122,42 @@ export default function Memberlist(props) {
         <BS.Alert variant="danger">Error fetching members.</BS.Alert> :
         <>
         <BS.Row noGutters="true" className="justify-content-md-center">
-        <BS.Col className="mb-3" xs={12} lg={4}>
+        <BS.Col className="lg-2 mb-3" xs={12} lg={3}>
+        <BS.Form>
+          <BS.InputGroup className="mb-3">
+          <BS.Form.Control disabled placeholder='Page length:'/>
+            <BS.Form.Control as="select" onChange={e => setMembersPerPage(e.target.value)}>
+              <option>10</option>
+              <option selected>25</option>
+              <option>50</option>
+              <option>100</option>
+            </BS.Form.Control>
+            </BS.InputGroup>
+        </BS.Form>
+        </BS.Col>
+        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={4}>
         <BS.Form>
             <BS.Form.Control value={value} onChange={e => setValue(e.target.value)} placeholder="Search"/>
         </BS.Form>
         </BS.Col>
-        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={2}>
+        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={1}>
           <BS.Button type="primary" className="m-0" block onClick={() => fetchMembers()}>Refresh</BS.Button>
         </BS.Col>
+        </BS.Row>
+        <BS.Row className="justify-content-md-center">
+          <BS.Pagination className="ml-auto mr-auto">
+          <BS.Pagination.First onClick={() => setCurrentPage(1)} />
+          <BS.Pagination.Prev onClick={() => setCurrentPage(currentPage - 1)} />
+          <BS.Pagination.Item  onClick={() => setCurrentPage(1)} active={1 === active}>{1}</BS.Pagination.Item>
+          <BS.Pagination.Ellipsis />
+          { currentPage > 2 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 2)} active={currentPage - 2 === active}>{currentPage - 2}</BS.Pagination.Item> : "" }
+          { currentPage > 1 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 1)} active={currentPage - 1 === active}>{currentPage - 1}</BS.Pagination.Item> : "" }
+          {pageNumbers}
+          <BS.Pagination.Ellipsis />
+          <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount)} active={pageAmount === active}>{pageAmount}</BS.Pagination.Item>
+          <BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />
+          <BS.Pagination.Last onClick={() => setCurrentPage(pageAmount)} />
+          </BS.Pagination>
         </BS.Row>
         <BS.Card className="w-100">
           <BS.Card.Header className="d-flex align-items-center justify-content-between">
@@ -240,6 +284,7 @@ export default function Memberlist(props) {
             </Popup>
           </BS.Card.Header>
         </BS.Card>
+        
         <BS.Accordion className="mb-3 mt-3 w-100" defaultActiveKey="0">
             {memberList}
         </BS.Accordion>
