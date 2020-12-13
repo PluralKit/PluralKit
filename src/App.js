@@ -4,17 +4,16 @@ import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
 import * as fetch from 'node-fetch';
 import Toggle from 'react-toggle'
+import useDarkMode from 'use-dark-mode';
 
 import './App.scss';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { FaLock } from "react-icons/fa";
-import { FaCog } from "react-icons/fa";
-
+import "react-toggle/style.css"
+import { FaLock, FaCog, FaSun, FaMoon } from "react-icons/fa";
 
 import Dash from './Components/Dash.js'
 import history from "./History.js";
 import Loading from "./Components/Loading.js";
-import Navigation from "./Components/Navigation.js";
 import Footer from './Components/Footer.js'
 import Profile from './Components/Profile.js'
 
@@ -27,12 +26,13 @@ export default function App() {
   const [isInvalid, setIsInvalid] = useState(false);
   const [, updateState] = useState();
   const forceUpdate = useCallback(() => updateState({}), []);
+  const darkMode = useDarkMode(false);
 
   const { register, handleSubmit } = useForm();
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
-      logIn();
+      checkLogIn();
     }
   }, [])
 
@@ -41,6 +41,13 @@ export default function App() {
     logIn();
   };
 
+  function logOut() {
+    setIsSubmit(false);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    history.push('/pk-webs');
+    forceUpdate();
+}
 
  function logIn() {
      setIsInvalid(false);
@@ -66,11 +73,52 @@ export default function App() {
         })
       };
 
+      function checkLogIn() {
+        setIsInvalid(false);
+        setIsLoading(true);
+        
+         fetch(`${API_URL}s/`,{
+           method: 'GET',
+           headers: {
+             'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+           }}).then ( res => res.json()
+           ).then (data => { 
+             localStorage.setItem('user', JSON.stringify(data));
+             setIsSubmit(true);
+             setIsLoading(false);
+         })
+           .catch (error => { 
+             console.log(error);
+             setIsInvalid(true);
+             localStorage.removeItem('token');
+             localStorage.removeItem('user');
+             setIsLoading(false);
+           })
+         };
+
 
   return (
     <div className={localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}>
       <Router history={history} basename="/pk-webs">
-        <Navigation/>
+      <BS.Navbar className="mb-5 align-items-center">
+            <BS.Navbar.Brand href="/pk-webs">
+                pk-webs
+            </BS.Navbar.Brand>
+            <BS.NavDropdown id="menu" className="mr-auto" title="Menu">
+            { localStorage.getItem('token') ? <BS.NavDropdown.Item onClick={() => logOut()}>Log out</BS.NavDropdown.Item> : "" }
+            <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/dash')} >Dash</BS.NavDropdown.Item>
+            <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/settings')} >Settings</BS.NavDropdown.Item>
+            <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/profile')}>Public profile</BS.NavDropdown.Item>
+
+            </BS.NavDropdown>
+            <BS.Nav className="mr-lg-2 d-flex align-items-center row">
+            <Toggle
+                defaultChecked={true}
+                icons={false}
+                onChange={darkMode.toggle} />
+                {darkMode.value ? <FaMoon className="m-1"/> : <FaSun className="m-1"/>}
+            </BS.Nav>
+        </BS.Navbar>
           <BS.Container>
             <Switch>
             <Route exact path="/pk-webs/dash" >
@@ -84,9 +132,11 @@ export default function App() {
               <BS.Card.Title><FaLock className="mr-3" />Login</BS.Card.Title>
             </BS.Card.Header>
             <BS.Card.Body>
-            <BS.Form onSubmit={handleSubmit(onSubmit)}>
-              { isSubmit && !localStorage.getItem('user') ? <BS.Alert variant="danger">Something went wrong, please try again.</BS.Alert> : ""}
+            { isSubmit && !localStorage.getItem('user') ? <BS.Alert variant="danger">Something went wrong, please try again.</BS.Alert> : ""}
               { isInvalid ? <BS.Alert variant="danger">Invalid token.</BS.Alert> : "" }
+              { localStorage.getItem('user') && localStorage.getItem('token') ? <><p>You are logged in already, click here to continue to the dash.</p>
+              <BS.Button type="primary" onClick={() => history.push('/pk-webs/dash')}>Continue to dash</BS.Button></> :
+            <BS.Form onSubmit={handleSubmit(onSubmit)}>
             <BS.Form.Row>
                 <BS.Col xs={12} lg={10}>
                     <BS.Form.Label>Enter your token here. You can get your token by using <b>"pk;token"</b>.</BS.Form.Label>
@@ -100,7 +150,7 @@ export default function App() {
                 <BS.Button variant="primary" type="submit" block >Submit</BS.Button>
               </BS.Col>
             </BS.Form.Row>
-          </BS.Form>
+          </BS.Form> }
           </BS.Card.Body>
           </BS.Card>
           }
