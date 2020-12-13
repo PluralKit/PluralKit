@@ -347,7 +347,7 @@ export default function MemberCard(props) {
                         </BS.InputGroup>
                         </BS.Form.Row>
                     </BS.Col>
-                ))} <BS.Col className="mb-lg-2" xs={12} lg={2}><BS.Button block variant="light" onClick={() => addProxyField()}>Add new</BS.Button></BS.Col>
+                ))} <BS.Col className="mb-2" xs={12} lg={2}><BS.Button block variant="light" onClick={() => addProxyField()}>Add new</BS.Button></BS.Col>
              </BS.Form.Row>
              <BS.Button variant="light" onClick={() => resetProxyFields()}>Exit</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button>
         </BS.Form><hr/></> : proxyView ? 

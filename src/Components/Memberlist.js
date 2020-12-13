@@ -70,8 +70,6 @@ export default function Memberlist(props) {
 
       const newdata = data.proxy_tags ? {...data, proxy_tags: data.proxy_tags.filter(tag => !(tag.prefix === "" && tag.suffix === ""))} : data
 
-      console.log(newdata);
-
       fetch(`${API_URL}m/`,{
         method: 'POST',
         body: JSON.stringify(newdata),
@@ -100,10 +98,11 @@ export default function Memberlist(props) {
       return false;
     }).sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
 
+
     const active = currentPage;
     const pageAmount = Math.ceil(members.length / membersPerPage);
     const pageNumbers = [];
-    for ( let i = currentPage; (i <= currentPage + 3) && (i < pageAmount); i++ ) {
+    for ( let i = currentPage; (i <= currentPage + 1) && (i < pageAmount); i++ ) {
       pageNumbers.push(
       <BS.Pagination.Item key={i}  onClick={() => setCurrentPage(i)} active={i === active}>{i}</BS.Pagination.Item>
       );
@@ -126,7 +125,10 @@ export default function Memberlist(props) {
         <BS.Form>
           <BS.InputGroup className="mb-3">
           <BS.Form.Control disabled placeholder='Page length:'/>
-            <BS.Form.Control as="select" onChange={e => setMembersPerPage(e.target.value)}>
+            <BS.Form.Control as="select" onChange={e => {
+              setMembersPerPage(e.target.value);
+              setCurrentPage(1);
+              }}>
               <option>10</option>
               <option selected>25</option>
               <option>50</option>
@@ -137,7 +139,7 @@ export default function Memberlist(props) {
         </BS.Col>
         <BS.Col className="ml-lg-2 mb-3" xs={12} lg={4}>
         <BS.Form>
-            <BS.Form.Control value={value} onChange={e => setValue(e.target.value)} placeholder="Search"/>
+            <BS.Form.Control value={value} onChange={e => {setValue(e.target.value); setCurrentPage(1)}} placeholder="Search"/>
         </BS.Form>
         </BS.Col>
         <BS.Col className="ml-lg-2 mb-3" xs={12} lg={1}>
@@ -146,17 +148,14 @@ export default function Memberlist(props) {
         </BS.Row>
         <BS.Row className="justify-content-md-center">
           <BS.Pagination className="ml-auto mr-auto">
-          <BS.Pagination.First onClick={() => setCurrentPage(1)} />
-          <BS.Pagination.Prev onClick={() => setCurrentPage(currentPage - 1)} />
+          { currentPage === 1 ? <BS.Pagination.Prev disabled/> : <BS.Pagination.Prev onClick={() => setCurrentPage(currentPage - 1)} />}
           <BS.Pagination.Item  onClick={() => setCurrentPage(1)} active={1 === active}>{1}</BS.Pagination.Item>
           <BS.Pagination.Ellipsis />
-          { currentPage > 2 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 2)} active={currentPage - 2 === active}>{currentPage - 2}</BS.Pagination.Item> : "" }
           { currentPage > 1 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 1)} active={currentPage - 1 === active}>{currentPage - 1}</BS.Pagination.Item> : "" }
           {pageNumbers}
           <BS.Pagination.Ellipsis />
           <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount)} active={pageAmount === active}>{pageAmount}</BS.Pagination.Item>
-          <BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />
-          <BS.Pagination.Last onClick={() => setCurrentPage(pageAmount)} />
+          { currentPage === pageAmount ? <BS.Pagination.Next disabled /> :<BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />}
           </BS.Pagination>
         </BS.Row>
         <BS.Card className="w-100">
