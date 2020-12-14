@@ -42,7 +42,7 @@ export default function Memberlist(props) {
     setMembersPerPage(25);
 
      fetch(`${API_URL}s/${userId}/members`,{
-    method: 'get',
+    method: 'GET',
     headers: {
       'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
     }}).then ( res => res.json()
@@ -102,7 +102,7 @@ export default function Memberlist(props) {
     const active = currentPage;
     const pageAmount = Math.ceil(members.length / membersPerPage);
       
-      const memberList = currentMembers.map((member, index) => <BS.Card key={member.id}>
+      const memberList = currentMembers.map((member) => <BS.Card key={member.id}>
         <MemberCard
         member={member} 
         />
@@ -141,15 +141,15 @@ export default function Memberlist(props) {
         </BS.Col>
         </BS.Row>
         <BS.Row className="justify-content-md-center">
-          <BS.Pagination className="ml-auto mr-auto">
+        <BS.Pagination className="ml-auto mr-auto">
           { currentPage === 1 ? <BS.Pagination.Prev disabled/> : <BS.Pagination.Prev onClick={() => setCurrentPage(currentPage - 1)} />}
-          <BS.Pagination.Item  onClick={() => setCurrentPage(1)} active={1 === active}>{1}</BS.Pagination.Item>
-          <BS.Pagination.Ellipsis disabled />
+          { currentPage < 3 ? "" : <BS.Pagination.Item  onClick={() => setCurrentPage(1)} active={1 === active}>{1}</BS.Pagination.Item>}
+          { currentPage < 4 ? "" :<BS.Pagination.Ellipsis disabled />}
           { currentPage > 1 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</BS.Pagination.Item> : "" }
           <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage)} active={currentPage === active}>{currentPage}</BS.Pagination.Item>
           { currentPage < pageAmount ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</BS.Pagination.Item> : "" }
-          <BS.Pagination.Ellipsis disabled />
-          <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount)} active={pageAmount === active}>{pageAmount}</BS.Pagination.Item>
+          { currentPage > pageAmount - 3 ? "" : <BS.Pagination.Ellipsis disabled />}
+          { currentPage > pageAmount - 2 ? "" : <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount)} active={pageAmount === active}>{pageAmount}</BS.Pagination.Item>}
           { currentPage === pageAmount ? <BS.Pagination.Next disabled /> :<BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />}
           </BS.Pagination>
         </BS.Row>
