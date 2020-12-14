@@ -14,6 +14,7 @@ export default function MemberCard(props) {
 
     const member = props.member;
 
+    const [ avatar, setAvatar ] = useState('')
     const [ displayName, setDisplayName ] = useState("");
     const [ birthday, setBirthday ] = useState("");
     const [ pronouns, setPronouns ] = useState("");
@@ -46,6 +47,10 @@ export default function MemberCard(props) {
         } else { setBirthday('');
     }
 
+    if (member.avatar_url) {
+        setAvatar(member.avatar_url.replace('?width=256&height=256&format=jpeg', ''))
+    } else setAvatar('')
+
         if (member.pronouns) {
             setPronouns(member.pronouns)
         } else setPronouns('')
@@ -66,7 +71,7 @@ export default function MemberCard(props) {
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${member.avatar_url}`} style={{width: 500, height: 'auto'}} thumbnail />
+                    <BS.Image src={`${avatar}`} style={{'max-width': 500, height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 

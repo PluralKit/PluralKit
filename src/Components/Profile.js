@@ -18,6 +18,7 @@ export default function Profile () {
     const [ tag, setTag ] = useState("");
     const [ timezone, setTimezone ] = useState("");
     const [ desc, setDesc ] = useState("");
+    const [ avatar, setAvatar ] = useState('');
 
     const [ isLoading, setIsLoading ] = useState(true);
     const [ isError, setIsError ] = useState(false);
@@ -44,6 +45,10 @@ export default function Profile () {
             setName(system.name);
         } else setName('');
 
+        if (system.avatar_url) {
+            setAvatar(system.avatar_url.replace('?width=256&height=256&format=jpeg', ''))
+        } else setAvatar('')
+
         if (system.tag) {
             setTag(system.tag);
         } else setTag('');
@@ -66,7 +71,7 @@ export default function Profile () {
            { system.avatar_url ? <Popup trigger={<BS.Image src={`${system.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
          {close => (
              <div className="text-center w-100 m-0" onClick={() => close()}>
-             <BS.Image src={`${system.avatar_url}`} style={{width: 500, height: 'auto'}} thumbnail />
+             <BS.Image src={`${avatar}`} style={{'max-width': 500, height: 'auto'}} thumbnail />
              </div>
          )}
      </Popup> : 

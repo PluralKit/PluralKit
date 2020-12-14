@@ -59,7 +59,7 @@ export default function System(props) {
     } else setTimezone('');
 
     if (user.avatar_url) {
-        setAvatar(user.avatar_url)
+        setAvatar(user.avatar_url.replace('?width=256&height=256&format=jpeg', ''))
     } else setAvatar('')
 
     if (user.description) {
@@ -118,7 +118,7 @@ const submitPrivacy = data => {
                   { user.avatar_url ? <Popup trigger={<BS.Image src={`${user.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${user.avatar_url}`} style={{width: 500, height: 'auto'}} thumbnail />
+                    <BS.Image src={`${avatar}`} style={{'max-width': 500, height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 
