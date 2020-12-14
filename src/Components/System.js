@@ -5,9 +5,11 @@ import autosize from 'autosize';
 import moment from 'moment';
 import 'moment-timezone';
 import Popup from 'reactjs-popup';
+import Twemoji from 'react-twemoji';
 
 import API_URL from "../Constants/constants.js";
 
+import history from "../History.js";
 import defaultAvatar from '../default_discord_avatar.png'
 import { FaAddressCard } from "react-icons/fa";
 
@@ -26,6 +28,7 @@ export default function System(props) {
 
     const [ user, setUser ] = useState(JSON.parse(localStorage.getItem('user')));
 
+    const [ name, setName ] = useState("");
     const [ tag, setTag ] = useState("");
     const [ timezone, setTimezone ] = useState("");
     const [ avatar, setAvatar ] = useState("");
@@ -43,6 +46,10 @@ export default function System(props) {
     useEffect(() => {
     const { toHTML } = require('../Functions/discord-parser.js');
     
+    if (user.name) {
+        setName(user.name);
+    } else setName('');
+
     if (user.tag) {
         setTag(user.tag);
     } else setTag('');
@@ -60,7 +67,7 @@ export default function System(props) {
         setEditDesc(user.description);
     } else { setDesc("(no description)");
     setEditDesc("");
-}}, [user.description, user.tag, user.avatar_url, user.tz]);
+}}, [user.description, user.tag, user.avatar_url, user.tz, user.name]);
 
 useEffect(() => {
     autosize(document.querySelector('textarea'));
@@ -107,8 +114,8 @@ const submitPrivacy = data => {
         return (
            <BS.Card className="mb-3 mt-3 w-100" >
                <BS.Card.Header className="d-flex align-items-center justify-content-between">
-                  <BS.Card.Title className="float-left"><FaAddressCard className="mr-3" /> {user.name}</BS.Card.Title> 
-                  { user.avatar_url ? <Popup trigger={<BS.Image src={`${user.avatar_url}`} style={{width: 50, height: 50}} tabindex="0" className="float-right" roundedCircle />} className="avatar" modal>
+                  <BS.Card.Title className="float-left"><FaAddressCard className="mr-4 float-left" /> {name} ({user.id})</BS.Card.Title> 
+                  { user.avatar_url ? <Popup trigger={<BS.Image src={`${user.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
                     <BS.Image src={`${user.avatar_url}`} style={{width: 500, height: 'auto'}} thumbnail />
@@ -126,7 +133,7 @@ const submitPrivacy = data => {
                 <BS.Form.Row>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-               <BS.Form.Control name="name" ref={registerEdit}  defaultValue={user.name}/>
+               <BS.Form.Control name="name" ref={registerEdit}  defaultValue={name}/>
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Tag:</BS.Form.Label>
@@ -200,8 +207,8 @@ const submitPrivacy = data => {
             <BS.Button variant="light" onClick={() => setPrivacyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setPrivacyMode(true)}>Edit</BS.Button>
             <hr/></> : "" }
                 <p><b>Description:</b></p>
-                <p dangerouslySetInnerHTML={{__html: desc}}></p>
-                { privacyMode ? "" : privacyView ? "" : <BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button>}</> }
+                { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
+                { privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button><BS.Button variant="primary" className="float-right" onClick={() => history.push(`/pk-webs/profile/${user.id}`)}>Profile</BS.Button></>}</> }
                 </BS.Card.Body>
            </BS.Card>
         )

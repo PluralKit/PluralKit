@@ -129,6 +129,13 @@ body {
   transition: background-color 0.3s ease;
 }
 
+.dark-mode .alert-primary {
+  color: $white;
+  background-color: $primary;
+  border: $gray-900;
+  transition: background-color 0.3s ease;
+}
+
 .dark-mode .alert-light {
   color: $white;
   background-color: $gray-900;
@@ -249,9 +256,13 @@ blockquote {
 }
 
 .d-emoji {
-  height: 25px;
+  height: 22px;
   width: auto;
-  image-rendering: crisp-edges;
+}
+
+.twemoji {
+  height: 22px;
+  width: auto;
 }
 
 

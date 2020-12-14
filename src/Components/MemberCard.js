@@ -6,6 +6,7 @@ import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import autosize from 'autosize';
 import LazyLoad from 'react-lazyload';
+import Twemoji from 'react-twemoji';
 
 import API_URL from "../Constants/constants.js";
 
@@ -197,15 +198,15 @@ export default function MemberCard(props) {
        memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> :
        <LazyLoad offset={100}>
            <BS.Card.Header className="d-flex align-items-center justify-content-between">
-        <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>
-            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabindex="0" className="float-right" roundedCircle />} className="avatar" modal>
+        <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>
+            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
                     <BS.Image src={`${member.avatar_url}`} style={{width: 500, height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 
-        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabindex="0" className="float-right" roundedCircle />}
+        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
         </BS.Card.Header>
         <BS.Accordion.Collapse eventKey={member.id}>
             <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
@@ -365,7 +366,7 @@ export default function MemberCard(props) {
          <BS.Button variant="light" onClick={() => setProxyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setProxyMode(true)}>Edit</BS.Button>
             <hr/></> : "" }
             <p><b>Description:</b></p>
-            <p dangerouslySetInnerHTML={{__html: desc}}></p>
+            { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
                 { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button>}
             </> } </BS.Card.Body>
         </BS.Accordion.Collapse>
