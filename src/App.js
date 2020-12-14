@@ -167,7 +167,7 @@ export default function App() {
             <p>Change how you view and use pk-webs here, changes will be saved after refreshing. You will have to apply them again in different browsers and on different devices.</p>
             <hr/>
             <BS.Row>
-            <BS.Col xs={12} lg={4} className="mx-lg-2 d-flex align-items-center row">
+            <BS.Col xs={12} lg={4} className="mx-1 mb-2 d-flex align-items-center row">
             { localStorage.getItem('opendyslexic') ? 
                 <Toggle className="mr-2"
                 defaultChecked={true}
@@ -183,7 +183,7 @@ export default function App() {
                     forceUpdate()}} />  }
                 Use opendyslexic?
             </BS.Col>
-            <BS.Col xs={12} lg={4} className="mx-lg-2 d-flex align-items-center row">
+            <BS.Col xs={12} lg={4} className="mx-1 mb-2 d-flex align-items-center row">
             { localStorage.getItem('twemoji') ? 
                 <Toggle className="mr-2"
                 defaultChecked={true}
