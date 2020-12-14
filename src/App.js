@@ -15,7 +15,7 @@ import Dash from './Components/Dash.js'
 import history from "./History.js";
 import Loading from "./Components/Loading.js";
 import Footer from './Components/Footer.js'
-import Profile from './Components/Profile.js'
+import Public from './Components/Public.js'
 
 import API_URL from "./Constants/constants.js";
 
@@ -105,13 +105,13 @@ export default function App() {
                 pk-webs
             </BS.Navbar.Brand>
             <BS.NavDropdown id="menu" className="mr-auto" title="Menu">
-            { localStorage.getItem('token') ? <BS.NavDropdown.Item onClick={() => logOut()}>Log out</BS.NavDropdown.Item> : "" }
             <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/dash')} >Dash</BS.NavDropdown.Item>
             <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/settings')} >Settings</BS.NavDropdown.Item>
             <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/profile')}>Public profile</BS.NavDropdown.Item>
+            { localStorage.getItem('token') ? <><hr className="my-1"/><BS.NavDropdown.Item onClick={() => logOut()}>Log out</BS.NavDropdown.Item></> : "" }
 
             </BS.NavDropdown>
-            <BS.Nav className="mr-lg-2 d-flex align-items-center row">
+            <BS.Nav className="mr-2 d-flex align-items-center row">
             <Toggle
                 defaultChecked={true}
                 icons={false}
@@ -121,7 +121,7 @@ export default function App() {
         </BS.Navbar>
           <BS.Container>
             <Switch>
-            <Route exact path="/pk-webs/dash" >
+            <Route path="/pk-webs/dash" >
               { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash />
               }
               </Route>
@@ -138,7 +138,7 @@ export default function App() {
               <BS.Button type="primary" onClick={() => history.push('/pk-webs/dash')}>Continue to dash</BS.Button></> :
             <BS.Form onSubmit={handleSubmit(onSubmit)}>
             <BS.Form.Row>
-                <BS.Col xs={12} lg={10}>
+                <BS.Col  className="mb-1" xs={12} lg={10}>
                     <BS.Form.Label>Enter your token here. You can get your token by using <b>"pk;token"</b>.</BS.Form.Label>
                 </BS.Col>
             </BS.Form.Row>
@@ -155,10 +155,10 @@ export default function App() {
           </BS.Card>
           }
               </Route>
-              <Route exact path="/pk-webs/profile">
-                <Profile />
+              <Route path="/pk-webs/profile">
+                <Public />
               </Route>
-              <Route exact path="/pk-webs/settings">
+              <Route path="/pk-webs/settings">
               <BS.Card>
             <BS.Card.Header className="d-flex align-items-center justify-content-between">
             <BS.Card.Title><FaCog className="mr-3" />Settings</BS.Card.Title>
@@ -182,6 +182,22 @@ export default function App() {
                     localStorage.setItem('opendyslexic', 'true')
                     forceUpdate()}} />  }
                 Use opendyslexic?
+            </BS.Col>
+            <BS.Col xs={12} lg={4} className="mx-lg-2 d-flex align-items-center row">
+            { localStorage.getItem('twemoji') ? 
+                <Toggle className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() =>  {
+                    localStorage.removeItem('twemoji');
+                    forceUpdate()}} /> :
+                <Toggle className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                    localStorage.setItem('twemoji', 'true')
+                    forceUpdate()}} />  }
+                Use twemoji?
             </BS.Col>
             </BS.Row>
             </BS.Card.Body>
