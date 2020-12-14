@@ -304,6 +304,13 @@ export default function MemberCard(props) {
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
+                    <BS.Form.Label>Avatar:</BS.Form.Label>
+                        <BS.Form.Control name="avatar_privacy" as="select" ref={registerPrivacy}>
+                            <option>public</option>
+                            <option>private</option>
+                        </BS.Form.Control>
+                    </BS.Col>
+                    <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Birthday:</BS.Form.Label>
                         <BS.Form.Control name="birthday_privacy" as="select" ref={registerPrivacy}>
                             <option>public</option>
@@ -333,6 +340,7 @@ export default function MemberCard(props) {
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Visibility:</b> {member.visibility}</BS.Col>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Name: </b>{member.name_privacy}</BS.Col>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Description:</b> {member.description_privacy}</BS.Col> 
+                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Avatar:</b> {member.avatar_privacy}</BS.Col>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Birthday:</b> {member.birthday_privacy}</BS.Col>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> {member.pronoun_privacy}</BS.Col>
                 <BS.Col className="mb-3" xs={12} lg={3}><b>Meta:</b> {member.metadata_privacy}</BS.Col>
