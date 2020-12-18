@@ -28,11 +28,11 @@ module.exports = {
     prevLinks: true,
     nav: [
       { text: "Support server", link: "https://discord.gg/PczBt78" },
-      { text: "Invite bot", link: "https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904" }
+      { text: "Invite bot", link: "https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904" }
     ],
     sidebar: [
       "/",
-      ["https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904", "Add to your server"],
+      ["https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904", "Add to your server"],
       {
         title: "Documentation",
         collapsable: false,

@@ -48,7 +48,7 @@ namespace PluralKit.Bot {
                 .Grant(Permissions.ManageWebhooks)
                 .Grant(Permissions.ReadMessageHistory)
                 .Grant(Permissions.SendMessages);
-            var invite = $"https://discord.com/oauth2/authorize?client_id={clientId}&scope=bot&permissions={(long)permissions}";
+            var invite = $"https://discord.com/oauth2/authorize?client_id={clientId}&scope=bot%20applications.commands&permissions={(long)permissions}";
             await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }
         
