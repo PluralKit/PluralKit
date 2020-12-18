@@ -43,5 +43,11 @@ namespace PluralKit.API
             if (!user.Identity.IsAuthenticated) return LookupContext.API;
             return member.System == user.CurrentSystem() ? LookupContext.ByOwner : LookupContext.API;
         }
+        
+        public static LookupContext ContextFor(this ClaimsPrincipal user, PKGroup group)
+        {
+            if (!user.Identity.IsAuthenticated) return LookupContext.API;
+            return group.System == user.CurrentSystem() ? LookupContext.ByOwner : LookupContext.API;
+        }
     }
 }

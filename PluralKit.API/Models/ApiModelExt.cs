@@ -73,6 +73,29 @@ namespace PluralKit.API.Models
             };
         }
 
+        public static ApiGroup ToApiGroup(this PKGroup g, LookupContext ctx)
+        {
+            return new ApiGroup
+            {
+                GroupId = g.Uuid,
+                ShortId = g.Hid,
+                Name = g.Name,
+                DisplayName = g.DisplayName,
+                Description = g.DescriptionFor(ctx),
+                Icon = g.IconFor(ctx),
+                Created = g.Created,
+                Privacy = ctx == LookupContext.ByOwner
+                    ? new ApiGroupPrivacy
+                    {
+                        Description = g.DescriptionPrivacy,
+                        Icon = g.IconPrivacy,
+                        List = g.ListPrivacy,
+                        Visibility = g.Visibility
+                    }
+                    : null
+            };
+        }
+
         public static SystemPatch ToSystemPatch(this ApiSystemPatch patch)
         {
             return new SystemPatch
@@ -109,6 +132,21 @@ namespace PluralKit.API.Models
                 BirthdayPrivacy = patch.Privacy.Then(p => p.Birthday),
                 PronounPrivacy = patch.Privacy.Then(p => p.Pronouns),
                 MetadataPrivacy = patch.Privacy.Then(p => p.Metadata)
+            };
+        }
+
+        public static GroupPatch ToGroupPatch(this ApiGroupPatch patch)
+        {
+            return new GroupPatch
+            {
+                Name = patch.Name,
+                DisplayName = patch.DisplayName,
+                Description = patch.Description,
+                Icon = patch.Icon,
+                Visibility = patch.Privacy.Then(p => p.Visibility),
+                DescriptionPrivacy = patch.Privacy.Then(p => p.Description),
+                IconPrivacy = patch.Privacy.Then(p => p.Icon),
+                ListPrivacy = patch.Privacy.Then(p => p.List)
             };
         }
     }

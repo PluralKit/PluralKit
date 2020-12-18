@@ -44,13 +44,16 @@ namespace PluralKit.API
                 options.AddPolicy(AuthPolicies.EditMember, p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
                 options.AddPolicy(AuthPolicies.DeleteMember, p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
                 
-                options.AddPolicy(AuthPolicies.ViewMembers, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.MemberListPrivacy)));
-                options.AddPolicy(AuthPolicies.ViewGroups, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.GroupListPrivacy)));
+                options.AddPolicy(AuthPolicies.ViewSystemMembers, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.MemberListPrivacy)));
+                options.AddPolicy(AuthPolicies.ViewSystemGroups, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.GroupListPrivacy)));
                 options.AddPolicy(AuthPolicies.ViewFront, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontPrivacy)));
                 options.AddPolicy(AuthPolicies.ViewFrontHistory, p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontHistoryPrivacy)));
             });
             services.AddSingleton<IAuthenticationHandler, SystemTokenAuthenticationHandler>();
             services.AddSingleton<IAuthorizationHandler, MemberOwnerHandler>();
+            services.AddSingleton<IAuthorizationHandler, MemberPrivacyHandler>();
+            services.AddSingleton<IAuthorizationHandler, GroupOwnerHandler>();
+            services.AddSingleton<IAuthorizationHandler, GroupPrivacyHandler>();
             services.AddSingleton<IAuthorizationHandler, SystemOwnerHandler>();
             services.AddSingleton<IAuthorizationHandler, SystemPrivacyHandler>();
             

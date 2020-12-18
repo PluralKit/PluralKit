@@ -16,9 +16,13 @@ namespace PluralKit.API.Models
         GroupNotFound,
         
         MemberNameRequired,
+        GroupNameRequired,
+        SwitchMembersRequired,
         InvalidSystemData,
         InvalidMemberData,
+        InvalidGroupData,
         
         MemberLimitReached,
+        GroupLimitReached,
     }
 }

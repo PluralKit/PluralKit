@@ -48,6 +48,12 @@ namespace PluralKit.API.v2
         protected Task Authorize(PKMember subject, string policy, FormattableString msg) =>
             Authorize((object) subject, policy, msg);
 
+        protected Task Authorize(PKGroup subject, string policy, FormattableString msg) =>
+            Authorize((object) subject, policy, msg);
+
+        protected Task Authorize(PKSwitch subject, string policy, FormattableString msg) =>
+            Authorize((object) subject, policy, msg);
+
         private async Task Authorize(object subject, string policy, FormattableString msg)
         {
             var res = await Authz.AuthorizeAsync(User, subject, policy);

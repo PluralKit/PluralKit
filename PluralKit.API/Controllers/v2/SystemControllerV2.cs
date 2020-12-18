@@ -46,7 +46,7 @@ namespace PluralKit.API.v2
         public async Task<IActionResult> GetSystemMembers(string id)
         {
             var system = await ResolveSystem(id);
-            await Authorize(system, AuthPolicies.ViewMembers, $"Not allowed to view system members");
+            await Authorize(system, AuthPolicies.ViewSystemMembers, $"Not allowed to view system members");
 
             var ctx = User.ContextFor(system);
             await using var conn = await Database.Obtain();

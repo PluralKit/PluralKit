@@ -60,5 +60,16 @@ namespace PluralKit.Core.Validation
                 throw new ModelValidationException(nameof(patch.Color),
                     "Member color is not a valid 6-digit hexadecimal color (eg. 'ff0000')");
         }
+
+        public static void ValidateGroup(GroupPatch patch)
+        {
+            if (patch.Name.IsPresent && string.IsNullOrWhiteSpace(patch.Name.Value))
+                throw new ModelValidationException(nameof(patch.Name), "Group name may not be empty or null");
+            
+            if (patch.Name.IsPresent && patch.Name.Value.IsLongerThan(Limits.MaxGroupNameLength))
+                throw new ModelValidationException(nameof(patch.Name),
+                    $"Group name is too long ({patch.Name.Value?.Length} > {Limits.MaxGroupNameLength} chars)");
+            
+        }
     }
 }

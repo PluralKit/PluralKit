@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -67,6 +68,9 @@ namespace PluralKit.Core
                 "select * from switches where system = @System order by timestamp desc",
                 new {System = system});
         }
+
+        public Task<PKSwitch> GetSwitchByUuid(IPKConnection conn, Guid uuid) => 
+            conn.QuerySingleOrDefaultAsync<PKSwitch>("select * from switches where uuid = @Uuid", new { Uuid = uuid });
 
         public async Task<int> GetSwitchCount(IPKConnection conn, SystemId system)
         {
