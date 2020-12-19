@@ -1,13 +1,7 @@
-using System;
+﻿using System;
 using System.Globalization;
 
-using App.Metrics;
-
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
-
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 using NodaTime;
 
@@ -19,66 +13,6 @@ using Serilog.Sinks.SystemConsole.Themes;
 
 namespace PluralKit.Core
 {
-    public class DataStoreModule: Module
-    {
-        protected override void Load(ContainerBuilder builder)
-        {
-            builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
-            builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
-            builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
-            
-            builder.Populate(new ServiceCollection().AddMemoryCache());
-        }
-    }
-
-    public class ConfigModule<T>: Module where T: new()
-    {
-        private readonly string _submodule;
-
-        public ConfigModule(string submodule = null)
-        {
-            _submodule = submodule;
-        }
-
-        protected override void Load(ContainerBuilder builder)
-        {
-            // We're assuming IConfiguration is already available somehow - it comes from various places (auto-injected in ASP, etc)
-
-            // Register the CoreConfig and where to find it
-            builder.Register(c => c.Resolve<IConfiguration>().GetSection("PluralKit").Get<CoreConfig>() ?? new CoreConfig()).SingleInstance();
-
-            // Register the submodule config (BotConfig, etc) if specified
-            if (_submodule != null)
-                builder.Register(c => c.Resolve<IConfiguration>().GetSection("PluralKit").GetSection(_submodule).Get<T>() ?? new T()).SingleInstance();
-        }
-    }
-
-    public class MetricsModule: Module
-    {
-        private readonly string _onlyContext;
-
-        public MetricsModule(string onlyContext = null)
-        {
-            _onlyContext = onlyContext;
-        }
-
-        protected override void Load(ContainerBuilder builder)
-        {
-            builder.Register(c => InitMetrics(c.Resolve<CoreConfig>()))
-                .AsSelf().As<IMetrics>().SingleInstance();
-        }
-
-        private IMetricsRoot InitMetrics(CoreConfig config)
-        {
-            var builder = AppMetrics.CreateDefaultBuilder();
-            if (config.InfluxUrl != null && config.InfluxDb != null)
-                builder.Report.ToInfluxDb(config.InfluxUrl, config.InfluxDb);
-            if (_onlyContext != null)
-                builder.Filter.ByIncludingOnlyContext(_onlyContext);
-            return builder.Build();
-        }
-    }
-
     public class LoggingModule: Module
     {
         private readonly string _component;
@@ -176,7 +110,7 @@ namespace PluralKit.Core
             return Log.Logger = logCfg.CreateLogger();
         }
     }
-
+    
     // Serilog why is this necessary for such a simple thing >.>
     public class UTCTimestampFormatProvider: IFormatProvider
     {
