@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -8,6 +9,8 @@ using App.Metrics;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
+
+using Humanizer;
 
 using PluralKit.Core;
 
@@ -95,14 +98,64 @@ namespace PluralKit.Bot
         private async Task ExecuteProxy(DiscordClient shard, IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
                                         ProxyMatch match, bool allowEveryone, bool allowEmbeds)
         {
+            // Create reply embed
+            var embeds = new List<DiscordEmbed>();
+            if (trigger.Reference?.Channel?.Id == trigger.ChannelId)
+            {
+                var embed = await CreateReplyEmbed(trigger);
+                if (embed != null)
+                    embeds.Add(embed);
+            }
+            
             // Send the webhook
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
             var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, FixSingleCharacterName(match.Member.ProxyName(ctx)),
                 match.Member.ProxyAvatar(ctx),
-                content, trigger.Attachments, allowEveryone);
+                content, trigger.Attachments, embeds, allowEveryone);
 
             await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
+        }
+
+        private async Task<DiscordEmbed> CreateReplyEmbed(DiscordMessage trigger)
+        {
+            DiscordMessage message;
+            try
+            {
+                message = await trigger.Channel.GetMessageAsync(trigger.Reference.Message.Id);
+            }
+            catch (NotFoundException)
+            {
+                _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but it was not found",
+                    trigger.Reference.Channel.Id, trigger.Reference.Message.Id);
+                return null;
+            }
+            catch (UnauthorizedException)
+            {
+                _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but bot was not allowed to",
+                    trigger.Reference.Channel.Id, trigger.Reference.Message.Id);
+                return null;
+            }
+
+            var content = new StringBuilder();
+            content.Append("[Reply to ");
+            
+            if (message.WebhookMessage)
+                content.Append($"**{message.Author.Username.EscapeMarkdown()}**");
+            else
+                content.Append(message.Author.Mention);
+
+            content.Append($"]({message.JumpLink}): ");
+            
+            if (message.Attachments.Count > 0)
+                content.Append($"{Emojis.Image} ");
+
+            if (!string.IsNullOrWhiteSpace(message.Content))
+                content.Append($"{message.Content.Truncate(100)}");
+            
+            return new DiscordEmbedBuilder()
+                .WithDescription(content.ToString())
+                .Build();
         }
 
         private async Task HandleProxyExecutedActions(DiscordClient shard, IPKConnection conn, MessageContext ctx,
