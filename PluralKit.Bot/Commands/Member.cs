@@ -91,7 +91,9 @@ namespace PluralKit.Bot
 
             var eb = new DiscordEmbedBuilder()
                 .WithColor(DiscordColor.Red)
-                .WithDescription($"[*{scream}*](https://onomancer.sibr.dev/reflect?name={encoded})");
+                .WithTitle(name)
+                .WithUrl($"https://onomancer.sibr.dev/reflect?name={encoded}")
+                .WithDescription($"*{scream}*");
             await ctx.Reply(embed: eb.Build());
         }
     }
