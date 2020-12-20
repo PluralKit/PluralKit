@@ -102,7 +102,8 @@ namespace PluralKit.Bot
             var embeds = new List<DiscordEmbed>();
             if (trigger.Reference?.Channel?.Id == trigger.ChannelId)
             {
-                var embed = await CreateReplyEmbed(trigger);
+                var repliedTo = await FetchReplyOriginalMessage(trigger.Reference);
+                var embed = await CreateReplyEmbed(repliedTo);
                 if (embed != null)
                     embeds.Add(embed);
             }
@@ -117,43 +118,48 @@ namespace PluralKit.Bot
             await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
         }
 
-        private async Task<DiscordEmbed> CreateReplyEmbed(DiscordMessage trigger)
+        private async Task<DiscordMessage> FetchReplyOriginalMessage(DiscordMessageReference reference)
         {
-            DiscordMessage message;
             try
             {
-                message = await trigger.Channel.GetMessageAsync(trigger.Reference.Message.Id);
+                return await reference.Channel.GetMessageAsync(reference.Message.Id);
             }
             catch (NotFoundException)
             {
                 _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but it was not found",
-                    trigger.Reference.Channel.Id, trigger.Reference.Message.Id);
-                return null;
+                    reference.Channel.Id, reference.Message.Id);
             }
             catch (UnauthorizedException)
             {
                 _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but bot was not allowed to",
-                    trigger.Reference.Channel.Id, trigger.Reference.Message.Id);
-                return null;
+                    reference.Channel.Id, reference.Message.Id);
             }
 
+            return null;
+        }
+
+        private async Task<DiscordEmbed> CreateReplyEmbed(DiscordMessage original)
+        {
             var content = new StringBuilder();
-            content.Append($"[Reply to]({message.JumpLink}) ");
-            
-            if (message.WebhookMessage)
-                content.Append($"**[{message.Author.Username.EscapeMarkdown()}]({message.JumpLink})**");
+
+            var hasContent = !string.IsNullOrWhiteSpace(original.Content);
+            if (hasContent)
+            {
+                content.Append($"**[Reply to:]({original.JumpLink})** ");
+                content.Append($"{original.Content.Truncate(100)}");
+                if (original.Attachments.Count > 0)
+                    content.Append($" {Emojis.Paperclip}");
+            }
             else
-                content.Append(message.Author.Mention);
-
-            content.Append(": ");
+            {
+                content.Append($"*[(click to see attachment)]({original.JumpLink})*");
+            }
             
-            if (message.Attachments.Count > 0)
-                content.Append($"{Emojis.Image} ");
-
-            if (!string.IsNullOrWhiteSpace(message.Content))
-                content.Append($"{message.Content.Truncate(100)}");
+            var username = (original.Author as DiscordMember)?.Nickname ?? original.Author.Username;
             
             return new DiscordEmbedBuilder()
+                // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
+                .WithAuthor($"{username}\u2004\u21a9\ufe0f", iconUrl: original.Author.AvatarUrl)
                 .WithDescription(content.ToString())
                 .Build();
         }
