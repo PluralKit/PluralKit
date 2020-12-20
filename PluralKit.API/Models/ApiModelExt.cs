@@ -149,5 +149,14 @@ namespace PluralKit.API.Models
                 ListPrivacy = patch.Privacy.Then(p => p.List)
             };
         }
+
+        public static SwitchPatch ToSwitchPatch(this ApiSwitchPatch patch)
+        {
+            return new SwitchPatch
+            {
+                Timestamp = patch.Timestamp,
+                Note = patch.Note
+            };
+        }
     }
 }

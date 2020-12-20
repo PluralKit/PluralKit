@@ -13,7 +13,7 @@ namespace PluralKit.Core
 {
     public partial class ModelRepository
     {
-        public async Task AddSwitch(IPKConnection conn, SystemId system, IReadOnlyCollection<MemberId> members)
+        public async Task<PKSwitch> AddSwitch(IPKConnection conn, SystemId system, IReadOnlyCollection<MemberId> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
             await using var tx = await conn.BeginTransactionAsync();
@@ -39,6 +39,7 @@ namespace PluralKit.Core
             await tx.CommitAsync();
 
             _logger.Information("Created {SwitchId} in {SystemId}: {Members}", sw.Id, system, members);
+            return sw;
         }
 
         public async Task MoveSwitch(IPKConnection conn, SwitchId id, Instant time)
@@ -53,6 +54,15 @@ namespace PluralKit.Core
         {
             await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = id});
             _logger.Information("Deleted {Switch}", id);
+        }
+
+        public Task<PKSwitch> UpdateSwitch(IPKConnection conn, SwitchId id, SwitchPatch patch)
+        {
+            _logger.Information("Updated {SwitchId}: {@SwitchPatch}", id, patch);
+            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("switches", "id = @id"))
+                .WithConstant("id", id)
+                .Build("returning *");
+            return conn.QueryFirstAsync<PKSwitch>(query, pms);
         }
 
         public async Task DeleteAllSwitches(IPKConnection conn, SystemId system)

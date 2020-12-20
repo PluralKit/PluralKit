@@ -12,6 +12,6 @@ namespace PluralKit.API.Models
     {
         public Partial<Instant> Timestamp { get; set; }
         public Partial<string?> Note { get; set; }
-        public Partial<IEnumerable<Guid>> Members { get; set; } = null!;
+        public Partial<List<Guid>> Members { get; set; } = null!;
     }
 }

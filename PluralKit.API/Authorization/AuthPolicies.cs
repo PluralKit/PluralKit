@@ -14,6 +14,7 @@
         public const string EditGroup = nameof(EditGroup);
         public const string DeleteGroup = nameof(DeleteGroup);
         
+        public const string ViewSwitch = nameof(ViewSwitch);
         public const string EditSwitch = nameof(EditSwitch);
         public const string DeleteSwitch = nameof(DeleteSwitch);
 

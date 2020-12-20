@@ -22,6 +22,10 @@ namespace PluralKit.Core.Validation
                 throw new ModelValidationException(nameof(patch.AvatarUrl),
                     $"System icon URL is too long ({patch.AvatarUrl.Value?.Length} > {Limits.MaxUriLength} chars)");
             
+            if (patch.AvatarUrl.IsPresent && patch.AvatarUrl.Value != null &&
+                !Uri.TryCreate(patch.AvatarUrl.Value, UriKind.Absolute, out _))
+                throw new ModelValidationException(nameof(patch.AvatarUrl), "System icon URL is not a valid URL");
+
             if (patch.Tag.IsPresent && patch.Tag.Value.IsLongerThan(Limits.MaxSystemTagLength))
                 throw new ModelValidationException(nameof(patch.AvatarUrl),
                     $"System tag is too long ({patch.Tag.Value?.Length} > {Limits.MaxSystemTagLength} chars)");
@@ -69,7 +73,25 @@ namespace PluralKit.Core.Validation
             if (patch.Name.IsPresent && patch.Name.Value.IsLongerThan(Limits.MaxGroupNameLength))
                 throw new ModelValidationException(nameof(patch.Name),
                     $"Group name is too long ({patch.Name.Value?.Length} > {Limits.MaxGroupNameLength} chars)");
+
+            if (patch.DisplayName.IsPresent && patch.DisplayName.Value.IsLongerThan(Limits.MaxGroupNameLength))
+                throw new ModelValidationException(nameof(patch.DisplayName),
+                    $"Group display name is too long ({patch.DisplayName.Value?.Length} > {Limits.MaxGroupNameLength} chars)");
+
+            if (patch.Description.IsPresent && patch.Description.Value.IsLongerThan(Limits.MaxDescriptionLength))
+                throw new ModelValidationException(nameof(patch.Description),
+                    $"Group description is too long ({patch.Description.Value?.Length} > {Limits.MaxDescriptionLength} chars)");
             
+            if (patch.Icon.IsPresent && patch.Icon.Value != null &&
+                !Uri.TryCreate(patch.Icon.Value, UriKind.Absolute, out _))
+                throw new ModelValidationException(nameof(patch.Icon), "Group icon URL is not a valid URL");
+        }
+
+        public static void ValidateSwitch(SwitchPatch patch)
+        {
+            if (patch.Note.IsPresent && patch.Note.Value.IsLongerThan(Limits.MaxSwitchNoteLength))
+                throw new ModelValidationException(nameof(patch.Note),
+                    $"Switch note is too long ({patch.Note.Value?.Length} > {Limits.MaxSwitchNoteLength} chars)");
         }
     }
 }

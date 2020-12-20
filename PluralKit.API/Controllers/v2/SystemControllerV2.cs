@@ -66,10 +66,14 @@ namespace PluralKit.API.v2
 
             await using var conn = await Database.Obtain();
             var ctx = User.ContextFor(system);
+
             var lastSwitch = await Repo.GetLatestSwitch(conn, system.Id);
+            if (lastSwitch == null)
+                return Ok(new ApiSwitchList { Switches = new ApiSwitch[0], Members = new ApiMember[0]});
             
             var memberIds = new List<Guid>();
             var membersDict = new Dictionary<Guid, ApiMember>();
+            
             await foreach (var member in Repo.GetSwitchMembers(conn, lastSwitch.Id))
             {
                 memberIds.Add(member.Uuid);

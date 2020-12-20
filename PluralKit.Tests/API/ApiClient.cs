@@ -32,7 +32,7 @@ namespace PluralKit.Tests.API
 
         public async Task<T> Send<T>(HttpMethod method, string url, string? token = null, object? body = null)
         {
-            var resp = await SendRaw(method, url, token);
+            var resp = await SendRaw(method, url, token, body);
             return await Parse<T>(resp);
         }
 

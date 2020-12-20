@@ -17,6 +17,9 @@ using Microsoft.OpenApi.Models;
 
 using Newtonsoft.Json.Serialization;
 
+using NodaTime;
+using NodaTime.Serialization.JsonNet;
+
 using PluralKit.API.Middleware;
 using PluralKit.Core;
 
@@ -69,6 +72,7 @@ namespace PluralKit.API
                     {
                         NamingStrategy = new SnakeCaseNamingStrategy()
                     };
+                    opts.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
                 });
 
             services.AddApiVersioning();

@@ -14,6 +14,7 @@ namespace PluralKit.API.Models
         SystemNotFound,
         MemberNotFound,
         GroupNotFound,
+        SwitchNotFound,
         
         MemberNameRequired,
         GroupNameRequired,
@@ -21,7 +22,13 @@ namespace PluralKit.API.Models
         InvalidSystemData,
         InvalidMemberData,
         InvalidGroupData,
-        
+        InvalidSwitchData,
+
+        SwitchMemberNotInSystem,
+        TooManySwitchMembers,
+        DuplicateSwitchMember,
+        CannotUpdateSwitchMembers,
+
         MemberLimitReached,
         GroupLimitReached,
     }
