@@ -138,14 +138,14 @@ namespace PluralKit.Bot
             }
 
             var content = new StringBuilder();
-            content.Append("[Reply to ");
+            content.Append($"[Reply to]({message.JumpLink}) ");
             
             if (message.WebhookMessage)
-                content.Append($"**{message.Author.Username.EscapeMarkdown()}**");
+                content.Append($"**[{message.Author.Username.EscapeMarkdown()}]({message.JumpLink})**");
             else
                 content.Append(message.Author.Mention);
 
-            content.Append($"]({message.JumpLink}): ");
+            content.Append(": ");
             
             if (message.Attachments.Count > 0)
                 content.Append($"{Emojis.Image} ");
