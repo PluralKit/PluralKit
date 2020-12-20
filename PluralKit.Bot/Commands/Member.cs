@@ -1,8 +1,13 @@
-using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Web;
 
 using Dapper;
+
+using DSharpPlus.Entities;
+
+using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
 
@@ -13,12 +18,14 @@ namespace PluralKit.Bot
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
+        private readonly HttpClient _client;
         
-        public Member(EmbedService embeds, IDatabase db, ModelRepository repo)
+        public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client)
         {
             _embeds = embeds;
             _db = db;
             _repo = repo;
+            _client = client;
         }
 
         public async Task NewMember(Context ctx) {
@@ -65,6 +72,27 @@ namespace PluralKit.Bot
         {
             var system = await _db.Execute(c => _repo.GetSystem(c, target.System));
             await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
+        }
+
+        public async Task Soulscream(Context ctx, PKMember target)
+        {
+            // this is for a meme, please don't take this code seriously. :)
+            
+            var name = target.NameFor(ctx.LookupContextFor(target));
+            var encoded = HttpUtility.UrlEncode(name);
+            
+            var resp = await _client.GetAsync($"https://onomancer.sibr.dev/api/generateStats2?name={encoded}");
+            if (resp.StatusCode != HttpStatusCode.OK)
+                // lol
+                return;
+
+            var data = JObject.Parse(await resp.Content.ReadAsStringAsync());
+            var scream = data["soulscream"]!.Value<string>();
+
+            var eb = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Red)
+                .WithDescription($"[*{scream}*](https://onomancer.sibr.dev/reflect?name={encoded})");
+            await ctx.Reply(embed: eb.Build());
         }
     }
 }
