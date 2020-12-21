@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -9,8 +10,6 @@ using App.Metrics;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
-
-using Humanizer;
 
 using PluralKit.Core;
 
@@ -145,8 +144,19 @@ namespace PluralKit.Bot
             var hasContent = !string.IsNullOrWhiteSpace(original.Content);
             if (hasContent)
             {
+                var msg = original.Content;
+                if (msg.Length > 100)
+                {
+                    msg = original.Content.Substring(0, 100);
+                    var spoilersInOriginalString = Regex.Matches(original.Content, @"\|\|").Count;
+                    var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
+                    if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
+                        msg += "||";
+                    msg += "…";
+                }
+                
                 content.Append($"**[Reply to:]({original.JumpLink})** ");
-                content.Append($"{original.Content.Truncate(100)}");
+                content.Append(msg);
                 if (original.Attachments.Count > 0)
                     content.Append($" {Emojis.Paperclip}");
             }
