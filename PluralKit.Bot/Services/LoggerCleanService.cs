@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using Dapper;
-
 using DSharpPlus;
 using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
+
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -68,8 +67,10 @@ namespace PluralKit.Bot
 
         public ICollection<LoggerBot> Bots => _bots.Values;
 
-        public async ValueTask HandleLoggerBotCleanup(DiscordMessage msg)
+        public async ValueTask HandleLoggerBotCleanup(Message msg)
         {
+            // TODO: fix!!
+            /*
             if (msg.Channel.Type != ChannelType.Text) return;
             if (!msg.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
  
@@ -130,6 +131,7 @@ namespace PluralKit.Bot
                 // The only thing I can think of that'd cause this are the DeleteAsync() calls which 404 when
                 // the message doesn't exist anyway - so should be safe to just ignore it, right?
             }
+        */
         }
 
         private static ulong? ExtractAuttaja(DiscordMessage msg)

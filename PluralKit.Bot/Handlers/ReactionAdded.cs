@@ -5,13 +5,15 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 
+using Myriad.Gateway;
+
 using PluralKit.Core;
 
 using Serilog;
 
 namespace PluralKit.Bot
 {
-    public class ReactionAdded: IEventHandler<MessageReactionAddEventArgs>
+    public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
@@ -28,9 +30,9 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<ReactionAdded>();
         }
 
-        public async Task Handle(DiscordClient shard, MessageReactionAddEventArgs evt)
+        public async Task Handle(Shard shard, MessageReactionAddEvent evt)
         { 
-            await TryHandleProxyMessageReactions(shard, evt);
+            // await TryHandleProxyMessageReactions(shard, evt);
         }
 
         private async ValueTask TryHandleProxyMessageReactions(DiscordClient shard, MessageReactionAddEventArgs evt)

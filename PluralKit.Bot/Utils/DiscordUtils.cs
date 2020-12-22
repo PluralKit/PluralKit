@@ -12,9 +12,13 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 
+using Myriad.Types;
+
 using NodaTime;
 
 using PluralKit.Core;
+
+using Permissions = DSharpPlus.Permissions;
 
 namespace PluralKit.Bot
 {
@@ -190,8 +194,7 @@ namespace PluralKit.Bot
             return false;
         }
 
-        public static IEnumerable<IMention> ParseAllMentions(this string input, bool allowEveryone = false,
-                                                             DiscordGuild guild = null)
+        public static IEnumerable<IMention> ParseAllMentions(this string input, Guild guild, bool allowEveryone = false)
         {
             var mentions = new List<IMention>();
             mentions.AddRange(USER_MENTION.Matches(input)
@@ -203,7 +206,7 @@ namespace PluralKit.Bot
             // Original fix by Gwen
             mentions.AddRange(ROLE_MENTION.Matches(input)
                 .Select(x => ulong.Parse(x.Groups[1].Value))
-                .Where(x => allowEveryone || guild != null && guild.GetRole(x).IsMentionable)
+                .Where(x => allowEveryone || guild != null && (guild.Roles.FirstOrDefault(g => g.Id == x)?.Mentionable ?? false))
                 .Select(x => new RoleMention(x) as IMention));
             if (EVERYONE_HERE_MENTION.IsMatch(input) && allowEveryone)
                 mentions.Add(new EveryoneMention());

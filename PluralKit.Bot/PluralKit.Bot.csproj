@@ -11,6 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Myriad\Myriad.csproj" />
       <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
     </ItemGroup>
 

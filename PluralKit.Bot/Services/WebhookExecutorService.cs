@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using App.Metrics;
 
-using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
-
 using Humanizer;
 
+using Myriad.Cache;
+using Myriad.Rest;
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
+using Myriad.Types;
+
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 using Serilog;
 
@@ -26,64 +27,84 @@ namespace PluralKit.Bot
         // Exceptions for control flow? don't mind if I do
         // TODO: rewrite both of these as a normal exceptional return value (0?) in case of error to be discarded by caller 
     }
+
+    public record ProxyRequest
+    {
+        public ulong GuildId { get; init; }
+        public ulong ChannelId { get; init; }
+        public string Name { get; init; }
+        public string? AvatarUrl { get; init; }
+        public string? Content { get; init; }
+        public Message.Attachment[] Attachments { get; init; }
+        public Embed[] Embeds { get; init; }
+        public bool AllowEveryone { get; init; }
+    }
     
     public class WebhookExecutorService
     {
+        private readonly IDiscordCache _cache;
         private readonly WebhookCacheService _webhookCache;
+        private readonly DiscordApiClient _rest;
         private readonly ILogger _logger;
         private readonly IMetrics _metrics;
         private readonly HttpClient _client;
 
-        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client)
+        public WebhookExecutorService(IMetrics metrics, WebhookCacheService webhookCache, ILogger logger, HttpClient client, IDiscordCache cache, DiscordApiClient rest)
         {
             _metrics = metrics;
             _webhookCache = webhookCache;
             _client = client;
+            _cache = cache;
+            _rest = rest;
             _logger = logger.ForContext<WebhookExecutorService>();
         }
 
-        public async Task<DiscordMessage> ExecuteWebhook(DiscordChannel channel, string name, string avatarUrl, string content, IReadOnlyList<DiscordAttachment> attachments, IReadOnlyList<DiscordEmbed> embeds, bool allowEveryone)
+        public async Task<Message> ExecuteWebhook(ProxyRequest req)
         {
-            _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
+            _logger.Verbose("Invoking webhook in channel {Channel}", req.ChannelId);
             
             // Get a webhook, execute it
-            var webhook = await _webhookCache.GetWebhook(channel);
-            var webhookMessage = await ExecuteWebhookInner(channel, webhook, name, avatarUrl, content, attachments, embeds, allowEveryone);
+            var webhook = await _webhookCache.GetWebhook(req.ChannelId);
+            var webhookMessage = await ExecuteWebhookInner(webhook, req);
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
             _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id,
-                channel.Id);
+                req.ChannelId);
             
             return webhookMessage;
         }
 
-        private async Task<DiscordMessage> ExecuteWebhookInner(
-            DiscordChannel channel, DiscordWebhook webhook, string name, string avatarUrl, string content, 
-            IReadOnlyList<DiscordAttachment> attachments, IReadOnlyList<DiscordEmbed> embeds, bool allowEveryone, bool hasRetried = false)
+        private async Task<Message> ExecuteWebhookInner(Webhook webhook, ProxyRequest req, bool hasRetried = false)
         {
-            content = content.Truncate(2000);
+            var guild = await _cache.GetGuild(req.GuildId)!;
+            var content = req.Content.Truncate(2000);
 
-            var dwb = new DiscordWebhookBuilder();
-            dwb.WithUsername(FixClyde(name).Truncate(80));
-            dwb.WithContent(content);
-            dwb.AddMentions(content.ParseAllMentions(allowEveryone, channel.Guild));
-            if (!string.IsNullOrWhiteSpace(avatarUrl)) 
-                dwb.WithAvatarUrl(avatarUrl);
-            dwb.AddEmbeds(embeds);
+            var webhookReq = new ExecuteWebhookRequest
+            {
+                Username = FixClyde(req.Name).Truncate(80),
+                Content = content,
+                AllowedMentions = null, // todo
+                AvatarUrl = !string.IsNullOrWhiteSpace(req.AvatarUrl) ? req.AvatarUrl : null,
+                Embeds = req.Embeds
+            };
             
-            var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
+            // dwb.AddMentions(content.ParseAllMentions(guild, req.AllowEveryone));
+
+            MultipartFile[] files = null;
+            var attachmentChunks = ChunkAttachmentsOrThrow(req.Attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)
             {
-                _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks", attachments.Count, attachments.Select(a => a.FileSize).Sum() / 1024 / 1024, attachmentChunks.Count);
-                await AddAttachmentsToBuilder(dwb, attachmentChunks[0]);
+                _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks", 
+                    req.Attachments.Length, req.Attachments.Select(a => a.Size).Sum() / 1024 / 1024, attachmentChunks.Count);
+                files = await GetAttachmentFiles(attachmentChunks[0]);
             }
             
-            DiscordMessage webhookMessage;
+            Message webhookMessage;
             using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime)) {
                 try
                 {
-                    webhookMessage = await webhook.ExecuteAsync(dwb);
+                    webhookMessage = await _rest.ExecuteWebhook(webhook.Id, webhook.Token, webhookReq, files);
                 }
                 catch (JsonReaderException)
                 {
@@ -91,17 +112,16 @@ namespace PluralKit.Bot
                     // Nothing we can do about this - happens sometimes under server load, so just drop the message and give up
                     throw new WebhookExecutionErrorOnDiscordsEnd();
                 }
-                catch (NotFoundException e)
+                catch (Myriad.Rest.Exceptions.NotFoundException e)
                 {
-                    var errorText = e.WebResponse?.Response;
-                    if (errorText != null && errorText.Contains("10015") && !hasRetried)
+                    if (e.ErrorCode == 10015 && !hasRetried)
                     {
                         // Error 10015 = "Unknown Webhook" - this likely means the webhook was deleted
                         // but is still in our cache. Invalidate, refresh, try again
                         _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
                         
-                        var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(channel, webhook);
-                        return await ExecuteWebhookInner(channel, newWebhook, name, avatarUrl, content, attachments, embeds, allowEveryone, hasRetried: true);
+                        var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(req.ChannelId, webhook);
+                        return await ExecuteWebhookInner(newWebhook, req, hasRetried: true);
                     }
 
                     throw;
@@ -109,53 +129,50 @@ namespace PluralKit.Bot
             } 
 
             // We don't care about whether the sending succeeds, and we don't want to *wait* for it, so we just fork it off
-            var _ = TrySendRemainingAttachments(webhook, name, avatarUrl, attachmentChunks);
+            var _ = TrySendRemainingAttachments(webhook, req.Name, req.AvatarUrl, attachmentChunks);
 
             return webhookMessage;
         }
 
-        private async Task TrySendRemainingAttachments(DiscordWebhook webhook, string name, string avatarUrl, IReadOnlyList<IReadOnlyCollection<DiscordAttachment>> attachmentChunks)
+        private async Task TrySendRemainingAttachments(Webhook webhook, string name, string avatarUrl, IReadOnlyList<IReadOnlyCollection<Message.Attachment>> attachmentChunks)
         {
             if (attachmentChunks.Count <= 1) return;
 
             for (var i = 1; i < attachmentChunks.Count; i++)
             {
-                var dwb = new DiscordWebhookBuilder();
-                if (avatarUrl != null) dwb.WithAvatarUrl(avatarUrl);
-                dwb.WithUsername(name);
-                await AddAttachmentsToBuilder(dwb, attachmentChunks[i]);
-                await webhook.ExecuteAsync(dwb);
+                var files = await GetAttachmentFiles(attachmentChunks[i]);
+                var req = new ExecuteWebhookRequest {Username = name, AvatarUrl = avatarUrl};
+                await _rest.ExecuteWebhook(webhook.Id, webhook.Token!, req, files);
             }
         }
-
-        private async Task AddAttachmentsToBuilder(DiscordWebhookBuilder dwb, IReadOnlyCollection<DiscordAttachment> attachments)
+        
+        private async Task<MultipartFile[]> GetAttachmentFiles(IReadOnlyCollection<Message.Attachment> attachments)
         {
-            async Task<(DiscordAttachment, Stream)> GetStream(DiscordAttachment attachment)
+            async Task<MultipartFile> GetStream(Message.Attachment attachment)
             {
                 var attachmentResponse = await _client.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead);
-                return (attachment, await attachmentResponse.Content.ReadAsStreamAsync());
+                return new(attachment.Filename, await attachmentResponse.Content.ReadAsStreamAsync());
             }
-            
-            foreach (var (attachment, attachmentStream) in await Task.WhenAll(attachments.Select(GetStream)))
-                dwb.AddFile(attachment.FileName, attachmentStream);
+
+            return await Task.WhenAll(attachments.Select(GetStream));
         }
 
-        private IReadOnlyList<IReadOnlyCollection<DiscordAttachment>> ChunkAttachmentsOrThrow(
-            IReadOnlyList<DiscordAttachment> attachments, int sizeThreshold)
+        private IReadOnlyList<IReadOnlyCollection<Message.Attachment>> ChunkAttachmentsOrThrow(
+            IReadOnlyList<Message.Attachment> attachments, int sizeThreshold)
         {
             // Splits a list of attachments into "chunks" of at most 8MB each
             // If any individual attachment is larger than 8MB, will throw an error
-            var chunks = new List<List<DiscordAttachment>>();
-            var list = new List<DiscordAttachment>();
+            var chunks = new List<List<Message.Attachment>>();
+            var list = new List<Message.Attachment>();
             
             foreach (var attachment in attachments)
             {
-                if (attachment.FileSize >= sizeThreshold) throw Errors.AttachmentTooLarge;
+                if (attachment.Size >= sizeThreshold) throw Errors.AttachmentTooLarge;
 
-                if (list.Sum(a => a.FileSize) + attachment.FileSize >= sizeThreshold)
+                if (list.Sum(a => a.Size) + attachment.Size >= sizeThreshold)
                 {
                     chunks.Add(list);
-                    list = new List<DiscordAttachment>();
+                    list = new List<Message.Attachment>();
                 }
                 
                 list.Add(attachment);
