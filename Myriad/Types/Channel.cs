@@ -20,7 +20,7 @@
         public string? Name { get; init; }
         public string? Topic { get; init; }
         public bool? Nsfw { get; init; }
-        public long? ParentId { get; init; }
+        public ulong? ParentId { get; init; }
         public Overwrite[]? PermissionOverwrites { get; init; }
 
         public record Overwrite

@@ -11,9 +11,13 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 
+using Myriad.Types;
+
 using NodaTime;
 
 using PluralKit.Core;
+
+using Permissions = DSharpPlus.Permissions;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
@@ -149,7 +153,8 @@ namespace PluralKit.Bot {
                         if (currentPage < 0) currentPage += pageCount;
                         
                         // If we can, remove the user's reaction (so they can press again quickly)
-                        if (ctx.BotHasAllPermissions(Permissions.ManageMessages)) await msg.DeleteReactionAsync(reaction.Emoji, reaction.User);
+                        if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
+                            await msg.DeleteReactionAsync(reaction.Emoji, reaction.User);
                         
                         // Edit the embed with the new page
                         var embed = await MakeEmbedForPage(currentPage);
@@ -159,7 +164,8 @@ namespace PluralKit.Bot {
                     // "escape hatch", clean up as if we hit X
                 }
 
-                if (ctx.BotHasAllPermissions(Permissions.ManageMessages)) await msg.DeleteAllReactionsAsync();
+                if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
+                    await msg.DeleteAllReactionsAsync();
             }
             // If we get a "NotFound" error, the message has been deleted and thus not our problem
             catch (NotFoundException) { }
@@ -245,12 +251,7 @@ namespace PluralKit.Bot {
                 return items[Array.IndexOf(indicators, reaction.Emoji.Name)];
             }
         }
-
-        public static Permissions BotPermissions(this Context ctx) => ctx.Channel.BotPermissions();
-
-        public static bool BotHasAllPermissions(this Context ctx, Permissions permission) =>
-            ctx.Channel.BotHasAllPermissions(permission);
-
+        
         public static async Task BusyIndicator(this Context ctx, Func<Task> f, string emoji = "\u23f3" /* hourglass */)
         {
             await ctx.BusyIndicator<object>(async () =>
@@ -265,8 +266,8 @@ namespace PluralKit.Bot {
             var task = f();
 
             // If we don't have permission to add reactions, don't bother, and just await the task normally.
-            var neededPermissions = Permissions.AddReactions | Permissions.ReadMessageHistory;
-            if ((ctx.BotPermissions() & neededPermissions) != neededPermissions) return await task;
+            var neededPermissions = PermissionSet.AddReactions | PermissionSet.ReadMessageHistory;
+            if ((ctx.BotPermissions & neededPermissions) != neededPermissions) return await task;
 
             try
             {

@@ -12,6 +12,8 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 
+using Myriad.Extensions;
+using Myriad.Rest.Types;
 using Myriad.Types;
 
 using NodaTime;
@@ -50,6 +52,11 @@ namespace PluralKit.Bot
         {
             return $"{user.Username}#{user.Discriminator} ({user.Mention})";
         }
+        
+        public static string NameAndMention(this User user)
+        {
+            return $"{user.Username}#{user.Discriminator} ({user.Mention()})";
+        }
 
         // We funnel all "permissions from DiscordMember" calls through here 
         // This way we can ensure we do the read permission correction everywhere
@@ -74,20 +81,7 @@ namespace PluralKit.Bot
             var invalidRoleIds = roleIdCache.Where(x => !currentRoleIds.Contains(x)).ToList();
             roleIdCache.RemoveAll(x => invalidRoleIds.Contains(x));
         }
-
-        public static async Task<Permissions> PermissionsIn(this DiscordChannel channel, DiscordUser user)
-        {
-            // Just delegates to PermissionsInSync, but handles the case of a non-member User in a guild properly
-            // This is a separate method because it requires an async call
-            if (channel.Guild != null && !(user is DiscordMember))
-            {
-                var member = await channel.Guild.GetMember(user.Id);
-                if (member != null)
-                    return PermissionsInSync(channel, member);
-            }
-
-            return PermissionsInSync(channel, user);
-        }
+        
 
         // Same as PermissionsIn, but always synchronous. DiscordUser must be a DiscordMember if channel is in guild.
         public static Permissions PermissionsInSync(this DiscordChannel channel, DiscordUser user)
@@ -194,23 +188,27 @@ namespace PluralKit.Bot
             return false;
         }
 
-        public static IEnumerable<IMention> ParseAllMentions(this string input, Guild guild, bool allowEveryone = false)
+        public static AllowedMentions ParseMentions(this string input)
         {
-            var mentions = new List<IMention>();
-            mentions.AddRange(USER_MENTION.Matches(input)
-                .Select(x => new UserMention(ulong.Parse(x.Groups[1].Value)) as IMention));
+            var users = USER_MENTION.Matches(input).Select(x => ulong.Parse(x.Groups[1].Value));
+            var roles = ROLE_MENTION.Matches(input).Select(x => ulong.Parse(x.Groups[1].Value));
+            var everyone = EVERYONE_HERE_MENTION.IsMatch(input);
+            
+            return new AllowedMentions
+            {
+                Users = users.ToArray(),
+                Roles = roles.ToArray(),
+                Parse = everyone ? new[] {AllowedMentions.ParseType.Everyone} : null
+            };
+        }
 
-            // Only allow role mentions through where the role is actually listed as *mentionable*
-            // (ie. any user can @ them, regardless of permissions)
-            // Still let the allowEveryone flag override this though (privileged users can @ *any* role)
-            // Original fix by Gwen
-            mentions.AddRange(ROLE_MENTION.Matches(input)
-                .Select(x => ulong.Parse(x.Groups[1].Value))
-                .Where(x => allowEveryone || guild != null && (guild.Roles.FirstOrDefault(g => g.Id == x)?.Mentionable ?? false))
-                .Select(x => new RoleMention(x) as IMention));
-            if (EVERYONE_HERE_MENTION.IsMatch(input) && allowEveryone)
-                mentions.Add(new EveryoneMention());
-            return mentions;
+        public static AllowedMentions RemoveUnmentionableRoles(this AllowedMentions mentions, Guild guild)
+        {
+            return mentions with {
+                Roles = mentions.Roles
+                    ?.Where(id => guild.Roles.FirstOrDefault(r => r.Id == id)?.Mentionable == true)
+                    .ToArray()
+                };
         }
 
         public static string EscapeMarkdown(this string input)

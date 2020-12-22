@@ -17,12 +17,12 @@ namespace Myriad.Cache
         public ValueTask RemoveUser(ulong userId);
         public ValueTask RemoveRole(ulong guildId, ulong roleId);
 
-        public ValueTask<Guild?> GetGuild(ulong guildId);
-        public ValueTask<Channel?> GetChannel(ulong channelId);
-        public ValueTask<User?> GetUser(ulong userId);
-        public ValueTask<Role?> GetRole(ulong roleId);
+        public bool TryGetGuild(ulong guildId, out Guild guild);
+        public bool TryGetChannel(ulong channelId, out Channel channel);
+        public bool TryGetUser(ulong userId, out User user);
+        public bool TryGetRole(ulong roleId, out Role role);
 
         public IAsyncEnumerable<Guild> GetAllGuilds();
-        public ValueTask<IEnumerable<Channel>> GetGuildChannels(ulong guildId);
+        public IEnumerable<Channel> GetGuildChannels(ulong guildId);
     }
 }

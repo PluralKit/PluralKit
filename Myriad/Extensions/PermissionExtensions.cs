@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
+using Myriad.Cache;
 using Myriad.Gateway;
 using Myriad.Types;
 
@@ -9,17 +11,39 @@ namespace Myriad.Extensions
 {
     public static class PermissionExtensions
     {
+        public static PermissionSet PermissionsFor(this IDiscordCache cache, MessageCreateEvent message) =>
+            PermissionsFor(cache, message.ChannelId, message.Author.Id, message.Member?.Roles);
+
+        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, GuildMember member) =>
+            PermissionsFor(cache, channelId, member.User.Id, member.Roles);
+
+        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, GuildMemberPartial member) =>
+            PermissionsFor(cache, channelId, userId, member.Roles);
+
+        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, ICollection<ulong>? userRoles)
+        {
+            var channel = cache.GetChannel(channelId);
+            if (channel.GuildId == null)
+                return PermissionSet.Dm;
+            
+            var guild = cache.GetGuild(channel.GuildId.Value);
+            return PermissionsFor(guild, channel, userId, userRoles);
+        }
+        
         public static PermissionSet EveryonePermissions(this Guild guild) =>
             guild.Roles.FirstOrDefault(r => r.Id == guild.Id)?.Permissions ?? PermissionSet.Dm;
         
         public static PermissionSet PermissionsFor(Guild guild, Channel channel, MessageCreateEvent msg) =>
-            PermissionsFor(guild, channel, msg.Author.Id, msg.Member!.Roles);
+            PermissionsFor(guild, channel, msg.Author.Id, msg.Member?.Roles);
 
         public static PermissionSet PermissionsFor(Guild guild, Channel channel, ulong userId,
-                                                   ICollection<ulong> roleIds)
+                                                   ICollection<ulong>? roleIds)
         {
             if (channel.Type == Channel.ChannelType.Dm)
                 return PermissionSet.Dm;
+            
+            if (roleIds == null)
+                throw new ArgumentException($"User roles must be specified for guild channels");
 
             var perms = GuildPermissions(guild, userId, roleIds);
             perms = ApplyChannelOverwrites(perms, channel, userId, roleIds);
@@ -36,9 +60,6 @@ namespace Myriad.Extensions
             return perms;
         }
 
-        public static bool Has(this PermissionSet value, PermissionSet flag) =>
-            (value & flag) == flag;
-
         public static PermissionSet GuildPermissions(this Guild guild, ulong userId, ICollection<ulong> roleIds)
         {
             if (guild.OwnerId == userId)
@@ -51,7 +72,7 @@ namespace Myriad.Extensions
                     perms |= role.Permissions;
             }
 
-            if (perms.Has(PermissionSet.Administrator))
+            if (perms.HasFlag(PermissionSet.Administrator))
                 return PermissionSet.All;
 
             return perms;

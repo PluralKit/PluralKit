@@ -2,9 +2,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Dapper;
-
-using DSharpPlus;
 using DSharpPlus.Entities;
 
 using NodaTime;
@@ -12,8 +9,6 @@ using NodaTime.Text;
 using NodaTime.TimeZones;
 
 using PluralKit.Core;
-
-using Sentry.Protocol;
 
 namespace PluralKit.Bot
 {
@@ -196,7 +191,7 @@ namespace PluralKit.Bot
         public async Task SystemProxy(Context ctx)
         {
             ctx.CheckSystem().CheckGuildContext();
-            var gs = await _db.Execute(c => _repo.GetSystemGuild(c, ctx.Guild.Id, ctx.System.Id));
+            var gs = await _db.Execute(c => _repo.GetSystemGuild(c, ctx.GuildNew.Id, ctx.System.Id));
 
             bool newValue;
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
@@ -212,12 +207,12 @@ namespace PluralKit.Bot
             }
 
             var patch = new SystemGuildPatch {ProxyEnabled = newValue};
-            await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+            await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.GuildNew.Id, patch));
 
             if (newValue)
-                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");
+                await ctx.Reply($"Message proxying in this server ({ctx.GuildNew.Name.EscapeMarkdown()}) is now **enabled** for your system.");
             else
-                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **disabled** for your system.");
+                await ctx.Reply($"Message proxying in this server ({ctx.GuildNew.Name.EscapeMarkdown()}) is now **disabled** for your system.");
         }
         
          public async Task SystemTimezone(Context ctx)

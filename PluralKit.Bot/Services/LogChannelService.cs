@@ -60,18 +60,16 @@ namespace PluralKit.Bot {
         private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)
         {
             // TODO: fetch it directly on cache miss?
-            var channel = await _cache.GetChannel(channelId);
+            if (_cache.TryGetChannel(channelId, out var channel))
+                return channel;
             
-            if (channel == null)
-            {
-                // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too
-                _logger.Warning("Attempted to fetch missing log channel {LogChannel} for guild {Guild}, removing from database", channelId, guildId);
-                await using var conn = await _db.Obtain();
-                await conn.ExecuteAsync("update servers set log_channel = null where id = @Guild",
-                    new {Guild = guildId});
-            }
+            // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too
+            _logger.Warning("Attempted to fetch missing log channel {LogChannel} for guild {Guild}, removing from database", channelId, guildId);
+            await using var conn = await _db.Obtain();
+            await conn.ExecuteAsync("update servers set log_channel = null where id = @Guild",
+                new {Guild = guildId});
 
-            return channel;
+            return null;
         }
     }
 }

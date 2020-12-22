@@ -5,9 +5,13 @@ using System.Threading.Tasks;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
 
 using Humanizer;
+
+using Myriad.Cache;
+using Myriad.Rest;
+using Myriad.Types;
+
 using NodaTime;
 
 using PluralKit.Core;
@@ -18,54 +22,79 @@ namespace PluralKit.Bot {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly DiscordShardedClient _client;
+        private readonly IDiscordCache _cache;
+        private readonly DiscordApiClient _rest;
 
-        public EmbedService(DiscordShardedClient client, IDatabase db, ModelRepository repo)
+        public EmbedService(DiscordShardedClient client, IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
         {
             _client = client;
             _db = db;
             _repo = repo;
+            _cache = cache;
+            _rest = rest;
+        }
+
+        private Task<(ulong Id, User? User)[]> GetUsers(IEnumerable<ulong> ids)
+        {
+            async Task<(ulong Id, User? User)> Inner(ulong id)
+            {
+                if (_cache.TryGetUser(id, out var cachedUser))
+                    return (id, cachedUser);
+                
+                var user = await _rest.GetUser(id);
+                if (user == null)
+                    return (id, null);
+                // todo: move to "GetUserCached" helper
+                await _cache.SaveUser(user);
+                return (id, user);
+            }
+
+            return Task.WhenAll(ids.Select(Inner));
         }
         
-        public async Task<DiscordEmbed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
+        public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
         {
             await using var conn = await _db.Obtain();
             
             // Fetch/render info for all accounts simultaneously
             var accounts = await _repo.GetSystemAccounts(conn, system.Id);
-            var users = await Task.WhenAll(accounts.Select(async uid => (await cctx.Shard.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
             var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
 
-            var eb = new DiscordEmbedBuilder()
-                .WithColor(DiscordUtils.Gray)
-                .WithTitle(system.Name ?? null)
-                .WithThumbnail(system.AvatarUrl)
-                .WithFooter($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}");
+            var embed = new Embed
+            {
+                Title = system.Name,
+                Thumbnail = new(system.AvatarUrl),
+                Footer = new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"),
+                Color = (uint?) DiscordUtils.Gray.Value
+            };
+            var fields = new List<Embed.Field>();
  
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
                 var switchMembers = await _repo.GetSwitchMembers(conn, latestSwitch.Id).ToListAsync();
-                                                                                                              if (switchMembers.Count > 0)
-                                                                                                                  eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
-                        string.Join(", ", switchMembers.Select(m => m.NameFor(ctx))));
+                if (switchMembers.Count > 0)
+                    fields.Add(new("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)))));
             }
 
-            if (system.Tag != null) eb.AddField("Tag", system.Tag.EscapeMarkdown());
-            eb.AddField("Linked accounts", string.Join("\n", users).Truncate(1000), true);
+            if (system.Tag != null) 
+                fields.Add(new("Tag", system.Tag.EscapeMarkdown()));
+            fields.Add(new("Linked accounts", string.Join("\n", users).Truncate(1000), true));
 
             if (system.MemberListPrivacy.CanAccess(ctx))
             {
                 if (memberCount > 0)
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
+                    fields.Add(new($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true));
                 else
-                    eb.AddField($"Members ({memberCount})", "Add one with `pk;member new`!", true);
+                    fields.Add(new($"Members ({memberCount})", "Add one with `pk;member new`!", true));
             }
 
             if (system.DescriptionFor(ctx) is { } desc)
-                eb.AddField("Description", desc.NormalizeLineEndSpacing().Truncate(1024), false);
+                fields.Add(new("Description", desc.NormalizeLineEndSpacing().Truncate(1024), false));
 
-            return eb.Build();
+            return embed with { Fields = fields.ToArray() };
         }
 
         public DiscordEmbed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordUser sender, string content, DiscordChannel channel) {

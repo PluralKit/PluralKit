@@ -9,6 +9,7 @@ using App.Metrics;
 using Humanizer;
 
 using Myriad.Cache;
+using Myriad.Extensions;
 using Myriad.Rest;
 using Myriad.Rest.Types;
 using Myriad.Rest.Types.Requests;
@@ -77,20 +78,22 @@ namespace PluralKit.Bot
 
         private async Task<Message> ExecuteWebhookInner(Webhook webhook, ProxyRequest req, bool hasRetried = false)
         {
-            var guild = await _cache.GetGuild(req.GuildId)!;
+            var guild = _cache.GetGuild(req.GuildId);
             var content = req.Content.Truncate(2000);
+
+            var allowedMentions = content.ParseMentions();
+            if (!req.AllowEveryone)
+                allowedMentions = allowedMentions.RemoveUnmentionableRoles(guild);
 
             var webhookReq = new ExecuteWebhookRequest
             {
                 Username = FixClyde(req.Name).Truncate(80),
                 Content = content,
-                AllowedMentions = null, // todo
+                AllowedMentions = allowedMentions,
                 AvatarUrl = !string.IsNullOrWhiteSpace(req.AvatarUrl) ? req.AvatarUrl : null,
                 Embeds = req.Embeds
             };
             
-            // dwb.AddMentions(content.ParseAllMentions(guild, req.AllowEveryone));
-
             MultipartFile[] files = null;
             var attachmentChunks = ChunkAttachmentsOrThrow(req.Attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)

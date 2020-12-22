@@ -1,8 +1,6 @@
 using System.Text;
 using System.Threading.Tasks;
 
-using NodaTime;
-
 using PluralKit.Core;
 
 namespace PluralKit.Bot

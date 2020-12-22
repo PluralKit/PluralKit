@@ -8,6 +8,6 @@ namespace Myriad.Rest.Types.Requests
         public object? Nonce { get; set; }
         public bool Tts { get; set; }
         public AllowedMentions AllowedMentions { get; set; }
-        public Embed? Embeds { get; set; }
+        public Embed? Embed { get; set; }
     }
 }

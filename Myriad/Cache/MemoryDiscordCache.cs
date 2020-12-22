@@ -110,13 +110,26 @@ namespace Myriad.Cache
             return default;
         }
 
-        public ValueTask<Guild?> GetGuild(ulong guildId) => new(_guilds.GetValueOrDefault(guildId)?.Guild);
+        public bool TryGetGuild(ulong guildId, out Guild guild)
+        {
+            if (_guilds.TryGetValue(guildId, out var cg))
+            {
+                guild = cg.Guild;
+                return true;
+            }
 
-        public ValueTask<Channel?> GetChannel(ulong channelId) => new(_channels.GetValueOrDefault(channelId));
+            guild = null!;
+            return false;
+        }
 
-        public ValueTask<User?> GetUser(ulong userId) => new(_users.GetValueOrDefault(userId));
+        public bool TryGetChannel(ulong channelId, out Channel channel) => 
+            _channels.TryGetValue(channelId, out channel!);
 
-        public ValueTask<Role?> GetRole(ulong roleId) => new(_roles.GetValueOrDefault(roleId));
+        public bool TryGetUser(ulong userId, out User user) =>
+            _users.TryGetValue(userId, out user!);
+
+        public bool TryGetRole(ulong roleId, out Role role) =>
+            _roles.TryGetValue(roleId, out role!);
 
         public async IAsyncEnumerable<Guild> GetAllGuilds()
         {
@@ -124,12 +137,12 @@ namespace Myriad.Cache
                 yield return guild.Guild;
         }
 
-        public ValueTask<IEnumerable<Channel>> GetGuildChannels(ulong guildId)
+        public IEnumerable<Channel> GetGuildChannels(ulong guildId)
         {
             if (!_guilds.TryGetValue(guildId, out var guild))
                 throw new ArgumentException("Guild not found", nameof(guildId));
 
-            return new ValueTask<IEnumerable<Channel>>(guild.Channels.Keys.Select(c => _channels[c]));
+            return guild.Channels.Keys.Select(c => _channels[c]);
         }
 
         private CachedGuild SaveGuildRaw(Guild guild) =>

@@ -1,7 +1,6 @@
 ﻿namespace Myriad.Extensions
 {
-    public class MessageExtensions
+    public static class MessageExtensions
     {
-        
     }
 }

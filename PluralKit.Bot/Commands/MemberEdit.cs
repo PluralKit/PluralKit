@@ -2,9 +2,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System;
 
-
-using Dapper;
-
 using DSharpPlus.Entities;
 
 using NodaTime;
@@ -49,11 +46,11 @@ namespace PluralKit.Bot
             if (newName.Contains(" ")) await ctx.Reply($"{Emojis.Note} Note that this member's name now contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it.");
             if (target.DisplayName != null) await ctx.Reply($"{Emojis.Note} Note that this member has a display name set ({target.DisplayName}), and will be proxied using that name instead.");
 
-            if (ctx.Guild != null)
+            if (ctx.GuildNew != null)
             {
-                var memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
+                var memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.GuildNew.Id, target.Id));
                 if (memberGuildConfig.DisplayName != null)
-                    await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.Guild.Name}), and will be proxied using that name here.");
+                    await ctx.Reply($"{Emojis.Note} Note that this member has a server name set ({memberGuildConfig.DisplayName}) in this server ({ctx.GuildNew.Name}), and will be proxied using that name here.");
             }
         }
 
@@ -229,8 +226,8 @@ namespace PluralKit.Bot
             var lcx = ctx.LookupContextFor(target);
             
             MemberGuildSettings memberGuildConfig = null;
-            if (ctx.Guild != null)
-                memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
+            if (ctx.GuildNew != null)
+                memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.GuildNew.Id, target.Id));
 
             var eb = new DiscordEmbedBuilder().WithTitle($"Member names")
                 .WithFooter($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name.");
@@ -248,12 +245,12 @@ namespace PluralKit.Bot
                     eb.AddField("Display Name", target.DisplayName ?? "*(none)*");
             }
 
-            if (ctx.Guild != null)
+            if (ctx.GuildNew != null)
             {
                 if (memberGuildConfig?.DisplayName != null)
-                    eb.AddField($"Server Name (in {ctx.Guild.Name})", $"**{memberGuildConfig.DisplayName}**");
+                    eb.AddField($"Server Name (in {ctx.GuildNew.Name})", $"**{memberGuildConfig.DisplayName}**");
                 else
-                    eb.AddField($"Server Name (in {ctx.Guild.Name})", memberGuildConfig?.DisplayName ?? "*(none)*");
+                    eb.AddField($"Server Name (in {ctx.GuildNew.Name})", memberGuildConfig?.DisplayName ?? "*(none)*");
             }
 
             return eb;
@@ -264,11 +261,11 @@ namespace PluralKit.Bot
             async Task PrintSuccess(string text)
             {
                 var successStr = text;
-                if (ctx.Guild != null)
+                if (ctx.GuildNew != null)
                 {
-                    var memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
+                    var memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.GuildNew.Id, target.Id));
                     if (memberGuildConfig.DisplayName != null)
-                        successStr += $" However, this member has a server name set in this server ({ctx.Guild.Name}), and will be proxied using that name, \"{memberGuildConfig.DisplayName}\", here.";
+                        successStr += $" However, this member has a server name set in this server ({ctx.GuildNew.Name}), and will be proxied using that name, \"{memberGuildConfig.DisplayName}\", here.";
                 }
 
                 await ctx.Reply(successStr);
@@ -313,12 +310,12 @@ namespace PluralKit.Bot
                 ctx.CheckOwnMember(target);
 
                 var patch = new MemberGuildPatch {DisplayName = null};
-                await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.Guild.Id, patch));
+                await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.GuildNew.Id, patch));
 
                 if (target.DisplayName != null)
-                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName}\" in this server ({ctx.Guild.Name}).");
+                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their global display name \"{target.DisplayName}\" in this server ({ctx.GuildNew.Name}).");
                 else
-                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\" in this server ({ctx.Guild.Name}).");
+                    await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\" in this server ({ctx.GuildNew.Name}).");
             }
             else if (!ctx.HasNext())
             {
@@ -335,9 +332,9 @@ namespace PluralKit.Bot
                 var newServerName = ctx.RemainderOrNull();
                 
                 var patch = new MemberGuildPatch {DisplayName = newServerName};
-                await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.Guild.Id, patch));
+                await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.GuildNew.Id, patch));
 
-                await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.Guild.Name}).");
+                await ctx.Reply($"{Emojis.Success} Member server name changed. This member will now be proxied using the name \"{newServerName}\" in this server ({ctx.GuildNew.Name}).");
             }
         }
         
@@ -417,8 +414,8 @@ namespace PluralKit.Bot
             
             // Get guild settings (mostly for warnings and such)
             MemberGuildSettings guildSettings = null;
-            if (ctx.Guild != null)
-                guildSettings = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
+            if (ctx.GuildNew != null)
+                guildSettings = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.GuildNew.Id, target.Id));
 
             async Task SetAll(PrivacyLevel level)
             {

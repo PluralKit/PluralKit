@@ -61,8 +61,8 @@ namespace PluralKit.Bot
             if (evt.Type != Message.MessageType.Default) return;
             if (IsDuplicateMessage(evt)) return;
 
-            var guild = evt.GuildId != null ? await _cache.GetGuild(evt.GuildId.Value) : null;
-            var channel = await _cache.GetChannel(evt.ChannelId);
+            var guild = evt.GuildId != null ? _cache.GetGuild(evt.GuildId.Value) : null;
+            var channel = _cache.GetChannel(evt.ChannelId);
             
             // Log metrics and message info
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
@@ -89,8 +89,8 @@ namespace PluralKit.Bot
 
         private async ValueTask<bool> TryHandleLogClean(MessageCreateEvent evt, MessageContext ctx)
         {
-            var channel = await _cache.GetChannel(evt.ChannelId);
-            if (!evt.Author.Bot || channel!.Type != Channel.ChannelType.GuildText ||
+            var channel = _cache.GetChannel(evt.ChannelId);
+            if (!evt.Author.Bot || channel.Type != Channel.ChannelType.GuildText ||
                 !ctx.LogCleanupEnabled) return false;
 
             await _loggerClean.HandleLoggerBotCleanup(evt);

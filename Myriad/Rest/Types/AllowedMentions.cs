@@ -11,9 +11,9 @@ namespace Myriad.Rest.Types
             Everyone
         }
 
-        public List<ParseType>? Parse { get; set; }
-        public List<ulong>? Users { get; set; }
-        public List<ulong>? Roles { get; set; }
+        public ParseType[]? Parse { get; set; }
+        public ulong[]? Users { get; set; }
+        public ulong[]? Roles { get; set; }
         public bool RepliedUser { get; set; }
     }
 }

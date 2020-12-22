@@ -8,14 +8,17 @@ using Autofac;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Net;
 
+using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
+using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using PluralKit.Core;
 
-using Permissions = DSharpPlus.Permissions;
+using DiscordApiClient = Myriad.Rest.DiscordApiClient;
 
 namespace PluralKit.Bot
 {
@@ -24,6 +27,7 @@ namespace PluralKit.Bot
         private readonly ILifetimeScope _provider;
 
         private readonly DiscordRestClient _rest;
+        private readonly DiscordApiClient _newRest;
         private readonly DiscordShardedClient _client;
         private readonly DiscordClient _shard = null;
         private readonly Shard _shardNew;
@@ -42,6 +46,7 @@ namespace PluralKit.Bot
         private readonly PKSystem _senderSystem;
         private readonly IMetrics _metrics;
         private readonly CommandMessageService _commandMessageService;
+        private readonly IDiscordCache _cache;
 
         private Command _currentCommand;
 
@@ -57,24 +62,25 @@ namespace PluralKit.Bot
             _senderSystem = senderSystem;
             _messageContext = messageContext;
             _botMember = botMember;
+            _cache = provider.Resolve<IDiscordCache>();
             _db = provider.Resolve<IDatabase>();
             _repo = provider.Resolve<ModelRepository>();
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _commandMessageService = provider.Resolve<CommandMessageService>();
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
+            _newRest = provider.Resolve<DiscordApiClient>();
 
-            _botPermissions = message.GuildId != null
-                ? PermissionExtensions.PermissionsFor(guild!, channel, shard.User?.Id ?? default, botMember!.Roles)
-                : PermissionSet.Dm;
-            _userPermissions = message.GuildId != null
-                ? PermissionExtensions.PermissionsFor(guild!, channel, message.Author.Id, message.Member!.Roles)
-                : PermissionSet.Dm;
+            _botPermissions = _cache.PermissionsFor(message.ChannelId, shard.User!.Id, botMember!);
+            _userPermissions = _cache.PermissionsFor(message);
         }
+
+        public IDiscordCache Cache => _cache;
 
         public DiscordUser Author => _message.Author;
         public DiscordChannel Channel => _message.Channel;
         public Channel ChannelNew => _channel;
+        public User AuthorNew => _messageNew.Author;
         public DiscordMessage Message => _message;
         public Message MessageNew => _messageNew;
         public DiscordGuild Guild => _message.Channel.Guild;
@@ -95,24 +101,44 @@ namespace PluralKit.Bot
         internal IDatabase Database => _db;
         internal ModelRepository Repository => _repo;
 
-        public async Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
+        public Task<DiscordMessage> Reply(string text, DiscordEmbed embed,
+                                          IEnumerable<IMention>? mentions = null)
         {
-            if (!this.BotHasAllPermissions(Permissions.SendMessages))
+            return Reply(text, (DiscordEmbed) null, mentions);
+        }
+
+        public Task<DiscordMessage> Reply(DiscordEmbed embed,
+                                          IEnumerable<IMention>? mentions = null)
+        {
+            return Reply(null, (DiscordEmbed) null, mentions);
+        }
+
+        public async Task<DiscordMessage> Reply(string text = null, Embed embed = null, IEnumerable<IMention>? mentions = null)
+        {
+            if (!BotPermissions.HasFlag(PermissionSet.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
                 throw new PKError("PluralKit does not have permission to send messages in this channel.");
 
-            if (embed != null && !this.BotHasAllPermissions(Permissions.EmbedLinks))
+            if (embed != null && !BotPermissions.HasFlag(PermissionSet.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
-            var msg = await Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
+
+            var msg = await _newRest.CreateMessage(_channel.Id, new MessageRequest
+            {
+                Content = text,
+                Embed = embed
+            });
+            // TODO: embeds/mentions
+            // var msg = await Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
 
             if (embed != null)
             {
                 // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
                 // This may need to be changed at some point but works well enough for now
-                await _commandMessageService.RegisterMessage(msg.Id, Author.Id);
+                await _commandMessageService.RegisterMessage(msg.Id, AuthorNew.Id);
             }
 
-            return msg;
+            // return msg;
+            return null;
         }
         
         public async Task Execute<T>(Command commandDef, Func<T, Task> handler)
