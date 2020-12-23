@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Myriad.Types
+﻿namespace Myriad.Types
 {
     public record Embed
     {

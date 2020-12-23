@@ -114,7 +114,7 @@ namespace PluralKit.Bot
             try
             {
                 var system = ctx.SystemId != null ? await _db.Execute(c => _repo.GetSystem(c, ctx.SystemId.Value)) : null;
-                await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, ctx, _bot.BotMemberIn(channel.GuildId!.Value)));
+                await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, ctx, _bot.PermissionsIn(channel.Id)));
             }
             catch (PKError)
             {
@@ -147,8 +147,7 @@ namespace PluralKit.Bot
 
         private async ValueTask<bool> TryHandleProxy(Shard shard, MessageCreateEvent evt, Guild guild, Channel channel, MessageContext ctx)
         {
-            var botMember = _bot.BotMemberIn(channel.GuildId!.Value);
-            var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, shard.User!.Id, botMember!.Roles);
+            var botPermissions = _bot.PermissionsIn(channel.Id);
 
             try
             {

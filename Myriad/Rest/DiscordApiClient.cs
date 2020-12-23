@@ -39,6 +39,10 @@ namespace Myriad.Rest
         public Task<User?> GetUser(ulong id) =>
             _client.Get<User>($"/users/{id}", ("GetUser", default));
 
+        public Task<GuildMember?> GetGuildMember(ulong guildId, ulong userId) =>
+            _client.Get<GuildMember>($"/guilds/{guildId}/members/{userId}",
+                ("GetGuildMember", guildId));
+
         public Task<Message> CreateMessage(ulong channelId, MessageRequest request) =>
             _client.Post<Message>($"/channels/{channelId}/messages", ("CreateMessage", channelId), request)!;
 
@@ -110,7 +114,7 @@ namespace Myriad.Rest
 
         public Task<Message> ExecuteWebhook(ulong webhookId, string webhookToken, ExecuteWebhookRequest request,
                                             MultipartFile[]? files = null) =>
-            _client.PostMultipart<Message>($"/webhooks/{webhookId}/{webhookToken}",
+            _client.PostMultipart<Message>($"/webhooks/{webhookId}/{webhookToken}?wait=true",
                 ("ExecuteWebhook", webhookId), request, files)!;
 
         private static string EncodeEmoji(Emoji emoji) =>

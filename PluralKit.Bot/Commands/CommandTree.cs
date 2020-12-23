@@ -1,8 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-
 using Humanizer;
 
 using PluralKit.Core;
@@ -119,14 +117,6 @@ namespace PluralKit.Bot
         public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
 
         public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
-        
-        private DiscordShardedClient _client;
-
-        public CommandTree(DiscordShardedClient client)
-        {
-            
-            _client = client;
-        }
 
         public Task ExecuteCommand(Context ctx)
         {

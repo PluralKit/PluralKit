@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dapper;
 
 using Myriad.Cache;
+using Myriad.Extensions;
 using Myriad.Rest;
 using Myriad.Types;
 
@@ -18,14 +19,16 @@ namespace PluralKit.Bot {
         private readonly ILogger _logger;
         private readonly IDiscordCache _cache;
         private readonly DiscordApiClient _rest;
+        private readonly Bot _bot;
 
-        public LogChannelService(EmbedService embed, ILogger logger, IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
+        public LogChannelService(EmbedService embed, ILogger logger, IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, Bot bot)
         {
             _embed = embed;
             _db = db;
             _repo = repo;
             _cache = cache;
             _rest = rest;
+            _bot = bot;
             _logger = logger.ForContext<LogChannelService>();
         }
 
@@ -36,25 +39,28 @@ namespace PluralKit.Bot {
             // Find log channel and check if valid
             var logChannel = await FindLogChannel(trigger.GuildId!.Value, ctx.LogChannel.Value);
             if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return;
+
+            var triggerChannel = _cache.GetChannel(trigger.ChannelId);
             
             // Check bot permissions
-            // if (!logChannel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
-            // {
-            //     _logger.Information(
-            //         "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
-            //         ctx.LogChannel.Value, trigger.GuildId!.Value, trigger.Channel.BotPermissions());
-            //     return;
-            // }
-            //
+            var perms = _bot.PermissionsIn(logChannel.Id);
+            if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
+            {
+                _logger.Information(
+                    "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
+                    ctx.LogChannel.Value, trigger.GuildId!.Value, perms);
+                return;
+            }
+            
             // Send embed!
             
             // TODO: fix?
-            // await using var conn = await _db.Obtain();
-            // var embed = _embed.CreateLoggedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value),
-            //     await _repo.GetMember(conn, proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content,
-            //     trigger.Channel);
-            // var url = $"https://discord.com/channels/{trigger.Channel.GuildId}/{trigger.ChannelId}/{hookMessage}";
-            // await logChannel.SendMessageFixedAsync(content: url, embed: embed);
+            await using var conn = await _db.Obtain();
+            var embed = _embed.CreateLoggedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value), 
+                await _repo.GetMember(conn, proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content, 
+                triggerChannel);
+            var url = $"https://discord.com/channels/{trigger.GuildId}/{trigger.ChannelId}/{hookMessage}";
+            await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
         }
 
         private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)

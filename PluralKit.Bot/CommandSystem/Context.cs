@@ -37,7 +37,6 @@ namespace PluralKit.Bot
         private readonly Message _messageNew;
         private readonly Parameters _parameters;
         private readonly MessageContext _messageContext;
-        private readonly GuildMemberPartial? _botMember;
         private readonly PermissionSet _botPermissions;
         private readonly PermissionSet _userPermissions;
 
@@ -51,7 +50,7 @@ namespace PluralKit.Bot
         private Command _currentCommand;
 
         public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
-                       PKSystem senderSystem, MessageContext messageContext, GuildMemberPartial? botMember)
+                       PKSystem senderSystem, MessageContext messageContext, PermissionSet botPermissions)
         {
             _rest = provider.Resolve<DiscordRestClient>();
             _client = provider.Resolve<DiscordShardedClient>();
@@ -61,7 +60,6 @@ namespace PluralKit.Bot
             _channel = channel;
             _senderSystem = senderSystem;
             _messageContext = messageContext;
-            _botMember = botMember;
             _cache = provider.Resolve<IDiscordCache>();
             _db = provider.Resolve<IDatabase>();
             _repo = provider.Resolve<ModelRepository>();
@@ -71,7 +69,7 @@ namespace PluralKit.Bot
             _parameters = new Parameters(message.Content.Substring(commandParseOffset));
             _newRest = provider.Resolve<DiscordApiClient>();
 
-            _botPermissions = _cache.PermissionsFor(message.ChannelId, shard.User!.Id, botMember!);
+            _botPermissions = botPermissions;
             _userPermissions = _cache.PermissionsFor(message);
         }
 

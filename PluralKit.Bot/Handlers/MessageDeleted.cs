@@ -34,7 +34,7 @@ namespace PluralKit.Bot
             {
                 await Task.Delay(MessageDeleteDelay);
                 // TODO
-                // await _db.Execute(c => _repo.DeleteMessage(c, evt.Message.Id));
+                await _db.Execute(c => _repo.DeleteMessage(c, evt.Id));
             }
 
             // Fork a task to delete the message after a short delay
@@ -49,9 +49,10 @@ namespace PluralKit.Bot
             async Task Inner()
             {
                 await Task.Delay(MessageDeleteDelay);
-                // TODO
-                // _logger.Information("Bulk deleting {Count} messages in channel {Channel}", evt.Messages.Count, evt.Channel.Id);
-                // await _db.Execute(c => _repo.DeleteMessagesBulk(c, evt.Messages.Select(m => m.Id).ToList()));
+
+                _logger.Information("Bulk deleting {Count} messages in channel {Channel}", 
+                    evt.Ids.Length, evt.ChannelId);
+                await _db.Execute(c => _repo.DeleteMessagesBulk(c, evt.Ids));
             }
             
             _ = Inner();

@@ -11,6 +11,7 @@ using App.Metrics;
 using Autofac;
 
 using Myriad.Cache;
+using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
 using Myriad.Types;
@@ -75,8 +76,19 @@ namespace PluralKit.Bot
             }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
         }
 
-        public GuildMemberPartial? BotMemberIn(ulong guildId) => _guildMembers.GetValueOrDefault(guildId);
+        public PermissionSet PermissionsIn(ulong channelId)
+        {
+            var channel = _cache.GetChannel(channelId);
 
+            if (channel.GuildId != null)
+            {
+                var member = _guildMembers.GetValueOrDefault(channel.GuildId.Value);
+                return _cache.PermissionsFor(channelId, _cluster.User?.Id ?? default, member?.Roles);
+            }
+
+            return PermissionSet.Dm;
+        }
+        
         private async Task OnEventReceived(Shard shard, IGatewayEvent evt)
         {
             await _cache.HandleGatewayEvent(evt);
