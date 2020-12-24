@@ -154,6 +154,10 @@ namespace PluralKit.Bot
             else if (ctx.Match("reset", "default")) newTimeoutHours = -1;
             else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeoutHours)) throw new PKError("Duration must be a number of hours.");
 
+            if (newTimeoutHours > 100000)
+                // sanity check to prevent seconds overflow if someone types in 999999999
+                newTimeoutHours = 0;
+
             var newTimeout = newTimeoutHours > -1 ? Duration.FromHours(newTimeoutHours) : (Duration?) null;
             await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, 
                 new SystemPatch { LatchTimeout = (int?) newTimeout?.TotalSeconds }));
