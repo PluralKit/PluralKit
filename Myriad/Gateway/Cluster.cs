@@ -27,6 +27,7 @@ namespace Myriad.Gateway
         public IReadOnlyDictionary<int, Shard> Shards => _shards;
         public ClusterSessionState SessionState => GetClusterState();
         public User? User => _shards.Values.Select(s => s.User).FirstOrDefault(s => s != null);
+        public ApplicationPartial? Application => _shards.Values.Select(s => s.Application).FirstOrDefault(s => s != null);
 
         private ClusterSessionState GetClusterState()
         {

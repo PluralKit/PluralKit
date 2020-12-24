@@ -32,6 +32,7 @@ namespace Myriad.Gateway
         public ShardState State { get; private set; }
         public TimeSpan? Latency { get; private set; }
         public User? User { get; private set; }
+        public ApplicationPartial? Application { get; private set; }
 
         public Func<IGatewayEvent, Task>? OnEventReceived { get; set; }
         
@@ -258,6 +259,7 @@ namespace Myriad.Gateway
             ShardInfo = ready.Shard;
             SessionInfo = SessionInfo with { Session = ready.SessionId };
             User = ready.User;
+            Application = ready.Application;
             State = ShardState.Open;
 
             return Task.CompletedTask;

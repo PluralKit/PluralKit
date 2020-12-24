@@ -12,7 +12,9 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 
+using Myriad.Builders;
 using Myriad.Extensions;
+using Myriad.Rest;
 using Myriad.Rest.Types;
 using Myriad.Types;
 
@@ -116,11 +118,11 @@ namespace PluralKit.Bot
         public static ulong InstantToSnowflake(DateTimeOffset time) =>
             (ulong) (time - new DateTimeOffset(2015, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds << 22;
 
-        public static async Task CreateReactionsBulk(this DiscordMessage msg, string[] reactions)
+        public static async Task CreateReactionsBulk(this DiscordApiClient rest, Message msg, string[] reactions)
         {
             foreach (var reaction in reactions)
             {
-                await msg.CreateReactionAsync(DiscordEmoji.FromUnicode(reaction));
+                await rest.CreateReaction(msg.ChannelId, msg.Id, new() {Name = reaction});
             }
         }
 
@@ -329,7 +331,7 @@ namespace PluralKit.Bot
             }
         }
 
-        public static DiscordEmbedBuilder WithSimpleLineContent(this DiscordEmbedBuilder eb, IEnumerable<string> lines)
+        public static EmbedBuilder WithSimpleLineContent(this EmbedBuilder eb, IEnumerable<string> lines)
         {
             static int CharacterLimit(int pageNumber) =>
                 // First chunk goes in description (2048 chars), rest go in embed values (1000 chars)
@@ -340,11 +342,11 @@ namespace PluralKit.Bot
 
             // Add the first page to the embed description
             if (pages.Count > 0)
-                eb.WithDescription(pages[0]);
+                eb.Description(pages[0]);
 
             // Add the rest to blank-named (\u200B) fields
             for (var i = 1; i < pages.Count; i++)
-                eb.AddField("\u200B", pages[i]);
+                eb.Field(new("\u200B", pages[i]));
 
             return eb;
         }

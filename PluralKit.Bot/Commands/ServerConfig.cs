@@ -123,7 +123,7 @@ namespace PluralKit.Bot
                     {
                         if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
                         {
-                            eb.AddField(CategoryName(lastCategory), fieldValue.ToString());
+                            eb.Field(new(CategoryName(lastCategory), fieldValue.ToString()));
                             fieldValue.Clear();
                         }
                         else fieldValue.Append("\n");
@@ -132,7 +132,7 @@ namespace PluralKit.Bot
                         lastCategory = channel.ParentId;
                     }
 
-                    eb.AddField(CategoryName(lastCategory), fieldValue.ToString());
+                    eb.Field(new(CategoryName(lastCategory), fieldValue.ToString()));
 
                     return Task.CompletedTask;
                 });

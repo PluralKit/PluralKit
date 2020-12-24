@@ -6,18 +6,16 @@ using System.Threading.Tasks;
 
 using Autofac;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Exceptions;
-
+using Myriad.Builders;
+using Myriad.Gateway;
+using Myriad.Rest.Exceptions;
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using NodaTime;
 
 using PluralKit.Core;
-
-using Permissions = DSharpPlus.Permissions;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
@@ -27,52 +25,45 @@ namespace PluralKit.Bot {
             else return true;
         }
 
-        public static async Task<bool> PromptYesNo(this Context ctx, String msgString, DiscordUser user = null, Duration? timeout = null, IEnumerable<IMention> mentions = null, bool matchFlag = true)
+        public static async Task<bool> PromptYesNo(this Context ctx, string msgString, User user = null, Duration? timeout = null, AllowedMentions mentions = null, bool matchFlag = true)
         {
-            DiscordMessage message;
+            Message message;
             if (matchFlag && ctx.MatchFlag("y", "yes")) return true;
             else message = await ctx.Reply(msgString, mentions: mentions);
             var cts = new CancellationTokenSource();
-            if (user == null) user = ctx.Author;
+            if (user == null) user = ctx.AuthorNew;
             if (timeout == null) timeout = Duration.FromMinutes(5);
             
             // "Fork" the task adding the reactions off so we don't have to wait for them to be finished to start listening for presses
-            var _ = message.CreateReactionsBulk(new[] {Emojis.Success, Emojis.Error});
+            await ctx.RestNew.CreateReactionsBulk(message, new[] {Emojis.Success, Emojis.Error});
             
-            bool ReactionPredicate(MessageReactionAddEventArgs e)
+            bool ReactionPredicate(MessageReactionAddEvent e)
             {
-                if (e.Channel.Id != message.ChannelId || e.Message.Id != message.Id) return false;
-                if (e.User.Id != user.Id) return false;
+                if (e.ChannelId != message.ChannelId || e.MessageId != message.Id) return false;
+                if (e.UserId != user.Id) return false;
                 return true;
             }
 
-            bool MessagePredicate(MessageCreateEventArgs e)
+            bool MessagePredicate(MessageCreateEvent e)
             {
-                if (e.Channel.Id != message.ChannelId) return false;
+                if (e.ChannelId != message.ChannelId) return false;
                 if (e.Author.Id != user.Id) return false;
 
                 var strings = new [] {"y", "yes", "n", "no"};
-                foreach (var str in strings)
-                    if (e.Message.Content.Equals(str, StringComparison.InvariantCultureIgnoreCase))
-                        return true;
-                
-                return false;
+                return strings.Any(str => string.Equals(e.Content, str, StringComparison.InvariantCultureIgnoreCase));
             }
 
-            var messageTask = ctx.Services.Resolve<HandlerQueue<MessageCreateEventArgs>>().WaitFor(MessagePredicate, timeout, cts.Token);
-            var reactionTask = ctx.Services.Resolve<HandlerQueue<MessageReactionAddEventArgs>>().WaitFor(ReactionPredicate, timeout, cts.Token);
+            var messageTask = ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>().WaitFor(MessagePredicate, timeout, cts.Token);
+            var reactionTask = ctx.Services.Resolve<HandlerQueue<MessageReactionAddEvent>>().WaitFor(ReactionPredicate, timeout, cts.Token);
             
             var theTask = await Task.WhenAny(messageTask, reactionTask);
             cts.Cancel();
 
             if (theTask == messageTask)
             {
-                var responseMsg = (await messageTask).Message;
+                var responseMsg = (await messageTask);
                 var positives = new[] {"y", "yes"};
-                foreach (var p in positives)
-                    if (responseMsg.Content.Equals(p, StringComparison.InvariantCultureIgnoreCase))
-                        return true;
-                return false;
+                return positives.Any(p => string.Equals(responseMsg.Content, p, StringComparison.InvariantCultureIgnoreCase));
             }
 
             if (theTask == reactionTask) 
@@ -81,50 +72,45 @@ namespace PluralKit.Bot {
             return false;
         }
 
-        public static async Task<MessageReactionAddEventArgs> AwaitReaction(this Context ctx, DiscordMessage message, DiscordUser user = null, Func<MessageReactionAddEventArgs, bool> predicate = null, TimeSpan? timeout = null) {
-            var tcs = new TaskCompletionSource<MessageReactionAddEventArgs>();
-            Task Inner(DiscordClient _, MessageReactionAddEventArgs args) {
-                if (message.Id != args.Message.Id) return Task.CompletedTask; // Ignore reactions for different messages
-                if (user != null && user.Id != args.User.Id) return Task.CompletedTask; // Ignore messages from other users if a user was defined
-                if (predicate != null && !predicate.Invoke(args)) return Task.CompletedTask; // Check predicate
-                tcs.SetResult(args);
-                return Task.CompletedTask;
+        public static async Task<MessageReactionAddEvent> AwaitReaction(this Context ctx, Message message, User user = null, Func<MessageReactionAddEvent, bool> predicate = null, Duration? timeout = null)
+        {
+            bool ReactionPredicate(MessageReactionAddEvent evt)
+            {
+                if (message.Id != evt.MessageId) return false; // Ignore reactions for different messages
+                if (user != null && user.Id != evt.UserId) return false; // Ignore messages from other users if a user was defined
+                if (predicate != null && !predicate.Invoke(evt)) return false; // Check predicate
+                return true;
             }
-
-            ctx.Shard.MessageReactionAdded += Inner;
-            try {
-                return await tcs.Task.TimeoutAfter(timeout);
-            } finally {
-                ctx.Shard.MessageReactionAdded -= Inner;
-            }
+            
+            return await ctx.Services.Resolve<HandlerQueue<MessageReactionAddEvent>>().WaitFor(ReactionPredicate, timeout);
         }
 
         public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply)
         {
-            bool Predicate(MessageCreateEventArgs e) =>
-                e.Author == ctx.Author && e.Channel.Id == ctx.Channel.Id;
+            bool Predicate(MessageCreateEvent e) =>
+                e.Author.Id == ctx.AuthorNew.Id && e.ChannelId == ctx.Channel.Id;
             
-            var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEventArgs>>()
+            var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>()
                 .WaitFor(Predicate, Duration.FromMinutes(1));
             
-            return string.Equals(msg.Message.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
+            return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, Func<DiscordEmbedBuilder, IEnumerable<T>, Task> renderer) {
+        public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, Func<EmbedBuilder, IEnumerable<T>, Task> renderer) {
             // TODO: make this generic enough we can use it in Choose<T> below
 
             var buffer = new List<T>();
             await using var enumerator = items.GetAsyncEnumerator();
 
             var pageCount = (int) Math.Ceiling(totalCount / (double) itemsPerPage);
-            async Task<DiscordEmbed> MakeEmbedForPage(int page)
+            async Task<Embed> MakeEmbedForPage(int page)
             {
                 var bufferedItemsNeeded = (page + 1) * itemsPerPage;
                 while (buffer.Count < bufferedItemsNeeded && await enumerator.MoveNextAsync())
                     buffer.Add(enumerator.Current);
 
-                var eb = new DiscordEmbedBuilder();
-                eb.Title = pageCount > 1 ? $"[{page+1}/{pageCount}] {title}" : title;
+                var eb = new EmbedBuilder();
+                eb.Title(pageCount > 1 ? $"[{page+1}/{pageCount}] {title}" : title);
                 await renderer(eb, buffer.Skip(page*itemsPerPage).Take(itemsPerPage));
                 return eb.Build();
             }
@@ -134,13 +120,13 @@ namespace PluralKit.Bot {
                 var msg = await ctx.Reply(embed: await MakeEmbedForPage(0));
                 if (pageCount <= 1) return; // If we only have one (or no) page, don't bother with the reaction/pagination logic, lol
                 string[] botEmojis = { "\u23EA", "\u2B05", "\u27A1", "\u23E9", Emojis.Error };
-                
-                var _ = msg.CreateReactionsBulk(botEmojis); // Again, "fork"
+
+                var _ = ctx.RestNew.CreateReactionsBulk(msg, botEmojis); // Again, "fork"
 
                 try {
                     var currentPage = 0;
                     while (true) {
-                        var reaction = await ctx.AwaitReaction(msg, ctx.Author, timeout: TimeSpan.FromMinutes(5));
+                        var reaction = await ctx.AwaitReaction(msg, ctx.AuthorNew, timeout: Duration.FromMinutes(5));
 
                         // Increment/decrement page counter based on which reaction was clicked
                         if (reaction.Emoji.Name == "\u23EA") currentPage = 0; // <<
@@ -154,18 +140,18 @@ namespace PluralKit.Bot {
                         
                         // If we can, remove the user's reaction (so they can press again quickly)
                         if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
-                            await msg.DeleteReactionAsync(reaction.Emoji, reaction.User);
+                            await ctx.RestNew.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, reaction.UserId);
                         
                         // Edit the embed with the new page
                         var embed = await MakeEmbedForPage(currentPage);
-                        await msg.ModifyAsync(embed: embed);
+                        await ctx.RestNew.EditMessage(msg.ChannelId, msg.Id, new MessageEditRequest {Embed = embed});
                     }
                 } catch (TimeoutException) {
                     // "escape hatch", clean up as if we hit X
                 }
 
                 if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
-                    await msg.DeleteAllReactionsAsync();
+                    await ctx.RestNew.DeleteAllReactions(msg.ChannelId, msg.Id);
             }
             // If we get a "NotFound" error, the message has been deleted and thus not our problem
             catch (NotFoundException) { }
@@ -203,9 +189,10 @@ namespace PluralKit.Bot {
                 // Add back/forward reactions and the actual indicator emojis
                 async Task AddEmojis()
                 {
-                    await msg.CreateReactionAsync(DiscordEmoji.FromUnicode("\u2B05"));
-                    await msg.CreateReactionAsync(DiscordEmoji.FromUnicode("\u27A1"));
-                    for (int i = 0; i < items.Count; i++) await msg.CreateReactionAsync(DiscordEmoji.FromUnicode(indicators[i]));
+                    await ctx.RestNew.CreateReaction(msg.ChannelId, msg.Id, new() { Name = "\u2B05" });
+                    await ctx.RestNew.CreateReaction(msg.ChannelId, msg.Id, new() { Name = "\u27A1" });
+                    for (int i = 0; i < items.Count; i++) 
+                        await ctx.RestNew.CreateReaction(msg.ChannelId, msg.Id, new() { Name = indicators[i] });
                 }
 
                 var _ = AddEmojis(); // Not concerned about awaiting
@@ -213,7 +200,7 @@ namespace PluralKit.Bot {
                 while (true)
                 {
                     // Wait for a reaction
-                    var reaction = await ctx.AwaitReaction(msg, ctx.Author);
+                    var reaction = await ctx.AwaitReaction(msg, ctx.AuthorNew);
                     
                     // If it's a movement reaction, inc/dec the page index
                     if (reaction.Emoji.Name == "\u2B05") currPage -= 1; // <
@@ -230,8 +217,13 @@ namespace PluralKit.Bot {
                         if (idx < items.Count) return items[idx];
                     }
 
-                    var __ = msg.DeleteReactionAsync(reaction.Emoji, ctx.Author); // don't care about awaiting
-                    await msg.ModifyAsync($"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
+                    var __ = ctx.RestNew.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, ctx.Author.Id);
+                    await ctx.RestNew.EditMessage(msg.ChannelId, msg.Id,
+                        new()
+                        {
+                            Content =
+                                $"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}"
+                        });
                 }
             }
             else
@@ -241,13 +233,14 @@ namespace PluralKit.Bot {
                 // Add the relevant reactions (we don't care too much about awaiting)
                 async Task AddEmojis()
                 {
-                    for (int i = 0; i < items.Count; i++) await msg.CreateReactionAsync(DiscordEmoji.FromUnicode(indicators[i]));
+                    for (int i = 0; i < items.Count; i++)
+                        await ctx.RestNew.CreateReaction(msg.ChannelId, msg.Id, new() {Name = indicators[i]});
                 }
 
                 var _ = AddEmojis();
 
                 // Then wait for a reaction and return whichever one we found
-                var reaction = await ctx.AwaitReaction(msg, ctx.Author,rx => indicators.Contains(rx.Emoji.Name));
+                var reaction = await ctx.AwaitReaction(msg, ctx.AuthorNew,rx => indicators.Contains(rx.Emoji.Name));
                 return items[Array.IndexOf(indicators, reaction.Emoji.Name)];
             }
         }
@@ -271,12 +264,12 @@ namespace PluralKit.Bot {
 
             try
             {
-                await Task.WhenAll(ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode(emoji)), task);
+                await Task.WhenAll(ctx.RestNew.CreateReaction(ctx.MessageNew.ChannelId, ctx.MessageNew.Id, new() {Name = emoji}), task);
                 return await task;
             }
             finally
             {
-                var _ = ctx.Message.DeleteReactionAsync(DiscordEmoji.FromUnicode(emoji), ctx.Shard.CurrentUser);
+                var _ = ctx.RestNew.DeleteOwnReaction(ctx.MessageNew.ChannelId, ctx.MessageNew.Id, new() { Name = emoji });
             }
         } 
     }

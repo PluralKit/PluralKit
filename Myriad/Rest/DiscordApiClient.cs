@@ -33,8 +33,11 @@ namespace Myriad.Rest
         public Task<Message?> GetMessage(ulong channelId, ulong messageId) =>
             _client.Get<Message>($"/channels/{channelId}/messages/{messageId}", ("GetMessage", channelId));
 
-        public Task<Channel?> GetGuild(ulong id) =>
-            _client.Get<Channel>($"/guilds/{id}", ("GetGuild", id));
+        public Task<Guild?> GetGuild(ulong id) =>
+            _client.Get<Guild>($"/guilds/{id}", ("GetGuild", id));
+        
+        public Task<Channel[]> GetGuildChannels(ulong id) =>
+            _client.Get<Channel[]>($"/guilds/{id}/channels", ("GetGuildChannels", id))!;
 
         public Task<User?> GetUser(ulong id) =>
             _client.Get<User>($"/users/{id}", ("GetUser", default));

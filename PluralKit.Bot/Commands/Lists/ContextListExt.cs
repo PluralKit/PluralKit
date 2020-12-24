@@ -3,9 +3,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
-
 using Humanizer;
+
+using Myriad.Builders;
 
 using NodaTime;
 
@@ -90,10 +90,10 @@ namespace PluralKit.Bot
             await ctx.Paginate(members.ToAsyncEnumerable(), members.Count, itemsPerPage, embedTitle, Renderer);
 
             // Base renderer, dispatches based on type
-            Task Renderer(DiscordEmbedBuilder eb, IEnumerable<ListedMember> page)
+            Task Renderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
             {
                 // Add a global footer with the filter/sort string + result count
-                eb.WithFooter($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}.");
+                eb.Footer(new($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}."));
                 
                 // Then call the specific renderers
                 if (opts.Type == ListType.Short)
@@ -104,7 +104,7 @@ namespace PluralKit.Bot
                 return Task.CompletedTask;
             }
 
-            void ShortRenderer(DiscordEmbedBuilder eb, IEnumerable<ListedMember> page)
+            void ShortRenderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
             {  
                 // We may end up over the description character limit
                 // so run it through a helper that "makes it work" :)
@@ -122,7 +122,7 @@ namespace PluralKit.Bot
                 }));
             }
             
-            void LongRenderer(DiscordEmbedBuilder eb, IEnumerable<ListedMember> page)
+            void LongRenderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
             {
                 var zone = ctx.System?.Zone ?? DateTimeZone.Utc;
                 foreach (var m in page)
@@ -162,7 +162,7 @@ namespace PluralKit.Bot
                     if (m.MemberVisibility == PrivacyLevel.Private)
                         profile.Append("\n*(this member is hidden)*");
                     
-                    eb.AddField(m.NameFor(ctx), profile.ToString().Truncate(1024));
+                    eb.Field(new(m.NameFor(ctx), profile.ToString().Truncate(1024)));
                 }
             }
         }

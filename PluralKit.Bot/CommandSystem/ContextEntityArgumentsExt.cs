@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-
+using Myriad.Cache;
 using Myriad.Types;
 
 using PluralKit.Bot.Utils;
@@ -12,11 +10,12 @@ namespace PluralKit.Bot
 {
     public static class ContextEntityArgumentsExt
     {
-        public static async Task<DiscordUser> MatchUser(this Context ctx)
+        public static async Task<User> MatchUser(this Context ctx)
         {
             var text = ctx.PeekArgument();
             if (text.TryParseMention(out var id))
-                return await ctx.Shard.GetUser(id);
+                return await ctx.Cache.GetOrFetchUser(ctx.RestNew, id);
+
             return null;
         }
 

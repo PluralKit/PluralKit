@@ -98,9 +98,11 @@ namespace PluralKit.Bot
                             stringToAdd =
                                 $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago)\n";
                         }
+                        
                         try // Unfortunately the only way to test DiscordEmbedBuilder.Description max length is this
                         {
-                            builder.Description += stringToAdd;
+                            // TODO: what is this??
+                            // builder.Description += stringToAdd;
                         }
                         catch (ArgumentException)
                         {

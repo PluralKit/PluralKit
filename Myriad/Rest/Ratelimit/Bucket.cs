@@ -77,8 +77,8 @@ namespace Myriad.Rest.Ratelimit
                     var headerNextReset = DateTimeOffset.UtcNow + headers.ResetAfter.Value; // todo: server time
                     if (headerNextReset > _nextReset)
                     {
-                        _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server",
-                            Key, Major, _nextReset);
+                        _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter})",
+                            Key, Major, headerNextReset, headers.ResetAfter.Value);
 
                         _nextReset = headerNextReset;
                         _resetTimeValid = true;
@@ -101,7 +101,7 @@ namespace Myriad.Rest.Ratelimit
                 _semaphore.Wait();
 
                 // If we're past the reset time *and* we haven't reset already, do that
-                var timeSinceReset = _nextReset - now;
+                var timeSinceReset = now - _nextReset;
                 var shouldReset = _resetTimeValid && timeSinceReset > TimeSpan.Zero;
                 if (shouldReset)
                 {

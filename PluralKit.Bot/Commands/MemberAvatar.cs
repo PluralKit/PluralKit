@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 
 using DSharpPlus.Entities;
 
+using Myriad.Builders;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -135,7 +137,7 @@ namespace PluralKit.Bot
             // The attachment's already right there, no need to preview it.
             var hasEmbed = avatar.Source != AvatarSource.Attachment;
             return hasEmbed 
-                ? ctx.Reply(msg, embed: new DiscordEmbedBuilder().WithImageUrl(avatar.Url).Build()) 
+                ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(avatar.Url)).Build()) 
                 : ctx.Reply(msg);
         }
 

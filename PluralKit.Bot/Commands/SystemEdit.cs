@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 
 using DSharpPlus.Entities;
 
+using Myriad.Builders;
+
 using NodaTime;
 using NodaTime.Text;
 using NodaTime.TimeZones;
@@ -150,7 +152,7 @@ namespace PluralKit.Bot
                 // The attachment's already right there, no need to preview it.
                 var hasEmbed = img.Source != AvatarSource.Attachment;
                 await (hasEmbed 
-                    ? ctx.Reply(msg, embed: new DiscordEmbedBuilder().WithImageUrl(img.Url).Build()) 
+                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Build()) 
                     : ctx.Reply(msg));
             }
 

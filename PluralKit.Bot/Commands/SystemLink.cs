@@ -1,7 +1,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
+using Myriad.Extensions;
+using Myriad.Rest.Types;
 
 using PluralKit.Core;
 
@@ -33,8 +34,8 @@ namespace PluralKit.Bot
             if (existingAccount != null)
                 throw Errors.AccountInOtherSystem(existingAccount); 
 
-            var msg = $"{account.Mention}, please confirm the link by clicking the {Emojis.Success} reaction on this message.";
-            var mentions = new IMention[] { new UserMention(account) };
+            var msg = $"{account.Mention()}, please confirm the link by clicking the {Emojis.Success} reaction on this message.";
+            var mentions = new AllowedMentions {Users = new[] {account.Id}};
             if (!await ctx.PromptYesNo(msg, user: account, mentions: mentions, matchFlag: false)) throw Errors.MemberLinkCancelled;
             await _repo.AddAccount(conn, ctx.System.Id, account.Id);
             await ctx.Reply($"{Emojis.Success} Account linked to system.");

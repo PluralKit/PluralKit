@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 
 using Myriad.Gateway;
+using Myriad.Rest;
+using Myriad.Types;
 
 namespace Myriad.Cache
 {
@@ -29,7 +31,7 @@ namespace Myriad.Cache
                 case GuildRoleDeleteEvent grd:
                     return cache.RemoveRole(grd.GuildId, grd.RoleId);
                 case MessageCreateEvent mc:
-                    return cache.SaveUser(mc.Author);
+                    return cache.SaveMessageCreate(mc);
             }
 
             return default;
@@ -45,6 +47,24 @@ namespace Myriad.Cache
 
             foreach (var member in guildCreate.Members)
                 await cache.SaveUser(member.User);
+        }
+
+        private static async ValueTask SaveMessageCreate(this IDiscordCache cache, MessageCreateEvent evt)
+        {
+            await cache.SaveUser(evt.Author);
+            foreach (var mention in evt.Mentions) 
+                await cache.SaveUser(mention);
+        }
+
+        public static async ValueTask<User?> GetOrFetchUser(this IDiscordCache cache, DiscordApiClient rest, ulong userId)
+        {
+            if (cache.TryGetUser(userId, out var cacheUser))
+                return cacheUser;
+
+            var restUser = await rest.GetUser(userId);
+            if (restUser != null)
+                await cache.SaveUser(restUser);
+            return restUser;
         }
     }
 }

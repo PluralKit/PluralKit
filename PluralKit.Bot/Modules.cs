@@ -83,7 +83,9 @@ namespace PluralKit.Bot
             
             // Event handler queue
             builder.RegisterType<HandlerQueue<MessageCreateEventArgs>>().AsSelf().SingleInstance();
+            builder.RegisterType<HandlerQueue<MessageCreateEvent>>().AsSelf().SingleInstance();
             builder.RegisterType<HandlerQueue<MessageReactionAddEventArgs>>().AsSelf().SingleInstance();
+            builder.RegisterType<HandlerQueue<MessageReactionAddEvent>>().AsSelf().SingleInstance();
             
             // Bot services
             builder.RegisterType<EmbedService>().AsSelf().SingleInstance();

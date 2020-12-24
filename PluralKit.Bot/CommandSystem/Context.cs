@@ -8,11 +8,11 @@ using Autofac;
 
 using DSharpPlus;
 using DSharpPlus.Entities;
-using DSharpPlus.Net;
 
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
+using Myriad.Rest.Types;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
@@ -34,7 +34,7 @@ namespace PluralKit.Bot
         private readonly Guild? _guild;
         private readonly Channel _channel;
         private readonly DiscordMessage _message = null;
-        private readonly Message _messageNew;
+        private readonly MessageCreateEvent _messageNew;
         private readonly Parameters _parameters;
         private readonly MessageContext _messageContext;
         private readonly PermissionSet _botPermissions;
@@ -79,6 +79,7 @@ namespace PluralKit.Bot
         public DiscordChannel Channel => _message.Channel;
         public Channel ChannelNew => _channel;
         public User AuthorNew => _messageNew.Author;
+        public GuildMemberPartial MemberNew => _messageNew.Member;
         public DiscordMessage Message => _message;
         public Message MessageNew => _messageNew;
         public DiscordGuild Guild => _message.Channel.Guild;
@@ -91,6 +92,7 @@ namespace PluralKit.Bot
         public PermissionSet UserPermissions => _userPermissions;
 
         public DiscordRestClient Rest => _rest;
+        public DiscordApiClient RestNew => _newRest;
 
         public PKSystem System => _senderSystem;
         
@@ -102,16 +104,16 @@ namespace PluralKit.Bot
         public Task<DiscordMessage> Reply(string text, DiscordEmbed embed,
                                           IEnumerable<IMention>? mentions = null)
         {
-            return Reply(text, (DiscordEmbed) null, mentions);
+            throw new NotImplementedException();
         }
 
         public Task<DiscordMessage> Reply(DiscordEmbed embed,
                                           IEnumerable<IMention>? mentions = null)
         {
-            return Reply(null, (DiscordEmbed) null, mentions);
+            throw new NotImplementedException();
         }
 
-        public async Task<DiscordMessage> Reply(string text = null, Embed embed = null, IEnumerable<IMention>? mentions = null)
+        public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
         {
             if (!BotPermissions.HasFlag(PermissionSet.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
@@ -123,10 +125,10 @@ namespace PluralKit.Bot
             var msg = await _newRest.CreateMessage(_channel.Id, new MessageRequest
             {
                 Content = text,
-                Embed = embed
+                Embed = embed,
+                AllowedMentions = mentions
             });
-            // TODO: embeds/mentions
-            // var msg = await Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
+            // TODO: mentions should default to empty and not null?
 
             if (embed != null)
             {
@@ -135,8 +137,7 @@ namespace PluralKit.Bot
                 await _commandMessageService.RegisterMessage(msg.Id, AuthorNew.Id);
             }
 
-            // return msg;
-            return null;
+            return msg;
         }
         
         public async Task Execute<T>(Command commandDef, Func<T, Task> handler)

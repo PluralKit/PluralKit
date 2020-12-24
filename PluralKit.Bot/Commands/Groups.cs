@@ -10,6 +10,8 @@ using DSharpPlus.Entities;
 
 using Humanizer;
 
+using Myriad.Builders;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -194,7 +196,7 @@ namespace PluralKit.Bot
                 // The attachment's already right there, no need to preview it.
                 var hasEmbed = img.Source != AvatarSource.Attachment;
                 await (hasEmbed 
-                    ? ctx.Reply(msg, embed: new DiscordEmbedBuilder().WithImageUrl(img.Url).Build()) 
+                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Build()) 
                     : ctx.Reply(msg));
             }
 
@@ -265,7 +267,7 @@ namespace PluralKit.Bot
             var title = system.Name != null ? $"Groups of {system.Name} (`{system.Hid}`)" : $"Groups of `{system.Hid}`";
             await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, 25, title, Renderer);
             
-            Task Renderer(DiscordEmbedBuilder eb, IEnumerable<ListedGroup> page)
+            Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
             {
                 eb.WithSimpleLineContent(page.Select(g =>
                 {
@@ -274,7 +276,7 @@ namespace PluralKit.Bot
                     else
                         return $"[`{g.Hid}`] **{g.Name.EscapeMarkdown()}** ({"member".ToQuantity(g.MemberCount)})";
                 }));
-                eb.WithFooter($"{groups.Count} total.");
+                eb.Footer(new($"{groups.Count} total."));
                 return Task.CompletedTask;
             }
         }
