@@ -167,7 +167,7 @@ namespace PluralKit.Bot
             else if (newTimeoutHours == 0)
                 await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
             else
-                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize()} hours.");
+                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize()}.");
         }
 
         public async Task AutoproxyAccount(Context ctx)
