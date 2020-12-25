@@ -10,19 +10,12 @@ namespace Myriad.Cache
 {
     public class MemoryDiscordCache: IDiscordCache
     {
-        private readonly ConcurrentDictionary<ulong, Channel> _channels;
-        private readonly ConcurrentDictionary<ulong, CachedGuild> _guilds;
-        private readonly ConcurrentDictionary<ulong, Role> _roles;
-        private readonly ConcurrentDictionary<ulong, User> _users;
-
-        public MemoryDiscordCache()
-        {
-            _guilds = new ConcurrentDictionary<ulong, CachedGuild>();
-            _channels = new ConcurrentDictionary<ulong, Channel>();
-            _users = new ConcurrentDictionary<ulong, User>();
-            _roles = new ConcurrentDictionary<ulong, Role>();
-        }
-
+        private readonly ConcurrentDictionary<ulong, Channel> _channels = new();
+        private readonly ConcurrentDictionary<ulong, ulong> _dmChannels = new();
+        private readonly ConcurrentDictionary<ulong, CachedGuild> _guilds = new();
+        private readonly ConcurrentDictionary<ulong, Role> _roles = new();
+        private readonly ConcurrentDictionary<ulong, User> _users = new();
+        
         public ValueTask SaveGuild(Guild guild)
         {
             SaveGuildRaw(guild);
@@ -35,14 +28,21 @@ namespace Myriad.Cache
             return default;
         }
 
-        public ValueTask SaveChannel(Channel channel)
+        public async ValueTask SaveChannel(Channel channel)
         {
             _channels[channel.Id] = channel;
 
             if (channel.GuildId != null && _guilds.TryGetValue(channel.GuildId.Value, out var guild))
                 guild.Channels.TryAdd(channel.Id, true);
 
-            return default;
+            if (channel.Recipients != null)
+            {
+                foreach (var recipient in channel.Recipients)
+                {
+                    _dmChannels[recipient.Id] = channel.Id;
+                    await SaveUser(recipient);
+                }
+            }
         }
 
         public ValueTask SaveUser(User user)
@@ -124,6 +124,14 @@ namespace Myriad.Cache
 
         public bool TryGetChannel(ulong channelId, out Channel channel) => 
             _channels.TryGetValue(channelId, out channel!);
+
+        public bool TryGetDmChannel(ulong userId, out Channel channel)
+        {
+            channel = default!;
+            if (!_dmChannels.TryGetValue(userId, out var channelId))
+                return false;
+            return TryGetChannel(channelId, out channel);
+        } 
 
         public bool TryGetUser(ulong userId, out User user) =>
             _users.TryGetValue(userId, out user!);

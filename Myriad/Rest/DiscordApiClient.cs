@@ -120,6 +120,9 @@ namespace Myriad.Rest
             _client.PostMultipart<Message>($"/webhooks/{webhookId}/{webhookToken}?wait=true",
                 ("ExecuteWebhook", webhookId), request, files)!;
 
+        public Task<Channel> CreateDm(ulong recipientId) =>
+            _client.Post<Channel>($"/users/@me/channels", ("CreateDM", default), new CreateDmRequest(recipientId))!;
+
         private static string EncodeEmoji(Emoji emoji) =>
             WebUtility.UrlEncode(emoji.Name) ?? emoji.Id?.ToString() ??
             throw new ArgumentException("Could not encode emoji");

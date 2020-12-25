@@ -55,16 +55,5 @@ namespace Myriad.Cache
             foreach (var mention in evt.Mentions) 
                 await cache.SaveUser(mention);
         }
-
-        public static async ValueTask<User?> GetOrFetchUser(this IDiscordCache cache, DiscordApiClient rest, ulong userId)
-        {
-            if (cache.TryGetUser(userId, out var cacheUser))
-                return cacheUser;
-
-            var restUser = await rest.GetUser(userId);
-            if (restUser != null)
-                await cache.SaveUser(restUser);
-            return restUser;
-        }
     }
 }

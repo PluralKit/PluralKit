@@ -19,6 +19,7 @@ namespace Myriad.Cache
 
         public bool TryGetGuild(ulong guildId, out Guild guild);
         public bool TryGetChannel(ulong channelId, out Channel channel);
+        public bool TryGetDmChannel(ulong userId, out Channel channel);
         public bool TryGetUser(ulong userId, out User user);
         public bool TryGetRole(ulong roleId, out Role role);
 

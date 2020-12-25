@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using Myriad.Cache;
+using Myriad.Rest;
 using Myriad.Types;
 
 namespace Myriad.Extensions
@@ -40,6 +42,27 @@ namespace Myriad.Extensions
             if (!cache.TryGetRole(roleId, out var role))
                 throw new KeyNotFoundException($"User {roleId} not found in cache");
             return role;
+        }
+        
+        public static async ValueTask<User?> GetOrFetchUser(this IDiscordCache cache, DiscordApiClient rest, ulong userId)
+        {
+            if (cache.TryGetUser(userId, out var cacheUser))
+                return cacheUser;
+
+            var restUser = await rest.GetUser(userId);
+            if (restUser != null)
+                await cache.SaveUser(restUser);
+            return restUser;
+        }
+        
+        public static async Task<Channel> GetOrCreateDmChannel(this IDiscordCache cache, DiscordApiClient rest, ulong recipientId)
+        {
+            if (cache.TryGetDmChannel(recipientId, out var cacheChannel))
+                return cacheChannel;
+
+            var restChannel = await rest.CreateDm(recipientId);
+            await cache.SaveChannel(restChannel);
+            return restChannel;
         }
     }
 }

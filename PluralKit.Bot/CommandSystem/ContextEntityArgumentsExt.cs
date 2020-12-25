@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 
 using Myriad.Cache;
+using Myriad.Extensions;
 using Myriad.Types;
 
 using PluralKit.Bot.Utils;
