@@ -5,6 +5,7 @@ obj/
 # IDE files
 .idea/
 .vscode/
+.vs/
 tags/
 
 # Dependencies
@@ -15,6 +16,8 @@ node_modules/
 pluralkit.conf
 pluralkit.*.conf
 *.DotSettings.user
+*.csproj.user
+launchsettings.json
 
 # Generated
 logs/

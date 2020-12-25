@@ -10,6 +10,10 @@
         <DebugType>full</DebugType>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="Polly" Version="7.2.1" />
       <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
