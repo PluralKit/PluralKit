@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus;
 using DSharpPlus.Entities;
 
 using Humanizer;
 
 using Myriad.Builders;
 using Myriad.Cache;
+using Myriad.Extensions;
 using Myriad.Rest;
 using Myriad.Types;
 
@@ -22,13 +22,11 @@ namespace PluralKit.Bot {
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
-        private readonly DiscordShardedClient _client;
         private readonly IDiscordCache _cache;
         private readonly DiscordApiClient _rest;
 
-        public EmbedService(DiscordShardedClient client, IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
+        public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
         {
-            _client = client;
             _db = db;
             _repo = repo;
             _cache = cache;
@@ -39,14 +37,7 @@ namespace PluralKit.Bot {
         {
             async Task<(ulong Id, User? User)> Inner(ulong id)
             {
-                if (_cache.TryGetUser(id, out var cachedUser))
-                    return (id, cachedUser);
-                
-                var user = await _rest.GetUser(id);
-                if (user == null)
-                    return (id, null);
-                // todo: move to "GetUserCached" helper
-                await _cache.SaveUser(user);
+                var user = await _cache.GetOrFetchUser(_rest, id);
                 return (id, user);
             }
 
@@ -108,7 +99,7 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, DiscordGuild guild, LookupContext ctx)
+        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)
         {
 
             // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
@@ -233,26 +224,33 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
-        public async Task<Embed> CreateMessageInfoEmbed(DiscordClient client, FullMessage msg)
+        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
         {
+            var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
             var ctx = LookupContext.ByNonOwner;
-            var channel = await _client.GetChannel(msg.Message.Channel);
-            var serverMsg = channel != null ? await channel.GetMessage(msg.Message.Mid) : null;
+            var serverMsg = channel != null ? await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid) : null;
 
             // Need this whole dance to handle cases where:
             // - the user is deleted (userInfo == null)
             // - the bot's no longer in the server we're querying (channel == null)
             // - the member is no longer in the server we're querying (memberInfo == null)
-            DiscordMember memberInfo = null;
-            DiscordUser userInfo = null;
-            if (channel != null) memberInfo = await channel.Guild.GetMember(msg.Message.Sender);
-            if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
-            else userInfo = await client.GetUser(msg.Message.Sender);
+            // TODO: optimize ordering here a bit with new cache impl; and figure what happens if bot leaves server -> channel still cached -> hits this bit and 401s?
+            GuildMemberPartial memberInfo = null;
+            User userInfo = null;
+            if (channel != null)
+            {
+                var m = await _rest.GetGuildMember(channel.GuildId!.Value, msg.Message.Sender);
+                if (m != null)
+                    // Don't do an extra request if we already have this info from the member lookup
+                    userInfo = m.User;
+                memberInfo = m;
+            }
+            else userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
 
             // Calculate string displayed under "Sent by"
             string userStr;
-            if (memberInfo != null && memberInfo.Nickname != null)
-                userStr = $"**Username:** {memberInfo.NameAndMention()}\n**Nickname:** {memberInfo.Nickname}";
+            if (memberInfo != null && memberInfo.Nick != null)
+                userStr = $"**Username:** {userInfo.NameAndMention()}\n**Nickname:** {memberInfo.Nick}";
             else if (userInfo != null) userStr = userInfo.NameAndMention();
             else userStr = $"*(deleted user {msg.Message.Sender})*";
 
@@ -270,7 +268,8 @@ namespace PluralKit.Bot {
             var roles = memberInfo?.Roles?.ToList();
             if (roles != null && roles.Count > 0)
             {
-                var rolesString = string.Join(", ", roles.Select(role => role.Name));
+                // TODO: what if role isn't in cache? figure out a fallback
+                var rolesString = string.Join(", ", roles.Select(id => _cache.GetRole(id).Name));
                 eb.Field(new($"Account roles ({roles.Count})", rolesString.Truncate(1024)));
             }
             

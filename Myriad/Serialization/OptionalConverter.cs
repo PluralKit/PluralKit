@@ -7,26 +7,31 @@ using Myriad.Utils;
 
 namespace Myriad.Serialization
 {
-    public class OptionalConverter: JsonConverter<IOptional>
+    public class OptionalConverterFactory: JsonConverterFactory
     {
-        public override IOptional? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public class Inner<T>: JsonConverter<Optional<T>>
+        {
+            public override Optional<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var inner = JsonSerializer.Deserialize<T>(ref reader, options);
+                return new(inner!);
+            }
+
+            public override void Write(Utf8JsonWriter writer, Optional<T> value, JsonSerializerOptions options)
+            {
+                JsonSerializer.Serialize(writer, value.HasValue ? value.GetValue() : default, typeof(T), options);
+            }
+        }
+        
+        public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
             var innerType = typeToConvert.GetGenericArguments()[0];
-            var inner = JsonSerializer.Deserialize(ref reader, innerType, options);
-
-            // TODO: rewrite to JsonConverterFactory to cut down on reflection
-            return (IOptional?) Activator.CreateInstance(
-                typeof(Optional<>).MakeGenericType(innerType),
+            return (JsonConverter?) Activator.CreateInstance(
+                typeof(Inner<>).MakeGenericType(innerType),
                 BindingFlags.Instance | BindingFlags.Public,
                 null,
-                new[] {inner}, 
+                null,
                 null);
-        }
-
-        public override void Write(Utf8JsonWriter writer, IOptional value, JsonSerializerOptions options)
-        {
-            var innerType = value.GetType().GetGenericArguments()[0];
-            JsonSerializer.Serialize(writer, value.GetValue(), innerType, options);
         }
 
         public override bool CanConvert(Type typeToConvert)

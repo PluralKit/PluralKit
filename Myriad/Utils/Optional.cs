@@ -1,16 +1,10 @@
-﻿using System.Text.Json.Serialization;
-
-using Myriad.Serialization;
-
-namespace Myriad.Utils
+﻿namespace Myriad.Utils
 {
     public interface IOptional
     {
-        bool HasValue { get; }
         object? GetValue();
     }
     
-    [JsonConverter(typeof(OptionalConverter))]
     public readonly struct Optional<T>: IOptional
     {
         public Optional(T value)

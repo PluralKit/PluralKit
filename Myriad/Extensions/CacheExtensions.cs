@@ -55,6 +55,17 @@ namespace Myriad.Extensions
             return restUser;
         }
         
+        public static async ValueTask<Channel?> GetOrFetchChannel(this IDiscordCache cache, DiscordApiClient rest, ulong channelId)
+        {
+            if (cache.TryGetChannel(channelId, out var cacheChannel))
+                return cacheChannel;
+
+            var restChannel = await rest.GetChannel(channelId);
+            if (restChannel != null)
+                await cache.SaveChannel(restChannel);
+            return restChannel;
+        }
+
         public static async Task<Channel> GetOrCreateDmChannel(this IDiscordCache cache, DiscordApiClient rest, ulong recipientId)
         {
             if (cache.TryGetDmChannel(recipientId, out var cacheChannel))

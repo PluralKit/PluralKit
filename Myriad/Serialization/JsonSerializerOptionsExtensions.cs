@@ -13,6 +13,7 @@ namespace Myriad.Serialization
 
             opts.Converters.Add(new PermissionSetJsonConverter());
             opts.Converters.Add(new ShardInfoJsonConverter());
+            opts.Converters.Add(new OptionalConverterFactory());
 
             return opts;
         }

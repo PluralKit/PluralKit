@@ -33,7 +33,6 @@ namespace PluralKit.Bot
             async Task Inner()
             {
                 await Task.Delay(MessageDeleteDelay);
-                // TODO
                 await _db.Execute(c => _repo.DeleteMessage(c, evt.Id));
             }
 

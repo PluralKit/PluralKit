@@ -7,6 +7,7 @@ using Myriad.Gateway;
 using Myriad.Rest;
 using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using PluralKit.Core;
@@ -22,10 +23,11 @@ namespace PluralKit.Bot
         private readonly CommandMessageService _commandMessageService;
         private readonly ILogger _logger;
         private readonly IDiscordCache _cache;
+        private readonly EmbedService _embeds;
         private readonly Bot _bot;
         private readonly DiscordApiClient _rest;
 
-        public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, DiscordApiClient rest)
+        public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, DiscordApiClient rest, EmbedService embeds)
         {
             _db = db;
             _repo = repo;
@@ -33,6 +35,7 @@ namespace PluralKit.Bot
             _cache = cache;
             _bot = bot;
             _rest = rest;
+            _embeds = embeds;
             _logger = logger.ForContext<ReactionAdded>();
         }
 
@@ -151,13 +154,22 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleQueryReaction(MessageReactionAddEvent evt, FullMessage msg)
         {
+            var guild = _cache.GetGuild(evt.GuildId!.Value);
+            
             // Try to DM the user info about the message
             // var member = await evt.Guild.GetMember(evt.User.Id);
             try
             {
-                // TODO: how to DM?
-                // await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, evt.Guild, LookupContext.ByNonOwner));
-                // await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(shard, msg));
+                var dm = await _cache.GetOrCreateDmChannel(_rest, evt.UserId);
+                await _rest.CreateMessage(dm.Id, new MessageRequest
+                {
+                    Embed = await _embeds.CreateMemberEmbed(msg.System, msg.Member, guild, LookupContext.ByNonOwner)
+                });
+                
+                await _rest.CreateMessage(dm.Id, new MessageRequest
+                {
+                    Embed = await _embeds.CreateMessageInfoEmbed(msg)
+                });
             }
             catch (UnauthorizedException) { } // No permissions to DM, can't check for this :(
             
@@ -192,9 +204,12 @@ namespace PluralKit.Bot
                 // If not, tell them in DMs (if we can)
                 try
                 {
-                    // todo: how to dm
-                    // await guildUser.SendMessageFixedAsync($"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:");
-                    // await guildUser.SendMessageFixedAsync($"<@{msg.Message.Sender}>".AsCode());
+                    var dm = await _cache.GetOrCreateDmChannel(_rest, evt.UserId);
+                    await _rest.CreateMessage(dm.Id, new MessageRequest
+                    {
+                        Content = $"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:"
+                    });
+                    await _rest.CreateMessage(dm.Id, new MessageRequest {Content = $"<@{msg.Message.Sender}>".AsCode()});
                 }
                 catch (UnauthorizedException) { }
             }

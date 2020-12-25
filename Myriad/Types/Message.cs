@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Mail;
+using System.Text.Json.Serialization;
+
+using Myriad.Utils;
 
 namespace Myriad.Types
 {
@@ -59,8 +62,8 @@ namespace Myriad.Types
         public Reference? MessageReference { get; set; }
         public MessageFlags Flags { get; init; }
         
-        // todo: null vs. absence
-        public Message? ReferencedMessage { get; init; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<Message?> ReferencedMessage { get; init; }
 
         public record Reference(ulong? GuildId, ulong? ChannelId, ulong? MessageId);
 

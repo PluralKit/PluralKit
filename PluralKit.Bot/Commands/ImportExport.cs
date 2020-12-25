@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Myriad.Rest.Exceptions;
+using Myriad.Types;
 
 using Newtonsoft.Json;
 
@@ -140,14 +141,14 @@ namespace PluralKit.Bot
 
             try
             {
-                var dm = await ctx.Rest.CreateDmAsync(ctx.Author.Id);
+                var dm = await ctx.Rest.CreateDmAsync(ctx.AuthorNew.Id);
+                // TODO: send file
                 var msg = await dm.SendFileAsync("system.json", stream, $"{Emojis.Success} Here you go!");
                 await dm.SendMessageAsync($"<{msg.Attachments[0].Url}>");
                 
                 // If the original message wasn't posted in DMs, send a public reminder
-                // TODO: DMs
-                // if (!(ctx.Channel is DiscordDmChannel))
-                    // await ctx.Reply($"{Emojis.Success} Check your DMs!");
+                if (ctx.ChannelNew.Type == Channel.ChannelType.Dm)
+                    await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
             catch (UnauthorizedException)
             {

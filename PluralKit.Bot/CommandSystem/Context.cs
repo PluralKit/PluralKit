@@ -101,18 +101,6 @@ namespace PluralKit.Bot
         internal IDatabase Database => _db;
         internal ModelRepository Repository => _repo;
 
-        public Task<DiscordMessage> Reply(string text, DiscordEmbed embed,
-                                          IEnumerable<IMention>? mentions = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<DiscordMessage> Reply(DiscordEmbed embed,
-                                          IEnumerable<IMention>? mentions = null)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
         {
             if (!BotPermissions.HasFlag(PermissionSet.SendMessages))
