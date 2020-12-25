@@ -17,6 +17,7 @@ namespace Myriad.Rest.Ratelimit
 
         private DateTimeOffset _nextReset;
         private bool _resetTimeValid;
+        private bool _hasReceivedRemaining;
 
         public Bucket(ILogger logger, string key, ulong major, int limit)
         {
@@ -77,8 +78,8 @@ namespace Myriad.Rest.Ratelimit
                     var headerNextReset = DateTimeOffset.UtcNow + headers.ResetAfter.Value; // todo: server time
                     if (headerNextReset > _nextReset)
                     {
-                        _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter})",
-                            Key, Major, headerNextReset, headers.ResetAfter.Value);
+                        _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter}, new remaining: {Remaining})",
+                            Key, Major, headerNextReset, headers.ResetAfter.Value, headers.Remaining);
 
                         _nextReset = headerNextReset;
                         _resetTimeValid = true;
@@ -87,6 +88,12 @@ namespace Myriad.Rest.Ratelimit
 
                 if (headers.Limit != null)
                     Limit = headers.Limit.Value;
+
+                if (headers.Remaining != null && !_hasReceivedRemaining)
+                {
+                    _hasReceivedRemaining = true;
+                    Remaining = headers.Remaining.Value;
+                }
             }
             finally
             {

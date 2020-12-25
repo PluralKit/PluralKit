@@ -3,16 +3,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-
+using Myriad.Builders;
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Types;
 
 using PluralKit.Core;
-
-using Permissions = DSharpPlus.Permissions;
 
 namespace PluralKit.Bot
 {
@@ -183,15 +179,15 @@ namespace PluralKit.Bot
                 newValue = false;
             else
             {
-                var eb = new DiscordEmbedBuilder()
-                    .WithTitle("Log cleanup settings")
-                    .AddField("Supported bots", botList);
+                var eb = new EmbedBuilder()
+                    .Title("Log cleanup settings")
+                    .Field(new("Supported bots", botList));
 
                 var guildCfg = await _db.Execute(c => _repo.GetGuild(c, ctx.GuildNew.Id));
                 if (guildCfg.LogCleanupEnabled)
-                    eb.WithDescription("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
+                    eb.Description("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
                 else 
-                    eb.WithDescription("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
+                    eb.Description("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }

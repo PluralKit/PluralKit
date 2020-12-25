@@ -5,9 +5,9 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
+using Myriad.Rest.Exceptions;
+
 using Newtonsoft.Json;
-using DSharpPlus.Exceptions;
-using DSharpPlus.Entities;
 
 using Newtonsoft.Json.Linq;
 
@@ -18,7 +18,7 @@ namespace PluralKit.Bot
     public class ImportExport
     {
         private readonly DataFileService _dataFiles;
-        private readonly JsonSerializerSettings _settings = new JsonSerializerSettings
+        private readonly JsonSerializerSettings _settings = new()
         {
             // Otherwise it'll mess up/reformat the ISO strings for ???some??? reason >.>
             DateParseHandling = DateParseHandling.None
@@ -145,8 +145,9 @@ namespace PluralKit.Bot
                 await dm.SendMessageAsync($"<{msg.Attachments[0].Url}>");
                 
                 // If the original message wasn't posted in DMs, send a public reminder
-                if (!(ctx.Channel is DiscordDmChannel))
-                    await ctx.Reply($"{Emojis.Success} Check your DMs!");
+                // TODO: DMs
+                // if (!(ctx.Channel is DiscordDmChannel))
+                    // await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
             catch (UnauthorizedException)
             {

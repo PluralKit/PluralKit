@@ -7,6 +7,8 @@ using Dapper;
 
 using DSharpPlus.Entities;
 
+using Myriad.Builders;
+
 using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
@@ -89,11 +91,11 @@ namespace PluralKit.Bot
             var data = JObject.Parse(await resp.Content.ReadAsStringAsync());
             var scream = data["soulscream"]!.Value<string>();
 
-            var eb = new DiscordEmbedBuilder()
-                .WithColor(DiscordColor.Red)
-                .WithTitle(name)
-                .WithUrl($"https://onomancer.sibr.dev/reflect?name={encoded}")
-                .WithDescription($"*{scream}*");
+            var eb = new EmbedBuilder()
+                .Color((uint?) DiscordColor.Red.Value)
+                .Title(name)
+                .Url($"https://onomancer.sibr.dev/reflect?name={encoded}")
+                .Description($"*{scream}*");
             await ctx.Reply(embed: eb.Build());
         }
     }

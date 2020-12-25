@@ -44,6 +44,7 @@ namespace Myriad.Rest.Ratelimit
             if (!_knownKeyLimits.TryGetValue(key, out var knownLimit))
                 return null;
 
+            _logger.Debug("Creating new bucket {BucketKey}/{BucketMajor} with limit {KnownLimit}", key, major, knownLimit);
             return _buckets.GetOrAdd((key, major),
                 k => new Bucket(_logger, k.Item1, k.Item2, knownLimit));
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
+using Myriad.Builders;
 
 using PluralKit.Core;
 
@@ -84,7 +84,7 @@ namespace PluralKit.Bot
                     msg += $"\nTo remove this member from one or more groups, use `pk;m {target.Reference()} group remove <group> [group 2] [group 3...]`";
             }
             
-            await ctx.Reply(msg, embed: (new DiscordEmbedBuilder().WithTitle($"{target.Name}'s groups").WithDescription(description)).Build());
+            await ctx.Reply(msg, (new EmbedBuilder().Title($"{target.Name}'s groups").Description(description)).Build());
         }
     }
 }

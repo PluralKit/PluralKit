@@ -2,8 +2,6 @@
 using System;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
-
 using Myriad.Builders;
 
 using PluralKit.Core;
@@ -60,11 +58,11 @@ namespace PluralKit.Bot
             var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.GuildNew.Name})" : "avatar";
             var cmd = location == AvatarLocation.Server ? "serveravatar" : "avatar";
             
-            var eb = new DiscordEmbedBuilder()
-                .WithTitle($"{target.NameFor(ctx)}'s {field}")
-                .WithImageUrl(currentValue);
+            var eb = new EmbedBuilder()
+                .Title($"{target.NameFor(ctx)}'s {field}")
+                .Image(new(currentValue));
             if (target.System == ctx.System?.Id)
-                eb.WithDescription($"To clear, use `pk;member {target.Reference()} {cmd} clear`.");
+                eb.Description($"To clear, use `pk;member {target.Reference()} {cmd} clear`.");
             await ctx.Reply(embed: eb.Build());
         }
 

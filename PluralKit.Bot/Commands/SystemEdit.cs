@@ -2,8 +2,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
-
 using Myriad.Builders;
 
 using NodaTime;
@@ -77,10 +75,10 @@ namespace PluralKit.Bot
                 else if (ctx.MatchFlag("r", "raw"))
                     await ctx.Reply($"```\n{ctx.System.Description}\n```");
                 else
-                    await ctx.Reply(embed: new DiscordEmbedBuilder()
-                        .WithTitle("System description")
-                        .WithDescription(ctx.System.Description)
-                        .WithFooter("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`.")
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .Title("System description")
+                        .Description(ctx.System.Description)
+                        .Footer(new("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`."))
                         .Build());
             }
             else
@@ -160,10 +158,10 @@ namespace PluralKit.Bot
             {
                 if ((ctx.System.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
-                    var eb = new DiscordEmbedBuilder()
-                        .WithTitle("System icon")
-                        .WithImageUrl(ctx.System.AvatarUrl)
-                        .WithDescription("To clear, use `pk;system icon clear`.");
+                    var eb = new EmbedBuilder()
+                        .Title("System icon")
+                        .Image(new(ctx.System.AvatarUrl))
+                        .Description("To clear, use `pk;system icon clear`.");
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
@@ -257,14 +255,14 @@ namespace PluralKit.Bot
 
             Task PrintEmbed()
             {
-                var eb = new DiscordEmbedBuilder()
-                    .WithTitle("Current privacy settings for your system")
-                    .AddField("Description", ctx.System.DescriptionPrivacy.Explanation())
-                    .AddField("Member list", ctx.System.MemberListPrivacy.Explanation())
-                    .AddField("Group list", ctx.System.GroupListPrivacy.Explanation())
-                    .AddField("Current fronter(s)", ctx.System.FrontPrivacy.Explanation())
-                    .AddField("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation())
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                var eb = new EmbedBuilder()
+                    .Title("Current privacy settings for your system")
+                    .Field(new("Description", ctx.System.DescriptionPrivacy.Explanation()))
+                    .Field(new("Member list", ctx.System.MemberListPrivacy.Explanation()))
+                    .Field(new("Group list", ctx.System.GroupListPrivacy.Explanation()))
+                    .Field(new("Current fronter(s)", ctx.System.FrontPrivacy.Explanation()))
+                    .Field(new("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation()))
+                    .Description("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
                 return ctx.Reply(embed: eb.Build());
             }
 

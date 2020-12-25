@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
+using Myriad.Rest.Exceptions;
 
 using PluralKit.Core;
 
@@ -33,14 +32,16 @@ namespace PluralKit.Bot
                 await dm.SendMessageFixedAsync(token);
 
                 // If we're not already in a DM, reply with a reminder to check
-                if (!(ctx.Channel is DiscordDmChannel)) 
-                    await ctx.Reply($"{Emojis.Success} Check your DMs!");
+                // TODO: DMs
+                // if (!(ctx.Channel is DiscordDmChannel)) 
+                //     await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
             catch (UnauthorizedException)
             {
                 // Can't check for permission errors beforehand, so have to handle here :/
-                if (!(ctx.Channel is DiscordDmChannel))
-                    await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
+                // TODO: DMs
+                // if (!(ctx.Channel is DiscordDmChannel))
+                //     await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
             }
         }
 
@@ -74,14 +75,16 @@ namespace PluralKit.Bot
                 await dm.SendMessageFixedAsync(token);
                 
                 // If we're not already in a DM, reply with a reminder to check
-                if (!(ctx.Channel is DiscordDmChannel)) 
-                    await ctx.Reply($"{Emojis.Success} Check your DMs!");
+                // TODO: DMs
+                // if (!(ctx.Channel is DiscordDmChannel)) 
+                //     await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
             catch (UnauthorizedException)
             {
                 // Can't check for permission errors beforehand, so have to handle here :/
-                if (!(ctx.Channel is DiscordDmChannel))
-                    await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
+                // TODO: DMs
+                // if (!(ctx.Channel is DiscordDmChannel))
+                //     await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
             }
         }
     }
