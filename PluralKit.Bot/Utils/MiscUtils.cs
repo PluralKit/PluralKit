@@ -76,7 +76,7 @@ namespace PluralKit.Bot
             if (e is WebhookExecutionErrorOnDiscordsEnd) return false;
             
             // Socket errors are *not our problem*
-            if (e is SocketException) return false;
+            if (e.GetBaseException() is SocketException) return false;
             
             // Tasks being cancelled for whatver reason are, you guessed it, also not our problem.
             if (e is TaskCanceledException) return false;
