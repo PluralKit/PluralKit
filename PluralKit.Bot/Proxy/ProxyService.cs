@@ -169,7 +169,7 @@ namespace PluralKit.Bot
             
             return new DiscordEmbedBuilder()
                 // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
-                .WithAuthor($"{username}\u2004\u21a9\ufe0f", iconUrl: original.Author.AvatarUrl)
+                .WithAuthor($"{username}\u2004\u21a9\ufe0f", iconUrl: original.Author.GetAvatarUrl(ImageFormat.Png, 1024))
                 .WithDescription(content.ToString())
                 .Build();
         }
