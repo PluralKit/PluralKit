@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import  * as BS from 'react-bootstrap'
+import { useRouteMatch } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import autosize from 'autosize';
 import moment from 'moment';
@@ -14,6 +15,8 @@ import defaultAvatar from '../default_discord_avatar.png'
 import { FaAddressCard } from "react-icons/fa";
 
 export default function System(props) {
+
+    const match = useRouteMatch("/pk-webs/dash/:memberID");
 
     const {
         register: registerEdit,
@@ -111,6 +114,8 @@ const submitPrivacy = data => {
             setErrorAlert(true);
         })
 }
+
+        if (match) return null;
 
         return (
            <BS.Card className="mb-3 mt-3 w-100" >

@@ -1,14 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Switch, Route, useParams, useRouteMatch } from 'react-router-dom';
 import  * as BS from 'react-bootstrap'
 import 'reactjs-popup/dist/index.css';
 
 import ProfileCard from './ProfileCard.js'
+import ProfilePages from './ProfilePages.js'
 import Loading from "./Loading.js";
 import API_URL from "../Constants/constants.js";
 
-export default function Memberlist(props) {
-    
-    const sysID = props.sysID;
+export default function Memberlist() {
+
+    const { path } = useRouteMatch();
+    const { sysID } = useParams();
 
     const [isLoading, setIsLoading ] = useState(false);
     const [isError, setIsError ] = useState(false);
@@ -128,6 +131,8 @@ export default function Memberlist(props) {
     );
 
     return (
+      <Switch>
+        <Route exact path={path}>
       <>
       <BS.Row className="mb-3 justfiy-content-md-center">
       <BS.Col xs={12} lg={4}>
@@ -209,5 +214,11 @@ export default function Memberlist(props) {
         </>
         }
         </>
+          </Route>
+            <Route path={`/pk-webs/profile/${sysID}/:memberID`}>
+              { isLoading ? <Loading/> :
+            <ProfilePages members={members}/>}
+          </Route>
+        </Switch>
     )
 }

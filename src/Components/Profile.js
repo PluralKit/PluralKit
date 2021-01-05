@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useRouteMatch } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import * as BS from 'react-bootstrap';
 import Popup from 'reactjs-popup';
@@ -11,6 +12,8 @@ import API_URL from "../Constants/constants.js";
 import ProfileList from "./ProfileList.js";
 
 export default function Profile () {
+
+    const match = useRouteMatch("/pk-webs/profile/:sysID/:memberID");
 
     const { sysID } = useParams();
     const [ system, setSystem ] = useState('');
@@ -63,8 +66,8 @@ export default function Profile () {
         } else setDesc("(no description)");
     }, [system.description, system.tag, system.avatar_url, system.tz, system.name]);
 
-
-   return (<>{ isLoading ? <Loading /> : isError ?  <BS.Alert variant="danger">Something went wrong, either the system doesn't exist, or there was an error fetching data.</BS.Alert> :
+   return (match ? <ProfileList sysID={sysID} /> :
+   <>{ isLoading ? <Loading /> : isError ?  <BS.Alert variant="danger">Something went wrong, either the system doesn't exist, or there was an error fetching data.</BS.Alert> :
     <><BS.Alert variant="primary" >You are currently <b>viewing</b> a system.</BS.Alert>
         <BS.Card className="mb-3 mt-3 w-100" >
         <BS.Card.Header className="d-flex align-items-center justify-content-between">

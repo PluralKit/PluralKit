@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
 import moment from 'moment';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import autosize from 'autosize';
-import LazyLoad from 'react-lazyload';
 import Twemoji from 'react-twemoji';
 
 import API_URL from "../Constants/constants.js";
+import history from "../History.js";
 
 import defaultAvatar from '../default_discord_avatar.png'
 import { FaUser, FaTrashAlt } from "react-icons/fa";
 
-export default function MemberCard(props) {
+export default function MemberPage(props) {
 
-    const [member, setMember] = useState(props.member);
+    const [ member, setMember] = useState(props.member);
 
     const [ displayName, setDisplayName ] = useState("");
     const [ birthday, setBirthday ] = useState("");
@@ -201,12 +201,17 @@ export default function MemberCard(props) {
     }    
 
     return (
-       memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> :
-       <LazyLoad offset={100}>
-           <BS.Card.Header className="d-flex align-items-center justify-content-between">
-        { localStorage.getItem('pagesonly') ? 
-        <Link to={`dash/${member.id}`}><BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button></Link>
-        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}
+        memberDeleted ? <BS.Card className="mb-5"><BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header>
+        <BS.Card.Body>
+            Member successfully deleted, click the button below to go back to the dash.
+            <BS.Button variant="primary" className="float-right" onClick={() => history.push("/pk-webs/dash/reload")}>Back</BS.Button>
+        </BS.Card.Body></BS.Card> :
+        <>
+        { localStorage.getItem('colorbg') ? "" : member.color ? <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
+        <div className="backdrop-overlay"/></> : "" }
+        <BS.Card className="mb-5">
+        <BS.Card.Header className="d-flex align-items-center justify-content-between">
+        <BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button>
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
@@ -216,8 +221,7 @@ export default function MemberCard(props) {
             </Popup> : 
         <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
         </BS.Card.Header>
-        <BS.Accordion.Collapse eventKey={member.id}>
-            <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
+                <BS.Card.Body style={{ borderLeft: localStorage.getItem('colorbg') ? `5px solid #${color}` : ''}}>
                 { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
                 { editMode ?
                 <>
@@ -385,10 +389,7 @@ export default function MemberCard(props) {
             <hr/></> : "" }
             <p><b>Description:</b></p>
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
-                { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to={`dash/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></> }
-            </> } </BS.Card.Body>
-        </BS.Accordion.Collapse>
-        </LazyLoad>
-        
+                { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to="/pk-webs/dash/reload" ><BS.Button variant="primary" className="float-right">Back</BS.Button></Link></>}
+            </> } </BS.Card.Body></BS.Card></>
     )
 }

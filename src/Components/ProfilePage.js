@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import  * as BS from 'react-bootstrap'
 import moment from 'moment';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import autosize from 'autosize';
-import LazyLoad from 'react-lazyload';
 import Twemoji from 'react-twemoji';
 
 import defaultAvatar from '../default_discord_avatar.png'
 import { FaUser } from "react-icons/fa";
 
-export default function MemberCard(props) {
-    const { sysID } = useParams();
+export default function ProfilePage(props) {
+
+    const location = useLocation();
     const member = props.member;
 
     const [ avatar, setAvatar ] = useState('')
@@ -67,11 +67,13 @@ export default function MemberCard(props) {
     }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags]);
 
     return (
-       <LazyLoad offset={100}>
-           <BS.Card.Header className="d-flex align-items-center justify-content-between">
-           { localStorage.getItem('pagesonly') ? 
-        <Link to={`${sysID}/${member.id}`}><BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button></Link>
-        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}
+       <> 
+       { localStorage.getItem('colorbg') ? "" : member.color ? <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
+        <div className="backdrop-overlay"/></> : "" }
+        <BS.Alert variant="primary" >You are currently <b>viewing</b> a member.</BS.Alert>
+        <BS.Card className="mb-5">
+        <BS.Card.Header className="d-flex align-items-center justify-content-between">
+        <BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button>
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
@@ -81,8 +83,7 @@ export default function MemberCard(props) {
             </Popup> : 
         <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
         </BS.Card.Header>
-        <BS.Accordion.Collapse eventKey={member.id}>
-            <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
+                <BS.Card.Body style={{ borderLeft: localStorage.getItem('colorbg') ? `5px solid #${color}` : ''}}>
             <BS.Row>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {member.id}</BS.Col>
                 { member.display_name ? localStorage.getItem('twemoji') ? <BS.Col className="mb-lg-3" xs={12} lg={3}><Twemoji options={{ className: 'twemoji' }}><b>Display name: </b>{displayName}</Twemoji></BS.Col> :
@@ -103,9 +104,9 @@ export default function MemberCard(props) {
             <hr/></> : "" }
             <p><b>Description:</b></p>
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
-            <BS.Row><BS.Col><Link to={`${sysID}/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></BS.Col></BS.Row> </BS.Card.Body>
-        </BS.Accordion.Collapse>
-        </LazyLoad>
-        
+            <BS.Row><BS.Col><Link to={location.pathname.substring(0, location.pathname.lastIndexOf('/'))}><BS.Button variant="primary" className="float-right">Back</BS.Button></Link></BS.Col></BS.Row>
+            </BS.Card.Body>
+        </BS.Card>
+        </>
     )
 }

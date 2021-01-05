@@ -1,16 +1,20 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useLayoutEffect, useState, useCallback } from 'react';
+import { useRouteMatch, Switch, Route } from "react-router-dom";
 import  * as BS from 'react-bootstrap'
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import { useForm } from "react-hook-form";
 
 import MemberCard from './MemberCard.js'
+import MemberPages from './MemberPages.js'
 import Loading from "./Loading.js";
 import API_URL from "../Constants/constants.js";
 
 import { FaPlus } from "react-icons/fa";
 
-export default function Memberlist(props) {
+export default function Memberlist() {
+
+    const { path } = useRouteMatch();
     
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user.id;
@@ -63,7 +67,7 @@ export default function Memberlist(props) {
     })
   }, [userId])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     fetchMembers();
   }, [fetchMembers])
 
@@ -100,6 +104,7 @@ export default function Memberlist(props) {
         ).then (data => { 
             setErrorAlert(false);
             closeModal();
+            fetchMembers();
     }
         ).catch (error => {
             console.error(error);
@@ -159,13 +164,11 @@ export default function Memberlist(props) {
         setSortedMembers(sortMembers);
       }
     }, [sortBy, filteredMembers, indexOfFirstMember, indexOfLastMember])
-   
-
 
     const active = currentPage;
     const pageAmount = Math.ceil(filteredMembers.length / membersPerPage);
       
-      const memberList = sortedMembers.map((member) => <BS.Card key={member.id}>
+    const memberList = sortedMembers.map((member) => <BS.Card key={member.id}>
         <MemberCard
         member={member} 
         />
@@ -173,6 +176,8 @@ export default function Memberlist(props) {
     );
 
     return (
+      <Switch>
+        <Route exact path={path}>
         <>
         <BS.Row className="mb-3 justfiy-content-md-center">
         <BS.Col xs={12} lg={4}>
@@ -380,5 +385,11 @@ export default function Memberlist(props) {
         </>
         }
         </>
+        </Route>
+        <Route path={`${path}/:memberID`}>
+          { isLoading ? <Loading/> :
+          <MemberPages members={members}/>}
+        </Route>
+        </Switch>
     )
 }
