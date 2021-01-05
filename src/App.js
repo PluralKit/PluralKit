@@ -121,7 +121,8 @@ export default function App() {
         </BS.Navbar>
           <BS.Container>
             <Switch>
-            <Route path="/pk-webs/dash" >
+            <Redirect exact from="/pk-webs/dash/reload" to="/pk-webs/dash" />
+            <Route path="/pk-webs/dash">
               { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash />
               }
               </Route>
@@ -167,7 +168,7 @@ export default function App() {
             <p>Change how you view and use pk-webs here, changes will be saved after refreshing. You will have to apply them again in different browsers and on different devices.</p>
             <hr/>
             <BS.Row>
-            <BS.Col xs={12} lg={4} className="mx-1 mb-2 d-flex align-items-center row">
+            <BS.Col xs={12} lg={4} className="mx-1 mb-4 d-flex align-items-center row">
             { localStorage.getItem('opendyslexic') ? 
                 <Toggle className="mr-2"
                 defaultChecked={true}
@@ -183,7 +184,7 @@ export default function App() {
                     forceUpdate()}} />  }
                 Use opendyslexic?
             </BS.Col>
-            <BS.Col xs={12} lg={4} className="mx-1 mb-2 d-flex align-items-center row">
+            <BS.Col xs={12} lg={4} className="mx-1 mb-4 d-flex align-items-center row">
             { localStorage.getItem('twemoji') ? 
                 <Toggle className="mr-2"
                 defaultChecked={true}
@@ -198,6 +199,38 @@ export default function App() {
                     localStorage.setItem('twemoji', 'true')
                     forceUpdate()}} />  }
                 Use twemoji?
+            </BS.Col>
+            <BS.Col xs={12} lg={4} className="mx-1 mb-4 d-flex align-items-center row">
+            { localStorage.getItem('pagesonly') ? 
+                <Toggle className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() =>  {
+                    localStorage.removeItem('pagesonly');
+                    forceUpdate()}} /> :
+                <Toggle className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                    localStorage.setItem('pagesonly', 'true')
+                    forceUpdate()}} />  }
+                Use only member pages?
+            </BS.Col>
+            <BS.Col xs={12} lg={4} className="mx-1 mb-4 d-flex align-items-center row">
+            { localStorage.getItem('colorbg') ? 
+                <Toggle className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() =>  {
+                    localStorage.removeItem('colorbg');
+                    forceUpdate()}} /> :
+                <Toggle className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                    localStorage.setItem('colorbg', 'false')
+                    forceUpdate()}} />  }
+                Hide colored backgrounds?
             </BS.Col>
             </BS.Row>
             </BS.Card.Body>
