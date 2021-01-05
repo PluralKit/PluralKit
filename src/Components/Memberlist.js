@@ -28,7 +28,13 @@ export default function Memberlist(props) {
     const closeModal = () => setOpen(false);
 
     const [members, setMembers ] = useState([]);
-    const [newMember, setNewMember ] = useState('');
+    const [memberData, setMemberData ] = useState([]);
+    const [filteredMembers, setFilteredMembers ] = useState([]);
+    const [sortedMembers, setSortedMembers ] = useState([]);
+
+    const [searchBy, setSearchBy] = useState('name')
+    const [sortBy, setSortBy] = useState('name')
+
     const [value, setValue] = useState('');
     const [proxyTags, setProxyTags] = useState([{
       prefix: "", suffix: ""
@@ -47,7 +53,7 @@ export default function Memberlist(props) {
       'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
     }}).then ( res => res.json()
     ).then (data => { 
-      newMember ? setMembers([...data, newMember]) : setMembers(data)
+      setMembers(data)
       setIsLoading(false);
   })
     .catch (error => { 
@@ -55,11 +61,25 @@ export default function Memberlist(props) {
         setIsError(true);
         setIsLoading(false);
     })
-  }, [newMember, userId])
+  }, [userId])
 
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers])
+
+   useEffect(() => {
+    let Members = members.map(member => {
+      if (member.display_name) {
+        return {...member, displayName: member.display_name}
+      } return {...member, displayName: member.name}
+    }) 
+    let Members1 = Members.map(member => {
+      if (member.description) {
+        return {...member, desc: member.description}
+      } return {...member, desc: "(no description)"}
+    })
+    setMemberData(Members1);
+  }, [members])
 
     function addProxyField() {
       setProxyTags(oldTags => [...oldTags, {prefix: '', suffix: ''}] )
@@ -78,7 +98,6 @@ export default function Memberlist(props) {
           'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
         }}).then (res => res.json()
         ).then (data => { 
-            setNewMember(data); 
             setErrorAlert(false);
             closeModal();
     }
@@ -90,19 +109,63 @@ export default function Memberlist(props) {
 
     const indexOfLastMember = currentPage * membersPerPage;
     const indexOfFirstMember = indexOfLastMember - membersPerPage;
-    const currentMembers =  members.filter(member => {
+    
+    useEffect(() => {
+      searchMembers();
+    }, [value, memberData, searchBy])
+
+    function searchMembers() {
+    const currentMembers =  memberData.filter(member => {
       if (!value) return true;
+      
+      if (searchBy === 'name') {
       if (member.name.toLowerCase().includes(value.toLowerCase())) {
         return true;
       }
       return false;
-    }).sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
+    } else if (searchBy === 'display name') {
+      if (member.displayName.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false
+    } else if (searchBy === 'description') {
+      if (member.desc.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false;
+    } else if (searchBy === 'ID') {
+      if (member.id.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false;
+    }
+      return false;
+    })
+    setFilteredMembers(currentMembers);
+    }
+
+    useEffect (() => { 
+      if (sortBy === 'name') {
+      const sortMembers =  filteredMembers.sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
+      setSortedMembers(sortMembers);
+      } else if (sortBy === 'display name') {
+        const sortMembers =  filteredMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).slice(indexOfFirstMember, indexOfLastMember);
+        setSortedMembers(sortMembers);
+      } else if (sortBy === 'ID') {
+        const sortMembers =  filteredMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
+        setSortedMembers(sortMembers);
+      } else if (sortBy === 'date created') {
+        const sortMembers =  filteredMembers.sort((a, b) => a.created.localeCompare(b.created)).slice(indexOfFirstMember, indexOfLastMember);
+        setSortedMembers(sortMembers);
+      }
+    }, [sortBy, filteredMembers, indexOfFirstMember, indexOfLastMember])
+   
 
 
     const active = currentPage;
-    const pageAmount = Math.ceil(members.length / membersPerPage);
+    const pageAmount = Math.ceil(filteredMembers.length / membersPerPage);
       
-      const memberList = currentMembers.map((member) => <BS.Card key={member.id}>
+      const memberList = sortedMembers.map((member) => <BS.Card key={member.id}>
         <MemberCard
         member={member} 
         />
@@ -111,29 +174,58 @@ export default function Memberlist(props) {
 
     return (
         <>
-        { isLoading ? <Loading /> : isError ? 
-        <BS.Alert variant="danger">Error fetching members.</BS.Alert> :
-        <>
-        <BS.Row noGutters="true" className="justify-content-md-center">
-        <BS.Col className="lg-2 mb-3" xs={12} lg={3}>
+        <BS.Row className="mb-3 justfiy-content-md-center">
+        <BS.Col xs={12} lg={4}>
         <BS.Form>
           <BS.InputGroup className="mb-3">
           <BS.Form.Control disabled placeholder='Page length:'/>
-            <BS.Form.Control as="select" onChange={e => {
+            <BS.Form.Control as="select" defaultValue="25" onChange={e => {
               setMembersPerPage(e.target.value);
               setCurrentPage(1);
               }}>
               <option>10</option>
-              <option selected>25</option>
+              <option>25</option>
               <option>50</option>
               <option>100</option>
             </BS.Form.Control>
             </BS.InputGroup>
         </BS.Form>
         </BS.Col>
-        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={4}>
+        <BS.Col xs={12} lg={4}>
         <BS.Form>
-            <BS.Form.Control value={value} onChange={e => {setValue(e.target.value); setCurrentPage(1)}} placeholder="Search"/>
+          <BS.InputGroup className="mb-3">
+          <BS.Form.Control disabled placeholder='Search by:'/>
+            <BS.Form.Control as="select" defaultValue={searchBy} onChange={e => {
+              setSearchBy(e.target.value)
+              }}>
+              <option>name</option>
+              <option>display name</option>
+              <option>description</option>
+              <option>ID</option>
+            </BS.Form.Control>
+            </BS.InputGroup>
+        </BS.Form>
+        </BS.Col>
+        <BS.Col xs={12} lg={4}>
+        <BS.Form>
+          <BS.InputGroup className="mb-3">
+          <BS.Form.Control disabled placeholder='Sort by:'/>
+            <BS.Form.Control as="select" defaultValue={sortBy} onChange={e => {
+              setSortBy(e.target.value)
+              }}>
+              <option>name</option>
+              <option>display name</option>
+              <option>ID</option>
+              <option>date created</option>
+            </BS.Form.Control>
+            </BS.InputGroup>
+        </BS.Form>
+        </BS.Col>
+        </BS.Row>
+        <BS.Row noGutters="true" className="justify-content-md-center">
+        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={6}>
+        <BS.Form>
+            <BS.Form.Control value={value} onChange={e => {setValue(e.target.value); setCurrentPage(1);}} placeholder={`Search by ${searchBy}`}/>
         </BS.Form>
         </BS.Col>
         <BS.Col className="ml-lg-2 mb-3" xs={12} lg={1}>
@@ -153,6 +245,9 @@ export default function Memberlist(props) {
           { currentPage === pageAmount ? <BS.Pagination.Next disabled /> :<BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />}
           </BS.Pagination>
         </BS.Row>
+        { isLoading ? <Loading /> : isError ? 
+        <BS.Alert variant="danger">Error fetching members.</BS.Alert> :
+        <>
         <BS.Card className="w-100">
           <BS.Card.Header className="d-flex align-items-center justify-content-between">
             <BS.Button variant="link" className="float-left" onClick={() => setOpen(o => !o)}><FaPlus className="mr-4"/>Add Member</BS.Button> 
