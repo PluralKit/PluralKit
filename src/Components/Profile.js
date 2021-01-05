@@ -46,7 +46,8 @@ export default function Profile () {
         } else setName('');
 
         if (system.avatar_url) {
-            setAvatar(system.avatar_url.replace('?width=256&height=256&format=jpeg', ''))
+            var avatarsmall = system.avatar_url.replace('&format=jpeg', '');
+            setAvatar(avatarsmall.replace('?width=256&height=256', ''))
         } else setAvatar('')
 
         if (system.tag) {
@@ -71,7 +72,7 @@ export default function Profile () {
            { system.avatar_url ? <Popup trigger={<BS.Image src={`${system.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
          {close => (
              <div className="text-center w-100 m-0" onClick={() => close()}>
-             <BS.Image src={`${avatar}`} style={{'max-width': 500, height: 'auto'}} thumbnail />
+             <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
              </div>
          )}
      </Popup> : 

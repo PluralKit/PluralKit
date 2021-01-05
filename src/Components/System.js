@@ -59,7 +59,8 @@ export default function System(props) {
     } else setTimezone('');
 
     if (user.avatar_url) {
-        setAvatar(user.avatar_url.replace('?width=256&height=256&format=jpeg', ''))
+        var avatarsmall = user.avatar_url.replace('&format=jpeg', '');
+        setAvatar(avatarsmall.replace('?width=256&height=256', ''))
     } else setAvatar('')
 
     if (user.description) {
@@ -118,7 +119,7 @@ const submitPrivacy = data => {
                   { user.avatar_url ? <Popup trigger={<BS.Image src={`${user.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${avatar}`} style={{'max-width': 500, height: 'auto'}} thumbnail />
+                    <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 
@@ -167,28 +168,28 @@ const submitPrivacy = data => {
                     <BS.Form.Row>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control name="description_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="description_privacy" defaultValue={user.description_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Member list:</BS.Form.Label>
-                        <BS.Form.Control name="member_list_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="member_list_privacy" defaultValue={user.member_list_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Front:</BS.Form.Label>
-                        <BS.Form.Control name="front_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="front_privacy" as="select" defaultValue={user.front_privacy} ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Front history:</BS.Form.Label>
-                        <BS.Form.Control name="front_history_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="front_history_privacy" defaultValue={user.front_history_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
