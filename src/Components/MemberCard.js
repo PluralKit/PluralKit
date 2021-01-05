@@ -21,6 +21,7 @@ export default function MemberCard(props) {
     const [ birthday, setBirthday ] = useState("");
     const [ birthdate, setBirthdate ] = useState("");
     const [ pronouns, setPronouns ] = useState("");
+    const [ editPronouns, setEditPronouns ] = useState("");
     const [ avatar, setAvatar ] = useState("");
     const [ color, setColor ] = useState("");
     const [ desc, setDesc ] = useState("");
@@ -86,11 +87,15 @@ export default function MemberCard(props) {
     }
 
         if (member.pronouns) {
-            setPronouns(member.pronouns)
-        } else setPronouns('')
+            setPronouns(toHTML(member.pronouns));
+            setEditPronouns(member.pronouns);
+        } else { setPronouns('');
+        setEditPronouns('');
+    }
 
         if (member.avatar_url) {
-            setAvatar(member.avatar_url.replace('?width=256&height=256&format=jpeg', ''))
+            var avatarsmall = member.avatar_url.replace('&format=jpeg', '');
+            setAvatar(avatarsmall.replace('?width=256&height=256', ''))
         } else setAvatar('')
         
         if (member.color) {
@@ -202,7 +207,7 @@ export default function MemberCard(props) {
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${avatar}`} style={{width: 500, height: 'auto'}} thumbnail />
+                    <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 
@@ -230,7 +235,7 @@ export default function MemberCard(props) {
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Pronouns:</BS.Form.Label>
-                    <BS.Form.Control name="pronouns" ref={registerEdit} defaultValue={pronouns} />
+                    <BS.Form.Control maxLength="100" name="pronouns" ref={registerEdit} defaultValue={editPronouns} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar url:</BS.Form.Label> 
@@ -272,7 +277,8 @@ export default function MemberCard(props) {
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {member.id}</BS.Col>
                 { member.display_name ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Display name: </b>{displayName}</BS.Col> : "" }
                 { member.birthday ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Birthday:</b> {birthday}</BS.Col> : "" }
-                { member.pronouns ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> {pronouns}</BS.Col> : "" }
+                { member.pronouns ?  localStorage.getItem('twemoji') ? <BS.Col className="mb-lg-3" xs={12} lg={3}><Twemoji options={{ className: 'twemoji' }}><b>Pronouns:</b> <span dangerouslySetInnerHTML={{__html: pronouns}}></span></Twemoji></BS.Col> : 
+                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b><span dangerouslySetInnerHTML={{__html: pronouns}}></span></BS.Col> : "" }
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
@@ -284,49 +290,49 @@ export default function MemberCard(props) {
                     <BS.Form.Row>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Label>Visibility:</BS.Form.Label>
-                        <BS.Form.Control name="visibility" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="visibility" defaultValue={member.visibility} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-                        <BS.Form.Control name="name_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="name_privacy" defaultValue={member.name_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control name="description_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="description_privacy" defaultValue={member.description_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar:</BS.Form.Label>
-                        <BS.Form.Control name="avatar_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="avatar_privacy" defaultValue={member.avatar_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Birthday:</BS.Form.Label>
-                        <BS.Form.Control name="birthday_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="birthday_privacy" defaultValue={member.birthday_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Pronouns:</BS.Form.Label>
-                        <BS.Form.Control name="pronoun_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="pronoun_privacy" defaultValue={member.pronoun_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-3" xs={12} lg={3}>
                     <BS.Form.Label>Meta:</BS.Form.Label>
-                        <BS.Form.Control name="metadata_privacy" as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="metadata_privacy" defaultValue={member.metadata_privacy} as="select" ref={registerPrivacy}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>

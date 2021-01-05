@@ -48,11 +48,12 @@ export default function MemberCard(props) {
     }
 
     if (member.avatar_url) {
-        setAvatar(member.avatar_url.replace('?width=256&height=256&format=jpeg', ''))
+        var avatarsmall = member.avatar_url.replace('&format=jpeg', '');
+        setAvatar(avatarsmall.replace('?width=256&height=256', ''))
     } else setAvatar('')
 
         if (member.pronouns) {
-            setPronouns(member.pronouns)
+            setPronouns(toHTML(member.pronouns))
         } else setPronouns('')
 
         if (member.color) {
@@ -71,7 +72,7 @@ export default function MemberCard(props) {
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${avatar}`} style={{'max-width': 500, height: 'auto'}} thumbnail />
+                    <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 
@@ -83,7 +84,8 @@ export default function MemberCard(props) {
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {member.id}</BS.Col>
                 { member.display_name ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Display name: </b>{displayName}</BS.Col> : "" }
                 { member.birthday ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Birthday:</b> {birthday}</BS.Col> : "" }
-                { member.pronouns ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> {pronouns}</BS.Col> : "" }
+                { member.pronouns ?  localStorage.getItem('twemoji') ? <BS.Col className="mb-lg-3" xs={12} lg={3}><Twemoji options={{ className: 'twemoji' }}><b>Pronouns:</b> <span dangerouslySetInnerHTML={{__html: pronouns}}></span></Twemoji></BS.Col> : 
+                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> <span dangerouslySetInnerHTML={{__html: pronouns}}></span></BS.Col> : "" }
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
                 
