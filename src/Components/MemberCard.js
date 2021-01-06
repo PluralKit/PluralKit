@@ -12,10 +12,12 @@ import Twemoji from 'react-twemoji';
 import API_URL from "../Constants/constants.js";
 
 import defaultAvatar from '../default_discord_avatar.png'
-import { FaUser, FaTrashAlt } from "react-icons/fa";
+import { FaLink, FaLock, FaTrashAlt } from "react-icons/fa";
 
 export default function MemberCard(props) {
 
+    const system = JSON.parse(localStorage.getItem('user'));
+    const sysID = system.id;
     const [member, setMember] = useState(props.member);
 
     const [ displayName, setDisplayName ] = useState("");
@@ -200,13 +202,32 @@ export default function MemberCard(props) {
             });
     }    
 
+    function copyLink() {
+        var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
+        var textField = document.createElement('textarea')
+        textField.innerText = link
+        document.body.appendChild(textField);
+
+        textField.select();
+        textField.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+
+        document.body.removeChild(textField);
+    }
+
     return (
        memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> :
        <LazyLoad offset={100}>
            <BS.Card.Header className="d-flex align-items-center justify-content-between">
+        <div> { member.visibility === 'public' ? <BS.OverlayTrigger placement="left" overlay={ 
+            <BS.Tooltip>
+                Copy public link
+            </BS.Tooltip>
+        }><BS.Button className="mr-3" variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : 
+        <BS.Button className="mr-3" variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }
         { localStorage.getItem('pagesonly') ? 
-        <Link to={`dash/${member.id}`}><BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button></Link>
-        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}
+        <Link to={`dash/${member.id}`}><BS.Button variant="link" className="float-left"><b>{member.name}</b> ({member.id})</BS.Button></Link>
+        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id}> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>

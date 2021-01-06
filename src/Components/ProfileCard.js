@@ -9,7 +9,7 @@ import LazyLoad from 'react-lazyload';
 import Twemoji from 'react-twemoji';
 
 import defaultAvatar from '../default_discord_avatar.png'
-import { FaUser } from "react-icons/fa";
+import { FaLink } from "react-icons/fa";
 
 export default function MemberCard(props) {
     const { sysID } = useParams();
@@ -66,12 +66,30 @@ export default function MemberCard(props) {
         } else setDesc("(no description)");
     }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags]);
 
+    function copyLink() {
+        var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
+        var textField = document.createElement('textarea')
+        textField.innerText = link
+        document.body.appendChild(textField);
+
+        textField.select();
+        textField.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+
+        document.body.removeChild(textField);
+    }
+
     return (
        <LazyLoad offset={100}>
            <BS.Card.Header className="d-flex align-items-center justify-content-between">
+           <div> <BS.OverlayTrigger placement="left" overlay={ 
+            <BS.Tooltip>
+                Copy link
+            </BS.Tooltip>
+        }><BS.Button className="mr-3" variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger>
            { localStorage.getItem('pagesonly') ? 
-        <Link to={`${sysID}/${member.id}`}><BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button></Link>
-        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}
+        <Link to={`${sysID}/${member.id}`}><BS.Button variant="link"> <b>{member.name}</b> ({member.id})</BS.Button></Link>
+        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} > <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>

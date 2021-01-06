@@ -12,11 +12,13 @@ import API_URL from "../Constants/constants.js";
 import history from "../History.js";
 
 import defaultAvatar from '../default_discord_avatar.png'
-import { FaUser, FaTrashAlt } from "react-icons/fa";
+import { FaLink, FaLock, FaTrashAlt } from "react-icons/fa";
 
 export default function MemberPage(props) {
 
     const [ member, setMember] = useState(props.member);
+    const system = JSON.parse(localStorage.getItem('user'));
+    const sysID = system.id;
 
     const [ displayName, setDisplayName ] = useState("");
     const [ birthday, setBirthday ] = useState("");
@@ -200,6 +202,19 @@ export default function MemberPage(props) {
             });
     }    
 
+    function copyLink() {
+        var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
+        var textField = document.createElement('textarea')
+        textField.innerText = link
+        document.body.appendChild(textField);
+
+        textField.select();
+        textField.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+
+        document.body.removeChild(textField);
+    }
+
     return (
         memberDeleted ? <BS.Card className="mb-5"><BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header>
         <BS.Card.Body>
@@ -211,7 +226,11 @@ export default function MemberPage(props) {
         <div className="backdrop-overlay"/></> : "" }
         <BS.Card className="mb-5">
         <BS.Card.Header className="d-flex align-items-center justify-content-between">
-        <BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button>
+        <div> { member.visibility === 'public' ? <BS.OverlayTrigger placement="left" overlay={ 
+            <BS.Tooltip>
+                Copy public link
+            </BS.Tooltip>
+        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : <BS.Button variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }<BS.Button variant="link" ><b>{member.name}</b> ({member.id})</BS.Button> </div> 
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>

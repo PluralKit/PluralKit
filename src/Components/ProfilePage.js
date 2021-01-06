@@ -8,7 +8,7 @@ import autosize from 'autosize';
 import Twemoji from 'react-twemoji';
 
 import defaultAvatar from '../default_discord_avatar.png'
-import { FaUser } from "react-icons/fa";
+import { FaLink } from "react-icons/fa";
 
 export default function ProfilePage(props) {
 
@@ -66,6 +66,19 @@ export default function ProfilePage(props) {
         } else setDesc("(no description)");
     }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags]);
 
+    function copyLink() {
+        var link = `https://spectralitree.github.io${location.pathname}`
+        var textField = document.createElement('textarea')
+        textField.innerText = link
+        document.body.appendChild(textField);
+
+        textField.select();
+        textField.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+
+        document.body.removeChild(textField);
+    }
+
     return (
        <> 
        { localStorage.getItem('colorbg') ? "" : member.color ? <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
@@ -73,7 +86,12 @@ export default function ProfilePage(props) {
         <BS.Alert variant="primary" >You are currently <b>viewing</b> a member.</BS.Alert>
         <BS.Card className="mb-5">
         <BS.Card.Header className="d-flex align-items-center justify-content-between">
-        <BS.Button variant="link" className="float-left"><FaUser className="mr-4 float-left" /> <b>{member.name}</b> ({member.id})</BS.Button>
+         <div> <BS.OverlayTrigger placement="left" overlay={ 
+            <BS.Tooltip>
+                Copy link
+            </BS.Tooltip>
+        }><BS.Button className="mr-3" variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger>
+         <BS.Button variant="link" ><b>{member.name}</b> ({member.id})</BS.Button></div>
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
