@@ -113,9 +113,6 @@ export default function Memberlist() {
       } else if (sortBy === 'ID') {
         const sortMembers =  filteredMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
         setSortedMembers(sortMembers);
-      } else if (sortBy === 'date created') {
-        const sortMembers =  filteredMembers.sort((a, b) => a.created.localeCompare(b.created)).slice(indexOfFirstMember, indexOfLastMember);
-        setSortedMembers(sortMembers);
       }
     }, [sortBy, filteredMembers, indexOfFirstMember, indexOfLastMember])
    
@@ -176,7 +173,6 @@ export default function Memberlist() {
             <option>name</option>
             <option>display name</option>
             <option>ID</option>
-            <option>date created</option>
           </BS.Form.Control>
           </BS.InputGroup>
       </BS.Form>
