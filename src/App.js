@@ -98,14 +98,14 @@ export default function App() {
 
 
   return (
-    <div className={localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}>
+    <div className={ `contents ${localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}`}>
       <Router history={history} basename="/pk-webs">
       <BS.Navbar className="mb-5 align-items-center">
             <BS.Navbar.Brand href="/pk-webs">
                 pk-webs
             </BS.Navbar.Brand>
             <BS.NavDropdown id="menu" className="mr-auto" title="Menu">
-            <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/dash')} >Dash</BS.NavDropdown.Item>
+            <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/dash/reload')} >Dash</BS.NavDropdown.Item>
             <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/settings')} >Settings</BS.NavDropdown.Item>
             <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/profile')}>Public profile</BS.NavDropdown.Item>
             { localStorage.getItem('token') ? <><hr className="my-1"/><BS.NavDropdown.Item onClick={() => logOut()}>Log out</BS.NavDropdown.Item></> : "" }
@@ -119,6 +119,7 @@ export default function App() {
                 {darkMode.value ? <FaMoon className="m-1"/> : <FaSun className="m-1"/>}
             </BS.Nav>
         </BS.Navbar>
+        <div className="content">
           <BS.Container>
             <Switch>
             <Redirect exact from="/pk-webs/dash/reload" to="/pk-webs/dash" />
@@ -238,6 +239,7 @@ export default function App() {
               </Route>
             </Switch>
           </BS.Container>
+          </div>
           <Footer />
       </Router>
       </div>
