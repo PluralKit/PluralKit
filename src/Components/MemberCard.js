@@ -223,8 +223,8 @@ export default function MemberCard(props) {
             <BS.Tooltip>
                 Copy public link
             </BS.Tooltip>
-        }><BS.Button className="mr-3" variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : 
-        <BS.Button className="mr-3" variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }
+        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : 
+        <BS.Button variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }
         { localStorage.getItem('pagesonly') ? 
         <Link to={`dash/${member.id}`}><BS.Button variant="link" className="float-left"><b>{member.name}</b> ({member.id})</BS.Button></Link>
         : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id}> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>

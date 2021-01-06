@@ -90,7 +90,7 @@ export default function ProfilePage(props) {
             <BS.Tooltip>
                 Copy link
             </BS.Tooltip>
-        }><BS.Button className="mr-3" variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger>
+        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger>
          <BS.Button variant="link" ><b>{member.name}</b> ({member.id})</BS.Button></div>
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (

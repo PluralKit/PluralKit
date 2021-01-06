@@ -64,6 +64,7 @@ body {
 
 .navbar {
   background-color: $gray-100;
+  flex: 0 1 auto;
 }
 
 .dark-mode .navbar {
@@ -262,6 +263,7 @@ blockquote {
 
 .footer {
   width: 100% !important;
+  flex: 0 1 auto;
 }
 
 .dark-mode .page-item:not(.active) .page-link {
