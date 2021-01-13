@@ -320,4 +320,7 @@ blockquote {
   background: linear-gradient(to bottom,  rgba(52, 58, 64, 1) 0%, rgba(52, 58, 64, 0) 100%);
 }
 
+textarea {
+  resize: none !important;
+}
 @import "~bootstrap/scss/bootstrap";

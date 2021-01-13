@@ -65,7 +65,7 @@ export default function MemberCard(props) {
         } = useForm();
 
         useEffect(() => {
-            autosize(document.querySelector('textarea'));
+            autosize(document.querySelectorAll('textarea'));
         })
 
     useEffect(() => {
@@ -384,16 +384,16 @@ export default function MemberCard(props) {
          <BS.Form onSubmit={handleSubmitProxy(submitProxy)}>
              <BS.Form.Row>
                 { proxyTags.map((item, index) => (
-                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={2}>
+                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Row>
                         <BS.InputGroup className="ml-1 mr-1 mb-1">
-                        <BS.Form.Control name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} ref={registerProxy}/> 
-                        <BS.Form.Control disabled placeholder='text'/>
-                        <BS.Form.Control name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} ref={registerProxy}/>
+                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} ref={registerProxy}/> 
+                        <BS.Form.Control as="textarea" rows="1" disabled placeholder='text'/>
+                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} ref={registerProxy}/>
                         </BS.InputGroup>
                         </BS.Form.Row>
                     </BS.Col>
-                ))} <BS.Col className="mb-2" xs={12} lg={2}><BS.Button block variant="light" onClick={() => addProxyField()}>Add new</BS.Button></BS.Col>
+                ))} <BS.Col className="mb-2" xs={12} lg={3}><BS.Button block variant="light" onClick={() => addProxyField()}>Add new</BS.Button></BS.Col>
              </BS.Form.Row>
              <BS.Button variant="light" onClick={() => resetProxyFields()}>Exit</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button>
         </BS.Form><hr/></> : proxyView ? 
