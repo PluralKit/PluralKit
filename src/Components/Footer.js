@@ -14,6 +14,11 @@ export default function Navigation() {
                         Github 
                     </BS.Nav.Link>
                 </BS.Nav.Item>
+                <BS.Nav.Item>
+                    <BS.Nav.Link rel="noreferrer" target="_blank" href="https://ko-fi.com/spectralitree">
+                        Ko-fi
+                    </BS.Nav.Link>
+                </BS.Nav.Item>
             </BS.Nav>
         </BS.Navbar>
     )
