@@ -57,20 +57,20 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> delete` - Deletes a member.
 
 ## Group commands
-*Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
-- `pk;group <name>` - Shows information about a group.
+*Replace `<groupname>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+- `pk;group <groupname>` - Shows information about a group.
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
-- `pk;group <group> list` - Lists all members in a group.
-- `pk;group <group> random` - Shows the info card of a randomly selected member in a group.
-- `pk;group <group> rename <new name>` - Renames a group.
-- `pk;group <group> displayname [display name]` - Shows or changes a group's display name.
-- `pk;group <group> description [description]` - Shows or changes a group's description.
-- `pk;group <group> add <member> [member 2] [member 3...]` - Adds one or more members to a group.
-- `pk;group <group> remove <member> [member 2] [member 3...]` - Removes one or more members from a group.
-- `pk;group <group> privacy <description|icon|visibility|all> <public|private>` - Changes a group's privacy settings.
-- `pk;group <group> icon [icon]` - Shows or changes a group's icon.
-- `pk;group <group> delete` - Deletes a group.
+- `pk;group <groupname> list` - Lists all members in a group.
+- `pk;group <groupname> random` - Shows the info card of a randomly selected member in a group.
+- `pk;group <groupname> rename <new name>` - Renames a group.
+- `pk;group <groupname> displayname [display name]` - Shows or changes a group's display name.
+- `pk;group <groupname> description [description]` - Shows or changes a group's description.
+- `pk;group <groupname> add <member> [member 2] [member 3...]` - Adds one or more members to a group.
+- `pk;group <groupname> remove <member> [member 2] [member 3...]` - Removes one or more members from a group.
+- `pk;group <groupname> privacy <description|icon|visibility|all> <public|private>` - Changes a group's privacy settings.
+- `pk;group <groupname> icon [icon]` - Shows or changes a group's icon.
+- `pk;group <groupname> delete` - Deletes a group.
 
 ## Switching commands
 - `pk;switch [member...]` - Registers a switch with the given members.
