@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import * as BS from 'react-bootstrap';
 import { useParams } from "react-router-dom";
 import ProfilePage from './ProfilePage.js'
 
 export default function MemberPages(props) {
     const { memberID } = useParams();
-    const [ noMatch, setNoMatch ] = useState(false);
     
     const memberpages = props.members.filter((member) => member.id === memberID)
     const memberpage = memberpages.map((member) => <ProfilePage key={member.id} member={member}/>)
+    const noMatch = memberpages.length === 0;
 
     useEffect (() => { 
         if (memberpages.length === 0) {
-            setNoMatch(true);
          }
     }, [memberpages])
 
