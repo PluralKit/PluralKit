@@ -112,9 +112,14 @@ namespace PluralKit.Bot
             if (trigger.MessageReference?.ChannelId == trigger.ChannelId) 
             {
                 var repliedTo = await FetchReplyOriginalMessage(trigger.MessageReference);
-                var embed = CreateReplyEmbed(repliedTo);
-                if (embed != null)
-                    embeds.Add(embed);
+                if (repliedTo != null)
+                {
+                    var embed = CreateReplyEmbed(repliedTo);
+                    if (embed != null)
+                        embeds.Add(embed);
+                }
+                
+                // TODO: have a clean error for when message can't be fetched instead of just being silent
             }
             
             // Send the webhook

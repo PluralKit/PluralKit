@@ -12,6 +12,11 @@ Accompanying it is an [OpenAPI v3.0 definition](https://github.com/xSke/PluralKi
 PluralKit has a basic HTTP REST API for querying and modifying your system.
 The root endpoint of the API is `https://api.pluralkit.me/v1/`.
 
+#### Authorization header token example
+```
+Authorization: z865MC7JNhLtZuSq1NXQYVe+FgZJHBfeBCXOPYYRwH4liDCDrsd7zdOuR45mX257
+```
+
 Endpoints will always return all fields, using `null` when a value is missing. On `PATCH` endpoints,
 missing fields from the JSON request will be ignored and preserved as is, but on `POST` endpoints will
 be set to `null` or cleared.

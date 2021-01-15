@@ -157,16 +157,26 @@ namespace PluralKit.Bot
             else if (ctx.Match("reset", "default")) newTimeoutHours = -1;
             else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeoutHours)) throw new PKError("Duration must be a number of hours.");
 
+            int? overflow = null;
+            if (newTimeoutHours > 100000)
+            {
+                // sanity check to prevent seconds overflow if someone types in 999999999
+                overflow = newTimeoutHours;
+                newTimeoutHours = 0;
+            }
+
             var newTimeout = newTimeoutHours > -1 ? Duration.FromHours(newTimeoutHours) : (Duration?) null;
             await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, 
                 new SystemPatch { LatchTimeout = (int?) newTimeout?.TotalSeconds }));
             
             if (newTimeoutHours == -1)
                 await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize()}).");
+            else if (newTimeoutHours == 0 && overflow != null)
+                await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out. ({overflow} hours is too long)");
             else if (newTimeoutHours == 0)
                 await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
             else
-                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize()} hours.");
+                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize()}.");
         }
 
         public async Task AutoproxyAccount(Context ctx)
