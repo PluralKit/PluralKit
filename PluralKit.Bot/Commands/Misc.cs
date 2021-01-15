@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 using App.Metrics;
 
-using DSharpPlus;
-
 using Humanizer;
 
 using NodaTime;
@@ -21,8 +19,6 @@ using Myriad.Gateway;
 using Myriad.Rest;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
-
-using Permissions = DSharpPlus.Permissions;
 
 namespace PluralKit.Bot {
     public class Misc
@@ -89,10 +85,10 @@ namespace PluralKit.Bot {
             var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name)?.Value ?? 0;
 
             // TODO: shard stuff
-            var shardId = ctx.Shard.ShardId;
-            var shardTotal = ctx.Client.ShardClients.Count;
+            var shardId = ctx.ShardNew.ShardInfo?.ShardId ?? -1;
+            var shardTotal = ctx.Cluster.Shards.Count;
             var shardUpTotal = _shards.Shards.Where(x => x.Connected).Count();
-            var shardInfo = _shards.GetShardInfo(ctx.Shard);
+            var shardInfo = _shards.GetShardInfo(ctx.ShardNew);
             
             var process = Process.GetCurrentProcess();
             var memoryUsage = process.WorkingSet64;
@@ -188,7 +184,7 @@ namespace PluralKit.Bot {
 
             if (permissionsMissing.Count == 0)
             {
-                eb.Description($"No errors found, all channels proxyable :)").Color((uint?) DiscordUtils.Green.Value);
+                eb.Description($"No errors found, all channels proxyable :)").Color(DiscordUtils.Green);
             }
             else
             {
@@ -196,14 +192,13 @@ namespace PluralKit.Bot {
                 {
                     // Each missing permission field can have multiple missing channels
                     // so we extract them all and generate a comma-separated list
-                    // TODO: port ToPermissionString?
-                    var missingPermissionNames = ((Permissions)missingPermissionField).ToPermissionString();
+                    var missingPermissionNames = ((PermissionSet) missingPermissionField).ToPermissionString();
                     
                     var channelsList = string.Join("\n", channels
                         .OrderBy(c => c.Position)
                         .Select(c => $"#{c.Name}"));
                     eb.Field(new($"Missing *{missingPermissionNames}*", channelsList.Truncate(1000)));
-                    eb.Color((uint?) DiscordUtils.Red.Value);
+                    eb.Color(DiscordUtils.Red);
                 }
             }
 

@@ -143,5 +143,11 @@ namespace Myriad.Extensions
             PermissionSet.SendTtsMessages |
             PermissionSet.AttachFiles |
             PermissionSet.EmbedLinks;
+
+        public static string ToPermissionString(this PermissionSet perms)
+        {
+            // TODO: clean string
+            return perms.ToString();
+        }
     }
 }

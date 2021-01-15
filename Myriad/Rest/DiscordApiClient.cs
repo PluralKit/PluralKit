@@ -46,8 +46,8 @@ namespace Myriad.Rest
             _client.Get<GuildMember>($"/guilds/{guildId}/members/{userId}",
                 ("GetGuildMember", guildId));
 
-        public Task<Message> CreateMessage(ulong channelId, MessageRequest request) =>
-            _client.Post<Message>($"/channels/{channelId}/messages", ("CreateMessage", channelId), request)!;
+        public Task<Message> CreateMessage(ulong channelId, MessageRequest request, MultipartFile[]? files = null) =>
+            _client.PostMultipart<Message>($"/channels/{channelId}/messages", ("CreateMessage", channelId), request, files)!;
 
         public Task<Message> EditMessage(ulong channelId, ulong messageId, MessageEditRequest request) =>
             _client.Patch<Message>($"/channels/{channelId}/messages/{messageId}", ("EditMessage", channelId), request)!;

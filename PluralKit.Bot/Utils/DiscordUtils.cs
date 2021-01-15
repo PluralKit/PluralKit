@@ -28,10 +28,10 @@ namespace PluralKit.Bot
 {
     public static class DiscordUtils
     {
-        public static DiscordColor Blue = new DiscordColor(0x1f99d8);
-        public static DiscordColor Green = new DiscordColor(0x00cc78);
-        public static DiscordColor Red = new DiscordColor(0xef4b3d);
-        public static DiscordColor Gray = new DiscordColor(0x979c9f);
+        public const uint Blue = 0x1f99d8;
+        public const uint Green = 0x00cc78;
+        public const uint Red = 0xef4b3d;
+        public const uint Gray = 0x979c9f;
 
         public static Permissions DM_PERMISSIONS = (Permissions) 0b00000_1000110_1011100110000_000000;
 
@@ -154,10 +154,10 @@ namespace PluralKit.Bot
             return cache != null && cache.TryGetValue(id, out user);
         }
 
-        public static DiscordColor? ToDiscordColor(this string color)
+        public static uint? ToDiscordColor(this string color)
         {
-            if (int.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
-                return new DiscordColor(colorInt);
+            if (uint.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
+                return colorInt;
             throw new ArgumentException($"Invalid color string '{color}'.");
         }
 

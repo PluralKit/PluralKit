@@ -5,8 +5,6 @@ using System.Web;
 
 using Dapper;
 
-using DSharpPlus.Entities;
-
 using Myriad.Builders;
 
 using Newtonsoft.Json.Linq;
@@ -92,7 +90,7 @@ namespace PluralKit.Bot
             var scream = data["soulscream"]!.Value<string>();
 
             var eb = new EmbedBuilder()
-                .Color((uint?) DiscordColor.Red.Value)
+                .Color(DiscordUtils.Red)
                 .Title(name)
                 .Url($"https://onomancer.sibr.dev/reflect?name={encoded}")
                 .Description($"*{scream}*");

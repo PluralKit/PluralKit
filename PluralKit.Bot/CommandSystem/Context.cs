@@ -1,24 +1,19 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using App.Metrics;
 
 using Autofac;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
+using Myriad.Rest;
 using Myriad.Rest.Types;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using PluralKit.Core;
-
-using DiscordApiClient = Myriad.Rest.DiscordApiClient;
 
 namespace PluralKit.Bot
 {
@@ -26,14 +21,11 @@ namespace PluralKit.Bot
     {
         private readonly ILifetimeScope _provider;
 
-        private readonly DiscordRestClient _rest;
         private readonly DiscordApiClient _newRest;
-        private readonly DiscordShardedClient _client;
-        private readonly DiscordClient _shard = null;
+        private readonly Cluster _cluster;
         private readonly Shard _shardNew;
         private readonly Guild? _guild;
         private readonly Channel _channel;
-        private readonly DiscordMessage _message = null;
         private readonly MessageCreateEvent _messageNew;
         private readonly Parameters _parameters;
         private readonly MessageContext _messageContext;
@@ -52,8 +44,6 @@ namespace PluralKit.Bot
         public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
                        PKSystem senderSystem, MessageContext messageContext, PermissionSet botPermissions)
         {
-            _rest = provider.Resolve<DiscordRestClient>();
-            _client = provider.Resolve<DiscordShardedClient>();
             _messageNew = message;
             _shardNew = shard;
             _guild = guild;
@@ -66,8 +56,9 @@ namespace PluralKit.Bot
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _commandMessageService = provider.Resolve<CommandMessageService>();
-            _parameters = new Parameters(message.Content.Substring(commandParseOffset));
+            _parameters = new Parameters(message.Content?.Substring(commandParseOffset));
             _newRest = provider.Resolve<DiscordApiClient>();
+            _cluster = provider.Resolve<Cluster>();
 
             _botPermissions = botPermissions;
             _userPermissions = _cache.PermissionsFor(message);
@@ -75,23 +66,19 @@ namespace PluralKit.Bot
 
         public IDiscordCache Cache => _cache;
 
-        public DiscordUser Author => _message.Author;
-        public DiscordChannel Channel => _message.Channel;
         public Channel ChannelNew => _channel;
         public User AuthorNew => _messageNew.Author;
         public GuildMemberPartial MemberNew => _messageNew.Member;
-        public DiscordMessage Message => _message;
+
         public Message MessageNew => _messageNew;
-        public DiscordGuild Guild => _message.Channel.Guild;
         public Guild GuildNew => _guild;
-        public DiscordClient Shard => _shard;
-        public DiscordShardedClient Client => _client;
+        public Shard ShardNew => _shardNew;
+        public Cluster Cluster => _cluster;
         public MessageContext MessageContext => _messageContext;
 
         public PermissionSet BotPermissions => _botPermissions;
         public PermissionSet UserPermissions => _userPermissions;
 
-        public DiscordRestClient Rest => _rest;
         public DiscordApiClient RestNew => _newRest;
 
         public PKSystem System => _senderSystem;

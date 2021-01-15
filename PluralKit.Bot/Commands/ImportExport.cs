@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Myriad.Rest.Exceptions;
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using Newtonsoft.Json;
@@ -32,7 +34,7 @@ namespace PluralKit.Bot
 
         public async Task Import(Context ctx)
         {
-            var url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
+            var url = ctx.RemainderOrNull() ?? ctx.MessageNew.Attachments.FirstOrDefault()?.Url;
             if (url == null) throw Errors.NoImportFilePassed;
 
             await ctx.BusyIndicator(async () =>
@@ -67,7 +69,7 @@ namespace PluralKit.Bot
                     if (!data.Valid) 
                         throw Errors.InvalidImportFile;
 
-                    if (data.LinkedAccounts != null && !data.LinkedAccounts.Contains(ctx.Author.Id))
+                    if (data.LinkedAccounts != null && !data.LinkedAccounts.Contains(ctx.AuthorNew.Id))
                     {
                         var msg = $"{Emojis.Warn} You seem to importing a system profile belonging to another account. Are you sure you want to proceed?";
                         if (!await ctx.PromptYesNo(msg)) throw Errors.ImportCancelled;
@@ -75,7 +77,7 @@ namespace PluralKit.Bot
 
                     // If passed system is null, it'll create a new one
                     // (and that's okay!)
-                    var result = await _dataFiles.ImportSystem(data, ctx.System, ctx.Author.Id);
+                    var result = await _dataFiles.ImportSystem(data, ctx.System, ctx.AuthorNew.Id);
                     if (!result.Success)
                         await ctx.Reply($"{Emojis.Error} The provided system profile could not be imported. {result.Message}");
                     else if (ctx.System == null)
@@ -141,13 +143,16 @@ namespace PluralKit.Bot
 
             try
             {
-                var dm = await ctx.Rest.CreateDmAsync(ctx.AuthorNew.Id);
+                var dm = await ctx.RestNew.CreateDm(ctx.AuthorNew.Id);
                 // TODO: send file
-                var msg = await dm.SendFileAsync("system.json", stream, $"{Emojis.Success} Here you go!");
-                await dm.SendMessageAsync($"<{msg.Attachments[0].Url}>");
+
+                var msg = await ctx.RestNew.CreateMessage(dm.Id,
+                    new MessageRequest {Content = $"{Emojis.Success} Here you go!"},
+                    new[] {new MultipartFile("system.json", stream)});
+                await ctx.RestNew.CreateMessage(dm.Id, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
                 
                 // If the original message wasn't posted in DMs, send a public reminder
-                if (ctx.ChannelNew.Type == Channel.ChannelType.Dm)
+                if (ctx.ChannelNew.Type != Channel.ChannelType.Dm)
                     await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
             catch (UnauthorizedException)

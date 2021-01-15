@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus.Entities;
-
 using Humanizer;
 
 using Myriad.Builders;
@@ -58,7 +56,7 @@ namespace PluralKit.Bot {
                 .Title(system.Name)
                 .Thumbnail(new(system.AvatarUrl))
                 .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
-                .Color((uint) DiscordUtils.Gray.Value);
+                .Color(DiscordUtils.Gray);
 
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
@@ -107,7 +105,7 @@ namespace PluralKit.Bot {
             var name = member.NameFor(ctx);
             if (system.Name != null) name = $"{name} ({system.Name})";
 
-            DiscordColor color;
+            uint color;
             try
             {
                 color = member.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
@@ -135,7 +133,7 @@ namespace PluralKit.Bot {
                 // TODO: add URL of website when that's up
                 .Author(new(name, IconUrl: DiscordUtils.WorkaroundForUrlBug(avatar)))
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
-                .Color((uint?) color.Value)
+                .Color(color)
                 .Footer(new(
                     $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")}"));
 
@@ -218,7 +216,7 @@ namespace PluralKit.Bot {
             var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
             return new EmbedBuilder()
-                .Color((uint?) (members.FirstOrDefault()?.Color?.ToDiscordColor()?.Value ?? DiscordUtils.Gray.Value))
+                .Color(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
                 .Field(new($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "*(no fronter)*"))
                 .Field(new("Since", $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)"))
                 .Build();
@@ -280,7 +278,7 @@ namespace PluralKit.Bot {
         {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new EmbedBuilder()
-                .Color((uint?) DiscordUtils.Gray.Value)
+                .Color(DiscordUtils.Gray)
                 .Footer(new($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)"));
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"

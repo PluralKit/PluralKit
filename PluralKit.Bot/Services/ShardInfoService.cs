@@ -7,6 +7,8 @@ using App.Metrics;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 
+using Myriad.Gateway;
+
 using NodaTime;
 using NodaTime.Extensions;
 
@@ -144,7 +146,7 @@ namespace PluralKit.Bot
             return Task.CompletedTask;
         }
 
-        public ShardInfo GetShardInfo(DiscordClient shard) => _shardInfo[shard.ShardId];
+        public ShardInfo GetShardInfo(Shard shard) => _shardInfo[shard.ShardId];
 
         public ICollection<ShardInfo> Shards => _shardInfo.Values;
     }

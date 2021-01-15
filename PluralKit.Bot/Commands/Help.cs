@@ -20,7 +20,7 @@ namespace PluralKit.Bot
                 .Field(new("More information", "For a full list of commands, see [the command list](https://pluralkit.me/commands).\nFor a more in-depth explanation of message proxying, see [the documentation](https://pluralkit.me/guide#proxying).\nIf you're an existing user of Tupperbox, type `pk;import` and attach a Tupperbox export file (from `tul!export`) to import your data from there."))
                 .Field(new("Support server", "We also have a Discord server for support, discussion, suggestions, announcements, etc: https://discord.gg/PczBt78"))
                 .Footer(new($"By @Ske#6201 | Myriad by @Layl#8888 | GitHub: https://github.com/xSke/PluralKit/ | Website: https://pluralkit.me/"))
-                .Color((uint?) DiscordUtils.Blue.Value)
+                .Color(DiscordUtils.Blue)
                 .Build());
         }
 

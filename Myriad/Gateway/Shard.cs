@@ -27,6 +27,7 @@ namespace Myriad.Gateway
         private Task _worker;
         
         public ShardInfo? ShardInfo { get; private set; }
+        public int ShardId => ShardInfo?.ShardId ?? 0;
         public GatewaySettings Settings { get; }
         public ShardSessionInfo SessionInfo { get; private set; }
         public ShardState State { get; private set; }

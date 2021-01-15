@@ -34,7 +34,7 @@ namespace PluralKit.Bot
             var system = _db.Execute(async c =>
             {
                 var system = await _repo.CreateSystem(c, systemName);
-                await _repo.AddAccount(c, system.Id, ctx.Author.Id);
+                await _repo.AddAccount(c, system.Id, ctx.AuthorNew.Id);
                 return system;
             });
             

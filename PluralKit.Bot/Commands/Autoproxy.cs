@@ -129,7 +129,7 @@ namespace PluralKit.Bot
             }
 
             if (!ctx.MessageContext.AllowAutoproxy) 
-                eb.Field(new("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`."));
+                eb.Field(new("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.AuthorNew.Id}>). To enable it, use `pk;autoproxy account enable`."));
 
             return eb.Build();
         }
@@ -191,7 +191,7 @@ namespace PluralKit.Bot
             else
             {
                 var statusString = ctx.MessageContext.AllowAutoproxy ? "enabled" : "disabled";
-                await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.Author.Id}>.");
+                await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.AuthorNew.Id}>.");
             }
         }
 
@@ -200,12 +200,12 @@ namespace PluralKit.Bot
             var statusString = allow ? "enabled" : "disabled";
             if (ctx.MessageContext.AllowAutoproxy == allow)
             {
-                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.");
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.AuthorNew.Id}>.");
                 return;
             }
             var patch = new AccountPatch { AllowAutoproxy = allow };
-            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.Author.Id, patch));
-            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
+            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.AuthorNew.Id, patch));
+            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.AuthorNew.Id}>.");
         }
 
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)

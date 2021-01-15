@@ -88,7 +88,7 @@ namespace PluralKit.Bot {
         public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply)
         {
             bool Predicate(MessageCreateEvent e) =>
-                e.Author.Id == ctx.AuthorNew.Id && e.ChannelId == ctx.Channel.Id;
+                e.Author.Id == ctx.AuthorNew.Id && e.ChannelId == ctx.ChannelNew.Id;
             
             var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>()
                 .WaitFor(Predicate, Duration.FromMinutes(1));
@@ -217,7 +217,7 @@ namespace PluralKit.Bot {
                         if (idx < items.Count) return items[idx];
                     }
 
-                    var __ = ctx.RestNew.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, ctx.Author.Id);
+                    var __ = ctx.RestNew.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, ctx.AuthorNew.Id);
                     await ctx.RestNew.EditMessage(msg.ChannelId, msg.Id,
                         new()
                         {
