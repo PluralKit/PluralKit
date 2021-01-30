@@ -15,9 +15,9 @@ namespace Myriad.Rest.Ratelimit
         private readonly ILogger _logger;
         private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-        private DateTimeOffset _nextReset;
+        private DateTimeOffset? _nextReset;
         private bool _resetTimeValid;
-        private bool _hasReceivedRemaining;
+        private bool _hasReceivedHeaders;
 
         public Bucket(ILogger logger, string key, ulong major, int limit)
         {
@@ -54,6 +54,7 @@ namespace Myriad.Rest.Ratelimit
                         "{BucketKey}/{BucketMajor}: Bucket has [{BucketRemaining}/{BucketLimit} left], allowing through",
                         Key, Major, Remaining, Limit);
                     Remaining--;
+                    
                     return true;
                 }
 
@@ -78,21 +79,25 @@ namespace Myriad.Rest.Ratelimit
                     var headerNextReset = DateTimeOffset.UtcNow + headers.ResetAfter.Value; // todo: server time
                     if (headerNextReset > _nextReset)
                     {
-                        _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter}, new remaining: {Remaining})",
-                            Key, Major, headerNextReset, headers.ResetAfter.Value, headers.Remaining);
+                        _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter}, remaining: {Remaining}, local remaining: {LocalRemaining})",
+                            Key, Major, headerNextReset, headers.ResetAfter.Value, headers.Remaining, Remaining);
 
                         _nextReset = headerNextReset;
                         _resetTimeValid = true;
                     }
                 }
 
-                if (headers.Limit != null)
+                if (headers.Limit != null) 
                     Limit = headers.Limit.Value;
 
-                if (headers.Remaining != null && !_hasReceivedRemaining)
+                if (headers.Remaining != null && !_hasReceivedHeaders)
                 {
-                    _hasReceivedRemaining = true;
-                    Remaining = headers.Remaining.Value;
+                    var oldRemaining = Remaining;
+                    Remaining = Math.Min(headers.Remaining.Value, Remaining);
+
+                    _logger.Debug("{BucketKey}/{BucketMajor}: Received first remaining of {HeaderRemaining}, previous local remaining is {LocalRemaining}, new local remaining is {Remaining}", 
+                        Key, Major, headers.Remaining.Value, oldRemaining, Remaining);
+                    _hasReceivedHeaders = true;
                 }
             }
             finally
@@ -106,6 +111,12 @@ namespace Myriad.Rest.Ratelimit
             try
             {
                 _semaphore.Wait();
+                
+                // If we don't have any reset data, "snap" it to now
+                // This happens before first request and at this point the reset is invalid anyway, so it's fine
+                // but it ensures the stale timeout doesn't trigger early by using `default` value
+                if (_nextReset == null)
+                    _nextReset = now;
 
                 // If we're past the reset time *and* we haven't reset already, do that
                 var timeSinceReset = now - _nextReset;
@@ -147,7 +158,7 @@ namespace Myriad.Rest.Ratelimit
             if (!_resetTimeValid)
                 return FallbackDelay;
 
-            var delay = _nextReset - now;
+            var delay = (_nextReset ?? now) - now;
 
             // If we have a really small (or negative) value, return a fallback delay too
             if (delay < Epsilon)

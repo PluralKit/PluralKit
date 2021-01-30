@@ -40,7 +40,7 @@ namespace Myriad.Rest
             Client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
             Client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", token);
 
-            _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForNewcord();
+            _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
 
             _ratelimiter = new Ratelimiter(logger);
             var discordPolicy = new DiscordRateLimitPolicy(_ratelimiter);

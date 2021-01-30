@@ -173,6 +173,8 @@ namespace PluralKit.Bot
 
             async Task HandleEventInner()
             {
+                await Task.Yield();
+                
                 using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
                 _logger
                     .ForContext("Elastic", "yes?")

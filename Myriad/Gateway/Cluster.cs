@@ -23,6 +23,7 @@ namespace Myriad.Gateway
         }
 
         public Func<Shard, IGatewayEvent, Task>? EventReceived { get; set; }
+        public event Action<Shard>? ShardCreated;
 
         public IReadOnlyDictionary<int, Shard> Shards => _shards;
         public ClusterSessionState SessionState => GetClusterState();
@@ -35,7 +36,8 @@ namespace Myriad.Gateway
             foreach (var (id, shard) in _shards)
                 shards.Add(new ClusterSessionState.ShardState
                 {
-                    Shard = shard.ShardInfo ?? new ShardInfo(id, _shards.Count), Session = shard.SessionInfo
+                    Shard = shard.ShardInfo, 
+                    Session = shard.SessionInfo
                 });
 
             return new ClusterSessionState {Shards = shards};
@@ -78,6 +80,8 @@ namespace Myriad.Gateway
             var shard = new Shard(_logger, new Uri(url), _gatewaySettings, shardInfo, session);
             shard.OnEventReceived += evt => OnShardEventReceived(shard, evt);
             _shards[shardInfo.ShardId] = shard;
+            
+            ShardCreated?.Invoke(shard);
         }
 
         private async Task OnShardEventReceived(Shard shard, IGatewayEvent evt)

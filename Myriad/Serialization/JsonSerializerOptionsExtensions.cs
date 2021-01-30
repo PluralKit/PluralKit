@@ -5,7 +5,7 @@ namespace Myriad.Serialization
 {
     public static class JsonSerializerOptionsExtensions
     {
-        public static JsonSerializerOptions ConfigureForNewcord(this JsonSerializerOptions opts)
+        public static JsonSerializerOptions ConfigureForMyriad(this JsonSerializerOptions opts)
         {
             opts.PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy();
             opts.NumberHandling = JsonNumberHandling.AllowReadingFromString;

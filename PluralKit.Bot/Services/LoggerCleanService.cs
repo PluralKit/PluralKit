@@ -4,31 +4,40 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-
+using Myriad.Cache;
+using Myriad.Extensions;
+using Myriad.Rest;
+using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
+using Dapper;
+
+using NodaTime;
+using NodaTime.Extensions;
+using NodaTime.Text;
+
 using PluralKit.Core;
+
+using Serilog;
 
 namespace PluralKit.Bot
 {
     public class LoggerCleanService
     {
-        private static readonly Regex _basicRegex = new Regex("(\\d{17,19})");
-        private static readonly Regex _dynoRegex = new Regex("Message ID: (\\d{17,19})");
-        private static readonly Regex _carlRegex = new Regex("ID: (\\d{17,19})");
-        private static readonly Regex _circleRegex = new Regex("\\(`(\\d{17,19})`\\)");
-        private static readonly Regex _loggerARegex = new Regex("Message = (\\d{17,19})");
-        private static readonly Regex _loggerBRegex = new Regex("MessageID:(\\d{17,19})");
-        private static readonly Regex _auttajaRegex = new Regex("Message (\\d{17,19}) deleted");
-        private static readonly Regex _mantaroRegex = new Regex("Message \\(?ID:? (\\d{17,19})\\)? created by .* in channel .* was deleted\\.");
-        private static readonly Regex _pancakeRegex = new Regex("Message from <@(\\d{17,19})> deleted in");
-        private static readonly Regex _unbelievaboatRegex = new Regex("Message ID: (\\d{17,19})");
-        private static readonly Regex _vanessaRegex = new Regex("Message sent by <@!?(\\d{17,19})> deleted in");
-        private static readonly Regex _salRegex = new Regex("\\(ID: (\\d{17,19})\\)");
-        private static readonly Regex _GearBotRegex = new Regex("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
-        private static readonly Regex _GiselleRegex = new Regex("\\*\\*Message ID\\*\\*: `(\\d{17,19})`");
+        private static readonly Regex _basicRegex = new("(\\d{17,19})");
+        private static readonly Regex _dynoRegex = new("Message ID: (\\d{17,19})");
+        private static readonly Regex _carlRegex = new("ID: (\\d{17,19})");
+        private static readonly Regex _circleRegex = new("\\(`(\\d{17,19})`\\)");
+        private static readonly Regex _loggerARegex = new("Message = (\\d{17,19})");
+        private static readonly Regex _loggerBRegex = new("MessageID:(\\d{17,19})");
+        private static readonly Regex _auttajaRegex = new("Message (\\d{17,19}) deleted");
+        private static readonly Regex _mantaroRegex = new("Message \\(?ID:? (\\d{17,19})\\)? created by .* in channel .* was deleted\\.");
+        private static readonly Regex _pancakeRegex = new("Message from <@(\\d{17,19})> deleted in");
+        private static readonly Regex _unbelievaboatRegex = new("Message ID: (\\d{17,19})");
+        private static readonly Regex _vanessaRegex = new("Message sent by <@!?(\\d{17,19})> deleted in");
+        private static readonly Regex _salRegex = new("\\(ID: (\\d{17,19})\\)");
+        private static readonly Regex _GearBotRegex = new("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
+        private static readonly Regex _GiselleRegex = new("\\*\\*Message ID\\*\\*: `(\\d{17,19})`");
 
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
@@ -57,29 +66,35 @@ namespace PluralKit.Bot
             .ToDictionary(b => b.WebhookName);
 
         private readonly IDatabase _db;
-        private DiscordShardedClient _client;
+        private readonly DiscordApiClient _client;
+        private readonly IDiscordCache _cache;
+        private readonly Bot _bot; // todo: get rid of this nasty
+        private readonly ILogger _logger;
         
-        public LoggerCleanService(IDatabase db, DiscordShardedClient client)
+        public LoggerCleanService(IDatabase db, DiscordApiClient client, IDiscordCache cache, Bot bot, ILogger logger)
         {
             _db = db;
             _client = client;
+            _cache = cache;
+            _bot = bot;
+            _logger = logger.ForContext<LoggerCleanService>();
         }
 
         public ICollection<LoggerBot> Bots => _bots.Values;
 
         public async ValueTask HandleLoggerBotCleanup(Message msg)
         {
-            // TODO: fix!!
-            /*
-            if (msg.Channel.Type != ChannelType.Text) return;
-            if (!msg.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
+            var channel = _cache.GetChannel(msg.ChannelId);
+            
+            if (channel.Type != Channel.ChannelType.GuildText) return;
+            if (!_bot.PermissionsIn(channel.Id).HasFlag(PermissionSet.ManageMessages)) return;
  
             // If this message is from a *webhook*, check if the name matches one of the bots we know
             // TODO: do we need to do a deeper webhook origin check, or would that be too hard on the rate limit?
             // If it's from a *bot*, check the bot ID to see if we know it.
             LoggerBot bot = null;
-            if (msg.WebhookMessage) _botsByWebhookName.TryGetValue(msg.Author.Username, out bot);
-            else if (msg.Author.IsBot) _bots.TryGetValue(msg.Author.Id, out bot);
+            if (msg.WebhookId != null) _botsByWebhookName.TryGetValue(msg.Author.Username, out bot);
+            else if (msg.Author.Bot) _bots.TryGetValue(msg.Author.Id, out bot);
             
             // If we didn't find anything before, or what we found is an unsupported bot, bail
             if (bot == null) return;
@@ -96,33 +111,43 @@ namespace PluralKit.Bot
                     // either way but shouldn't be too much, given it's constrained by user ID and guild.
                     var fuzzy = bot.FuzzyExtractFunc(msg);
                     if (fuzzy == null) return;
-
+                    
+                    _logger.Debug("Fuzzy logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
+                        bot.Name, msg.Id, fuzzy);
+                    
                     var mid = await _db.Execute(conn =>
                         conn.QuerySingleOrDefaultAsync<ulong?>(
                             "select mid from messages where sender = @User and mid > @ApproxID and guild = @Guild limit 1",
                             new
                             {
                                 fuzzy.Value.User,
-                                Guild = msg.Channel.GuildId,
+                                Guild = msg.GuildId,
                                 ApproxId = DiscordUtils.InstantToSnowflake(
-                                    fuzzy.Value.ApproxTimestamp - TimeSpan.FromSeconds(3))
+                                    fuzzy.Value.ApproxTimestamp - Duration.FromSeconds(3))
                             }));
-                    if (mid == null) return; // If we didn't find a corresponding message, bail
+                    
+                    // If we didn't find a corresponding message, bail
+                    if (mid == null) 
+                        return; 
+                    
                     // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
-                    await msg.DeleteAsync();
+                    await _client.DeleteMessage(msg.ChannelId, msg.Id);
                 }
                 else if (bot.ExtractFunc != null)
                 {
                     // Other bots give us the message ID itself, and we can just extract that from the database directly.
                     var extractedId = bot.ExtractFunc(msg);
                     if (extractedId == null) return; // If we didn't find anything, bail.
+                    
+                    _logger.Debug("Pure logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
+                        bot.Name, msg.Id, extractedId);
 
                     var mid = await _db.Execute(conn => conn.QuerySingleOrDefaultAsync<ulong?>(
                         "select mid from messages where original_mid = @Mid", new {Mid = extractedId.Value}));
                     if (mid == null) return;
 
                     // If we've gotten this far, we found a logged deletion of a trigger message. Just yeet it!
-                    await msg.DeleteAsync();
+                    await _client.DeleteMessage(msg.ChannelId, msg.Id);
                 } // else should not happen, but idk, it might
             }
             catch (NotFoundException)
@@ -131,10 +156,9 @@ namespace PluralKit.Bot
                 // The only thing I can think of that'd cause this are the DeleteAsync() calls which 404 when
                 // the message doesn't exist anyway - so should be safe to just ignore it, right?
             }
-        */
         }
 
-        private static ulong? ExtractAuttaja(DiscordMessage msg)
+        private static ulong? ExtractAuttaja(Message msg)
         {
             // Auttaja has an optional "compact mode" that logs without embeds
             // That one puts the ID in the message content, non-compact puts it in the embed description.
@@ -146,7 +170,7 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
-        private static ulong? ExtractDyno(DiscordMessage msg)
+        private static ulong? ExtractDyno(Message msg)
         {
             // Embed *description* contains "Message sent by [mention] deleted in [channel]", contains message ID in footer per regex
             var embed = msg.Embeds.FirstOrDefault();
@@ -155,7 +179,7 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
-        private static ulong? ExtractLoggerA(DiscordMessage msg)
+        private static ulong? ExtractLoggerA(Message msg)
         {
             // This is for Logger#6088 (298822483060981760), distinct from Logger#6278 (327424261180620801).
             // Embed contains title "Message deleted in [channel]", and an ID field containing both message and user ID (see regex).
@@ -169,7 +193,7 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
-        private static ulong? ExtractLoggerB(DiscordMessage msg)
+        private static ulong? ExtractLoggerB(Message msg)
         {
             // This is for Logger#6278 (327424261180620801), distinct from Logger#6088 (298822483060981760).
             // Embed title ends with "A Message Was Deleted!", footer contains message ID as per regex.
@@ -179,7 +203,7 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
-        private static ulong? ExtractGenericBot(DiscordMessage msg)
+        private static ulong? ExtractGenericBot(Message msg)
         {
             // Embed, title is "Message Deleted", ID plain in footer.
             var embed = msg.Embeds.FirstOrDefault();
@@ -188,7 +212,7 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
-        private static ulong? ExtractBlargBot(DiscordMessage msg)
+        private static ulong? ExtractBlargBot(Message msg)
         {
             // Embed, title ends with "Message Deleted", contains ID plain in a field.
             var embed = msg.Embeds.FirstOrDefault();
@@ -198,7 +222,7 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
-        private static ulong? ExtractMantaro(DiscordMessage msg)
+        private static ulong? ExtractMantaro(Message msg)
         {
             // Plain message, "Message (ID: [id]) created by [user] (ID: [id]) in channel [channel] was deleted.
             if (!(msg.Content?.Contains("was deleted.") ?? false)) return null;
@@ -206,7 +230,7 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
 
-        private static FuzzyExtractResult? ExtractCarlBot(DiscordMessage msg)
+        private static FuzzyExtractResult? ExtractCarlBot(Message msg)
         {
             // Embed, title is "Message deleted in [channel], **user** ID in the footer, timestamp as, well, timestamp in embed.
             // This is the *deletion* timestamp, which we can assume is a couple seconds at most after the message was originally sent
@@ -214,17 +238,21 @@ namespace PluralKit.Bot
             if (embed?.Footer == null || embed.Timestamp == null || !(embed.Title?.StartsWith("Message deleted in") ?? false)) return null;
             var match = _carlRegex.Match(embed.Footer.Text ?? "");
             return match.Success 
-                ? new FuzzyExtractResult { User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = embed.Timestamp.Value }
+                ? new FuzzyExtractResult
+                {
+                    User = ulong.Parse(match.Groups[1].Value), 
+                    ApproxTimestamp = OffsetDateTimePattern.Rfc3339.Parse(embed.Timestamp).GetValueOrThrow().ToInstant()
+                }
                 : (FuzzyExtractResult?) null;
         }
 
-        private static FuzzyExtractResult? ExtractCircle(DiscordMessage msg)
+        private static FuzzyExtractResult? ExtractCircle(Message msg)
         {
             // Like Auttaja, Circle has both embed and compact modes, but the regex works for both.
             // Compact: "Message from [user] ([id]) deleted in [channel]", no timestamp (use message time)
             // Embed: Message Author field: "[user] ([id])", then an embed timestamp
             string stringWithId = msg.Content;
-            if (msg.Embeds.Count > 0)
+            if (msg.Embeds.Length > 0)
             {
                 var embed = msg.Embeds.First();
                 if (embed.Author?.Name == null || !embed.Author.Name.StartsWith("Message Deleted in")) return null;
@@ -236,11 +264,14 @@ namespace PluralKit.Bot
             
             var match = _circleRegex.Match(stringWithId);
             return match.Success 
-                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                ? new FuzzyExtractResult {
+                    User = ulong.Parse(match.Groups[1].Value),
+                    ApproxTimestamp = msg.Timestamp().ToInstant()
+                }
                 : (FuzzyExtractResult?) null;
         }
 
-        private static FuzzyExtractResult? ExtractPancake(DiscordMessage msg)
+        private static FuzzyExtractResult? ExtractPancake(Message msg)
         {
             // Embed, author is "Message Deleted", description includes a mention, timestamp is *message send time* (but no ID)
             // so we use the message timestamp to get somewhere *after* the message was proxied
@@ -248,11 +279,15 @@ namespace PluralKit.Bot
             if (embed?.Description == null || embed.Author?.Name != "Message Deleted") return null;
             var match = _pancakeRegex.Match(embed.Description);
             return match.Success
-                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                ? new FuzzyExtractResult
+                {
+                    User = ulong.Parse(match.Groups[1].Value),
+                    ApproxTimestamp = msg.Timestamp().ToInstant()
+                }
                 : (FuzzyExtractResult?) null;
         }
         
-        private static ulong? ExtractUnbelievaBoat(DiscordMessage msg)
+        private static ulong? ExtractUnbelievaBoat(Message msg)
         {
             // Embed author is "Message Deleted", footer contains message ID per regex
             var embed = msg.Embeds.FirstOrDefault();
@@ -261,18 +296,22 @@ namespace PluralKit.Bot
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
         }
         
-        private static FuzzyExtractResult? ExtractVanessa(DiscordMessage msg)
+        private static FuzzyExtractResult? ExtractVanessa(Message msg)
         {
             // Title is "Message Deleted", embed description contains mention
             var embed = msg.Embeds.FirstOrDefault();
             if (embed?.Title == null || embed.Title != "Message Deleted" || embed.Description == null) return null;
             var match = _vanessaRegex.Match(embed.Description);
             return match.Success
-                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                ? new FuzzyExtractResult
+                {
+                    User = ulong.Parse(match.Groups[1].Value),
+                    ApproxTimestamp = msg.Timestamp().ToInstant()
+                }
                 : (FuzzyExtractResult?) null;
         }
         
-        private static FuzzyExtractResult? ExtractSAL(DiscordMessage msg)
+        private static FuzzyExtractResult? ExtractSAL(Message msg)
         {
             // Title is "Message Deleted!", field "Message Author" contains ID
             var embed = msg.Embeds.FirstOrDefault();
@@ -281,22 +320,30 @@ namespace PluralKit.Bot
             if (authorField == null) return null;
             var match = _salRegex.Match(authorField.Value);
             return match.Success
-                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                ? new FuzzyExtractResult
+                {
+                    User = ulong.Parse(match.Groups[1].Value),
+                    ApproxTimestamp = msg.Timestamp().ToInstant()
+                }
                 : (FuzzyExtractResult?) null;
         }
 
-        private static FuzzyExtractResult? ExtractGearBot(DiscordMessage msg)
+        private static FuzzyExtractResult? ExtractGearBot(Message msg)
         {
             // Simple text based message log.
             // No message ID, but we have timestamp and author ID.
             // Not using timestamp here though (seems to be same as message timestamp), might be worth implementing in the future.
             var match = _GearBotRegex.Match(msg.Content);
             return match.Success
-                ? new FuzzyExtractResult {User = ulong.Parse(match.Groups[1].Value), ApproxTimestamp = msg.Timestamp}
+                ? new FuzzyExtractResult
+                {
+                    User = ulong.Parse(match.Groups[1].Value),
+                    ApproxTimestamp = msg.Timestamp().ToInstant()
+                }
                 : (FuzzyExtractResult?) null;
         }
 
-        private static ulong? ExtractGiselleBot(DiscordMessage msg)
+        private static ulong? ExtractGiselleBot(Message msg)
         {
             var embed = msg.Embeds.FirstOrDefault();
             if (embed?.Title == null || embed.Title != "🗑 Message Deleted") return null;
@@ -308,11 +355,11 @@ namespace PluralKit.Bot
         {
             public string Name;
             public ulong Id;
-            public Func<DiscordMessage, ulong?> ExtractFunc;
-            public Func<DiscordMessage, FuzzyExtractResult?> FuzzyExtractFunc;
+            public Func<Message, ulong?> ExtractFunc;
+            public Func<Message, FuzzyExtractResult?> FuzzyExtractFunc;
             public string WebhookName;
 
-            public LoggerBot(string name, ulong id, Func<DiscordMessage, ulong?> extractFunc = null, Func<DiscordMessage, FuzzyExtractResult?> fuzzyExtractFunc = null, string webhookName = null)
+            public LoggerBot(string name, ulong id, Func<Message, ulong?> extractFunc = null, Func<Message, FuzzyExtractResult?> fuzzyExtractFunc = null, string webhookName = null)
             {
                 Name = name;
                 Id = id;
@@ -324,8 +371,8 @@ namespace PluralKit.Bot
 
         public struct FuzzyExtractResult
         {
-            public ulong User;
-            public DateTimeOffset ApproxTimestamp;
+            public ulong User { get; set; }
+            public Instant ApproxTimestamp { get; set; }
         }
     }
 }

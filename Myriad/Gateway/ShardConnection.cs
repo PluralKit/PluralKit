@@ -29,9 +29,12 @@ namespace Myriad.Gateway
         }
 
         public Func<GatewayPacket, Task>? OnReceive { get; set; }
+        public Action? OnOpen { get; set; }
+
+        public Action<WebSocketCloseStatus, string?>? OnClose { get; set; }
 
         public WebSocketState State => _client.State;
-
+        
         public async ValueTask DisposeAsync()
         {
             _cts.Cancel();
@@ -50,8 +53,14 @@ namespace Myriad.Gateway
             }.Uri;
             _logger.Debug("Connecting to gateway WebSocket at {GatewayUrl}", realUrl);
             await _client.ConnectAsync(realUrl, default);
-
+            _logger.Debug("Gateway connection opened");
+            
+            OnOpen?.Invoke();
+            
+            // Main worker loop, spins until we manually disconnect (which hits the cancellation token)
+            // or the server disconnects us (which sets state to closed)
             while (!_cts.IsCancellationRequested && _client.State == WebSocketState.Open)
+            {
                 try
                 {
                     await HandleReceive();
@@ -60,6 +69,9 @@ namespace Myriad.Gateway
                 {
                     _logger.Error(e, "Error in WebSocket receive worker");
                 }
+            }
+            
+            OnClose?.Invoke(_client.CloseStatus ?? default, _client.CloseStatusDescription);
         }
 
         private async Task HandleReceive()
@@ -92,6 +104,7 @@ namespace Myriad.Gateway
 
         private async Task<ValueWebSocketReceiveResult> ReadData(MemoryStream stream)
         {
+            // TODO: does this throw if we disconnect mid-read?
             using var buf = MemoryPool<byte>.Shared.Rent();
             ValueWebSocketReceiveResult result;
             do
