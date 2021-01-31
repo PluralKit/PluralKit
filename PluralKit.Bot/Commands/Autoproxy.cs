@@ -89,7 +89,7 @@ namespace PluralKit.Bot
         {
             var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member\n**pk;autoproxy front** - Autoproxies as current (first) fronter\n**pk;autoproxy <member>** - Autoproxies as a specific member";
             var eb = new EmbedBuilder()
-                .Title($"Current autoproxy status (for {ctx.GuildNew.Name.EscapeMarkdown()})");
+                .Title($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
             
             var fronters = ctx.MessageContext.LastSwitchMembers;
             var relevantMember = ctx.MessageContext.AutoproxyMode switch
@@ -129,7 +129,7 @@ namespace PluralKit.Bot
             }
 
             if (!ctx.MessageContext.AllowAutoproxy) 
-                eb.Field(new("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.AuthorNew.Id}>). To enable it, use `pk;autoproxy account enable`."));
+                eb.Field(new("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`."));
 
             return eb.Build();
         }
@@ -191,7 +191,7 @@ namespace PluralKit.Bot
             else
             {
                 var statusString = ctx.MessageContext.AllowAutoproxy ? "enabled" : "disabled";
-                await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.AuthorNew.Id}>.");
+                await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.Author.Id}>.");
             }
         }
 
@@ -200,18 +200,18 @@ namespace PluralKit.Bot
             var statusString = allow ? "enabled" : "disabled";
             if (ctx.MessageContext.AllowAutoproxy == allow)
             {
-                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.AuthorNew.Id}>.");
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.");
                 return;
             }
             var patch = new AccountPatch { AllowAutoproxy = allow };
-            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.AuthorNew.Id, patch));
-            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.AuthorNew.Id}>.");
+            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.Author.Id, patch));
+            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
         }
 
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
         {
             var patch = new SystemGuildPatch {AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember};
-            return _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.GuildNew.Id, patch));
+            return _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
         }
     }
 }

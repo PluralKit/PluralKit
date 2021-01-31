@@ -84,10 +84,10 @@ namespace PluralKit.Bot {
             var totalSwitches = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.SwitchCount.Name)?.Value ?? 0;
             var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name)?.Value ?? 0;
 
-            var shardId = ctx.ShardNew.ShardInfo.ShardId;
+            var shardId = ctx.Shard.ShardInfo.ShardId;
             var shardTotal = ctx.Cluster.Shards.Count;
             var shardUpTotal = _shards.Shards.Where(x => x.Connected).Count();
-            var shardInfo = _shards.GetShardInfo(ctx.ShardNew);
+            var shardInfo = _shards.GetShardInfo(ctx.Shard);
             
             var process = Process.GetCurrentProcess();
             var memoryUsage = process.WorkingSet64;
@@ -106,7 +106,7 @@ namespace PluralKit.Bot {
                 .Field(new("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true))
                 .Field(new("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true))
                 .Field(new("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalGroups:N0} groups, {totalSwitches:N0} switches, {totalMessages:N0} messages"));
-            await ctx.RestNew.EditMessage(msg.ChannelId, msg.Id,
+            await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
                 new MessageEditRequest {Content = "", Embed = embed.Build()});
         }
 
@@ -115,10 +115,10 @@ namespace PluralKit.Bot {
             Guild guild;
             GuildMemberPartial senderGuildUser = null;
 
-            if (ctx.GuildNew != null && !ctx.HasNext())
+            if (ctx.Guild != null && !ctx.HasNext())
             {
-                guild = ctx.GuildNew;
-                senderGuildUser = ctx.MemberNew;
+                guild = ctx.Guild;
+                senderGuildUser = ctx.Member;
             }
             else
             {
@@ -128,7 +128,7 @@ namespace PluralKit.Bot {
 
                 guild = await _rest.GetGuild(guildId);
                 if (guild != null) 
-                    senderGuildUser = await _rest.GetGuildMember(guildId, ctx.AuthorNew.Id);
+                    senderGuildUser = await _rest.GetGuildMember(guildId, ctx.Author.Id);
                 if (guild == null || senderGuildUser == null) 
                     throw Errors.GuildNotFound(guildId);
             }
@@ -150,7 +150,7 @@ namespace PluralKit.Bot {
             foreach (var channel in await _rest.GetGuildChannels(guild.Id))
             {
                 var botPermissions = _bot.PermissionsIn(channel.Id);
-                var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.AuthorNew.Id, senderGuildUser.Roles);
+                var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser.Roles);
                 
                 if ((userPermissions & PermissionSet.ViewChannel) == 0)
                 {

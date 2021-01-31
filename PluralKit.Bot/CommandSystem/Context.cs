@@ -21,12 +21,12 @@ namespace PluralKit.Bot
     {
         private readonly ILifetimeScope _provider;
 
-        private readonly DiscordApiClient _newRest;
+        private readonly DiscordApiClient _rest;
         private readonly Cluster _cluster;
-        private readonly Shard _shardNew;
+        private readonly Shard _shard;
         private readonly Guild? _guild;
         private readonly Channel _channel;
-        private readonly MessageCreateEvent _messageNew;
+        private readonly MessageCreateEvent _message;
         private readonly Parameters _parameters;
         private readonly MessageContext _messageContext;
         private readonly PermissionSet _botPermissions;
@@ -44,8 +44,8 @@ namespace PluralKit.Bot
         public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
                        PKSystem senderSystem, MessageContext messageContext, PermissionSet botPermissions)
         {
-            _messageNew = message;
-            _shardNew = shard;
+            _message = message;
+            _shard = shard;
             _guild = guild;
             _channel = channel;
             _senderSystem = senderSystem;
@@ -57,7 +57,7 @@ namespace PluralKit.Bot
             _provider = provider;
             _commandMessageService = provider.Resolve<CommandMessageService>();
             _parameters = new Parameters(message.Content?.Substring(commandParseOffset));
-            _newRest = provider.Resolve<DiscordApiClient>();
+            _rest = provider.Resolve<DiscordApiClient>();
             _cluster = provider.Resolve<Cluster>();
 
             _botPermissions = botPermissions;
@@ -66,20 +66,20 @@ namespace PluralKit.Bot
 
         public IDiscordCache Cache => _cache;
 
-        public Channel ChannelNew => _channel;
-        public User AuthorNew => _messageNew.Author;
-        public GuildMemberPartial MemberNew => _messageNew.Member;
+        public Channel Channel => _channel;
+        public User Author => _message.Author;
+        public GuildMemberPartial Member => _message.Member;
 
-        public Message MessageNew => _messageNew;
-        public Guild GuildNew => _guild;
-        public Shard ShardNew => _shardNew;
+        public Message Message => _message;
+        public Guild Guild => _guild;
+        public Shard Shard => _shard;
         public Cluster Cluster => _cluster;
         public MessageContext MessageContext => _messageContext;
 
         public PermissionSet BotPermissions => _botPermissions;
         public PermissionSet UserPermissions => _userPermissions;
 
-        public DiscordApiClient RestNew => _newRest;
+        public DiscordApiClient Rest => _rest;
 
         public PKSystem System => _senderSystem;
         
@@ -97,7 +97,7 @@ namespace PluralKit.Bot
             if (embed != null && !BotPermissions.HasFlag(PermissionSet.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
 
-            var msg = await _newRest.CreateMessage(_channel.Id, new MessageRequest
+            var msg = await _rest.CreateMessage(_channel.Id, new MessageRequest
             {
                 Content = text,
                 Embed = embed,
@@ -109,7 +109,7 @@ namespace PluralKit.Bot
             {
                 // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
                 // This may need to be changed at some point but works well enough for now
-                await _commandMessageService.RegisterMessage(msg.Id, AuthorNew.Id);
+                await _commandMessageService.RegisterMessage(msg.Id, Author.Id);
             }
 
             return msg;

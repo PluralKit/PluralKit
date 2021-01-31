@@ -25,7 +25,7 @@ namespace PluralKit.Bot
             if (location == AvatarLocation.Server)
             {
                 if (target.AvatarUrl != null)
-                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member will now use the global avatar in this server (**{ctx.GuildNew.Name}**).");
+                    await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member will now use the global avatar in this server (**{ctx.Guild.Name}**).");
                 else
                     await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member now has no avatar.");
             }
@@ -55,7 +55,7 @@ namespace PluralKit.Bot
                     throw new PKError($"This member does not have a server avatar set. Type `pk;member {target.Reference()} avatar` to see their global avatar.");
             }
             
-            var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.GuildNew.Name})" : "avatar";
+            var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.Guild.Name})" : "avatar";
             var cmd = location == AvatarLocation.Server ? "serveravatar" : "avatar";
             
             var eb = new EmbedBuilder()
@@ -69,14 +69,14 @@ namespace PluralKit.Bot
         public async Task ServerAvatar(Context ctx, PKMember target)
         {
             ctx.CheckGuildContext();
-            var guildData = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.GuildNew.Id, target.Id));
+            var guildData = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
             await AvatarCommandTree(AvatarLocation.Server, ctx, target, guildData);
         }
         
         public async Task Avatar(Context ctx, PKMember target)
         {
-            var guildData = ctx.GuildNew != null ?
-                await _db.Execute(c => _repo.GetMemberGuild(c, ctx.GuildNew.Id, target.Id))
+            var guildData = ctx.Guild != null ?
+                await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id))
                 : null;
 
             await AvatarCommandTree(AvatarLocation.Member, ctx, target, guildData);
@@ -119,8 +119,8 @@ namespace PluralKit.Bot
             
             var serverFrag = location switch
             {
-                AvatarLocation.Server => $" This avatar will now be used when proxying in this server (**{ctx.GuildNew.Name}**).",
-                AvatarLocation.Member when targetGuildData?.AvatarUrl != null => $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.GuildNew.Name}**), and thus changing the global avatar will have no effect here.",
+                AvatarLocation.Server => $" This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).",
+                AvatarLocation.Member when targetGuildData?.AvatarUrl != null => $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
                 _ => ""
             };
 
@@ -145,7 +145,7 @@ namespace PluralKit.Bot
             {
                 case AvatarLocation.Server:
                     var serverPatch = new MemberGuildPatch { AvatarUrl = url };
-                    return _db.Execute(c => _repo.UpsertMemberGuild(c, target.Id, ctx.GuildNew.Id, serverPatch));
+                    return _db.Execute(c => _repo.UpsertMemberGuild(c, target.Id, ctx.Guild.Id, serverPatch));
                 case AvatarLocation.Member:
                     var memberPatch = new MemberPatch { AvatarUrl = url };
                     return _db.Execute(c => _repo.UpdateMember(c, target.Id, memberPatch));

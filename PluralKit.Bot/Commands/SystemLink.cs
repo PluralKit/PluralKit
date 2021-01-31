@@ -49,7 +49,7 @@ namespace PluralKit.Bot
 
             ulong id;
             if (!ctx.HasNext())
-                id = ctx.AuthorNew.Id;
+                id = ctx.Author.Id;
             else if (!ctx.MatchUserRaw(out id))
                 throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
 

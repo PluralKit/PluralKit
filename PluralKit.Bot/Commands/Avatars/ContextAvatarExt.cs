@@ -45,7 +45,7 @@ namespace PluralKit.Bot
             }
             
             // If we have an attachment, use that 
-            if (ctx.MessageNew.Attachments.FirstOrDefault() is {} attachment)
+            if (ctx.Message.Attachments.FirstOrDefault() is {} attachment)
             {
                 var url = TryRewriteCdnUrl(attachment.ProxyUrl);
                 return new ParsedImage {Url = url, Source = AvatarSource.Attachment};

@@ -8,7 +8,7 @@ namespace PluralKit.Bot
     {
         public static Context CheckGuildContext(this Context ctx)
         {
-            if (ctx.ChannelNew.GuildId != null) return ctx;
+            if (ctx.Channel.GuildId != null) return ctx;
             throw new PKError("This command can not be run in a DM.");
         }
         

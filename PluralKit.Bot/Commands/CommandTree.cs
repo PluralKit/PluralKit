@@ -524,7 +524,7 @@ namespace PluralKit.Bot
             {
                 // Try to resolve the user ID to find the associated account,
                 // so we can print their username.
-                var user = await ctx.RestNew.GetUser(id);
+                var user = await ctx.Rest.GetUser(id);
                 if (user != null)
                     return $"Account **{user.Username}#{user.Discriminator}** does not have a system registered.";
                 else

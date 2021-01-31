@@ -14,7 +14,7 @@ namespace PluralKit.Bot
         {
             var text = ctx.PeekArgument();
             if (text.TryParseMention(out var id))
-                return await ctx.Cache.GetOrFetchUser(ctx.RestNew, id);
+                return await ctx.Cache.GetOrFetchUser(ctx.Rest, id);
 
             return null;
         }
