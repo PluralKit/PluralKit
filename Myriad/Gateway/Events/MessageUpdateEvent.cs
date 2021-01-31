@@ -9,6 +9,7 @@ namespace Myriad.Gateway
         public Optional<User> Author { get; init; }
         public Optional<GuildMemberPartial> Member { get; init; }
         public Optional<Message.Attachment[]> Attachments { get; init; }
+        public Optional<ulong?> GuildId { get; init; }
         // TODO: lots of partials
     }
 }

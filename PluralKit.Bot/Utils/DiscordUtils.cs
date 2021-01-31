@@ -30,9 +30,7 @@ namespace PluralKit.Bot
         public const uint Green = 0x00cc78;
         public const uint Red = 0xef4b3d;
         public const uint Gray = 0x979c9f;
-
-        public static Permissions DM_PERMISSIONS = (Permissions) 0b00000_1000110_1011100110000_000000;
-
+        
         private static readonly Regex USER_MENTION = new Regex("<@!?(\\d{17,19})>");
         private static readonly Regex ROLE_MENTION = new Regex("<@&(\\d{17,19})>");
         private static readonly Regex EVERYONE_HERE_MENTION = new Regex("@(everyone|here)");
@@ -44,59 +42,10 @@ namespace PluralKit.Bot
         // corresponding to: https://github.com/Khan/simple-markdown/blob/master/src/index.js#L1489
         // I added <? and >? at the start/end; they need to be handled specially later...
         private static readonly Regex UNBROKEN_LINK_REGEX = new Regex("<?(https?:\\/\\/[^\\s<]+[^<.,:;\"')\\]\\s])>?");
-
-        private static readonly FieldInfo _roleIdsField =
-            typeof(DiscordMember).GetField("_role_ids", BindingFlags.NonPublic | BindingFlags.Instance);
         
         public static string NameAndMention(this User user)
         {
             return $"{user.Username}#{user.Discriminator} ({user.Mention()})";
-        }
-
-        // We funnel all "permissions from DiscordMember" calls through here 
-        // This way we can ensure we do the read permission correction everywhere
-        private static Permissions PermissionsInGuild(DiscordChannel channel, DiscordMember member)
-        {
-            ValidateCachedRoles(member);
-            var permissions = channel.PermissionsFor(member);
-
-            // This method doesn't account for channels without read permissions
-            // If we don't have read permissions in the channel, we don't have *any* permissions
-            if ((permissions & Permissions.AccessChannels) != Permissions.AccessChannels)
-                return Permissions.None;
-
-            return permissions;
-        }
-
-        // Workaround for DSP internal error
-        private static void ValidateCachedRoles(DiscordMember member)
-        {
-            var roleIdCache = _roleIdsField.GetValue(member) as List<ulong>;
-            var currentRoleIds = member.Roles.Where(x => x != null).Select(x => x.Id);
-            var invalidRoleIds = roleIdCache.Where(x => !currentRoleIds.Contains(x)).ToList();
-            roleIdCache.RemoveAll(x => invalidRoleIds.Contains(x));
-        }
-        
-
-        // Same as PermissionsIn, but always synchronous. DiscordUser must be a DiscordMember if channel is in guild.
-        public static Permissions PermissionsInSync(this DiscordChannel channel, DiscordUser user)
-        {
-            if (channel.Guild != null && !(user is DiscordMember))
-                throw new ArgumentException("Function was passed a guild channel but a non-member DiscordUser");
-
-            if (user is DiscordMember m) return PermissionsInGuild(channel, m);
-            if (channel.Type == ChannelType.Private) return DM_PERMISSIONS;
-            return Permissions.None;
-        }
-
-        public static Permissions BotPermissions(this DiscordChannel channel)
-        {
-            // TODO: can we get a CurrentMember somehow without a guild context?
-            // at least, without somehow getting a DiscordClient reference as an arg(which I don't want to do)
-            if (channel.Guild != null)
-                return PermissionsInSync(channel, channel.Guild.CurrentMember);
-            if (channel.Type == ChannelType.Private) return DM_PERMISSIONS;
-            return Permissions.None;
         }
         
         public static Instant SnowflakeToInstant(ulong snowflake) =>
