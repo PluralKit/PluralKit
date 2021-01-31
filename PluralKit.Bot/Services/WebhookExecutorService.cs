@@ -87,7 +87,7 @@ namespace PluralKit.Bot
 
             var webhookReq = new ExecuteWebhookRequest
             {
-                Username = FixClyde(req.Name).Truncate(80),
+                Username = FixProxyName(req.Name).Truncate(80),
                 Content = content,
                 AllowedMentions = allowedMentions,
                 AvatarUrl = !string.IsNullOrWhiteSpace(req.AvatarUrl) ? req.AvatarUrl : null,
@@ -185,6 +185,8 @@ namespace PluralKit.Bot
             return chunks;
         }
 
+        private string FixProxyName(string name) => FixSingleCharacterName(FixClyde(name));
+
         private string FixClyde(string name)
         {
             static string Replacement(Match m) => m.Groups[1].Value + "\u200A" + m.Groups[2].Value;
@@ -192,6 +194,13 @@ namespace PluralKit.Bot
             // Adds a Unicode hair space (\u200A) between the "c" and the "lyde" to avoid Discord matching it
             // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
             return Regex.Replace(name, "(c)(lyde)", Replacement, RegexOptions.IgnoreCase);
+        }
+        
+        private string FixSingleCharacterName(string proxyName)
+        {
+            if (proxyName.Length == 1)
+                return proxyName + "\u17b5";
+            return proxyName;
         }
     }
 }

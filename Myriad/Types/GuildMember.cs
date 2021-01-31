@@ -7,7 +7,7 @@
     
     public record GuildMemberPartial
     {
-        public string Nick { get; init; }
+        public string? Nick { get; init; }
         public ulong[] Roles { get; init; }
         public string JoinedAt { get; init; }
     }

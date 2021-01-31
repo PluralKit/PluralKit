@@ -88,7 +88,8 @@ namespace PluralKit.Bot
             if (ctx.SystemId == null) return false;
             
             // Make sure channel is a guild text channel and this is a normal message
-            if ((channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildNews) || msg.Type != Message.MessageType.Default) return false;
+            if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildNews) return false;
+            if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply) return false;
             
             // Make sure author is a normal user
             if (msg.Author.System == true || msg.Author.Bot || msg.WebhookId != null) return false;
@@ -109,12 +110,13 @@ namespace PluralKit.Bot
         {
             // Create reply embed
             var embeds = new List<Embed>();
-            if (trigger.MessageReference?.ChannelId == trigger.ChannelId) 
+            if (trigger.Type == Message.MessageType.Reply && trigger.MessageReference?.ChannelId == trigger.ChannelId)
             {
-                var repliedTo = await FetchReplyOriginalMessage(trigger.MessageReference);
+                var repliedTo = trigger.ReferencedMessage.Value;
                 if (repliedTo != null)
                 {
-                    var embed = CreateReplyEmbed(repliedTo);
+                    var nickname = await FetchReferencedMessageAuthorNickname(trigger, repliedTo);
+                    var embed = CreateReplyEmbed(trigger, repliedTo, nickname);
                     if (embed != null)
                         embeds.Add(embed);
                 }
@@ -130,7 +132,7 @@ namespace PluralKit.Bot
             {
                 GuildId = trigger.GuildId!.Value,
                 ChannelId = trigger.ChannelId,
-                Name = FixSingleCharacterName(match.Member.ProxyName(ctx)),
+                Name = match.Member.ProxyName(ctx),
                 AvatarUrl = match.Member.ProxyAvatar(ctx),
                 Content = content,
                 Attachments = trigger.Attachments,
@@ -140,39 +142,39 @@ namespace PluralKit.Bot
             await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
         }
 
-        private async Task<Message?> FetchReplyOriginalMessage(Message.Reference reference)
+        private async Task<string?> FetchReferencedMessageAuthorNickname(Message trigger, Message referenced)
         {
+            if (referenced.WebhookId != null)
+                return null;
+
             try
             {
-                var msg = await _rest.GetMessage(reference.ChannelId!.Value, reference.MessageId!.Value);
-                if (msg == null)
-                    _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but it was not found",
-                        reference.ChannelId, reference.MessageId);
-                return msg;
+                var member = await _rest.GetGuildMember(trigger.GuildId!.Value, referenced.Author.Id);
+                return member?.Nick;
             }
-            catch (UnauthorizedException)
+            catch (ForbiddenException)
             {
-                _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but bot was not allowed to",
-                    reference.ChannelId, reference.MessageId);
+                _logger.Warning("Failed to fetch member {UserId} in guild {GuildId} when getting reply nickname, falling back to username",
+                    referenced.Author.Id, trigger.GuildId!.Value);
+                return null;
             }
-
-            return null;
         }
 
-        private Embed CreateReplyEmbed(Message original)
+        private Embed CreateReplyEmbed(Message trigger, Message repliedTo, string? nickname)
         {
-            var jumpLink = $"https://discord.com/channels/{original.GuildId}/{original.ChannelId}/{original.Id}";
+            // repliedTo doesn't have a GuildId field :/
+            var jumpLink = $"https://discord.com/channels/{trigger.GuildId}/{repliedTo.ChannelId}/{repliedTo.Id}";
             
             var content = new StringBuilder();
 
-            var hasContent = !string.IsNullOrWhiteSpace(original.Content);
+            var hasContent = !string.IsNullOrWhiteSpace(repliedTo.Content);
             if (hasContent)
             {
-                var msg = original.Content;
+                var msg = repliedTo.Content;
                 if (msg.Length > 100)
                 {
-                    msg = original.Content.Substring(0, 100);
-                    var spoilersInOriginalString = Regex.Matches(original.Content, @"\|\|").Count;
+                    msg = repliedTo.Content.Substring(0, 100);
+                    var spoilersInOriginalString = Regex.Matches(repliedTo.Content, @"\|\|").Count;
                     var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
                     if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
                         msg += "||";
@@ -181,7 +183,7 @@ namespace PluralKit.Bot
                 
                 content.Append($"**[Reply to:]({jumpLink})** ");
                 content.Append(msg);
-                if (original.Attachments.Length > 0)
+                if (repliedTo.Attachments.Length > 0)
                     content.Append($" {Emojis.Paperclip}");
             }
             else
@@ -189,11 +191,8 @@ namespace PluralKit.Bot
                 content.Append($"*[(click to see attachment)]({jumpLink})*");
             }
             
-            // TODO: get the nickname somehow
-            var username = original.Author.Username;
-            // var username = original.Member?.Nick ?? original.Author.Username;
-
-            var avatarUrl = $"https://cdn.discordapp.com/avatars/{original.Author.Id}/{original.Author.Avatar}.png";
+            var username = nickname ?? repliedTo.Author.Username;
+            var avatarUrl = $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";
 
             return new Embed
             {
@@ -286,12 +285,6 @@ namespace PluralKit.Bot
             }
 
             return true;
-        }
-
-        private string FixSingleCharacterName(string proxyName)
-        {
-            if (proxyName.Length == 1) return proxyName += "\u17b5";
-            else return proxyName;
         }
 
         private void CheckProxyNameBoundsOrError(string proxyName)

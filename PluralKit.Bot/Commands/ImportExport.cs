@@ -144,7 +144,6 @@ namespace PluralKit.Bot
             try
             {
                 var dm = await ctx.RestNew.CreateDm(ctx.AuthorNew.Id);
-                // TODO: send file
 
                 var msg = await ctx.RestNew.CreateMessage(dm.Id,
                     new MessageRequest {Content = $"{Emojis.Success} Here you go!"},

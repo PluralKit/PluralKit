@@ -101,9 +101,9 @@ namespace PluralKit.Bot
             {
                 Content = text,
                 Embed = embed,
-                AllowedMentions = mentions
+                // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
+                AllowedMentions = mentions ?? new AllowedMentions()
             });
-            // TODO: mentions should default to empty and not null?
 
             if (embed != null)
             {

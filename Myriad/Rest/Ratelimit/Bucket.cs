@@ -73,11 +73,14 @@ namespace Myriad.Rest.Ratelimit
             try
             {
                 _semaphore.Wait();
+                
+                _logger.Verbose("{BucketKey}/{BucketMajor}: Received rate limit headers: {@RateLimitHeaders}",
+                    Key, Major, headers);
 
                 if (headers.ResetAfter != null)
                 {
                     var headerNextReset = DateTimeOffset.UtcNow + headers.ResetAfter.Value; // todo: server time
-                    if (headerNextReset > _nextReset)
+                    if (_nextReset == null || headerNextReset > _nextReset)
                     {
                         _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter}, remaining: {Remaining}, local remaining: {LocalRemaining})",
                             Key, Major, headerNextReset, headers.ResetAfter.Value, headers.Remaining, Remaining);

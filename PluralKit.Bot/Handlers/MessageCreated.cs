@@ -58,7 +58,7 @@ namespace PluralKit.Bot
         public async Task Handle(Shard shard, MessageCreateEvent evt)
         {
             if (evt.Author.Id == shard.User?.Id) return;
-            if (evt.Type != Message.MessageType.Default) return;
+            if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
             if (IsDuplicateMessage(evt)) return;
 
             var guild = evt.GuildId != null ? _cache.GetGuild(evt.GuildId.Value) : null;

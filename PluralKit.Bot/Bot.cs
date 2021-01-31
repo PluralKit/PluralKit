@@ -14,6 +14,7 @@ using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
+using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
 using NodaTime;
@@ -244,9 +245,12 @@ namespace PluralKit.Bot
 
                 // Once we've sent it to Sentry, report it to the user (if we have permission to)
                 var reportChannel = handler.ErrorChannelFor(evt);
-                // TODO: ID lookup
-                // if (reportChannel != null && reportChannel.BotHasAllPermissions(Permissions.SendMessages | Permissions.EmbedLinks))
-                //     await _errorMessageService.SendErrorMessage(reportChannel, sentryEvent.EventId.ToString());
+                if (reportChannel != null)
+                {
+                    var botPerms = PermissionsIn(reportChannel.Value);
+                    if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
+                        await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
+                }
             }
         }
         

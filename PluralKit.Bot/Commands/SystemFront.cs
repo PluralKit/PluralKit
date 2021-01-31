@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using NodaTime;
@@ -70,6 +71,7 @@ namespace PluralKit.Bot
                 embedTitle,
                 async (builder, switches) =>
                 {
+                    var sb = new StringBuilder();
                     foreach (var entry in switches)
                     {
                         var lastSw = entry.LastTime;
@@ -98,17 +100,13 @@ namespace PluralKit.Bot
                             stringToAdd =
                                 $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago)\n";
                         }
-                        
-                        try // Unfortunately the only way to test DiscordEmbedBuilder.Description max length is this
-                        {
-                            // TODO: what is this??
-                            // builder.Description += stringToAdd;
-                        }
-                        catch (ArgumentException)
-                        {
+
+                        if (sb.Length + stringToAdd.Length >= 1024)
                             break;
-                        }// TODO: Make sure this works
+                        sb.Append(stringToAdd);
                     }
+
+                    builder.Description(sb.ToString());
                 }
             );
         }

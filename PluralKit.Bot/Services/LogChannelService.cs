@@ -53,8 +53,6 @@ namespace PluralKit.Bot {
             }
             
             // Send embed!
-            
-            // TODO: fix?
             await using var conn = await _db.Obtain();
             var embed = _embed.CreateLoggedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value), 
                 await _repo.GetMember(conn, proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content, 
