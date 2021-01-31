@@ -1,6 +1,4 @@
-﻿using DSharpPlus;
-
-using Myriad.Types;
+﻿using Myriad.Types;
 
 using PluralKit.Core;
 

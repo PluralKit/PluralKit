@@ -3,9 +3,6 @@ using System.Net.Http;
 
 using Autofac;
 
-using DSharpPlus;
-using DSharpPlus.EventArgs;
-
 using Myriad.Cache;
 using Myriad.Gateway;
 
@@ -24,17 +21,6 @@ namespace PluralKit.Bot
         protected override void Load(ContainerBuilder builder)
         {
             // Clients
-            builder.Register(c => new DiscordConfiguration
-            {
-                Token = c.Resolve<BotConfig>().Token,
-                TokenType = TokenType.Bot,
-                MessageCacheSize = 0,
-                LargeThreshold = 50,
-                LoggerFactory = c.Resolve<Microsoft.Extensions.Logging.ILoggerFactory>()
-            }).AsSelf();
-            builder.Register(c => new DiscordShardedClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();
-            builder.Register(c => new DiscordRestClient(c.Resolve<DiscordConfiguration>())).AsSelf().SingleInstance();
-
             builder.Register(c => new GatewaySettings
             {
                 Token = c.Resolve<BotConfig>().Token,
@@ -82,9 +68,7 @@ namespace PluralKit.Bot
             builder.RegisterType<ReactionAdded>().As<IEventHandler<MessageReactionAddEvent>>();
             
             // Event handler queue
-            builder.RegisterType<HandlerQueue<MessageCreateEventArgs>>().AsSelf().SingleInstance();
             builder.RegisterType<HandlerQueue<MessageCreateEvent>>().AsSelf().SingleInstance();
-            builder.RegisterType<HandlerQueue<MessageReactionAddEventArgs>>().AsSelf().SingleInstance();
             builder.RegisterType<HandlerQueue<MessageReactionAddEvent>>().AsSelf().SingleInstance();
             
             // Bot services
@@ -104,14 +88,13 @@ namespace PluralKit.Bot
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
-            // TODO:
-            // builder.RegisterType<SentryEnricher>()
-            //     .As<ISentryEnricher<MessageCreateEvent>>()
-            //     .As<ISentryEnricher<MessageDeleteEvent>>()
-            //     .As<ISentryEnricher<MessageUpdateEvent>>()
-            //     .As<ISentryEnricher<MessageDeleteBulkEvent>>()
-            //     .As<ISentryEnricher<MessageReactionAddEvent>>()
-            //     .SingleInstance();
+            builder.RegisterType<SentryEnricher>()
+                .As<ISentryEnricher<MessageCreateEvent>>()
+                .As<ISentryEnricher<MessageDeleteEvent>>()
+                .As<ISentryEnricher<MessageUpdateEvent>>()
+                .As<ISentryEnricher<MessageDeleteBulkEvent>>()
+                .As<ISentryEnricher<MessageReactionAddEvent>>()
+                .SingleInstance();
             
             // Proxy stuff
             builder.RegisterType<ProxyMatcher>().AsSelf().SingleInstance();

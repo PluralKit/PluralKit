@@ -6,14 +6,14 @@ namespace Myriad.Rest.Exceptions
 {
     public class DiscordRequestException: Exception
     {
-        public DiscordRequestException(HttpResponseMessage response, string requestBody, DiscordApiError? apiError)
+        public DiscordRequestException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError)
         {
-            RequestBody = requestBody;
+            ResponseBody = responseBody;
             Response = response;
             ApiError = apiError;
         }
 
-        public string RequestBody { get; init; } = null!;
+        public string ResponseBody { get; init; } = null!;
         public HttpResponseMessage Response { get; init; } = null!;
 
         public HttpStatusCode StatusCode => Response.StatusCode;
@@ -29,43 +29,43 @@ namespace Myriad.Rest.Exceptions
 
     public class NotFoundException: DiscordRequestException
     {
-        public NotFoundException(HttpResponseMessage response, string requestBody, DiscordApiError? apiError): base(
-            response, requestBody, apiError) { }
+        public NotFoundException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError): base(
+            response, responseBody, apiError) { }
     }
 
     public class UnauthorizedException: DiscordRequestException
     {
-        public UnauthorizedException(HttpResponseMessage response, string requestBody, DiscordApiError? apiError): base(
-            response, requestBody, apiError) { }
+        public UnauthorizedException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError): base(
+            response, responseBody, apiError) { }
     }
 
     public class ForbiddenException: DiscordRequestException
     {
-        public ForbiddenException(HttpResponseMessage response, string requestBody, DiscordApiError? apiError): base(
-            response, requestBody, apiError) { }
+        public ForbiddenException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError): base(
+            response, responseBody, apiError) { }
     }
 
     public class ConflictException: DiscordRequestException
     {
-        public ConflictException(HttpResponseMessage response, string requestBody, DiscordApiError? apiError): base(
-            response, requestBody, apiError) { }
+        public ConflictException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError): base(
+            response, responseBody, apiError) { }
     }
 
     public class BadRequestException: DiscordRequestException
     {
-        public BadRequestException(HttpResponseMessage response, string requestBody, DiscordApiError? apiError): base(
-            response, requestBody, apiError) { }
+        public BadRequestException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError): base(
+            response, responseBody, apiError) { }
     }
 
     public class TooManyRequestsException: DiscordRequestException
     {
-        public TooManyRequestsException(HttpResponseMessage response, string requestBody, DiscordApiError? apiError):
-            base(response, requestBody, apiError) { }
+        public TooManyRequestsException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError):
+            base(response, responseBody, apiError) { }
     }
 
     public class UnknownDiscordRequestException: DiscordRequestException
     {
-        public UnknownDiscordRequestException(HttpResponseMessage response, string requestBody,
-                                              DiscordApiError? apiError): base(response, requestBody, apiError) { }
+        public UnknownDiscordRequestException(HttpResponseMessage response, string responseBody,
+                                              DiscordApiError? apiError): base(response, responseBody, apiError) { }
     }
 }
