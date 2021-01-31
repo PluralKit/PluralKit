@@ -157,7 +157,6 @@ namespace PluralKit.Bot
             var guild = _cache.GetGuild(evt.GuildId!.Value);
             
             // Try to DM the user info about the message
-            // var member = await evt.Guild.GetMember(evt.User.Id);
             try
             {
                 var dm = await _cache.GetOrCreateDmChannel(_rest, evt.UserId);
@@ -220,7 +219,7 @@ namespace PluralKit.Bot
         private async Task TryRemoveOriginalReaction(MessageReactionAddEvent evt)
         {
             if (_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
-                await _rest.DeleteOwnReaction(evt.ChannelId, evt.MessageId, evt.Emoji);
+                await _rest.DeleteUserReaction(evt.ChannelId, evt.MessageId, evt.Emoji, evt.UserId);
         }
     }
 }
