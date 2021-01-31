@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -10,7 +9,6 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using DSharpPlus.Exceptions;
 
 using Myriad.Builders;
 using Myriad.Extensions;
@@ -49,11 +47,6 @@ namespace PluralKit.Bot
 
         private static readonly FieldInfo _roleIdsField =
             typeof(DiscordMember).GetField("_role_ids", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        public static string NameAndMention(this DiscordUser user)
-        {
-            return $"{user.Username}#{user.Discriminator} ({user.Mention})";
-        }
         
         public static string NameAndMention(this User user)
         {
@@ -105,19 +98,13 @@ namespace PluralKit.Bot
             if (channel.Type == ChannelType.Private) return DM_PERMISSIONS;
             return Permissions.None;
         }
-
-        public static bool BotHasAllPermissions(this DiscordChannel channel, Permissions permissionSet) =>
-            (BotPermissions(channel) & permissionSet) == permissionSet;
-
+        
         public static Instant SnowflakeToInstant(ulong snowflake) =>
             Instant.FromUtc(2015, 1, 1, 0, 0, 0) + Duration.FromMilliseconds(snowflake >> 22);
 
         public static ulong InstantToSnowflake(Instant time) =>
             (ulong) (time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds << 22;
-
-        public static ulong InstantToSnowflake(DateTimeOffset time) =>
-            (ulong) (time - new DateTimeOffset(2015, 1, 1, 0, 0, 0, TimeSpan.Zero)).TotalMilliseconds << 22;
-
+        
         public static async Task CreateReactionsBulk(this DiscordApiClient rest, Message msg, string[] reactions)
         {
             foreach (var reaction in reactions)
@@ -131,29 +118,7 @@ namespace PluralKit.Bot
             // Workaround for https://github.com/DSharpPlus/DSharpPlus/issues/565
             return input?.Replace("%20", "+");
         }
-
-        public static Task<DiscordMessage> SendMessageFixedAsync(this DiscordChannel channel, string content = null,
-                                                                 DiscordEmbed embed = null,
-                                                                 IEnumerable<IMention> mentions = null) =>
-            // Passing an empty list blocks all mentions by default (null allows all through)
-            channel.SendMessageAsync(content, embed: embed, mentions: mentions ?? new IMention[0]);
-
-        // This doesn't do anything by itself (DiscordMember.SendMessageAsync doesn't take a mentions argument)
-        // It's just here for consistency so we don't use the standard SendMessageAsync method >.>
-        public static Task<DiscordMessage> SendMessageFixedAsync(this DiscordMember member, string content = null,
-                                                                 DiscordEmbed embed = null) =>
-            member.SendMessageAsync(content, embed: embed);
-
-        public static bool TryGetCachedUser(this DiscordClient client, ulong id, out DiscordUser user)
-        {
-            user = null;
-
-            var cache = (ConcurrentDictionary<ulong, DiscordUser>) typeof(BaseDiscordClient)
-                .GetProperty("UserCache", BindingFlags.Instance | BindingFlags.NonPublic)
-                ?.GetValue(client);
-            return cache != null && cache.TryGetValue(id, out user);
-        }
-
+        
         public static uint? ToDiscordColor(this string color)
         {
             if (uint.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))
@@ -244,93 +209,7 @@ namespace PluralKit.Bot
             // So, surrounding with two backticks, then escaping all backtick pairs makes it impossible(!) to "break out"
             return $"``{EscapeBacktickPair(input)}``";
         }
-
-        public static Task<DiscordUser> GetUser(this DiscordRestClient client, ulong id) =>
-            WrapDiscordCall(client.GetUserAsync(id));
-
-        public static Task<DiscordUser> GetUser(this DiscordClient client, ulong id) =>
-            WrapDiscordCall(client.GetUserAsync(id));
-
-        public static Task<DiscordChannel> GetChannel(this DiscordRestClient client, ulong id) =>
-            WrapDiscordCall(client.GetChannelAsync(id));
-
-        public static Task<DiscordChannel> GetChannel(this DiscordClient client, ulong id) =>
-            WrapDiscordCall(client.GetChannelAsync(id));
-
-        public static Task<DiscordGuild> GetGuild(this DiscordRestClient client, ulong id) =>
-            WrapDiscordCall(client.GetGuildAsync(id));
-
-        public static Task<DiscordGuild> GetGuild(this DiscordClient client, ulong id) =>
-            WrapDiscordCall(client.GetGuildAsync(id));
-
-        public static Task<DiscordMember> GetMember(this DiscordRestClient client, ulong guild, ulong user)
-        {
-            async Task<DiscordMember> Inner() =>
-                await (await client.GetGuildAsync(guild)).GetMemberAsync(user);
-
-            return WrapDiscordCall(Inner());
-        }
-
-        public static Task<DiscordMember> GetMember(this DiscordClient client, ulong guild, ulong user)
-        {
-            async Task<DiscordMember> Inner() =>
-                await (await client.GetGuildAsync(guild)).GetMemberAsync(user);
-
-            return WrapDiscordCall(Inner());
-        }
-
-        public static Task<DiscordMember> GetMember(this DiscordGuild guild, ulong user) =>
-            WrapDiscordCall(guild.GetMemberAsync(user));
-
-        public static Task<DiscordMessage> GetMessage(this DiscordChannel channel, ulong id) =>
-            WrapDiscordCall(channel.GetMessageAsync(id));
-
-        public static Task<DiscordMessage> GetMessage(this DiscordRestClient client, ulong channel, ulong message) =>
-            WrapDiscordCall(client.GetMessageAsync(channel, message));
-
-        public static DiscordGuild GetGuild(this DiscordShardedClient client, ulong id)
-        {
-            DiscordGuild guild;
-            foreach (DiscordClient shard in client.ShardClients.Values)
-            {
-                shard.Guilds.TryGetValue(id, out guild);
-                if (guild != null) return guild;
-            }
-
-            return null;
-        }
-
-        public static async Task<DiscordChannel> GetChannel(this DiscordShardedClient client, ulong id,
-                                                            ulong? guildId = null)
-        {
-            // we need to know the channel's guild ID to get the cached guild object, so we grab it from the API
-            if (guildId == null)
-            {
-                var channel = await WrapDiscordCall(client.ShardClients.Values.FirstOrDefault().GetChannelAsync(id));
-                if (channel != null) guildId = channel.GuildId;
-                else return null; // we probably don't have the guild in cache if the API doesn't give it to us
-            }
-
-            return client.GetGuild(guildId.Value).GetChannel(id);
-        }
-
-        private static async Task<T> WrapDiscordCall<T>(Task<T> t)
-            where T: class
-        {
-            try
-            {
-                return await t;
-            }
-            catch (NotFoundException)
-            {
-                return null;
-            }
-            catch (UnauthorizedException)
-            {
-                return null;
-            }
-        }
-
+        
         public static EmbedBuilder WithSimpleLineContent(this EmbedBuilder eb, IEnumerable<string> lines)
         {
             static int CharacterLimit(int pageNumber) =>
