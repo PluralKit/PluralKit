@@ -120,7 +120,8 @@ namespace PluralKit.Bot
             builder.RegisterModule(new ConfigModule<BotConfig>("Bot"));
             builder.RegisterModule(new LoggingModule("bot", cfg =>
             {
-                cfg.Destructure.With<EventDestructuring>();
+                // TODO: do we need this?
+                // cfg.Destructure.With<EventDestructuring>();
             }));
             builder.RegisterModule(new MetricsModule());
             builder.RegisterModule<DataStoreModule>();

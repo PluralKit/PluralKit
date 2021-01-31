@@ -2,16 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-
 using Myriad.Builders;
 using Myriad.Extensions;
+using Myriad.Gateway;
 using Myriad.Rest;
 using Myriad.Rest.Types;
 using Myriad.Types;
@@ -19,8 +15,6 @@ using Myriad.Types;
 using NodaTime;
 
 using PluralKit.Core;
-
-using Permissions = DSharpPlus.Permissions;
 
 namespace PluralKit.Bot
 {
@@ -190,7 +184,7 @@ namespace PluralKit.Bot
                 return $"<{match.Value}>";
             });
 
-        public static string EventType(this DiscordEventArgs evt) => 
-            evt.GetType().Name.Replace("EventArgs", "");
+        public static string EventType(this IGatewayEvent evt) => 
+            evt.GetType().Name.Replace("Event", "");
     }
 }
