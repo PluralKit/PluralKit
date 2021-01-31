@@ -9,6 +9,7 @@ using Myriad.Builders;
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Rest;
+using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
 using NodaTime;
@@ -226,7 +227,16 @@ namespace PluralKit.Bot {
         {
             var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
             var ctx = LookupContext.ByNonOwner;
-            var serverMsg = channel != null ? await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid) : null;
+
+            Message serverMsg = null;
+            try
+            {
+                serverMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);
+            }
+            catch (ForbiddenException)
+            {
+                // no permission, couldn't fetch, oh well
+            }
 
             // Need this whole dance to handle cases where:
             // - the user is deleted (userInfo == null)
@@ -237,11 +247,20 @@ namespace PluralKit.Bot {
             User userInfo = null;
             if (channel != null)
             {
-                var m = await _rest.GetGuildMember(channel.GuildId!.Value, msg.Message.Sender);
-                if (m != null)
+                GuildMember member = null;
+                try
+                {
+                    member = await _rest.GetGuildMember(channel.GuildId!.Value, msg.Message.Sender);
+                }
+                catch (ForbiddenException)
+                {
+                    // no permission, couldn't fetch, oh well
+                }
+
+                if (member != null)
                     // Don't do an extra request if we already have this info from the member lookup
-                    userInfo = m.User;
-                memberInfo = m;
+                    userInfo = member.User;
+                memberInfo = member;
             }
             else userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
 
