@@ -46,7 +46,7 @@ namespace PluralKit.Bot
                 if (notActionedOn == 0)
                     return $"{Emojis.Success} {entityTerm<T>(actionedOn.Count, true)} {opStr} {entityTerm<T>(actionedOn.Count, false).ToLower()}.";
                 else
-                    return $"{Emojis.Success} {entityTerm<T>(actionedOn.Count, true)} {opStr} {actionedOn.Count} {entityTerm<T>(actionedOn.Count, false).ToLower()} ({memberNotActionedPosStr}{entityTerm<T>(actionedOn.Count, true).ToLower()} already {inStr} {groupNotActionedPosStr}{entityTerm<T>(notActionedOn, false).ToLower()}).";
+                    return $"{Emojis.Success} {actionedOn.Count} {entityTerm<T>(actionedOn.Count, true).ToLower()} {opStr} {entityTerm<T>(actionedOn.Count, false).ToLower()} ({memberNotActionedPosStr}{entityTerm<T>(actionedOn.Count, true).ToLower()} already {inStr} {groupNotActionedPosStr}{entityTerm<T>(notActionedOn, false).ToLower()}).";
         }
 
         public static bool IsOurProblem(this Exception e)
