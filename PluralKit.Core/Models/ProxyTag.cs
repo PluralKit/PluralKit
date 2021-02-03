@@ -16,7 +16,7 @@ namespace PluralKit.Core
 
         [JsonIgnore] public string ProxyString => $"{Prefix ?? ""}text{Suffix ?? ""}";
 
-        public bool IsEmpty => Prefix == null && Suffix == null;
+        [JsonIgnore] public bool IsEmpty => Prefix == null && Suffix == null;
 
         public bool Equals(ProxyTag other) => Prefix == other.Prefix && Suffix == other.Suffix;
 

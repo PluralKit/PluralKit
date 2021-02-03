@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -17,6 +18,37 @@ namespace PluralKit.Bot
         public static string ProxyTagsString(this PKMember member, string separator = ", ") => 
             string.Join(separator, member.ProxyTags.Select(t => t.ProxyString.AsCode()));
         
+        
+        private static String entityTerm<T>(int count, bool isTarget)
+        {
+            var ret = "";
+            ret += isTarget ? "Member" : "Group";
+            if ((
+                (typeof(T) == typeof(GroupId) && !isTarget) ||
+                (typeof(T) == typeof(MemberId) && isTarget)
+            ) && count > 1)
+                ret += "s";
+            return ret;
+        }
+
+        public static String GroupAddRemoveResponse<T>(List<T> entityList, List<T> actionedOn, Groups.AddRemoveOperation op)
+        {
+            var opStr = op == Groups.AddRemoveOperation.Add ? "added to" : "removed from";
+            var inStr = op == Groups.AddRemoveOperation.Add ? "in" : "not in";
+            var notActionedOn = entityList.Count - actionedOn.Count;
+
+            var groupNotActionedPosStr = typeof(T) == typeof(GroupId) ? notActionedOn.ToString() + " " : "";
+            var memberNotActionedPosStr = typeof(T) == typeof(MemberId) ? notActionedOn.ToString() + " " : "";
+            
+            if (actionedOn.Count == 0)
+                return $"{Emojis.Error} {entityTerm<T>(notActionedOn, true)} not {opStr} {entityTerm<T>(entityList.Count, false).ToLower()} ({entityTerm<T>(notActionedOn, true).ToLower()} already {inStr} {entityTerm<T>(entityList.Count, false).ToLower()}).";
+            else
+                if (notActionedOn == 0)
+                    return $"{Emojis.Success} {entityTerm<T>(actionedOn.Count, true)} {opStr} {entityTerm<T>(actionedOn.Count, false).ToLower()}.";
+                else
+                    return $"{Emojis.Success} {entityTerm<T>(actionedOn.Count, true)} {opStr} {actionedOn.Count} {entityTerm<T>(actionedOn.Count, false).ToLower()} ({memberNotActionedPosStr}{entityTerm<T>(actionedOn.Count, true).ToLower()} already {inStr} {groupNotActionedPosStr}{entityTerm<T>(notActionedOn, false).ToLower()}).";
+        }
+
         public static bool IsOurProblem(this Exception e)
         {
             // This function filters out sporadic errors out of our control from being reported to Sentry
@@ -44,7 +76,7 @@ namespace PluralKit.Bot
             if (e is WebhookExecutionErrorOnDiscordsEnd) return false;
             
             // Socket errors are *not our problem*
-            if (e is SocketException) return false;
+            if (e.GetBaseException() is SocketException) return false;
             
             // Tasks being cancelled for whatver reason are, you guessed it, also not our problem.
             if (e is TaskCanceledException) return false;

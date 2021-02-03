@@ -18,6 +18,7 @@ namespace PluralKit.Core {
         public Instant Created { get; }
         public string UiTz { get; set; }
         public bool PingsEnabled { get; }
+        public int? LatchTimeout { get; }
 	    public PrivacyLevel DescriptionPrivacy { get; }
         public PrivacyLevel MemberListPrivacy { get;}
         public PrivacyLevel FrontPrivacy { get; }

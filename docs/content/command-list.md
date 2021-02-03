@@ -49,12 +49,12 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
 - `pk;member <name> proxy add [tags]` - Adds a proxy tag pair to a member.
 - `pk;member <name> proxy remove [tags]` - Removes a proxy tag from a member.
+- `pk;member <name> autoproxy [on|off]` - Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.
 - `pk;member <name> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
 - `pk;member <name> pronouns [pronouns]` - Changes the pronouns of a member.
 - `pk;member <name> color [color]` - Changes the color of a member.
 - `pk;member <name> birthdate [birthdate]` - Changes the birthday of a member.
 - `pk;member <name> delete` - Deletes a member.
-- `pk;random` - Shows the member card of a randomly selected member in your system.
 
 ## Group commands
 *Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -62,6 +62,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
 - `pk;group <group> list` - Lists all members in a group.
+- `pk;group <group> random` - Shows the info card of a randomly selected member in a group.
 - `pk;group <group> rename <new name>` - Renames a group.
 - `pk;group <group> displayname [display name]` - Shows or changes a group's display name.
 - `pk;group <group> description [description]` - Shows or changes a group's description.
@@ -75,12 +76,18 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
 - `pk;switch delete` - Deletes the latest switch.
-- `pk;switch delete all` - Deletes every logged switch.
+- `pk;switch delete all` - Deletes all logged switches.
 - `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
+
+## Autoproxy commands
+- `pk;autoproxy [off|front|latch|<member>]` - Sets your system's autoproxy mode for the current server.
+- `pk;autoproxy timeout [<duration>|off|reset]` - Sets the latch timeout duration for your system.
+- `pk;autoproxy account [on|off]` - Toggles autoproxy globally for the current account.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
 - `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
+- `pk;log channel -clear` - Clears the currently set log channel.
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
 - `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
 - `pk;logclean <on/off>` - Enables or disables [log cleanup](./staff/compatibility.md#log-cleanup).
@@ -88,6 +95,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
 
 ## Utility
+- `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
 - `pk;message <message id / message link>` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.

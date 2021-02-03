@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -55,7 +57,9 @@ namespace PluralKit.Bot
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
             if (!await CheckBotPermissionsOrError(message.Channel)) return false;
-            if (!CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx))) return false;
+
+            // this method throws, so no need to wrap it in an if statement
+            CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx));
             
             // Check if the sender account can mention everyone/here + embed links
             // we need to "mirror" these permissions when proxying to prevent exploits
@@ -74,7 +78,7 @@ namespace PluralKit.Bot
             if (ctx.SystemId == null) return false;
             
             // Make sure channel is a guild text channel and this is a normal message
-            if (msg.Channel.Type != ChannelType.Text || msg.MessageType != MessageType.Default) return false;
+            if ((msg.Channel.Type != ChannelType.Text && msg.Channel.Type != ChannelType.News) || msg.MessageType != MessageType.Default) return false;
             
             // Make sure author is a normal user
             if (msg.Author.IsSystem == true || msg.Author.IsBot || msg.WebhookMessage) return false;
@@ -93,14 +97,86 @@ namespace PluralKit.Bot
         private async Task ExecuteProxy(DiscordClient shard, IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
                                         ProxyMatch match, bool allowEveryone, bool allowEmbeds)
         {
+            // Create reply embed
+            var embeds = new List<DiscordEmbed>();
+            if (trigger.Reference?.Channel?.Id == trigger.ChannelId)
+            {
+                var repliedTo = await FetchReplyOriginalMessage(trigger.Reference);
+                if (repliedTo != null)
+                {
+                    var embed = CreateReplyEmbed(repliedTo);
+                    if (embed != null)
+                        embeds.Add(embed);
+                }
+                
+                // TODO: have a clean error for when message can't be fetched instead of just being silent
+            }
+            
             // Send the webhook
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
-            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, match.Member.ProxyName(ctx),
+            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, FixSingleCharacterName(match.Member.ProxyName(ctx)),
                 match.Member.ProxyAvatar(ctx),
-                content, trigger.Attachments, allowEveryone);
+                content, trigger.Attachments, embeds, allowEveryone);
 
             await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
+        }
+
+        private async Task<DiscordMessage> FetchReplyOriginalMessage(DiscordMessageReference reference)
+        {
+            try
+            {
+                return await reference.Channel.GetMessageAsync(reference.Message.Id);
+            }
+            catch (NotFoundException)
+            {
+                _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but it was not found",
+                    reference.Channel.Id, reference.Message.Id);
+            }
+            catch (UnauthorizedException)
+            {
+                _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but bot was not allowed to",
+                    reference.Channel.Id, reference.Message.Id);
+            }
+
+            return null;
+        }
+
+        private DiscordEmbed CreateReplyEmbed(DiscordMessage original)
+        {
+            var content = new StringBuilder();
+
+            var hasContent = !string.IsNullOrWhiteSpace(original.Content);
+            if (hasContent)
+            {
+                var msg = original.Content;
+                if (msg.Length > 100)
+                {
+                    msg = original.Content.Substring(0, 100);
+                    var spoilersInOriginalString = Regex.Matches(original.Content, @"\|\|").Count;
+                    var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
+                    if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
+                        msg += "||";
+                    msg += "…";
+                }
+                
+                content.Append($"**[Reply to:]({original.JumpLink})** ");
+                content.Append(msg);
+                if (original.Attachments.Count > 0)
+                    content.Append($" {Emojis.Paperclip}");
+            }
+            else
+            {
+                content.Append($"*[(click to see attachment)]({original.JumpLink})*");
+            }
+            
+            var username = (original.Author as DiscordMember)?.Nickname ?? original.Author.Username;
+            
+            return new DiscordEmbedBuilder()
+                // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
+                .WithAuthor($"{username}\u2004\u21a9\ufe0f", iconUrl: original.Author.GetAvatarUrl(ImageFormat.Png, 1024))
+                .WithDescription(content.ToString())
+                .Build();
         }
 
         private async Task HandleProxyExecutedActions(DiscordClient shard, IPKConnection conn, MessageContext ctx,
@@ -185,13 +261,15 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool CheckProxyNameBoundsOrError(string proxyName)
+        private string FixSingleCharacterName(string proxyName)
         {
-            if (proxyName.Length < 2) throw Errors.ProxyNameTooShort(proxyName);
-            if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+            if (proxyName.Length == 1) return proxyName += "\u17b5";
+            else return proxyName;
+        }
 
-            // TODO: this never returns false as it throws instead, should this happen?
-            return true;
+        private void CheckProxyNameBoundsOrError(string proxyName)
+        {
+            if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
         }
     }
 }

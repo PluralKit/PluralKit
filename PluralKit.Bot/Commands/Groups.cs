@@ -18,11 +18,13 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly EmbedService _embeds;
 
-        public Groups(IDatabase db, ModelRepository repo)
+        public Groups(IDatabase db, ModelRepository repo, EmbedService embeds)
         {
             _db = db;
             _repo = repo;
+            _embeds = embeds;
         }
 
         public async Task CreateGroup(Context ctx)
@@ -177,8 +179,6 @@ namespace PluralKit.Bot
             {
                 ctx.CheckOwnGroup(target);
                 
-                if (img.Url.Length > Limits.MaxUriLength) 
-                    throw Errors.InvalidUrl(img.Url);
                 await AvatarUtils.VerifyAvatarOrThrow(img.Url);
 
                 await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {Icon = img.Url}));
@@ -282,87 +282,46 @@ namespace PluralKit.Bot
         public async Task ShowGroupCard(Context ctx, PKGroup target)
         {
             await using var conn = await _db.Obtain();
-            
             var system = await GetGroupSystem(ctx, target, conn);
-            var pctx = ctx.LookupContextFor(system);
-            var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(conn, target.Id);
-
-            var nameField = target.Name;
-            if (system.Name != null)
-                nameField = $"{nameField} ({system.Name})";
-
-            var eb = new DiscordEmbedBuilder()
-                .WithAuthor(nameField, iconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx)))
-                .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
-
-            if (target.DisplayName != null)
-                eb.AddField("Display Name", target.DisplayName);
-
-            if (target.ListPrivacy.CanAccess(pctx))
-            {
-                if (memberCount == 0 && pctx == LookupContext.ByOwner)
-                    // Only suggest the add command if this is actually the owner lol
-                    eb.AddField("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true);
-                else
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true);
-            }
-
-            if (target.DescriptionFor(pctx) is {} desc)
-                eb.AddField("Description", desc);
-
-            if (target.IconFor(pctx) is {} icon)
-                eb.WithThumbnail(icon);
-
-            await ctx.Reply(embed: eb.Build());
+            await ctx.Reply(embed: await _embeds.CreateGroupEmbed(ctx, system, target));
         }
 
         public async Task AddRemoveMembers(Context ctx, PKGroup target, AddRemoveOperation op)
         {
             ctx.CheckOwnGroup(target);
 
-            var members = await ctx.ParseMemberList(ctx.System.Id);
+            var members = (await ctx.ParseMemberList(ctx.System.Id))
+                .Select(m => m.Id)
+                .Distinct()
+                .ToList();
             
             await using var conn = await _db.Obtain();
             
             var existingMembersInGroup = (await conn.QueryMemberList(target.System,
                 new DatabaseViewsExt.MemberListQueryOptions {GroupFilter = target.Id}))
                 .Select(m => m.Id.Value)
+                .Distinct()
                 .ToHashSet();
             
+            List<MemberId> toAction;
+
             if (op == AddRemoveOperation.Add)
             {
-                var membersNotInGroup = members
-                    .Where(m => !existingMembersInGroup.Contains(m.Id.Value))
-                    .Select(m => m.Id)
-                    .Distinct()
+                toAction = members
+                    .Where(m => !existingMembersInGroup.Contains(m.Value))
                     .ToList();
-                await _repo.AddMembersToGroup(conn, target.Id, membersNotInGroup);
-                
-                if (membersNotInGroup.Count == members.Count)
-                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member added to group." : $"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group.");
-                else
-                    if (membersNotInGroup.Count == 0)
-                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not added to group (member already in group)." : $"{Emojis.Error} No members added to group (members already in group).");
-                    else
-                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersNotInGroup.Count)} added to group ({"members".ToQuantity(members.Count - membersNotInGroup.Count)} already in group).");
+                await _repo.AddMembersToGroup(conn, target.Id, toAction);
             }
             else if (op == AddRemoveOperation.Remove)
             {
-                var membersInGroup = members
-                    .Where(m => existingMembersInGroup.Contains(m.Id.Value))
-                    .Select(m => m.Id)
-                    .Distinct()
+                toAction = members
+                    .Where(m => existingMembersInGroup.Contains(m.Value))
                     .ToList();
-                await _repo.RemoveMembersFromGroup(conn, target.Id, membersInGroup);
-                
-                if (membersInGroup.Count == members.Count)
-                    await ctx.Reply(members.Count == 0 ? $"{Emojis.Success} Member removed from group." : $"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group.");
-                else
-                    if (membersInGroup.Count == 0)
-                        await ctx.Reply(members.Count == 1 ? $"{Emojis.Error} Member not removed from group (member already not in group)." : $"{Emojis.Error} No members removed from group (members already not in group).");
-                    else
-                        await ctx.Reply($"{Emojis.Success} {"members".ToQuantity(membersInGroup.Count)} removed from group ({"members".ToQuantity(members.Count - membersInGroup.Count)} already not in group).");
+                await _repo.RemoveMembersFromGroup(conn, target.Id, toAction);
             }
+            else return; // otherwise toAction "may be undefined"
+
+            await ctx.Reply(MiscUtils.GroupAddRemoveResponse<MemberId>(members, toAction, op));
         }
 
         public async Task ListGroupMembers(Context ctx, PKGroup target)

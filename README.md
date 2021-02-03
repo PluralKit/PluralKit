@@ -1,12 +1,12 @@
 # PluralKit
 PluralKit is a Discord bot meant for plural communities. It has features like message proxying through webhooks, switch tracking, system and member profiles, and more.
 
-**Do you just want to add PluralKit to your server? If so, you don't need any of this. Use the bot's invite link: https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904**
+**Do you just want to add PluralKit to your server? If so, you don't need any of this. Use the bot's invite link: https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904**
 
 PluralKit has a Discord server for support, feedback, and discussion: https://discord.gg/PczBt78 
 
 # Requirements
-Running the bot requires [.NET Core](https://dotnet.microsoft.com/download) (v3.1) and a PostgreSQL database. It should function on any system where the prerequisites are set up (including Windows).
+Running the bot requires [.NET 5](https://dotnet.microsoft.com/download) and a PostgreSQL database. It should function on any system where the prerequisites are set up (including Windows).
 
 Optionally, it can integrate with [Sentry](https://sentry.io/welcome/) for error reporting and [InfluxDB](https://www.influxdata.com/products/influxdb-overview/) for aggregate statistics.
 
@@ -47,7 +47,7 @@ $ docker-compose up -d
 ```
 
 ## Manually
-* Install the .NET Core 3.1 SDK (see https://dotnet.microsoft.com/download)
+* Install the .NET 5 SDK (see https://dotnet.microsoft.com/download)
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
 * Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`

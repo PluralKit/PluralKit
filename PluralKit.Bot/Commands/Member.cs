@@ -1,8 +1,13 @@
-using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Web;
 
 using Dapper;
+
+using DSharpPlus.Entities;
+
+using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
 
@@ -13,12 +18,14 @@ namespace PluralKit.Bot
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
+        private readonly HttpClient _client;
         
-        public Member(EmbedService embeds, IDatabase db, ModelRepository repo)
+        public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client)
         {
             _embeds = embeds;
             _db = db;
             _repo = repo;
+            _client = client;
         }
 
         public async Task NewMember(Context ctx) {
@@ -61,33 +68,33 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
         }
         
-        public async Task MemberRandom(Context ctx)
-        {
-            ctx.CheckSystem();
-
-            var randGen = new global::System.Random(); 
-            //Maybe move this somewhere else in the file structure since it doesn't need to get created at every command
-
-            // TODO: don't buffer these, find something else to do ig
-            
-            var members = await _db.Execute(c =>
-            {
-                if (ctx.MatchFlag("all", "a"))
-                    return _repo.GetSystemMembers(c, ctx.System.Id);
-                return _repo.GetSystemMembers(c, ctx.System.Id)
-                    .Where(m => m.MemberVisibility == PrivacyLevel.Public);
-            }).ToListAsync();
-            
-            if (members == null || !members.Any())
-                throw Errors.NoMembersError;
-            var randInt = randGen.Next(members.Count);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
-        }
-
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _db.Execute(c => _repo.GetSystem(c, target.System));
             await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
+        }
+
+        public async Task Soulscream(Context ctx, PKMember target)
+        {
+            // this is for a meme, please don't take this code seriously. :)
+            
+            var name = target.NameFor(ctx.LookupContextFor(target));
+            var encoded = HttpUtility.UrlEncode(name);
+            
+            var resp = await _client.GetAsync($"https://onomancer.sibr.dev/api/generateStats2?name={encoded}");
+            if (resp.StatusCode != HttpStatusCode.OK)
+                // lol
+                return;
+
+            var data = JObject.Parse(await resp.Content.ReadAsStringAsync());
+            var scream = data["soulscream"]!.Value<string>();
+
+            var eb = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Red)
+                .WithTitle(name)
+                .WithUrl($"https://onomancer.sibr.dev/reflect?name={encoded}")
+                .WithDescription($"*{scream}*");
+            await ctx.Reply(embed: eb.Build());
         }
     }
 }

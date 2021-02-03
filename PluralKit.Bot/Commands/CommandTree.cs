@@ -28,7 +28,9 @@ namespace PluralKit.Bot
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
         public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
         public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
-        public static Command Autoproxy = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for this server");
+        public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
+        public static Command AutoproxyTimeout = new Command("autoproxy", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
+        public static Command AutoproxyAccount = new Command("autoproxy", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
         public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
         public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
         public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
@@ -39,11 +41,15 @@ namespace PluralKit.Bot
         public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
         public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "Changes a member's avatar");
+        public static Command MemberGroups = new Command("member group", "member <member> group", "Shows the groups a member is in");
+        public static Command MemberGroupAdd = new Command("member group", "member <member> group add <group> [group 2] [group 3...]", "Adds a member to one or more groups");
+        public static Command MemberGroupRemove = new Command("member group", "member <member> group remove <group> [group 2] [group 3...]", "Removes a member from one or more groups");
         public static Command MemberServerAvatar = new Command("member serveravatar", "member <member> serveravatar [url|@mention]", "Changes a member's avatar in the current server");
         public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
         public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
+        public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.");
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
-        public static Command MemberRandom = new Command("random", "random", "Looks up a random member from your system");
+        public static Command MemberRandom = new Command("random", "random", "Shows the info card of a randomly selected member in your system.");
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
         public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
         public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
@@ -57,10 +63,13 @@ namespace PluralKit.Bot
         public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
         public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");
         public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
+        public static Command GroupMemberRandom = new Command("group random", "group <group> random", "Shows the info card of a randomly selected member in a group.");
+        public static Command GroupRandom = new Command("random", "random group", "Shows the info card of a randomly selected group in your system.");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
-        public static Command SwitchDelete = new Command("switch delete", "switch delete [all]", "Deletes the latest switch (or them all)");
+        public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
+        public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
         public static Command Link = new Command("link", "link <account>", "Links your system to another account");
         public static Command Unlink = new Command("unlink", "unlink [account]", "Unlinks your system from an account");
         public static Command TokenGet = new Command("token", "token", "Gets your system's API token");
@@ -71,6 +80,7 @@ namespace PluralKit.Bot
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
         public static Command Message = new Command("message", "message <id|link>", "Looks up a proxied message");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
+        public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
         public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
         public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
@@ -87,8 +97,8 @@ namespace PluralKit.Bot
 
         public static Command[] MemberCommands = {
             MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-            MemberColor, MemberBirthday, MemberProxy, MemberKeepProxy, MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy,
-            MemberRandom
+            MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberGroups, MemberGroupAdd, MemberGroupRemove,
+            MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy, MemberRandom
         };
 
         public static Command[] GroupCommands =
@@ -100,12 +110,16 @@ namespace PluralKit.Bot
         public static Command[] GroupCommandsTargeted =
         {
             GroupInfo, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc, GroupIcon, GroupPrivacy,
-            GroupDelete
+            GroupDelete, GroupMemberRandom
         };
 
-        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete};
+        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
 
-        public static Command[] LogCommands = {LogChannel, LogEnable, LogDisable};
+        public static Command[] AutoproxyCommands = {AutoproxySet, AutoproxyTimeout, AutoproxyAccount};
+        
+        public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
+
+        public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
         
         private DiscordShardedClient _client;
 
@@ -125,12 +139,12 @@ namespace PluralKit.Bot
                 return HandleGroupCommand(ctx);
             if (ctx.Match("switch", "sw"))
                 return HandleSwitchCommand(ctx);
+            if (ctx.Match("commands", "cmd", "c"))
+                return CommandHelpRoot(ctx);
             if (ctx.Match("ap", "autoproxy", "auto"))
-                return ctx.Execute<Autoproxy>(Autoproxy, m => m.AutoproxyRoot(ctx));
-            if (ctx.Match("list", "l", "members"))
+                return HandleAutoproxyCommand(ctx);
+            if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
                 return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-            if (ctx.Match("f", "find", "search", "query", "fd"))
-                return ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
             if (ctx.Match("link"))
                 return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
             if (ctx.Match("unlink"))
@@ -152,8 +166,6 @@ namespace PluralKit.Bot
                 else return ctx.Execute<Help>(Help, m => m.HelpRoot(ctx));
             if (ctx.Match("explain"))
                 return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
-            if (ctx.Match("commands"))
-                return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
             if (ctx.Match("message", "msg"))
                 return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("log"))
@@ -163,6 +175,8 @@ namespace PluralKit.Bot
                     return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true));
                 else if (ctx.Match("disable", "off"))
                     return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
+                else if (ctx.Match("commands"))
+                    return PrintCommandList(ctx, "message logging", LogCommands);
                 else return PrintCommandExpectedError(ctx, LogCommands);
             if (ctx.Match("logclean"))
                 return ctx.Execute<ServerConfig>(LogClean, m => m.SetLogCleanup(ctx));
@@ -173,7 +187,9 @@ namespace PluralKit.Bot
                     return ctx.Execute<ServerConfig>(BlacklistRemove, m => m.SetBlacklisted(ctx, false));
                 else if (ctx.Match("list", "show"))
                     return ctx.Execute<ServerConfig>(BlacklistShow, m => m.ShowBlacklisted(ctx));
-                else return PrintCommandExpectedError(ctx, BlacklistAdd, BlacklistRemove, BlacklistShow);
+                else if (ctx.Match("commands"))
+                    return PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                else return PrintCommandExpectedError(ctx, BlacklistCommands);
             if (ctx.Match("proxy", "enable", "disable"))
                 return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
@@ -187,7 +203,10 @@ namespace PluralKit.Bot
             if (ctx.Match("permcheck"))
                 return ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
             if (ctx.Match("random", "r"))
-                return ctx.Execute<Member>(MemberRandom, m => m.MemberRandom(ctx));
+                if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
+                return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx));
+            else
+                return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx));
 
             // remove compiler warning
             return ctx.Reply(
@@ -322,12 +341,21 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
             else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
                 await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
+            else if (ctx.Match("group", "groups"))
+                if (ctx.Match("add", "a"))
+                    await ctx.Execute<MemberGroup>(MemberGroupAdd, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Add));
+                else if (ctx.Match("remove", "rem"))
+                    await ctx.Execute<MemberGroup>(MemberGroupRemove, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Remove));
+                else 
+                    await ctx.Execute<MemberGroup>(MemberGroups, m => m.List(ctx, target));
             else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic", "guildavatar", "guildpic", "guildicon", "sicon"))
                 await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
             else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))
                 await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));
             else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname", "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
                 await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
+            else if (ctx.Match("autoproxy", "ap"))
+                await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
             else if (ctx.Match("keepproxy", "keeptags", "showtags"))
                 await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
             else if (ctx.Match("privacy"))
@@ -336,6 +364,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
             else if (ctx.Match("public", "shown", "show"))
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
+            else if (ctx.Match("soulscream"))
+                await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
             else 
@@ -366,6 +396,8 @@ namespace PluralKit.Bot
                     await ctx.Execute<Groups>(GroupRemove, g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
                 else if (ctx.Match("members", "list", "ms", "l"))
                     await ctx.Execute<Groups>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
+                else if (ctx.Match("random"))
+                    await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
                 else if (ctx.Match("privacy"))
                     await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
                 else if (ctx.Match("public", "pub"))
@@ -401,6 +433,74 @@ namespace PluralKit.Bot
                 await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
             else
                 await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchDelete, SystemFronter, SystemFrontHistory);
+        }
+
+        private async Task CommandHelpRoot(Context ctx)
+        {   
+            if (!ctx.HasNext())
+            {
+                await ctx.Reply($"{Emojis.Error} You need to pass a target command.\nAvailable command help targets: `system`, `member`, `group`, `switch`, `log`, `blacklist`.\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
+                return;
+            }
+
+            switch (ctx.PeekArgument()) {
+                case "system":
+                case "systems":
+                case "s":
+                    await PrintCommandList(ctx, "systems", SystemCommands);
+                    break;
+                case "member":
+                case "members":
+                case "m":
+                    await PrintCommandList(ctx, "members", MemberCommands);
+                    break;
+                case "group":
+                case "groups":
+                case "g":
+                    await PrintCommandList(ctx, "groups", GroupCommands);
+                    break;
+                case "switch":
+                case "switches":
+                case "switching":
+                case "sw":
+                    await PrintCommandList(ctx, "switching", SwitchCommands);
+                    break;
+                case "log":
+                    await PrintCommandList(ctx, "message logging", LogCommands);
+                    break;
+                case "blacklist":
+                case "bl":
+                    await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
+                    break;
+                case "autoproxy":
+                case "ap":
+                    await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+                    break;
+                // todo: are there any commands that still need to be added?
+                default:
+                    await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
+                    break;
+            }
+        }
+
+        private Task HandleAutoproxyCommand(Context ctx)
+        {
+            // todo: merge this with the changes from #251
+            if (ctx.Match("commands"))
+                return PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+
+            // ctx.CheckSystem();
+            // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
+            // so we just emulate checking and throwing an error.
+            if (ctx.System == null)
+                return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
+
+            if (ctx.Match("account", "ac"))
+                return ctx.Execute<Autoproxy>(AutoproxyAccount, m => m.AutoproxyAccount(ctx));
+            else if (ctx.Match("timeout", "tm"))
+                return ctx.Execute<Autoproxy>(AutoproxyTimeout, m => m.AutoproxyTimeout(ctx));
+            else
+                return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)

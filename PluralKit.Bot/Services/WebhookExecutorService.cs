@@ -42,13 +42,13 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<WebhookExecutorService>();
         }
 
-        public async Task<DiscordMessage> ExecuteWebhook(DiscordChannel channel, string name, string avatarUrl, string content, IReadOnlyList<DiscordAttachment> attachments, bool allowEveryone)
+        public async Task<DiscordMessage> ExecuteWebhook(DiscordChannel channel, string name, string avatarUrl, string content, IReadOnlyList<DiscordAttachment> attachments, IReadOnlyList<DiscordEmbed> embeds, bool allowEveryone)
         {
             _logger.Verbose("Invoking webhook in channel {Channel}", channel.Id);
             
             // Get a webhook, execute it
             var webhook = await _webhookCache.GetWebhook(channel);
-            var webhookMessage = await ExecuteWebhookInner(channel, webhook, name, avatarUrl, content, attachments, allowEveryone);
+            var webhookMessage = await ExecuteWebhookInner(channel, webhook, name, avatarUrl, content, attachments, embeds, allowEveryone);
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
@@ -58,17 +58,19 @@ namespace PluralKit.Bot
             return webhookMessage;
         }
 
-        private async Task<DiscordMessage> ExecuteWebhookInner(DiscordChannel channel, DiscordWebhook webhook, string name, string avatarUrl, string content,
-            IReadOnlyList<DiscordAttachment> attachments, bool allowEveryone, bool hasRetried = false)
+        private async Task<DiscordMessage> ExecuteWebhookInner(
+            DiscordChannel channel, DiscordWebhook webhook, string name, string avatarUrl, string content, 
+            IReadOnlyList<DiscordAttachment> attachments, IReadOnlyList<DiscordEmbed> embeds, bool allowEveryone, bool hasRetried = false)
         {
             content = content.Truncate(2000);
-            
+
             var dwb = new DiscordWebhookBuilder();
             dwb.WithUsername(FixClyde(name).Truncate(80));
             dwb.WithContent(content);
             dwb.AddMentions(content.ParseAllMentions(allowEveryone, channel.Guild));
             if (!string.IsNullOrWhiteSpace(avatarUrl)) 
                 dwb.WithAvatarUrl(avatarUrl);
+            dwb.AddEmbeds(embeds);
             
             var attachmentChunks = ChunkAttachmentsOrThrow(attachments, 8 * 1024 * 1024);
             if (attachmentChunks.Count > 0)
@@ -99,7 +101,7 @@ namespace PluralKit.Bot
                         _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
                         
                         var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(channel, webhook);
-                        return await ExecuteWebhookInner(channel, newWebhook, name, avatarUrl, content, attachments, allowEveryone, hasRetried: true);
+                        return await ExecuteWebhookInner(channel, newWebhook, name, avatarUrl, content, attachments, embeds, allowEveryone, hasRetried: true);
                     }
 
                     throw;

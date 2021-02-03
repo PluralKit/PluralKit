@@ -140,8 +140,6 @@ namespace PluralKit.Bot
 
             async Task SetIcon(ParsedImage img)
             {
-                if (img.Url.Length > Limits.MaxUriLength) 
-                    throw Errors.InvalidUrl(img.Url);
                 await AvatarUtils.VerifyAvatarOrThrow(img.Url);
 
                 await _db.Execute(c => _repo.UpdateSystem(c, ctx.System.Id, new SystemPatch {AvatarUrl = img.Url}));

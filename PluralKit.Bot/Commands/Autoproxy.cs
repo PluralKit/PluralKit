@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
 
-using Dapper;
-
 using DSharpPlus.Entities;
+
+using Humanizer;
+
+using NodaTime;
 
 using PluralKit.Core;
 
@@ -20,9 +22,10 @@ namespace PluralKit.Bot
             _repo = repo;
         }
 
-        public async Task AutoproxyRoot(Context ctx)
+        public async Task SetAutoproxyMode(Context ctx)
         {
-            ctx.CheckSystem().CheckGuildContext();
+            // no need to check account here, it's already done at CommandTree
+            ctx.CheckGuildContext();
             
             if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
                 await AutoproxyOff(ctx);
@@ -122,7 +125,84 @@ namespace PluralKit.Bot
                 default: throw new ArgumentOutOfRangeException();
             }
 
+            if (!ctx.MessageContext.AllowAutoproxy) 
+                eb.AddField("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`.");
+
             return eb.Build();
+        }
+
+        public async Task AutoproxyTimeout(Context ctx)
+        {
+            if (!ctx.HasNext())
+            {
+                var timeout = ctx.System.LatchTimeout.HasValue
+                    ? Duration.FromSeconds(ctx.System.LatchTimeout.Value) 
+                    : (Duration?) null;
+                
+                if (timeout == null)
+                    await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize()}.");
+                else if (timeout == Duration.Zero)
+                    await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never time out.");
+                else
+                    await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize()}.");
+                return;
+            }
+
+            // todo: somehow parse a more human-friendly date format
+            int newTimeoutHours;
+            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeoutHours = 0;
+            else if (ctx.Match("reset", "default")) newTimeoutHours = -1;
+            else if (!int.TryParse(ctx.RemainderOrNull(), out newTimeoutHours)) throw new PKError("Duration must be a number of hours.");
+
+            int? overflow = null;
+            if (newTimeoutHours > 100000)
+            {
+                // sanity check to prevent seconds overflow if someone types in 999999999
+                overflow = newTimeoutHours;
+                newTimeoutHours = 0;
+            }
+
+            var newTimeout = newTimeoutHours > -1 ? Duration.FromHours(newTimeoutHours) : (Duration?) null;
+            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, 
+                new SystemPatch { LatchTimeout = (int?) newTimeout?.TotalSeconds }));
+            
+            if (newTimeoutHours == -1)
+                await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize()}).");
+            else if (newTimeoutHours == 0 && overflow != null)
+                await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out. ({overflow} hours is too long)");
+            else if (newTimeoutHours == 0)
+                await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
+            else
+                await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize()}.");
+        }
+
+        public async Task AutoproxyAccount(Context ctx)
+        {
+            // todo: this might be useful elsewhere, consider moving it to ctx.MatchToggle
+            if (ctx.Match("enable", "on"))
+                await AutoproxyEnableDisable(ctx, true);
+            else if (ctx.Match("disable", "off"))
+                await AutoproxyEnableDisable(ctx, false);
+            else if (ctx.HasNext())
+                throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+            else
+            {
+                var statusString = ctx.MessageContext.AllowAutoproxy ? "enabled" : "disabled";
+                await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+            }
+        }
+
+        private async Task AutoproxyEnableDisable(Context ctx, bool allow)
+        {
+            var statusString = allow ? "enabled" : "disabled";
+            if (ctx.MessageContext.AllowAutoproxy == allow)
+            {
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
+                return;
+            }
+            var patch = new AccountPatch { AllowAutoproxy = allow };
+            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.Author.Id, patch));
+            await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.", mentions: new IMention[]{});
         }
 
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
