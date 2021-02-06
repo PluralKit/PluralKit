@@ -82,9 +82,9 @@ export default function Memberlist() {
         return {...member, desc: member.description}
       } return {...member, desc: "(no description)"}
     })
-    
-    const currentMembers =  Members1.filter(member => {
-      if (!value & privacyFilter === 'all') return true;
+
+    const currentMembers = Members1.filter(member => {
+      if (!value) return true;
       
       if (privacyFilter === 'private') {
         if (member.visibility !== 'private') {
@@ -138,7 +138,7 @@ export default function Memberlist() {
       const memberList = sortMembers.map((member) => <BS.Card key={member.id}>
       <MemberCard
       member={member} 
-      edit={memberEdit => {setMembers(members.map(member => member.id === memberEdit.id ? Object.assign(member, memberEdit) : member)); console.log(members)}}
+      edit={memberEdit => setMembers(members.map(member => member.id === memberEdit.id ? Object.assign(member, memberEdit) : member))}
       />
     </BS.Card>
     );
@@ -250,11 +250,11 @@ export default function Memberlist() {
         <BS.Pagination className="ml-auto mr-auto">
           { currentPage === 1 ? <BS.Pagination.Prev disabled/> : <BS.Pagination.Prev onClick={() => setCurrentPage(currentPage - 1)} />}
           { currentPage < 3 ? "" : <BS.Pagination.Item  onClick={() => setCurrentPage(1)} active={1 === active}>{1}</BS.Pagination.Item>}
-          { currentPage < 4 ? "" :<BS.Pagination.Ellipsis disabled />}
+          { currentPage < 4 ? "" : currentPage < 5 ? <BS.Pagination.Item  onClick={() => setCurrentPage(2)} active={2 === active}>{2}</BS.Pagination.Item> : <BS.Pagination.Ellipsis disabled />}
           { currentPage > 1 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</BS.Pagination.Item> : "" }
           <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage)} active={currentPage === active}>{currentPage}</BS.Pagination.Item>
           { currentPage < pageAmount ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</BS.Pagination.Item> : "" }
-          { currentPage > pageAmount - 3 ? "" : <BS.Pagination.Ellipsis disabled />}
+          { currentPage > pageAmount - 3 ? "" : currentPage === pageAmount - 3 ? <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount - 1)} active={pageAmount - 1 === active}>{pageAmount - 1}</BS.Pagination.Item> : <BS.Pagination.Ellipsis disabled />}
           { currentPage > pageAmount - 2 ? "" : <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount)} active={pageAmount === active}>{pageAmount}</BS.Pagination.Item>}
           { currentPage === pageAmount ? <BS.Pagination.Next disabled /> :<BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />}
           </BS.Pagination>
@@ -391,6 +391,19 @@ export default function Memberlist() {
         <BS.Accordion className="mb-3 mt-3 w-100" defaultActiveKey="0">
             {memberList}
         </BS.Accordion>
+        <BS.Row className="justify-content-md-center">
+        <BS.Pagination className="ml-auto mr-auto">
+          { currentPage === 1 ? <BS.Pagination.Prev disabled/> : <BS.Pagination.Prev onClick={() => setCurrentPage(currentPage - 1)} />}
+          { currentPage < 3 ? "" : <BS.Pagination.Item  onClick={() => setCurrentPage(1)} active={1 === active}>{1}</BS.Pagination.Item>}
+          { currentPage < 4 ? "" : currentPage < 5 ? <BS.Pagination.Item  onClick={() => setCurrentPage(2)} active={2 === active}>{2}</BS.Pagination.Item> : <BS.Pagination.Ellipsis disabled />}
+          { currentPage > 1 ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</BS.Pagination.Item> : "" }
+          <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage)} active={currentPage === active}>{currentPage}</BS.Pagination.Item>
+          { currentPage < pageAmount ? <BS.Pagination.Item  onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</BS.Pagination.Item> : "" }
+          { currentPage > pageAmount - 3 ? "" : currentPage === pageAmount - 3 ? <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount - 1)} active={pageAmount - 1 === active}>{pageAmount - 1}</BS.Pagination.Item> : <BS.Pagination.Ellipsis disabled />}
+          { currentPage > pageAmount - 2 ? "" : <BS.Pagination.Item  onClick={() => setCurrentPage(pageAmount)} active={pageAmount === active}>{pageAmount}</BS.Pagination.Item>}
+          { currentPage === pageAmount ? <BS.Pagination.Next disabled /> :<BS.Pagination.Next onClick={() => setCurrentPage(currentPage + 1)} />}
+          </BS.Pagination>
+        </BS.Row>
         </>
         }
         </>
@@ -398,7 +411,7 @@ export default function Memberlist() {
         <Route path={`${path}/:memberID`}>
           { isLoading ? <Loading/> :
           <MemberPages members={members}
-          edit={memberEdit => {setMembers(members.map(member => member.id === memberEdit.id ? Object.assign(member, memberEdit) : member)); console.log(members)}}/>}
+          edit={memberEdit => setMembers(members.map(member => member.id === memberEdit.id ? Object.assign(member, memberEdit) : member))}/>}
         </Route>
         </Switch>
     )
