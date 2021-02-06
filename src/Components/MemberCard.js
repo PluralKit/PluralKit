@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from "react-router-dom";
 import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
@@ -78,8 +78,7 @@ export default function MemberCard(props) {
         if (member.birthday) { 
             setBirthdate(member.birthday)
             if (member.birthday.startsWith('0004-')) {
-                var bday = member.birthday.replace('0004-','');
-                var bdaymoment = moment(bday, 'MM-DD').format('MMM D');
+                var bdaymoment = moment(member.birthday, 'YYYY-MM-DD').format('MMM D');
                 setBirthday(bdaymoment);
             } else {
                 var birthdaymoment =  moment(member.birthday, 'YYYY-MM-DD').format('MMM D, YYYY');
@@ -200,7 +199,17 @@ export default function MemberCard(props) {
                 console.error(error);
                 setErrorAlert(true);
             });
-    }    
+    }
+
+    const didMount = useRef(false);
+ 
+    useEffect(() => {
+      if (didMount.current) {
+        props.edit(member);
+      } else {
+        didMount.current = true;
+      }
+    }, [props, member]);
 
     function copyLink() {
         var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
@@ -231,7 +240,7 @@ export default function MemberCard(props) {
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
+                    <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 

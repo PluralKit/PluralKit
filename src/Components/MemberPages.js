@@ -8,7 +8,7 @@ export default function MemberPages(props) {
     
     
     const memberpages = props.members.filter((member) => member.id === memberID)
-    const memberpage = memberpages.map((member) => <MemberPage key={member.id} member={member}/>)
+    const memberpage = memberpages.map((member) => <MemberPage key={member.id} member={member} edit={props.edit}/>)
     const noMatch = memberpages.length === 0;
 
     useEffect (() => { 

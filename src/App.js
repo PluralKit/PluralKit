@@ -105,7 +105,7 @@ export default function App() {
                 pk-webs
             </BS.Navbar.Brand>
             <BS.NavDropdown id="menu" className="mr-auto" title="Menu">
-            <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/dash/reload')} >Dash</BS.NavDropdown.Item>
+            <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/dash')} >Dash</BS.NavDropdown.Item>
             <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/settings')} >Settings</BS.NavDropdown.Item>
             <BS.NavDropdown.Item onClick={() => history.push('/pk-webs/profile')}>Public profile</BS.NavDropdown.Item>
             { localStorage.getItem('token') ? <><hr className="my-1"/><BS.NavDropdown.Item onClick={() => logOut()}>Log out</BS.NavDropdown.Item></> : "" }
@@ -122,7 +122,6 @@ export default function App() {
         <div className="content">
           <BS.Container>
             <Switch>
-            <Redirect exact from="/pk-webs/dash/reload" to="/pk-webs/dash" />
             <Route path="/pk-webs/dash">
               { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash />
               }

@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouteMatch, Switch, Route } from "react-router-dom";
 import  * as BS from 'react-bootstrap'
 import Popup from 'reactjs-popup';
@@ -32,11 +32,9 @@ export default function Memberlist() {
     const closeModal = () => setOpen(false);
 
     const [members, setMembers ] = useState([]);
-    const [memberData, setMemberData ] = useState([]);
-    const [filteredMembers, setFilteredMembers ] = useState([]);
-    const [sortedMembers, setSortedMembers ] = useState([]);
 
     const [searchBy, setSearchBy] = useState('name')
+    const [privacyFilter, setPrivacyFilter] = useState('all')
     const [sortBy, setSortBy] = useState('name')
 
     const [value, setValue] = useState('');
@@ -67,11 +65,13 @@ export default function Memberlist() {
     })
   }, [userId])
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     fetchMembers();
   }, [fetchMembers])
 
-   useEffect(() => {
+  const indexOfLastMember = currentPage * membersPerPage;
+  const indexOfFirstMember = indexOfLastMember - membersPerPage;
+
     let Members = members.map(member => {
       if (member.display_name) {
         return {...member, displayName: member.display_name}
@@ -82,8 +82,66 @@ export default function Memberlist() {
         return {...member, desc: member.description}
       } return {...member, desc: "(no description)"}
     })
-    setMemberData(Members1);
-  }, [members])
+    
+    const currentMembers =  Members1.filter(member => {
+      if (!value & privacyFilter === 'all') return true;
+      
+      if (privacyFilter === 'private') {
+        if (member.visibility !== 'private') {
+          return false;
+        }
+      } else if (privacyFilter === 'public') {
+        if (member.visibility !== 'public') {
+          return false;
+        }
+      }
+
+      if (searchBy === 'name') {
+      if (member.name.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false;
+    } else if (searchBy === 'display name') {
+      if (member.displayName.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false
+    } else if (searchBy === 'description') {
+      if (member.desc.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false;
+    } else if (searchBy === 'ID') {
+      if (member.id.toLowerCase().includes(value.toLowerCase())) {
+        return true;
+      }
+      return false;
+    }
+
+      return false;
+    })
+
+    const active = currentPage;
+    const pageAmount = Math.ceil(currentMembers.length / membersPerPage);
+
+      var sortMembers = currentMembers;
+      if (sortBy === 'name') {
+        sortMembers =  currentMembers.sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
+      } else if (sortBy === 'display name') {
+        sortMembers =  currentMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).slice(indexOfFirstMember, indexOfLastMember);
+      } else if (sortBy === 'ID') {
+        sortMembers =  currentMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
+      } else if (sortBy === 'date created') {
+        sortMembers =  currentMembers.sort((a, b) => a.created.localeCompare(b.created)).slice(indexOfFirstMember, indexOfLastMember);
+      }
+
+      const memberList = sortMembers.map((member) => <BS.Card key={member.id}>
+      <MemberCard
+      member={member} 
+      edit={memberEdit => {setMembers(members.map(member => member.id === memberEdit.id ? Object.assign(member, memberEdit) : member)); console.log(members)}}
+      />
+    </BS.Card>
+    );
 
     function addProxyField() {
       setProxyTags(oldTags => [...oldTags, {prefix: '', suffix: ''}] )
@@ -112,74 +170,11 @@ export default function Memberlist() {
         });
     }
 
-    const indexOfLastMember = currentPage * membersPerPage;
-    const indexOfFirstMember = indexOfLastMember - membersPerPage;
-    
-    useEffect(() => {
-      searchMembers();
-    }, [value, memberData, searchBy])
-
-    function searchMembers() {
-    const currentMembers =  memberData.filter(member => {
-      if (!value) return true;
-      
-      if (searchBy === 'name') {
-      if (member.name.toLowerCase().includes(value.toLowerCase())) {
-        return true;
-      }
-      return false;
-    } else if (searchBy === 'display name') {
-      if (member.displayName.toLowerCase().includes(value.toLowerCase())) {
-        return true;
-      }
-      return false
-    } else if (searchBy === 'description') {
-      if (member.desc.toLowerCase().includes(value.toLowerCase())) {
-        return true;
-      }
-      return false;
-    } else if (searchBy === 'ID') {
-      if (member.id.toLowerCase().includes(value.toLowerCase())) {
-        return true;
-      }
-      return false;
-    }
-      return false;
-    })
-    setFilteredMembers(currentMembers);
-    }
-
-    useEffect (() => { 
-      if (sortBy === 'name') {
-      const sortMembers =  filteredMembers.sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
-      setSortedMembers(sortMembers);
-      } else if (sortBy === 'display name') {
-        const sortMembers =  filteredMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).slice(indexOfFirstMember, indexOfLastMember);
-        setSortedMembers(sortMembers);
-      } else if (sortBy === 'ID') {
-        const sortMembers =  filteredMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
-        setSortedMembers(sortMembers);
-      } else if (sortBy === 'date created') {
-        const sortMembers =  filteredMembers.sort((a, b) => a.created.localeCompare(b.created)).slice(indexOfFirstMember, indexOfLastMember);
-        setSortedMembers(sortMembers);
-      }
-    }, [sortBy, filteredMembers, indexOfFirstMember, indexOfLastMember])
-
-    const active = currentPage;
-    const pageAmount = Math.ceil(filteredMembers.length / membersPerPage);
-      
-    const memberList = sortedMembers.map((member) => <BS.Card key={member.id}>
-        <MemberCard
-        member={member} 
-        />
-    </BS.Card>
-    );
-
     return (
       <Switch>
         <Route exact path={path}>
         <>
-        <BS.Row className="mb-3 justfiy-content-md-center">
+        <BS.Row className="mb-lg-3 justfiy-content-md-center">
         <BS.Col xs={12} lg={4}>
         <BS.Form>
           <BS.InputGroup className="mb-3">
@@ -227,13 +222,27 @@ export default function Memberlist() {
         </BS.Form>
         </BS.Col>
         </BS.Row>
-        <BS.Row noGutters="true" className="justify-content-md-center">
-        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={6}>
+        <BS.Row className="justify-content-md-center">
+        <BS.Col xs={12} lg={3}>
+        <BS.Form>
+          <BS.InputGroup className="mb-3">
+          <BS.Form.Control disabled placeholder='Only show:'/>
+            <BS.Form.Control as="select" defaultValue={privacyFilter} onChange={e => {
+              setPrivacyFilter(e.target.value)
+              }}>
+              <option>all</option>
+              <option>private</option>
+              <option>public</option>
+            </BS.Form.Control>
+            </BS.InputGroup>
+        </BS.Form>
+        </BS.Col>
+        <BS.Col className="mb-3" xs={12} lg={7}>
         <BS.Form>
             <BS.Form.Control value={value} onChange={e => {setValue(e.target.value); setCurrentPage(1);}} placeholder={`Search by ${searchBy}`}/>
         </BS.Form>
         </BS.Col>
-        <BS.Col className="ml-lg-2 mb-3" xs={12} lg={1}>
+        <BS.Col className="mb-3" xs={12} lg={2}>
           <BS.Button type="primary" className="m-0" block onClick={() => fetchMembers()}>Refresh</BS.Button>
         </BS.Col>
         </BS.Row>
@@ -388,7 +397,8 @@ export default function Memberlist() {
         </Route>
         <Route path={`${path}/:memberID`}>
           { isLoading ? <Loading/> :
-          <MemberPages members={members}/>}
+          <MemberPages members={members}
+          edit={memberEdit => {setMembers(members.map(member => member.id === memberEdit.id ? Object.assign(member, memberEdit) : member)); console.log(members)}}/>}
         </Route>
         </Switch>
     )
