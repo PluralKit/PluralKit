@@ -20,9 +20,6 @@ export default function Memberlist() {
     const [membersPerPage, setMembersPerPage] = useState(25);
 
     const [members, setMembers ] = useState([]);
-    const [memberData, setMemberData ] = useState([]);
-    const [filteredMembers, setFilteredMembers ] = useState([]);
-    const [sortedMembers, setSortedMembers ] = useState([]);
 
     const [searchBy, setSearchBy] = useState('name')
     const [sortBy, setSortBy] = useState('name')
@@ -52,7 +49,9 @@ export default function Memberlist() {
     fetchMembers();
   }, [fetchMembers])
 
-  useEffect(() => {
+  const indexOfLastMember = currentPage * membersPerPage;
+  const indexOfFirstMember = indexOfLastMember - membersPerPage;
+
     let Members = members.map(member => {
       if (member.display_name) {
         return {...member, displayName: member.display_name}
@@ -63,18 +62,8 @@ export default function Memberlist() {
         return {...member, desc: member.description}
       } return {...member, desc: "(no description)"}
     })
-    setMemberData(Members1);
-  }, [members])
-
-    const indexOfLastMember = currentPage * membersPerPage;
-    const indexOfFirstMember = indexOfLastMember - membersPerPage;
-
-    useEffect(() => {
-      searchMembers();
-    }, [value, memberData, searchBy])
-
-    function searchMembers() {
-    const currentMembers =  memberData.filter(member => {
+    
+    const currentMembers =  Members1.filter(member => {
       if (!value) return true;
       
       if (searchBy === 'name') {
@@ -100,30 +89,23 @@ export default function Memberlist() {
     }
       return false;
     })
-    setFilteredMembers(currentMembers);
-    }
-
-    useEffect (() => { 
-      if (sortBy === 'name') {
-      const sortMembers =  filteredMembers.sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
-      setSortedMembers(sortMembers);
-      } else if (sortBy === 'display name') {
-        const sortMembers =  filteredMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).slice(indexOfFirstMember, indexOfLastMember);
-        setSortedMembers(sortMembers);
-      } else if (sortBy === 'ID') {
-        const sortMembers =  filteredMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
-        setSortedMembers(sortMembers);
-      }
-    }, [sortBy, filteredMembers, indexOfFirstMember, indexOfLastMember])
-   
 
     const active = currentPage;
-    const pageAmount = Math.ceil(filteredMembers.length / membersPerPage);
-      
-      const memberList = sortedMembers.map((member) => <BS.Card key={member.id}>
-        <ProfileCard
-        member={member} 
-        />
+    const pageAmount = Math.ceil(currentMembers.length / membersPerPage);
+
+      var sortMembers = currentMembers;
+      if (sortBy === 'name') {
+        sortMembers =  currentMembers.sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
+      } else if (sortBy === 'display name') {
+        sortMembers =  currentMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).slice(indexOfFirstMember, indexOfLastMember);
+      } else if (sortBy === 'ID') {
+        sortMembers =  currentMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
+      } 
+
+      const memberList = sortMembers.map((member) => <BS.Card key={member.id}>
+      <ProfileCard
+      member={member} 
+      />
     </BS.Card>
     );
 
@@ -131,7 +113,7 @@ export default function Memberlist() {
       <Switch>
         <Route exact path={path}>
       <>
-      <BS.Row className="mb-3 justfiy-content-md-center">
+      <BS.Row className="mb-lg-3 justfiy-content-md-center">
       <BS.Col xs={12} lg={4}>
       <BS.Form>
         <BS.InputGroup className="mb-3">
@@ -178,13 +160,13 @@ export default function Memberlist() {
       </BS.Form>
       </BS.Col>
       </BS.Row>
-      <BS.Row noGutters="true" className="justify-content-md-center">
-      <BS.Col className="ml-lg-2 mb-3" xs={12} lg={6}>
+      <BS.Row className="justify-content-md-center">
+      <BS.Col className="mb-3" xs={12} lg={7}>
       <BS.Form>
           <BS.Form.Control value={value} onChange={e => {setValue(e.target.value); setCurrentPage(1);}} placeholder={`Search by ${searchBy}`}/>
       </BS.Form>
       </BS.Col>
-      <BS.Col className="ml-lg-2 mb-3" xs={12} lg={1}>
+      <BS.Col className="mb-3" xs={12} lg={2}>
         <BS.Button type="primary" className="m-0" block onClick={() => fetchMembers()}>Refresh</BS.Button>
       </BS.Col>
       </BS.Row>
