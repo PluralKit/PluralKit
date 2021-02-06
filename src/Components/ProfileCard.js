@@ -38,8 +38,7 @@ export default function MemberCard(props) {
 
         if (member.birthday) { 
             if (member.birthday.startsWith('0004-')) {
-                var bday = member.birthday.replace('0004-','');
-                var bdaymoment = moment(bday, 'MM-DD').format('MMM D');
+                var bdaymoment = moment(member.birthday, 'YYYY-MM-DD').format('MMM D');
                 setBirthday(bdaymoment);
             } else {
                 var birthdaymoment =  moment(member.birthday, 'YYYY-MM-DD').format('MMM D, YYYY');
@@ -93,7 +92,7 @@ export default function MemberCard(props) {
             { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
                 {close => (
                     <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
+                    <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
                     </div>
                 )}
             </Popup> : 
