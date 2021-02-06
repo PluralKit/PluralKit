@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
@@ -205,8 +205,6 @@ export default function MemberCard(props) {
                 setErrorAlert(true);
             });
     }
-
-    const didMount = useRef(false);
 
     function copyLink() {
         var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
