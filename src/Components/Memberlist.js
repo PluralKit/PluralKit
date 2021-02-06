@@ -84,7 +84,7 @@ export default function Memberlist() {
     })
 
     const currentMembers = Members1.filter(member => {
-      if (!value) return true;
+      if (!value & privacyFilter === 'all') return true;
       
       if (privacyFilter === 'private') {
         if (member.visibility !== 'private') {
