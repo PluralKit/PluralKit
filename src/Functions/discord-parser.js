@@ -152,7 +152,11 @@ const rules = {
 			return htmlTag('a', output(node.content, state), { class: 'd-spoiler' }, state);
 		}
 	},
-	link: markdown.defaultRules.link
+	link: Object.assign({ }, markdown.defaultRules.link, {
+		html: (node, output, state) => {
+			return htmlTag('a', output(node.content, state), { href: markdown.sanitizeUrl(node.target), rel: "noreferrer", target: "_blank" }, state);
+		}
+	})
 };
 
 const discordCallbackDefaults = {
