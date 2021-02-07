@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
@@ -113,6 +113,8 @@ export default function MemberPage(props) {
     }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags]);
 
     const submitEdit = data => {
+        props.edit(Object.assign(member, data));
+
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -132,6 +134,8 @@ export default function MemberPage(props) {
     }
 
     const submitPrivacy = data => {
+        props.edit(Object.assign(member, data));
+        
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -181,6 +185,7 @@ export default function MemberPage(props) {
     const submitProxy = data => {
 
         const newdata = {proxy_tags: data.proxy_tags.filter(tag => !(tag.prefix === "" && tag.suffix === ""))}
+        props.edit(Object.assign(member, newdata));
 
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
@@ -200,16 +205,6 @@ export default function MemberPage(props) {
                 setErrorAlert(true);
             });
     }
-    
-    const didMount = useRef(false);
- 
-    useEffect(() => {
-      if (didMount.current) {
-        props.edit(member);
-      } else {
-        didMount.current = true;
-      }
-    }, [props, member]);
 
     function copyLink() {
         var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
