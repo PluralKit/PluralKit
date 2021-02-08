@@ -37,7 +37,7 @@ namespace Myriad.Rest.Ratelimit
             var response = await action(context, ct).ConfigureAwait(continueOnCapturedContext);
 
             // Update rate limit state with headers
-            var headers = new RatelimitHeaders(response);
+            var headers = RatelimitHeaders.Parse(response);
             _ratelimiter.HandleResponse(headers, endpoint, major);
 
             return response;
