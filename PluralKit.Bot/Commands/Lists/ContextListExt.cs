@@ -180,7 +180,8 @@ namespace PluralKit.Bot
                 eb.WithSimpleLineContent(page.Select(r =>
                 {
                     string emoji = !r.Seen ? Emojis.New : "";
-                    return $"[Click to see message {Emojis.RightArrow}](https://discord.com/channels/{r.Guild}/{r.Channel}/{r.Mid}) | {r.Timestamp.FormatZoned(ctx.System.Zone)} {emoji}";
+                    string guildId = r.Guild == null ? "@me" : r.Guild.ToString();
+                    return $"[Click to see message {Emojis.RightArrow}](https://discord.com/channels/{guildId}/{r.Channel}/{r.Mid}) | {r.Timestamp.FormatZoned(ctx.System.Zone)} {emoji}";
                 }));
                 return Task.CompletedTask;
             });
