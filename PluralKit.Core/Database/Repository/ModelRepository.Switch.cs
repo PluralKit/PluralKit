@@ -122,7 +122,7 @@ namespace PluralKit.Core
             await GetSwitches(conn, system).FirstOrDefaultAsync();
 
         public async Task<IEnumerable<SwitchListEntry>> GetPeriodFronters(IPKConnection conn,
-                                                                          SystemId system, Instant periodStart,
+                                                                          SystemId system, GroupId? group, Instant periodStart,
                                                                           Instant periodEnd)
         {
             // TODO: IAsyncEnumerable-ify this one
@@ -139,7 +139,14 @@ namespace PluralKit.Core
                 new {Switches = switchMembers.Select(m => m.Member.Value).Distinct().ToList()});
             var memberObjects = membersList.ToDictionary(m => m.Id);
 
+            // check if a group ID is provided. if so, query DB for all members of said group, otherwise use membersList
+            var groupMembersList = group != null ? await conn.QueryAsync<PKMember>(
+                "select * from members inner join group_members on members.id = group_members.member_id where group_id = @id",
+                new {id = group}) : membersList;
+            var groupMemberObjects = groupMembersList.ToDictionary(m => m.Id);
+
             // Initialize entries - still need to loop to determine the TimespanEnd below
+            // use groupMemberObjects to make sure no members outside of the specified group (if present) are selected
             var entries =
                 from item in switchMembers
                 group item by item.Timestamp
@@ -147,7 +154,7 @@ namespace PluralKit.Core
                 select new SwitchListEntry
                 {
                     TimespanStart = g.Key,
-                    Members = g.Where(x => x.Member != default(MemberId)).Select(x => memberObjects[x.Member])
+                    Members = g.Where(x => x.Member != default(MemberId) && groupMemberObjects.Any(m => x.Member == m.Key) ).Select(x => memberObjects[x.Member])
                         .ToList()
                 };
 
@@ -174,7 +181,7 @@ namespace PluralKit.Core
             return outList;
         }
 
-        public async Task<FrontBreakdown> GetFrontBreakdown(IPKConnection conn, SystemId system, Instant periodStart,
+        public async Task<FrontBreakdown> GetFrontBreakdown(IPKConnection conn, SystemId system, GroupId? group, Instant periodStart,
                                                             Instant periodEnd)
         {
             // TODO: this doesn't belong in the repo
@@ -188,7 +195,7 @@ namespace PluralKit.Core
             var actualStart = periodEnd; // will be "pulled" down
             var actualEnd = periodStart; // will be "pulled" up
 
-            foreach (var sw in await GetPeriodFronters(conn, system, periodStart, periodEnd))
+            foreach (var sw in await GetPeriodFronters(conn, system, group, periodStart, periodEnd))
             {
                 var span = sw.TimespanEnd - sw.TimespanStart;
                 foreach (var member in sw.Members)

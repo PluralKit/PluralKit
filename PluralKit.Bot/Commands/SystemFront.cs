@@ -125,8 +125,14 @@ namespace PluralKit.Bot
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
-            var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone, ctx.LookupContextFor(system)));
+            var title = new StringBuilder($"Frontpercent of ");
+            if (system.Name != null) 
+                title.Append($"{system.Name} (`{system.Hid}`)");
+            else
+                title.Append($"`{system.Hid}`");
+
+            var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, null, rangeStart.Value.ToInstant(), now));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, system.Zone, ctx.LookupContextFor(system), title.ToString()));
         }
     }
 }
