@@ -48,6 +48,8 @@ namespace PluralKit.Bot
         public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
         public static Command MemberRandom = new Command("random", "random", "Shows the info card of a randomly selected member in your system.");
         public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
+        public static Command MemberRemindNew = new Command("member remind", "member <member> remind <reminder message>", "Creates a reminder for another member");
+        public static Command MemberReminders = new Command("member reminders", "member <member>", "Displays all reminders for a given member and marks any unseen reminders as 'seen'");
         public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
         public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
         public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
@@ -95,7 +97,7 @@ namespace PluralKit.Bot
         public static Command[] MemberCommands = {
             MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
             MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberGroups, MemberGroupAdd, MemberGroupRemove,
-            MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy, MemberRandom
+            MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy, MemberRandom, MemberRemindNew, MemberReminders
         };
 
         public static Command[] GroupCommands =
@@ -335,7 +337,7 @@ namespace PluralKit.Bot
                     await ctx.Execute<MemberGroup>(MemberGroupAdd, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Add));
                 else if (ctx.Match("remove", "rem"))
                     await ctx.Execute<MemberGroup>(MemberGroupRemove, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Remove));
-                else 
+                else
                     await ctx.Execute<MemberGroup>(MemberGroups, m => m.List(ctx, target));
             else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic", "guildavatar", "guildpic", "guildicon", "sicon"))
                 await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
@@ -353,12 +355,16 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
             else if (ctx.Match("public", "shown", "show"))
                 await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
+            else if (ctx.Match("remind"))
+                await ctx.Execute<Member>(MemberRemindNew, m => m.AddReminder(ctx, target));
+            else if (ctx.Match("reminders"))
+                await ctx.Execute<Member>(MemberReminders, m => m.GetReminders(ctx, target));
             else if (ctx.Match("soulscream"))
                 await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
-            else 
-                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName ,MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
+            else
+                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
         }
 
         private async Task HandleGroupCommand(Context ctx)
