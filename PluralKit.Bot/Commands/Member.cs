@@ -79,7 +79,7 @@ namespace PluralKit.Bot
             if (ctx.System?.Id == target.System)
             {
                 await using var conn = await _db.Obtain();
-                await _repo.AddReminder(conn, new PKReminder { Mid = ctx.Message.Id, Channel = ctx.Channel.Id, Guild = ctx.Guild.Id, Member = target.Id, System = target.System, Seen = false });
+                await _repo.AddReminder(conn, new PKReminder { Mid = ctx.Message.Id, Channel = ctx.Channel.Id, Guild = ctx.Guild == null ? null : ctx.Guild.Id, Member = target.Id, System = target.System, Seen = false });
                 await ctx.Reply($"Added new reminder for {target.Name}");
             }
             else
