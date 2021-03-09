@@ -80,11 +80,16 @@ namespace PluralKit.Core
             if (patch.Name.IsPresent) qb.Variable("name", "@Name");
             if (patch.DisplayName.IsPresent) qb.Variable("display_name", "@DisplayName");
             if (patch.Description.IsPresent) qb.Variable("description", "@Description");
+			if (patch.Pronouns.IsPresent) qb.Variable("pronouns", "@Pronouns");
             if (patch.Color.IsPresent) qb.Variable("color", "@Color");
             if (patch.AvatarUrl.IsPresent) qb.Variable("avatar_url", "@AvatarUrl");
             if (patch.ProxyTags.IsPresent) qb.Variable("proxy_tags", "@ProxyTags");
             if (patch.Birthday.IsPresent) qb.Variable("birthday", "@Birthday");
             if (patch.KeepProxy.IsPresent) qb.Variable("keep_proxy", "@KeepProxy");
+
+			// don't overwrite message count on existing members
+			if (existingMember == null)
+				if (patch.MessageCount.IsPresent) qb.Variable("message_count", "@MessageCount");
 
             var newMember = await _conn.QueryFirstAsync<PKMember>(qb.Build("returning *"),
                 new
@@ -94,11 +99,13 @@ namespace PluralKit.Core
                     Name = patch.Name.Value,
                     DisplayName = patch.DisplayName.Value,
                     Description = patch.Description.Value,
+					Pronouns = patch.Pronouns.Value,
                     Color = patch.Color.Value,
                     AvatarUrl = patch.AvatarUrl.Value,
                     KeepProxy = patch.KeepProxy.Value,
                     ProxyTags = patch.ProxyTags.Value,
-                    Birthday = patch.Birthday.Value
+                    Birthday = patch.Birthday.Value,
+					MessageCount = patch.MessageCount.Value,
                 });
 
             // Log this member ID by the given identifier
