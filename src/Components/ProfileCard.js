@@ -78,29 +78,8 @@ export default function MemberCard(props) {
         document.body.removeChild(textField);
     }
 
-    return (
-       <LazyLoad offset={100}>
-           <BS.Card.Header className="d-flex align-items-center justify-content-between">
-           <div> <BS.OverlayTrigger placement="left" overlay={ 
-            <BS.Tooltip>
-                Copy link
-            </BS.Tooltip>
-        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger>
-           { localStorage.getItem('pagesonly') ? 
-        <Link to={`${sysID}/${member.id}`}><BS.Button variant="link"> <b>{member.name}</b> ({member.id})</BS.Button></Link>
-        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} > <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>
-            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
-                {close => (
-                  <div className="text-center w-100 m-0" onClick={() => close()}>
-                  <div className="m-auto" style={{maxWidth: '640px'}}>
-                      <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
-                  </div>
-                </div>
-                )}
-            </Popup> : 
-        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
-        </BS.Card.Header>
-        <BS.Accordion.Collapse eventKey={member.id}>
+    function renderCard() {
+        return (
             <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
             <BS.Row>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {member.id}</BS.Col>
@@ -123,7 +102,34 @@ export default function MemberCard(props) {
             <p><b>Description:</b></p>
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
             <BS.Row><BS.Col><Link to={`${sysID}/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></BS.Col></BS.Row> </BS.Card.Body>
-        </BS.Accordion.Collapse>
+        )
+    }
+
+    return (
+       <LazyLoad offset={100}>
+           <BS.Card.Header className="d-flex align-items-center justify-content-between">
+           <div> <BS.OverlayTrigger placement="left" overlay={ 
+            <BS.Tooltip>
+                Copy link
+            </BS.Tooltip>
+        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger>
+           { localStorage.getItem('pagesonly') ? 
+        <Link to={`${sysID}/${member.id}`}><BS.Button variant="link"> <b>{member.name}</b> ({member.id})</BS.Button></Link>
+        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id} > <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>
+            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
+                {close => (
+                  <div className="text-center w-100 m-0" onClick={() => close()}>
+                  <div className="m-auto" style={{maxWidth: '640px'}}>
+                      <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
+                  </div>
+                </div>
+                )}
+            </Popup> : 
+        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
+        </BS.Card.Header>
+        {localStorage.getItem("expandcards") ? renderCard() : <BS.Accordion.Collapse eventKey={member.id}>
+        {renderCard()}
+        </BS.Accordion.Collapse>}
         </LazyLoad>
         
     )

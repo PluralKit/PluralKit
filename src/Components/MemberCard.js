@@ -219,31 +219,8 @@ export default function MemberCard(props) {
         document.body.removeChild(textField);
     }
 
-    return (
-       memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> :
-       <LazyLoad offset={100}>
-           <BS.Card.Header className="d-flex align-items-center justify-content-between">
-        <div> { member.visibility === 'public' ? <BS.OverlayTrigger placement="left" overlay={ 
-            <BS.Tooltip>
-                Copy public link
-            </BS.Tooltip>
-        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : 
-        <BS.Button variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }
-        { localStorage.getItem('pagesonly') ? 
-        <Link to={`dash/${member.id}`}><BS.Button variant="link" className="float-left"><b>{member.name}</b> ({member.id})</BS.Button></Link>
-        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id}> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>
-            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
-                {close => (
-                    <div className="text-center w-100 m-0" onClick={() => close()}>
-                        <div className="m-auto" style={{maxWidth: '640px'}}>
-                            <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
-                        </div>
-                    </div>
-                )}
-            </Popup> : 
-        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
-        </BS.Card.Header>
-        <BS.Accordion.Collapse eventKey={member.id}>
+    function renderCard() {
+        return (
             <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
                 { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
                 { editMode ?
@@ -414,7 +391,36 @@ export default function MemberCard(props) {
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
                 { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to={`dash/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></> }
             </> } </BS.Card.Body>
-        </BS.Accordion.Collapse>
+        )
+    }
+
+    return (
+       memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> :
+       <LazyLoad offset={100}>
+           <BS.Card.Header className="d-flex align-items-center justify-content-between">
+        <div> { member.visibility === 'public' ? <BS.OverlayTrigger placement="left" overlay={ 
+            <BS.Tooltip>
+                Copy public link
+            </BS.Tooltip>
+        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : 
+        <BS.Button variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }
+        { localStorage.getItem('pagesonly') ? 
+        <Link to={`dash/${member.id}`}><BS.Button variant="link" className="float-left"><b>{member.name}</b> ({member.id})</BS.Button></Link>
+        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id}> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>
+            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
+                {close => (
+                    <div className="text-center w-100 m-0" onClick={() => close()}>
+                        <div className="m-auto" style={{maxWidth: '640px'}}>
+                            <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
+                        </div>
+                    </div>
+                )}
+            </Popup> : 
+        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
+        </BS.Card.Header>
+        {localStorage.getItem("expandcards") ? renderCard() : <BS.Accordion.Collapse eventKey={member.id}>
+            {renderCard()}
+        </BS.Accordion.Collapse>}
         </LazyLoad>
         
     )

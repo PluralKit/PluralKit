@@ -29,7 +29,7 @@ export default function Memberlist() {
   const fetchMembers = useCallback( () => {
     setIsLoading(true);
     setIsError(false);
-    setMembersPerPage(25);
+    setMembersPerPage(localStorage.getItem("expandcards") ? 10 : 25);
 
      fetch(`${API_URL}s/${sysID}/members`,{
     method: 'GET',
@@ -102,7 +102,7 @@ export default function Memberlist() {
         sortMembers =  currentMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
       } 
 
-      const memberList = sortMembers.map((member) => <BS.Card key={member.id}>
+      const memberList = sortMembers.map((member) => <BS.Card key={member.id} className={localStorage.getItem("expandcards") ? "mb-3" : ""}>
       <ProfileCard
       member={member} 
       />
@@ -118,7 +118,7 @@ export default function Memberlist() {
       <BS.Form>
         <BS.InputGroup className="mb-3">
         <BS.Form.Control disabled placeholder='Page length:'/>
-          <BS.Form.Control as="select" defaultValue="25" onChange={e => {
+          <BS.Form.Control as="select" defaultValue={localStorage.getItem("expandcards") ? 10 : 25} onChange={e => {
             setMembersPerPage(e.target.value);
             setCurrentPage(1);
             }}>

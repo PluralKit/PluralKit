@@ -232,6 +232,22 @@ export default function App() {
                     forceUpdate()}} />  }
                 Hide colored backgrounds?
             </BS.Col>
+            <BS.Col xs={12} lg={4} className="mx-1 mb-4 d-flex align-items-center row">
+            { localStorage.getItem('expandcards') ? 
+                <Toggle className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() =>  {
+                    localStorage.removeItem('expandcards');
+                    forceUpdate()}} /> :
+                <Toggle className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                    localStorage.setItem('expandcards', 'true')
+                    forceUpdate()}} />  }
+                Expand member cards on default?
+            </BS.Col>
             </BS.Row>
             </BS.Card.Body>
         </BS.Card>
