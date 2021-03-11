@@ -147,7 +147,7 @@ const submitPrivacy = data => {
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Timezone:</BS.Form.Label>
-                    <BS.Form.Control name="tz" ref={registerEdit}  defaultValue={timezone}/>
+                    <BS.Form.Control name="tz" ref={registerEdit}  defaultValue={timezone} required/>
                     { invalidTimezone ? <BS.Form.Text>Please enter a valid <a href='https://xske.github.io/tz/' rel="noreferrer" target="_blank">timezone</a></BS.Form.Text> : "" }
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
