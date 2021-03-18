@@ -71,6 +71,7 @@ namespace PluralKit.Core
                         (config.LogDir ?? "logs") + $"/pluralkit.{_component}.log",
                         outputTemplate: outputTemplate,
                         rollingInterval: RollingInterval.Day,
+                        fileSizeLimitBytes: null,
                         flushToDiskInterval: TimeSpan.FromMilliseconds(50),
                         restrictedToMinimumLevel: config.FileLogLevel,
                         formatProvider: new UTCTimestampFormatProvider(),
