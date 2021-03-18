@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
 
 using Myriad.Gateway;
-using Myriad.Rest;
-using Myriad.Types;
 
 namespace Myriad.Cache
 {
@@ -51,6 +49,11 @@ namespace Myriad.Cache
 
         private static async ValueTask SaveMessageCreate(this IDiscordCache cache, MessageCreateEvent evt)
         {
+            // DM messages don't get Channel Create events first, so we need to save
+            // some kind of stub channel object until we get the real one
+            if (evt.GuildId == null)
+                await cache.SaveDmChannelStub(evt.ChannelId);
+            
             await cache.SaveUser(evt.Author);
             foreach (var mention in evt.Mentions) 
                 await cache.SaveUser(mention);

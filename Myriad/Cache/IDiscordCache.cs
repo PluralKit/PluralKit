@@ -11,6 +11,7 @@ namespace Myriad.Cache
         public ValueTask SaveChannel(Channel channel);
         public ValueTask SaveUser(User user);
         public ValueTask SaveRole(ulong guildId, Role role);
+        public ValueTask SaveDmChannelStub(ulong channelId);
 
         public ValueTask RemoveGuild(ulong guildId);
         public ValueTask RemoveChannel(ulong channelId);
