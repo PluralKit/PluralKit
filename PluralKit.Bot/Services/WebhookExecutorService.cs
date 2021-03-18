@@ -83,7 +83,10 @@ namespace PluralKit.Bot
 
             var allowedMentions = content.ParseMentions();
             if (!req.AllowEveryone)
-                allowedMentions = allowedMentions.RemoveUnmentionableRoles(guild);
+                allowedMentions = allowedMentions.RemoveUnmentionableRoles(guild) with {
+                    // also clear @everyones
+                    Parse = Array.Empty<AllowedMentions.ParseType>()
+                };
 
             var webhookReq = new ExecuteWebhookRequest
             {
