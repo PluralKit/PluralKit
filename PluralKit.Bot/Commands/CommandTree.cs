@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -88,7 +88,7 @@ namespace PluralKit.Bot
             if (ctx.Match("freeze")) return ctx.Execute<Fun>(null, m => m.Freeze(ctx));
             if (ctx.Match("starstorm")) return ctx.Execute<Fun>(null, m => m.Starstorm(ctx));
             if (ctx.Match("flash")) return ctx.Execute<Fun>(null, m => m.Flash(ctx));
-            if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
+            if (ctx.Match("stats")) return ctx.Execute<Misc>("Stats", m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
                 return ctx.Execute<Misc>("PermCheck", m => m.PermCheckGuild(ctx));
             if (ctx.Match("random", "r"))
@@ -322,54 +322,31 @@ namespace PluralKit.Bot
                 await PrintCommandNotFoundError(ctx, "SwitchCommands");
         }
 
+        // TODO: can this be managed more effectively?
+        private Dictionary<string, string[]> _commandHelpRootMapping = new Dictionary<string, string[]>
+        {
+            { "system", new string[] { "systems", "SystemCommands"} },
+            { "member", new string[] { "members", "MemberCommands"} },
+            { "group", new string[] { "groups", "GroupCommands"} },
+            { "switch", new string[] { "switching", "SwitchCommands"} },
+            { "mod", new string[] { "server moderation", "StaffCommands"} },
+            { "api", new string[] { "the PluralKit API", "APICommands"} },
+        };
+
+        private string availableHelpTargetsString = "Available command help targets: `system`, `member`, `group`, `switch`, `mod`, `api`.";
+
         private async Task CommandHelpRoot(Context ctx)
         {   
             if (!ctx.HasNext())
             {
-                await ctx.Reply($"{Emojis.Error} You need to pass a target command.\nAvailable command help targets: `system`, `member`, `group`, `switch`, `log`, `blacklist`.\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
+                await ctx.Reply($"{Emojis.Error} You need to pass a target command.\n{availableHelpTargetsString}\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
                 return;
             }
 
-            // TODO: fix this shit
-
-            switch (ctx.PeekArgument()) {
-                case "system":
-                case "systems":
-                case "s":
-                    await PrintCommandList(ctx, "systems", "SystemCommands");
-                    break;
-                case "member":
-                case "members":
-                case "m":
-                    await PrintCommandList(ctx, "members", "MemberCommands");
-                    break;
-                case "group":
-                case "groups":
-                case "g":
-                    await PrintCommandList(ctx, "groups", "GroupCommands");
-                    break;
-                case "switch":
-                case "switches":
-                case "switching":
-                case "sw":
-                    await PrintCommandList(ctx, "switching", "SwitchCommands");
-                    break;
-                case "log":
-                    await PrintCommandList(ctx, "message logging", "LogCommands");
-                    break;
-                case "blacklist":
-                case "bl":
-                    await PrintCommandList(ctx, "channel blacklisting", "BlacklistCommands");
-                    break;
-                case "autoproxy":
-                case "ap":
-                    await PrintCommandList(ctx, "autoproxy", "AutoproxyCommands");
-                    break;
-                // todo: are there any commands that still need to be added?
-                default:
-                    await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
-                    break;
-            }
+            if (_commandHelpRootMapping.TryGetValue(ctx.PeekArgument(), out var grp))
+                await PrintCommandList(ctx, grp[0], grp[1]);
+            else
+                await ctx.Reply($"{Emojis.Error} ``{ctx.PeekArgument()}`` is not a valid help command target.\n{availableHelpTargetsString}\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
         }
 
         private Task HandleAutoproxyCommand(Context ctx)

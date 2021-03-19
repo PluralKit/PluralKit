@@ -53,6 +53,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <member> avatar [url|@mention]` - Changes a member's avatar.
 - `pk;member <member> serveravatar [url|@mention]` - Changes a member's avatar in the current server.
 - `pk;member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>` - Changes a member's privacy settings.
+- `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
 
 ## Group commands
 *Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -92,19 +93,18 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;blacklist show` - Displays the current proxy blacklist.
 - `pk;blacklist add all|<channel> [channel 2] [channel 3...]` - Adds certain channels to the proxy blacklist.
 - `pk;blacklist remove all|<channel> [channel 2] [channel 3...]` - Removes certain channels from the proxy blacklist.
+- `pk;permcheck [server id]` - [Checks the given server's permission setup](<./staff/permissions/#permission-checker-command>) to check if it's compatible with PluralKit.
 
 ## Utility
-- `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
-- `pk;message <id|link>` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Gets a link to invite PluralKit to other servers.
 - `pk;import [fileurl|*attachment*]` - Imports system information from a data file created by PluralKit or Tupperbox.
 - `pk;export` - Sends you a data file containing your system information.
 - `pk;explain` - Explains the basics of systems and proxying.
-- `pk;permcheck [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
+- `pk;stats` - Prints statistics related to PluralKit, such as resource usage, latency, and registered system/member count.
 
 ## API
-*(for using the [PluralKit API](./api-documentation.md), useful for developers)*
-- `pk;token` - DMs you a token for using the PluralKit API.
+*(for using the [PluralKit API](https://pluralkit.me/api), useful for developers)*
+- `pk;token` - DMs you an access token for the PluralKit API.
 - `pk;token refresh` - Refreshes your API token and invalidates the old one.
 
 ## Help

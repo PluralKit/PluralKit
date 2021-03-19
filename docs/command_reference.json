@@ -308,7 +308,7 @@
 	   {
 		  "key":"TokenGet",
 		  "usage":"token",
-		  "description":"DMs you a token for using the PluralKit API"
+		  "description":"DMs you an access token for the PluralKit API"
 	   },
 	   {
 		  "key":"TokenRefresh",
@@ -393,7 +393,12 @@
 	   {
 		  "key":"PermCheck",
 		  "usage":"permcheck [server id]",
-		  "description":"[Checks the given server's permission setup](https://pluralkit.me/staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit"
+		  "description":"[Checks the given server's permission setup](<https://pluralkit.me/staff/permissions/#permission-checker-command>) to check if it's compatible with PluralKit"
+	   },
+	   {
+		   "key":"Stats",
+		   "usage":"stats",
+		   "description":"Prints statistics related to PluralKit, such as resource usage, latency, and registered system/member count"
 	   }
 	],
 	"groups":[
@@ -468,7 +473,8 @@
 			  "MemberDelete",
 			  "MemberAvatar",
 			  "MemberServerAvatar",
-			  "MemberPrivacy"
+			  "MemberPrivacy",
+			  "MemberRandom"
 		   ]
 		},
 		{
@@ -523,26 +529,26 @@
 				"LogClean",
 				"BlacklistShow",
 				"BlacklistAdd",
-				"BlacklistRemove"                
+				"BlacklistRemove",
+				"PermCheck",
+				"Message"
 			]
 		},
 		{
 			"key":"UtilityCommands",
 			"title":"Utility",
 			"commands":[
-				"MemberRandom",
-				"Message",
 				"Invite",
 				"Import",
 				"Export",
 				"Explain",
-				"PermCheck"
+				"Stats"
 			]
 		},
 		{
 			"key":"APICommands",
 			"title":"API",
-			"description":"*(for using the [PluralKit API](./api-documentation.md), useful for developers)*",
+			"description":"*(for using the [PluralKit API](https://pluralkit.me/api), useful for developers)*",
 			"commands":[
 				"TokenGet",
 				"TokenRefresh"

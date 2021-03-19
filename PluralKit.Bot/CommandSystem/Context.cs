@@ -115,7 +115,12 @@ namespace PluralKit.Bot
         
         public async Task Execute<T>(string commandDef, Func<T, Task> handler)
         {
-            Command currentCommand = _provider.Resolve<CommandReferenceStore>().GetCommand(commandDef);
+            Command currentCommand = null;
+
+            // some commands just don't exist in the command list (for instance, `Fun` commands)
+            try {
+                currentCommand = _provider.Resolve<CommandReferenceStore>().GetCommand(commandDef);
+            } catch (ArgumentNullException) {}
 
             try
             {
@@ -124,7 +129,7 @@ namespace PluralKit.Bot
             }
             catch (PKSyntaxError e)
             {
-                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{currentCommand.Usage}");
+                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{currentCommand?.Usage}");
             }
             catch (PKError e)
             {
