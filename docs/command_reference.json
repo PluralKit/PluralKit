@@ -1,405 +1,405 @@
 {
 	"commands":[
-	   {
-		  "key":"SystemInfo",
-		  "usage":"system [system]",
-		  "description":"Looks up information about a system"
-	   },
-	   {
-		  "key":"SystemNew",
-		  "usage":"system new [name]",
-		  "description":"Creates a new system"
-	   },
-	   {
-		  "key":"SystemRename",
-		  "usage":"system rename [new name]",
-		  "description":"Renames your system"
-	   },
-	   {
-		  "key":"SystemDesc",
-		  "usage":"system description [description]",
-		  "description":"Changes your system's description"
-	   },
-	   {
-		  "key":"SystemTag",
-		  "usage":"system tag [tag]",
-		  "description":"Changes your system's tag"
-	   },
-	   {
-		  "key":"SystemAvatar",
-		  "usage":"system avatar [url|@mention]",
-		  "description":"Changes your system's avatar image"
-	   },
-	   {
-		  "key":"SystemDelete",
-		  "usage":"system delete",
-		  "description":"Deletes your system"
-	   },
-	   {
-		  "key":"SystemTimezone",
-		  "usage":"system timezone [location]",
-		  "description":"Changes your system's timezone"
-	   },
-	   {
-		  "key":"SystemProxy",
-		  "usage":"system proxy [on|off]",
-		  "description":"Toggles message proxying for a specific server"
-	   },
-	   {
-		  "key":"SystemList",
-		  "usage":"system [system] list [-full]",
-		  "description":"Shows a paginated list of a system's members [with increased detail]"
-	   },
-	   {
-		  "key":"SystemFind",
-		  "usage":"system [system] find [-full] <search term>",
-		  "description":"Searches a system's members given a search term [with increased detail]"
-	   },
-	   {
-		  "key":"SystemFronter",
-		  "usage":"system [system] fronter",
-		  "description":"Shows a system's current fronter(s)"
-	   },
-	   {
-		  "key":"SystemFrontHistory",
-		  "usage":"system [system] fronthistory",
-		  "description":"Shows a system's paginated front history"
-	   },
-	   {
-		  "key":"SystemFrontPercent",
-		  "usage":"system [system] frontpercent [timespan]",
-		  "description":"Shows a system's front breakdown"
-	   },
-	   {
-		  "key":"SystemPing",
-		  "usage":"system ping <enable|disable>",
-		  "description":"Changes your system's ping preferences"
-	   },
-	   {
-		   "key":"SystemPrivacy",
-		   "usage":"system privacy",
-		   "description":"Shows your system's current privacy settings"
-	   },
-	   {
-		  "key":"SystemPrivacyTargeted",
-		  "usage":"system privacy <description|members|fronter|fronthistory|all> <public|private>",
-		  "description":"Changes your system's privacy settings"
-	   },
-	   {
-		  "key":"AutoproxySet",
-		  "usage":"autoproxy [off|front|latch|member]",
-		  "description":"Sets your system's autoproxy mode for the current server"
-	   },
-	   {
-		  "key":"AutoproxyTimeout",
-		  "usage":"autoproxy timeout [<duration>|off|reset]",
-		  "description":"Sets the latch timeout duration for your system"
-	   },
-	   {
-		  "key":"AutoproxyAccount",
-		  "usage":"autoproxy account [on|off]",
-		  "description":"Toggles autoproxy globally for the current account"
-	   },
-	   {
-		  "key":"MemberInfo",
-		  "usage":"member <member>",
-		  "description":"Shows information about a member"
-	   },
-	   {
-		  "key":"MemberNew",
-		  "usage":"member new <name>",
-		  "description":"Creates a new member"
-	   },
-	   {
-		  "key":"MemberRename",
-		  "usage":"member <member> rename <new name>",
-		  "description":"Renames a member"
-	   },
-	   {
-		  "key":"MemberDesc",
-		  "usage":"member <member> description [description]",
-		  "description":"Changes a member's description"
-	   },
-	   {
-		  "key":"MemberPronouns",
-		  "usage":"member <member> pronouns [pronouns]",
-		  "description":"Changes a member's pronouns"
-	   },
-	   {
-		  "key":"MemberColor",
-		  "usage":"member <member> color [color]",
-		  "description":"Changes a member's color"
-	   },
-	   {
-		  "key":"MemberBirthday",
-		  "usage":"member <member> birthday [birthday]",
-		  "description":"Changes a member's birthday"
-	   },
-	   {
-		  "key":"MemberProxy",
-		  "usage":"member <member> proxy [add|remove] [example proxy]",
-		  "description":"Changes, adds, or removes a member's proxy tags"
-	   },
-	   {
-		  "key":"MemberDelete",
-		  "usage":"member <member> delete",
-		  "description":"Deletes a member"
-	   },
-	   {
-		  "key":"MemberAvatar",
-		  "usage":"member <member> avatar [url|@mention]",
-		  "description":"Changes a member's avatar"
-	   },
-	   {
-		  "key":"MemberGroups",
-		  "usage":"member <member> group",
-		  "description":"Shows the groups a member is in"
-	   },
-	   {
-		  "key":"MemberGroupAdd",
-		  "usage":"member <member> group add <group> [group 2] [group 3...]",
-		  "description":"Adds a member to one or more groups"
-	   },
-	   {
-		  "key":"MemberGroupRemove",
-		  "usage":"member <member> group remove <group> [group 2] [group 3...]",
-		  "description":"Removes a member from one or more groups"
-	   },
-	   {
-		  "key":"MemberServerAvatar",
-		  "usage":"member <member> serveravatar [url|@mention]",
-		  "description":"Changes a member's avatar in the current server"
-	   },
-	   {
-		  "key":"MemberDisplayName",
-		  "usage":"member <member> displayname [display name]",
-		  "description":"Changes a member's display name"
-	   },
-	   {
-		  "key":"MemberServerName",
-		  "usage":"member <member> servername [server name]",
-		  "description":"Changes a member's display name in the current server"
-	   },
-	   {
-		  "key":"MemberAutoproxy",
-		  "usage":"member <member> autoproxy [on|off]",
-		  "description":"Sets whether a member will be autoproxied when autoproxy is set to latch or front mode"
-	   },
-	   {
-		  "key":"MemberKeepProxy",
-		  "usage":"member <member> keepproxy [on|off]",
-		  "description":"Sets whether to include a member's proxy tags when proxying"
-	   },
-	   {
-		  "key":"MemberRandom",
-		  "usage":"random [-group]",
-		  "description":"Shows the info card of a randomly selected member [or group] in your system"
-	   },
-	   {
-		  "key":"MemberPrivacy",
-		  "usage":"member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>",
-		  "description":"Changes a member's privacy settings"
-	   },
-	   {
-		  "key":"GroupInfo",
-		  "usage":"group <name>",
-		  "description":"Looks up information about a group"
-	   },
-	   {
-		  "key":"GroupNew",
-		  "usage":"group new <name>",
-		  "description":"Creates a new group"
-	   },
-	   {
-		  "key":"GroupList",
-		  "usage":"group list",
-		  "description":"Lists all groups in your system"
-	   },
-	   {
-		  "key":"GroupMemberList",
-		  "usage":"group <group> list",
-		  "description":"Lists all members in a group"
-	   },
-	   {
-		  "key":"GroupRename",
-		  "usage":"group <group> rename <new name>",
-		  "description":"Renames a group"
-	   },
-	   {
-		  "key":"GroupDisplayName",
-		  "usage":"group <group> displayname [display name]",
-		  "description":"Changes a group's display name"
-	   },
-	   {
-		  "key":"GroupDesc",
-		  "usage":"group <group> description [description]",
-		  "description":"Changes a group's description"
-	   },
-	   {
-		  "key":"GroupAdd",
-		  "usage":"group <group> add <member> [member 2] [member 3...]",
-		  "description":"Adds one or more members to a group"
-	   },
-	   {
-		  "key":"GroupRemove",
-		  "usage":"group <group> remove <member> [member 2] [member 3...]",
-		  "description":"Removes one or more members from a group"
-	   },
-	   {
-		  "key":"GroupPrivacy",
-		  "usage":"group <group> privacy <description|icon|visibility|all> <public|private>",
-		  "description":"Changes a group's privacy settings"
-	   },
-	   {
-		  "key":"GroupIcon",
-		  "usage":"group <group> icon [url|@mention]",
-		  "description":"Changes a group's icon"
-	   },
-	   {
-		  "key":"GroupDelete",
-		  "usage":"group <group> delete",
-		  "description":"Deletes a group"
-	   },
-	   {
-		  "key":"GroupMemberRandom",
-		  "usage":"group <group> random",
-		  "description":"Shows the info card of a randomly selected member in a group"
-	   },
-	   {
-		  "key":"GroupRandom",
-		  "usage":"random group",
-		  "description":"Shows the info card of a randomly selected group in your system"
-	   },
-	   {
-		  "key":"Switch",
-		  "usage":"switch <member> [member 2] [member 3...]",
-		  "description":"Registers a switch"
-	   },
-	   {
-		  "key":"SwitchOut",
-		  "usage":"switch out",
-		  "description":"Registers a switch with no members"
-	   },
-	   {
-		  "key":"SwitchMove",
-		  "usage":"switch move <date/time>",
-		  "description":"Moves the latest switch in time"
-	   },
-	   {
-		  "key":"SwitchDelete",
-		  "usage":"switch delete",
-		  "description":"Deletes the latest switch"
-	   },
-	   {
-		  "key":"SwitchDeleteAll",
-		  "usage":"switch delete all",
-		  "description":"Deletes all logged switches"
-	   },
-	   {
-		  "key":"Link",
-		  "usage":"link <account>",
-		  "description":"Links your system to another account"
-	   },
-	   {
-		  "key":"Unlink",
-		  "usage":"unlink [account]",
-		  "description":"Unlinks your system from an account"
-	   },
-	   {
-		  "key":"TokenGet",
-		  "usage":"token",
-		  "description":"DMs you an access token for the PluralKit API"
-	   },
-	   {
-		  "key":"TokenRefresh",
-		  "usage":"token refresh",
-		  "description":"Refreshes your API token and invalidates the old one"
-	   },
-	   {
-		  "key":"Import",
-		  "usage":"import [fileurl|*attachment*]",
-		  "description":"Imports system information from a data file created by PluralKit or Tupperbox"
-	   },
-	   {
-		  "key":"Export",
-		  "usage":"export",
-		  "description":"Sends you a data file containing your system information"
-	   },
-	   {
-		  "key":"Help",
-		  "usage":"help",
-		  "description":"Displays a basic help message describing how to use the bot"
-	   },
-	   {
-		   "key":"Commands",
-		   "usage":"commands <target>",
-		   "description":"Shows the list of commands available for use (where `target` is one of `system`, `member`, `group`, `switch`, `log`, `blacklist`)"
-	   },
-	   {
-		  "key":"Explain",
-		  "usage":"explain",
-		  "description":"Explains the basics of systems and proxying"
-	   },
-	   {
-		  "key":"Message",
-		  "usage":"message <id|link>",
-		  "description":"Looks up information about a proxied message by its message ID or link"
-	   },
-	   {
-		  "key":"LogChannel",
-		  "usage":"log channel <channel>",
-		  "description":"Designates a channel to post proxied messages to"
-	   },
-	   {
-		  "key":"LogChannelClear",
-		  "usage":"log channel -clear",
-		  "description":"Clears the currently set log channel"
-	   },
-	   {
-		  "key":"LogEnable",
-		  "usage":"log enable all|<channel> [channel 2] [channel 3...]",
-		  "description":"Enables message logging in certain channels"
-	   },
-	   {
-		  "key":"LogDisable",
-		  "usage":"log disable all|<channel> [channel 2] [channel 3...]",
-		  "description":"Disables message logging in certain channels"
-	   },
-	   {
-		  "key":"LogClean",
-		  "usage":"logclean [on|off]",
-		  "description":"Toggles whether to clean up other bots' log channels"
-	   },
-	   {
-		  "key":"BlacklistShow",
-		  "usage":"blacklist show",
-		  "description":"Displays the current proxy blacklist"
-	   },
-	   {
-		  "key":"BlacklistAdd",
-		  "usage":"blacklist add all|<channel> [channel 2] [channel 3...]",
-		  "description":"Adds certain channels to the proxy blacklist"
-	   },
-	   {
-		  "key":"BlacklistRemove",
-		  "usage":"blacklist remove all|<channel> [channel 2] [channel 3...]",
-		  "description":"Removes certain channels from the proxy blacklist"
-	   },
-	   {
-		  "key":"Invite",
-		  "usage":"invite",
-		  "description":"Gets a link to invite PluralKit to other servers"
-	   },
-	   {
-		  "key":"PermCheck",
-		  "usage":"permcheck [server id]",
-		  "description":"[Checks the given server's permission setup](<https://pluralkit.me/staff/permissions/#permission-checker-command>) to check if it's compatible with PluralKit"
-	   },
-	   {
-		   "key":"Stats",
-		   "usage":"stats",
-		   "description":"Prints statistics related to PluralKit, such as resource usage, latency, and registered system/member count"
-	   }
+		{
+			"key":"SystemInfo",
+			"usage":"system [system]",
+			"description":"Looks up information about a system"
+		},
+		{
+			"key":"SystemNew",
+			"usage":"system new [name]",
+			"description":"Creates a new system"
+		},
+		{
+			"key":"SystemRename",
+			"usage":"system rename [new name]",
+			"description":"Renames your system"
+		},
+		{
+			"key":"SystemDesc",
+			"usage":"system description [description]",
+			"description":"Changes your system's description"
+		},
+		{
+			"key":"SystemTag",
+			"usage":"system tag [tag]",
+			"description":"Changes your system's tag"
+		},
+		{
+			"key":"SystemAvatar",
+			"usage":"system avatar [url|@mention]",
+			"description":"Changes your system's avatar image"
+		},
+		{
+			"key":"SystemDelete",
+			"usage":"system delete",
+			"description":"Deletes your system"
+		},
+		{
+			"key":"SystemTimezone",
+			"usage":"system timezone [location]",
+			"description":"Changes your system's timezone"
+		},
+		{
+			"key":"SystemProxy",
+			"usage":"system proxy [on|off]",
+			"description":"Toggles message proxying for a specific server"
+		},
+		{
+			"key":"SystemList",
+			"usage":"system [system] list [-full]",
+			"description":"Shows a paginated list of a system's members [with increased detail]"
+		},
+		{
+			"key":"SystemFind",
+			"usage":"system [system] find [-full] <search term>",
+			"description":"Searches a system's members given a search term [with increased detail]"
+		},
+		{
+			"key":"SystemFronter",
+			"usage":"system [system] fronter",
+			"description":"Shows a system's current fronter(s)"
+		},
+		{
+			"key":"SystemFrontHistory",
+			"usage":"system [system] fronthistory",
+			"description":"Shows a system's paginated front history"
+		},
+		{
+			"key":"SystemFrontPercent",
+			"usage":"system [system] frontpercent [timespan]",
+			"description":"Shows a system's front breakdown"
+		},
+		{
+			"key":"SystemPing",
+			"usage":"system ping <enable|disable>",
+			"description":"Changes your system's ping preferences"
+		},
+		{
+			"key":"SystemPrivacy",
+			"usage":"system privacy",
+			"description":"Shows your system's current privacy settings"
+		},
+		{
+			"key":"SystemPrivacyTargeted",
+			"usage":"system privacy <description|members|fronter|fronthistory|all> <public|private>",
+			"description":"Changes your system's privacy settings"
+		},
+		{
+			"key":"AutoproxySet",
+			"usage":"autoproxy [off|front|latch|member]",
+			"description":"Sets your system's autoproxy mode for the current server"
+		},
+		{
+			"key":"AutoproxyTimeout",
+			"usage":"autoproxy timeout [<duration>|off|reset]",
+			"description":"Sets the latch timeout duration for your system"
+		},
+		{
+			"key":"AutoproxyAccount",
+			"usage":"autoproxy account [on|off]",
+			"description":"Toggles autoproxy globally for the current account"
+		},
+		{
+			"key":"MemberInfo",
+			"usage":"member <member>",
+			"description":"Shows information about a member"
+		},
+		{
+			"key":"MemberNew",
+			"usage":"member new <name>",
+			"description":"Creates a new member"
+		},
+		{
+			"key":"MemberRename",
+			"usage":"member <member> rename <new name>",
+			"description":"Renames a member"
+		},
+		{
+			"key":"MemberDesc",
+			"usage":"member <member> description [description]",
+			"description":"Changes a member's description"
+		},
+		{
+			"key":"MemberPronouns",
+			"usage":"member <member> pronouns [pronouns]",
+			"description":"Changes a member's pronouns"
+		},
+		{
+			"key":"MemberColor",
+			"usage":"member <member> color [color]",
+			"description":"Changes a member's color"
+		},
+		{
+			"key":"MemberBirthday",
+			"usage":"member <member> birthday [birthday]",
+			"description":"Changes a member's birthday"
+		},
+		{
+			"key":"MemberProxy",
+			"usage":"member <member> proxy [add|remove] [example proxy]",
+			"description":"Changes, adds, or removes a member's proxy tags"
+		},
+		{
+			"key":"MemberDelete",
+			"usage":"member <member> delete",
+			"description":"Deletes a member"
+		},
+		{
+			"key":"MemberAvatar",
+			"usage":"member <member> avatar [url|@mention]",
+			"description":"Changes a member's avatar"
+		},
+		{
+			"key":"MemberGroups",
+			"usage":"member <member> group",
+			"description":"Shows the groups a member is in"
+		},
+		{
+			"key":"MemberGroupAdd",
+			"usage":"member <member> group add <group> [group 2] [group 3...]",
+			"description":"Adds a member to one or more groups"
+		},
+		{
+			"key":"MemberGroupRemove",
+			"usage":"member <member> group remove <group> [group 2] [group 3...]",
+			"description":"Removes a member from one or more groups"
+		},
+		{
+			"key":"MemberServerAvatar",
+			"usage":"member <member> serveravatar [url|@mention]",
+			"description":"Changes a member's avatar in the current server"
+		},
+		{
+			"key":"MemberDisplayName",
+			"usage":"member <member> displayname [display name]",
+			"description":"Changes a member's display name"
+		},
+		{
+			"key":"MemberServerName",
+			"usage":"member <member> servername [server name]",
+			"description":"Changes a member's display name in the current server"
+		},
+		{
+			"key":"MemberAutoproxy",
+			"usage":"member <member> autoproxy [on|off]",
+			"description":"Sets whether a member will be autoproxied when autoproxy is set to latch or front mode"
+		},
+		{
+			"key":"MemberKeepProxy",
+			"usage":"member <member> keepproxy [on|off]",
+			"description":"Sets whether to include a member's proxy tags when proxying"
+		},
+		{
+			"key":"MemberRandom",
+			"usage":"random [-group]",
+			"description":"Shows the info card of a randomly selected member [or group] in your system"
+		},
+		{
+			"key":"MemberPrivacy",
+			"usage":"member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>",
+			"description":"Changes a member's privacy settings"
+		},
+		{
+			"key":"GroupInfo",
+			"usage":"group <name>",
+			"description":"Looks up information about a group"
+		},
+		{
+			"key":"GroupNew",
+			"usage":"group new <name>",
+			"description":"Creates a new group"
+		},
+		{
+			"key":"GroupList",
+			"usage":"group list",
+			"description":"Lists all groups in your system"
+		},
+		{
+			"key":"GroupMemberList",
+			"usage":"group <group> list",
+			"description":"Lists all members in a group"
+		},
+		{
+			"key":"GroupRename",
+			"usage":"group <group> rename <new name>",
+			"description":"Renames a group"
+		},
+		{
+			"key":"GroupDisplayName",
+			"usage":"group <group> displayname [display name]",
+			"description":"Changes a group's display name"
+		},
+		{
+			"key":"GroupDesc",
+			"usage":"group <group> description [description]",
+			"description":"Changes a group's description"
+		},
+		{
+			"key":"GroupAdd",
+			"usage":"group <group> add <member> [member 2] [member 3...]",
+			"description":"Adds one or more members to a group"
+		},
+		{
+			"key":"GroupRemove",
+			"usage":"group <group> remove <member> [member 2] [member 3...]",
+			"description":"Removes one or more members from a group"
+		},
+		{
+			"key":"GroupPrivacy",
+			"usage":"group <group> privacy <description|icon|visibility|all> <public|private>",
+			"description":"Changes a group's privacy settings"
+		},
+		{
+			"key":"GroupIcon",
+			"usage":"group <group> icon [url|@mention]",
+			"description":"Changes a group's icon"
+		},
+		{
+			"key":"GroupDelete",
+			"usage":"group <group> delete",
+			"description":"Deletes a group"
+		},
+		{
+			"key":"GroupMemberRandom",
+			"usage":"group <group> random",
+			"description":"Shows the info card of a randomly selected member in a group"
+		},
+		{
+			"key":"GroupRandom",
+			"usage":"random group",
+			"description":"Shows the info card of a randomly selected group in your system"
+		},
+		{
+			"key":"Switch",
+			"usage":"switch <member> [member 2] [member 3...]",
+			"description":"Registers a switch"
+		},
+		{
+			"key":"SwitchOut",
+			"usage":"switch out",
+			"description":"Registers a switch with no members"
+		},
+		{
+			"key":"SwitchMove",
+			"usage":"switch move <date/time>",
+			"description":"Moves the latest switch in time"
+		},
+		{
+			"key":"SwitchDelete",
+			"usage":"switch delete",
+			"description":"Deletes the latest switch"
+		},
+		{
+			"key":"SwitchDeleteAll",
+			"usage":"switch delete all",
+			"description":"Deletes all logged switches"
+		},
+		{
+			"key":"Link",
+			"usage":"link <account>",
+			"description":"Links your system to another account"
+		},
+		{
+			"key":"Unlink",
+			"usage":"unlink [account]",
+			"description":"Unlinks your system from an account"
+		},
+		{
+			"key":"TokenGet",
+			"usage":"token",
+			"description":"DMs you an access token for the PluralKit API"
+		},
+		{
+			"key":"TokenRefresh",
+			"usage":"token refresh",
+			"description":"Refreshes your API token and invalidates the old one"
+		},
+		{
+			"key":"Import",
+			"usage":"import [fileurl|*attachment*]",
+			"description":"Imports system information from a data file created by PluralKit or Tupperbox"
+		},
+		{
+			"key":"Export",
+			"usage":"export",
+			"description":"Sends you a data file containing your system information"
+		},
+		{
+			"key":"Help",
+			"usage":"help",
+			"description":"Displays a basic help message describing how to use the bot"
+		},
+		{
+			"key":"Commands",
+			"usage":"commands <target>",
+			"description":"Shows the list of commands available for use (where `target` is one of `system`, `member`, `group`, `switch`, `log`, `blacklist`)"
+		},
+		{
+			"key":"Explain",
+			"usage":"explain",
+			"description":"Explains the basics of systems and proxying"
+		},
+		{
+			"key":"Message",
+			"usage":"message <id|link>",
+			"description":"Looks up information about a proxied message by its message ID or link"
+		},
+		{
+			"key":"LogChannel",
+			"usage":"log channel <channel>",
+			"description":"Designates a channel to post proxied messages to"
+		},
+		{
+			"key":"LogChannelClear",
+			"usage":"log channel -clear",
+			"description":"Clears the currently set log channel"
+		},
+		{
+			"key":"LogEnable",
+			"usage":"log enable all|<channel> [channel 2] [channel 3...]",
+			"description":"Enables message logging in certain channels"
+		},
+		{
+			"key":"LogDisable",
+			"usage":"log disable all|<channel> [channel 2] [channel 3...]",
+			"description":"Disables message logging in certain channels"
+		},
+		{
+			"key":"LogClean",
+			"usage":"logclean [on|off]",
+			"description":"Toggles whether to clean up other bots' log channels"
+		},
+		{
+			"key":"BlacklistShow",
+			"usage":"blacklist show",
+			"description":"Displays the current proxy blacklist"
+		},
+		{
+			"key":"BlacklistAdd",
+			"usage":"blacklist add all|<channel> [channel 2] [channel 3...]",
+			"description":"Adds certain channels to the proxy blacklist"
+		},
+		{
+			"key":"BlacklistRemove",
+			"usage":"blacklist remove all|<channel> [channel 2] [channel 3...]",
+			"description":"Removes certain channels from the proxy blacklist"
+		},
+		{
+			"key":"Invite",
+			"usage":"invite",
+			"description":"Gets a link to invite PluralKit to other servers"
+		},
+		{
+			"key":"PermCheck",
+			"usage":"permcheck [server id]",
+			"description":"[Checks the given server's permission setup](<https://pluralkit.me/staff/permissions/#permission-checker-command>) to check if it's compatible with PluralKit"
+		},
+		{
+			"key":"Stats",
+			"usage":"stats",
+			"description":"Prints statistics related to PluralKit, such as resource usage, latency, and registered system/member count"
+		}
 	],
 	"groups":[
 		{
@@ -407,116 +407,116 @@
 			"title":"System commands",
 			"description":"*Optionally replace `[system]` with a @mention, Discord account ID, or 5-character ID. For most commands, adding `-clear` will clear/delete the field.*",
 			"commands":[
-			   "SystemInfo",
-			   "SystemNew",
-			   "SystemRename",
-			   "SystemDesc",
-			   "SystemAvatar",
-			   "SystemTag",
-			   "SystemPrivacy",
-			   "SystemPrivacyTargeted",
-			   "SystemTimezone",
-			   "SystemProxy",
-			   "SystemDelete",
-			   "SystemList",
-			   "SystemFronter",
-			   "SystemFrontHistory",
-			   "SystemFrontPercent",
-			   "SystemFind",
-			   "SystemPing",
-			   "Link",
-			   "Unlink"
+				"SystemInfo",
+				"SystemNew",
+				"SystemRename",
+				"SystemDesc",
+				"SystemAvatar",
+				"SystemTag",
+				"SystemPrivacy",
+				"SystemPrivacyTargeted",
+				"SystemTimezone",
+				"SystemProxy",
+				"SystemDelete",
+				"SystemList",
+				"SystemFronter",
+				"SystemFrontHistory",
+				"SystemFrontPercent",
+				"SystemFind",
+				"SystemPing",
+				"Link",
+				"Unlink"
 			]
-		 },
-		 {
+		},
+		{
 			"key":"SystemSubcommands",
 			"commands":[
-			   "SystemInfo",
-			   "SystemNew",
-			   "SystemRename",
-			   "SystemDesc",
-			   "SystemAvatar",
-			   "SystemTag",
-			   "SystemPrivacy",
-			   "SystemPrivacyTargeted",
-			   "SystemTimezone",
-			   "SystemProxy",
-			   "SystemDelete",
-			   "SystemList",
-			   "SystemFronter",
-			   "SystemFrontHistory",
-			   "SystemFrontPercent",
-			   "SystemFind",
-			   "SystemPing"
+				"SystemInfo",
+				"SystemNew",
+				"SystemRename",
+				"SystemDesc",
+				"SystemAvatar",
+				"SystemTag",
+				"SystemPrivacy",
+				"SystemPrivacyTargeted",
+				"SystemTimezone",
+				"SystemProxy",
+				"SystemDelete",
+				"SystemList",
+				"SystemFronter",
+				"SystemFrontHistory",
+				"SystemFrontPercent",
+				"SystemFind",
+				"SystemPing"
 			]
-		 },
-		  {
-		   "key":"MemberCommands",
-		   "title":"Member commands",
-		   "description":"*Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*",
-		   "commands":[
-			  "MemberInfo",
-			  "MemberNew",
-			  "MemberRename",
-			  "MemberDisplayName",
-			  "MemberServerName",
-			  "MemberDesc",
-			  "MemberPronouns",
-			  "MemberColor",
-			  "MemberBirthday",
-			  "MemberProxy",
-			  "MemberAutoproxy",
-			  "MemberKeepProxy",
-			  "MemberGroups",
-			  "MemberGroupAdd",
-			  "MemberGroupRemove",
-			  "MemberDelete",
-			  "MemberAvatar",
-			  "MemberServerAvatar",
-			  "MemberPrivacy",
-			  "MemberRandom"
-		   ]
 		},
 		{
-		   "key":"GroupCommands",
-		   "title":"Group commands",
-		   "description":"*Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*",
-		   "commands":[
-			  "GroupInfo",
-			  "GroupList",
-			  "GroupNew",
-			  "GroupAdd",
-			  "GroupRemove",
-			  "GroupMemberList",
-			  "GroupRename",
-			  "GroupDesc",
-			  "GroupIcon",
-			  "GroupDisplayName",
-			  "GroupPrivacy",
-			  "GroupDelete",
-			  "GroupMemberRandom",
-			  "GroupRandom"
-		   ]
+			"key":"MemberCommands",
+			"title":"Member commands",
+			"description":"*Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*",
+			"commands":[
+				"MemberInfo",
+				"MemberNew",
+				"MemberRename",
+				"MemberDisplayName",
+				"MemberServerName",
+				"MemberDesc",
+				"MemberPronouns",
+				"MemberColor",
+				"MemberBirthday",
+				"MemberProxy",
+				"MemberAutoproxy",
+				"MemberKeepProxy",
+				"MemberGroups",
+				"MemberGroupAdd",
+				"MemberGroupRemove",
+				"MemberDelete",
+				"MemberAvatar",
+				"MemberServerAvatar",
+				"MemberPrivacy",
+				"MemberRandom"
+			]
 		},
 		{
-		   "key":"SwitchCommands",
-		   "title":"Switching commands",
-		   "commands":[
-			  "Switch",
-			  "SwitchOut",
-			  "SwitchMove",
-			  "SwitchDelete",
-			  "SwitchDeleteAll"
-		   ]
+			"key":"GroupCommands",
+			"title":"Group commands",
+			"description":"*Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*",
+			"commands":[
+				"GroupInfo",
+				"GroupList",
+				"GroupNew",
+				"GroupAdd",
+				"GroupRemove",
+				"GroupMemberList",
+				"GroupRename",
+				"GroupDesc",
+				"GroupIcon",
+				"GroupDisplayName",
+				"GroupPrivacy",
+				"GroupDelete",
+				"GroupMemberRandom",
+				"GroupRandom"
+			]
 		},
 		{
-		   "key":"AutoproxyCommands",
-		   "title":"Autoproxy commands",
-		   "commands":[
-			  "AutoproxySet",
-			  "AutoproxyTimeout",
-			  "AutoproxyAccount"
-		   ]
+			"key":"SwitchCommands",
+			"title":"Switching commands",
+			"commands":[
+				"Switch",
+				"SwitchOut",
+				"SwitchMove",
+				"SwitchDelete",
+				"SwitchDeleteAll"
+			]
+		},
+		{
+			"key":"AutoproxyCommands",
+			"title":"Autoproxy commands",
+			"commands":[
+				"AutoproxySet",
+				"AutoproxyTimeout",
+				"AutoproxyAccount"
+			]
 		},
 		{
 			"key":"StaffCommands",
@@ -580,4 +580,4 @@
 			]
 		}
 	]
- }
+}
