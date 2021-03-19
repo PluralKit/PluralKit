@@ -1,0 +1,14 @@
+name: Documentation
+
+on: [push, pull_request]
+
+jobs:
+  check_command_reference:
+    - name: Validate command reference file
+    - runs-on: ubuntu-latest
+    - steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: cd docs && node commandList.js --check

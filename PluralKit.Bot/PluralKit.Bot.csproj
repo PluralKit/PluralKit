@@ -20,4 +20,8 @@
       <PackageReference Include="Sentry" Version="2.1.6" />
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2" />
     </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="..\docs\command_reference.json" LogicalName="commandreference.json" />
+    </ItemGroup>
 </Project>

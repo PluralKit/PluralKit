@@ -59,12 +59,15 @@ namespace PluralKit.Bot
             _cache = cache;
         }
 
-        public void Init()
+        public async Task Init()
         {
             _cluster.EventReceived += OnEventReceived;
             
             // Init the shard stuff
             _services.Resolve<ShardInfoService>().Init();
+
+            // Init command reference
+            await _services.Resolve<CommandReferenceStore>().Init();
 
             // Not awaited, just needs to run in the background
             // Trying our best to run it at whole minute boundaries (xx:00), with ~250ms buffer

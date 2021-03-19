@@ -39,8 +39,6 @@ namespace PluralKit.Bot
         private readonly CommandMessageService _commandMessageService;
         private readonly IDiscordCache _cache;
 
-        private Command _currentCommand;
-
         public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
                        PKSystem senderSystem, MessageContext messageContext, PermissionSet botPermissions)
         {
@@ -115,9 +113,9 @@ namespace PluralKit.Bot
             return msg;
         }
         
-        public async Task Execute<T>(Command commandDef, Func<T, Task> handler)
+        public async Task Execute<T>(string commandDef, Func<T, Task> handler)
         {
-            _currentCommand = commandDef;
+            Command currentCommand = _provider.Resolve<CommandReferenceStore>().GetCommand(commandDef);
 
             try
             {
@@ -126,7 +124,7 @@ namespace PluralKit.Bot
             }
             catch (PKSyntaxError e)
             {
-                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef.Usage}");
+                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{currentCommand.Usage}");
             }
             catch (PKError e)
             {

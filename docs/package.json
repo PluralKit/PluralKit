@@ -3,8 +3,9 @@
   "private": true,
   "description": "Documentation for PluralKit",
   "scripts": {
-    "dev": "vuepress dev content",
-    "build": "vuepress build content"
+    "commandList": "node commandList.js --build",
+    "dev": "yarn commandList && vuepress dev content",
+    "build": "yarn commandList && vuepress build content"
   },
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
