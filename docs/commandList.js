@@ -1,5 +1,12 @@
 const fs = require('fs');
-const commandReference = require('./command_reference.json');
+let commandReference;
+
+try {
+    commandReference = require('./command_reference.json');
+} catch(e) {
+    console.error('\x1b[31m%s\x1b[0m', "The command reference JSON file is invalid or inaccessible.");
+    process.exit(1);
+}
 
 const commands = {};
 commandReference.commands.forEach(cmd => commands[cmd.key] = cmd);
@@ -59,7 +66,7 @@ switch(process.argv[2])
             })
         }
 
-        if (extra) {
+        if (extra.length > 0) {
             console.warn('\x1b[31m%s\x1b[0m', "The following commands were found in multiple groups shown in the docs:") 
             console.warn(extra.map(cmd => {
                 let grps = [];
@@ -68,12 +75,13 @@ switch(process.argv[2])
             }).join("\n"));
         }
 
-        if (Object.keys(commands)) {
+        if (Object.keys(commands).length > 0) {
             console.warn('\x1b[31m%s\x1b[0m', "The following commands were not found to be listed on the docs:")
             console.warn(Object.keys(commands).join("\n"));
         }
 
-        if (extra || Object.keys(commands)) process.exit(1);
+        if (extra.length > 0 || Object.keys(commands).length > 0) process.exit(1);
+        else console.log('\x1b[32m%s\x1b[0m', "The command reference file is valid.");
 
         break;
     }

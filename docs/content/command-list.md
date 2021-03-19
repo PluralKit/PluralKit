@@ -28,7 +28,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;system [system] fronthistory` - Shows a system's paginated front history.
 - `pk;system [system] frontpercent [timespan]` - Shows a system's front breakdown.
 - `pk;system [system] find [-full] <search term>` - Searches a system's members given a search term [with increased detail].
-- `pk;autoproxy [off|front|latch|member]` - Sets your system's autoproxy mode for the current server.
+- `pk;system ping <enable|disable>` - Changes your system's ping preferences.
 - `pk;link <account>` - Links your system to another account.
 - `pk;unlink [account]` - Unlinks your system from an account.
 
@@ -53,7 +53,6 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <member> avatar [url|@mention]` - Changes a member's avatar.
 - `pk;member <member> serveravatar [url|@mention]` - Changes a member's avatar in the current server.
 - `pk;member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>` - Changes a member's privacy settings.
-- `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
 
 ## Group commands
 *Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -66,9 +65,11 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;group <group> rename <new name>` - Renames a group.
 - `pk;group <group> description [description]` - Changes a group's description.
 - `pk;group <group> icon [url|@mention]` - Changes a group's icon.
+- `pk;group <group> displayname [display name]` - Changes a group's display name.
 - `pk;group <group> privacy <description|icon|visibility|all> <public|private>` - Changes a group's privacy settings.
 - `pk;group <group> delete` - Deletes a group.
 - `pk;group <group> random` - Shows the info card of a randomly selected member in a group.
+- `pk;random group` - Shows the info card of a randomly selected group in your system.
 
 ## Switching commands
 - `pk;switch <member> [member 2] [member 3...]` - Registers a switch.
@@ -98,6 +99,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;invite` - Gets a link to invite PluralKit to other servers.
 - `pk;import [fileurl|*attachment*]` - Imports system information from a data file created by PluralKit or Tupperbox.
 - `pk;export` - Sends you a data file containing your system information.
+- `pk;explain` - Explains the basics of systems and proxying.
 - `pk;permcheck [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
 
 ## API
