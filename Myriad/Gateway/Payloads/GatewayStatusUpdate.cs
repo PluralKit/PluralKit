@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System.Text.Json.Serialization;
 
+using Myriad.Serialization;
 using Myriad.Types;
 
 namespace Myriad.Gateway
 {
     public record GatewayStatusUpdate
     {
+        [JsonConverter(typeof(JsonSnakeCaseStringEnumConverter))]
         public enum UserStatus
         {
             Online,
