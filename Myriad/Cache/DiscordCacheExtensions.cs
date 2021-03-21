@@ -68,7 +68,7 @@ namespace Myriad.Cache
         {
             // DM messages don't get Channel Create events first, so we need to save
             // some kind of stub channel object until we get the real one
-            return guildId == null ? default : cache.SaveDmChannelStub(channelId);
+            return guildId != null ? default : cache.SaveDmChannelStub(channelId);
         }
     }
 }
