@@ -85,6 +85,7 @@ namespace PluralKit.Core
                 Pronouns = fileMember.Pronouns,
                 AvatarUrl = fileMember.AvatarUrl,
                 KeepProxy = fileMember.KeepProxy,
+				MessageCount = fileMember.MessageCount,
             };
 
             if (fileMember.Prefix != null || fileMember.Suffix != null)
