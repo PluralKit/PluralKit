@@ -28,8 +28,16 @@ namespace Myriad.Cache
                     return cache.SaveRole(gru.GuildId, gru.Role);
                 case GuildRoleDeleteEvent grd:
                     return cache.RemoveRole(grd.GuildId, grd.RoleId);
+                case MessageReactionAddEvent mra:
+                    return cache.TrySaveDmChannelStub(mra.GuildId, mra.ChannelId);
                 case MessageCreateEvent mc:
                     return cache.SaveMessageCreate(mc);
+                case MessageUpdateEvent mu:
+                    return cache.TrySaveDmChannelStub(mu.GuildId.Value, mu.ChannelId);
+                case MessageDeleteEvent md:
+                    return cache.TrySaveDmChannelStub(md.GuildId, md.ChannelId);
+                case MessageDeleteBulkEvent md:
+                    return cache.TrySaveDmChannelStub(md.GuildId, md.ChannelId);
             }
 
             return default;
@@ -49,14 +57,18 @@ namespace Myriad.Cache
 
         private static async ValueTask SaveMessageCreate(this IDiscordCache cache, MessageCreateEvent evt)
         {
-            // DM messages don't get Channel Create events first, so we need to save
-            // some kind of stub channel object until we get the real one
-            if (evt.GuildId == null)
-                await cache.SaveDmChannelStub(evt.ChannelId);
+            await cache.TrySaveDmChannelStub(evt.GuildId, evt.ChannelId);
             
             await cache.SaveUser(evt.Author);
             foreach (var mention in evt.Mentions) 
                 await cache.SaveUser(mention);
+        }
+
+        private static ValueTask TrySaveDmChannelStub(this IDiscordCache cache, ulong? guildId, ulong channelId)
+        {
+            // DM messages don't get Channel Create events first, so we need to save
+            // some kind of stub channel object until we get the real one
+            return guildId == null ? default : cache.SaveDmChannelStub(channelId);
         }
     }
 }
