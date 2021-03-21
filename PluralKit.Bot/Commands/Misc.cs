@@ -222,6 +222,15 @@ namespace PluralKit.Bot {
             var message = await _db.Execute(c => _repo.GetMessage(c, messageId));
             if (message == null) throw Errors.MessageNotFound(messageId);
 
+            if (ctx.Match("delete") || ctx.MatchFlag("delete"))
+            {
+                if (message.System.Id != ctx.System.Id)
+                    throw new PKError("You can only delete your own messages.");
+                await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
+                await ctx.Rest.DeleteMessage(ctx.Message);
+                return;
+            }
+
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
         }
     }
