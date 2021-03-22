@@ -64,6 +64,8 @@ namespace PluralKit.Bot
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
                 ctx = await _repo.GetMessageContext(conn, evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
 
+            Message referencedMessage = (lastMessage.referenced_message != null) ? await _rest.GetMessage(evt.ChannelId, lastMessage.referenced_message.Value) : null;
+
             // TODO: is this missing anything?
             var equivalentEvt = new MessageCreateEvent
             {
@@ -74,9 +76,9 @@ namespace PluralKit.Bot
                 Member = evt.Member.Value,
                 Content = evt.Content.Value,
                 Attachments = evt.Attachments.Value ?? Array.Empty<Message.Attachment>(),
-                MessageReference = (lastMessage.referenced_message.HasValue) ? new (channel.GuildId, evt.ChannelId, lastMessage.referenced_message.Value.Id) : null,
-                ReferencedMessage = (lastMessage.referenced_message.HasValue) ? lastMessage.referenced_message : null,
-                Type = (lastMessage.referenced_message.HasValue) ? Message.MessageType.Reply : Message.MessageType.Default,
+                MessageReference = (lastMessage.referenced_message != null) ? new (channel.GuildId, evt.ChannelId, lastMessage.referenced_message.Value) : null,
+                ReferencedMessage = referencedMessage,
+                Type = (lastMessage.referenced_message != null) ? Message.MessageType.Reply : Message.MessageType.Default,
             };
             var botPermissions = _bot.PermissionsIn(channel.Id);
             await _proxy.HandleIncomingMessage(shard, equivalentEvt, ctx, allowAutoproxy: false, guild: guild, channel: channel, botPermissions: botPermissions);

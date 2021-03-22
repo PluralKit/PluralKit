@@ -29,12 +29,13 @@ namespace PluralKit.Bot
     public class CachedMessage
     {
         public ulong mid;
-        public Myriad.Utils.Optional<Message> referenced_message;
+        public ulong? referenced_message;
 
         public CachedMessage(Message msg)
         {
             mid = msg.Id;
-            referenced_message = msg.ReferencedMessage;
+            if (msg.ReferencedMessage.HasValue)
+                referenced_message = msg.ReferencedMessage.Value.Id;
         }
     }
 }
