@@ -53,7 +53,7 @@ namespace PluralKit.Bot
 
         private bool IsDuplicateMessage(Message msg) =>
             // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
-            _lastMessageCache.GetLastMessage(msg.ChannelId) == msg.Id;
+            _lastMessageCache.GetLastMessage(msg.ChannelId)?.mid == msg.Id;
 
         public async Task Handle(Shard shard, MessageCreateEvent evt)
         {
@@ -66,7 +66,7 @@ namespace PluralKit.Bot
             
             // Log metrics and message info
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
-            _lastMessageCache.AddMessage(evt.ChannelId, evt.Id);
+            _lastMessageCache.AddMessage(evt);
             
             // Get message context from DB (tracking w/ metrics)
             MessageContext ctx;
