@@ -1,6 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 
+using Myriad.Types;
+
 namespace PluralKit.Bot
 {
     // Doing things like this instead of enabling D.NET's message cache because the message cache is, let's face it,
@@ -10,17 +12,29 @@ namespace PluralKit.Bot
     // TODO: is this still needed after the D#+ migration?
     public class LastMessageCacheService
     {
-        private readonly IDictionary<ulong, ulong> _cache = new ConcurrentDictionary<ulong, ulong>();
+        private readonly IDictionary<ulong, CachedMessage> _cache = new ConcurrentDictionary<ulong, CachedMessage>();
 
-        public void AddMessage(ulong channel, ulong message)
+        public void AddMessage(Message msg)
         {
-            _cache[channel] = message;
+            _cache[msg.ChannelId] = new CachedMessage(msg);
         }
 
-        public ulong? GetLastMessage(ulong channel)
+        public CachedMessage GetLastMessage(ulong channel)
         {
             if (_cache.TryGetValue(channel, out var message)) return message;
             return null;
+        }
+    }
+
+    public class CachedMessage
+    {
+        public ulong mid;
+        public Myriad.Utils.Optional<Message> referenced_message;
+
+        public CachedMessage(Message msg)
+        {
+            mid = msg.Id;
+            referenced_message = msg.ReferencedMessage;
         }
     }
 }
