@@ -5,11 +5,7 @@ using Myriad.Types;
 
 namespace PluralKit.Bot
 {
-    // Doing things like this instead of enabling D.NET's message cache because the message cache is, let's face it,
-    // not particularly efficient? It allocates a dictionary *and* a queue for every single channel (500k in prod!)
-    // whereas this is, worst case, one dictionary *entry* of a single ulong per channel, and one dictionary instance
-    // on the whole instance, total. Yeah, much more efficient.
-    // TODO: is this still needed after the D#+ migration?
+    // TODO: Should this be moved to Myriad.Cache?
     public class LastMessageCacheService
     {
         private readonly IDictionary<ulong, CachedMessage> _cache = new ConcurrentDictionary<ulong, CachedMessage>();
@@ -34,7 +30,7 @@ namespace PluralKit.Bot
         public CachedMessage(Message msg)
         {
             mid = msg.Id;
-            if (msg.ReferencedMessage.HasValue)
+            if (msg.ReferencedMessage.Value != null)
                 referenced_message = msg.ReferencedMessage.Value.Id;
         }
     }
