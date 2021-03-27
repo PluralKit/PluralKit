@@ -10,7 +10,7 @@ namespace PluralKit.Core
     public class HandlerQueue<T>
     {
         private long _seq;
-        private readonly ConcurrentDictionary<long, HandlerEntry> _handlers = new ConcurrentDictionary<long, HandlerEntry>();
+        private readonly ConcurrentDictionary<long, HandlerEntry> _handlers = new();
 
         public async Task<T> WaitFor(Func<T, bool> predicate, Duration? timeout = null, CancellationToken ct = default)
         {

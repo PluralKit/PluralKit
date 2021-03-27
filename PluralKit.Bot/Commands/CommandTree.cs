@@ -1,9 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Exceptions;
-
 using Humanizer;
 
 using PluralKit.Core;
@@ -63,6 +60,7 @@ namespace PluralKit.Bot
         public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
         public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");
         public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
+        public static Command GroupFrontPercent = new Command("group frontpercent", "group <group> frontpercent [timespan]", "Shows a group's front breakdown.");
         public static Command GroupMemberRandom = new Command("group random", "group <group> random", "Shows the info card of a randomly selected member in a group.");
         public static Command GroupRandom = new Command("random", "random group", "Shows the info card of a randomly selected group in your system.");
         public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
@@ -110,7 +108,7 @@ namespace PluralKit.Bot
         public static Command[] GroupCommandsTargeted =
         {
             GroupInfo, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc, GroupIcon, GroupPrivacy,
-            GroupDelete, GroupMemberRandom
+            GroupDelete, GroupMemberRandom, GroupFrontPercent
         };
 
         public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
@@ -120,14 +118,6 @@ namespace PluralKit.Bot
         public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
 
         public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
-        
-        private DiscordShardedClient _client;
-
-        public CommandTree(DiscordShardedClient client)
-        {
-            
-            _client = client;
-        }
 
         public Task ExecuteCommand(Context ctx)
         {
@@ -408,6 +398,8 @@ namespace PluralKit.Bot
                     await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
                 else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
                     await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
+                else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
+                    await ctx.Execute<Groups>(GroupFrontPercent, g => g.GroupFrontPercent(ctx, target));
                 else if (!ctx.HasNext())
                     await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
                 else
@@ -535,7 +527,7 @@ namespace PluralKit.Bot
             {
                 // Try to resolve the user ID to find the associated account,
                 // so we can print their username.
-                var user = await ctx.Shard.GetUser(id);
+                var user = await ctx.Rest.GetUser(id);
                 if (user != null)
                     return $"Account **{user.Username}#{user.Discriminator}** does not have a system registered.";
                 else

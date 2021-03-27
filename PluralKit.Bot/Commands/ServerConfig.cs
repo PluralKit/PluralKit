@@ -3,8 +3,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
+using Myriad.Builders;
+using Myriad.Cache;
+using Myriad.Extensions;
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -14,17 +16,19 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly IDiscordCache _cache;
         private readonly LoggerCleanService _cleanService;
-        public ServerConfig(LoggerCleanService cleanService, IDatabase db, ModelRepository repo)
+        public ServerConfig(LoggerCleanService cleanService, IDatabase db, ModelRepository repo, IDiscordCache cache)
         {
             _cleanService = cleanService;
             _db = db;
             _repo = repo;
+            _cache = cache;
         }
 
         public async Task SetLogChannel(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
             
             if (await ctx.MatchClear("the server log channel"))
             {
@@ -36,7 +40,7 @@ namespace PluralKit.Bot
             if (!ctx.HasNext())
                 throw new PKSyntaxError("You must pass a #channel to set, or `clear` to clear it.");
             
-            DiscordChannel channel = null;
+            Channel channel = null;
             var channelString = ctx.PeekArgument();
             channel = await ctx.MatchChannel();
             if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
@@ -48,11 +52,11 @@ namespace PluralKit.Bot
 
         public async Task SetLogEnabled(Context ctx, bool enable)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-            var affectedChannels = new List<DiscordChannel>();
+            var affectedChannels = new List<Channel>();
             if (ctx.Match("all"))
-                affectedChannels = (await ctx.Guild.GetChannelsAsync()).Where(x => x.Type == ChannelType.Text).ToList();
+                affectedChannels = _cache.GetGuildChannels(ctx.Guild.Id).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
@@ -84,13 +88,13 @@ namespace PluralKit.Bot
 
         public async Task ShowBlacklisted(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
             var blacklist = await _db.Execute(c => _repo.GetGuild(c, ctx.Guild.Id));
             
             // Resolve all channels from the cache and order by position
             var channels = blacklist.Blacklist
-                .Select(id => ctx.Guild.GetChannel(id))
+                .Select(id => _cache.GetChannelOrNull(id))
                 .Where(c => c != null)
                 .OrderBy(c => c.Position)
                 .ToList();
@@ -105,23 +109,26 @@ namespace PluralKit.Bot
                 $"Blacklisted channels for {ctx.Guild.Name}",
                 (eb, l) =>
                 {
-                    DiscordChannel lastCategory = null;
+                    string CategoryName(ulong? id) =>
+                        id != null ? _cache.GetChannel(id.Value).Name : "(no category)";
+                    
+                    ulong? lastCategory = null;
 
                     var fieldValue = new StringBuilder();
                     foreach (var channel in l)
                     {
-                        if (lastCategory != channel.Parent && fieldValue.Length > 0)
+                        if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
                         {
-                            eb.AddField(lastCategory?.Name ?? "(no category)", fieldValue.ToString());
+                            eb.Field(new(CategoryName(lastCategory), fieldValue.ToString()));
                             fieldValue.Clear();
                         }
                         else fieldValue.Append("\n");
 
-                        fieldValue.Append(channel.Mention);
-                        lastCategory = channel.Parent;
+                        fieldValue.Append(channel.Mention());
+                        lastCategory = channel.ParentId;
                     }
 
-                    eb.AddField(lastCategory?.Name ?? "(no category)", fieldValue.ToString());
+                    eb.Field(new(CategoryName(lastCategory), fieldValue.ToString()));
 
                     return Task.CompletedTask;
                 });
@@ -129,11 +136,11 @@ namespace PluralKit.Bot
 
         public async Task SetBlacklisted(Context ctx, bool shouldAdd)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-            var affectedChannels = new List<DiscordChannel>();
+            var affectedChannels = new List<Channel>();
             if (ctx.Match("all"))
-                affectedChannels = (await ctx.Guild.GetChannelsAsync()).Where(x => x.Type == ChannelType.Text).ToList();
+                affectedChannels = _cache.GetGuildChannels(ctx.Guild.Id).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
             {
@@ -161,7 +168,7 @@ namespace PluralKit.Bot
 
         public async Task SetLogCleanup(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(Permissions.ManageGuild, "Manage Server");
+            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
             var botList = string.Join(", ", _cleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
 
@@ -172,15 +179,15 @@ namespace PluralKit.Bot
                 newValue = false;
             else
             {
-                var eb = new DiscordEmbedBuilder()
-                    .WithTitle("Log cleanup settings")
-                    .AddField("Supported bots", botList);
+                var eb = new EmbedBuilder()
+                    .Title("Log cleanup settings")
+                    .Field(new("Supported bots", botList));
 
                 var guildCfg = await _db.Execute(c => _repo.GetGuild(c, ctx.Guild.Id));
                 if (guildCfg.LogCleanupEnabled)
-                    eb.WithDescription("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
+                    eb.Description("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
                 else 
-                    eb.WithDescription("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
+                    eb.Description("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }

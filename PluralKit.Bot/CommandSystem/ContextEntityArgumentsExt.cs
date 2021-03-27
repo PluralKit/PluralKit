@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
+using Myriad.Extensions;
+using Myriad.Types;
 
 using PluralKit.Bot.Utils;
 using PluralKit.Core;
@@ -10,11 +10,12 @@ namespace PluralKit.Bot
 {
     public static class ContextEntityArgumentsExt
     {
-        public static async Task<DiscordUser> MatchUser(this Context ctx)
+        public static async Task<User> MatchUser(this Context ctx)
         {
             var text = ctx.PeekArgument();
             if (text.TryParseMention(out var id))
-                return await ctx.Shard.GetUser(id);
+                return await ctx.Cache.GetOrFetchUser(ctx.Rest, id);
+
             return null;
         }
 
@@ -153,13 +154,16 @@ namespace PluralKit.Bot
             return $"Group not found. Note that a group ID is 5 characters long.";
         }
         
-        public static async Task<DiscordChannel> MatchChannel(this Context ctx)
+        public static async Task<Channel> MatchChannel(this Context ctx)
         {
             if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id)) 
                 return null;
+
+            if (!ctx.Cache.TryGetChannel(id, out var channel))
+                return null;
             
-            var channel = await ctx.Shard.GetChannel(id);
-            if (channel == null || !(channel.Type == ChannelType.Text || channel.Type == ChannelType.News)) return null;
+            if (!(channel.Type == Channel.ChannelType.GuildText || channel.Type == Channel.ChannelType.GuildText)) 
+                return null;
             
             ctx.PopArgument();
             return channel;

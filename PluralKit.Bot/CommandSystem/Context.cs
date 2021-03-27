@@ -1,13 +1,17 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using App.Metrics;
 
 using Autofac;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
+using Myriad.Cache;
+using Myriad.Extensions;
+using Myriad.Gateway;
+using Myriad.Rest;
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -17,47 +21,65 @@ namespace PluralKit.Bot
     {
         private readonly ILifetimeScope _provider;
 
-        private readonly DiscordRestClient _rest;
-        private readonly DiscordShardedClient _client;
-        private readonly DiscordClient _shard;
-        private readonly DiscordMessage _message;
+        private readonly DiscordApiClient _rest;
+        private readonly Cluster _cluster;
+        private readonly Shard _shard;
+        private readonly Guild? _guild;
+        private readonly Channel _channel;
+        private readonly MessageCreateEvent _message;
         private readonly Parameters _parameters;
         private readonly MessageContext _messageContext;
+        private readonly PermissionSet _botPermissions;
+        private readonly PermissionSet _userPermissions;
 
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly PKSystem _senderSystem;
         private readonly IMetrics _metrics;
         private readonly CommandMessageService _commandMessageService;
+        private readonly IDiscordCache _cache;
 
         private Command _currentCommand;
 
-        public Context(ILifetimeScope provider, DiscordClient shard, DiscordMessage message, int commandParseOffset,
-                       PKSystem senderSystem, MessageContext messageContext)
+        public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
+                       PKSystem senderSystem, MessageContext messageContext, PermissionSet botPermissions)
         {
-            _rest = provider.Resolve<DiscordRestClient>();
-            _client = provider.Resolve<DiscordShardedClient>();
             _message = message;
             _shard = shard;
+            _guild = guild;
+            _channel = channel;
             _senderSystem = senderSystem;
             _messageContext = messageContext;
+            _cache = provider.Resolve<IDiscordCache>();
             _db = provider.Resolve<IDatabase>();
             _repo = provider.Resolve<ModelRepository>();
             _metrics = provider.Resolve<IMetrics>();
             _provider = provider;
             _commandMessageService = provider.Resolve<CommandMessageService>();
-            _parameters = new Parameters(message.Content.Substring(commandParseOffset));
+            _parameters = new Parameters(message.Content?.Substring(commandParseOffset));
+            _rest = provider.Resolve<DiscordApiClient>();
+            _cluster = provider.Resolve<Cluster>();
+
+            _botPermissions = botPermissions;
+            _userPermissions = _cache.PermissionsFor(message);
         }
 
-        public DiscordUser Author => _message.Author;
-        public DiscordChannel Channel => _message.Channel;
-        public DiscordMessage Message => _message;
-        public DiscordGuild Guild => _message.Channel.Guild;
-        public DiscordClient Shard => _shard;
-        public DiscordShardedClient Client => _client;
+        public IDiscordCache Cache => _cache;
+
+        public Channel Channel => _channel;
+        public User Author => _message.Author;
+        public GuildMemberPartial Member => _message.Member;
+
+        public Message Message => _message;
+        public Guild Guild => _guild;
+        public Shard Shard => _shard;
+        public Cluster Cluster => _cluster;
         public MessageContext MessageContext => _messageContext;
 
-        public DiscordRestClient Rest => _rest;
+        public PermissionSet BotPermissions => _botPermissions;
+        public PermissionSet UserPermissions => _userPermissions;
+
+        public DiscordApiClient Rest => _rest;
 
         public PKSystem System => _senderSystem;
         
@@ -66,15 +88,22 @@ namespace PluralKit.Bot
         internal IDatabase Database => _db;
         internal ModelRepository Repository => _repo;
 
-        public async Task<DiscordMessage> Reply(string text = null, DiscordEmbed embed = null, IEnumerable<IMention> mentions = null)
+        public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
         {
-            if (!this.BotHasAllPermissions(Permissions.SendMessages))
+            if (!BotPermissions.HasFlag(PermissionSet.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
                 throw new PKError("PluralKit does not have permission to send messages in this channel.");
 
-            if (embed != null && !this.BotHasAllPermissions(Permissions.EmbedLinks))
+            if (embed != null && !BotPermissions.HasFlag(PermissionSet.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
-            var msg = await Channel.SendMessageFixedAsync(text, embed: embed, mentions: mentions);
+
+            var msg = await _rest.CreateMessage(_channel.Id, new MessageRequest
+            {
+                Content = text,
+                Embed = embed,
+                // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
+                AllowedMentions = mentions ?? new AllowedMentions()
+            });
 
             if (embed != null)
             {

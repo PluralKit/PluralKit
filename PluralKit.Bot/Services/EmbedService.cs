@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
-
 using Humanizer;
+
+using Myriad.Builders;
+using Myriad.Cache;
+using Myriad.Extensions;
+using Myriad.Rest;
+using Myriad.Rest.Exceptions;
+using Myriad.Types;
+
 using NodaTime;
 
 using PluralKit.Core;
@@ -17,71 +21,84 @@ namespace PluralKit.Bot {
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
-        private readonly DiscordShardedClient _client;
+        private readonly IDiscordCache _cache;
+        private readonly DiscordApiClient _rest;
 
-        public EmbedService(DiscordShardedClient client, IDatabase db, ModelRepository repo)
+        public EmbedService(IDatabase db, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
         {
-            _client = client;
             _db = db;
             _repo = repo;
+            _cache = cache;
+            _rest = rest;
+        }
+
+        private Task<(ulong Id, User? User)[]> GetUsers(IEnumerable<ulong> ids)
+        {
+            async Task<(ulong Id, User? User)> Inner(ulong id)
+            {
+                var user = await _cache.GetOrFetchUser(_rest, id);
+                return (id, user);
+            }
+
+            return Task.WhenAll(ids.Select(Inner));
         }
         
-        public async Task<DiscordEmbed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
+        public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
         {
             await using var conn = await _db.Obtain();
             
             // Fetch/render info for all accounts simultaneously
             var accounts = await _repo.GetSystemAccounts(conn, system.Id);
-            var users = await Task.WhenAll(accounts.Select(async uid => (await cctx.Shard.GetUser(uid))?.NameAndMention() ?? $"(deleted account {uid})"));
+            var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
             var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
 
-            var eb = new DiscordEmbedBuilder()
-                .WithColor(DiscordUtils.Gray)
-                .WithTitle(system.Name ?? null)
-                .WithThumbnail(system.AvatarUrl)
-                .WithFooter($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}");
- 
+            var eb = new EmbedBuilder()
+                .Title(system.Name)
+                .Thumbnail(new(system.AvatarUrl))
+                .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
+                .Color(DiscordUtils.Gray);
+
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
                 var switchMembers = await _repo.GetSwitchMembers(conn, latestSwitch.Id).ToListAsync();
-                                                                                                              if (switchMembers.Count > 0)
-                                                                                                                  eb.AddField("Fronter".ToQuantity(switchMembers.Count(), ShowQuantityAs.None),
-                        string.Join(", ", switchMembers.Select(m => m.NameFor(ctx))));
+                if (switchMembers.Count > 0)
+                    eb.Field(new("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)))));
             }
 
-            if (system.Tag != null) eb.AddField("Tag", system.Tag.EscapeMarkdown());
-            eb.AddField("Linked accounts", string.Join("\n", users).Truncate(1000), true);
+            if (system.Tag != null) 
+                eb.Field(new("Tag", system.Tag.EscapeMarkdown()));
+            eb.Field(new("Linked accounts", string.Join("\n", users).Truncate(1000), true));
 
             if (system.MemberListPrivacy.CanAccess(ctx))
             {
                 if (memberCount > 0)
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true);
+                    eb.Field(new($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true));
                 else
-                    eb.AddField($"Members ({memberCount})", "Add one with `pk;member new`!", true);
+                    eb.Field(new($"Members ({memberCount})", "Add one with `pk;member new`!", true));
             }
 
             if (system.DescriptionFor(ctx) is { } desc)
-                eb.AddField("Description", desc.NormalizeLineEndSpacing().Truncate(1024), false);
+                eb.Field(new("Description", desc.NormalizeLineEndSpacing().Truncate(1024), false));
 
             return eb.Build();
         }
 
-        public DiscordEmbed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, DiscordUser sender, string content, DiscordChannel channel) {
+        public Embed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, Channel channel) {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
             var name = member.NameFor(LookupContext.ByNonOwner); 
-            return new DiscordEmbedBuilder()
-                .WithAuthor($"#{channel.Name}: {name}", iconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner)))
-                .WithThumbnail(member.AvatarFor(LookupContext.ByNonOwner))
-                .WithDescription(content?.NormalizeLineEndSpacing())
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}")
-                .WithTimestamp(timestamp.ToDateTimeOffset())
+            return new EmbedBuilder()
+                .Author(new($"#{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner))))
+                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner)))
+                .Description(content?.NormalizeLineEndSpacing())
+                .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
+                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
                 .Build();
         }
 
-        public async Task<DiscordEmbed> CreateMemberEmbed(PKSystem system, PKMember member, DiscordGuild guild, LookupContext ctx)
+        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)
         {
 
             // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
@@ -89,7 +106,7 @@ namespace PluralKit.Bot {
             var name = member.NameFor(ctx);
             if (system.Name != null) name = $"{name} ({system.Name})";
 
-            DiscordColor color;
+            uint color;
             try
             {
                 color = member.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
@@ -112,13 +129,14 @@ namespace PluralKit.Bot {
                 .Where(g => g.Visibility.CanAccess(ctx))
                 .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
                 .ToListAsync();
-            
-            var eb = new DiscordEmbedBuilder()
+
+            var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
-                .WithAuthor(name, iconUrl: DiscordUtils.WorkaroundForUrlBug(avatar))
+                .Author(new(name, IconUrl: DiscordUtils.WorkaroundForUrlBug(avatar)))
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
-                .WithColor(color)
-                .WithFooter($"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}":"")}");
+                .Color(color)
+                .Footer(new(
+                    $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")}"));
 
             var description = "";
             if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
@@ -127,21 +145,21 @@ namespace PluralKit.Bot {
                     description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl}) to see the global avatar)*\n";
                 else
                     description += "*(this member has a server-specific avatar set)*\n";
-            if (description != "") eb.WithDescription(description);
+            if (description != "") eb.Description(description);
             
-            if (avatar != null) eb.WithThumbnail(avatar);
+            if (avatar != null) eb.Thumbnail(new(avatar));
 
-            if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.AddField("Display Name", member.DisplayName.Truncate(1024), true);
-            if (guild != null && guildDisplayName != null) eb.AddField($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true);
-            if (member.BirthdayFor(ctx) != null) eb.AddField("Birthdate", member.BirthdayString, true);
-            if (member.PronounsFor(ctx) is {} pronouns && !string.IsNullOrWhiteSpace(pronouns)) eb.AddField("Pronouns", pronouns.Truncate(1024), true);
-            if (member.MessageCountFor(ctx) is {} count && count > 0) eb.AddField("Message Count", member.MessageCount.ToString(), true);
-            if (member.HasProxyTags) eb.AddField("Proxy Tags", member.ProxyTagsString("\n").Truncate(1024), true);
+            if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.Field(new("Display Name", member.DisplayName.Truncate(1024), true));
+            if (guild != null && guildDisplayName != null) eb.Field(new($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true));
+            if (member.BirthdayFor(ctx) != null) eb.Field(new("Birthdate", member.BirthdayString, true));
+            if (member.PronounsFor(ctx) is {} pronouns && !string.IsNullOrWhiteSpace(pronouns)) eb.Field(new("Pronouns", pronouns.Truncate(1024), true));
+            if (member.MessageCountFor(ctx) is {} count && count > 0) eb.Field(new("Message Count", member.MessageCount.ToString(), true));
+            if (member.HasProxyTags) eb.Field(new("Proxy Tags", member.ProxyTagsString("\n").Truncate(1024), true));
             // --- For when this gets added to the member object itself or however they get added
             // if (member.LastMessage != null && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last message:" FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value)));
             // if (member.LastSwitchTime != null && m.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last switched in:", FormatTimestamp(member.LastSwitchTime.Value));
             // if (!member.Color.EmptyOrNull() && member.ColorPrivacy.CanAccess(ctx)) eb.AddField("Color", $"#{member.Color}", true);
-            if (!member.Color.EmptyOrNull()) eb.AddField("Color", $"#{member.Color}", true);
+            if (!member.Color.EmptyOrNull()) eb.Field(new("Color", $"#{member.Color}", true));
 
             if (groups.Count > 0)
             {
@@ -149,15 +167,16 @@ namespace PluralKit.Bot {
                 var content = groups.Count > 5
                     ? string.Join(", ", groups.Select(g => g.DisplayName ?? g.Name))
                     : string.Join("\n", groups.Select(g => $"[`{g.Hid}`] **{g.DisplayName ?? g.Name}**"));
-                eb.AddField($"Groups ({groups.Count})", content.Truncate(1000));
+                eb.Field(new($"Groups ({groups.Count})", content.Truncate(1000)));
             }
 
-            if (member.DescriptionFor(ctx) is {} desc) eb.AddField("Description", member.Description.NormalizeLineEndSpacing(), false);
+            if (member.DescriptionFor(ctx) is {} desc) 
+                eb.Field(new("Description", member.Description.NormalizeLineEndSpacing(), false));
 
             return eb.Build();
         }
 
-        public async Task<DiscordEmbed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
+        public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
         {
             await using var conn = await _db.Obtain();
             
@@ -168,92 +187,119 @@ namespace PluralKit.Bot {
             if (system.Name != null)
                 nameField = $"{nameField} ({system.Name})";
 
-            var eb = new DiscordEmbedBuilder()
-                .WithAuthor(nameField, iconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx)))
-                .WithFooter($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}");
+            var eb = new EmbedBuilder()
+                .Author(new(nameField, IconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx))))
+                .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
 
             if (target.DisplayName != null)
-                eb.AddField("Display Name", target.DisplayName);
+                eb.Field(new("Display Name", target.DisplayName));
 
             if (target.ListPrivacy.CanAccess(pctx))
             {
                 if (memberCount == 0 && pctx == LookupContext.ByOwner)
                     // Only suggest the add command if this is actually the owner lol
-                    eb.AddField("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true);
+                    eb.Field(new("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true));
                 else
-                    eb.AddField($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true);
+                    eb.Field(new($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true));
             }
 
-            if (target.DescriptionFor(pctx) is {} desc)
-                eb.AddField("Description", desc);
+            if (target.DescriptionFor(pctx) is { } desc)
+                eb.Field(new("Description", desc));
 
             if (target.IconFor(pctx) is {} icon)
-                eb.WithThumbnail(icon);
+                eb.Thumbnail(new(icon));
 
             return eb.Build();
         }
 
-        public async Task<DiscordEmbed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone, LookupContext ctx)
+        public async Task<Embed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone, LookupContext ctx)
         {
             var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
-            return new DiscordEmbedBuilder()
-                .WithColor(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
-                .AddField($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "*(no fronter)*")
-                .AddField("Since", $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)")
+            return new EmbedBuilder()
+                .Color(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
+                .Field(new($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "*(no fronter)*"))
+                .Field(new("Since", $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)"))
                 .Build();
         }
 
-        public async Task<DiscordEmbed> CreateMessageInfoEmbed(DiscordClient client, FullMessage msg)
+        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
         {
+            var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
             var ctx = LookupContext.ByNonOwner;
-            var channel = await _client.GetChannel(msg.Message.Channel);
-            var serverMsg = channel != null ? await channel.GetMessage(msg.Message.Mid) : null;
+
+            Message serverMsg = null;
+            try
+            {
+                serverMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);
+            }
+            catch (ForbiddenException)
+            {
+                // no permission, couldn't fetch, oh well
+            }
 
             // Need this whole dance to handle cases where:
             // - the user is deleted (userInfo == null)
             // - the bot's no longer in the server we're querying (channel == null)
             // - the member is no longer in the server we're querying (memberInfo == null)
-            DiscordMember memberInfo = null;
-            DiscordUser userInfo = null;
-            if (channel != null) memberInfo = await channel.Guild.GetMember(msg.Message.Sender);
-            if (memberInfo != null) userInfo = memberInfo; // Don't do an extra request if we already have this info from the member lookup
-            else userInfo = await client.GetUser(msg.Message.Sender);
+            // TODO: optimize ordering here a bit with new cache impl; and figure what happens if bot leaves server -> channel still cached -> hits this bit and 401s?
+            GuildMemberPartial memberInfo = null;
+            User userInfo = null;
+            if (channel != null)
+            {
+                GuildMember member = null;
+                try
+                {
+                    member = await _rest.GetGuildMember(channel.GuildId!.Value, msg.Message.Sender);
+                }
+                catch (ForbiddenException)
+                {
+                    // no permission, couldn't fetch, oh well
+                }
+
+                if (member != null)
+                    // Don't do an extra request if we already have this info from the member lookup
+                    userInfo = member.User;
+                memberInfo = member;
+            }
+            else userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
 
             // Calculate string displayed under "Sent by"
             string userStr;
-            if (memberInfo != null && memberInfo.Nickname != null)
-                userStr = $"**Username:** {memberInfo.NameAndMention()}\n**Nickname:** {memberInfo.Nickname}";
+            if (memberInfo != null && memberInfo.Nick != null)
+                userStr = $"**Username:** {userInfo.NameAndMention()}\n**Nickname:** {memberInfo.Nick}";
             else if (userInfo != null) userStr = userInfo.NameAndMention();
             else userStr = $"*(deleted user {msg.Message.Sender})*";
 
             // Put it all together
-            var eb = new DiscordEmbedBuilder()
-                .WithAuthor(msg.Member.NameFor(ctx), iconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarFor(ctx)))
-                .WithDescription(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
-                .WithImageUrl(serverMsg?.Attachments?.FirstOrDefault()?.Url)
-                .AddField("System",
-                    msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true)
-                .AddField("Member", $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)", true)
-                .AddField("Sent by", userStr, inline: true)
-                .WithTimestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset());
+            var eb = new EmbedBuilder()
+                .Author(new(msg.Member.NameFor(ctx), IconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarFor(ctx))))
+                .Description(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
+                .Image(new(serverMsg?.Attachments?.FirstOrDefault()?.Url))
+                .Field(new("System",
+                    msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true))
+                .Field(new("Member", $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)", true))
+                .Field(new("Sent by", userStr, true))
+                .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"));
 
             var roles = memberInfo?.Roles?.ToList();
             if (roles != null && roles.Count > 0)
             {
-                var rolesString = string.Join(", ", roles.Select(role => role.Name));
-                eb.AddField($"Account roles ({roles.Count})", rolesString.Truncate(1024));
+                // TODO: what if role isn't in cache? figure out a fallback
+                var rolesString = string.Join(", ", roles.Select(id => _cache.GetRole(id).Name));
+                eb.Field(new($"Account roles ({roles.Count})", rolesString.Truncate(1024)));
             }
             
             return eb.Build();
         }
 
-        public Task<DiscordEmbed> CreateFrontPercentEmbed(FrontBreakdown breakdown, DateTimeZone tz, LookupContext ctx)
+        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle)
         {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
-            var eb = new DiscordEmbedBuilder()
-                .WithColor(DiscordUtils.Gray)
-                .WithFooter($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)");
+            var eb = new EmbedBuilder()
+                .Title(embedTitle)
+                .Color(DiscordUtils.Gray)
+                .Footer(new($"System ID: {system.Hid} | {(group != null ? $"Group ID: {group.Hid} | " : "") }Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)"));
 
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
@@ -267,15 +313,15 @@ namespace PluralKit.Bot {
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / actualPeriod;
-                eb.AddField(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({pair.Value.FormatDuration()})");
+                eb.Field(new(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({pair.Value.FormatDuration()})"));
             }
 
             if (membersOrdered.Count > maxEntriesToDisplay)
             {
-                eb.AddField("(others)",
+                eb.Field(new("(others)",
                     membersOrdered.Skip(maxEntriesToDisplay)
                         .Aggregate(Duration.Zero, (prod, next) => prod + next.Value)
-                        .FormatDuration(), true);
+                        .FormatDuration(), true));
             }
 
             return Task.FromResult(eb.Build());

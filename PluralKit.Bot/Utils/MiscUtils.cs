@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-using DSharpPlus.Exceptions;
+using Myriad.Rest.Exceptions;
 
 using Newtonsoft.Json;
 
@@ -46,7 +46,7 @@ namespace PluralKit.Bot
                 if (notActionedOn == 0)
                     return $"{Emojis.Success} {entityTerm<T>(actionedOn.Count, true)} {opStr} {entityTerm<T>(actionedOn.Count, false).ToLower()}.";
                 else
-                    return $"{Emojis.Success} {entityTerm<T>(actionedOn.Count, true)} {opStr} {actionedOn.Count} {entityTerm<T>(actionedOn.Count, false).ToLower()} ({memberNotActionedPosStr}{entityTerm<T>(actionedOn.Count, true).ToLower()} already {inStr} {groupNotActionedPosStr}{entityTerm<T>(notActionedOn, false).ToLower()}).";
+                    return $"{Emojis.Success} {actionedOn.Count} {entityTerm<T>(actionedOn.Count, true).ToLower()} {opStr} {entityTerm<T>(actionedOn.Count, false).ToLower()} ({memberNotActionedPosStr}{entityTerm<T>(actionedOn.Count, true).ToLower()} already {inStr} {groupNotActionedPosStr}{entityTerm<T>(notActionedOn, false).ToLower()}).";
         }
 
         public static bool IsOurProblem(this Exception e)
@@ -64,12 +64,12 @@ namespace PluralKit.Bot
             if (e is JsonReaderException jre && jre.Message == "Unexpected character encountered while parsing value: <. Path '', line 0, position 0.") return false;
 
             // And now (2020-05-12), apparently Discord returns these weird responses occasionally. Also not our problem.
-            if (e is BadRequestException bre && bre.WebResponse.Response.Contains("<center>nginx</center>")) return false;
-            if (e is NotFoundException ne && ne.WebResponse.Response.Contains("<center>nginx</center>")) return false;
-            if (e is UnauthorizedException ue && ue.WebResponse.Response.Contains("<center>nginx</center>")) return false;
+            if (e is BadRequestException bre && bre.ResponseBody.Contains("<center>nginx</center>")) return false;
+            if (e is NotFoundException ne && ne.ResponseBody.Contains("<center>nginx</center>")) return false;
+            if (e is UnauthorizedException ue && ue.ResponseBody.Contains("<center>nginx</center>")) return false;
 
-            // 500s? also not our problem :^)
-            if (e is ServerErrorException) return false;
+            // 5xxs? also not our problem :^)
+            if (e is UnknownDiscordRequestException udre && (int) udre.StatusCode >= 500) return false;
 
             // Webhook server errors are also *not our problem*
             // (this includes rate limit errors, WebhookRateLimited is a subclass)

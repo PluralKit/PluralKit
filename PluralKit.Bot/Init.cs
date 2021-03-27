@@ -4,9 +4,10 @@ using System.Threading.Tasks;
 
 using Autofac;
 
-using DSharpPlus;
-
 using Microsoft.Extensions.Configuration;
+
+using Myriad.Gateway;
+using Myriad.Rest;
 
 using PluralKit.Core;
 
@@ -47,7 +48,8 @@ namespace PluralKit.Bot
 
                 // Start the Discord shards themselves (handlers already set up)
                 logger.Information("Connecting to Discord");
-                await services.Resolve<DiscordShardedClient>().StartAsync();
+                var info = await services.Resolve<DiscordApiClient>().GetGatewayBot();
+                await services.Resolve<Cluster>().Start(info);
                 logger.Information("Connected! All is good (probably).");
 
                 // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
@@ -118,7 +120,8 @@ namespace PluralKit.Bot
             builder.RegisterModule(new ConfigModule<BotConfig>("Bot"));
             builder.RegisterModule(new LoggingModule("bot", cfg =>
             {
-                cfg.Destructure.With<EventDestructuring>();
+                // TODO: do we need this?
+                // cfg.Destructure.With<EventDestructuring>();
             }));
             builder.RegisterModule(new MetricsModule());
             builder.RegisterModule<DataStoreModule>();

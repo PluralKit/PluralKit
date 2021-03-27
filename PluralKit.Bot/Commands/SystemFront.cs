@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using NodaTime;
@@ -71,6 +71,7 @@ namespace PluralKit.Bot
                 embedTitle,
                 async (builder, switches) =>
                 {
+                    var sb = new StringBuilder();
                     foreach (var entry in switches)
                     {
                         var lastSw = entry.LastTime;
@@ -99,15 +100,13 @@ namespace PluralKit.Bot
                             stringToAdd =
                                 $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago)\n";
                         }
-                        try // Unfortunately the only way to test DiscordEmbedBuilder.Description max length is this
-                        {
-                            builder.Description += stringToAdd;
-                        }
-                        catch (ArgumentException)
-                        {
+
+                        if (sb.Length + stringToAdd.Length >= 1024)
                             break;
-                        }// TODO: Make sure this works
+                        sb.Append(stringToAdd);
                     }
+
+                    builder.Description(sb.ToString());
                 }
             );
         }
@@ -125,8 +124,14 @@ namespace PluralKit.Bot
             if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
-            var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone, ctx.LookupContextFor(system)));
+            var title = new StringBuilder($"Frontpercent of ");
+            if (system.Name != null) 
+                title.Append($"{system.Name} (`{system.Hid}`)");
+            else
+                title.Append($"`{system.Hid}`");
+
+            var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, null, rangeStart.Value.ToInstant(), now));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, system.Zone, ctx.LookupContextFor(system), title.ToString()));
         }
     }
 }

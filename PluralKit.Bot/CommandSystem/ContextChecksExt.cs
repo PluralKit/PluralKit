@@ -1,4 +1,4 @@
-﻿using DSharpPlus;
+﻿using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -8,7 +8,7 @@ namespace PluralKit.Bot
     {
         public static Context CheckGuildContext(this Context ctx)
         {
-            if (ctx.Channel.Guild != null) return ctx;
+            if (ctx.Channel.GuildId != null) return ctx;
             throw new PKError("This command can not be run in a DM.");
         }
         
@@ -46,12 +46,9 @@ namespace PluralKit.Bot
             return ctx;
         }
         
-        public static Context CheckAuthorPermission(this Context ctx, Permissions neededPerms, string permissionName)
+        public static Context CheckAuthorPermission(this Context ctx, PermissionSet neededPerms, string permissionName)
         {
-            // TODO: can we always assume Author is a DiscordMember? I would think so, given they always come from a
-            // message received event...
-            var hasPerms = ctx.Channel.PermissionsInSync(ctx.Author);
-            if ((hasPerms & neededPerms) != neededPerms)
+            if ((ctx.UserPermissions & neededPerms) != neededPerms)
                 throw new PKError($"You must have the \"{permissionName}\" permission in this server to use this command.");
             return ctx;
         }

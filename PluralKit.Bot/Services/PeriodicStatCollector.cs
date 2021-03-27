@@ -1,12 +1,11 @@
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using App.Metrics;
 
 using Dapper;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
+using Myriad.Cache;
+using Myriad.Types;
 
 using NodaTime.Extensions;
 using PluralKit.Core;
@@ -17,8 +16,8 @@ namespace PluralKit.Bot
 {
     public class PeriodicStatCollector
     {
-        private readonly DiscordShardedClient _client;
         private readonly IMetrics _metrics;
+        private readonly IDiscordCache _cache;
         private readonly CpuStatService _cpu;
 
         private readonly IDatabase _db;
@@ -29,14 +28,14 @@ namespace PluralKit.Bot
 
         private readonly ILogger _logger;
 
-        public PeriodicStatCollector(DiscordShardedClient client, IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, IDatabase db)
+        public PeriodicStatCollector(IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, IDatabase db, IDiscordCache cache)
         {
-            _client = client;
             _metrics = metrics;
             _webhookCache = webhookCache;
             _countHolder = countHolder;
             _cpu = cpu;
             _db = db;
+            _cache = cache;
             _logger = logger.ForContext<PeriodicStatCollector>();
         }
 
@@ -46,36 +45,22 @@ namespace PluralKit.Bot
             stopwatch.Start();
             
             // Aggregate guild/channel stats
-
             var guildCount = 0;
             var channelCount = 0;
+            
             // No LINQ today, sorry
-            foreach (var shard in _client.ShardClients.Values)
+            await foreach (var guild in _cache.GetAllGuilds())
             {
-                guildCount += shard.Guilds.Count;
-                foreach (var guild in shard.Guilds.Values)
-                foreach (var channel in guild.Channels.Values)
-                    if (channel.Type == ChannelType.Text)
+                guildCount++;
+                foreach (var channel in _cache.GetGuildChannels(guild.Id))
+                {
+                    if (channel.Type == Channel.ChannelType.GuildText)
                         channelCount++;
+                }
             }
             
             _metrics.Measure.Gauge.SetValue(BotMetrics.Guilds, guildCount);
             _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, channelCount);
-
-            // Aggregate member stats
-            var usersKnown = new HashSet<ulong>();
-            var usersOnline = new HashSet<ulong>();
-            foreach (var shard in _client.ShardClients.Values)
-            foreach (var guild in shard.Guilds.Values)
-            foreach (var user in guild.Members.Values)
-            {
-                usersKnown.Add(user.Id);
-                if (user.Presence?.Status == UserStatus.Online)
-                    usersOnline.Add(user.Id);
-            }
-
-            _metrics.Measure.Gauge.SetValue(BotMetrics.MembersTotal, usersKnown.Count);
-            _metrics.Measure.Gauge.SetValue(BotMetrics.MembersOnline, usersOnline.Count);
             
             // Aggregate DB stats
             var counts = await _db.Execute(c => c.QueryFirstAsync<Counts>("select (select count(*) from systems) as systems, (select count(*) from members) as members, (select count(*) from switches) as switches, (select count(*) from messages) as messages, (select count(*) from groups) as groups"));

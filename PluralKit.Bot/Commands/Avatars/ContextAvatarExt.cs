@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
+using Myriad.Extensions;
+using Myriad.Types;
 
 namespace PluralKit.Bot
 {
@@ -22,7 +22,7 @@ namespace PluralKit.Bot
             // If we have a user @mention/ID, use their avatar 
             if (await ctx.MatchUser() is { } user)
             {
-                var url = user.GetAvatarUrl(ImageFormat.Png, 256);
+                var url = user.AvatarUrl("png", 256);
                 return new ParsedImage {Url = url, Source = AvatarSource.User, SourceUser = user};
             }
             
@@ -64,7 +64,7 @@ namespace PluralKit.Bot
     {
         public string Url;
         public AvatarSource Source;
-        public DiscordUser? SourceUser;
+        public User? SourceUser;
     }
 
     public enum AvatarSource

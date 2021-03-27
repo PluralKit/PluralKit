@@ -5,18 +5,22 @@ using App.Metrics;
 
 using Autofac;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+using Myriad.Cache;
+using Myriad.Extensions;
+using Myriad.Gateway;
+using Myriad.Rest;
+using Myriad.Rest.Types.Requests;
+using Myriad.Types;
 
 using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
-    public class MessageCreated: IEventHandler<MessageCreateEventArgs>
+    public class MessageCreated: IEventHandler<MessageCreateEvent>
     {
+        private readonly Bot _bot;
         private readonly CommandTree _tree;
-        private readonly DiscordShardedClient _client;
+        private readonly IDiscordCache _cache;
         private readonly LastMessageCacheService _lastMessageCache;
         private readonly LoggerCleanService _loggerClean;
         private readonly IMetrics _metrics;
@@ -25,73 +29,81 @@ namespace PluralKit.Bot
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly BotConfig _config;
+        private readonly DiscordApiClient _rest;
 
         public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean,
-                              IMetrics metrics, ProxyService proxy, DiscordShardedClient client,
-                              CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config, ModelRepository repo)
+                              IMetrics metrics, ProxyService proxy,
+                              CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config, ModelRepository repo, IDiscordCache cache, Bot bot, DiscordApiClient rest)
         {
             _lastMessageCache = lastMessageCache;
             _loggerClean = loggerClean;
             _metrics = metrics;
             _proxy = proxy;
-            _client = client;
             _tree = tree;
             _services = services;
             _db = db;
             _config = config;
             _repo = repo;
+            _cache = cache;
+            _bot = bot;
+            _rest = rest;
         }
 
-        public DiscordChannel ErrorChannelFor(MessageCreateEventArgs evt) => evt.Channel;
+        public ulong? ErrorChannelFor(MessageCreateEvent evt) => evt.ChannelId;
 
-        private bool IsDuplicateMessage(DiscordMessage evt) =>
+        private bool IsDuplicateMessage(Message msg) =>
             // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
-            _lastMessageCache.GetLastMessage(evt.ChannelId) == evt.Id;
+            _lastMessageCache.GetLastMessage(msg.ChannelId) == msg.Id;
 
-        public async Task Handle(DiscordClient shard, MessageCreateEventArgs evt)
+        public async Task Handle(Shard shard, MessageCreateEvent evt)
         {
-            if (evt.Author?.Id == _client.CurrentUser?.Id) return;
-            if (evt.Message.MessageType != MessageType.Default) return;
-            if (IsDuplicateMessage(evt.Message)) return;
+            if (evt.Author.Id == shard.User?.Id) return;
+            if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
+            if (IsDuplicateMessage(evt)) return;
+
+            var guild = evt.GuildId != null ? _cache.GetGuild(evt.GuildId.Value) : null;
+            var channel = _cache.GetChannel(evt.ChannelId);
             
             // Log metrics and message info
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
-            _lastMessageCache.AddMessage(evt.Channel.Id, evt.Message.Id);
+            _lastMessageCache.AddMessage(evt.ChannelId, evt.Id);
             
             // Get message context from DB (tracking w/ metrics)
             MessageContext ctx;
             await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-                ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.Channel.GuildId, evt.Channel.Id);
-
+                ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.GuildId ?? default, evt.ChannelId);
+            
             // Try each handler until we find one that succeeds
             if (await TryHandleLogClean(evt, ctx)) 
                 return;
             
             // Only do command/proxy handling if it's a user account
-            if (evt.Message.Author.IsBot || evt.Message.WebhookMessage || evt.Message.Author.IsSystem == true) 
+            if (evt.Author.Bot || evt.WebhookId != null || evt.Author.System == true) 
                 return;
-            if (await TryHandleCommand(shard, evt, ctx))
+            
+            if (await TryHandleCommand(shard, evt, guild, channel, ctx))
                 return;
-            await TryHandleProxy(shard, evt, ctx);
+            await TryHandleProxy(shard, evt, guild, channel, ctx);
         }
 
-        private async ValueTask<bool> TryHandleLogClean(MessageCreateEventArgs evt, MessageContext ctx)
+        private async ValueTask<bool> TryHandleLogClean(MessageCreateEvent evt, MessageContext ctx)
         {
-            if (!evt.Message.Author.IsBot || evt.Message.Channel.Type != ChannelType.Text ||
+            var channel = _cache.GetChannel(evt.ChannelId);
+            if (!evt.Author.Bot || channel.Type != Channel.ChannelType.GuildText ||
                 !ctx.LogCleanupEnabled) return false;
 
-            await _loggerClean.HandleLoggerBotCleanup(evt.Message);
+            await _loggerClean.HandleLoggerBotCleanup(evt);
             return true;
         }
 
-        private async ValueTask<bool> TryHandleCommand(DiscordClient shard, MessageCreateEventArgs evt, MessageContext ctx)
+        private async ValueTask<bool> TryHandleCommand(Shard shard, MessageCreateEvent evt, Guild? guild, Channel channel, MessageContext ctx)
         {
-            var content = evt.Message.Content;
+            var content = evt.Content;
             if (content == null) return false;
 
             // Check for command prefix
-            if (!HasCommandPrefix(content, out var cmdStart))
+            if (!HasCommandPrefix(content, shard.User?.Id ?? default, out var cmdStart))
                 return false;
 
             // Trim leading whitespace from command without actually modifying the string
@@ -102,7 +114,7 @@ namespace PluralKit.Bot
             try
             {
                 var system = ctx.SystemId != null ? await _db.Execute(c => _repo.GetSystem(c, ctx.SystemId.Value)) : null;
-                await _tree.ExecuteCommand(new Context(_services, shard, evt.Message, cmdStart, system, ctx));
+                await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, ctx, _bot.PermissionsIn(channel.Id)));
             }
             catch (PKError)
             {
@@ -113,7 +125,7 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool HasCommandPrefix(string message, out int argPos)
+        private bool HasCommandPrefix(string message, ulong currentUserId, out int argPos)
         {
             // First, try prefixes defined in the config
             var prefixes = _config.Prefixes ?? BotConfig.DefaultPrefixes;
@@ -128,23 +140,27 @@ namespace PluralKit.Bot
             // Then, check mention prefix (must be the bot user, ofc)
             argPos = -1;
             if (DiscordUtils.HasMentionPrefix(message, ref argPos, out var id))
-                return id == _client.CurrentUser.Id;
+                return id == currentUserId;
 
             return false;
         }
 
-        private async ValueTask<bool> TryHandleProxy(DiscordClient shard, MessageCreateEventArgs evt, MessageContext ctx)
+        private async ValueTask<bool> TryHandleProxy(Shard shard, MessageCreateEvent evt, Guild guild, Channel channel, MessageContext ctx)
         {
+            var botPermissions = _bot.PermissionsIn(channel.Id);
+
             try
             {
-                return await _proxy.HandleIncomingMessage(shard, evt.Message, ctx, allowAutoproxy: ctx.AllowAutoproxy);
+                return await _proxy.HandleIncomingMessage(shard, evt, ctx, guild, channel, allowAutoproxy: ctx.AllowAutoproxy, botPermissions);
             }
             catch (PKError e)
             {
                 // User-facing errors, print to the channel properly formatted
-                var msg = evt.Message;
-                if (msg.Channel.Guild == null || msg.Channel.BotHasAllPermissions(Permissions.SendMessages))
-                    await msg.Channel.SendMessageFixedAsync($"{Emojis.Error} {e.Message}");
+                if (botPermissions.HasFlag(PermissionSet.SendMessages))
+                {
+                    await _rest.CreateMessage(evt.ChannelId,
+                        new MessageRequest {Content = $"{Emojis.Error} {e.Message}"});
+                }
             }
 
             return false;

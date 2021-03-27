@@ -2,10 +2,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System;
 
-
-using Dapper;
-
-using DSharpPlus.Entities;
+using Myriad.Builders;
 
 using NodaTime;
 
@@ -78,11 +75,11 @@ namespace PluralKit.Bot
                 else if (ctx.MatchFlag("r", "raw"))
                     await ctx.Reply($"```\n{target.Description}\n```");
                 else
-                    await ctx.Reply(embed: new DiscordEmbedBuilder()
-                        .WithTitle("Member description")
-                        .WithDescription(target.Description)
-                        .AddField("\u200B", $"To print the description with formatting, type `pk;member {target.Reference()} description -raw`." 
-                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} description -clear`." : ""))
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .Title("Member description")
+                        .Description(target.Description)
+                        .Field(new("\u200B", $"To print the description with formatting, type `pk;member {target.Reference()} description -raw`." 
+                                    + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} description -clear`." : "")))
                         .Build());
             }
             else
@@ -161,11 +158,11 @@ namespace PluralKit.Bot
                     else
                         await ctx.Reply("This member does not have a color set.");
                 else
-                    await ctx.Reply(embed: new DiscordEmbedBuilder()
-                        .WithTitle("Member color")
-                        .WithColor(target.Color.ToDiscordColor().Value)
-                        .WithThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20")
-                        .WithDescription($"This member's color is **#{target.Color}**."
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .Title("Member color")
+                        .Color(target.Color.ToDiscordColor())
+                        .Thumbnail(new($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
+                        .Description($"This member's color is **#{target.Color}**."
                                          + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} color -clear`." : ""))
                         .Build());
             }
@@ -179,10 +176,10 @@ namespace PluralKit.Bot
                 var patch = new MemberPatch {Color = Partial<string>.Present(color.ToLowerInvariant())};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
-                await ctx.Reply(embed: new DiscordEmbedBuilder()
-                    .WithTitle($"{Emojis.Success} Member color changed.")
-                    .WithColor(color.ToDiscordColor().Value)
-                    .WithThumbnail($"https://fakeimg.pl/256x256/{color}/?text=%20")
+                await ctx.Reply(embed: new EmbedBuilder()
+                    .Title($"{Emojis.Success} Member color changed.")
+                    .Color(color.ToDiscordColor())
+                    .Thumbnail(new($"https://fakeimg.pl/256x256/{color}/?text=%20"))
                     .Build());
             }
         }
@@ -224,7 +221,7 @@ namespace PluralKit.Bot
             }
         }
         
-        private async Task<DiscordEmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
+        private async Task<EmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
         {
             var lcx = ctx.LookupContextFor(target);
             
@@ -232,28 +229,29 @@ namespace PluralKit.Bot
             if (ctx.Guild != null)
                 memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
 
-            var eb = new DiscordEmbedBuilder().WithTitle($"Member names")
-                .WithFooter($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name.");
+            var eb = new EmbedBuilder()
+                .Title($"Member names")
+                .Footer(new($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name."));
 
             if (target.DisplayName == null && memberGuildConfig?.DisplayName == null)
-                eb.AddField("Name", $"**{target.NameFor(ctx)}**");
+                eb.Field(new("Name", $"**{target.NameFor(ctx)}**"));
             else
-                eb.AddField("Name", target.NameFor(ctx));
+                eb.Field(new("Name", target.NameFor(ctx)));
 
             if (target.NamePrivacy.CanAccess(lcx))
             {
                 if (target.DisplayName != null && memberGuildConfig?.DisplayName == null)
-                    eb.AddField("Display Name", $"**{target.DisplayName}**");
+                    eb.Field(new("Display Name", $"**{target.DisplayName}**"));
                 else
-                    eb.AddField("Display Name", target.DisplayName ?? "*(none)*");
+                    eb.Field(new("Display Name", target.DisplayName ?? "*(none)*"));
             }
 
             if (ctx.Guild != null)
             {
                 if (memberGuildConfig?.DisplayName != null)
-                    eb.AddField($"Server Name (in {ctx.Guild.Name})", $"**{memberGuildConfig.DisplayName}**");
+                    eb.Field(new($"Server Name (in {ctx.Guild.Name})", $"**{memberGuildConfig.DisplayName}**"));
                 else
-                    eb.AddField($"Server Name (in {ctx.Guild.Name})", memberGuildConfig?.DisplayName ?? "*(none)*");
+                    eb.Field(new($"Server Name (in {ctx.Guild.Name})", memberGuildConfig?.DisplayName ?? "*(none)*"));
             }
 
             return eb;
@@ -288,7 +286,7 @@ namespace PluralKit.Bot
                 // No perms check, display name isn't covered by member privacy 
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change display name, type `pk;member {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;member {target.Reference()} displayname -clear`.");
+                    eb.Description($"To change display name, type `pk;member {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;member {target.Reference()} displayname -clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
@@ -325,7 +323,7 @@ namespace PluralKit.Bot
                 // No perms check, server name isn't covered by member privacy 
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
-                    eb.WithDescription($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.");
+                    eb.Description($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
             else
@@ -401,16 +399,16 @@ namespace PluralKit.Bot
             // Display privacy settings
             if (!ctx.HasNext() && newValueFromCommand == null)
             {
-                await ctx.Reply(embed: new DiscordEmbedBuilder()
-                    .WithTitle($"Current privacy settings for {target.NameFor(ctx)}")
-                    .AddField("Name (replaces name with display name if member has one)",target.NamePrivacy.Explanation())
-                    .AddField("Description", target.DescriptionPrivacy.Explanation())
-                    .AddField("Avatar", target.AvatarPrivacy.Explanation())
-                    .AddField("Birthday", target.BirthdayPrivacy.Explanation())
-                    .AddField("Pronouns", target.PronounPrivacy.Explanation())
-                    .AddField("Meta (message count, last front, last message)",target.MetadataPrivacy.Explanation())
-                    .AddField("Visibility", target.MemberVisibility.Explanation())
-                    .WithDescription("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                await ctx.Reply(embed: new EmbedBuilder()
+                    .Title($"Current privacy settings for {target.NameFor(ctx)}")
+                    .Field(new("Name (replaces name with display name if member has one)",target.NamePrivacy.Explanation()))
+                    .Field(new("Description", target.DescriptionPrivacy.Explanation()))
+                    .Field(new("Avatar", target.AvatarPrivacy.Explanation()))
+                    .Field(new("Birthday", target.BirthdayPrivacy.Explanation()))
+                    .Field(new("Pronouns", target.PronounPrivacy.Explanation()))
+                    .Field(new("Meta (message count, last front, last message)",target.MetadataPrivacy.Explanation()))
+                    .Field(new("Visibility", target.MemberVisibility.Explanation()))
+                    .Description("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                     .Build()); 
                 return;
             }
