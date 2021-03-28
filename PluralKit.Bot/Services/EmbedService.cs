@@ -79,7 +79,10 @@ namespace PluralKit.Bot {
             }
 
             if (system.Tag != null) 
-                eb.Field(new("Tag", system.Tag.EscapeMarkdown()));
+                eb.Field(new("Tag", system.Tag.EscapeMarkdown(), true));
+
+            if (!system.Color.EmptyOrNull()) eb.Field(new("Color", $"#{system.Color}", true));
+
             eb.Field(new("Linked accounts", string.Join("\n", users).Truncate(1000), true));
 
             if (system.MemberListPrivacy.CanAccess(ctx))
@@ -215,15 +218,17 @@ namespace PluralKit.Bot {
                 .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
 
             if (target.DisplayName != null)
-                eb.Field(new("Display Name", target.DisplayName));
+                eb.Field(new("Display Name", target.DisplayName, true));
+                
+            if (!target.Color.EmptyOrNull()) eb.Field(new("Color", $"#{target.Color}", true));
 
             if (target.ListPrivacy.CanAccess(pctx))
             {
                 if (memberCount == 0 && pctx == LookupContext.ByOwner)
                     // Only suggest the add command if this is actually the owner lol
-                    eb.Field(new("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true));
+                    eb.Field(new("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", false));
                 else
-                    eb.Field(new($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true));
+                    eb.Field(new($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", false));
             }
 
             if (target.DescriptionFor(pctx) is { } desc)
