@@ -125,7 +125,7 @@ namespace PluralKit.Bot
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
             var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, system.Zone, ctx.LookupContextFor(system), title.ToString()));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system.Zone, ctx.LookupContextFor(system), title.ToString()));
         }
     }
 }
