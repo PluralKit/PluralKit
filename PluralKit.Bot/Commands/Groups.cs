@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -225,6 +226,53 @@ namespace PluralKit.Bot
                 await SetIcon(img);
             else
                 await ShowIcon();
+        }
+        public async Task GroupColor(Context ctx, PKGroup target)
+        {
+            var color = ctx.RemainderOrNull();
+            if (await ctx.MatchClear())
+            {
+                ctx.CheckOwnGroup(target);
+                
+                var patch = new GroupPatch {Color = Partial<string>.Null()};
+                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
+                
+                await ctx.Reply($"{Emojis.Success} Group color cleared.");
+            }
+            else if (!ctx.HasNext())
+            {
+
+                if (target.Color == null)
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply(
+                            $"This group does not have a color set. To set one, type `pk;group {target.Reference()} color <color>`.");
+                    else
+                        await ctx.Reply("This group does not have a color set.");
+                else
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .Title("Group color")
+                        .Color(target.Color.ToDiscordColor())
+                        .Thumbnail(new($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
+                        .Description($"This group's color is **#{target.Color}**."
+                                         + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {target.Reference()} color -clear`." : ""))
+                        .Build());
+            }
+            else
+            {
+                ctx.CheckOwnGroup(target);
+
+                if (color.StartsWith("#")) color = color.Substring(1);
+                if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
+                
+                var patch = new GroupPatch {Color = Partial<string>.Present(color.ToLowerInvariant())};
+                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
+
+                await ctx.Reply(embed: new EmbedBuilder()
+                    .Title($"{Emojis.Success} Group color changed.")
+                    .Color(color.ToDiscordColor())
+                    .Thumbnail(new($"https://fakeimg.pl/256x256/{color}/?text=%20"))
+                    .Build());
+            }
         }
 
         public async Task ListSystemGroups(Context ctx, PKSystem system)

@@ -13,6 +13,7 @@ namespace PluralKit.Bot
         public static Command SystemNew = new Command("system new", "system new [name]", "Creates a new system");
         public static Command SystemRename = new Command("system name", "system rename [name]", "Renames your system");
         public static Command SystemDesc = new Command("system description", "system description [description]", "Changes your system's description");
+        public static Command SystemColor = new Command("system color", "system color [color]", "Changes your system's color");
         public static Command SystemTag = new Command("system tag", "system tag [tag]", "Changes your system's tag");
         public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
@@ -55,6 +56,7 @@ namespace PluralKit.Bot
         public static Command GroupRename = new Command("group rename", "group <group> rename <new name>", "Renames a group");
         public static Command GroupDisplayName = new Command("group displayname", "group <group> displayname [display name]", "Changes a group's display name");
         public static Command GroupDesc = new Command("group description", "group <group> description [description]", "Changes a group's description");
+        public static Command GroupColor = new Command("group color", "group <group> color [color]", "Changes a group's color");
         public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
         public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
         public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
@@ -89,7 +91,7 @@ namespace PluralKit.Bot
         public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
 
         public static Command[] SystemCommands = {
-            SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemDelete, SystemTimezone,
+            SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemColor, SystemDelete, SystemTimezone,
             SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
         };
 
@@ -102,7 +104,7 @@ namespace PluralKit.Bot
         public static Command[] GroupCommands =
         {
             GroupInfo, GroupList, GroupNew, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc,
-            GroupIcon, GroupPrivacy, GroupDelete
+            GroupIcon, GroupColor, GroupPrivacy, GroupDelete
         };
 
         public static Command[] GroupCommandsTargeted =
@@ -218,6 +220,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemTag, m => m.Tag(ctx));
             else if (ctx.Match("description", "desc", "bio"))
                 await ctx.Execute<SystemEdit>(SystemDesc, m => m.Description(ctx));
+            else if (ctx.Match("color", "colour"))
+                await ctx.Execute<SystemEdit>(SystemColor, m => m.Color(ctx));
             else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
                 await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx));
             else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
@@ -398,6 +402,8 @@ namespace PluralKit.Bot
                     await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
                 else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
                     await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
+                else if (ctx.Match("color", "colour"))
+                    await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
                 else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
                     await ctx.Execute<Groups>(GroupFrontPercent, g => g.GroupFrontPercent(ctx, target));
                 else if (!ctx.HasNext())

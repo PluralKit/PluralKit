@@ -18,3 +18,4 @@ pluralkit.*.conf
 
 # Generated
 logs/
+*.dll

@@ -53,11 +53,22 @@ namespace PluralKit.Bot {
 
             var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
 
+            uint color;
+            try
+            {
+                color = system.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
+            }
+            catch (ArgumentException)
+            {
+                // There's no API for system colors yet, but defaulting to a blank color in advance can't be a bad idea
+                color = DiscordUtils.Gray;
+            }
+
             var eb = new EmbedBuilder()
                 .Title(system.Name)
                 .Thumbnail(new(system.AvatarUrl))
                 .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
-                .Color(DiscordUtils.Gray);
+                .Color(color);
 
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
@@ -187,8 +198,20 @@ namespace PluralKit.Bot {
             if (system.Name != null)
                 nameField = $"{nameField} ({system.Name})";
 
+            uint color;
+            try
+            {
+                color = target.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
+            }
+            catch (ArgumentException)
+            {
+                // There's no API for group colors yet, but defaulting to a blank color regardless
+                color = DiscordUtils.Gray;
+            }
+
             var eb = new EmbedBuilder()
                 .Author(new(nameField, IconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx))))
+                .Color(color)
                 .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
 
             if (target.DisplayName != null)
