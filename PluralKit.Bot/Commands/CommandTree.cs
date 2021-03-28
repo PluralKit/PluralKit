@@ -404,8 +404,6 @@ namespace PluralKit.Bot
                     await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
                 else if (ctx.Match("color", "colour"))
                     await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
-                else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-                    await ctx.Execute<Groups>(GroupFrontPercent, g => g.GroupFrontPercent(ctx, target));
                 else if (!ctx.HasNext())
                     await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
                 else

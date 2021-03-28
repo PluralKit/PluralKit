@@ -51,7 +51,7 @@ namespace PluralKit.Core
 
             // Export switches
             var switches = new List<DataFileSwitch>();
-            var switchList = await _repo.GetPeriodFronters(conn, system.Id, null, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
+            var switchList = await _repo.GetPeriodFronters(conn, system.Id, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
             switches.AddRange(switchList.Select(x => new DataFileSwitch
             {
                 Timestamp = x.TimespanStart.FormatExport(),

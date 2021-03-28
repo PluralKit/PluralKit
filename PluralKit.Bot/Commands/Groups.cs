@@ -478,31 +478,6 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Group deleted.");
         }
 
-            public async Task GroupFrontPercent(Context ctx, PKGroup target)
-        {
-            await using var conn = await _db.Obtain();
-            
-            var targetSystem = await GetGroupSystem(ctx, target, conn);
-            ctx.CheckSystemPrivacy(targetSystem, targetSystem.FrontHistoryPrivacy);
-
-            string durationStr = ctx.RemainderOrNull() ?? "30d";
-            
-            var now = SystemClock.Instance.GetCurrentInstant();
-
-            var rangeStart = DateUtils.ParseDateTime(durationStr, true, targetSystem.Zone);
-            if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
-            if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
-
-            var title = new StringBuilder($"Frontpercent of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");
-            if (targetSystem.Name != null) 
-                title.Append($"{targetSystem.Name} (`{targetSystem.Hid}`)");
-            else
-                title.Append($"`{targetSystem.Hid}`");
-
-            var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString()));
-        }
-
         private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
         {
             var system = ctx.System;
