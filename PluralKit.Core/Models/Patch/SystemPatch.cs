@@ -7,6 +7,7 @@ namespace PluralKit.Core
         public Partial<string?> Description { get; set; }
         public Partial<string?> Tag { get; set; }
         public Partial<string?> AvatarUrl { get; set; }
+        public Partial<string?> Color { get; set; }
         public Partial<string?> Token { get; set; }
         public Partial<string> UiTz { get; set; }
         public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
@@ -22,6 +23,7 @@ namespace PluralKit.Core
             .With("description", Description)
             .With("tag", Tag)
             .With("avatar_url", AvatarUrl)
+            .With("color", Color)
             .With("token", Token)
             .With("ui_tz", UiTz)
             .With("description_privacy", DescriptionPrivacy)
