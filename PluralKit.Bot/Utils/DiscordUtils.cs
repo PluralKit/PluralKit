@@ -186,5 +186,8 @@ namespace PluralKit.Bot
 
         public static string EventType(this IGatewayEvent evt) => 
             evt.GetType().Name.Replace("Event", "");
+
+        public static bool IsValidGuildChannel(Channel channel) =>
+            !(channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildNews);
     }
 }

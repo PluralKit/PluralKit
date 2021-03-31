@@ -88,7 +88,7 @@ namespace PluralKit.Bot
             if (ctx.SystemId == null) return false;
             
             // Make sure channel is a guild text channel and this is a normal message
-            if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildNews) return false;
+            if (!DiscordUtils.IsValidGuildChannel(channel)) return false;
             if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply) return false;
             
             // Make sure author is a normal user

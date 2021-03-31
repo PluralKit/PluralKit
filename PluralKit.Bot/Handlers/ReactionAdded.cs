@@ -67,7 +67,7 @@ namespace PluralKit.Bot
             }
 
             // Only proxies in guild text channels
-            if (channel.Type != Channel.ChannelType.GuildText) return;
+            if (!DiscordUtils.IsValidGuildChannel(channel)) return;
 
             // Ignore reactions from bots (we can't DM them anyway)
             if (user.Bot) return;

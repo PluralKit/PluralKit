@@ -162,7 +162,7 @@ namespace PluralKit.Bot
             if (!ctx.Cache.TryGetChannel(id, out var channel))
                 return null;
             
-            if (!(channel.Type == Channel.ChannelType.GuildText || channel.Type == Channel.ChannelType.GuildText)) 
+            if (!(DiscordUtils.IsValidGuildChannel(channel))) 
                 return null;
             
             ctx.PopArgument();
