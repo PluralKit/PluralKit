@@ -3,7 +3,6 @@
 
 # Include project code and build files
 !PluralKit.*/
-!Myriad/
 !PluralKit.sln
 !nuget.config
 

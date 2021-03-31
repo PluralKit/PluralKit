@@ -40,7 +40,7 @@ namespace PluralKit.Bot
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)
                     await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
-            catch (ForbiddenException)
+            catch (UnauthorizedException)
             {
                 // Can't check for permission errors beforehand, so have to handle here :/
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)
@@ -84,7 +84,7 @@ namespace PluralKit.Bot
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)
                     await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
-            catch (ForbiddenException)
+            catch (UnauthorizedException)
             {
                 // Can't check for permission errors beforehand, so have to handle here :/
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)

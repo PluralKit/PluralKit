@@ -106,8 +106,8 @@ namespace PluralKit.Bot
             
             return new AllowedMentions
             {
-                Users = users.Distinct().ToArray(),
-                Roles = roles.Distinct().ToArray(),
+                Users = users.ToArray(),
+                Roles = roles.ToArray(),
                 Parse = everyone ? new[] {AllowedMentions.ParseType.Everyone} : null
             };
         }

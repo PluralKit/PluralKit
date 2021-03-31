@@ -69,7 +69,6 @@ namespace PluralKit.Bot
                 totalSwitches,
                 10,
                 embedTitle,
-                system.Color,
                 async (builder, switches) =>
                 {
                     var sb = new StringBuilder();

@@ -107,7 +107,6 @@ namespace PluralKit.Bot
 
             await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
                 $"Blacklisted channels for {ctx.Guild.Name}",
-                null,
                 (eb, l) =>
                 {
                     string CategoryName(ulong? id) =>

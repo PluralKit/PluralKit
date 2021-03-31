@@ -20,7 +20,7 @@ namespace PluralKit.Bot
             ctx.CheckSystemPrivacy(target, target.MemberListPrivacy);
 
             var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target));
-            await ctx.RenderMemberList(ctx.LookupContextFor(target), _db, target.Id, GetEmbedTitle(target, opts), target.Color, opts);
+            await ctx.RenderMemberList(ctx.LookupContextFor(target), _db, target.Id, GetEmbedTitle(target, opts), opts);
         }
 
         private string GetEmbedTitle(PKSystem target, MemberListOptions opts)

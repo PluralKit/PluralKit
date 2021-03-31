@@ -11,7 +11,5 @@ namespace PluralKit.Bot
         // and fall back to the separate default array at the use site :)
         // This does bind [] as null (therefore default) instead of an empty array, but I can live w/ that. 
         public string[] Prefixes { get; set; }
-        
-        public int? MaxShardConcurrency { get; set; }
     }
 }

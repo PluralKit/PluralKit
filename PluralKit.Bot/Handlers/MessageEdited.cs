@@ -6,7 +6,6 @@ using App.Metrics;
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
-using Myriad.Rest;
 using Myriad.Types;
 
 using PluralKit.Core;
@@ -24,10 +23,8 @@ namespace PluralKit.Bot
         private readonly Cluster _client;
         private readonly IDiscordCache _cache;
         private readonly Bot _bot;
-        private readonly DiscordApiClient _rest;
-        
 
-        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics, ModelRepository repo, Cluster client, IDiscordCache cache, Bot bot, DiscordApiClient rest)
+        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics, ModelRepository repo, Cluster client, IDiscordCache cache, Bot bot)
         {
             _lastMessageCache = lastMessageCache;
             _proxy = proxy;
@@ -37,7 +34,6 @@ namespace PluralKit.Bot
             _client = client;
             _cache = cache;
             _bot = bot;
-            _rest = rest;
         }
 
         public async Task Handle(Shard shard, MessageUpdateEvent evt)
@@ -52,10 +48,9 @@ namespace PluralKit.Bot
             if (channel.Type != Channel.ChannelType.GuildText)
                 return;
             var guild = _cache.GetGuild(channel.GuildId!.Value);
-            var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId);
 
             // Only react to the last message in the channel
-            if (lastMessage?.mid != evt.Id)
+            if (_lastMessageCache.GetLastMessage(evt.ChannelId) != evt.Id)
                 return;
             
             // Just run the normal message handling code, with a flag to disable autoproxying
@@ -63,8 +58,6 @@ namespace PluralKit.Bot
             await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
                 ctx = await _repo.GetMessageContext(conn, evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
-
-            Message referencedMessage = (lastMessage.referenced_message != null) ? await _rest.GetMessage(evt.ChannelId, lastMessage.referenced_message.Value) : null;
 
             // TODO: is this missing anything?
             var equivalentEvt = new MessageCreateEvent
@@ -75,10 +68,7 @@ namespace PluralKit.Bot
                 Author = evt.Author.Value,
                 Member = evt.Member.Value,
                 Content = evt.Content.Value,
-                Attachments = evt.Attachments.Value ?? Array.Empty<Message.Attachment>(),
-                MessageReference = (lastMessage.referenced_message != null) ? new (channel.GuildId, evt.ChannelId, lastMessage.referenced_message.Value) : null,
-                ReferencedMessage = referencedMessage,
-                Type = (lastMessage.referenced_message != null) ? Message.MessageType.Reply : Message.MessageType.Default,
+                Attachments = evt.Attachments.Value ?? Array.Empty<Message.Attachment>()
             };
             var botPermissions = _bot.PermissionsIn(channel.Id);
             await _proxy.HandleIncomingMessage(shard, equivalentEvt, ctx, allowAutoproxy: false, guild: guild, channel: channel, botPermissions: botPermissions);

@@ -12,8 +12,6 @@ using Npgsql;
 
 using PluralKit.Core;
 
-using Polly.Timeout;
-
 namespace PluralKit.Bot
 {
     public static class MiscUtils {
@@ -69,11 +67,6 @@ namespace PluralKit.Bot
             if (e is BadRequestException bre && bre.ResponseBody.Contains("<center>nginx</center>")) return false;
             if (e is NotFoundException ne && ne.ResponseBody.Contains("<center>nginx</center>")) return false;
             if (e is UnauthorizedException ue && ue.ResponseBody.Contains("<center>nginx</center>")) return false;
-
-            // Filter out timeout/ratelimit related stuff
-            if (e is TooManyRequestsException) return false;
-            if (e is RatelimitBucketExhaustedException) return false;
-            if (e is TimeoutRejectedException) return false;
 
             // 5xxs? also not our problem :^)
             if (e is UnknownDiscordRequestException udre && (int) udre.StatusCode >= 500) return false;

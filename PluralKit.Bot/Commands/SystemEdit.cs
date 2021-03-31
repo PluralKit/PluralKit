@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Myriad.Builders;
@@ -90,47 +89,6 @@ namespace PluralKit.Bot
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} System description changed.");
-            }
-        }
-
-        public async Task Color(Context ctx) {
-            ctx.CheckSystem();
-
-            if (await ctx.MatchClear())
-            {
-                var patch = new SystemPatch {Color = Partial<string>.Null()};
-                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
-
-                await ctx.Reply($"{Emojis.Success} System color cleared.");
-            }
-            else if (!ctx.HasNext()) 
-            {
-                if (ctx.System.Color == null) 
-                    await ctx.Reply(
-                            $"Your system does not have a color set. To set one, type `pk;system color <color>`.");
-                else
-                    await ctx.Reply(embed: new EmbedBuilder()
-                        .Title("System color")
-                        .Color(ctx.System.Color.ToDiscordColor())
-                        .Thumbnail(new($"https://fakeimg.pl/256x256/{ctx.System.Color}/?text=%20"))
-                        .Description($"Your system's color is **#{ctx.System.Color}**. To clear it, type `pk;s color -clear`.")
-                        .Build());
-            }
-            else
-            {
-                var color = ctx.RemainderOrNull();
-
-                if (color.StartsWith("#")) color = color.Substring(1);
-                if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
-
-                var patch = new SystemPatch {Color = Partial<string>.Present(color.ToLowerInvariant())};
-                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
-
-                await ctx.Reply(embed: new EmbedBuilder()
-                    .Title($"{Emojis.Success} Member color changed.")
-                    .Color(color.ToDiscordColor())
-                    .Thumbnail(new($"https://fakeimg.pl/256x256/{color}/?text=%20"))
-                    .Build());
             }
         }
         

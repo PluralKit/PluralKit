@@ -170,7 +170,7 @@ namespace PluralKit.Bot
                     Embed = await _embeds.CreateMessageInfoEmbed(msg)
                 });
             }
-            catch (ForbiddenException) { } // No permissions to DM, can't check for this :(
+            catch (UnauthorizedException) { } // No permissions to DM, can't check for this :(
             
             await TryRemoveOriginalReaction(evt);
         }
@@ -210,7 +210,7 @@ namespace PluralKit.Bot
                     });
                     await _rest.CreateMessage(dm.Id, new MessageRequest {Content = $"<@{msg.Message.Sender}>".AsCode()});
                 }
-                catch (ForbiddenException) { }
+                catch (UnauthorizedException) { }
             }
 
             await TryRemoveOriginalReaction(evt);

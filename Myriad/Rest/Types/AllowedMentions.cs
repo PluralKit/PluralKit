@@ -1,12 +1,9 @@
-﻿using System.Text.Json.Serialization;
-
-using Myriad.Serialization;
+﻿using System.Collections.Generic;
 
 namespace Myriad.Rest.Types
 {
     public record AllowedMentions
     {
-        [JsonConverter(typeof(JsonSnakeCaseStringEnumConverter))]
         public enum ParseType
         {
             Roles,

@@ -54,8 +54,7 @@ namespace Myriad.Rest
 
         public Task DeleteMessage(ulong channelId, ulong messageId) =>
             _client.Delete($"/channels/{channelId}/messages/{messageId}", ("DeleteMessage", channelId));
-        public Task DeleteMessage(Message message) =>
-            _client.Delete($"/channels/{message.ChannelId}/messages/{message.Id}", ("DeleteMessage", message.ChannelId));
+
         public Task CreateReaction(ulong channelId, ulong messageId, Emoji emoji) =>
             _client.Put<object>($"/channels/{channelId}/messages/{messageId}/reactions/{EncodeEmoji(emoji)}/@me",
                 ("CreateReaction", channelId), null);

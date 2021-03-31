@@ -53,22 +53,11 @@ namespace PluralKit.Bot {
 
             var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
 
-            uint color;
-            try
-            {
-                color = system.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-            }
-            catch (ArgumentException)
-            {
-                // There's no API for system colors yet, but defaulting to a blank color in advance can't be a bad idea
-                color = DiscordUtils.Gray;
-            }
-
             var eb = new EmbedBuilder()
                 .Title(system.Name)
                 .Thumbnail(new(system.AvatarUrl))
                 .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
-                .Color(color);
+                .Color(DiscordUtils.Gray);
 
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
@@ -79,10 +68,7 @@ namespace PluralKit.Bot {
             }
 
             if (system.Tag != null) 
-                eb.Field(new("Tag", system.Tag.EscapeMarkdown(), true));
-
-            if (!system.Color.EmptyOrNull()) eb.Field(new("Color", $"#{system.Color}", true));
-
+                eb.Field(new("Tag", system.Tag.EscapeMarkdown()));
             eb.Field(new("Linked accounts", string.Join("\n", users).Truncate(1000), true));
 
             if (system.MemberListPrivacy.CanAccess(ctx))
@@ -201,34 +187,20 @@ namespace PluralKit.Bot {
             if (system.Name != null)
                 nameField = $"{nameField} ({system.Name})";
 
-            uint color;
-            try
-            {
-                color = target.Color?.ToDiscordColor() ?? DiscordUtils.Gray;
-            }
-            catch (ArgumentException)
-            {
-                // There's no API for group colors yet, but defaulting to a blank color regardless
-                color = DiscordUtils.Gray;
-            }
-
             var eb = new EmbedBuilder()
                 .Author(new(nameField, IconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx))))
-                .Color(color)
                 .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
 
             if (target.DisplayName != null)
-                eb.Field(new("Display Name", target.DisplayName, true));
-                
-            if (!target.Color.EmptyOrNull()) eb.Field(new("Color", $"#{target.Color}", true));
+                eb.Field(new("Display Name", target.DisplayName));
 
             if (target.ListPrivacy.CanAccess(pctx))
             {
                 if (memberCount == 0 && pctx == LookupContext.ByOwner)
                     // Only suggest the add command if this is actually the owner lol
-                    eb.Field(new("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", false));
+                    eb.Field(new("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", true));
                 else
-                    eb.Field(new($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", false));
+                    eb.Field(new($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", true));
             }
 
             if (target.DescriptionFor(pctx) is { } desc)
@@ -327,6 +299,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .Color(DiscordUtils.Gray)
                 .Footer(new($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)"));
+
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
             // We convert to a list of pairs so we can add the no-fronter value

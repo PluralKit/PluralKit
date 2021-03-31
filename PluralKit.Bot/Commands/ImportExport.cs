@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-using Myriad.Extensions;
 using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types;
 using Myriad.Rest.Types.Requests;
@@ -144,7 +143,7 @@ namespace PluralKit.Bot
 
             try
             {
-                var dm = await ctx.Cache.GetOrCreateDmChannel(ctx.Rest, ctx.Author.Id);
+                var dm = await ctx.Rest.CreateDm(ctx.Author.Id);
 
                 var msg = await ctx.Rest.CreateMessage(dm.Id,
                     new MessageRequest {Content = $"{Emojis.Success} Here you go!"},
@@ -155,7 +154,7 @@ namespace PluralKit.Bot
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)
                     await ctx.Reply($"{Emojis.Success} Check your DMs!");
             }
-            catch (ForbiddenException)
+            catch (UnauthorizedException)
             {
                 // If user has DMs closed, tell 'em to open them
                 await ctx.Reply(

@@ -21,21 +21,16 @@ namespace PluralKit.Bot
         protected override void Load(ContainerBuilder builder)
         {
             // Clients
-            builder.Register(c =>
+            builder.Register(c => new GatewaySettings
             {
-                var botConfig = c.Resolve<BotConfig>();
-                return new GatewaySettings
-                {
-                    Token = botConfig.Token,
-                    MaxShardConcurrency = botConfig.MaxShardConcurrency,
-                    Intents = GatewayIntent.Guilds |
-                              GatewayIntent.DirectMessages |
-                              GatewayIntent.DirectMessageReactions |
-                              GatewayIntent.GuildEmojis |
-                              GatewayIntent.GuildMessages |
-                              GatewayIntent.GuildWebhooks |
-                              GatewayIntent.GuildMessageReactions
-                };
+                Token = c.Resolve<BotConfig>().Token,
+                Intents = GatewayIntent.Guilds |
+                          GatewayIntent.DirectMessages |
+                          GatewayIntent.DirectMessageReactions |
+                          GatewayIntent.GuildEmojis |
+                          GatewayIntent.GuildMessages |
+                          GatewayIntent.GuildWebhooks |
+                          GatewayIntent.GuildMessageReactions
             }).AsSelf().SingleInstance();
             builder.RegisterType<Cluster>().AsSelf().SingleInstance();
             builder.Register(c => new Myriad.Rest.DiscordApiClient(c.Resolve<BotConfig>().Token, c.Resolve<ILogger>()))

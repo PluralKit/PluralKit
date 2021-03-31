@@ -22,7 +22,7 @@
         public bool? Nsfw { get; init; }
         public ulong? ParentId { get; init; }
         public Overwrite[]? PermissionOverwrites { get; init; }
-        public User[]? Recipients { get; init; } // NOTE: this may be null for stub channel objects
+        public User[]? Recipients { get; init; }
 
         public record Overwrite
         {
