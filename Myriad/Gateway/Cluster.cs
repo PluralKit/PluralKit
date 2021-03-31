@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Myriad.Types;
@@ -69,9 +68,10 @@ namespace Myriad.Gateway
 
             await StartShards(concurrency);
         }
-
         private async Task StartShards(int concurrency)
         {
+            concurrency = GetActualShardConcurrency(concurrency);
+            
             var lastTime = DateTimeOffset.UtcNow;
             var identifyCalls = 0;
             
@@ -111,6 +111,14 @@ namespace Myriad.Gateway
         {
             if (EventReceived != null)
                 await EventReceived(shard, evt);
+        }
+        
+        private int GetActualShardConcurrency(int recommendedConcurrency)
+        {
+            if (_gatewaySettings.MaxShardConcurrency == null)
+                return recommendedConcurrency;
+            
+            return Math.Min(_gatewaySettings.MaxShardConcurrency.Value, recommendedConcurrency);
         }
     }
 }

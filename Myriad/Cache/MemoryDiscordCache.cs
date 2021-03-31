@@ -81,6 +81,18 @@ namespace Myriad.Cache
             return default;
         }
 
+        public ValueTask SaveDmChannelStub(ulong channelId)
+        {
+            // Use existing channel object if present, otherwise add a stub
+            // We may get a message create before channel create and we want to have it saved
+            _channels.GetOrAdd(channelId, id => new Channel
+            {
+                Id = id, 
+                Type = Channel.ChannelType.Dm
+            });
+            return default;
+        }
+
         public ValueTask RemoveGuild(ulong guildId)
         {
             _guilds.TryRemove(guildId, out _);

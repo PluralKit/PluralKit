@@ -79,7 +79,7 @@ namespace PluralKit.Bot
             return p;
         }
 
-        public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx, IDatabase db, SystemId system, string embedTitle, MemberListOptions opts)
+        public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx, IDatabase db, SystemId system, string embedTitle, string color, MemberListOptions opts)
         {
             // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
             // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
@@ -88,7 +88,7 @@ namespace PluralKit.Bot
                 .ToList();
 
             var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
-            await ctx.Paginate(members.ToAsyncEnumerable(), members.Count, itemsPerPage, embedTitle, Renderer);
+            await ctx.Paginate(members.ToAsyncEnumerable(), members.Count, itemsPerPage, embedTitle, color, Renderer);
 
             // Base renderer, dispatches based on type
             Task Renderer(EmbedBuilder eb, IEnumerable<ListedMember> page)

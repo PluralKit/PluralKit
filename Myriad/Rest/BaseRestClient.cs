@@ -69,8 +69,8 @@ namespace Myriad.Rest
 
         public async Task<T?> Get<T>(string path, (string endpointName, ulong major) ratelimitParams) where T: class
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, ApiBaseUrl + path);
-            var response = await Send(request, ratelimitParams, true);
+            using var response = await Send(() => new HttpRequestMessage(HttpMethod.Get, ApiBaseUrl + path),
+                ratelimitParams, true);
 
             // GET-only special case: 404s are nulls and not exceptions
             if (response.StatusCode == HttpStatusCode.NotFound)
@@ -82,47 +82,54 @@ namespace Myriad.Rest
         public async Task<T?> Post<T>(string path, (string endpointName, ulong major) ratelimitParams, object? body)
             where T: class
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + path);
-            SetRequestJsonBody(request, body);
-
-            var response = await Send(request, ratelimitParams);
+            using var response = await Send(() =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + path);
+                SetRequestJsonBody(request, body);
+                return request;
+            }, ratelimitParams);
             return await ReadResponse<T>(response);
         }
         
         public async Task<T?> PostMultipart<T>(string path, (string endpointName, ulong major) ratelimitParams, object? payload, MultipartFile[]? files)
             where T: class
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + path);
-            SetRequestFormDataBody(request, payload, files);
-
-            var response = await Send(request, ratelimitParams);
+            using var response = await Send(() =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + path);
+                SetRequestFormDataBody(request, payload, files);
+                return request;
+            }, ratelimitParams);
             return await ReadResponse<T>(response);
         }
 
         public async Task<T?> Patch<T>(string path, (string endpointName, ulong major) ratelimitParams, object? body)
             where T: class
         {
-            var request = new HttpRequestMessage(HttpMethod.Patch, ApiBaseUrl + path);
-            SetRequestJsonBody(request, body);
-
-            var response = await Send(request, ratelimitParams);
+            using var response = await Send(() =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Patch, ApiBaseUrl + path);
+                SetRequestJsonBody(request, body);
+                return request;
+            }, ratelimitParams);
             return await ReadResponse<T>(response);
         }
 
         public async Task<T?> Put<T>(string path, (string endpointName, ulong major) ratelimitParams, object? body)
             where T: class
         {
-            var request = new HttpRequestMessage(HttpMethod.Put, ApiBaseUrl + path);
-            SetRequestJsonBody(request, body);
-
-            var response = await Send(request, ratelimitParams);
+            using var response = await Send(() =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Put, ApiBaseUrl + path);
+                SetRequestJsonBody(request, body);
+                return request;
+            }, ratelimitParams);
             return await ReadResponse<T>(response);
         }
 
         public async Task Delete(string path, (string endpointName, ulong major) ratelimitParams)
         {
-            var request = new HttpRequestMessage(HttpMethod.Delete, ApiBaseUrl + path);
-            await Send(request, ratelimitParams);
+            using var _ = await Send(() => new HttpRequestMessage(HttpMethod.Delete, ApiBaseUrl + path), ratelimitParams);
         }
 
         private void SetRequestJsonBody(HttpRequestMessage request, object? body)
@@ -159,12 +166,13 @@ namespace Myriad.Rest
             return await response.Content.ReadFromJsonAsync<T>(_jsonSerializerOptions);
         }
 
-        private async Task<HttpResponseMessage> Send(HttpRequestMessage request,
+        private async Task<HttpResponseMessage> Send(Func<HttpRequestMessage> createRequest,
                                                      (string endpointName, ulong major) ratelimitParams,
                                                      bool ignoreNotFound = false)
         {
             return await _retryPolicy.ExecuteAsync(async _ =>
                 {
+                    var request = createRequest();
                     _logger.Debug("Sending request: {RequestMethod} {RequestPath}",
                         request.Method, request.RequestUri);
 

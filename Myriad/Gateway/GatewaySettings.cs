@@ -4,5 +4,6 @@
     {
         public string Token { get; init; }
         public GatewayIntent Intents { get; init; }
+        public int? MaxShardConcurrency { get; init; }
     }
 }
