@@ -166,5 +166,21 @@ namespace PluralKit.Bot
                 }
             }
         }
+        public static async Task RenderReminderList(this Context ctx, IDatabase db, MemberId member, string embedTitle, string color, bool showSeen) {
+            var reminders = await db.Execute(conn => showSeen ? conn.QueryReminders(member) : conn.QueryUnseenReminders(member)).ToListAsync();
+            var itemsPerPage = 25;
+
+            if (reminders.Count > 0 && showSeen) {
+                await ctx.Paginate(reminders.ToAsyncEnumerable(), reminders.Count, itemsPerPage, embedTitle, color, (eb, page) => {
+                    eb.Footer(new("result".ToQuantity(reminders.Count)));
+                    eb.WithSimpleLineContent(page.Select(r => {
+                        string emoji = !r.Seen ? Emojis.New : "";
+                        string guildId = r.Guild == null ? "@me" : r.Guild.ToString();
+                        return $"[Click to see message {Emojis.RightArrow}](https://discord.com/channels/{guildId}/{r.Channel}/{r.Mid}) | {r.Timestamp.FormatZoned(ctx.System.Zone)} {emoji}";
+                    }));
+                    return Task.CompletedTask;
+                });
+            }
+        }
     }
 }
