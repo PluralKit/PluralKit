@@ -34,6 +34,9 @@ namespace PluralKit.Bot {
             if (user == null) user = ctx.Author;
             if (timeout == null) timeout = Duration.FromMinutes(5);
             
+            if (!DiscordUtils.HasReactionPermissions(ctx)) 
+                await ctx.Reply($"{Emojis.Note} PluralKit does not have permissions to add reactions in this channel. \nPlease reply with 'yes' to confirm, or 'no' to cancel.");
+            else
             // "Fork" the task adding the reactions off so we don't have to wait for them to be finished to start listening for presses
             await ctx.Rest.CreateReactionsBulk(message, new[] {Emojis.Success, Emojis.Error});
             
@@ -261,8 +264,7 @@ namespace PluralKit.Bot {
             var task = f();
 
             // If we don't have permission to add reactions, don't bother, and just await the task normally.
-            var neededPermissions = PermissionSet.AddReactions | PermissionSet.ReadMessageHistory;
-            if ((ctx.BotPermissions & neededPermissions) != neededPermissions) return await task;
+            if (!DiscordUtils.HasReactionPermissions(ctx)) return await task;
 
             try
             {

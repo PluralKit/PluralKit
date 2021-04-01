@@ -186,5 +186,11 @@ namespace PluralKit.Bot
 
         public static string EventType(this IGatewayEvent evt) => 
             evt.GetType().Name.Replace("Event", "");
+
+        public static bool HasReactionPermissions(Context ctx)
+        {
+            var neededPermissions = PermissionSet.AddReactions | PermissionSet.ReadMessageHistory;
+            return ((ctx.BotPermissions & neededPermissions) == neededPermissions);
+        }
     }
 }
