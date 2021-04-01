@@ -30,16 +30,18 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly ILogger _logger;
         private readonly WebhookExecutorService _webhookExecutor;
+        private readonly LastMessageCacheService _lastMessage;
         private readonly ProxyMatcher _matcher;
         private readonly IMetrics _metrics;
         private readonly IDiscordCache _cache;
         private readonly DiscordApiClient _rest;
 
         public ProxyService(LogChannelService logChannel, ILogger logger,
-                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
+                            WebhookExecutorService webhookExecutor, LastMessageCacheService lastMessage, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
         {
             _logChannel = logChannel;
             _webhookExecutor = webhookExecutor;
+            _lastMessage = lastMessage;
             _db = db;
             _matcher = matcher;
             _metrics = metrics;
@@ -132,7 +134,7 @@ namespace PluralKit.Bot
             {
                 GuildId = trigger.GuildId!.Value,
                 ChannelId = trigger.ChannelId,
-                Name = match.Member.ProxyName(ctx),
+                Name = await FixSameName(trigger.ChannelId, ctx, match.Member),
                 AvatarUrl = match.Member.ProxyAvatar(ctx),
                 Content = content,
                 Attachments = trigger.Attachments,
@@ -290,6 +292,48 @@ namespace PluralKit.Bot
         private void CheckProxyNameBoundsOrError(string proxyName)
         {
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+        }
+
+        private async Task<string> FixSameName(ulong channel_id, MessageContext ctx, ProxyMember member)
+        {
+            var proxyName = member.ProxyName(ctx);
+
+            // need "previous" here because the immediate last message is the proxy invocation message
+            // todo: can this race condition?
+            var lastMsg = (_lastMessage.GetLastMessage(channel_id)).previous;
+
+            // this will break if the bot is restarted between when two members with the same name try to proxy
+            // but we can't really do anything about that :/
+            if (lastMsg == null || lastMsg.webhook_name == null)
+                return proxyName;
+
+            await using var conn = await _db.Obtain();
+            var message = await _repo.GetMessage(conn, lastMsg.mid);
+
+            if (lastMsg.webhook_name == proxyName)
+            {
+                // last message wasn't proxied by us, but somehow has the same name
+                // it's probably from a different webhook (Tupperbox?) but let's fix it anyway!
+                if (message == null)
+                    return FixSameNameInner(proxyName);
+
+                // last message was proxied by a different member
+                if (message.Member.Id != member.Id)
+                    return FixSameNameInner(proxyName);
+            }
+
+            // if we fixed the name last message and it's the same member proxying, we want to fix it again
+            if (lastMsg.webhook_name == FixSameNameInner(proxyName) && message?.Member.Id == member.Id)
+                return FixSameNameInner(proxyName);
+
+            // No issues found, current proxy name is fine.
+            return proxyName;
+        }
+
+        private string FixSameNameInner(string name)
+        {
+            Console.WriteLine("Fixing name");
+            return $"{name}\u17b5";
         }
     }
 }
