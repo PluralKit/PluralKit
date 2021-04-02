@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -19,7 +19,7 @@ namespace PluralKit.Core
     internal class Database: IDatabase
     {
         private const string RootPath = "PluralKit.Core.Database"; // "resource path" root for SQL files
-        private const int TargetSchemaVersion = 13;
+        private const int TargetSchemaVersion = 14;
         
         private readonly CoreConfig _config;
         private readonly ILogger _logger;
