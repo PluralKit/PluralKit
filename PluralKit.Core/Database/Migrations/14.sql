@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS reminders
     channel bigint NOT NULL,
     guild bigint,
     member integer REFERENCES members (id) ON DELETE CASCADE,
-    system integer NOT NULL,
+    system integer REFERENCES systems (id) NOT NULL ON DELETE CASCADE,
     seen boolean NOT NULL default false,
     timestamp timestamp NOT NULL default (current_timestamp at time zone 'utc'),
 );
