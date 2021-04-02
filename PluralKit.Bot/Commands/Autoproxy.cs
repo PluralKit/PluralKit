@@ -27,98 +27,148 @@ namespace PluralKit.Bot
         {
             // no need to check account here, it's already done at CommandTree
             ctx.CheckGuildContext();
+
+            var scope = ctx.MatchAutoproxyScope();
+            ulong? location = ScopeLocation(ctx, scope);
+
+            await using var conn = await _db.Obtain();
+            var settings = await _repo.GetAutoproxySettings(conn, ctx.System.Id, scope, location);
             
-            if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
-                await AutoproxyOff(ctx);
+            if (await ctx.MatchClear())
+                await AutoproxyClear(ctx, scope, location, settings);
+            else if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
+                await AutoproxyOff(ctx, scope, location, settings);
             else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
-                await AutoproxyLatch(ctx);
+                await AutoproxyLatch(ctx, scope, location, settings);
             else if (ctx.Match("front", "fronter", "switch"))
-                await AutoproxyFront(ctx);
+                await AutoproxyFront(ctx, scope, location, settings);
             else if (ctx.Match("member"))
                 throw new PKSyntaxError("Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
             else if (await ctx.MatchMember() is PKMember member)
-                await AutoproxyMember(ctx, member);
+                await AutoproxyMember(ctx, member, scope, location, settings);
             else if (!ctx.HasNext())
-                await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx));
+                await ctx.Reply(embed: await AutoproxyStatus(ctx, scope, settings));
             else
                 throw new PKSyntaxError($"Invalid autoproxy mode {ctx.PopArgument().AsCode()}.");
         }
 
-        private async Task AutoproxyOff(Context ctx)
+        private async Task AutoproxyClear(Context ctx, AutoproxyScope scope, ulong? location, AutoproxySettings settings)
         {
+            var scopeStr = ScopeStr(scope);
+
+            if (settings == null)
+                await ctx.Reply($"{Emojis.Note} There are no autoproxy settings to clear {scopeStr}.");
+            else
+            {
+                await _db.Execute(conn => _repo.ClearAutoproxySettings(conn, ctx.System.Id, scope, location));
+                await ctx.Reply($"{Emojis.Success} Autoproxy settings cleared {scopeStr}.");
+            }
+        }
+
+        private async Task AutoproxyOff(Context ctx, AutoproxyScope scope, ulong? location, AutoproxySettings settings)
+        {
+            var scopeStr = ScopeStr(scope);
+
+            // TODO
             if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Off)
-                await ctx.Reply($"{Emojis.Note} Autoproxy is already off in this server.");
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already off {scopeStr}.");
             else
             {
-                await UpdateAutoproxy(ctx, AutoproxyMode.Off, null);
-                await ctx.Reply($"{Emojis.Success} Autoproxy turned off in this server.");
+                await UpdateAutoproxy(ctx, AutoproxyMode.Off, scope, location, null);
+                await ctx.Reply($"{Emojis.Success} Autoproxy turned off {scopeStr}.");
             }
         }
 
-        private async Task AutoproxyLatch(Context ctx)
+        private async Task AutoproxyLatch(Context ctx, AutoproxyScope scope, ulong? location, AutoproxySettings settings)
         {
-            if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Latch)
-                await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
+            var scopeStr = ScopeStr(scope);
+
+            if (settings?.Mode == AutoproxyMode.Latch)
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode {scopeStr}. If you want to disable autoproxying, use `pk;autoproxy off`.");
             else
             {
-                await UpdateAutoproxy(ctx, AutoproxyMode.Latch, null);
-                await ctx.Reply($"{Emojis.Success} Autoproxy set to latch mode in this server. Messages will now be autoproxied using the *last-proxied member* in this server.");
+                await UpdateAutoproxy(ctx, AutoproxyMode.Latch, scope, location, null);
+                await ctx.Reply($"{Emojis.Success} Autoproxy set to latch mode {scopeStr}. Messages will now be autoproxied using the *last-proxied member* {scopeStr}.");
             }
         }
 
-        private async Task AutoproxyFront(Context ctx)
+        private async Task AutoproxyFront(Context ctx, AutoproxyScope scope, ulong? location, AutoproxySettings settings)
         {
-            if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Front)
-                await ctx.Reply($"{Emojis.Note} Autoproxy is already set to front mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
+            var scopeStr = ScopeStr(scope);
+         
+            if (settings?.Mode == AutoproxyMode.Front)
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already set to front mode {scopeStr}. If you want to disable autoproxying, use `pk;autoproxy off`.");
             else
             {
-                await UpdateAutoproxy(ctx, AutoproxyMode.Front, null);
-                await ctx.Reply($"{Emojis.Success} Autoproxy set to front mode in this server. Messages will now be autoproxied using the *current first fronter*, if any.");
+                await UpdateAutoproxy(ctx, AutoproxyMode.Front, scope, location, null);
+                await ctx.Reply($"{Emojis.Success} Autoproxy set to front mode {scopeStr}. Messages will now be autoproxied using the *current first fronter*, if any.");
             }
         }
 
-        private async Task AutoproxyMember(Context ctx, PKMember member)
+        private async Task AutoproxyMember(Context ctx, PKMember member, AutoproxyScope scope, ulong? location, AutoproxySettings settings)
         {
             ctx.CheckOwnMember(member);
 
-            await UpdateAutoproxy(ctx, AutoproxyMode.Member, member.Id);
-            await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** in this server.");
+            var scopeStr = ScopeStr(scope);
+
+            if (settings?.Mode == AutoproxyMode.Member && settings?.Member == member.Id)
+                await ctx.Reply($"{Emojis.Note} Autoproxy is already set to **{member.NameFor(ctx)}** {scopeStr}. If you want to disable autoproxying, use `pk;autoproxy off`.");
+            else {
+                await UpdateAutoproxy(ctx, AutoproxyMode.Member, scope, location, member.Id);
+                await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** {scopeStr}.");
+            }
         }
 
-        private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx)
+        private async Task<Embed> AutoproxyStatus(Context ctx, AutoproxyScope scope, AutoproxySettings settings)
+        {
+            var titleScopeName = "";
+
+            if (scope == AutoproxyScope.Channel)
+                titleScopeName = $"(for #{ctx.Channel.Name})";
+            else if (scope == AutoproxyScope.Guild)
+                titleScopeName = $"(for {ctx.Guild.Name.EscapeMarkdown()})";
+            else if (scope == AutoproxyScope.Global)
+                titleScopeName = "(global)";
+
+            if (settings == null)
+                return await CreateAutoproxyStatusEmbed(ctx, AutoproxyMode.Off, null, ScopeStr(scope), titleScopeName);
+            return await CreateAutoproxyStatusEmbed(ctx, settings.Mode, settings.Member, ScopeStr(scope), titleScopeName);
+        }
+
+        private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx, AutoproxyMode mode, MemberId? autoproxyMember, string scopeStr, string titleScopeName)
         {
             var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member\n**pk;autoproxy front** - Autoproxies as current (first) fronter\n**pk;autoproxy <member>** - Autoproxies as a specific member";
             var eb = new EmbedBuilder()
-                .Title($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
+                .Title($"Current autoproxy status {titleScopeName}");
             
             var fronters = ctx.MessageContext.LastSwitchMembers;
-            var relevantMember = ctx.MessageContext.AutoproxyMode switch
+            var relevantMember = mode switch
             {
                 AutoproxyMode.Front => fronters.Length > 0 ? await _db.Execute(c => _repo.GetMember(c, fronters[0])) : null,
-                AutoproxyMode.Member => await _db.Execute(c => _repo.GetMember(c, ctx.MessageContext.AutoproxyMember.Value)),
+                AutoproxyMode.Member => autoproxyMember.HasValue ? await _db.Execute(c => _repo.GetMember(c, autoproxyMember.Value)) : null,
                 _ => null
             };
 
             switch (ctx.MessageContext.AutoproxyMode) {
                 case AutoproxyMode.Off:
-                    eb.Description($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");
+                    eb.Description($"Autoproxy is currently **off** {scopeStr}. To enable it, use one of the following commands:\n{commandList}");
                     break;
                 case AutoproxyMode.Front:
                 {
                     if (fronters.Length == 0)
-                        eb.Description("Autoproxy is currently set to **front mode** in this server, but there are currently no fronters registered. Use the `pk;switch` command to log a switch.");
+                        eb.Description("Autoproxy is currently set to **front mode** {scopeStr}, but there are currently no fronters registered. Use the `pk;switch` command to log a switch.");
                     else
                     {
                         if (relevantMember == null) 
                             throw new ArgumentException("Attempted to print member autoproxy status, but the linked member ID wasn't found in the database. Should be handled appropriately.");
-                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+                        eb.Description($"Autoproxy is currently set to **front mode** {scopeStr}. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
                     }
 
                     break;
                 }
                 // AutoproxyMember is never null if Mode is Member, this is just to make the compiler shut up
                 case AutoproxyMode.Member when relevantMember != null: {
-                    eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
+                    eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) {scopeStr}. To disable, type `pk;autoproxy off`.");
                     break;
                 }
                 case AutoproxyMode.Latch:
@@ -208,10 +258,41 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
         }
 
-        private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
+        private string ScopeStr(AutoproxyScope scope)
         {
-            var patch = new SystemGuildPatch {AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember};
-            return _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+            switch(scope)
+            {
+                case AutoproxyScope.Channel:
+                    return "in this channel";
+                case AutoproxyScope.Guild:
+                    return "in this server";
+                case AutoproxyScope.Global:
+                    return "globally";
+                default:
+                    return "invalid-scope";
+            }
+        }
+
+        private ulong? ScopeLocation(Context ctx, AutoproxyScope scope)
+        {
+            // TODO: is this useful elsewhere?
+            switch(scope)
+            {
+                case AutoproxyScope.Channel:
+                    return ctx.Channel.Id;
+                case AutoproxyScope.Guild:
+                    return ctx.Guild.Id;
+                case AutoproxyScope.Global:
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
+        private Task UpdateAutoproxy(Context ctx, AutoproxyMode mode, AutoproxyScope scope, ulong? location, MemberId? autoproxyMember)
+        {
+            var patch = new AutoproxyPatch { AutoproxyMode = mode, AutoproxyMember = autoproxyMember };
+            return _db.Execute(conn => _repo.UpsertAutoproxySettings(conn, ctx.System.Id, location, scope, patch));
         }
     }
 }

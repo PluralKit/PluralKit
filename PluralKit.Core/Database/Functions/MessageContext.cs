@@ -16,7 +16,9 @@ namespace PluralKit.Core
         public bool LogCleanupEnabled { get; }
         public bool ProxyEnabled { get; }
         public AutoproxyMode AutoproxyMode { get; }
+        public AutoproxyScope AutoproxyScope { get; }
         public MemberId? AutoproxyMember { get; }
+        public ulong AutoproxyLocation { get; }
         public ulong? LastMessage { get; }
         public MemberId? LastMessageMember { get; }
         public SwitchId? LastSwitch { get; }

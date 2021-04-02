@@ -206,6 +206,23 @@ namespace PluralKit.Bot
                                                       Message triggerMessage, Message proxyMessage,
                                                       ProxyMatch match)
         {
+            async Task SaveAutoproxyLatchMember()
+            {
+                var location = ctx.AutoproxyScope switch {
+                    AutoproxyScope.Global => null,
+                    AutoproxyScope.Guild => triggerMessage.GuildId,
+                    AutoproxyScope.Channel => triggerMessage.ChannelId,
+                    _ => null // this should never be null
+                };
+
+                if (ctx.AutoproxyMode == AutoproxyMode.Latch)
+                {
+                    // TODO: update timestamp
+                    await using var conn = await _db.Obtain();
+                    await _repo.UpsertAutoproxySettings(conn, ctx.SystemId.Value, location, ctx.AutoproxyScope, new AutoproxyPatch{ AutoproxyMember = match.Member.Id });
+                }
+            }
+
             Task SaveMessageInDatabase() => _repo.AddMessage(conn, new PKMessage
             {
                 Channel = triggerMessage.ChannelId,
@@ -240,6 +257,7 @@ namespace PluralKit.Bot
             await Task.WhenAll(
                 DeleteProxyTriggerMessage(),
                 SaveMessageInDatabase(),
+                SaveAutoproxyLatchMember(),
                 LogMessageToChannel()
             );
         }

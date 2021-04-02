@@ -1,4 +1,28 @@
-﻿create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
+﻿create function autoproxy_context(system_id int, guild_id bigint, channel_id bigint)
+    returns table (
+        scope int,
+        mode int,
+        location bigint,
+        member int
+    )
+as $$
+    with
+        channel as (select * from autoproxy where autoproxy.system = system_id and autoproxy.location = channel_id and autoproxy.scope = 3),
+        guild as (select * from autoproxy where autoproxy.system = system_id and autoproxy.location = guild_id and autoproxy.scope = 2),
+        global as (select * from autoproxy where autoproxy.system = system_id and autoproxy.location = 0 and autoproxy.scope = 1)
+    select
+        coalesce(channel.scope, guild.scope, global.scope) as scope,
+        coalesce(channel.mode, guild.mode, global.mode, 1) as mode,
+        coalesce(channel.location, guild.location, global.location) as location,
+        coalesce(channel.member, guild.member, global.member) as member
+    from (select 1) as _placeholder
+        left join channel on true
+        left join guild on true
+        left join global on true
+$$ language sql stable rows 1;
+
+
+create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
     returns table (
         system_id int,
         log_channel bigint,
@@ -7,7 +31,9 @@
         log_cleanup_enabled bool,
         proxy_enabled bool,
         autoproxy_mode int,
+        autoproxy_scope int,
         autoproxy_member int,
+        autoproxy_location bigint,
         last_message bigint,
         last_message_member int,
         last_switch int,
@@ -23,6 +49,8 @@ as $$
     with
         system as (select systems.*, allow_autoproxy as account_autoproxy from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id),
+        -- TODO: how do we get the correct last_message for the autoproxy scope we're in?
+        -- (do we even need to?)
         last_message as (select * from messages where messages.guild = guild_id and messages.sender = account_id order by mid desc limit 1)
     select
         system.id as system_id,
@@ -31,10 +59,16 @@ as $$
         (channel_id = any(guild.log_blacklist)) as in_log_blacklist,
         coalesce(guild.log_cleanup_enabled, false),
         coalesce(system_guild.proxy_enabled, true) as proxy_enabled,
-        coalesce(system_guild.autoproxy_mode, 1) as autoproxy_mode,
-        system_guild.autoproxy_member,
+
+        -- TODO: *don't*
+        (select mode from autoproxy_context(system.id, guild_id, channel_id)) as autoproxy_mode,
+        (select scope from autoproxy_context(system.id, guild_id, channel_id)) as autoproxy_scope,
+        (select member from autoproxy_context(system.id, guild_id, channel_id)) as autoproxy_member,
+        (select location from autoproxy_context(system.id, guild_id, channel_id)) as autoproxy_location,
+
         last_message.mid as last_message,
         last_message.member as last_message_member,
+
         system_last_switch.switch as last_switch,
         system_last_switch.members as last_switch_members,
         system_last_switch.timestamp as last_switch_timestamp,

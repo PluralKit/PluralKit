@@ -114,5 +114,20 @@ namespace PluralKit.Bot
 
             return groups;
         }
+
+        public static AutoproxyScope MatchAutoproxyScope(this Context ctx)
+        {
+            // TODO: how do we match guild/channel IDs here?
+
+            if (ctx.MatchFlag("global"))
+                return AutoproxyScope.Global;
+            else if (ctx.MatchFlag("server", "guild"))
+                return AutoproxyScope.Guild;
+            else if (ctx.MatchFlag("channel"))
+                return AutoproxyScope.Channel;
+            
+            // default fallback
+            return AutoproxyScope.Guild;
+        }
     }
 }
