@@ -219,7 +219,8 @@ namespace PluralKit.Bot
                     {
                         RenderReminderListPage(reminders.Count, page, eb, ctx.System.Zone);
                         return Task.CompletedTask;
-                    });
+                    }
+                );
             }
         }
 
