@@ -19,7 +19,11 @@ namespace PluralKit.Bot {
             ctx.CheckSystem();
 
             await using var conn = await _db.Obtain();
-            await _repo.AddReminder(conn, new PKReminder { Mid = ctx.Message.Id, Channel = ctx.Channel.Id, Guild = ctx.Guild == null ? null : ctx.Guild.Id, System = ctx.System.Id });
+            await _repo.AddReminder(conn, new PKReminder { 
+                Mid = ctx.Message.Id, 
+                Channel = ctx.Channel.Id, 
+                Guild = ctx.Guild == null ? null : ctx.Guild.Id, 
+                System = ctx.System.Id });
             await ctx.Reply($"Added new reminder for {ctx.System.Name}");
         }
 

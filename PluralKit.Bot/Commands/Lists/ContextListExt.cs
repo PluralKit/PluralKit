@@ -174,10 +174,10 @@ namespace PluralKit.Bot
             string color, 
             bool showSeen) 
         {
-            var reminders = await db.Execute(
-                conn => showSeen ? conn.QueryReminders(ctx.System, member) : conn.QueryReminders(ctx.System, member, false))
-                .ToListAsync();
-            
+            var reminders = await db.Execute(conn =>
+                showSeen ? conn.QueryReminders(ctx.System, member) : conn.QueryReminders(ctx.System, member, false)
+            ).ToListAsync();
+
             var itemsPerPage = 25;
 
             if (reminders.Count > 0 || showSeen) {
@@ -203,8 +203,8 @@ namespace PluralKit.Bot
             bool showSeen) 
         {
             var reminders = await db.Execute(conn => 
-                showSeen ? conn.QueryReminders(ctx.System) : conn.QueryReminders(ctx.System, seen: false))
-                .ToListAsync();
+                showSeen ? conn.QueryReminders(ctx.System) : conn.QueryReminders(ctx.System, seen: false)
+            ).ToListAsync();
 
             var itemsPerPage = 25;
 

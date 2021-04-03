@@ -45,7 +45,12 @@ namespace PluralKit.Core
             return conn.QueryAsync<ListedMember>(query.ToString(), new {system, filter = opts.Search, groupFilter = opts.GroupFilter});
         }
 
-        public static IAsyncEnumerable<PKReminder> QueryReminders(this IPKConnection conn, PKSystem system, MemberId? memberId = null, bool seen = true) {
+        public static IAsyncEnumerable<PKReminder> QueryReminders(
+            this IPKConnection conn, 
+            PKSystem system, 
+            MemberId? memberId = null,
+            bool seen = true) 
+        {
             var showSeen = seen ? "" : "AND seen = false";
             var memberOrSystem = memberId is null ? "system = @Id AND member is null" : "member = @Id";
             var queryParameter = memberId is null ? new { Id = system.Id.Value } : new { Id = ((MemberId)memberId).Value };
