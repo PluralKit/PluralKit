@@ -237,7 +237,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("find", "search", "query", "fd", "s"))
                 await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
-            else if (ctx.Match("f", "front", "fronter", "fronters")) {
+            else if (ctx.Match("f", "front", "fronter", "fronters")) 
+            {
                 if (ctx.Match("h", "history"))
                     await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
                 else if (ctx.Match("p", "percent", "%"))
