@@ -86,7 +86,7 @@ namespace PluralKit.Bot
 
         public async Task GetReminders(Context ctx, PKMember target) {
             if (ctx.System?.Id == target.System) {
-                await ctx.RenderReminderList(
+                await ctx.RenderMemberReminderList(
                     _db,
                     target.Id,
                     $"Reminders for {target.Name}",

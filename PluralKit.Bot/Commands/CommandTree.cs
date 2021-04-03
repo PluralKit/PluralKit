@@ -26,6 +26,8 @@ namespace PluralKit.Bot
         public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
         public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
         public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
+        public static Command SystemRemindNew = new Command("system remind", "system remind <reminder message>", "Creates a reminder for your system, that will be shown to the next member who switches in");
+        public static Command SystemReminders = new Command("system reminders", "system reminders", "Displays all reminders for your system");
         public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
         public static Command AutoproxyTimeout = new Command("autoproxy", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
         public static Command AutoproxyAccount = new Command("autoproxy", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
@@ -93,7 +95,7 @@ namespace PluralKit.Bot
 
         public static Command[] SystemCommands = {
             SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemColor, SystemDelete, SystemTimezone,
-            SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
+            SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy, SystemRemindNew, SystemReminders
         };
 
         public static Command[] MemberCommands = {
@@ -235,8 +237,7 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
             else if (ctx.Match("find", "search", "query", "fd", "s"))
                 await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
-            else if (ctx.Match("f", "front", "fronter", "fronters"))
-            {
+            else if (ctx.Match("f", "front", "fronter", "fronters")) {
                 if (ctx.Match("h", "history"))
                     await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
                 else if (ctx.Match("p", "percent", "%"))
@@ -252,6 +253,10 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx));
             else if (ctx.Match("ping"))
                 await ctx.Execute<SystemEdit>(SystemPing, m => m.SystemPing(ctx));
+            else if (ctx.Match("remind"))
+                await ctx.Execute<SystemRemind>(SystemRemindNew, m => m.AddReminder(ctx));
+            else if (ctx.Match("reminders"))
+                await ctx.Execute<SystemRemind>(SystemReminders, m => m.GetReminders(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "systems", SystemCommands);
             else if (ctx.Match("groups", "gs", "g"))

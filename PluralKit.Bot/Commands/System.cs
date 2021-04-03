@@ -25,7 +25,7 @@ namespace PluralKit.Bot
 
         public async Task New(Context ctx)
         {
-            ctx.CheckNoSystem();
+            ctx.CheckSystem();
 
             var systemName = ctx.RemainderOrNull();
             if (systemName != null && systemName.Length > Limits.MaxSystemNameLength)
@@ -40,6 +40,10 @@ namespace PluralKit.Bot
             
             // TODO: better message, perhaps embed like in groups?
             await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
+        }
+
+        internal Task AddReminder(Context ctx) {
+            throw new global::System.NotImplementedException();
         }
     }
 }
