@@ -16,6 +16,7 @@ namespace PluralKit.Bot
         public static Command SystemColor = new Command("system color", "system color [color]", "Changes your system's color");
         public static Command SystemTag = new Command("system tag", "system tag [tag]", "Changes your system's tag");
         public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
+        public static Command SystemBannerImage = new Command("system banner", "system banner [url]", "Set the system's banner image");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
         public static Command SystemProxy = new Command("system proxy", "system proxy [on|off]", "Enables or disables message proxying in a specific server");
@@ -39,6 +40,7 @@ namespace PluralKit.Bot
         public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
         public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "Changes a member's avatar");
+        public static Command MemberBannerImage = new Command("member banner", "member <member> banner [url]", "Set the member's banner image");
         public static Command MemberGroups = new Command("member group", "member <member> group", "Shows the groups a member is in");
         public static Command MemberGroupAdd = new Command("member group", "member <member> group add <group> [group 2] [group 3...]", "Adds a member to one or more groups");
         public static Command MemberGroupRemove = new Command("member group", "member <member> group remove <group> [group 2] [group 3...]", "Removes a member from one or more groups");
@@ -61,6 +63,7 @@ namespace PluralKit.Bot
         public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
         public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
         public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");
+        public static Command GroupBannerImage = new Command("group banner", "group <group> banner [url]", "Set the group's banner image");
         public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
         public static Command GroupMemberRandom = new Command("group random", "group <group> random", "Shows the info card of a randomly selected member in a group.");
         public static Command GroupRandom = new Command("random", "random group", "Shows the info card of a randomly selected group in your system.");
@@ -90,20 +93,20 @@ namespace PluralKit.Bot
         public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
 
         public static Command[] SystemCommands = {
-            SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemColor, SystemDelete, SystemTimezone,
-            SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
+            SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor, SystemDelete, 
+            SystemTimezone, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
         };
 
         public static Command[] MemberCommands = {
             MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
             MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberGroups, MemberGroupAdd, MemberGroupRemove,
-            MemberDelete, MemberAvatar, MemberServerAvatar, MemberPrivacy, MemberRandom
+            MemberDelete, MemberAvatar, MemberServerAvatar, MemberBannerImage, MemberPrivacy, MemberRandom
         };
 
         public static Command[] GroupCommands =
         {
             GroupInfo, GroupList, GroupNew, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc,
-            GroupIcon, GroupColor, GroupPrivacy, GroupDelete
+            GroupIcon, GroupBannerImage, GroupColor, GroupPrivacy, GroupDelete
         };
 
         public static Command[] GroupCommandsTargeted =
@@ -223,6 +226,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemColor, m => m.Color(ctx));
             else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
                 await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx));
+            else if (ctx.Match("banner", "splash", "cover"))
+                await ctx.Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx));
             else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
                 await ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx));
             else if (ctx.Match("timezone", "tz"))
@@ -334,6 +339,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
             else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
                 await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
+            else if (ctx.Match("banner", "splash", "cover"))
+                await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
             else if (ctx.Match("group", "groups"))
                 if (ctx.Match("add", "a"))
                     await ctx.Execute<MemberGroup>(MemberGroupAdd, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Add));
@@ -401,6 +408,8 @@ namespace PluralKit.Bot
                     await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
                 else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
                     await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
+                else if (ctx.Match("banner", "splash", "cover"))
+                    await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
                 else if (ctx.Match("color", "colour"))
                     await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
                 else if (!ctx.HasNext())

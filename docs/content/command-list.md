@@ -17,6 +17,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;system rename [new name]` - Changes the name of your system.
 - `pk;system description [description]` - Changes the description of your system.
 - `pk;system avatar [avatar url]` - Changes the avatar of your system.
+- `pk;system banner [image url]` - Changes your system's banner image.
 - `pk;system privacy` - Displays your system's current privacy settings.
 - `pk;system privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system tag [tag]` - Changes the system tag of your system.
@@ -44,6 +45,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> description [description]` - Changes the description of a member.
 - `pk;member <name> avatar <avatar url|@mention>` - Changes the avatar of a member.
 - `pk;member <name> serveravatar <avatar url|@mention>` - Changes the avatar of a member in a specific server.
+- `pk;member <name> banner <image url>` - Changes the banner image of a member.
 - `pk;member <name> privacy` - Displays a members current privacy settings.
 - `pk;member <name> privacy <subject> <public|private>` - Changes a members privacy setting.
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
@@ -70,6 +72,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;group <group> remove <member> [member 2] [member 3...]` - Removes one or more members from a group.
 - `pk;group <group> privacy <description|icon|visibility|all> <public|private>` - Changes a group's privacy settings.
 - `pk;group <group> icon [icon]` - Shows or changes a group's icon.
+- `pk;group <group> banner [image]` - Shows or changes a group's banner image.
 - `pk;group <group> delete` - Deletes a group.
 
 ## Switching commands

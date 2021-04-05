@@ -67,6 +67,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .Title(system.Name)
                 .Thumbnail(new(system.AvatarUrl))
+                .Image(new(system.BannerImage))
                 .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
                 .Color(color);
 
@@ -149,6 +150,7 @@ namespace PluralKit.Bot {
                 .Author(new(name, IconUrl: DiscordUtils.WorkaroundForUrlBug(avatar)))
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .Color(color)
+                .Image(new(member.BannerImage))
                 .Footer(new(
                     $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")}"));
 
@@ -215,6 +217,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .Author(new(nameField, IconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx))))
                 .Color(color)
+                .Image(new(target.BannerImage))
                 .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
 
             if (target.DisplayName != null)

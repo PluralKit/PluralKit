@@ -225,6 +225,66 @@ namespace PluralKit.Bot
             else
                 await ShowIcon();
         }
+
+        public async Task GroupBannerImage(Context ctx, PKGroup target)
+        {
+            async Task ClearBannerImage()
+            {
+                ctx.CheckOwnGroup(target);
+
+                await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {BannerImage = null}));
+                await ctx.Reply($"{Emojis.Success} Group banner image cleared.");
+            }
+
+            async Task SetBannerImage(ParsedImage img)
+            {
+                ctx.CheckOwnGroup(target);
+
+                await AvatarUtils.VerifyAvatarOrThrow(img.Url, true);
+
+                await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {BannerImage = img.Url}));
+
+                var msg = img.Source switch
+                {
+                    AvatarSource.Url => $"{Emojis.Success} Group banner image changed to the image at the given URL.",
+                    AvatarSource.Attachment => $"{Emojis.Success} Group banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                // The attachment's already right there, no need to preview it.
+                var hasEmbed = img.Source != AvatarSource.Attachment;
+                await (hasEmbed 
+                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Build()) 
+                    : ctx.Reply(msg));
+            }
+
+            async Task ShowBannerImage()
+            {
+                if ((target.BannerImage?.Trim() ?? "").Length > 0)
+                {
+                    var eb = new EmbedBuilder()
+                        .Title("Group banner image")
+                        .Image(new(target.BannerImage));
+
+                    if (target.System == ctx.System?.Id)
+                    {
+                        eb.Description($"To clear, use `pk;group {target.Reference()} banner clear`.");
+                    }
+
+                    await ctx.Reply(embed: eb.Build());
+                }
+                else
+                    throw new PKSyntaxError("This group does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+            }
+
+            if (await ctx.MatchClear("this group's banner image"))
+                await ClearBannerImage();
+            else if (await ctx.MatchImage(true) is {} img)
+                await SetBannerImage(img);
+            else
+                await ShowBannerImage();
+        }
+
         public async Task GroupColor(Context ctx, PKGroup target)
         {
             var color = ctx.RemainderOrNull();

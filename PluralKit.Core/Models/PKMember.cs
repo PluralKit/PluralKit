@@ -15,6 +15,7 @@ namespace PluralKit.Core {
         public SystemId System { get; private set; }
         public string Color { get; private set; }
         public string AvatarUrl { get; private set; }
+        public string BannerImage { get; private set; }
         public string Name { get; private set; }
         public string DisplayName { get; private set; }
         public LocalDate? Birthday { get; private set; }

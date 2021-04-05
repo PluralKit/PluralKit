@@ -9,6 +9,7 @@ namespace PluralKit.Core
         public Partial<string> Name { get; set; }
         public Partial<string?> DisplayName { get; set; }
         public Partial<string?> AvatarUrl { get; set; }
+        public Partial<string?> BannerImage { get; set; }
         public Partial<string?> Color { get; set; }
         public Partial<LocalDate?> Birthday { get; set; }
         public Partial<string?> Pronouns { get; set; }
@@ -29,6 +30,7 @@ namespace PluralKit.Core
             .With("name", Name)
             .With("display_name", DisplayName)
             .With("avatar_url", AvatarUrl)
+            .With("banner_image", BannerImage)
             .With("color", Color)
             .With("birthday", Birthday)
             .With("pronouns", Pronouns)

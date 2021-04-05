@@ -133,6 +133,58 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} Member pronouns changed.");
             }
         }
+        public async Task BannerImage(Context ctx, PKMember target)
+        {
+            ctx.CheckOwnMember(target);
+
+            async Task ClearBannerImage()
+            {
+                await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch {BannerImage = null}));
+                await ctx.Reply($"{Emojis.Success} Member banner image cleared.");
+            }
+
+            async Task SetBannerImage(ParsedImage img)
+            {
+                await AvatarUtils.VerifyAvatarOrThrow(img.Url, true);
+
+                await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch {BannerImage = img.Url}));
+
+                var msg = img.Source switch
+                {
+                    AvatarSource.Url => $"{Emojis.Success} Member banner image changed to the image at the given URL.",
+                    AvatarSource.Attachment => $"{Emojis.Success} Member banner image changed to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the banner image will stop working.",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                // The attachment's already right there, no need to preview it.
+                var hasEmbed = img.Source != AvatarSource.Attachment;
+                await (hasEmbed 
+                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Build()) 
+                    : ctx.Reply(msg));
+            }
+
+            async Task ShowBannerImage()
+            {
+                if ((target.BannerImage?.Trim() ?? "").Length > 0)
+                {
+                    var eb = new EmbedBuilder()
+                        .Title($"{target.NameFor(ctx)}'s banner image")
+                        .Image(new(target.BannerImage))
+                        .Description($"To clear, use `pk;member {target.Hid} banner clear`.");
+                    await ctx.Reply(embed: eb.Build());
+                }
+                else
+                    throw new PKSyntaxError("This member does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+            }
+
+            if (await ctx.MatchClear("this member's banner image"))
+                await ClearBannerImage();
+            else if (await ctx.MatchImage(true) is {} img)
+                await SetBannerImage(img);
+            else
+                await ShowBannerImage();
+        }
+        
 
         public async Task Color(Context ctx, PKMember target)
         {
