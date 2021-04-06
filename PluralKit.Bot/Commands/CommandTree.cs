@@ -80,6 +80,7 @@ namespace PluralKit.Bot
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
         public static Command MessageInfo = new Command("message", "message [reply|id|link]", "Looks up a proxied message");
         public static Command MessageDelete = new Command("message", "message [reply|id|link] delete", "Deletes a proxied message.");
+        public static Command MessageEdit = new Command("message", "message [reply|id|link] edit [new message]", "Edits a proxied message");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
         public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
@@ -122,7 +123,7 @@ namespace PluralKit.Bot
 
         public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
 
-        public static Command[]MessageCommands = { MessageInfo, MessageDelete };
+        public static Command[]MessageCommands = { MessageInfo, MessageDelete, MessageEdit };
 
         public Task ExecuteCommand(Context ctx)
         {
@@ -163,6 +164,8 @@ namespace PluralKit.Bot
                 return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
             if (ctx.Match("message", "msg"))
                 return HandleMessageCommand(ctx);
+            if (ctx.Match("edit"))
+                return HandleMessageEditCommand(ctx);
             if (ctx.Match("log"))
                 if (ctx.Match("channel"))
                     return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));
@@ -514,6 +517,18 @@ namespace PluralKit.Bot
                 await ctx.Execute<Msg>(MessageInfo, m => m.MessageInfo(ctx, message));
             else if (ctx.Match("delete"))
                 await ctx.Execute<Msg>(MessageDelete, m => m.MessageDelete(ctx, message));
+            else if (ctx.Match("edit"))
+                await ctx.Execute<Msg>(MessageEdit, m => m.MessageEdit(ctx, message));
+        }
+
+        private async Task HandleMessageEditCommand(Context ctx)
+        {
+            FullMessage message = await ctx.MatchMessage();
+
+            if (message == null)
+                throw new PKError("You must reply to a message or pass a message ID or link");
+
+            await ctx.Execute<Msg>(MessageEdit, m => m.MessageEdit(ctx, message));
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)

@@ -4,8 +4,10 @@ using App.Metrics;
 
 using PluralKit.Core;
 
+using Myriad.Types;
 using Myriad.Cache;
 using Myriad.Rest;
+using Myriad.Rest.Types.Requests;
 using Myriad.Gateway;
 
 
@@ -49,6 +51,19 @@ namespace PluralKit.Bot {
             if (message.System.Id != ctx.System?.Id)
                 throw new PKError("You can only delete your own messages.");
             await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
+            await ctx.Rest.DeleteMessage(ctx.Message);
+        }
+
+        public async Task MessageEdit(Context ctx, FullMessage message)
+        {
+            if (message.System.Id != ctx.System?.Id)
+                throw new PKError("You can only edit your own messages.");
+
+            var request = new EditWebhookMessageRequest { Content = ctx.RemainderOrNull() ?? "" };
+            Webhook webhook = await ctx.WebhookCache.GetWebhook(message.Message.Channel);
+            await ctx.Rest.EditWebhookMessage(webhook.Id, webhook.Token, message.Message.Mid, request);
+
+            // Edit commands should be deleted.
             await ctx.Rest.DeleteMessage(ctx.Message);
         }
     }

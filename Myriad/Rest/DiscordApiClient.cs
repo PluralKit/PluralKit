@@ -121,6 +121,10 @@ namespace Myriad.Rest
             _client.PostMultipart<Message>($"/webhooks/{webhookId}/{webhookToken}?wait=true",
                 ("ExecuteWebhook", webhookId), request, files)!;
 
+        public Task<Message> EditWebhookMessage(ulong webhookId, string webhookToken, ulong messageId, EditWebhookMessageRequest request) =>
+            _client.Patch<Message>($"/webhooks/{webhookId}/{webhookToken}/messages/{messageId}",
+                ("EditWebhookMessage", webhookId), request)!;
+
         public Task<Channel> CreateDm(ulong recipientId) =>
             _client.Post<Channel>($"/users/@me/channels", ("CreateDM", default), new CreateDmRequest(recipientId))!;
 

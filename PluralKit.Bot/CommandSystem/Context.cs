@@ -38,6 +38,7 @@ namespace PluralKit.Bot
         private readonly IMetrics _metrics;
         private readonly CommandMessageService _commandMessageService;
         private readonly IDiscordCache _cache;
+        private readonly WebhookCacheService _webhookCache;
 
         private Command _currentCommand;
 
@@ -51,6 +52,7 @@ namespace PluralKit.Bot
             _senderSystem = senderSystem;
             _messageContext = messageContext;
             _cache = provider.Resolve<IDiscordCache>();
+            _webhookCache = provider.Resolve<WebhookCacheService>();
             _db = provider.Resolve<IDatabase>();
             _repo = provider.Resolve<ModelRepository>();
             _metrics = provider.Resolve<IMetrics>();
@@ -65,6 +67,7 @@ namespace PluralKit.Bot
         }
 
         public IDiscordCache Cache => _cache;
+        public WebhookCacheService WebhookCache => _webhookCache;
 
         public Channel Channel => _channel;
         public User Author => _message.Author;
