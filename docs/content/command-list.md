@@ -21,7 +21,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;system privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system tag [tag]` - Changes the system tag of your system.
 - `pk;system timezone [location]` - Changes the time zone of your system.
-- `pk;system proxy [on|off]` - Toggles message proxying for a specific server. 
+- `pk;system proxy [server id] [on|off]` - Toggles message proxying for a specific server.
 - `pk;system delete` - Deletes your system.
 - `pk;system [system] fronter` - Shows the current fronter of a system.
 - `pk;system [system] fronthistory` - Shows the last 10 fronters of a system.

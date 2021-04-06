@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+using System;
+using System.Threading.Tasks;
 
 using Myriad.Extensions;
 using Myriad.Types;
@@ -167,6 +168,23 @@ namespace PluralKit.Bot
             
             ctx.PopArgument();
             return channel;
+        }
+
+        public static Guild MatchGuild(this Context ctx)
+        {
+            try
+            {
+                var id = ulong.Parse(ctx.PeekArgument());
+                ctx.Cache.TryGetGuild(id, out var guild);
+                if (guild != null)
+                    ctx.PopArgument();
+
+                return guild;
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
         }
     }
 }
