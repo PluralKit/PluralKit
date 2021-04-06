@@ -321,12 +321,22 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle)
-        {
+        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string color, string embedTitle)
+        {   
+            uint embedColor;
+            try
+            {
+                embedColor = color?.ToDiscordColor() ?? DiscordUtils.Gray;
+            }
+            catch (ArgumentException)
+            {
+                embedColor = DiscordUtils.Gray;
+            }
+            
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             var eb = new EmbedBuilder()
                 .Title(embedTitle)
-                .Color(DiscordUtils.Gray)
+                .Color(embedColor)
                 .Footer(new($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)"));
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 

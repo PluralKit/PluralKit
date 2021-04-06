@@ -132,7 +132,7 @@ namespace PluralKit.Bot
                 title.Append($"`{system.Hid}`");
 
             var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, null, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, system.Zone, ctx.LookupContextFor(system), title.ToString()));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, system.Zone, ctx.LookupContextFor(system), system.Color, title.ToString()));
         }
     }
 }

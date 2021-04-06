@@ -500,7 +500,7 @@ namespace PluralKit.Bot
                 title.Append($"`{targetSystem.Hid}`");
 
             var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString()));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), target.Color, title.ToString()));
         }
 
         private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
