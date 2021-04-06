@@ -78,7 +78,8 @@ namespace PluralKit.Bot
         public static Command Export = new Command("export", "export", "Exports system information to a data file");
         public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
-        public static Command Message = new Command("message", "message <id|link> [delete]", "Looks up a proxied message");
+        public static Command MessageInfo = new Command("message", "message [reply|id|link]", "Looks up a proxied message");
+        public static Command MessageDelete = new Command("message", "message [reply|id|link] delete", "Deletes a proxied message.");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
         public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
@@ -121,6 +122,8 @@ namespace PluralKit.Bot
 
         public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
 
+        public static Command[]MessageCommands = { MessageInfo, MessageDelete };
+
         public Task ExecuteCommand(Context ctx)
         {
             if (ctx.Match("system", "s"))
@@ -159,7 +162,7 @@ namespace PluralKit.Bot
             if (ctx.Match("explain"))
                 return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
             if (ctx.Match("message", "msg"))
-                return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
+                return HandleMessageCommand(ctx);
             if (ctx.Match("log"))
                 if (ctx.Match("channel"))
                     return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));
@@ -499,6 +502,18 @@ namespace PluralKit.Bot
                 return ctx.Execute<Autoproxy>(AutoproxyTimeout, m => m.AutoproxyTimeout(ctx));
             else
                 return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
+        }
+
+        private async Task HandleMessageCommand(Context ctx)
+        {
+            FullMessage message = await ctx.MatchMessage();
+
+            if (message == null)
+                await PrintCommandExpectedError(ctx, MessageCommands);
+            else if (!ctx.HasNext())
+                await ctx.Execute<Msg>(MessageInfo, m => m.MessageInfo(ctx, message));
+            else if (ctx.Match("delete"))
+                await ctx.Execute<Msg>(MessageDelete, m => m.MessageDelete(ctx, message));
         }
 
         private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)

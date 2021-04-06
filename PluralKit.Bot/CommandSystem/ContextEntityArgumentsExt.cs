@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+using System;
+using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 using Myriad.Extensions;
 using Myriad.Types;
@@ -167,6 +169,35 @@ namespace PluralKit.Bot
             
             ctx.PopArgument();
             return channel;
+        }
+
+        public static async Task<FullMessage> MatchMessage(this Context ctx)
+        {
+            ulong? mid = null;
+
+            if (ctx.Message.MessageReference != null)
+            {
+                mid = ctx.Message.MessageReference.MessageId;
+            }
+            else
+            {
+                var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must reply to a message or pass a message ID or link.");
+                if (Regex.Match(word, @"https://(?:\w+.)discord(?:app)?.com/channels/\d+/\d+/(\d+)") is Match match && match.Success)
+                {
+                    try
+                    {
+                        mid = ulong.Parse(match.Groups[1].Value);
+                    }
+                    catch (FormatException)
+                    {
+                        throw new PKSyntaxError($"Could not parse {word.AsCode()} as a message ID or link.");
+                    }
+                }
+            }
+
+            if (mid == null) return null;
+
+            return await ctx.Database.Execute(c => ctx.Repository.GetMessage(c, mid.Value));
         }
     }
 }

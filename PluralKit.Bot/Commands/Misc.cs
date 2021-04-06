@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -206,32 +205,6 @@ namespace PluralKit.Bot {
 
             // Send! :)
             await ctx.Reply(embed: eb.Build());
-        }
-        
-        public async Task GetMessage(Context ctx)
-        {
-            var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a message ID or link.");
-
-            ulong messageId;
-            if (ulong.TryParse(word, out var id))
-                messageId = id;
-            else if (Regex.Match(word, "https://(?:\\w+.)discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
-                messageId = ulong.Parse(match.Groups[1].Value);
-            else throw new PKSyntaxError($"Could not parse {word.AsCode()} as a message ID or link.");
-
-            var message = await _db.Execute(c => _repo.GetMessage(c, messageId));
-            if (message == null) throw Errors.MessageNotFound(messageId);
-
-            if (ctx.Match("delete") || ctx.MatchFlag("delete"))
-            {
-                if (message.System.Id != ctx.System.Id)
-                    throw new PKError("You can only delete your own messages.");
-                await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
-                await ctx.Rest.DeleteMessage(ctx.Message);
-                return;
-            }
-
-            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
         }
     }
 }
