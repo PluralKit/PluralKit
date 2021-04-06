@@ -127,7 +127,7 @@ namespace PluralKit.Bot
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
 
                 await ctx.Reply(embed: new EmbedBuilder()
-                    .Title($"{Emojis.Success} Member color changed.")
+                    .Title($"{Emojis.Success} System color changed.")
                     .Color(color.ToDiscordColor())
                     .Thumbnail(new($"https://fakeimg.pl/256x256/{color}/?text=%20"))
                     .Build());
