@@ -215,7 +215,7 @@ namespace PluralKit.Bot {
             ulong messageId;
             if (ulong.TryParse(word, out var id))
                 messageId = id;
-            else if (Regex.Match(word, "https://(?:\\w+.)discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
+            else if (Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
                 messageId = ulong.Parse(match.Groups[1].Value);
             else throw new PKSyntaxError($"Could not parse {word.AsCode()} as a message ID or link.");
 
