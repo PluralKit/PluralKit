@@ -321,8 +321,14 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string color, string embedTitle)
+        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle)
         {   
+            string color = system.Color;
+            if (group != null) 
+            {
+                color = group.Color;
+            }
+
             uint embedColor;
             try
             {
