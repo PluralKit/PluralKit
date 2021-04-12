@@ -32,7 +32,7 @@ namespace PluralKit.Bot
                 var dm = await ctx.Cache.GetOrCreateDmChannel(ctx.Rest, ctx.Author.Id);
                 await ctx.Rest.CreateMessage(dm.Id, new MessageRequest
                 {
-                    Content = $"{Emojis.Warn} Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`.\n\nYour token is below:"
+                    Content = $"{Emojis.Warn} Please note that this grants access to modify (and delete!) all your system data, so keep it safe and secure. If it leaks or you need a new one, you can invalidate this one with `{ctx.CommandPrefix}token refresh`.\n\nYour token is below:"
                 });
                 await ctx.Rest.CreateMessage(dm.Id, new MessageRequest {Content = token});
 

@@ -36,7 +36,7 @@ namespace PluralKit.Bot
 
         public async Task SystemFronter(Context ctx, PKSystem system)
         {
-            if (system == null) throw Errors.NoSystemError;
+            if (system == null) throw Errors.NoSystemError(ctx);
             ctx.CheckSystemPrivacy(system, system.FrontPrivacy);
 
             await using var conn = await _db.Obtain();
@@ -49,7 +49,7 @@ namespace PluralKit.Bot
 
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
         {
-            if (system == null) throw Errors.NoSystemError;
+            if (system == null) throw Errors.NoSystemError(ctx);
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
             // Gotta be careful here: if we dispose of the connection while the IAE is alive, boom 
@@ -114,7 +114,7 @@ namespace PluralKit.Bot
         
         public async Task SystemFrontPercent(Context ctx, PKSystem system)
         {
-            if (system == null) throw Errors.NoSystemError;
+            if (system == null) throw Errors.NoSystemError(ctx);
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
             string durationStr = ctx.RemainderOrNull() ?? "30d";

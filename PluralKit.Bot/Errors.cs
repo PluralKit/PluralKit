@@ -35,8 +35,8 @@ namespace PluralKit.Bot {
         public static PKError NotOwnSystemError => new PKError($"You can only run this command on your own system.");
         public static PKError NotOwnMemberError => new PKError($"You can only run this command on your own member.");
         public static PKError NotOwnGroupError => new PKError($"You can only run this command on your own group.");
-        public static PKError NoSystemError => new PKError("You do not have a system registered with PluralKit. To create one, type `pk;system new`.");
-        public static PKError ExistingSystemError => new PKError("You already have a system registered with PluralKit. To view it, type `pk;system`. If you'd like to delete your system and start anew, type `pk;system delete`, or if you'd like to unlink this account from it, type `pk;unlink`.");
+        public static PKError NoSystemError(Context ctx) => new PKError($"You do not have a system registered with PluralKit. To create one, type `{ctx.CommandPrefix}system new`.");
+        public static PKError ExistingSystemError(Context ctx) => new PKError($"You already have a system registered with PluralKit. To view it, type `{ctx.CommandPrefix}system`. If you'd like to delete your system and start anew, type `{ctx.CommandPrefix}system delete`, or if you'd like to unlink this account from it, type `{ctx.CommandPrefix}unlink`.");
         public static PKError MissingMemberError => new PKSyntaxError("You need to specify a member to run this command on.");
 
         public static PKError SystemNameTooLongError(int length) => new PKError($"System name too long ({length}/{Limits.MaxSystemNameLength} characters).");
@@ -63,8 +63,8 @@ namespace PluralKit.Bot {
         
         public static PKError AccountAlreadyLinked => new PKError("That account is already linked to your system.");
         public static PKError AccountNotLinked => new PKError("That account isn't linked to your system.");
-        public static PKError AccountInOtherSystem(PKSystem system) => new PKError($"The mentioned account is already linked to another system (see `pk;system {system.Hid}`).");
-        public static PKError UnlinkingLastAccount => new PKError("Since this is the only account linked to this system, you cannot unlink it (as that would leave your system account-less). If you would like to delete your system, use `pk;system delete`.");
+        public static PKError AccountInOtherSystem(Context ctx, PKSystem system) => new PKError($"The mentioned account is already linked to another system (see `{ctx.CommandPrefix}system {system.Hid}`).");
+        public static PKError UnlinkingLastAccount(Context ctx) => new PKError($"Since this is the only account linked to this system, you cannot unlink it (as that would leave your system account-less). If you would like to delete your system, use `{ctx.CommandPrefix}system delete`.");
         public static PKError MemberLinkCancelled => new PKError("Member link cancelled.");
         public static PKError MemberUnlinkCancelled => new PKError("Member unlink cancelled.");
 
@@ -107,8 +107,8 @@ namespace PluralKit.Bot {
 
         public static PKError ProxyTagAlreadyExists(ProxyTag tagToAdd, PKMember member) => new PKError($"That member already has the proxy tag {tagToAdd.ProxyString.AsCode()}. The member currently has these tags: {member.ProxyTagsString()}");
         public static PKError ProxyTagDoesNotExist(ProxyTag tagToRemove, PKMember member) => new PKError($"That member does not have the proxy tag {tagToRemove.ProxyString.AsCode()}. The member currently has these tags: {member.ProxyTagsString()}");
-        public static PKError LegacyAlreadyHasProxyTag(ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString()}\nConsider using the {$"pk;member {member.Reference()} proxy add {requested.ProxyString}".AsCode()} command instead.");
-        public static PKError EmptyProxyTags(PKMember member) => new PKError($"The example proxy `text` is equivalent to having no proxy tags at all, since there are no symbols or brackets on either end. If you'd like to clear your proxy tags, use `pk;member {member.Reference()} proxy clear`.");
+        public static PKError LegacyAlreadyHasProxyTag(Context ctx, ProxyTag requested, PKMember member) => new PKError($"This member already has more than one proxy tag set: {member.ProxyTagsString()}\nConsider using the {$"{ctx.CommandPrefix}member {member.Reference()} proxy add {requested.ProxyString}".AsCode()} command instead.");
+        public static PKError EmptyProxyTags(Context ctx, PKMember member) => new PKError($"The example proxy `text` is equivalent to having no proxy tags at all, since there are no symbols or brackets on either end. If you'd like to clear your proxy tags, use `{ctx.CommandPrefix}member {member.Reference()} proxy clear`.");
 
         public static PKError GenericCancelled() => new PKError("Operation cancelled.");
 

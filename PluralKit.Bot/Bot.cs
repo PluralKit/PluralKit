@@ -285,7 +285,7 @@ namespace PluralKit.Bot
                         {
                             new ActivityPartial
                             {
-                                Name = $"pk;help | in {totalGuilds} servers | shard #{shard.ShardInfo?.ShardId}",
+                                Name = $"@PluralKit help | in {totalGuilds} servers | shard #{shard.ShardInfo?.ShardId}",
                                 Type = ActivityType.Game,
                                 Url = "https://pluralkit.me/"
                             }

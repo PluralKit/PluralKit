@@ -41,9 +41,9 @@ namespace PluralKit.Bot
             if (newSystemName == null)
             {
                 if (ctx.System.Name != null)
-                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
+                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `{ctx.CommandPrefix}system name -clear` to clear it.");
                 else
-                    await ctx.Reply("Your system currently does not have a name. Type `pk;system name <name>` to set one.");
+                    await ctx.Reply($"Your system currently does not have a name. Type `{ctx.CommandPrefix}system name <name>` to set one.");
                 return;
             }
             
@@ -72,14 +72,14 @@ namespace PluralKit.Bot
             if (newDescription == null)
             {
                 if (ctx.System.Description == null)
-                    await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
+                    await ctx.Reply($"Your system does not have a description set. To set one, type `{ctx.CommandPrefix}s description <description>`.");
                 else if (ctx.MatchFlag("r", "raw"))
                     await ctx.Reply($"```\n{ctx.System.Description}\n```");
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .Title("System description")
                         .Description(ctx.System.Description)
-                        .Footer(new("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`."))
+                        .Footer(new($"To print the description with formatting, type `{ctx.CommandPrefix}s description -raw`. To clear it, type `{ctx.CommandPrefix}s description -clear`. To change it, type `{ctx.CommandPrefix}s description <new description>`."))
                         .Build());
             }
             else
@@ -107,13 +107,13 @@ namespace PluralKit.Bot
             {
                 if (ctx.System.Color == null) 
                     await ctx.Reply(
-                            $"Your system does not have a color set. To set one, type `pk;system color <color>`.");
+                            $"Your system does not have a color set. To set one, type `{ctx.CommandPrefix}system color <color>`.");
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .Title("System color")
                         .Color(ctx.System.Color.ToDiscordColor())
                         .Thumbnail(new($"https://fakeimg.pl/256x256/{ctx.System.Color}/?text=%20"))
-                        .Description($"Your system's color is **#{ctx.System.Color}**. To clear it, type `pk;s color -clear`.")
+                        .Description($"Your system's color is **#{ctx.System.Color}**. To clear it, type `{ctx.CommandPrefix}s color -clear`.")
                         .Build());
             }
             else
@@ -147,9 +147,9 @@ namespace PluralKit.Bot
             } else if (!ctx.HasNext(skipFlags: false))
             {
                 if (ctx.System.Tag == null)
-                    await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
+                    await ctx.Reply($"You currently have no system tag. To set one, type `{ctx.CommandPrefix}s tag <tag>`.");
                 else
-                    await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                    await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `{ctx.CommandPrefix}s tag <tag>`. To clear it, type `{ctx.CommandPrefix}s tag -clear`.");
             }
             else
             {
@@ -203,7 +203,7 @@ namespace PluralKit.Bot
                     var eb = new EmbedBuilder()
                         .Title("System icon")
                         .Image(new(ctx.System.AvatarUrl))
-                        .Description("To clear, use `pk;system icon clear`.");
+                        .Description($"To clear, use `{ctx.CommandPrefix}system icon clear`.");
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
@@ -242,9 +242,9 @@ namespace PluralKit.Bot
             else
             {
                 if (gs.ProxyEnabled)
-                    await ctx.Reply("Proxying in this server is currently **enabled** for your system. To disable it, type `pk;system proxy off`.");
+                    await ctx.Reply($"Proxying in this server is currently **enabled** for your system. To disable it, type `{ctx.CommandPrefix}system proxy off`.");
                 else
-                    await ctx.Reply("Proxying in this server is currently **disabled** for your system. To enable it, type `pk;system proxy on`.");
+                    await ctx.Reply($"Proxying in this server is currently **disabled** for your system. To enable it, type `{ctx.CommandPrefix}system proxy on`.");
                 return;
             }
 
@@ -259,7 +259,7 @@ namespace PluralKit.Bot
         
          public async Task SystemTimezone(Context ctx)
         {
-            if (ctx.System == null) throw Errors.NoSystemError;
+            if (ctx.System == null) throw Errors.NoSystemError(ctx);
 
             if (await ctx.MatchClear())
             {
@@ -274,7 +274,7 @@ namespace PluralKit.Bot
             if (zoneStr == null)
             {
                 await ctx.Reply(
-                    $"Your current system time zone is set to **{ctx.System.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.System)}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
+                    $"Your current system time zone is set to **{ctx.System.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.System)}** in that time zone. To change your system time zone, type `{ctx.CommandPrefix}s tz <zone>`.");
                 return;
             }
 
@@ -304,7 +304,7 @@ namespace PluralKit.Bot
                     .Field(new("Group list", ctx.System.GroupListPrivacy.Explanation()))
                     .Field(new("Current fronter(s)", ctx.System.FrontPrivacy.Explanation()))
                     .Field(new("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation()))
-                    .Description("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    .Description("To edit privacy settings, use the command:\n`{ctx.CommandPrefix}system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
                 return ctx.Reply(embed: eb.Build());
             }
 
@@ -361,8 +361,8 @@ namespace PluralKit.Bot
 
 	        if (!ctx.HasNext()) 
 	        {
-		        if (ctx.System.PingsEnabled) {await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;s ping disable`.");}
-		        else {await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;s ping enable`.");}
+		        if (ctx.System.PingsEnabled) {await ctx.Reply($"Reaction pings are currently **enabled** for your system. To disable reaction pings, type `{ctx.CommandPrefix}s ping disable`.");}
+		        else {await ctx.Reply($"Reaction pings are currently **disabled** for your system. To enable reaction pings, type `{ctx.CommandPrefix}s ping enable`.");}
 	        }
             else {
                 if (ctx.Match("on", "enable")) {

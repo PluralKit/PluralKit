@@ -88,9 +88,9 @@ namespace PluralKit.Bot {
             if (system.MemberListPrivacy.CanAccess(ctx))
             {
                 if (memberCount > 0)
-                    eb.Field(new($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true));
+                    eb.Field(new($"Members ({memberCount})", $"(see `{cctx.CommandPrefix}system {system.Hid} list` or `{cctx.CommandPrefix}system {system.Hid} list full`)", true));
                 else
-                    eb.Field(new($"Members ({memberCount})", "Add one with `pk;member new`!", true));
+                    eb.Field(new($"Members ({memberCount})", $"Add one with `{cctx.CommandPrefix}member new`!", true));
             }
 
             if (system.DescriptionFor(ctx) is { } desc)
@@ -226,9 +226,9 @@ namespace PluralKit.Bot {
             {
                 if (memberCount == 0 && pctx == LookupContext.ByOwner)
                     // Only suggest the add command if this is actually the owner lol
-                    eb.Field(new("Members (0)", $"Add one with `pk;group {target.Reference()} add <member>`!", false));
+                    eb.Field(new("Members (0)", $"Add one with `{ctx.CommandPrefix}group {target.Reference()} add <member>`!", false));
                 else
-                    eb.Field(new($"Members ({memberCount})", $"(see `pk;group {target.Reference()} list`)", false));
+                    eb.Field(new($"Members ({memberCount})", $"(see `{ctx.CommandPrefix}group {target.Reference()} list`)", false));
             }
 
             if (target.DescriptionFor(pctx) is { } desc)

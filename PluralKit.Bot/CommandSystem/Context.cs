@@ -57,6 +57,7 @@ namespace PluralKit.Bot
             _provider = provider;
             _commandMessageService = provider.Resolve<CommandMessageService>();
             _parameters = new Parameters(message.Content?.Substring(commandParseOffset));
+            CommandPrefix = message.Content?.Substring(0, commandParseOffset);
             _rest = provider.Resolve<DiscordApiClient>();
             _cluster = provider.Resolve<Cluster>();
 
@@ -83,6 +84,7 @@ namespace PluralKit.Bot
 
         public PKSystem System => _senderSystem;
         
+        public string CommandPrefix { get; init; }
         public Parameters Parameters => _parameters;
 
         internal IDatabase Database => _db;
@@ -126,7 +128,7 @@ namespace PluralKit.Bot
             }
             catch (PKSyntaxError e)
             {
-                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef.Usage}");
+                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> {CommandPrefix}{commandDef.Usage}");
             }
             catch (PKError e)
             {

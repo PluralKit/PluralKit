@@ -79,9 +79,9 @@ namespace PluralKit.Bot
             
             if (pctx == LookupContext.ByOwner)
             {
-                msg += $"\n\nTo add this member to one or more groups, use `pk;m {target.Reference()} group add <group> [group 2] [group 3...]`";
+                msg += $"\n\nTo add this member to one or more groups, use `{ctx.CommandPrefix}m {target.Reference()} group add <group> [group 2] [group 3...]`";
                 if (groups.Count > 0)
-                    msg += $"\nTo remove this member from one or more groups, use `pk;m {target.Reference()} group remove <group> [group 2] [group 3...]`";
+                    msg += $"\nTo remove this member from one or more groups, use `{ctx.CommandPrefix}m {target.Reference()} group remove <group> [group 2] [group 3...]`";
             }
             
             await ctx.Reply(msg, (new EmbedBuilder().Title($"{target.Name}'s groups").Description(description)).Build());

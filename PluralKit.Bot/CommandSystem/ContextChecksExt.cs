@@ -35,14 +35,14 @@ namespace PluralKit.Bot
         public static Context CheckSystem(this Context ctx)
         {
             if (ctx.System == null)
-                throw Errors.NoSystemError;
+                throw Errors.NoSystemError(ctx);
             return ctx;
         }
 
         public static Context CheckNoSystem(this Context ctx)
         {
             if (ctx.System != null)
-                throw Errors.ExistingSystemError;
+                throw Errors.ExistingSystemError(ctx);
             return ctx;
         }
         

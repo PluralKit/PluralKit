@@ -16,7 +16,7 @@ namespace PluralKit.Bot
 
         public async Task MemberList(Context ctx, PKSystem target)
         {
-            if (target == null) throw Errors.NoSystemError;
+            if (target == null) throw Errors.NoSystemError(ctx);
             ctx.CheckSystemPrivacy(target, target.MemberListPrivacy);
 
             var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target));
