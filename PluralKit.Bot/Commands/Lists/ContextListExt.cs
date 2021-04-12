@@ -184,16 +184,16 @@ namespace PluralKit.Bot
                     if (m.ProxyTags.Count > 0) 
                         profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
                     
-                    if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is {} count && count > 0)
+                    if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) && m.MessageCountFor(lookupCtx) is {} count && count > 0)
                         profile.Append($"\n**Message count:** {count}");
                     
-                    if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg)) 
+                    if ((opts.IncludeLastMessage || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg)) 
                         profile.Append($"\n**Last message:** {DiscordUtils.SnowflakeToInstant(lastMsg.Value).FormatZoned(zone)}");
                     
-                    if (opts.IncludeLastSwitch && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw)) 
+                    if ((opts.IncludeLastSwitch || opts.SortProperty == SortProperty.LastSwitch) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw)) 
                         profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(zone)}");
 
-                    if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                    if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                         profile.Append($"\n**Created on:** {created.FormatZoned(zone)}");
                     
                     if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is {} avatar)
