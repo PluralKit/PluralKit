@@ -26,6 +26,7 @@ namespace PluralKit.Bot
         public bool IncludeLastMessage { get; set; }
         public bool IncludeCreated { get; set; }
         public bool IncludeAvatar { get; set; }
+        public bool IncludePronouns { get; set; }
         
         public string CreateFilterString()
         {
@@ -46,6 +47,11 @@ namespace PluralKit.Bot
                 _ => new ArgumentOutOfRangeException($"Couldn't find readable string for sort property {SortProperty}")
             });
             
+            // only works if you're not sorting by something else that would be displayed instead
+            // TODO: does this need to change for full list?
+            if (IncludePronouns && (SortProperty == SortProperty.Name || SortProperty == SortProperty.DisplayName || SortProperty == SortProperty.Random))
+                str.Append(", including pronouns");
+
             if (Search != null)
             {
                 str.Append($", searching for \"{Search}\"");

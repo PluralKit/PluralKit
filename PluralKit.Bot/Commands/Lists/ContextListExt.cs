@@ -36,7 +36,7 @@ namespace PluralKit.Bot
             if (ctx.MatchFlag("by-display-name", "bdn")) p.SortProperty = SortProperty.DisplayName;
             if (ctx.MatchFlag("by-id", "bid")) p.SortProperty = SortProperty.Hid;
             if (ctx.MatchFlag("by-message-count", "bmc")) p.SortProperty = SortProperty.MessageCount;
-            if (ctx.MatchFlag("by-created", "bc")) p.SortProperty = SortProperty.CreationDate;
+            if (ctx.MatchFlag("by-created", "bc", "bcd")) p.SortProperty = SortProperty.CreationDate;
             if (ctx.MatchFlag("by-last-fronted", "by-last-front", "by-last-switch", "blf", "bls")) p.SortProperty = SortProperty.LastSwitch;
             if (ctx.MatchFlag("by-last-message", "blm", "blp")) p.SortProperty = SortProperty.LastMessage;
             if (ctx.MatchFlag("by-birthday", "by-birthdate", "bbd")) p.SortProperty = SortProperty.Birthdate;
@@ -67,6 +67,8 @@ namespace PluralKit.Bot
                 p.IncludeCreated = true;
             if (ctx.MatchFlag("with-avatar", "with-image", "wa", "wi", "ia", "ii", "img"))
                 p.IncludeAvatar = true;
+            if (ctx.MatchFlag("with-pronouns", "wp"))
+                p.IncludePronouns = true;
             
             // Always show the sort property, too
             if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
@@ -110,15 +112,56 @@ namespace PluralKit.Bot
                 // so run it through a helper that "makes it work" :)
                 eb.WithSimpleLineContent(page.Select(m =>
                 {
-                    if (m.HasProxyTags)
-                    {
-                        var proxyTagsString = m.ProxyTagsString();
-                        if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
-                            proxyTagsString = "tags too long, see member card";
-                        return $"[`{m.Hid}`] **{m.NameFor(ctx)}** *(*{proxyTagsString}*)*";
-                    }
+                    var ret = $"[`{m.Hid}`] **{m.NameFor(ctx)}** ";
 
-                    return $"[`{m.Hid}`] **{m.NameFor(ctx)}**";
+                    switch (opts.SortProperty) {
+                        case SortProperty.Birthdate: {
+                            if (m.Birthday.HasValue) ret += $"(birthday: {m.BirthdayString})";
+                            break;
+                        }
+                        case SortProperty.MessageCount: {
+                            ret += $"({m.MessageCount} messages)";
+                            break;
+                        }
+                        case SortProperty.LastSwitch: {
+                            if (m.LastSwitchTime != null)
+                                ret += $"(last switched in: {m.LastSwitchTime.Value.FormatZoned(ctx.System)})";
+                            break;
+                        }
+                        case SortProperty.LastMessage: {
+                            if (m.LastMessage != null)
+                                ret += $"(last message: {DiscordUtils.SnowflakeToInstant(m.LastMessage.Value).FormatZoned(ctx.System)})";
+                            break;
+                        }
+                        case SortProperty.CreationDate: {
+                            ret += $"(created at {m.Created.FormatZoned(ctx.System)})";
+                            break;
+                        }
+                        default: {
+                            if (opts.IncludeMessageCount)
+                                ret += $"({m.MessageCount} messages)";
+                            else if (opts.IncludeLastSwitch)
+                                ret += $"(last switched in: {m.LastSwitchTime?.FormatZoned(ctx.System)})";
+                            else if (opts.IncludeLastMessage && m.LastMessage != null)
+                                ret += $"(last message: {DiscordUtils.SnowflakeToInstant(m.LastMessage.Value).FormatZoned(ctx.System)})";
+                            else if (opts.IncludeCreated)
+                                ret += $"(created at {m.Created.FormatZoned(ctx.System)})";
+                            else if (opts.IncludePronouns) {
+                                if (m.Pronouns != null)
+                                    ret += $"({m.Pronouns})";
+                                break;
+                            }
+                            else if (m.HasProxyTags)
+                            {
+                                var proxyTagsString = m.ProxyTagsString();
+                                if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
+                                    proxyTagsString = "tags too long, see member card";
+                                ret += $"*(*{proxyTagsString}*)*";
+                            }
+                            break;
+                        }
+                    }
+                    return ret;
                 }));
             }
             
