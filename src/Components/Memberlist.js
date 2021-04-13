@@ -279,28 +279,28 @@ export default function Memberlist() {
                             <BS.Form.Row>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Name:</BS.Form.Label>
-                          <BS.Form.Control name="name" ref={register()} defaultValue={''} required/>
+                          <BS.Form.Control name="name"{...register("name")} defaultValue={''} required/>
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Display name: </BS.Form.Label>
-                            <BS.Form.Control name="display_name" ref={register}  defaultValue={''} />
+                            <BS.Form.Control name="display_name" {...register("display_name")}  defaultValue={''} />
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Birthday:</BS.Form.Label>
-                            <BS.Form.Control  pattern="^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$" name="birthday" ref={register}  defaultValue={''}/>
+                            <BS.Form.Control  pattern="^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$" name="birthday" {...register("birthday")}  defaultValue={''}/>
                             <BS.Form.Text>(YYYY-MM-DD)</BS.Form.Text>
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Pronouns:</BS.Form.Label>
-                            <BS.Form.Control name="pronouns" ref={register} defaultValue={''} />
+                            <BS.Form.Control name="pronouns" {...register("pronouns")} defaultValue={''} />
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Avatar url:</BS.Form.Label> 
-                          <BS.Form.Control type="url" name="avatar_url" ref={register}  defaultValue={''} />
+                          <BS.Form.Control type="url" name="avatar_url" {...register("avatar_url")}  defaultValue={''} />
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Color:</BS.Form.Label> 
-                          <BS.Form.Control  pattern="[A-Fa-f0-9]{6}" name="color" ref={register}  defaultValue={''} />
+                          <BS.Form.Control  pattern="[A-Fa-f0-9]{6}" name="color" {...register("color")}  defaultValue={''} />
                             <BS.Form.Text>(hexcode)</BS.Form.Text>
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={2}>
@@ -320,9 +320,9 @@ export default function Memberlist() {
                     <BS.Col key={index} className="mb-lg-2" xs={12} lg={2}>
                         <BS.Form.Row>
                         <BS.InputGroup className="ml-1 mr-1 mb-1">
-                        <BS.Form.Control name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} ref={register}/> 
+                        <BS.Form.Control name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} {...register(`proxy_tags[${index}].prefix`)}/> 
                         <BS.Form.Control disabled placeholder='text'/>
-                        <BS.Form.Control name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} ref={register}/>
+                        <BS.Form.Control name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} {...register(`proxy_tags[${index}].suffix`)}/>
                         </BS.InputGroup>
                         </BS.Form.Row>
                     </BS.Col>
@@ -333,42 +333,42 @@ export default function Memberlist() {
                     <BS.Form.Row>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Label>Visibility:</BS.Form.Label>
-                        <BS.Form.Control name="visibility" as="select" ref={register}>
+                        <BS.Form.Control name="visibility" as="select" {...register("visibility")} >
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-                        <BS.Form.Control name="name_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="name_privacy" as="select" {...register("name_privacy")} >
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control name="description_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="description_privacy" as="select" {...register("description_privacy")} >
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Birthday:</BS.Form.Label>
-                        <BS.Form.Control name="birthday_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="birthday_privacy" as="select" {...register("birthday_privacy")} >
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Pronouns:</BS.Form.Label>
-                        <BS.Form.Control name="pronoun_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="pronoun_privacy" as="select" {...register("pronoun_privacy")} >
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-3" xs={12} lg={3}>
                     <BS.Form.Label>Meta:</BS.Form.Label>
-                        <BS.Form.Control name="metadata_privacy" as="select" ref={register}>
+                        <BS.Form.Control name="metadata_privacy" as="select" {...register("metadata_privacy")} >
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
@@ -377,7 +377,7 @@ export default function Memberlist() {
                 <hr/></> : "" }
                 <BS.Form.Group className="mt-3">
                         <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control maxLength="1000" as="textarea" rows="7" name="description" ref={register} defaultValue={''}/>
+                        <BS.Form.Control maxLength="1000" as="textarea" rows="7" name="description" {...register("description")}  defaultValue={''}/>
                     </BS.Form.Group>
                     <BS.Button variant="primary" type="submit">Submit</BS.Button> <BS.Button variant="light" className="float-right" onClick={closeModal}>Cancel</BS.Button>
                     </BS.Form>

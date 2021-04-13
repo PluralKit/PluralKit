@@ -29,7 +29,7 @@ export default function Public () {
                     </BS.Form.Label>
                     <BS.Form.Row>
                         <BS.Col className="mb-1"  xs={12} lg={10}>
-                            <BS.Form.Control name="sysID" ref={register} defaultValue="" />
+                            <BS.Form.Control name="sysID" {...register("sysID")} defaultValue="" />
                         </BS.Col>
                         <BS.Col>
                             <BS.Button variant="primary" type="submit" block >Submit</BS.Button>

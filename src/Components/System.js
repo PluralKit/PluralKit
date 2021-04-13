@@ -139,25 +139,25 @@ const submitPrivacy = data => {
                 <BS.Form.Row>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-               <BS.Form.Control name="name" ref={registerEdit}  defaultValue={name}/>
+               <BS.Form.Control name="name" {...registerEdit("name")}  defaultValue={name}/>
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Tag:</BS.Form.Label>
-                    <BS.Form.Control name="tag" ref={registerEdit}  defaultValue={tag}/>
+                    <BS.Form.Control name="tag" {...registerEdit("tag")}  defaultValue={tag}/>
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Timezone:</BS.Form.Label>
-                    <BS.Form.Control name="tz" ref={registerEdit}  defaultValue={timezone} required/>
+                    <BS.Form.Control name="tz" {...registerEdit("tz")}  defaultValue={timezone} required/>
                     { invalidTimezone ? <BS.Form.Text>Please enter a valid <a href='https://xske.github.io/tz/' rel="noreferrer" target="_blank">timezone</a></BS.Form.Text> : "" }
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar url:</BS.Form.Label> 
-                    <BS.Form.Control name="avatar_url" ref={registerEdit}   defaultValue={avatar}/>
+                    <BS.Form.Control name="avatar_url" {...registerEdit("avatar_url")} defaultValue={avatar}/>
                 </BS.Col>
                 </BS.Form.Row>
                 <BS.Form.Group className="mt-3">
                 <BS.Form.Label>Description:</BS.Form.Label>
-                <BS.Form.Control maxLength="1000" as="textarea" name="description" ref={registerEdit} defaultValue={editDesc}/>
+                <BS.Form.Control maxLength="1000" as="textarea" name="description" {...registerEdit("description")} defaultValue={editDesc}/>
             </BS.Form.Group>
                 <BS.Button variant="light" onClick={() => setEditMode(false)}>Cancel</BS.Button>  <BS.Button variant="primary" type="submit">Submit</BS.Button>
                 </BS.Form> :
@@ -173,28 +173,28 @@ const submitPrivacy = data => {
                     <BS.Form.Row>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control name="description_privacy" defaultValue={user.description_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="description_privacy" defaultValue={user.description_privacy} as="select" {...registerPrivacy("description_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Member list:</BS.Form.Label>
-                        <BS.Form.Control name="member_list_privacy" defaultValue={user.member_list_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="member_list_privacy" defaultValue={user.member_list_privacy} as="select" {...registerPrivacy("member_list_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Front:</BS.Form.Label>
-                        <BS.Form.Control name="front_privacy" as="select" defaultValue={user.front_privacy} ref={registerPrivacy}>
+                        <BS.Form.Control name="front_privacy" as="select" defaultValue={user.front_privacy} {...registerPrivacy("front_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Front history:</BS.Form.Label>
-                        <BS.Form.Control name="front_history_privacy" defaultValue={user.front_history_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="front_history_privacy" defaultValue={user.front_history_privacy} as="select" {...registerPrivacy("front_history_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>

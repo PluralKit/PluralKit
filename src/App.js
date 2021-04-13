@@ -58,7 +58,7 @@ export default function App() {
         headers: {
           'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
         }}).then ( res => res.json()
-        ).then (data => { 
+        ).then (data => {
           localStorage.setItem('user', JSON.stringify(data));
           setIsSubmit(true);
           setIsLoading(false);
@@ -145,7 +145,7 @@ export default function App() {
             </BS.Form.Row>
             <BS.Form.Row>
               <BS.Col xs={12} lg={10}>
-                <BS.Form.Control required name="pkToken" type="text" ref={register} placeholder="token" />
+                <BS.Form.Control required name="pkToken" type="text" {...register("pkToken")} placeholder="token" />
               </BS.Col>
               <BS.Col>
                 <BS.Button variant="primary" type="submit" block >Submit</BS.Button>

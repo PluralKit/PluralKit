@@ -254,34 +254,34 @@ export default function MemberPage(props) {
                 <BS.Form.Row>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-                   <BS.Form.Control name="name" ref={registerEdit} defaultValue={member.name} />
+                   <BS.Form.Control name="name" {...registerEdit("name")} defaultValue={member.name} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Display name: </BS.Form.Label>
-                    <BS.Form.Control name="display_name" ref={registerEdit}  defaultValue={displayName} />
+                    <BS.Form.Control name="display_name" {...registerEdit("display_name")}  defaultValue={displayName} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Birthday:</BS.Form.Label>
-                    <BS.Form.Control  pattern="^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$" name="birthday" ref={registerEdit}  defaultValue={birthdate}/>
+                    <BS.Form.Control  pattern="^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$" name="birthday" {...registerEdit("birthday")}  defaultValue={birthdate}/>
                     <BS.Form.Text>(YYYY-MM-DD)</BS.Form.Text>
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Pronouns:</BS.Form.Label>
-                    <BS.Form.Control maxLength="100" name="pronouns" ref={registerEdit} defaultValue={editPronouns} />
+                    <BS.Form.Control maxLength="100" name="pronouns" {...registerEdit("pronouns")} defaultValue={editPronouns} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar url:</BS.Form.Label> 
-                  <BS.Form.Control type="url" name="avatar_url" ref={registerEdit}  defaultValue={avatar} />
+                  <BS.Form.Control type="url" name="avatar_url" {...registerEdit("avatar_url")}  defaultValue={avatar} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Color:</BS.Form.Label> 
-                   <BS.Form.Control  pattern="[A-Fa-f0-9]{6}" name="color" ref={registerEdit}  defaultValue={color} />
+                   <BS.Form.Control  pattern="[A-Fa-f0-9]{6}" name="color" {...registerEdit("color")} defaultValue={color} />
                     <BS.Form.Text>(hexcode)</BS.Form.Text>
                 </BS.Col>
             </BS.Form.Row>
             <BS.Form.Group className="mt-3">
                 <BS.Form.Label>Description:</BS.Form.Label>
-                <BS.Form.Control maxLength="1000" as="textarea" name="description" ref={registerEdit} defaultValue={editDesc}/>
+                <BS.Form.Control maxLength="1000" as="textarea" name="description" {...registerEdit("description")} defaultValue={editDesc}/>
             </BS.Form.Group>
             <BS.Button variant="light" onClick={() => setEditMode(false)}>Cancel</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button> <BS.Button variant="danger" className="float-right" onClick={() => setOpen(o => !o)}>Delete</BS.Button>
             </BS.Form>
@@ -296,7 +296,7 @@ export default function MemberPage(props) {
                                <p>If you're sure you want to delete this member, please enter the member ID ({member.id}) below.</p>
                                <BS.Form id='Delete' onSubmit={handleSubmitDelete(deleteMember)}>
                                    <BS.Form.Label>Member ID:</BS.Form.Label>
-                                   <BS.Form.Control className="mb-4" name="memberID" ref={registerDelete({required: true})} placeholder={member.id} />
+                                   <BS.Form.Control className="mb-4" name="memberID" {...registerDelete("memberID", {required: true})} placeholder={member.id} />
                                    <BS.Button variant="danger" type="submit">Delete</BS.Button> <BS.Button variant="light" className="float-right" onClick={closeModal}>Cancel</BS.Button>
                                </BS.Form>
                            </BS.Card.Body>
@@ -320,52 +320,52 @@ export default function MemberPage(props) {
             { privacyMode ? <BS.Form id='Privacy' onSubmit={handleSubmitPrivacy(submitPrivacy)}>
                 <hr/>
                 <h5>Editing privacy settings</h5>
-                    <BS.Form.Row>
+                <BS.Form.Row>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Label>Visibility:</BS.Form.Label>
-                        <BS.Form.Control name="visibility" defaultValue={member.visibility} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="visibility" defaultValue={member.visibility} as="select" {...registerPrivacy("visibility")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Name:</BS.Form.Label>
-                        <BS.Form.Control name="name_privacy" defaultValue={member.name_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="name_privacy" defaultValue={member.name_privacy} as="select" {...registerPrivacy("name_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control name="description_privacy" defaultValue={member.description_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="description_privacy" defaultValue={member.description_privacy} as="select" {...registerPrivacy("description_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar:</BS.Form.Label>
-                        <BS.Form.Control name="avatar_privacy" defaultValue={member.avatar_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="avatar_privacy" defaultValue={member.avatar_privacy} as="select" {...registerPrivacy("avatar_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Birthday:</BS.Form.Label>
-                        <BS.Form.Control name="birthday_privacy" defaultValue={member.birthday_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="birthday_privacy" defaultValue={member.birthday_privacy} as="select" {...registerPrivacy("birthday_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Pronouns:</BS.Form.Label>
-                        <BS.Form.Control name="pronoun_privacy" defaultValue={member.pronoun_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="pronoun_privacy" defaultValue={member.pronoun_privacy} as="select" {...registerPrivacy("pronoun_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
                     </BS.Col>
                     <BS.Col className="mb-3" xs={12} lg={3}>
                     <BS.Form.Label>Meta:</BS.Form.Label>
-                        <BS.Form.Control name="metadata_privacy" defaultValue={member.metadata_privacy} as="select" ref={registerPrivacy}>
+                        <BS.Form.Control name="metadata_privacy" defaultValue={member.metadata_privacy} as="select" {...registerPrivacy("metadata_privacy")}>
                             <option>public</option>
                             <option>private</option>
                         </BS.Form.Control>
@@ -395,9 +395,9 @@ export default function MemberPage(props) {
                     <BS.Col key={index} className="mb-lg-2" xs={12} lg={2}>
                         <BS.Form.Row>
                         <BS.InputGroup className="ml-1 mr-1 mb-1">
-                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} ref={registerProxy}/> 
+                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} {...registerProxy(`proxy_tags[${index}].prefix`)}/> 
                         <BS.Form.Control as="textarea" rows="1" disabled placeholder='text'/>
-                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} ref={registerProxy}/>
+                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} {...registerProxy(`proxy_tags[${index}].suffix`)}/>
                         </BS.InputGroup>
                         </BS.Form.Row>
                     </BS.Col>
