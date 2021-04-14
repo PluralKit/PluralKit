@@ -230,6 +230,16 @@ namespace PluralKit.Bot {
                 await ctx.Rest.DeleteMessage(ctx.Message);
                 return;
             }
+            if (ctx.Match("author") || ctx.MatchFlag("author"))
+            {
+                var user = await _cache.GetOrFetchUser(_rest, message.Message.Sender);
+                var eb = new EmbedBuilder()
+                    .Author(new(user != null ? $"{user.Username}#{user.Discriminator}" : $"Deleted user ${message.Message.Sender}", IconUrl: user != null ? user.AvatarUrl() : null))
+                    .Description(message.Message.Sender.ToString());
+
+                await ctx.Reply(user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*", embed: eb.Build());
+                return;
+            }
 
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
         }
