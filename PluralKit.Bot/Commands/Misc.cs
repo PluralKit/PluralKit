@@ -126,7 +126,12 @@ namespace PluralKit.Bot {
                 if (!ulong.TryParse(guildIdStr, out var guildId))
                     throw new PKSyntaxError($"Could not parse {guildIdStr.AsCode()} as an ID.");
 
-                guild = await _rest.GetGuild(guildId);
+                try {
+                    guild = await _rest.GetGuild(guildId);
+                } catch (Myriad.Rest.Exceptions.ForbiddenException) {
+                    throw Errors.GuildNotFound(guildId);
+                }
+                
                 if (guild != null) 
                     senderGuildUser = await _rest.GetGuildMember(guildId, ctx.Author.Id);
                 if (guild == null || senderGuildUser == null) 
