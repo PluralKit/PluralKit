@@ -104,7 +104,7 @@ namespace PluralKit.API
             }
             catch (InvalidPatchException e)
             {
-                return BadRequest($"Request field is invalid: {e.Message}");
+                return BadRequest($"Request field '{e.Message}' is invalid.");
             }
             
             var newMember = await _repo.UpdateMember(conn, member.Id, patch);
