@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,22 +31,22 @@ namespace PluralKit.Core
             return conn.QuerySingleOrDefaultAsync<int>(query.ToString(), new {Id = id, PrivacyFilter = privacyFilter});
         }
         
-        public async Task<PKGroup> CreateGroup(IPKConnection conn, SystemId system, string name)
+        public async Task<PKGroup> CreateGroup(IPKConnection conn, SystemId system, string name, IDbTransaction? transaction = null)
         {
             var group = await conn.QueryFirstAsync<PKGroup>(
                 "insert into groups (hid, system, name) values (find_free_group_hid(), @System, @Name) returning *",
-                new {System = system, Name = name});
+                new {System = system, Name = name}, transaction);
             _logger.Information("Created group {GroupId} in system {SystemId}: {GroupName}", group.Id, system, name);
             return group;
         }
 
-        public Task<PKGroup> UpdateGroup(IPKConnection conn, GroupId id, GroupPatch patch)
+        public Task<PKGroup> UpdateGroup(IPKConnection conn, GroupId id, GroupPatch patch, IDbTransaction? transaction = null)
         {
             _logger.Information("Updated {GroupId}: {@GroupPatch}", id, patch);
             var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("groups", "id = @id"))
                 .WithConstant("id", id)
                 .Build("returning *");
-            return conn.QueryFirstAsync<PKGroup>(query, pms);
+            return conn.QueryFirstAsync<PKGroup>(query, pms, transaction);
         }
 
         public Task DeleteGroup(IPKConnection conn, GroupId group)

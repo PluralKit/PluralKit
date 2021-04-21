@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -140,13 +141,18 @@ namespace PluralKit.API
             try
             {
                 patch = JsonModelExt.ToSystemPatch(changes); 
+                patch.CheckIsValid();
             }
             catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
             }
+            catch (InvalidPatchException e)
+            {
+                return BadRequest($"Request field '{e.Message}' is invalid.");
+            }
 
-            await _repo.UpdateSystem(conn, system!.Id, patch);
+            system = await _repo.UpdateSystem(conn, system!.Id, patch);
             return Ok(system.ToJson(User.ContextFor(system)));
         }
 
