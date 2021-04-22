@@ -131,8 +131,9 @@ namespace PluralKit.Bot
             else
                 title.Append($"`{system.Hid}`");
 
+            var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
             var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, null, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, system.Zone, ctx.LookupContextFor(system), title.ToString()));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, system.Zone, ctx.LookupContextFor(system), title.ToString(), ignoreNoFronters));
         }
     }
 }

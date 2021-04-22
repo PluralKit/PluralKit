@@ -499,8 +499,9 @@ namespace PluralKit.Bot
             else
                 title.Append($"`{targetSystem.Hid}`");
 
+            var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
             var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString()));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString(), ignoreNoFronters));
         }
 
         private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)
