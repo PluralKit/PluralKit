@@ -321,9 +321,12 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle)
+        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters)
         {
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
+            // this is kinda messy?
+            var hasFrontersPeriod = Duration.FromTicks(breakdown.MemberSwitchDurations.Values.ToList().Sum(i => i.TotalTicks));
+
             var eb = new EmbedBuilder()
                 .Title(embedTitle)
                 .Color(DiscordUtils.Gray)
@@ -333,13 +336,13 @@ namespace PluralKit.Bot {
             // We convert to a list of pairs so we can add the no-fronter value
             // Dictionary doesn't allow for null keys so we instead have a pair with a null key ;)
             var pairs = breakdown.MemberSwitchDurations.ToList();
-            if (breakdown.NoFronterDuration != Duration.Zero)
+            if (breakdown.NoFronterDuration != Duration.Zero && !ignoreNoFronters)
                 pairs.Add(new KeyValuePair<PKMember, Duration>(null, breakdown.NoFronterDuration));
 
             var membersOrdered = pairs.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)
             {
-                var frac = pair.Value / actualPeriod;
+                var frac = pair.Value / (ignoreNoFronters ? hasFrontersPeriod : actualPeriod);
                 eb.Field(new(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({pair.Value.FormatDuration()})"));
             }
 
