@@ -160,6 +160,10 @@ namespace PluralKit.Bot {
             }
             // If we get a "NotFound" error, the message has been deleted and thus not our problem
             catch (NotFoundException) { }
+            // If we get an "Unauthorized" error, we don't have permissions to remove our reaction
+            // which means we probably didn't add it in the first place, or permissions changed since then
+            // either way, nothing to do here
+            catch (UnauthorizedException) { }
         }
         
         public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items, Func<T, string> display = null)
