@@ -38,7 +38,7 @@ namespace PluralKit.Bot
                 {"guild", evt.GuildId.ToString()},
                 {"message", evt.Id.ToString()},
             });
-            scope.SetTag("shard", shard.ShardInfo.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
 
             // Also report information about the bot's permissions in the channel
             // We get a lot of permission errors so this'll be useful for determining problems
@@ -55,7 +55,7 @@ namespace PluralKit.Bot
                     {"guild", evt.GuildId.ToString()},
                     {"message", evt.Id.ToString()},
                 });
-            scope.SetTag("shard", shard.ShardInfo.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
 
         public void Enrich(Scope scope, Shard shard, MessageUpdateEvent evt)
@@ -67,7 +67,7 @@ namespace PluralKit.Bot
                     {"guild", evt.GuildId.Value.ToString()},
                     {"message", evt.Id.ToString()}
                 });
-            scope.SetTag("shard", shard.ShardInfo.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
 
         public void Enrich(Scope scope, Shard shard, MessageDeleteBulkEvent evt)
@@ -79,7 +79,7 @@ namespace PluralKit.Bot
                     {"guild", evt.GuildId.ToString()},
                     {"messages", string.Join(",", evt.Ids)},
                 });
-            scope.SetTag("shard", shard.ShardInfo.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
 
         public void Enrich(Scope scope, Shard shard, MessageReactionAddEvent evt)
@@ -93,7 +93,7 @@ namespace PluralKit.Bot
                     {"message", evt.MessageId.ToString()},
                     {"reaction", evt.Emoji.Name}
                 });
-            scope.SetTag("shard", shard.ShardInfo.ShardId.ToString());
+            scope.SetTag("shard", shard.ShardId.ToString());
         }
     }
 }

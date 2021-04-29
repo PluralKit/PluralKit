@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-using Myriad.Types;
+﻿using Myriad.Types;
 
 namespace Myriad.Gateway
 {

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-using Myriad.Rest.Types;
+﻿using Myriad.Rest.Types;
 
 namespace Myriad.Types
 {

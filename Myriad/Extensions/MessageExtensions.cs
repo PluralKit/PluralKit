@@ -1,6 +1,4 @@
-﻿using System;
-
-using Myriad.Gateway;
+﻿using Myriad.Gateway;
 using Myriad.Types;
 
 namespace Myriad.Extensions

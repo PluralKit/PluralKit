@@ -155,6 +155,7 @@ namespace PluralKit.Bot {
                     // "escape hatch", clean up as if we hit X
                 }
 
+                // todo: re-check 
                 if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
                     await ctx.Rest.DeleteAllReactions(msg.ChannelId, msg.Id);
             }
