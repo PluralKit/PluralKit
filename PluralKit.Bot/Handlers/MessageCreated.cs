@@ -103,7 +103,7 @@ namespace PluralKit.Bot
             if (content == null) return false;
 
             // Check for command prefix
-            if (!HasCommandPrefix(content, shard.User?.Id ?? default, out var cmdStart))
+            if (!HasCommandPrefix(content, shard.User?.Id ?? default, out var cmdStart) || cmdStart == content.Length)
                 return false;
 
             // Trim leading whitespace from command without actually modifying the string
