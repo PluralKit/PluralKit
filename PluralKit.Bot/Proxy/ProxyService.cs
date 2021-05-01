@@ -116,7 +116,7 @@ namespace PluralKit.Bot
                 if (repliedTo != null)
                 {
                     var nickname = await FetchReferencedMessageAuthorNickname(trigger, repliedTo);
-                    var embed = CreateReplyEmbed(trigger, repliedTo, nickname);
+                    var embed = CreateReplyEmbed(match, trigger, repliedTo, nickname);
                     if (embed != null)
                         embeds.Add(embed);
                 }
@@ -160,7 +160,7 @@ namespace PluralKit.Bot
             }
         }
 
-        private Embed CreateReplyEmbed(Message trigger, Message repliedTo, string? nickname)
+        private Embed CreateReplyEmbed(ProxyMatch match, Message trigger, Message repliedTo, string? nickname)
         {
             // repliedTo doesn't have a GuildId field :/
             var jumpLink = $"https://discord.com/channels/{trigger.GuildId}/{repliedTo.ChannelId}/{repliedTo.Id}";
@@ -194,11 +194,14 @@ namespace PluralKit.Bot
             var username = nickname ?? repliedTo.Author.Username;
             var avatarUrl = $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";
 
+            Console.WriteLine($"color {match.Member.Color}");
+
             return new Embed
             {
                 // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
                 Author = new($"{username}\u2004\u21a9\ufe0f", IconUrl: avatarUrl),
-                Description = content.ToString()
+                Description = content.ToString(),
+                Color = match.Member.Color?.ToDiscordColor(),
             };
         }
 

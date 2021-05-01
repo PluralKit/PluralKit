@@ -64,9 +64,11 @@ create function proxy_members(account_id bigint, guild_id bigint)
         server_name text,
         display_name text,
         name text,
-        
+
         server_avatar text,
         avatar text,
+
+        color char(6),
 
         allow_autoproxy bool
     )
@@ -85,6 +87,8 @@ as $$
         -- Avatar info
         member_guild.avatar_url as server_avatar,
         members.avatar_url as avatar,
+
+        members.color as color,
 
         members.allow_autoproxy as allow_autoproxy
     from accounts
