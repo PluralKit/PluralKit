@@ -194,8 +194,6 @@ namespace PluralKit.Bot
             var username = nickname ?? repliedTo.Author.Username;
             var avatarUrl = $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";
 
-            Console.WriteLine($"color {match.Member.Color}");
-
             return new Embed
             {
                 // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
