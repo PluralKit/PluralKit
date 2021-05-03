@@ -160,8 +160,7 @@ namespace PluralKit.Bot
                 var timeoutStr = ctx.RemainderOrNull();
                 var timeoutPeriod = DateUtils.ParsePeriod(timeoutStr);
                 if (timeoutPeriod == null) throw new PKError($"Could not parse '{timeoutStr}' as a valid duration. Try using a syntax such as \"3h5m\" (i.e. 3 hours and 5 minutes).");
-                Console.WriteLine(timeoutPeriod.Value.TotalHours);
-                if (timeoutPeriod.Value.TotalHours > (ulong)100000)
+                if (timeoutPeriod.Value.TotalHours > 100000)
                 {
                     // sanity check to prevent seconds overflow if someone types in 999999999
                     overflow = timeoutPeriod.Value;
@@ -170,7 +169,6 @@ namespace PluralKit.Bot
                 else newTimeout = timeoutPeriod;
             }
 
-            var timeoutSeconds = newTimeout.HasValue ? newTimeout?.TotalSeconds : -1;
             await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, 
                 new SystemPatch { LatchTimeout = (int?) newTimeout?.TotalSeconds }));
             
