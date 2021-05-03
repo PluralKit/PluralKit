@@ -36,20 +36,20 @@ namespace PluralKit.Bot
 
         private string NormalizeRoutePath(string url)
         {
-            url = Regex.Replace(url, @"/channels/\d{17,19}", "/channels/{channel_id}");
-            url = Regex.Replace(url, @"/messages/\d{17,19}", "/messages/{message_id}");
-            url = Regex.Replace(url, @"/members/\d{17,19}", "/members/{user_id}");
-            url = Regex.Replace(url, @"/webhooks/\d{17,19}/[^/]+", "/webhooks/{webhook_id}/{webhook_token}");
-            url = Regex.Replace(url, @"/webhooks/\d{17,19}", "/webhooks/{webhook_id}");
-            url = Regex.Replace(url, @"/users/\d{17,19}", "/users/{user_id}");
-            url = Regex.Replace(url, @"/bans/\d{17,19}", "/bans/{user_id}");
-            url = Regex.Replace(url, @"/roles/\d{17,19}", "/roles/{role_id}");
-            url = Regex.Replace(url, @"/pins/\d{17,19}", "/pins/{message_id}");
-            url = Regex.Replace(url, @"/emojis/\d{17,19}", "/emojis/{emoji_id}");
-            url = Regex.Replace(url, @"/guilds/\d{17,19}", "/guilds/{guild_id}");
-            url = Regex.Replace(url, @"/integrations/\d{17,19}", "/integrations/{integration_id}");
-            url = Regex.Replace(url, @"/permissions/\d{17,19}", "/permissions/{overwrite_id}");
-            url = Regex.Replace(url, @"/reactions/[^{/]+/\d{17,19}", "/reactions/{emoji}/{user_id}");
+            url = Regex.Replace(url, @"/channels/\d+", "/channels/{channel_id}");
+            url = Regex.Replace(url, @"/messages/\d+", "/messages/{message_id}");
+            url = Regex.Replace(url, @"/members/\d+", "/members/{user_id}");
+            url = Regex.Replace(url, @"/webhooks/\d+/[^/]+", "/webhooks/{webhook_id}/{webhook_token}");
+            url = Regex.Replace(url, @"/webhooks/\d+", "/webhooks/{webhook_id}");
+            url = Regex.Replace(url, @"/users/\d+", "/users/{user_id}");
+            url = Regex.Replace(url, @"/bans/\d+", "/bans/{user_id}");
+            url = Regex.Replace(url, @"/roles/\d+", "/roles/{role_id}");
+            url = Regex.Replace(url, @"/pins/\d+", "/pins/{message_id}");
+            url = Regex.Replace(url, @"/emojis/\d+", "/emojis/{emoji_id}");
+            url = Regex.Replace(url, @"/guilds/\d+", "/guilds/{guild_id}");
+            url = Regex.Replace(url, @"/integrations/\d+", "/integrations/{integration_id}");
+            url = Regex.Replace(url, @"/permissions/\d+", "/permissions/{overwrite_id}");
+            url = Regex.Replace(url, @"/reactions/[^{/]+/\d+", "/reactions/{emoji}/{user_id}");
             url = Regex.Replace(url, @"/reactions/[^{/]+", "/reactions/{emoji}");
             url = Regex.Replace(url, @"/invites/[^{/]+", "/invites/{invite_code}");
             
