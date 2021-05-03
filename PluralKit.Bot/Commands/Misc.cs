@@ -215,17 +215,16 @@ namespace PluralKit.Bot {
         
         public async Task GetMessage(Context ctx)
         {
-            var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a message ID or link.");
-
-            ulong messageId;
-            if (ulong.TryParse(word, out var id))
-                messageId = id;
-            else if (Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
-                messageId = ulong.Parse(match.Groups[1].Value);
-            else throw new PKSyntaxError($"Could not parse {word.AsCode()} as a message ID or link.");
-
-            var message = await _db.Execute(c => _repo.GetMessage(c, messageId));
-            if (message == null) throw Errors.MessageNotFound(messageId);
+            var messageId = ctx.MatchMessage(true);
+            if (messageId == null)
+            {
+                if (!ctx.HasNext())
+                    throw new PKSyntaxError("You must pass a message ID or link.");
+                throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
+            }
+            
+            var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
+            if (message == null) throw Errors.MessageNotFound(messageId.Value);
 
             if (ctx.Match("delete") || ctx.MatchFlag("delete"))
             {

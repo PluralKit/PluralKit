@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -66,6 +69,27 @@ namespace PluralKit.Bot
             if (matched && toClear != null) 
                 return await ctx.ConfirmClear(toClear);
             return matched;
+        }
+
+        public static ulong? MatchMessage(this Context ctx, bool parseRawMessageId)
+        {
+            if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference != null)
+                return ctx.Message.MessageReference.MessageId;
+
+            var word = ctx.PeekArgument();
+            if (word == null)
+                return null;
+
+            if (parseRawMessageId && ulong.TryParse(word, out var mid))
+                return mid;
+            
+            var match = Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)");
+            if (!match.Success)
+                return null;
+            
+            var messageId = ulong.Parse(match.Groups[1].Value);
+            ctx.PopArgument();
+            return messageId;
         }
 
         public static async Task<List<PKMember>> ParseMemberList(this Context ctx, SystemId? restrictToSystem)

@@ -76,6 +76,18 @@ namespace PluralKit.Bot
             return webhookMessage;
         }
 
+        public async Task<Message> EditWebhookMessage(ulong channelId, ulong messageId, string newContent)
+        {
+            var webhook = await _webhookCache.GetWebhook(channelId);
+            var allowedMentions = newContent.ParseMentions() with {
+                Roles = Array.Empty<ulong>(),
+                Parse = Array.Empty<AllowedMentions.ParseType>()
+            };
+
+            return await _rest.EditWebhookMessage(webhook.Id, webhook.Token, messageId,
+                new WebhookMessageEditRequest {Content = newContent, AllowedMentions = allowedMentions});
+        }
+        
         private async Task<Message> ExecuteWebhookInner(Webhook webhook, ProxyRequest req, bool hasRetried = false)
         {
             var guild = _cache.GetGuild(req.GuildId);
