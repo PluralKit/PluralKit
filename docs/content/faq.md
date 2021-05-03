@@ -76,3 +76,6 @@ If you are on mobile and are having issues, try copy-pasting the link into your 
 
 ### Why are my member lists broken on mobile?
 This is a bug in Discord's mobile client. It handles formatting slightly different than other clients. This can't be fixed without breaking things elsewhere, so we're waiting for a fix on their end.
+
+### Why is my time showing up incorrectly after Daylight savings time change?
+You probably set your timezone in PluralKit to a specific timezone, and PluralKit doesn't know how to calculate daylight savings time with that. Instead, set your timezone to a city (for example, "America/Toronto") - you can find your correct city identifier on <https://xske.github.io/tz>
