@@ -112,6 +112,19 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
+        public Embed CreateEditedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, string oldContent, Channel channel) {
+            var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
+            var name = member.NameFor(LookupContext.ByNonOwner); 
+            return new EmbedBuilder()
+                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner))))
+                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner)))
+                .Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)))
+                .Description(content?.NormalizeLineEndSpacing())
+                .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
+                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
+                .Build();
+        }
+
         public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)
         {
 
