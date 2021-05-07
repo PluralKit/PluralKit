@@ -323,13 +323,29 @@ namespace PluralKit.Bot {
 
         public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters)
         {
+            string color = system.Color;
+            if (group != null) 
+            {
+                color = group.Color;
+            }
+
+            uint embedColor;
+            try
+            {
+                embedColor = color?.ToDiscordColor() ?? DiscordUtils.Gray;
+            }
+            catch (ArgumentException)
+            {
+                embedColor = DiscordUtils.Gray;
+            }
+          
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
             // this is kinda messy?
             var hasFrontersPeriod = Duration.FromTicks(breakdown.MemberSwitchDurations.Values.ToList().Sum(i => i.TotalTicks));
 
             var eb = new EmbedBuilder()
                 .Title(embedTitle)
-                .Color(DiscordUtils.Gray)
+                .Color(embedColor)
                 .Footer(new($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)"));
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
