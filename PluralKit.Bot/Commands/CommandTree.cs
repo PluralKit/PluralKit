@@ -18,7 +18,7 @@ namespace PluralKit.Bot
         public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
-        public static Command SystemProxy = new Command("system proxy", "system proxy [on|off]", "Enables or disables message proxying in a specific server");
+        public static Command SystemProxy = new Command("system proxy", "system proxy [server id] [on|off]", "Enables or disables message proxying in a specific server");
         public static Command SystemList = new Command("system list", "system [system] list [full]", "Lists a system's members");
         public static Command SystemFind = new Command("system find", "system [system] find [full] <search term>", "Searches a system's members given a search term");
         public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
@@ -78,7 +78,8 @@ namespace PluralKit.Bot
         public static Command Export = new Command("export", "export", "Exports system information to a data file");
         public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
-        public static Command Message = new Command("message", "message <id|link> [delete]", "Looks up a proxied message");
+        public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
+        public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
         public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
@@ -160,6 +161,8 @@ namespace PluralKit.Bot
                 return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
             if (ctx.Match("message", "msg"))
                 return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
+            if (ctx.Match("edit", "e"))
+                return ctx.Execute<MessageEdit>(MessageEdit, m => m.EditMessage(ctx));
             if (ctx.Match("log"))
                 if (ctx.Match("channel"))
                     return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));

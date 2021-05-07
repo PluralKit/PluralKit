@@ -42,6 +42,18 @@ namespace PluralKit.Core
                 _logger.Information("Bulk deleted messages ({FoundCount} found) from database: {MessageIds}", rowCount,
                     ids);
         }
+
+        public async Task<PKMessage?> GetLastMessage(IPKConnection conn, ulong guildId, ulong channelId, ulong accountId)
+        {
+            // Want to index scan on the (guild, sender, mid) index so need the additional constraint
+            return await conn.QuerySingleOrDefaultAsync<PKMessage>(
+                "select * from messages where guild = @Guild and channel = @Channel and sender = @Sender order by mid desc limit 1", new
+                {
+                    Guild = guildId,
+                    Channel = channelId,
+                    Sender = accountId
+                });
+        }
     }
 
     public class PKMessage

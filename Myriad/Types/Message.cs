@@ -54,7 +54,7 @@ namespace Myriad.Types
         public ulong[] MentionRoles { get; init; }
 
         public Attachment[] Attachments { get; init; }
-        public Embed[] Embeds { get; init; }
+        public Embed[]? Embeds { get; init; }
         public Reaction[] Reactions { get; init; }
         public bool Pinned { get; init; }
         public ulong? WebhookId { get; init; }

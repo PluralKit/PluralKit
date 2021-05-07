@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Myriad.Builders;
+using Myriad.Types;
 
 using NodaTime;
 using NodaTime.Text;
@@ -232,8 +233,18 @@ namespace PluralKit.Bot
         
         public async Task SystemProxy(Context ctx)
         {
-            ctx.CheckSystem().CheckGuildContext();
-            var gs = await _db.Execute(c => _repo.GetSystemGuild(c, ctx.Guild.Id, ctx.System.Id));
+            ctx.CheckSystem();
+
+            var guild = ctx.MatchGuild() ?? ctx.Guild ??
+                throw new PKError("You must run this command in a server or pass a server ID.");
+
+            var gs = await _db.Execute(c => _repo.GetSystemGuild(c, guild.Id, ctx.System.Id));
+
+            string serverText;
+            if (guild.Id == ctx.Guild?.Id)
+                serverText = $"this server ({guild.Name.EscapeMarkdown()})";
+            else
+                serverText = $"the server {guild.Name.EscapeMarkdown()}";
 
             bool newValue;
             if (ctx.Match("on", "enabled", "true", "yes")) newValue = true;
@@ -242,19 +253,19 @@ namespace PluralKit.Bot
             else
             {
                 if (gs.ProxyEnabled)
-                    await ctx.Reply("Proxying in this server is currently **enabled** for your system. To disable it, type `pk;system proxy off`.");
+                    await ctx.Reply($"Proxying in {serverText} is currently **enabled** for your system. To disable it, type `pk;system proxy off`.");
                 else
-                    await ctx.Reply("Proxying in this server is currently **disabled** for your system. To enable it, type `pk;system proxy on`.");
+                    await ctx.Reply($"Proxying in {serverText} is currently **disabled** for your system. To enable it, type `pk;system proxy on`.");
                 return;
             }
 
             var patch = new SystemGuildPatch {ProxyEnabled = newValue};
-            await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+            await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, guild.Id, patch));
 
             if (newValue)
-                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **enabled** for your system.");
+                await ctx.Reply($"Message proxying in {serverText} is now **enabled** for your system.");
             else
-                await ctx.Reply($"Message proxying in this server ({ctx.Guild.Name.EscapeMarkdown()}) is now **disabled** for your system.");
+                await ctx.Reply($"Message proxying in {serverText} is now **disabled** for your system.");
         }
         
          public async Task SystemTimezone(Context ctx)

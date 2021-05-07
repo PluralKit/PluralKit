@@ -26,6 +26,7 @@ namespace PluralKit.Bot
             {
                 // // Make sure there's one and only one instance of "text" in the example proxy given
                 var prefixAndSuffix = exampleProxy.Split("text");
+                if (prefixAndSuffix.Length == 1) prefixAndSuffix = prefixAndSuffix[0].Split("TEXT");
                 if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
                 if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
                 return new ProxyTag(prefixAndSuffix[0], prefixAndSuffix[1]);

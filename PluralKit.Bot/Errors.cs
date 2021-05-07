@@ -98,7 +98,7 @@ namespace PluralKit.Bot {
         public static PKError DurationParseError(string durationStr) => new PKError($"Could not parse {durationStr.AsCode()} as a valid duration. Try a format such as `30d`, `1d3h` or `20m30s`.");
         public static PKError FrontPercentTimeInFuture => new PKError("Cannot get the front percent between now and a time in the future.");
 
-        public static PKError GuildNotFound(ulong guildId) => new PKError($"Guild with ID {guildId} not found. Note that you must be a member of the guild you are querying.");
+        public static PKError GuildNotFound(ulong guildId) => new PKError($"Guild with ID `{guildId}` not found, or I cannot access it. Note that you must be a member of the guild you are querying.");
 
         public static PKError DisplayNameTooLong(string displayName, int maxLength) => new PKError(
             $"Display name too long ({displayName.Length} > {maxLength} characters). Use a shorter display name, or shorten your system tag.");

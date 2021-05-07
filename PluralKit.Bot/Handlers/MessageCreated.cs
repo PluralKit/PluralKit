@@ -53,7 +53,7 @@ namespace PluralKit.Bot
 
         private bool IsDuplicateMessage(Message msg) =>
             // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
-            _lastMessageCache.GetLastMessage(msg.ChannelId)?.mid == msg.Id;
+            _lastMessageCache.GetLastMessage(msg.ChannelId)?.Id == msg.Id;
 
         public async Task Handle(Shard shard, MessageCreateEvent evt)
         {
@@ -103,7 +103,7 @@ namespace PluralKit.Bot
             if (content == null) return false;
 
             // Check for command prefix
-            if (!HasCommandPrefix(content, shard.User?.Id ?? default, out var cmdStart))
+            if (!HasCommandPrefix(content, shard.User?.Id ?? default, out var cmdStart) || cmdStart == content.Length)
                 return false;
 
             // Trim leading whitespace from command without actually modifying the string

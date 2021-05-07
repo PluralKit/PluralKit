@@ -163,7 +163,7 @@ namespace PluralKit.Bot
             // Auttaja has an optional "compact mode" that logs without embeds
             // That one puts the ID in the message content, non-compact puts it in the embed description.
             // Regex also checks that this is a deletion.
-            var stringWithId = msg.Embeds.FirstOrDefault()?.Description ?? msg.Content;
+            var stringWithId = msg.Embeds?.FirstOrDefault()?.Description ?? msg.Content;
             if (stringWithId == null) return null;
             
             var match = _auttajaRegex.Match(stringWithId);
@@ -173,7 +173,7 @@ namespace PluralKit.Bot
         private static ulong? ExtractDyno(Message msg)
         {
             // Embed *description* contains "Message sent by [mention] deleted in [channel]", contains message ID in footer per regex
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || !(embed.Description?.Contains("deleted in") ?? false)) return null;
             var match = _dynoRegex.Match(embed.Footer.Text ?? "");
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
@@ -183,7 +183,7 @@ namespace PluralKit.Bot
         {
             // This is for Logger#6088 (298822483060981760), distinct from Logger#6278 (327424261180620801).
             // Embed contains title "Message deleted in [channel]", and an ID field containing both message and user ID (see regex).
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed == null) return null;
             if (!embed.Description.StartsWith("Message deleted in")) return null;
             
@@ -197,7 +197,7 @@ namespace PluralKit.Bot
         {
             // This is for Logger#6278 (327424261180620801), distinct from Logger#6088 (298822483060981760).
             // Embed title ends with "A Message Was Deleted!", footer contains message ID as per regex.
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || !(embed.Title?.EndsWith("A Message Was Deleted!") ?? false)) return null;
             var match = _loggerBRegex.Match(embed.Footer.Text ?? "");
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
@@ -206,7 +206,7 @@ namespace PluralKit.Bot
         private static ulong? ExtractGenericBot(Message msg)
         {
             // Embed, title is "Message Deleted", ID plain in footer.
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || !(embed.Title?.Contains("Message Deleted") ?? false)) return null;
             var match = _basicRegex.Match(embed.Footer.Text ?? "");
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
@@ -215,7 +215,7 @@ namespace PluralKit.Bot
         private static ulong? ExtractBlargBot(Message msg)
         {
             // Embed, title ends with "Message Deleted", contains ID plain in a field.
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed == null || !(embed.Title?.EndsWith("Message Deleted") ?? false)) return null;
             var field = embed.Fields.FirstOrDefault(f => f.Name == "Message ID");
             var match = _basicRegex.Match(field.Value ?? "");
@@ -234,7 +234,7 @@ namespace PluralKit.Bot
         {
             // Embed, title is "Message deleted in [channel], **user** ID in the footer, timestamp as, well, timestamp in embed.
             // This is the *deletion* timestamp, which we can assume is a couple seconds at most after the message was originally sent
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || embed.Timestamp == null || !(embed.Title?.StartsWith("Message deleted in") ?? false)) return null;
             var match = _carlRegex.Match(embed.Footer.Text ?? "");
             return match.Success 
@@ -252,9 +252,9 @@ namespace PluralKit.Bot
             // Compact: "Message from [user] ([id]) deleted in [channel]", no timestamp (use message time)
             // Embed: Message Author field: "[user] ([id])", then an embed timestamp
             string stringWithId = msg.Content;
-            if (msg.Embeds.Length > 0)
+            if (msg.Embeds?.Length > 0)
             {
-                var embed = msg.Embeds.First();
+                var embed = msg.Embeds?.First();
                 if (embed.Author?.Name == null || !embed.Author.Name.StartsWith("Message Deleted in")) return null;
                 var field = embed.Fields.FirstOrDefault(f => f.Name == "Message Author");
                 if (field.Value == null) return null;
@@ -275,7 +275,7 @@ namespace PluralKit.Bot
         {
             // Embed, author is "Message Deleted", description includes a mention, timestamp is *message send time* (but no ID)
             // so we use the message timestamp to get somewhere *after* the message was proxied
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Description == null || embed.Author?.Name != "Message Deleted") return null;
             var match = _pancakeRegex.Match(embed.Description);
             return match.Success
@@ -290,7 +290,7 @@ namespace PluralKit.Bot
         private static ulong? ExtractUnbelievaBoat(Message msg)
         {
             // Embed author is "Message Deleted", footer contains message ID per regex
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || embed.Author?.Name != "Message Deleted") return null;
             var match = _unbelievaboatRegex.Match(embed.Footer.Text ?? "");
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
@@ -299,7 +299,7 @@ namespace PluralKit.Bot
         private static FuzzyExtractResult? ExtractVanessa(Message msg)
         {
             // Title is "Message Deleted", embed description contains mention
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Title == null || embed.Title != "Message Deleted" || embed.Description == null) return null;
             var match = _vanessaRegex.Match(embed.Description);
             return match.Success
@@ -314,7 +314,7 @@ namespace PluralKit.Bot
         private static FuzzyExtractResult? ExtractSAL(Message msg)
         {
             // Title is "Message Deleted!", field "Message Author" contains ID
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Title == null || embed.Title != "Message Deleted!") return null;
             var authorField = embed.Fields.FirstOrDefault(f => f.Name == "Message Author");
             if (authorField == null) return null;
@@ -345,7 +345,7 @@ namespace PluralKit.Bot
 
         private static ulong? ExtractGiselleBot(Message msg)
         {
-            var embed = msg.Embeds.FirstOrDefault();
+            var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Title == null || embed.Title != "🗑 Message Deleted") return null;
             var match = _GiselleRegex.Match(embed?.Description);
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;

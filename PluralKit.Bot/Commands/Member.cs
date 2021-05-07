@@ -1,7 +1,9 @@
+using System;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
 using System.Web;
+using System.Linq;
 
 using Dapper;
 
@@ -53,13 +55,30 @@ namespace PluralKit.Bot
             // Create the member
             var member = await _repo.CreateMember(conn, ctx.System.Id, memberName);
             memberCount++;
-            
+
+            // Try to match an image attached to the message
+            var avatarArg = ctx.Message.Attachments.FirstOrDefault();
+            Exception imageMatchError = null;
+            if (avatarArg != null)
+            {
+                try {
+                    await AvatarUtils.VerifyAvatarOrThrow(avatarArg.Url);
+                    await _db.Execute(conn => _repo.UpdateMember(conn, member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }));
+                } catch (Exception e) {
+                    imageMatchError = e;
+                }
+            }
+
             // Send confirmation and space hint
             await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
             if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new {System = ctx.System.Id}))) //if has private members
                 await ctx.Reply($"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
-
+            if (avatarArg != null)
+                if (imageMatchError == null)
+                    await ctx.Reply($"{Emojis.Success} Member avatar set to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.");
+                else
+                    await ctx.Reply($"{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}");
             if (memberName.Contains(" "))
                 await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
             if (memberCount >= memberLimit)

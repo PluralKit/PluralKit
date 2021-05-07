@@ -54,6 +54,7 @@ namespace PluralKit.Bot
             builder.RegisterType<MemberEdit>().AsSelf();
             builder.RegisterType<MemberGroup>().AsSelf();
             builder.RegisterType<MemberProxy>().AsSelf();
+            builder.RegisterType<MessageEdit>().AsSelf();
             builder.RegisterType<Misc>().AsSelf();
             builder.RegisterType<Random>().AsSelf();
             builder.RegisterType<ServerConfig>().AsSelf();

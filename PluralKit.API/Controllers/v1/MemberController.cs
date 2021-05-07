@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -54,18 +55,28 @@ namespace PluralKit.API
             if (memberCount >= memberLimit)
                 return BadRequest($"Member limit reached ({memberCount} / {memberLimit}).");
 
-            var member = await _repo.CreateMember(conn, systemId, properties.Value<string>("name"));
+            await using var tx = await conn.BeginTransactionAsync();
+            var member = await _repo.CreateMember(conn, systemId, properties.Value<string>("name"), transaction: tx);
+
             MemberPatch patch;
             try
             {
                 patch = JsonModelExt.ToMemberPatch(properties);
+                patch.CheckIsValid();
             }
             catch (JsonModelParseError e)
             {
+                await tx.RollbackAsync();
                 return BadRequest(e.Message);
             }
+            catch (InvalidPatchException e)
+            {
+                await tx.RollbackAsync();
+                return BadRequest($"Request field '{e.Message}' is invalid.");
+            }
             
-            member = await _repo.UpdateMember(conn, member.Id, patch);
+            member = await _repo.UpdateMember(conn, member.Id, patch, transaction: tx);
+            await tx.CommitAsync();
             return Ok(member.ToJson(User.ContextFor(member)));
         }
 
@@ -85,10 +96,15 @@ namespace PluralKit.API
             try
             {
                 patch = JsonModelExt.ToMemberPatch(changes);
+                patch.CheckIsValid();
             }
             catch (JsonModelParseError e)
             {
                 return BadRequest(e.Message);
+            }
+            catch (InvalidPatchException e)
+            {
+                return BadRequest($"Request field '{e.Message}' is invalid.");
             }
             
             var newMember = await _repo.UpdateMember(conn, member.Id, patch);

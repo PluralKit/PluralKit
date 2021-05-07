@@ -103,15 +103,30 @@ namespace PluralKit.Bot
             }
             else if (!ctx.HasNext())
             {
-                // No perms check, display name isn't covered by member privacy 
-                var eb = new EmbedBuilder()
-                    .Field(new("Name", target.Name))
-                    .Field(new("Display Name", target.DisplayName ?? "*(none)*"));
-                
-                if (ctx.System?.Id == target.System)
-                    eb.Description($"To change display name, type `pk;group {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;group {target.Reference()} displayname -clear`.");
-                
-                await ctx.Reply(embed: eb.Build());
+                // No perms check, display name isn't covered by member privacy
+                if (ctx.MatchFlag("r", "raw"))
+                {
+                    if (target.DisplayName == null)
+                    {
+                        if (ctx.System?.Id == target.System)
+                            await ctx.Reply($"This group does not have a display name set. To set one, type `pk;group {target.Reference()} displayname <display name>`.");
+                        else
+                            await ctx.Reply("This group does not have a display name set.");
+                    }
+                    else
+                        await ctx.Reply($"```\n{target.DisplayName}\n```");
+                }
+                else
+                {
+                    var eb = new EmbedBuilder()
+                        .Field(new("Name", target.Name))
+                        .Field(new("Display Name", target.DisplayName ?? "*(none)*"));
+                    
+                    if (ctx.System?.Id == target.System)
+                        eb.Description($"To change display name, type `pk;group {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;group {target.Reference()} displayname -clear`.\nTo print the raw display name, type `pk;group {target.Reference()} displayname -raw`.");
+                    
+                    await ctx.Reply(embed: eb.Build());
+                }
             }
             else
             {
@@ -499,8 +514,9 @@ namespace PluralKit.Bot
             else
                 title.Append($"`{targetSystem.Hid}`");
 
+            var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
             var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString()));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString(), ignoreNoFronters));
         }
 
         private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)

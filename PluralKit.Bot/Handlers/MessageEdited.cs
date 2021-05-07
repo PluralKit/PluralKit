@@ -11,6 +11,8 @@ using Myriad.Types;
 
 using PluralKit.Core;
 
+using Serilog;
+
 
 namespace PluralKit.Bot
 {
@@ -25,9 +27,9 @@ namespace PluralKit.Bot
         private readonly IDiscordCache _cache;
         private readonly Bot _bot;
         private readonly DiscordApiClient _rest;
+        private readonly ILogger _logger;
         
-
-        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics, ModelRepository repo, Cluster client, IDiscordCache cache, Bot bot, DiscordApiClient rest)
+        public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics, ModelRepository repo, Cluster client, IDiscordCache cache, Bot bot, DiscordApiClient rest, ILogger logger)
         {
             _lastMessageCache = lastMessageCache;
             _proxy = proxy;
@@ -38,6 +40,7 @@ namespace PluralKit.Bot
             _cache = cache;
             _bot = bot;
             _rest = rest;
+            _logger = logger.ForContext<MessageEdited>();
         }
 
         public async Task Handle(Shard shard, MessageUpdateEvent evt)
@@ -55,7 +58,7 @@ namespace PluralKit.Bot
             var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId);
 
             // Only react to the last message in the channel
-            if (lastMessage?.mid != evt.Id)
+            if (lastMessage?.Id != evt.Id)
                 return;
             
             // Just run the normal message handling code, with a flag to disable autoproxying
@@ -64,8 +67,23 @@ namespace PluralKit.Bot
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
                 ctx = await _repo.GetMessageContext(conn, evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
 
-            Message referencedMessage = (lastMessage.referenced_message != null) ? await _rest.GetMessage(evt.ChannelId, lastMessage.referenced_message.Value) : null;
+            var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
+            var botPermissions = _bot.PermissionsIn(channel.Id);
+            await _proxy.HandleIncomingMessage(shard, equivalentEvt, ctx, allowAutoproxy: false, guild: guild, channel: channel, botPermissions: botPermissions);
+        }
 
+        private async Task<MessageCreateEvent> GetMessageCreateEvent(MessageUpdateEvent evt, CachedMessage lastMessage, Channel channel)
+        {
+            var referencedMessage = await GetReferencedMessage(evt.ChannelId, lastMessage.ReferencedMessage);
+
+            var messageReference = lastMessage.ReferencedMessage != null
+                ? new Message.Reference(channel.GuildId, evt.ChannelId, lastMessage.ReferencedMessage.Value)
+                : null;
+            
+            var messageType = lastMessage.ReferencedMessage != null 
+                ? Message.MessageType.Reply 
+                : Message.MessageType.Default;
+            
             // TODO: is this missing anything?
             var equivalentEvt = new MessageCreateEvent
             {
@@ -76,12 +94,27 @@ namespace PluralKit.Bot
                 Member = evt.Member.Value,
                 Content = evt.Content.Value,
                 Attachments = evt.Attachments.Value ?? Array.Empty<Message.Attachment>(),
-                MessageReference = (lastMessage.referenced_message != null) ? new (channel.GuildId, evt.ChannelId, lastMessage.referenced_message.Value) : null,
+                MessageReference = messageReference,
                 ReferencedMessage = referencedMessage,
-                Type = (lastMessage.referenced_message != null) ? Message.MessageType.Reply : Message.MessageType.Default,
+                Type = messageType,
             };
-            var botPermissions = _bot.PermissionsIn(channel.Id);
-            await _proxy.HandleIncomingMessage(shard, equivalentEvt, ctx, allowAutoproxy: false, guild: guild, channel: channel, botPermissions: botPermissions);
+            return equivalentEvt;
+        }
+
+        private async Task<Message?> GetReferencedMessage(ulong channelId, ulong? referencedMessageId)
+        {
+            if (referencedMessageId == null)
+                return null;
+            
+            var botPermissions = _bot.PermissionsIn(channelId);
+            if (!botPermissions.HasFlag(PermissionSet.ReadMessageHistory))
+            {
+                _logger.Warning("Tried to get referenced message in channel {ChannelId} to reply but bot does not have Read Message History",
+                    channelId);
+                return null;
+            }
+
+            return await _rest.GetMessage(channelId, referencedMessageId.Value);
         }
     }
 }
