@@ -1,4 +1,6 @@
 ﻿#nullable enable
+using System.Text.RegularExpressions;
+
 namespace PluralKit.Core
 {
     public class GroupPatch: PatchObject
@@ -24,5 +26,14 @@ namespace PluralKit.Core
             .With("icon_privacy", IconPrivacy)
             .With("list_privacy", ListPrivacy)
             .With("visibility", Visibility);
+
+        public new void CheckIsValid()
+        {
+            if (Icon.Value != null && !MiscUtils.TryMatchUri(Icon.Value, out var avatarUri))
+                throw new InvalidPatchException("avatar_url");
+            if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
+                throw new InvalidPatchException("color");
+        }
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.Text.RegularExpressions;
 
 using NodaTime;
 
@@ -44,5 +45,14 @@ namespace PluralKit.Core
             .With("birthday_privacy", BirthdayPrivacy)
             .With("avatar_privacy", AvatarPrivacy)
             .With("metadata_privacy", MetadataPrivacy);
+
+        public new void CheckIsValid()
+        {
+            if (AvatarUrl.Value != null && !MiscUtils.TryMatchUri(AvatarUrl.Value, out var avatarUri))
+                throw new InvalidPatchException("avatar_url");
+            if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
+                throw new InvalidPatchException("color");
+        }
+
     }
 }

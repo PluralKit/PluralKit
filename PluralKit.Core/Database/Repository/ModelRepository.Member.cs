@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.Data;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -19,23 +20,23 @@ namespace PluralKit.Core
         public Task<PKMember?> GetMemberByDisplayName(IPKConnection conn, SystemId system, string name) => 
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where lower(display_name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system });
 
-        public async Task<PKMember> CreateMember(IPKConnection conn, SystemId id, string memberName)
+        public async Task<PKMember> CreateMember(IPKConnection conn, SystemId id, string memberName, IDbTransaction? transaction = null)
         {
             var member = await conn.QueryFirstAsync<PKMember>(
                 "insert into members (hid, system, name) values (find_free_member_hid(), @SystemId, @Name) returning *",
-                new {SystemId = id, Name = memberName});
+                new {SystemId = id, Name = memberName}, transaction);
             _logger.Information("Created {MemberId} in {SystemId}: {MemberName}",
                 member.Id, id, memberName);
             return member;
         }
 
-        public Task<PKMember> UpdateMember(IPKConnection conn, MemberId id, MemberPatch patch)
+        public Task<PKMember> UpdateMember(IPKConnection conn, MemberId id, MemberPatch patch, IDbTransaction? transaction = null)
         {
             _logger.Information("Updated {MemberId}: {@MemberPatch}", id, patch);
             var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("members", "id = @id"))
                 .WithConstant("id", id)
                 .Build("returning *");
-            return conn.QueryFirstAsync<PKMember>(query, pms);
+            return conn.QueryFirstAsync<PKMember>(query, pms, transaction);
         }
 
         public Task DeleteMember(IPKConnection conn, MemberId id)
