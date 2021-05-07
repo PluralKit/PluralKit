@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,13 +33,14 @@ namespace PluralKit.Core
         }
 
         public override Task<int> ExecuteNonQueryAsync(CancellationToken ct) => LogQuery(Inner.ExecuteNonQueryAsync(ct));
-        public override Task<object> ExecuteScalarAsync(CancellationToken ct) => LogQuery(Inner.ExecuteScalarAsync(ct));
+        public override Task<object?> ExecuteScalarAsync(CancellationToken ct) => LogQuery(Inner.ExecuteScalarAsync(ct));
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken ct) => await LogQuery(Inner.ExecuteReaderAsync(behavior, ct));
 
         public override Task PrepareAsync(CancellationToken ct = default) => Inner.PrepareAsync(ct);
         public override void Cancel() => Inner.Cancel();
         protected override DbParameter CreateDbParameter() => Inner.CreateParameter();
 
+        [AllowNull]
         public override string CommandText
         {
             get => Inner.CommandText;

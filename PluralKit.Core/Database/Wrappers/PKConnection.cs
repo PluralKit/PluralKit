@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -73,13 +74,14 @@ namespace PluralKit.Core
         IDbTransaction IPKConnection.BeginTransaction() => throw SyncError(nameof(BeginTransaction));
         IDbTransaction IPKConnection.BeginTransaction(IsolationLevel level) => throw SyncError(nameof(BeginTransaction));
 
+        [AllowNull]
         public override string ConnectionString
         {
             get => Inner.ConnectionString;
             set => Inner.ConnectionString = value;
         }
 
-        public override string? Database => Inner.Database;
+        public override string Database => Inner.Database!;
         public override ConnectionState State => Inner.State;
         public override string DataSource => Inner.DataSource;
         public override string ServerVersion => Inner.ServerVersion;

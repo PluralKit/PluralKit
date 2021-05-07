@@ -155,19 +155,19 @@ namespace PluralKit.Bot
             return $"Group not found. Note that a group ID is 5 characters long.";
         }
         
-        public static async Task<Channel> MatchChannel(this Context ctx)
+        public static Task<Channel> MatchChannel(this Context ctx)
         {
             if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id)) 
-                return null;
+                return Task.FromResult<Channel>(null);
 
             if (!ctx.Cache.TryGetChannel(id, out var channel))
-                return null;
+                return Task.FromResult<Channel>(null);
             
-            if (!(channel.Type == Channel.ChannelType.GuildText || channel.Type == Channel.ChannelType.GuildText)) 
-                return null;
+            if (!(channel.Type == Channel.ChannelType.GuildText || channel.Type == Channel.ChannelType.GuildNews)) 
+                return Task.FromResult<Channel>(null);
             
             ctx.PopArgument();
-            return channel;
+            return Task.FromResult(channel);
         }
 
         public static Guild MatchGuild(this Context ctx)
