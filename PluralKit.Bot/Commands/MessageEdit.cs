@@ -20,14 +20,16 @@ namespace PluralKit.Bot
         private readonly IClock _clock;
         private readonly DiscordApiClient _rest;
         private readonly WebhookExecutorService _webhookExecutor;
+        private readonly LogChannelService _logChannel;
 
-        public MessageEdit(IDatabase db, ModelRepository repo, IClock clock, DiscordApiClient rest, WebhookExecutorService webhookExecutor)
+        public MessageEdit(IDatabase db, ModelRepository repo, IClock clock, DiscordApiClient rest, WebhookExecutorService webhookExecutor, LogChannelService logChannel)
         {
             _db = db;
             _repo = repo;
             _clock = clock;
             _rest = rest;
             _webhookExecutor = webhookExecutor;
+            _logChannel = logChannel;
         }
 
         public async Task EditMessage(Context ctx)
@@ -41,12 +43,16 @@ namespace PluralKit.Bot
             
             var newContent = ctx.RemainderOrNull();
 
+            var originalMsg = await _rest.GetMessage(msg.Channel, msg.Mid);
+
             try
             {
                 await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent);
                 
                 if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
                     await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
+
+                await _logChannel.LogEditedMessage(ctx.MessageContext, msg, ctx.Message, originalMsg!, newContent);
             }
             catch (NotFoundException)
             {
