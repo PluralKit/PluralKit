@@ -69,6 +69,8 @@ namespace PluralKit.Bot
         public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
         public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
         public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
+        public static Command SwitchEdit = new Command("switch edit", "switch edit <member> [member 2] [member 3...]", "Edits the members in the latest switch");
+        public static Command SwitchEditOut = new Command("switch edit out", "switch edit out", "Turns the latest switch into a switch-out");
         public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
         public static Command Link = new Command("link", "link <account>", "Links your system to another account");
         public static Command Unlink = new Command("unlink", "unlink [account]", "Unlinks your system from an account");
@@ -114,7 +116,7 @@ namespace PluralKit.Bot
             GroupDelete, GroupMemberRandom, GroupFrontPercent
         };
 
-        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
+        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll};
 
         public static Command[] AutoproxyCommands = {AutoproxySet, AutoproxyTimeout, AutoproxyAccount};
         
@@ -428,12 +430,17 @@ namespace PluralKit.Bot
                 await ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx));
             else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
                 await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
+            else if (ctx.Match("edit", "replace"))
+              if (ctx.Match("out"))
+                  await ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx));
+              else
+                  await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "switching", SwitchCommands);
             else if (ctx.HasNext()) // there are following arguments
                 await ctx.Execute<Switch>(Switch, m => m.SwitchDo(ctx));
             else
-                await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchDelete, SystemFronter, SystemFrontHistory);
+                await PrintCommandNotFoundError(ctx, Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SystemFronter, SystemFrontHistory);
         }
 
         private async Task CommandHelpRoot(Context ctx)

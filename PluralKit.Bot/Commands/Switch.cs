@@ -81,7 +81,7 @@ namespace PluralKit.Bot
             // If we don't have a switch to move, don't bother
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
             
-            // If there's a switch *behind* the one we move, we check to make srue we're not moving the time further back than that
+            // If there's a switch *behind* the one we move, we check to make sure we're not moving the time further back than that
             if (lastTwoSwitches.Count == 2)
             {
                 if (lastTwoSwitches[1].Timestamp > time.ToInstant())
@@ -106,6 +106,57 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Switch moved to {newSwitchTimeStr} ({newSwitchDeltaStr} ago).");
         }
         
+        public async Task SwitchEdit(Context ctx)
+        {
+            ctx.CheckSystem();
+
+            var members = await ctx.ParseMemberList(ctx.System.Id);
+            await DoEditCommand(ctx, members);
+        }
+
+        public async Task SwitchEditOut(Context ctx)
+        {
+            ctx.CheckSystem();
+            await DoEditCommand(ctx, new PKMember[] { });
+
+        }
+        public async Task DoEditCommand(Context ctx, ICollection<PKMember> members)
+        {
+            // Make sure there are no dupes in the list
+            // We do this by checking if removing duplicate member IDs results in a list of different length
+            if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
+
+            // Find the switch to edit
+            await using var conn = await _db.Obtain();
+            var lastSwitch = await _repo.GetLatestSwitch(conn, ctx.System.Id);
+            // Make sure there's at least one switch
+            if (lastSwitch == null) throw Errors.NoRegisteredSwitches;
+            var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastSwitch.Id);
+            // Make sure switch isn't being edited to have the members it already does
+            if (await lastSwitchMembers.Select(m => m.Id).SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
+                throw Errors.SameSwitch(members, ctx.LookupContextFor(ctx.System));
+
+            // Send a prompt asking the user to confirm the switch
+            var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastSwitch.Timestamp).FormatDuration();
+            var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
+            var newSwitchMemberStr = string.Join(", ", members.Select(m => m.NameFor(ctx)));
+            string msg;
+            if (members.Count == 0)
+              msg = $"{Emojis.Warn} This will turn the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago) into a switch-out. Is this okay?";
+            else
+              msg = $"{Emojis.Warn} This will change the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago) to {newSwitchMemberStr}. Is this okay?";
+            if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchEditCancelled;
+
+            // Actually edit the switch
+            await _repo.EditSwitch(conn, lastSwitch.Id, members.Select(m => m.Id).ToList());
+
+            // Tell the user the edit suceeded
+            if (members.Count == 0)
+              await ctx.Reply($"{Emojis.Success} Switch edited. No one is now fronting.");
+            else
+              await ctx.Reply($"{Emojis.Success} Switch edited. Current fronter is now {newSwitchMemberStr}.");
+        }
+
         public async Task SwitchDelete(Context ctx)
         {
             ctx.CheckSystem();

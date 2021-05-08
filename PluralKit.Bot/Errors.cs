@@ -84,6 +84,7 @@ namespace PluralKit.Bot {
 
         public static PKError SwitchMoveBeforeSecondLast(ZonedDateTime time) => new PKError($"Can't move switch to before last switch time ({time.FormatZoned()}), as it would cause conflicts.");
         public static PKError SwitchMoveCancelled => new PKError("Switch move cancelled.");
+        public static PKError SwitchEditCancelled => new PKError("Switch edit cancelled.");
         public static PKError SwitchDeleteCancelled => new PKError("Switch deletion cancelled.");
         public static PKError TimezoneParseError(string timezone) => new PKError($"Could not parse timezone offset {timezone}. Offset must be a value like 'UTC+5' or 'GMT-4:30'.");
 

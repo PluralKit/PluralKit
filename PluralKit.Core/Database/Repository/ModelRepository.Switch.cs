@@ -48,6 +48,34 @@ namespace PluralKit.Core
             _logger.Information("Updated {SwitchId} timestamp: {SwitchTimestamp}", id, time);
         }
 
+        public async Task EditSwitch(IPKConnection conn, SwitchId switchId, IReadOnlyCollection<MemberId> members)
+        {
+            // Use a transaction here since we're doing multiple executed commands in one
+            await using var tx = await conn.BeginTransactionAsync();
+
+            // Remove the old members from the switch
+            await conn.ExecuteAsync("delete from switch_members where switch = @Switch",
+                new {Switch = switchId});
+
+            // Add the new members
+            await using (var w = conn.BeginBinaryImport("copy switch_members (switch, member) from stdin (format binary)"))
+            {
+                foreach (var member in members)
+                {
+                    await w.StartRowAsync();
+                    await w.WriteAsync(switchId.Value, NpgsqlDbType.Integer);
+                    await w.WriteAsync(member.Value, NpgsqlDbType.Integer);
+                }
+
+                await w.CompleteAsync();
+            }
+
+            // Finally we commit the tx, since the using block will otherwise rollback it
+            await tx.CommitAsync();
+
+            _logger.Information("Updated {SwitchId} members: {Members}", switchId, members);
+        }
+
         public async Task DeleteSwitch(IPKConnection conn, SwitchId id)
         {
             await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = id});
