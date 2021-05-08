@@ -73,6 +73,9 @@ namespace PluralKit.Bot
                 return msg.Message;
             }
 
+            if (ctx.Guild == null)
+                throw new PKError("You must use a message link to edit messages in DMs.");
+
             var recent = await FindRecentMessage(ctx);
             if (recent == null)
                 throw new PKError("Could not find a recent message to edit.");
