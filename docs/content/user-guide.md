@@ -594,7 +594,7 @@ pk;import https://link/to/the/data/file.json
 ```
 *(alternatively, run `pk;import` by itself and attach the .json file)*
 
-Note that while Tupperbox supports features such as multiple proxies per member, per-member system tags, and member groups, PluralKit does not.
+Note that while Tupperbox supports features such as per-member system tags PluralKit does not. Pluralkit also does not currently support exporting/importing member groups. 
 PluralKit will warn you when you're importing a Tupperbox file that makes use of such features, as they will not carry over. 
 
 ### Importing from PluralKit
