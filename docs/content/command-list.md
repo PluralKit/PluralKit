@@ -96,11 +96,12 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 
 ## Utility
 - `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
-- `pk;message <message id / message link>` - Looks up information about a proxied message by its message ID or link.
+- `pk;message <message id / message link / reply>` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
 - `pk;permcheck [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
+- `pk;edit [message link / proxy]` - Edits a proxied message. Default edits the last proxied message in that channel. NOTE: THIS DOES NOT SUPPORT MESSAGE IDS. 
 
 ## API
 *(for using the [PluralKit API](./api-documentation.md), useful for developers)*
