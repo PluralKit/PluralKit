@@ -22,6 +22,7 @@ PluralKit has a couple of useful command shorthands to reduce the typing:
 |pk;system frontpercent|pk;s fp|
 |pk;member|pk;m|
 |pk;member new|pk;m n|
+|pk;group|pk;g|
 |pk;switch|pk;sw|
 |pk;message|pk;msg|
 |pk;autoproxy|pk;ap|
@@ -54,7 +55,7 @@ There are a number of option flags that can be added to the `pk;system list` com
 You cannot look up private members of another system.
 :::
 
-### Additional fields to include in the search results
+### Additional fields to include in the search results (Only work with `pk;system list full` not `pk;system list`)
 |Flag|Aliases|Description|
 |---|---|---|
 |-with-last-switch|-with-last-fronted, -with-last-front, -wls, -wlf|Show each member's last switch date|
@@ -66,5 +67,5 @@ You cannot look up private members of another system.
 ## Miscellaneous flags
 |Command|Flag|Aliases|Description|
 |---|---|---|---|
-|pk;system frontpercent|fronters-only|fo|Hides the "no fronters" list item|
-|pk;group \<group> frontpercent|fronters-only|fo|Same as above, but for groups|
+|pk;system frontpercent|-fronters-only|-fo|Hides the "no fronters" list item|
+|pk;group \<group> frontpercent|-fronters-only|-fo|Same as above, but for groups|
