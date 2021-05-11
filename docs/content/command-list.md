@@ -16,7 +16,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system rename [new name]` - Changes the name of your system.
 - `pk;system description [description]` - Changes the description of your system.
-- `pk;system avatar [avatar url]` - Changes the avatar of your system.
+- `pk;system avatar [avatar url|@mention|upload]` - Changes the avatar of your system.
 - `pk;system privacy` - Displays your system's current privacy settings.
 - `pk;system privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system tag [tag]` - Changes the system tag of your system.
@@ -42,8 +42,8 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;member <name> displayname <new display name>` - Changes the display name of a member.
 - `pk;member <name> servername <new server name>` - Changes the display name of a member, only in the current server.
 - `pk;member <name> description [description]` - Changes the description of a member.
-- `pk;member <name> avatar <avatar url|@mention>` - Changes the avatar of a member.
-- `pk;member <name> serveravatar <avatar url|@mention>` - Changes the avatar of a member in a specific server.
+- `pk;member <name> avatar <avatar url|@mention|upload>` - Changes the avatar of a member.
+- `pk;member <name> serveravatar <avatar url|@mention|upload>` - Changes the avatar of a member in a specific server.
 - `pk;member <name> privacy` - Displays a members current privacy settings.
 - `pk;member <name> privacy <subject> <public|private>` - Changes a members privacy setting.
 - `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
@@ -90,18 +90,18 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;log channel -clear` - Clears the currently set log channel.
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
 - `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
-- `pk;logclean <on/off>` - Enables or disables [log cleanup](./staff/compatibility.md#log-cleanup).
+- `pk;logclean <on|off>` - Enables or disables [log cleanup](./staff/compatibility.md#log-cleanup).
 - `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
 
 ## Utility
 - `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
-- `pk;message <message id / message link / reply>` - Looks up information about a proxied message by its message ID or link.
+- `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
 - `pk;permcheck [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
-- `pk;edit [message link / proxy]` - Edits a proxied message. Default edits the last proxied message in that channel. NOTE: THIS DOES NOT SUPPORT MESSAGE IDS. 
+- `pk;edit [message link|reply]` - Edits a proxied message. Default edits the last proxied message in that channel. NOTE: THIS DOES NOT SUPPORT MESSAGE IDS. 
 
 ## API
 *(for using the [PluralKit API](./api-documentation.md), useful for developers)*
