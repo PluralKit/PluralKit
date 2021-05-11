@@ -101,7 +101,7 @@ Words in **\<angle brackets>** or **[square brackets]** mean fill-in-the-blank. 
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
 - `pk;permcheck [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
-- `pk;edit [message link|reply]` - Edits a proxied message. Default edits the last proxied message in that channel. NOTE: THIS DOES NOT SUPPORT MESSAGE IDS. 
+- `pk;edit [message link / reply]` - Edits a proxied message. Default edits the last proxied message in that channel. NOTE: THIS DOES NOT SUPPORT MESSAGE IDS. 
 
 ## API
 *(for using the [PluralKit API](./api-documentation.md), useful for developers)*
