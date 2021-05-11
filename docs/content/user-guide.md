@@ -614,5 +614,5 @@ pk;import https://link/to/the/data/file.json
 To export all the data associated with your system, run the `pk;export` command. This will send you a JSON file containing your system, member, and switch information.
 
 ## Reply commands
-Commands that work with message links or ids will sometimes also work by replying to a message. If you use this method you do not need to use the message link/id field. You can tell if a command works with replies if it has <reply> as a field in the command in the [Command List](../commands). 
+Commands that work with message links or ids typically also work by replying to a message. If you use this method you do not need to use the message link/id field. 
 ![demonstration of reply](./assets/reply_example.PNG)
