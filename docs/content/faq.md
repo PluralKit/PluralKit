@@ -65,8 +65,9 @@ No. This is a limitation in Discord itself, and cannot be changed. The color com
 * The message with the avatar may have been deleted, or the link may have become invalid. Try re-setting your avatar.
 * Discord sometimes has issues displaying avatars. We can't do anything about that, sorry :(
 
-### Why can't I use nitro emotes in some channels?
-Webhooks inherit the nitro emoji permissions from the `@everyone` role, so the `@everyone` role must have the permission "Use External Emoji" to be able to use nitro emotes through PluralKit.
+### Why can't I use nitro emoji in some channels?
+Webhooks inherit nitro emoji permissions from the @everyone role, so @everyone must have the "Use External Emoji" permission to be able to use nitro emoji with PluralKit.
+If it still doesn't work, make sure this permission isn't denied in channel overrides (found in channel settings -> permissions).
 
 ### Why can't I invite PluralKit to my server?
 
@@ -79,3 +80,7 @@ This is a bug in Discord's mobile client. It handles formatting slightly differe
 
 ### Why is my time showing up incorrectly after Daylight savings time change?
 You probably set your timezone in PluralKit to a specific timezone, and PluralKit doesn't know how to calculate daylight savings time with that. Instead, set your timezone to a city (for example, "America/Toronto") - you can find your correct city identifier on <https://xske.github.io/tz>
+
+### Why am I not able to edit a message via ID? or, Why is PluralKit editing the wrong message?
+It is not possible to edit messages via ID. Please use the full link, or reply to the message.
+
