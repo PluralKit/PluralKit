@@ -42,8 +42,8 @@ namespace PluralKit.Bot {
             
             // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateLoggedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value), 
-                await _repo.GetMember(conn, proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content, 
+            var embed = _embed.CreateLoggedMessageEmbed(ctx, await _repo.GetSystem(conn, ctx.SystemId.Value),
+                await _repo.GetMember(conn, proxy.Member.Id), proxy, hookMessage, trigger.Id, trigger.Author, proxy.Content,
                 triggerChannel);
             var url = $"https://discord.com/channels/{trigger.GuildId}/{trigger.ChannelId}/{hookMessage}";
             await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
@@ -58,8 +58,8 @@ namespace PluralKit.Bot {
             
             // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateEditedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value), 
-                await _repo.GetMember(conn, proxy.Member), originalMessage.Id, trigger.Id, trigger.Author, newContent, originalMessage.Content,
+            var embed = _embed.CreateEditedMessageEmbed(ctx, await _repo.GetSystem(conn, ctx.SystemId.Value),
+                await _repo.GetMember(conn, proxy.Member), originalMessage.Id, trigger.Id, trigger.Author, newContent, originalMessage,
                 triggerChannel);
             var url = $"https://discord.com/channels/{proxy.Guild.Value}/{proxy.Channel}/{proxy.Mid}";
             await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});

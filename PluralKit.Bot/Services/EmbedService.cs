@@ -99,26 +99,26 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, Channel channel) {
+        public Embed CreateLoggedMessageEmbed(MessageContext ctx, PKSystem system, PKMember member, ProxyMatch proxy, ulong messageId, ulong originalMsgId, User sender, string content, Channel channel) {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
-            var name = member.NameFor(LookupContext.ByNonOwner); 
+            var name = proxy.Member.ProxyName(ctx);
             return new EmbedBuilder()
-                .Author(new($"#{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner))))
-                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner)))
+                .Author(new($"#{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(proxy.Member.ProxyAvatar(ctx))))
+                .Thumbnail(new(proxy.Member.ProxyAvatar(ctx)))
                 .Description(content?.NormalizeLineEndSpacing())
                 .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
                 .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
                 .Build();
         }
 
-        public Embed CreateEditedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, string oldContent, Channel channel) {
+        public Embed CreateEditedMessageEmbed(MessageContext ctx, PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, Message oldMessage, Channel channel) {
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
-            var name = member.NameFor(LookupContext.ByNonOwner); 
+            var name = oldMessage.Author.Username;
             return new EmbedBuilder()
-                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner))))
-                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner)))
-                .Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)))
+                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(oldMessage.Author.AvatarUrl())))
+                .Thumbnail(new(oldMessage.Author.AvatarUrl()))
+                .Field(new("Old message", oldMessage.Content?.NormalizeLineEndSpacing().Truncate(1000)))
                 .Description(content?.NormalizeLineEndSpacing())
                 .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
                 .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
