@@ -84,6 +84,8 @@ namespace PluralKit.Bot
             
             if (await TryHandleCommand(shard, evt, guild, channel, ctx))
                 return;
+            
+            await TryHandleReply(shard, evt, guild, channel, ctx);
             await TryHandleProxy(shard, evt, guild, channel, ctx);
         }
 
@@ -160,6 +162,35 @@ namespace PluralKit.Bot
                 {
                     await _rest.CreateMessage(evt.ChannelId,
                         new MessageRequest {Content = $"{Emojis.Error} {e.Message}"});
+                }
+            }
+
+            return false;
+        }
+        
+        private async ValueTask<bool> TryHandleReply(Shard shard, MessageCreateEvent evt, Guild guild, Channel channel,
+                                                     MessageContext ctx)
+        {
+            var botPermissions = _bot.PermissionsIn(channel.Id);
+            if (evt.MessageReference is Message.Reference reference)
+            {
+                if (evt.ReferencedMessage.HasValue && evt.ReferencedMessage.Value is Message msg)
+                {
+                    var id = msg.Id;
+                    var fullReference = await _db.Execute(c => _repo.GetMessage(c, id));
+                    if (fullReference != default(FullMessage))
+                    {
+                        var memberName = fullReference.Member.DisplayName;
+                        if (memberName.EmptyOrNull())
+                        {
+                            memberName = fullReference.Member.Name;
+                        }
+                        var memberUser = fullReference.Message.Sender;
+                        var messageSender = evt.Author.Id;
+                        await _rest.CreateMessage(evt.ChannelId,
+                            new MessageRequest { Content = $"Psst, **{memberName}** (<@{memberUser}>), you have been replied to by <@{messageSender}>." });
+                        return true;
+                    }
                 }
             }
 
