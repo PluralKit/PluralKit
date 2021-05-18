@@ -99,30 +99,21 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateLoggedMessageEmbed(MessageContext ctx, PKSystem system, PKMember member, ProxyMatch proxy, ulong messageId, ulong originalMsgId, User sender, string content, Channel channel) {
+        public Embed CreateLoggedMessageEmbed(Message triggerMessage, Message proxiedMessage, string systemHid, string memberHid, string channelName, string oldContent = null) {
             // TODO: pronouns in ?-reacted response using this card
-            var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
-            var name = proxy.Member.ProxyName(ctx);
-            return new EmbedBuilder()
-                .Author(new($"#{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(proxy.Member.ProxyAvatar(ctx))))
-                .Thumbnail(new(proxy.Member.ProxyAvatar(ctx)))
-                .Description(content?.NormalizeLineEndSpacing())
-                .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
-                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
-                .Build();
-        }
+            var timestamp = DiscordUtils.SnowflakeToInstant(proxiedMessage.Id);
+            var name = proxiedMessage.Author.Username;
+            var embed = new EmbedBuilder()
+                .Author(new($"#{channelName}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(proxiedMessage.Author.AvatarUrl())))
+                .Thumbnail(new(proxiedMessage.Author.AvatarUrl()))
+                .Description(proxiedMessage.Content?.NormalizeLineEndSpacing())
+                .Footer(new($"System ID: {systemHid} | Member ID: {memberHid} | Sender: {triggerMessage.Author.Username}#{triggerMessage.Author.Discriminator} ({triggerMessage.Author.Id}) | Message ID: {proxiedMessage.Id} | Original Message ID: {triggerMessage.Id}"))
+                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"));
 
-        public Embed CreateEditedMessageEmbed(MessageContext ctx, PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, Message oldMessage, Channel channel) {
-            var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
-            var name = oldMessage.Author.Username;
-            return new EmbedBuilder()
-                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(oldMessage.Author.AvatarUrl())))
-                .Thumbnail(new(oldMessage.Author.AvatarUrl()))
-                .Field(new("Old message", oldMessage.Content?.NormalizeLineEndSpacing().Truncate(1000)))
-                .Description(content?.NormalizeLineEndSpacing())
-                .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
-                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
-                .Build();
+            if (oldContent != null)
+                embed.Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)));
+
+            return embed.Build();
         }
 
         public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)

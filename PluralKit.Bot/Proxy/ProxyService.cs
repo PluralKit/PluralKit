@@ -207,7 +207,7 @@ namespace PluralKit.Bot
                                                       Message triggerMessage, Message proxyMessage,
                                                       ProxyMatch match)
         {
-            Task SaveMessageInDatabase() => _repo.AddMessage(conn, new PKMessage
+            var proxiedMessage = new PKMessage
             {
                 Channel = triggerMessage.ChannelId,
                 Guild = triggerMessage.GuildId,
@@ -215,9 +215,11 @@ namespace PluralKit.Bot
                 Mid = proxyMessage.Id,
                 OriginalMid = triggerMessage.Id,
                 Sender = triggerMessage.Author.Id
-            });
+            };
+
+            Task SaveMessageInDatabase() => _repo.AddMessage(conn, proxiedMessage);
             
-            Task LogMessageToChannel() => _logChannel.LogMessage(ctx, match, triggerMessage, proxyMessage.Id).AsTask();
+            Task LogMessageToChannel() => _logChannel.LogMessage(ctx, proxiedMessage, triggerMessage, proxyMessage).AsTask();
             
             async Task DeleteProxyTriggerMessage()
             {

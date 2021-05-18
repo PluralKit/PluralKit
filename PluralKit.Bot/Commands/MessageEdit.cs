@@ -44,15 +44,16 @@ namespace PluralKit.Bot
             var newContent = ctx.RemainderOrNull();
 
             var originalMsg = await _rest.GetMessage(msg.Channel, msg.Mid);
+            if (originalMsg == null) throw new PKError("Could not edit message.");
 
             try
             {
-                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent);
+                var newMessage = await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent);
                 
                 if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
                     await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
 
-                await _logChannel.LogEditedMessage(ctx.MessageContext, msg, ctx.Message, originalMsg!, newContent);
+                await _logChannel.LogMessage(ctx.MessageContext, msg, ctx.Message, newMessage, originalMsg.Content!);
             }
             catch (NotFoundException)
             {

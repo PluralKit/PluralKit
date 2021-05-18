@@ -33,35 +33,25 @@ namespace PluralKit.Bot {
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async ValueTask LogMessage(MessageContext ctx, ProxyMatch proxy, Message trigger, ulong hookMessage)
+        public async ValueTask LogMessage(MessageContext ctx, PKMessage message, Message trigger, Message hookMessage, string oldContent = null)
         {
-            var logChannel = await GetAndCheckLogChannel(ctx, trigger);
+            Channel? logChannel;
+            if (oldContent == null)
+                logChannel = await GetAndCheckLogChannel(ctx, trigger);
+            else
+                logChannel = await GetAndCheckLogChannel(ctx, trigger, message);
+
             if (logChannel == null) return;
 
-            var triggerChannel = _cache.GetChannel(trigger.ChannelId);
+            var triggerChannel = _cache.GetChannel(message.Channel);
             
-            // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateLoggedMessageEmbed(ctx, await _repo.GetSystem(conn, ctx.SystemId.Value),
-                await _repo.GetMember(conn, proxy.Member.Id), proxy, hookMessage, trigger.Id, trigger.Author, proxy.Content,
-                triggerChannel);
-            var url = $"https://discord.com/channels/{trigger.GuildId}/{trigger.ChannelId}/{hookMessage}";
-            await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
-        }
+            var system = await _repo.GetSystem(conn, ctx.SystemId.Value);
+            var member = await _repo.GetMember(conn, message.Member);
 
-        public async ValueTask LogEditedMessage(MessageContext ctx, PKMessage proxy, Message trigger, Message originalMessage, string newContent)
-        {
-            var logChannel = await GetAndCheckLogChannel(ctx, trigger, proxy);
-            if (logChannel == null) return;
-
-            var triggerChannel = _cache.GetChannel(proxy.Channel);
-            
             // Send embed!
-            await using var conn = await _db.Obtain();
-            var embed = _embed.CreateEditedMessageEmbed(ctx, await _repo.GetSystem(conn, ctx.SystemId.Value),
-                await _repo.GetMember(conn, proxy.Member), originalMessage.Id, trigger.Id, trigger.Author, newContent, originalMessage,
-                triggerChannel);
-            var url = $"https://discord.com/channels/{proxy.Guild.Value}/{proxy.Channel}/{proxy.Mid}";
+            var embed = _embed.CreateLoggedMessageEmbed(trigger, hookMessage, system.Hid, member.Hid, triggerChannel.Name, oldContent);
+            var url = $"https://discord.com/channels/{message.Guild.Value}/{message.Channel}/{message.Mid}";
             await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
         }
 
