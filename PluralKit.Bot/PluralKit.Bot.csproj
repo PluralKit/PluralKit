@@ -21,4 +21,16 @@
       <PackageReference Include="Sentry" Version="2.1.6" />
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2" />
     </ItemGroup>
+
+    <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+      <Exec
+        Command="git describe --long --always --dirty --exclude=* --abbrev=8 > ../.version"
+        IgnoreExitCode="False"
+        >
+      </Exec>
+    </Target>
+
+    <ItemGroup>
+      <EmbeddedResource Include="..\.version" LogicalName="version" />
+    </ItemGroup>
 </Project>

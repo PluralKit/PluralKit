@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -59,8 +61,21 @@ namespace PluralKit.Bot
             _cache = cache;
         }
 
-        public void Init()
+        public string Version { get; set; }
+
+        public async Task Init()
         {
+            // get version information
+            using (var stream = Assembly.GetEntryAssembly()?.GetManifestResourceStream("version"))
+            {
+                // if this happens, something broke
+                if (stream == null) Version = "unknown ";
+                else using (var reader = new StreamReader(stream)) Version = await reader.ReadToEndAsync();
+            }
+
+            // cheap hack to remove newline
+            Version = Version.Remove(Version.Length - 1);
+
             _cluster.EventReceived += OnEventReceived;
             
             // Init the shard stuff

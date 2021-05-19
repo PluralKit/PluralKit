@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -92,7 +91,8 @@ namespace PluralKit.Bot {
             var process = Process.GetCurrentProcess();
             var memoryUsage = process.WorkingSet64;
 
-            var shardUptime = SystemClock.Instance.GetCurrentInstant() - shardInfo.LastConnectionTime;
+            var now = SystemClock.Instance.GetCurrentInstant();
+            var shardUptime = now - shardInfo.LastConnectionTime;
 
             var embed = new EmbedBuilder();
             if (messagesReceived != null) embed.Field(new("Messages processed",$"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)", true));
@@ -105,7 +105,9 @@ namespace PluralKit.Bot {
                 .Field(new("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true))
                 .Field(new("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true))
                 .Field(new("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true))
-                .Field(new("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalGroups:N0} groups, {totalSwitches:N0} switches, {totalMessages:N0} messages"));
+                .Field(new("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalGroups:N0} groups, {totalSwitches:N0} switches, {totalMessages:N0} messages"))
+                .Timestamp(now.ToDateTimeOffset().ToString("O"))
+                .Footer(new($"PluralKit {_bot.Version} • https://github.com/xSke/PluralKit"));
             await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
                 new MessageEditRequest {Content = "", Embed = embed.Build()});
         }

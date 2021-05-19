@@ -41,7 +41,7 @@ namespace PluralKit.Bot
                 // Init the bot instance itself, register handlers and such to the client before beginning to connect
                 logger.Information("Initializing bot");
                 var bot = services.Resolve<Bot>();
-                bot.Init();
+                await bot.Init();
                 
                 // Install observer for request/responses
                 DiscordRequestObserver.Install(services);
