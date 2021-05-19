@@ -157,7 +157,7 @@ namespace PluralKit.Bot
                 var newTag = ctx.RemainderOrNull(skipFlags: false);
                 if (newTag != null)
                     if (newTag.Length > Limits.MaxSystemTagLength)
-                        throw Errors.SystemNameTooLongError(newTag.Length);
+                        throw Errors.SystemTagTooLongError(newTag.Length);
                 
                 var patch = new SystemPatch {Tag = newTag};
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
@@ -188,7 +188,7 @@ namespace PluralKit.Bot
                 var newTag = ctx.RemainderOrNull(skipFlags: false);
                 if (newTag != null)
                     if (newTag.Length > Limits.MaxSystemTagLength)
-                        throw Errors.SystemNameTooLongError(newTag.Length);
+                        throw Errors.SystemTagTooLongError(newTag.Length);
 
                 var patch = new SystemGuildPatch {Tag = newTag};
                 await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
