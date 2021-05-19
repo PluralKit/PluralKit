@@ -14,6 +14,7 @@
         last_switch_members int[],
         last_switch_timestamp timestamp,
         system_tag text,
+        system_guild_tag text,
         system_avatar text,
         allow_autoproxy bool,
         latch_timeout integer
@@ -21,7 +22,10 @@
 as $$
     -- CTEs to query "static" (accessible only through args) data
     with
-        system as (select systems.*, allow_autoproxy as account_autoproxy from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
+        system as (select systems.*, system_guild.tag as server_tag, allow_autoproxy as account_autoproxy from accounts
+            left join systems on systems.id = accounts.system
+            left join system_guild on system_guild.system = accounts.system and system_guild.guild = guild_id
+            where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id),
         last_message as (select * from messages where messages.guild = guild_id and messages.sender = account_id order by mid desc limit 1)
     select
@@ -39,6 +43,7 @@ as $$
         system_last_switch.members as last_switch_members,
         system_last_switch.timestamp as last_switch_timestamp,
         system.tag as system_tag,
+        system.server_tag as system_guild_tag,
         system.avatar_url as system_avatar,
         system.account_autoproxy as allow_autoproxy,
         system.latch_timeout as latch_timeout

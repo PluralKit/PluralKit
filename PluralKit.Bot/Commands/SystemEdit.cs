@@ -165,6 +165,37 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with {newTag.AsCode()} when proxied.");
             }
         }
+
+        public async Task ServerTag(Context ctx)
+        {
+            ctx.CheckSystem().CheckGuildContext();
+
+            if (await ctx.MatchClear("your system's server tag"))
+            {
+                var patch = new SystemGuildPatch {Tag = null};
+                await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} System server tag cleared.");
+            } else if (!ctx.HasNext(skipFlags: false))
+            {
+                if (ctx.MessageContext.SystemGuildTag == null)
+                    await ctx.Reply($"You currently have no system tag specific to the server '{ctx.Guild.Name}'. To set one, type `pk;s servertag <tag>`.");
+                else
+                    await ctx.Reply($"Your current system server tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+            }
+            else
+            {
+                var newTag = ctx.RemainderOrNull(skipFlags: false);
+                if (newTag != null)
+                    if (newTag.Length > Limits.MaxSystemTagLength)
+                        throw Errors.SystemNameTooLongError(newTag.Length);
+
+                var patch = new SystemGuildPatch {Tag = newTag};
+                await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} System server tag changed. Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
+            }
+        }
         
         public async Task Avatar(Context ctx)
         {

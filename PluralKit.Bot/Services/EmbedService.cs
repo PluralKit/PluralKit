@@ -78,7 +78,9 @@ namespace PluralKit.Bot {
                     eb.Field(new("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)))));
             }
 
-            if (system.Tag != null) 
+            if (cctx.MessageContext.SystemGuildTag != null)
+                eb.Field(new("Tag", cctx.MessageContext.SystemGuildTag.EscapeMarkdown(), true));
+            else if (system.Tag != null)
                 eb.Field(new("Tag", system.Tag.EscapeMarkdown(), true));
 
             if (!system.Color.EmptyOrNull()) eb.Field(new("Color", $"#{system.Color}", true));

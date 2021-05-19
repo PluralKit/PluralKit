@@ -74,6 +74,15 @@ If you want to remove your system tag, just type `pk;system tag` with no extra p
 to bump it over that limit. PluralKit will warn you if you have a member name/tag combination that will bring the combined username above the limit.
 You can either make the member name or the system tag shorter to solve this. 
     
+### System server tags
+If you'd like to set a system tag (as above), but only for a specific server, you can set the *system server tag*. This will override the global system tag, but only in the server you set it in. For example:
+
+```
+pk;system servertag 🛰️
+```
+
+The server tag applies to the same server you run the command in, so this command doesn't function in DMs.
+
 ### Adding or removing Discord accounts to the system
 If you have multiple Discord accounts you want to use the same system on, you don't need to create multiple systems.
 Instead, you can *link* the same system to multiple accounts.
