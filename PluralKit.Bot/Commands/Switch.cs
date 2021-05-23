@@ -152,7 +152,7 @@ namespace PluralKit.Bot
 
             // Tell the user the edit suceeded
             if (members.Count == 0)
-              await ctx.Reply($"{Emojis.Success} Switch edited. No one is now fronting.");
+              await ctx.Reply($"{Emojis.Success} Switch edited. The latest switch is now a switch-out.");
             else
               await ctx.Reply($"{Emojis.Success} Switch edited. Current fronter is now {newSwitchMemberStr}.");
         }
