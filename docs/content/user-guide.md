@@ -83,6 +83,12 @@ pk;system servertag 🛰️
 
 The server tag applies to the same server you run the command in, so this command doesn't function in DMs.
 
+::: tip
+It is possible to disable the system tag for a specific server. Use the command `pk;system servertag -disable`.
+
+To re-enable it, use the command `pk;system servertag -enable`.
+:::
+
 ### Adding or removing Discord accounts to the system
 If you have multiple Discord accounts you want to use the same system on, you don't need to create multiple systems.
 Instead, you can *link* the same system to multiple accounts.

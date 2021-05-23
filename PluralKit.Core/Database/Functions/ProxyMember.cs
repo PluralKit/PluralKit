@@ -26,6 +26,9 @@ namespace PluralKit.Core
         public string ProxyName(MessageContext ctx)
         {
             var memberName = ServerName ?? DisplayName ?? Name;
+            if (!ctx.TagEnabled)
+                return memberName;
+
             if (ctx.SystemGuildTag != null)
                 return $"{memberName} {ctx.SystemGuildTag}";
             else if (ctx.SystemTag != null)

@@ -178,11 +178,44 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} System server tag cleared.");
             } else if (!ctx.HasNext(skipFlags: false))
             {
-                if (ctx.MessageContext.SystemGuildTag == null)
+                if (!ctx.MessageContext.TagEnabled)
+                    if (ctx.MessageContext.SystemGuildTag == null)
+                        await ctx.Reply($"Your global system tag is {ctx.System.Tag}, but it is **disabled** in this server. To re-enable it, type `pk;s servertag -enable`");
+                    else
+                        await ctx.Reply($"Your current system server tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}, but it is currently **disabled**. To re-enable it, type `pk;s servertag -enable`");
+                else if (ctx.MessageContext.SystemGuildTag == null)
                     await ctx.Reply($"You currently have no system tag specific to the server '{ctx.Guild.Name}'. To set one, type `pk;s servertag <tag>`.");
                 else
                     await ctx.Reply($"Your current system server tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
             }
+            else if (ctx.MatchFlag("disable"))
+            {
+                if (!ctx.MessageContext.TagEnabled)
+                {
+                    await ctx.Reply($"{Emojis.Note} The system tag is already disabled in this server.");
+                    return;
+                }
+                var patch = new SystemGuildPatch {TagEnabled = false};
+                await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} System tag disabled in this server.");
+            }
+            else if (ctx.MatchFlag("enable"))
+                if (ctx.MessageContext.TagEnabled)
+                    if (ctx.MessageContext.SystemGuildTag == null)
+                        await ctx.Reply($"{Emojis.Note} The system tag is already enabled in this server. However, you do not have a system tag specific to this server. Messages will be proxied using your global system tag, if there is one set.");
+                    else
+                        await ctx.Reply($"{Emojis.Note} The system tag is already enabled in this server. Your current system tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}.");
+                else
+                {
+                    var patch = new SystemGuildPatch {TagEnabled = true};
+                    await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+
+                    if (ctx.MessageContext.SystemGuildTag != null)
+                        await ctx.Reply($"{Emojis.Success} System tag enabled in this server. Member names will now end with the server-specific tag {ctx.MessageContext.SystemGuildTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
+                    else
+                        await ctx.Reply($"{Emojis.Success} System tag enabled in this server.  Member names will now end with the global system tag when proxied in the current server, if there is one set.");
+                }
             else
             {
                 var newTag = ctx.RemainderOrNull(skipFlags: false);
@@ -194,6 +227,9 @@ namespace PluralKit.Bot
                 await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} System server tag changed. Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
+
+                if (!ctx.MessageContext.TagEnabled)
+                    await ctx.Reply($"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `pk;s servertag -enable`.");
             }
         }
         
