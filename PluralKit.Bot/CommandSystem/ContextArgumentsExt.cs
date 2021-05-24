@@ -71,6 +71,12 @@ namespace PluralKit.Bot
             return matched;
         }
 
+        public static bool MatchRaw(this Context ctx)
+        {
+            var matched = ctx.Match("r", "raw") || ctx.MatchFlag("r", "raw");
+            return matched;
+        }
+
         public static ulong? MatchMessage(this Context ctx, bool parseRawMessageId)
         {
             if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference != null)

@@ -101,32 +101,30 @@ namespace PluralKit.Bot
 
                 await ctx.Reply($"{Emojis.Success} Group display name cleared.");
             }
+            else if (ctx.MatchRaw())
+            {
+                // No perms check, display name isn't covered by member privacy
+                if (target.DisplayName == null)
+                {
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This group does not have a display name set. To set one, type `pk;group {target.Reference()} displayname <display name>`.");
+                    else
+                        await ctx.Reply("This group does not have a display name set.");
+                }
+                else
+                    await ctx.Reply($"```\n{target.DisplayName}\n```");
+            }
             else if (!ctx.HasNext())
             {
                 // No perms check, display name isn't covered by member privacy
-                if (ctx.MatchFlag("r", "raw"))
-                {
-                    if (target.DisplayName == null)
-                    {
-                        if (ctx.System?.Id == target.System)
-                            await ctx.Reply($"This group does not have a display name set. To set one, type `pk;group {target.Reference()} displayname <display name>`.");
-                        else
-                            await ctx.Reply("This group does not have a display name set.");
-                    }
-                    else
-                        await ctx.Reply($"```\n{target.DisplayName}\n```");
-                }
-                else
-                {
-                    var eb = new EmbedBuilder()
-                        .Field(new("Name", target.Name))
-                        .Field(new("Display Name", target.DisplayName ?? "*(none)*"));
-                    
-                    if (ctx.System?.Id == target.System)
-                        eb.Description($"To change display name, type `pk;group {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;group {target.Reference()} displayname -clear`.\nTo print the raw display name, type `pk;group {target.Reference()} displayname -raw`.");
-                    
-                    await ctx.Reply(embed: eb.Build());
-                }
+                var eb = new EmbedBuilder()
+                    .Field(new("Name", target.Name))
+                    .Field(new("Display Name", target.DisplayName ?? "*(none)*"));
+                
+                if (ctx.System?.Id == target.System)
+                    eb.Description($"To change display name, type `pk;group {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;group {target.Reference()} displayname -clear`.\nTo print the raw display name, type `pk;group {target.Reference()} displayname -raw`.");
+                
+                await ctx.Reply(embed: eb.Build());
             }
             else
             {
@@ -150,16 +148,29 @@ namespace PluralKit.Bot
                 var patch = new GroupPatch {Description = Partial<string>.Null()};
                 await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Group description cleared.");
-            } 
-            else if (!ctx.HasNext())
+            }
+            else if (ctx.MatchRaw())
             {
+                if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
+                    
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
                         await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {target.Reference()} description <description>`.");
                     else
                         await ctx.Reply("This group does not have a description set.");
-                else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{target.Description}\n```");
+                else await ctx.Reply($"```\n{target.Description}\n```");
+            } 
+            else if (!ctx.HasNext())
+            {
+                if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
+
+                if (target.Description == null)
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {target.Reference()} description <description>`.");
+                    else
+                        await ctx.Reply("This group does not have a description set.");
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .Title("Group description")

@@ -38,6 +38,15 @@ namespace PluralKit.Bot
                 return;
             }
 
+            if (ctx.MatchRaw())
+            {
+                if (ctx.System.Name == null)
+                    await ctx.Reply("Your system currently does not have a name. Type `pk;system name <name>` to set one.");
+                else
+                    await ctx.Reply($"```\n{ctx.System.Name}\n```");
+                return;
+            }
+
             var newSystemName = ctx.RemainderOrNull();
             if (newSystemName == null)
             {
@@ -68,14 +77,21 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} System description cleared.");
                 return;
             }
+
+            if (ctx.MatchRaw())
+            {
+                if (ctx.System.Description == null)
+                    await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
+                else
+                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
+                return;
+            }
             
             var newDescription = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
             if (newDescription == null)
             {
                 if (ctx.System.Description == null)
                     await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
-                else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .Title("System description")
@@ -145,7 +161,15 @@ namespace PluralKit.Bot
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} System tag cleared.");
-            } else if (!ctx.HasNext(skipFlags: false))
+            } 
+            else if (ctx.MatchRaw())
+            {
+                if (ctx.System.Tag == null)
+                    await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
+                else
+                    await ctx.Reply($"```\n{ctx.System.Tag}\n```");
+            }
+            else if (!ctx.HasNext(skipFlags: false))
             {
                 if (ctx.System.Tag == null)
                     await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");

@@ -62,7 +62,19 @@ namespace PluralKit.Bot
                 var patch = new MemberPatch {Description = Partial<string>.Null()};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member description cleared.");
-            } 
+            }
+            else if (ctx.MatchRaw())
+            {
+                if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
+                if (target.Description == null)
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This member does not have a description set. To set one, type `pk;member {target.Reference()} description <description>`.");
+                    else
+                        await ctx.Reply("This member does not have a description set.");
+                else 
+                    await ctx.Reply($"```\n{target.Description}\n```");
+            }
             else if (!ctx.HasNext())
             {
                 if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
@@ -72,8 +84,6 @@ namespace PluralKit.Bot
                         await ctx.Reply($"This member does not have a description set. To set one, type `pk;member {target.Reference()} description <description>`.");
                     else
                         await ctx.Reply("This member does not have a description set.");
-                else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{target.Description}\n```");
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .Title("Member description")
@@ -283,28 +293,25 @@ namespace PluralKit.Bot
 
                 await PrintSuccess($"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\".");
             }
+            else if (ctx.MatchRaw())
+            {
+                if (target.DisplayName == null)
+                {
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This member does not have a display name set. To set one, type `pk;member {target.Reference()} displayname <display name>`.");
+                    else
+                        await ctx.Reply("This member does not have a display name set.");
+                }
+                else
+                    await ctx.Reply($"```\n{target.DisplayName}\n```");
+            }
             else if (!ctx.HasNext())
             {
                 // No perms check, display name isn't covered by member privacy
-                if (ctx.MatchFlag("r", "raw"))
-                {
-                    if (target.DisplayName == null)
-                    {
-                        if (ctx.System?.Id == target.System)
-                            await ctx.Reply($"This member does not have a display name set. To set one, type `pk;member {target.Reference()} displayname <display name>`.");
-                        else
-                            await ctx.Reply("This member does not have a display name set.");
-                    }
-                    else
-                        await ctx.Reply($"```\n{target.DisplayName}\n```");
-                }
-                else
-                {
-                    var eb = await CreateMemberNameInfoEmbed(ctx, target);
-                    if (ctx.System?.Id == target.System)
-                        eb.Description($"To change display name, type `pk;member {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;member {target.Reference()} displayname -clear`.\nTo print the raw display name, type `pk;member {target.Reference()} displayname -raw`.");
-                    await ctx.Reply(embed: eb.Build());
-                }
+                var eb = await CreateMemberNameInfoEmbed(ctx, target);
+                if (ctx.System?.Id == target.System)
+                    eb.Description($"To change display name, type `pk;member {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;member {target.Reference()} displayname -clear`.\nTo print the raw display name, type `pk;member {target.Reference()} displayname -raw`.");
+                await ctx.Reply(embed: eb.Build());
             }
             else
             {
@@ -335,30 +342,27 @@ namespace PluralKit.Bot
                 else
                     await ctx.Reply($"{Emojis.Success} Member server name cleared. This member will now be proxied using their member name \"{target.NameFor(ctx)}\" in this server ({ctx.Guild.Name}).");
             }
+            if (ctx.MatchRaw())
+            {
+                MemberGuildSettings memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
+
+                if (memberGuildConfig.DisplayName == null)
+                {
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This member does not have a server name set. To set one, type `pk;member {target.Reference()} servername <server name>`.");
+                    else
+                        await ctx.Reply("This member does not have a server name set.");
+                }
+                else
+                    await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+            }
             else if (!ctx.HasNext())
             {
                 // No perms check, display name isn't covered by member privacy
-                if (ctx.MatchFlag("r", "raw"))
-                {
-                    MemberGuildSettings memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
-
-                    if (memberGuildConfig.DisplayName == null)
-                    {
-                        if (ctx.System?.Id == target.System)
-                            await ctx.Reply($"This member does not have a server name set. To set one, type `pk;member {target.Reference()} servername <server name>`.");
-                        else
-                            await ctx.Reply("This member does not have a server name set.");
-                    }
-                    else
-                        await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
-                }
-                else
-                {
-                    var eb = await CreateMemberNameInfoEmbed(ctx, target);
-                    if (ctx.System?.Id == target.System)
-                        eb.Description($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.\nTo print the raw server name, type `pk;member {target.Reference()} servername -raw`.");
-                    await ctx.Reply(embed: eb.Build());
-                }
+                var eb = await CreateMemberNameInfoEmbed(ctx, target);
+                if (ctx.System?.Id == target.System)
+                    eb.Description($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.\nTo print the raw server name, type `pk;member {target.Reference()} servername -raw`.");
+                await ctx.Reply(embed: eb.Build());
             }
             else
             {
