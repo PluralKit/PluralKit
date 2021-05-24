@@ -218,6 +218,8 @@ namespace PluralKit.Bot
 
             async Task ShowIcon()
             {
+                if (!target.IconPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
                 if ((target.Icon?.Trim() ?? "").Length > 0)
                 {
                     var eb = new EmbedBuilder()
