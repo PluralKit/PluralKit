@@ -115,7 +115,18 @@ namespace PluralKit.Bot
                 var patch = new MemberPatch {Pronouns = Partial<string>.Null()};
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
                 await ctx.Reply($"{Emojis.Success} Member pronouns cleared.");
-            } 
+            }
+            else if (ctx.MatchRaw())
+            {
+                if (!target.PronounPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                    throw Errors.LookupNotAllowed;
+                if (target.Pronouns == null)
+                    if (ctx.System?.Id == target.System)
+                        await ctx.Reply($"This member does not have pronouns set. To set some, type `pk;member {target.Reference()} pronouns <pronouns>`.");
+                    else
+                        await ctx.Reply("This member does not have pronouns set.");
+                else await ctx.Reply($"```\n{target.Pronouns}\n```");
+            }
             else if (!ctx.HasNext())
             {
                 if (!target.PronounPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
@@ -125,8 +136,6 @@ namespace PluralKit.Bot
                         await ctx.Reply($"This member does not have pronouns set. To set some, type `pk;member {target.Reference()} pronouns <pronouns>`.");
                     else
                         await ctx.Reply("This member does not have pronouns set.");
-                else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{target.Pronouns}\n```");
                 else
                     await ctx.Reply($"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference()} pronouns -raw`."
                         + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Reference()} pronouns -clear`." : ""));
