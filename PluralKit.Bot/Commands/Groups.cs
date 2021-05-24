@@ -153,6 +153,9 @@ namespace PluralKit.Bot
             } 
             else if (!ctx.HasNext())
             {
+                if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                throw Errors.LookupNotAllowed;
+
                 if (target.Description == null)
                     if (ctx.System?.Id == target.System)
                         await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {target.Reference()} description <description>`.");
