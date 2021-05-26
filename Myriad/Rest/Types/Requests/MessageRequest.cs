@@ -9,5 +9,6 @@ namespace Myriad.Rest.Types.Requests
         public bool Tts { get; set; }
         public AllowedMentions? AllowedMentions { get; set; }
         public Embed? Embed { get; set; }
+        public MessageComponent[]? Components { get; set; }
     }
 }

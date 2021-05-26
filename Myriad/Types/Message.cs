@@ -64,6 +64,7 @@ namespace Myriad.Types
         
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<Message?> ReferencedMessage { get; init; }
+        public MessageComponent[]? Components { get; init; }
 
         public record Reference(ulong? GuildId, ulong? ChannelId, ulong? MessageId);
 

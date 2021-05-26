@@ -72,6 +72,7 @@ namespace PluralKit.Bot
             builder.RegisterType<MessageDeleted>().As<IEventHandler<MessageDeleteEvent>>().As<IEventHandler<MessageDeleteBulkEvent>>();
             builder.RegisterType<MessageEdited>().As<IEventHandler<MessageUpdateEvent>>();
             builder.RegisterType<ReactionAdded>().As<IEventHandler<MessageReactionAddEvent>>();
+            builder.RegisterType<InteractionCreated>().As<IEventHandler<InteractionCreateEvent>>();
             
             // Event handler queue
             builder.RegisterType<HandlerQueue<MessageCreateEvent>>().AsSelf().SingleInstance();
@@ -91,6 +92,7 @@ namespace PluralKit.Bot
             builder.RegisterType<LoggerCleanService>().AsSelf().SingleInstance();
             builder.RegisterType<ErrorMessageService>().AsSelf().SingleInstance();
             builder.RegisterType<CommandMessageService>().AsSelf().SingleInstance();
+            builder.RegisterType<InteractionDispatchService>().AsSelf().SingleInstance();
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();

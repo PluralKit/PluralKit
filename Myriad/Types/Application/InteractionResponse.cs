@@ -5,10 +5,10 @@
         public enum ResponseType
         {
             Pong = 1,
-            Acknowledge = 2,
-            ChannelMessage = 3,
             ChannelMessageWithSource = 4,
-            AckWithSource = 5
+            DeferredChannelMessageWithSource = 5,
+            DeferredUpdateMessage = 6,
+            UpdateMessage = 7
         }
 
         public ResponseType Type { get; init; }

@@ -109,6 +109,8 @@ namespace PluralKit.Bot
                 await HandleEvent(shard, mdb);
             if (evt is MessageReactionAddEvent mra)
                 await HandleEvent(shard, mra);
+            if (evt is InteractionCreateEvent ic)
+                await HandleEvent(shard, ic);
 
             // Update shard status for shards immediately on connect
             if (evt is ReadyEvent re)
