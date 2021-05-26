@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -13,7 +12,7 @@ namespace Myriad.Rest
 {
     public class DiscordApiClient
     {
-        private const string UserAgent = "Test Discord Library by @Ske#6201";
+        private const string UserAgent = "DiscordBot (https://github.com/xSke/PluralKit/tree/main/Myriad/, vMyriad)";
         private readonly BaseRestClient _client;
 
         public DiscordApiClient(string token, ILogger logger)
