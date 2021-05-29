@@ -13,6 +13,9 @@ namespace PluralKit.Core
         public static bool CanAccess(this PrivacyLevel level, LookupContext ctx) =>
             level == PrivacyLevel.Public || ctx == LookupContext.ByOwner;
 
+        public static bool ShouldShow(this PrivacyLevel level, LookupContext ctx, bool showPrivate) =>
+            level == PrivacyLevel.Public || (ctx == LookupContext.ByOwner && !showPrivate);
+
         public static string LevelName(this PrivacyLevel level) => 
             level == PrivacyLevel.Public ? "public" : "private";
 

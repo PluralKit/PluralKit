@@ -51,7 +51,9 @@ namespace PluralKit.Bot {
             var accounts = await _repo.GetSystemAccounts(conn, system.Id);
             var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
-            var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
+            bool showPriv = cctx.MatchPrivateFlag(ctx);
+
+            var memberCount = showPriv ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
 
             uint color;
             try
@@ -71,7 +73,7 @@ namespace PluralKit.Bot {
                 .Color(color);
 
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
-            if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
+            if (latestSwitch != null && system.FrontPrivacy.ShouldShow(ctx, showPriv))
             {
                 var switchMembers = await _repo.GetSwitchMembers(conn, latestSwitch.Id).ToListAsync();
                 if (switchMembers.Count > 0)
@@ -85,7 +87,7 @@ namespace PluralKit.Bot {
 
             eb.Field(new("Linked accounts", string.Join("\n", users).Truncate(1000), true));
 
-            if (system.MemberListPrivacy.CanAccess(ctx))
+            if (system.MemberListPrivacy.ShouldShow(ctx, showPriv))
             {
                 if (memberCount > 0)
                     eb.Field(new($"Members ({memberCount})", $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true));
