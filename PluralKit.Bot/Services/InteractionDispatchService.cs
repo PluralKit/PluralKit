@@ -39,6 +39,14 @@ namespace PluralKit.Bot
             return true;
         }
 
+        public void Unregister(string customId)
+        {
+            if (!Guid.TryParse(customId, out var customIdGuid))
+                return;
+
+            _handlers.TryRemove(customIdGuid, out _);
+        }
+
         public string Register(Func<InteractionContext, Task> callback, Duration? expiry = null)
         {
             var key = Guid.NewGuid();

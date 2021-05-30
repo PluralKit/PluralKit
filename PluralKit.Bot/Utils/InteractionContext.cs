@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using Autofac;
@@ -21,7 +22,8 @@ namespace PluralKit.Bot
 
         public ulong ChannelId => _evt.ChannelId;
         public ulong? MessageId => _evt.Message?.Id;
-        public GuildMember User => _evt.Member;
+        public GuildMember Member => _evt.Member;
+        public User User => _evt.Member.User;
         public string Token => _evt.Token;
         public string? CustomId => _evt.Data?.CustomId;
         public InteractionCreateEvent Event => _evt;
@@ -36,7 +38,23 @@ namespace PluralKit.Bot
                 });
         }
 
-        public async Task Respond(InteractionResponse.ResponseType type, InteractionApplicationCommandCallbackData data)
+        public async Task Ignore()
+        {
+            await Respond(InteractionResponse.ResponseType.DeferredUpdateMessage, new InteractionApplicationCommandCallbackData
+            {
+                // Components = _evt.Message.Components
+            });
+        }
+
+        public async Task Acknowledge()
+        {
+            await Respond(InteractionResponse.ResponseType.UpdateMessage, new InteractionApplicationCommandCallbackData
+            {
+                Components = Array.Empty<MessageComponent>()
+            });
+        }
+
+        public async Task Respond(InteractionResponse.ResponseType type, InteractionApplicationCommandCallbackData? data)
         { 
             var rest = _services.Resolve<DiscordApiClient>();
             await rest.CreateInteractionResponse(_evt.Id, _evt.Token, new InteractionResponse {Type = type, Data = data});
