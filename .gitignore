@@ -4,8 +4,10 @@ obj/
 
 # IDE files
 .idea/
+.run/
 .vscode/
 tags/
+.DS_Store
 
 # Dependencies
 node_modules/
