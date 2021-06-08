@@ -36,7 +36,9 @@ namespace Myriad.Types
             GuildDiscoveryDisqualified = 14,
             GuildDiscoveryRequalified = 15,
             Reply = 19,
-            ApplicationCommand = 20
+            ApplicationCommand = 20,
+            ThreadStarterMessage = 21,
+            GuildInviteReminder = 22
         }
 
         public ulong Id { get; init; }
