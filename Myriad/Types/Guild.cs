@@ -13,7 +13,7 @@
         public ulong? AfkChannelId { get; init; }
         public int AfkTimeout { get; init; }
         public bool? WidgetEnabled { get; init; }
-        public bool? WidgetChannelId { get; init; }
+        public ulong? WidgetChannelId { get; init; }
         public int VerificationLevel { get; init; }
 
         public Role[] Roles { get; init; }
