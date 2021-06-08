@@ -49,7 +49,7 @@ namespace PluralKit.Bot
                 // Start the Discord shards themselves (handlers already set up)
                 logger.Information("Connecting to Discord");
                 var info = await services.Resolve<DiscordApiClient>().GetGatewayBot();
-                await services.Resolve<Cluster>().Start(info with { Shards = 10 });
+                await services.Resolve<Cluster>().Start(info);
                 logger.Information("Connected! All is good (probably).");
 
                 // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
