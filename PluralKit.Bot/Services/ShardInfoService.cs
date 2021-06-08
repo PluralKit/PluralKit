@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
-using System.Threading.Tasks;
 
 using App.Metrics;
 
@@ -66,11 +65,8 @@ namespace PluralKit.Bot
             } else _shardInfo[shard.ShardId] = info = new ShardInfo();
             
             // Call our own SocketOpened listener manually (and then attach the listener properly)
-            SocketOpened(shard);
-            shard.SocketOpened += () => SocketOpened(shard);
-                
+            
             // Register listeners for new shards
-            _logger.Information("Attaching listeners to new shard #{Shard}", shard.ShardId);
             shard.Resumed += () => Resumed(shard);
             shard.Ready += () => Ready(shard);
             shard.SocketClosed += (closeStatus, message) => SocketClosed(shard, closeStatus, message);
@@ -78,14 +74,6 @@ namespace PluralKit.Bot
                 
             // Register that we've seen it
             info.HasAttachedListeners = true;
-
-        }
-
-        private void SocketOpened(Shard shard)
-        {
-            // We do nothing else here, since this kinda doesn't mean *much*? It's only really started once we get Ready/Resumed
-            // And it doesn't get fired first time around since we don't have time to add the event listener before it's fired'
-            _logger.Information("Shard #{Shard} opened socket", shard.ShardId);
         }
 
         private ShardInfo TryGetShard(Shard shard)
@@ -100,29 +88,22 @@ namespace PluralKit.Bot
 
         private void Resumed(Shard shard)
         {
-            _logger.Information("Shard #{Shard} resumed connection", shard.ShardId);
-            
-            var info = TryGetShard(shard);
-            // info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
-            info.Connected = true;
-            ReportShardStatus();
-        }
-
-        private void Ready(Shard shard)
-        {
-            _logger.Information("Shard #{Shard} sent Ready event", shard.ShardId);
-            
             var info = TryGetShard(shard);
             info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
             ReportShardStatus();
         }
 
-        private void SocketClosed(Shard shard, WebSocketCloseStatus closeStatus, string message)
+        private void Ready(Shard shard)
         {
-            _logger.Warning("Shard #{Shard} disconnected ({CloseCode}: {CloseMessage})", 
-                shard.ShardId, closeStatus, message);
-            
+            var info = TryGetShard(shard);
+            info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
+            info.Connected = true;
+            ReportShardStatus();
+        }
+
+        private void SocketClosed(Shard shard, WebSocketCloseStatus? closeStatus, string message)
+        {
             var info = TryGetShard(shard);
             info.DisconnectionCount++;
             info.Connected = false;
@@ -131,9 +112,6 @@ namespace PluralKit.Bot
 
         private void Heartbeated(Shard shard, TimeSpan latency)
         {
-            _logger.Information("Shard #{Shard} received heartbeat (latency: {Latency} ms)",
-                shard.ShardId, latency.Milliseconds);
-
             var info = TryGetShard(shard);
             info.LastHeartbeatTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;

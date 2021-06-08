@@ -114,7 +114,7 @@ namespace PluralKit.Bot
             try
             {
                 var system = ctx.SystemId != null ? await _db.Execute(c => _repo.GetSystem(c, ctx.SystemId.Value)) : null;
-                await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, ctx, _bot.PermissionsIn(channel.Id)));
+                await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, ctx));
             }
             catch (PKError)
             {

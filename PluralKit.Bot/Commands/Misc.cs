@@ -84,7 +84,7 @@ namespace PluralKit.Bot {
             var totalSwitches = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.SwitchCount.Name)?.Value ?? 0;
             var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name)?.Value ?? 0;
 
-            var shardId = ctx.Shard.ShardInfo.ShardId;
+            var shardId = ctx.Shard.ShardId;
             var shardTotal = ctx.Cluster.Shards.Count;
             var shardUpTotal = _shards.Shards.Where(x => x.Connected).Count();
             var shardInfo = _shards.GetShardInfo(ctx.Shard);
