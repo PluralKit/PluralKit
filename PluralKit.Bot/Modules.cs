@@ -44,6 +44,7 @@ namespace PluralKit.Bot
 
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
+            builder.RegisterType<Admin>().AsSelf();
             builder.RegisterType<Autoproxy>().AsSelf();
             builder.RegisterType<Fun>().AsSelf();
             builder.RegisterType<Groups>().AsSelf();

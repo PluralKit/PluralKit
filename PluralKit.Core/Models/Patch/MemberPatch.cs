@@ -8,6 +8,7 @@ namespace PluralKit.Core
     public class MemberPatch: PatchObject
     {
         public Partial<string> Name { get; set; }
+        public Partial<string> Hid { get; set; }
         public Partial<string?> DisplayName { get; set; }
         public Partial<string?> AvatarUrl { get; set; }
         public Partial<string?> Color { get; set; }
@@ -28,6 +29,7 @@ namespace PluralKit.Core
 
         public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
             .With("name", Name)
+            .With("hid", Hid)
             .With("display_name", DisplayName)
             .With("avatar_url", AvatarUrl)
             .With("color", Color)

@@ -13,5 +13,7 @@ namespace PluralKit.Bot
         public string[] Prefixes { get; set; }
         
         public int? MaxShardConcurrency { get; set; }
+        
+        public ulong? AdminRole { get; set; }
     }
 }

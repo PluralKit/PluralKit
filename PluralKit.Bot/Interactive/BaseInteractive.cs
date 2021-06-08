@@ -43,13 +43,11 @@ namespace PluralKit.Bot.Interactive
             return button;
         }
 
-        protected async Task Update(InteractionContext ctx, string? content = null, Embed? embed = null)
+        protected async Task Update(InteractionContext ctx)
         {
             await ctx.Respond(InteractionResponse.ResponseType.UpdateMessage,
                 new InteractionApplicationCommandCallbackData
                 {
-                    Content = content,
-                    Embeds = embed != null ? new[] { embed } : null,
                     Components = GetComponents()
                 });
         }

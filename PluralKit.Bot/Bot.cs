@@ -14,7 +14,6 @@ using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
-using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
 using NodaTime;

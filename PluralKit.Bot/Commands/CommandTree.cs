@@ -90,6 +90,7 @@ namespace PluralKit.Bot
         public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
         public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
         public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
+        public static Command Admin = new Command("admin", "admin", "Super secret admin commands (sshhhh)");
 
         public static Command[] SystemCommands = {
             SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemColor, SystemDelete, SystemTimezone,
@@ -197,6 +198,8 @@ namespace PluralKit.Bot
             if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
                 return ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
+            if (ctx.Match("admin"))
+                return HandleAdminCommand(ctx);
             if (ctx.Match("random", "r"))
                 if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
                 return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx));
@@ -206,6 +209,18 @@ namespace PluralKit.Bot
             // remove compiler warning
             return ctx.Reply(
                 $"{Emojis.Error} Unknown command {ctx.PeekArgument().AsCode()}. For a list of possible commands, see <https://pluralkit.me/commands>.");
+        }
+
+        private async Task HandleAdminCommand(Context ctx)
+        {
+            if (ctx.Match("usid", "updatesystemid"))
+                await ctx.Execute<Admin>(Admin, a => a.UpdateSystemId(ctx));
+            else if (ctx.Match("umid", "updatememberid"))
+                await ctx.Execute<Admin>(Admin, a => a.UpdateMemberId(ctx));
+            else if (ctx.Match("uml", "updatememberlimit"))
+                await ctx.Execute<Admin>(Admin, a => a.SystemMemberLimit(ctx));
+            else
+                await ctx.Reply($"{Emojis.Error} Unknown command.");
         }
 
         private async Task HandleSystemCommand(Context ctx)
