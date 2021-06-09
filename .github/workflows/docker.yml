@@ -19,7 +19,7 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ env.BRANCH_NAME }}
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:${{ env.BRANCH_NAME }}
+            ghcr.io/xske/pluralkit:${{ env.BRANCH_NAME }}
+            ghcr.io/xske/pluralkit:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/xske/pluralkit:${{ env.BRANCH_NAME }}
           cache-to: type=inline
