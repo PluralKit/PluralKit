@@ -84,56 +84,17 @@ namespace PluralKit.Core
             string newHid = existingMember?.Hid ?? await _conn.QuerySingleAsync<string>("find_free_member_hid", commandType: CommandType.StoredProcedure);
 
             // Upsert member data and return the ID
-            QueryBuilder qb = QueryBuilder.Upsert("members", "hid")
-                .Constant("hid", "@Hid")
-                .Constant("system", "@System");
+            var qb = UpdateQueryBuilder.Upsert("members", "hid")
+                .WithConstant("hid", newHid)
+                .WithConstant("system", _systemId);
 
-            if (patch.Name.IsPresent) qb.Variable("name", "@Name");
-            if (patch.DisplayName.IsPresent) qb.Variable("display_name", "@DisplayName");
-            if (patch.Description.IsPresent) qb.Variable("description", "@Description");
-			if (patch.Pronouns.IsPresent) qb.Variable("pronouns", "@Pronouns");
-            if (patch.Color.IsPresent) qb.Variable("color", "@Color");
-            if (patch.AvatarUrl.IsPresent) qb.Variable("avatar_url", "@AvatarUrl");
-            if (patch.ProxyTags.IsPresent) qb.Variable("proxy_tags", "@ProxyTags");
-            if (patch.Birthday.IsPresent) qb.Variable("birthday", "@Birthday");
-            if (patch.KeepProxy.IsPresent) qb.Variable("keep_proxy", "@KeepProxy");
-            if (patch.AllowAutoproxy.IsPresent) qb.Variable("allow_autoproxy", "@AllowAutoproxy");
-            if (patch.Visibility.IsPresent) qb.Variable("member_visibility", "@Visibility");
-            if (patch.NamePrivacy.IsPresent) qb.Variable("name_privacy", "@NamePrivacy");
-            if (patch.DescriptionPrivacy.IsPresent) qb.Variable("description_privacy", "@DescriptionPrivacy");
-            if (patch.PronounPrivacy.IsPresent) qb.Variable("pronoun_privacy", "@PronounPrivacy");
-            if (patch.BirthdayPrivacy.IsPresent) qb.Variable("birthday_privacy", "@BirthdayPrivacy");
-            if (patch.AvatarPrivacy.IsPresent) qb.Variable("avatar_privacy", "@AvatarPrivacy");
-            if (patch.MetadataPrivacy.IsPresent) qb.Variable("metadata_privacy", "@MetadataPrivacy");
- 
             // don't overwrite message count on existing members
-			if (existingMember == null)
-				if (patch.MessageCount.IsPresent) qb.Variable("message_count", "@MessageCount");
+			if (existingMember != null) patch.MessageCount = Partial<int>.Absent;
 
-            var newMember = await _conn.QueryFirstAsync<PKMember>(qb.Build("returning *"),
-                new
-                {
-                    Hid = newHid,
-                    System = _systemId,
-                    Name = patch.Name.Value,
-                    DisplayName = patch.DisplayName.Value,
-                    Description = patch.Description.Value,
-					Pronouns = patch.Pronouns.Value,
-                    Color = patch.Color.Value,
-                    AvatarUrl = patch.AvatarUrl.Value,
-                    KeepProxy = patch.KeepProxy.Value,
-                    ProxyTags = patch.ProxyTags.Value,
-                    Birthday = patch.Birthday.Value,
-					MessageCount = patch.MessageCount.Value,
-                    AllowAutoproxy = patch.AllowAutoproxy.Value,
-                    Visibility = patch.Visibility.Value,
-                    NamePrivacy = patch.NamePrivacy.Value,
-                    DescriptionPrivacy = patch.DescriptionPrivacy.Value,
-                    PronounPrivacy = patch.PronounPrivacy.Value,
-                    BirthdayPrivacy = patch.BirthdayPrivacy.Value,
-                    AvatarPrivacy = patch.AvatarPrivacy.Value,
-                    MetadataPrivacy = patch.MetadataPrivacy.Value,
-                });
+            patch.Apply(qb);
+
+            var (query, pms) = qb.Build("returning *");
+            var newMember = await _conn.QueryFirstAsync<PKMember>(query, pms);
 
             // Log this member ID by the given identifier
             _knownMembers[identifier] = newMember.Id;
@@ -160,37 +121,16 @@ namespace PluralKit.Core
         {
             var existingGroup = FindExistingGroup(potentialHid, potentialName);
             string newHid = existingGroup?.Hid ?? await _conn.QuerySingleAsync<string>("find_free_member_hid", commandType: CommandType.StoredProcedure);
-            
-            // Upsert group data and return ID
-            QueryBuilder qb = QueryBuilder.Upsert("groups", "hid")
-                .Constant("hid", "@Hid")
-                .Constant("system", "@System");
-            
-            if (patch.Name.IsPresent) qb.Variable("name", "@Name");
-            if (patch.DisplayName.IsPresent) qb.Variable("display_name", "@DisplayName");
-            if (patch.Description.IsPresent) qb.Variable("description", "@Description");
-            if (patch.Color.IsPresent) qb.Variable("color", "@Color");
-            if (patch.Icon.IsPresent) qb.Variable("icon", "@Icon");
-            if (patch.DescriptionPrivacy.IsPresent) qb.Variable("description_privacy", "@DescriptionPrivacy");
-            if (patch.IconPrivacy.IsPresent) qb.Variable("icon_privacy", "@IconPrivacy");
-            if (patch.ListPrivacy.IsPresent) qb.Variable("list_privacy", "@ListPrivacy");
-            if (patch.Visibility.IsPresent) qb.Variable("visibility", "@Visibility");
 
-            var newGroup = await _conn.QueryFirstAsync<PKGroup>(qb.Build("returning *"),
-                new
-                {
-                    Hid = newHid,
-                    System = _systemId,
-                    Name = patch.Name.Value,
-                    DisplayName = patch.DisplayName.Value,
-                    Description = patch.Description.Value,
-                    Color = patch.Color.Value,
-                    Icon = patch.Icon.Value,
-                    DescriptionPrivacy = patch.DescriptionPrivacy.Value,
-                    IconPrivacy = patch.IconPrivacy.Value,
-                    ListPrivacy = patch.ListPrivacy.Value,
-                    Visibility = patch.Visibility.Value,
-                });
+            // Upsert group data and return ID
+            var qb = UpdateQueryBuilder.Upsert("groups", "hid")
+                .WithConstant("hid", newHid)
+                .WithConstant("system", _systemId);
+
+            patch.Apply(qb);
+
+            var (query, pms) = qb.Build("returning *");
+            var newGroup = await _conn.QueryFirstAsync<PKGroup>(query, pms);
 
             _knownGroups[identifier] = newGroup.Id;
             return newGroup;
