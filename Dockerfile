@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /app
 
 # Restore/fetch dependencies excluding app code to make use of caching
@@ -14,7 +14,11 @@ RUN dotnet restore PluralKit.sln
 COPY . /app
 RUN dotnet build -c Release -o bin
 
-# Run :)
+# Build runtime stage (doesn't include SDK)
+FROM mcr.microsoft.com/dotnet/aspnet:5.0
+WORKDIR /app
+COPY --from=build /app ./
+
 # Allow overriding CMD from eg. docker-compose to run API layer too
 ENTRYPOINT ["dotnet"]
 CMD ["bin/PluralKit.Bot.dll"]
