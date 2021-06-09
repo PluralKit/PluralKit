@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -48,8 +49,7 @@ namespace PluralKit.Bot
 
                 // Start the Discord shards themselves (handlers already set up)
                 logger.Information("Connecting to Discord");
-                var info = await services.Resolve<DiscordApiClient>().GetGatewayBot();
-                await services.Resolve<Cluster>().Start(info);
+                await StartCluster(services);
                 logger.Information("Connected! All is good (probably).");
 
                 // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
@@ -127,6 +127,38 @@ namespace PluralKit.Bot
             builder.RegisterModule<DataStoreModule>();
             builder.RegisterModule<BotModule>();
             return builder.Build();
+        }
+
+        private static async Task StartCluster(IComponentContext services)
+        {
+            var info = await services.Resolve<DiscordApiClient>().GetGatewayBot();
+
+            var cluster = services.Resolve<Cluster>();
+            var config = services.Resolve<BotConfig>();
+            
+            if (config.Cluster != null)
+            {
+                // For multi-instance deployments, calculate the "span" of shards this node is responsible for
+                var totalNodes = config.Cluster.TotalNodes;
+                var totalShards = config.Cluster.TotalShards;
+                var nodeIndex = ExtractNodeIndex(config.Cluster.NodeName);
+                
+                // Should evenly distribute shards even with an uneven amount of nodes
+                var shardMin = (int) Math.Round(totalShards * (float) nodeIndex / totalNodes);
+                var shardMax = (int) Math.Round(totalShards * (float) (nodeIndex + 1) / totalNodes) - 1;
+                
+                await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency);
+            }
+            else
+            {
+                await cluster.Start(info);
+            }
+        }
+
+        private static int ExtractNodeIndex(string nodeName)
+        {
+            // Node name eg. "pluralkit-3", want to extract the 3. blame k8s :p
+            return int.Parse(nodeName.Split("-").Last());
         }
     }
 }

@@ -32,17 +32,19 @@ namespace Myriad.Gateway
         
         public async Task Start(GatewayInfo.Bot info)
         {
-            var concurrency = GetActualShardConcurrency(info.SessionStartLimit.MaxConcurrency);
-            _ratelimiter = new(_logger, concurrency);
-            
-            await Start(info.Url, info.Shards);
+            await Start(info.Url, 0, info.Shards - 1, info.Shards, info.SessionStartLimit.MaxConcurrency);
         }
 
-        public async Task Start(string url, int shardCount)
+        public async Task Start(string url, int shardMin, int shardMax, int shardTotal, int concurrency)
         {
-            _logger.Information("Starting {ShardCount} shards at {Url}", shardCount, url);
-            for (var i = 0; i < shardCount; i++)
-                CreateAndAddShard(url, new ShardInfo(i, shardCount));
+            concurrency = GetActualShardConcurrency(concurrency);
+            _ratelimiter = new(_logger, concurrency);
+
+            var shardCount = shardMax - shardMin + 1;
+            _logger.Information("Starting {ShardCount} of {ShardTotal} shards (#{ShardMin}-#{ShardMax}) at {Url}",
+                shardCount, shardTotal, shardMin, shardMax, url);
+            for (var i = shardMin; i <= shardMax; i++)
+                CreateAndAddShard(url, new ShardInfo(i, shardTotal));
 
             await StartShards();
         }
