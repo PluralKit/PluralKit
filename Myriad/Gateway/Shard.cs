@@ -74,6 +74,7 @@ namespace Myriad.Gateway
                 try
                 {
                     await ConnectInner();
+                    
                     await HandleConnectionOpened();
 
                     while (_conn.State == WebSocketState.Open)
@@ -84,7 +85,7 @@ namespace Myriad.Gateway
 
                         await _stateManager.HandlePacketReceived(packet);
                     }
-
+                    
                     await HandleConnectionClosed(_conn.CloseStatus, _conn.CloseStatusDescription);
 
                     _logger.Information("Shard {ShardId}: Reconnecting after delay {ReconnectDelay}",
@@ -92,6 +93,7 @@ namespace Myriad.Gateway
 
                     if (_reconnectDelay > TimeSpan.Zero)
                         await Task.Delay(_reconnectDelay);
+                    _reconnectDelay = TimeSpan.Zero;
                 }
                 catch (Exception e)
                 {
@@ -121,10 +123,22 @@ namespace Myriad.Gateway
         
         private async Task ConnectInner()
         {
-            await _ratelimiter.Acquire(_info.ShardId);
+            while (true)
+            {
+                await _ratelimiter.Acquire(_info.ShardId);
 
-            _logger.Information("Shard {ShardId}: Connecting to WebSocket", _info.ShardId);
-            await _conn.Connect(_url, default);
+                _logger.Information("Shard {ShardId}: Connecting to WebSocket", _info.ShardId);
+                try
+                {
+                    await _conn.Connect(_url, default);
+                    break;
+                }
+                catch (WebSocketException e)
+                {
+                    _logger.Error(e, "Shard {ShardId}: Error connecting to WebSocket, retrying in 5 seconds...", _info.ShardId);
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
+            }
         }
         
         private async Task DisconnectInner(WebSocketCloseStatus closeStatus)

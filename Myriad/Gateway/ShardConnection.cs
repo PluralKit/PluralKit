@@ -39,7 +39,8 @@ namespace Myriad.Gateway
 
         public async Task Send(GatewayPacket packet)
         {
-            if (_client == null || _client.State != WebSocketState.Open)
+            // from `ManagedWebSocket.s_validSendStates`
+            if (_client is not {State: WebSocketState.Open or WebSocketState.CloseReceived})
                 return;
 
             try
@@ -60,9 +61,10 @@ namespace Myriad.Gateway
 
         public async Task<GatewayPacket?> Read()
         {
-            if (_client == null || _client.State != WebSocketState.Open)
+            // from `ManagedWebSocket.s_validReceiveStates`
+            if (_client is not {State: WebSocketState.Open or WebSocketState.CloseSent})
                 return null;
-            
+
             try
             {
                 var (_, packet) = await _serializer.ReadPacket(_client);
@@ -71,6 +73,8 @@ namespace Myriad.Gateway
             catch (Exception e)
             {
                 _logger.Error(e, "Error reading from WebSocket");
+                // force close so we can "reset"
+                await CloseInner(WebSocketCloseStatus.NormalClosure, null);
             }
 
             return null;
@@ -85,19 +89,33 @@ namespace Myriad.Gateway
         {
             if (_client == null)
                 return;
+            
+            var client = _client;
+            _client = null;
+            
+            // from `ManagedWebSocket.s_validCloseStates`
+            if (client.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
+            {
+                // Close with timeout, mostly to work around https://github.com/dotnet/runtime/issues/51590
+                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                try
+                {
+                    await client.CloseAsync(closeStatus, description, cts.Token);
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e, "Error closing WebSocket connection");
+                }
+            }
 
-            if (_client.State != WebSocketState.Connecting && _client.State != WebSocketState.Open)
-                return;
-
-            // Close with timeout, mostly to work around https://github.com/dotnet/runtime/issues/51590
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            // This shouldn't need to be wrapped in a try/catch but doing it anyway :/
             try
             {
-                await _client.CloseAsync(closeStatus, description, cts.Token);
+                client.Dispose();
             }
             catch (Exception e)
             {
-                _logger.Error(e, "Error closing WebSocket connection");
+                _logger.Error(e, "Error disposing WebSocket connection");
             }
         }
     }
