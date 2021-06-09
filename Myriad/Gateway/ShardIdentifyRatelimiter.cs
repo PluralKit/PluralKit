@@ -8,7 +8,8 @@ namespace Myriad.Gateway
 {
     public class ShardIdentifyRatelimiter
     {
-        private static readonly TimeSpan BucketLength = TimeSpan.FromSeconds(5);
+        // docs specify 5 seconds, but we're actually throttling connections, not identify, so we need a bit of leeway
+        private static readonly TimeSpan BucketLength = TimeSpan.FromSeconds(6);
 
         private readonly ConcurrentDictionary<int, ConcurrentQueue<TaskCompletionSource>> _buckets = new();
         private readonly int _maxConcurrency;
