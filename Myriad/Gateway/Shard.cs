@@ -3,6 +3,7 @@ using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using Myriad.Gateway.Limit;
 using Myriad.Gateway.State;
 using Myriad.Serialization;
 using Myriad.Types;
@@ -17,7 +18,7 @@ namespace Myriad.Gateway
 
         private readonly GatewaySettings _settings;
         private readonly ShardInfo _info;
-        private readonly ShardIdentifyRatelimiter _ratelimiter;
+        private readonly IGatewayRatelimiter _ratelimiter;
         private readonly string _url;
         private readonly ILogger _logger;
         private readonly ShardStateManager _stateManager;
@@ -41,7 +42,7 @@ namespace Myriad.Gateway
         private TimeSpan _reconnectDelay = TimeSpan.Zero;
         private Task? _worker;
 
-        public Shard(GatewaySettings settings, ShardInfo info, ShardIdentifyRatelimiter ratelimiter, string url, ILogger logger)
+        public Shard(GatewaySettings settings, ShardInfo info, IGatewayRatelimiter ratelimiter, string url, ILogger logger)
         {
             _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
 
@@ -105,11 +106,14 @@ namespace Myriad.Gateway
             }
         }
         
-        public Task Start()
+        public async Task Start()
         {
             if (_worker == null)
                 _worker = ShardLoop();
-            return Task.CompletedTask;
+
+            // we can probably TCS this instead of spin loop but w/e
+            while (State != ShardState.Connected) 
+                await Task.Delay(100);
         }
 
         public async Task UpdateStatus(GatewayStatusUpdate payload)
@@ -125,7 +129,7 @@ namespace Myriad.Gateway
         {
             while (true)
             {
-                await _ratelimiter.Acquire(_info.ShardId);
+                await _ratelimiter.Identify(_info.ShardId);
 
                 _logger.Information("Shard {ShardId}: Connecting to WebSocket", _info.ShardId);
                 try

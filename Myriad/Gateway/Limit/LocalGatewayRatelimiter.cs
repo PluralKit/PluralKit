@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 
 using Serilog;
 
-namespace Myriad.Gateway
+namespace Myriad.Gateway.Limit
 {
-    public class ShardIdentifyRatelimiter
+    public class LocalGatewayRatelimiter: IGatewayRatelimiter
     {
         // docs specify 5 seconds, but we're actually throttling connections, not identify, so we need a bit of leeway
         private static readonly TimeSpan BucketLength = TimeSpan.FromSeconds(6);
@@ -17,13 +17,13 @@ namespace Myriad.Gateway
         private Task? _refillTask;
         private readonly ILogger _logger;
 
-        public ShardIdentifyRatelimiter(ILogger logger, int maxConcurrency)
+        public LocalGatewayRatelimiter(ILogger logger, int maxConcurrency)
         {
-            _logger = logger.ForContext<ShardIdentifyRatelimiter>();
+            _logger = logger.ForContext<LocalGatewayRatelimiter>();
             _maxConcurrency = maxConcurrency;
         }
 
-        public Task Acquire(int shard)
+        public Task Identify(int shard)
         {
             var bucket = shard % _maxConcurrency;
             var queue = _buckets.GetOrAdd(bucket, _ => new ConcurrentQueue<TaskCompletionSource>());

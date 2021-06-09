@@ -17,6 +17,8 @@ namespace PluralKit.Bot
         public ulong? AdminRole { get; set; }
         
         public ClusterSettings? Cluster { get; set; }
+        
+        public string? GatewayQueueUrl { get; set; }
 
         public record ClusterSettings
         {

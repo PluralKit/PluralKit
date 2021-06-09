@@ -28,6 +28,7 @@ namespace PluralKit.Bot
                 {
                     Token = botConfig.Token,
                     MaxShardConcurrency = botConfig.MaxShardConcurrency,
+                    GatewayQueueUrl = botConfig.GatewayQueueUrl,
                     Intents = GatewayIntent.Guilds |
                               GatewayIntent.DirectMessages |
                               GatewayIntent.DirectMessageReactions |

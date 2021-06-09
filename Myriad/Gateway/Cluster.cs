@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Myriad.Gateway.Limit;
 using Myriad.Types;
 
 using Serilog;
@@ -15,7 +16,7 @@ namespace Myriad.Gateway
         private readonly GatewaySettings _gatewaySettings;
         private readonly ILogger _logger;
         private readonly ConcurrentDictionary<int, Shard> _shards = new();
-        private ShardIdentifyRatelimiter? _ratelimiter;
+        private IGatewayRatelimiter? _ratelimiter;
 
         public Cluster(GatewaySettings gatewaySettings, ILogger logger)
         {
@@ -35,11 +36,10 @@ namespace Myriad.Gateway
             await Start(info.Url, 0, info.Shards - 1, info.Shards, info.SessionStartLimit.MaxConcurrency);
         }
 
-        public async Task Start(string url, int shardMin, int shardMax, int shardTotal, int concurrency)
+        public async Task Start(string url, int shardMin, int shardMax, int shardTotal, int recommendedConcurrency)
         {
-            concurrency = GetActualShardConcurrency(concurrency);
-            _ratelimiter = new(_logger, concurrency);
-
+            _ratelimiter = GetRateLimiter(recommendedConcurrency);
+            
             var shardCount = shardMax - shardMin + 1;
             _logger.Information("Starting {ShardCount} of {ShardTotal} shards (#{ShardMin}-#{ShardMax}) at {Url}",
                 shardCount, shardTotal, shardMin, shardMax, url);
@@ -76,6 +76,17 @@ namespace Myriad.Gateway
                 return recommendedConcurrency;
             
             return Math.Min(_gatewaySettings.MaxShardConcurrency.Value, recommendedConcurrency);
+        }
+
+        private IGatewayRatelimiter GetRateLimiter(int recommendedConcurrency)
+        {
+            if (_gatewaySettings.GatewayQueueUrl != null)
+            {
+                return new TwilightGatewayRatelimiter(_logger, _gatewaySettings.GatewayQueueUrl);
+            }
+            
+            var concurrency = GetActualShardConcurrency(recommendedConcurrency);
+            return new LocalGatewayRatelimiter(_logger, concurrency);
         }
     }
 }
