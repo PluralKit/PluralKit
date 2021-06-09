@@ -45,6 +45,8 @@ This includes:
   * the information that would be shown when a member proxies (proxy name/avatar image);
   * and the system ID on a member card.
 
+For more information about why certain information must be public, see [this github issue](https://github.com/xSke/PluralKit/issues/238).
+
 ### Is there a way to restrict PluralKit usage to a certain role? / Can I remove PluralKit access for specific users in my server?
 This is not a feature currently available in PluralKit. It may be added in the future.
 In the meantime, this feature is supported in Tupperbox (an alternative proxying bot) - ask about it in their support server: <https://discord.gg/Z4BHccHhy3>
