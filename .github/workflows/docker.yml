@@ -21,5 +21,6 @@ jobs:
           tags: |
             ghcr.io/xske/pluralkit:${{ env.BRANCH_NAME }}
             ghcr.io/xske/pluralkit:${{ github.sha }}
+            ghcr.io/xske/pluralkit:latest
           cache-from: type=registry,ref=ghcr.io/xske/pluralkit:${{ env.BRANCH_NAME }}
           cache-to: type=inline
