@@ -3,7 +3,7 @@ create view system_last_switch as
 select systems.id as system,
        last_switch.id as switch,
        last_switch.timestamp as timestamp,
-       array(select member from switch_members where switch_members.switch = last_switch.id) as members
+       array(select member from switch_members where switch_members.switch = last_switch.id order by switch_members.id) as members
 from systems
     inner join lateral (select * from switches where switches.system = systems.id order by timestamp desc limit 1) as last_switch on true;
 
