@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
@@ -30,25 +29,11 @@ namespace PluralKit.Core
             await using var conn = await _db.Obtain();
             
             // Export members
-            var members = new List<DataFileMember>();
-            var pkMembers = _repo.GetSystemMembers(conn, system.Id); // Read all members in the system
-            
-            await foreach (var member in pkMembers.Select(m => new DataFileMember
-            {
-                Id = m.Hid,
-                Name = m.Name,
-                DisplayName = m.DisplayName,
-                Description = m.Description,
-                Birthday = m.Birthday?.FormatExport(),
-                Pronouns = m.Pronouns,
-                Color = m.Color,
-                AvatarUrl = m.AvatarUrl,
-                ProxyTags = m.ProxyTags,
-                KeepProxy = m.KeepProxy,
-                Created = m.Created.FormatExport(),
-                MessageCount = m.MessageCount
-            })) members.Add(member);
+            var members =  await _repo.GetSystemMembers(conn, system.Id).ToListAsync(); // Read all members in the system
 
+            // Export groups
+            var groups = (await conn.QueryGroupList(system.Id)).ToList();
+            
             // Export switches
             var switches = new List<DataFileSwitch>();
             var switchList = await _repo.GetPeriodFronters(conn, system.Id, null, Instant.FromDateTimeUtc(DateTime.MinValue.ToUniversalTime()), SystemClock.Instance.GetCurrentInstant());
@@ -68,41 +53,13 @@ namespace PluralKit.Core
                 AvatarUrl = system.AvatarUrl,
                 TimeZone = system.UiTz,
                 Members = members,
+                Groups = groups,
                 Switches = switches,
                 Created = system.Created.FormatExport(),
                 LinkedAccounts = (await _repo.GetSystemAccounts(conn, system.Id)).ToList()
             };
         }
 
-        private MemberPatch ToMemberPatch(DataFileMember fileMember)
-        {
-            var newMember = new MemberPatch
-            {
-                Name = fileMember.Name,
-                DisplayName = fileMember.DisplayName,
-                Description = fileMember.Description,
-                Color = fileMember.Color,
-                Pronouns = fileMember.Pronouns,
-                AvatarUrl = fileMember.AvatarUrl,
-                KeepProxy = fileMember.KeepProxy,
-				MessageCount = fileMember.MessageCount,
-            };
-
-            if (fileMember.Prefix != null || fileMember.Suffix != null)
-                newMember.ProxyTags = new[] {new ProxyTag(fileMember.Prefix, fileMember.Suffix)};
-            else
-                // Ignore proxy tags where both prefix and suffix are set to null (would be invalid anyway)
-                newMember.ProxyTags = (fileMember.ProxyTags ?? new ProxyTag[] { }).Where(tag => !tag.IsEmpty).ToArray();
-                
-            if (fileMember.Birthday != null)
-            {
-                var birthdayParse = DateTimeFormats.DateExportFormat.Parse(fileMember.Birthday);
-                newMember.Birthday = birthdayParse.Success ? (LocalDate?)birthdayParse.Value : null;
-            }
-
-            return newMember;
-        }
-        
         public async Task<ImportResult> ImportSystem(DataFileSystem data, PKSystem system, ulong accountId)
         {
             await using var conn = await _db.Obtain();
@@ -110,6 +67,8 @@ namespace PluralKit.Core
             var result = new ImportResult {
                 AddedNames = new List<string>(),
                 ModifiedNames = new List<string>(),
+                AddedGroupNames = new List<string>(),
+                ModifiedGroupNames = new List<string>(),
                 System = system,
                 Success = true // Assume success unless indicated otherwise
             };
@@ -137,7 +96,7 @@ namespace PluralKit.Core
                 // Tally up the members that didn't exist before, and check member count on import
                 // If creating the unmatched members would put us over the member limit, abort before creating any members
                 var memberCountBefore = await _repo.GetSystemMemberCount(conn, system.Id);
-                var membersToAdd = data.Members.Count(m => imp.IsNewMember(m.Id, m.Name));
+                var membersToAdd = data.Members.Count(m => imp.IsNewMember(m.Hid, m.Name));
                 if (memberCountBefore + membersToAdd > memberLimit)
                 {
                     result.Success = false;
@@ -145,25 +104,42 @@ namespace PluralKit.Core
                     return result;
                 }
                 
-                async Task DoImportMember(BulkImporter imp, DataFileMember fileMember)
+                async Task DoImportMember(BulkImporter imp, PKMember fileMember)
                 {
-                    var isCreatingNewMember = imp.IsNewMember(fileMember.Id, fileMember.Name);
+                    var isCreatingNewMember = imp.IsNewMember(fileMember.Hid, fileMember.Name);
 
                     // Use the file member's id as the "unique identifier" for the importing (actual value is irrelevant but needs to be consistent)
                     _logger.Debug(
                         "Importing member with identifier {FileId} to system {System} (is creating new member? {IsCreatingNewMember})",
                         fileMember.Id, system.Id, isCreatingNewMember);
-                    var newMember = await imp.AddMember(fileMember.Id, fileMember.Id, fileMember.Name, ToMemberPatch(fileMember));
+                    var newMember = await imp.AddMember(fileMember.Hid, fileMember.Hid, fileMember.Name, fileMember.ToMemberPatch());
 
                     if (isCreatingNewMember)
                         result.AddedNames.Add(newMember.Name);
                     else
                         result.ModifiedNames.Add(newMember.Name);
                 }
+
+                async Task DoImportGroup(BulkImporter imp, PKGroup group)
+                {
+                    var isCreatingNewGroup = imp.IsNewGroup(group.Hid, group.Name);
+                    
+                    _logger.Debug("Importing group with identifier {id} to system {System} (is creating new group? {IsCreatingNewGroup})",
+                        group.Hid, system.Id, isCreatingNewGroup);
+                    var newGroup = await imp.AddGroup(group.Hid, group.Hid, group.Name, group.ToGroupPatch());
+
+                    if (isCreatingNewGroup)
+                        result.AddedGroupNames.Add(group.Name);
+                    else
+                        result.ModifiedGroupNames.Add(group.Name);
+                }
                 
                 // Can't parallelize this because we can't reuse the same connection/tx inside the importer
                 foreach (var m in data.Members) 
                     await DoImportMember(imp, m);
+
+                foreach (var g in data.Groups)
+                    await DoImportGroup(imp, g);
                 
                 // Lastly, import the switches
                 await imp.AddSwitches(data.Switches.Select(sw => new BulkImporter.SwitchInfo
@@ -181,8 +157,11 @@ namespace PluralKit.Core
 
     public struct ImportResult
     {
+        // todo: should these just be ints?
         public ICollection<string> AddedNames;
         public ICollection<string> ModifiedNames;
+        public ICollection<string> AddedGroupNames;
+        public ICollection<string> ModifiedGroupNames;
         public PKSystem System;
         public bool Success;
         public string Message;
@@ -197,7 +176,8 @@ namespace PluralKit.Core
         [JsonProperty("tag")] public string Tag;
         [JsonProperty("avatar_url")] public string AvatarUrl;
         [JsonProperty("timezone")] public string TimeZone;
-        [JsonProperty("members")] public ICollection<DataFileMember> Members;
+        [JsonProperty("members")] public ICollection<PKMember> Members;
+        [JsonProperty("groups")] public ICollection<ListedGroup> Groups;
         [JsonProperty("switches")] public ICollection<DataFileSwitch> Switches;
         [JsonProperty("accounts")] public ICollection<ulong> LinkedAccounts;
         [JsonProperty("created")] public string Created;
@@ -218,47 +198,6 @@ namespace PluralKit.Core
             !Tag.IsLongerThan(Limits.MaxSystemTagLength) &&
             !AvatarUrl.IsLongerThan(1000);
     }
-
-    public struct DataFileMember
-    {
-        [JsonProperty("id")] public string Id;
-        [JsonProperty("name")] public string Name;
-        [JsonProperty("display_name")] public string DisplayName;
-        [JsonProperty("description")] public string Description;
-        [JsonProperty("birthday")] public string Birthday;
-        [JsonProperty("pronouns")] public string Pronouns;
-        [JsonProperty("color")] public string Color;
-        [JsonProperty("avatar_url")] public string AvatarUrl;
-        
-        // For legacy single-tag imports
-        [JsonProperty("prefix")] [JsonIgnore] public string Prefix;
-        [JsonProperty("suffix")] [JsonIgnore] public string Suffix;
-        
-        // ^ is superseded by v
-        [JsonProperty("proxy_tags")] public ICollection<ProxyTag> ProxyTags;
-
-        [JsonProperty("keep_proxy")] public bool KeepProxy;
-        [JsonProperty("message_count")] public int MessageCount;
-        [JsonProperty("created")] public string Created;
-
-        [JsonIgnore] public bool Valid =>
-            Name != null &&
-            !Name.IsLongerThan(Limits.MaxMemberNameLength) &&
-            !DisplayName.IsLongerThan(Limits.MaxMemberNameLength) &&
-            !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
-            !Pronouns.IsLongerThan(Limits.MaxPronounsLength) &&
-            (Color == null || Regex.IsMatch(Color, "[0-9a-fA-F]{6}")) &&
-            (Birthday == null || DateTimeFormats.DateExportFormat.Parse(Birthday).Success) &&
-
-            // Sanity checks
-            !AvatarUrl.IsLongerThan(1000) &&
-
-            // Older versions have Prefix and Suffix as fields, meaning ProxyTags is null
-            (ProxyTags == null || ProxyTags.Count < 100 &&
-                ProxyTags.All(t => !t.ProxyString.IsLongerThan(100))) &&
-            !Prefix.IsLongerThan(100) && !Suffix.IsLongerThan(100);
-    }
-
     public struct DataFileSwitch
     {
         [JsonProperty("timestamp")] public string Timestamp;
@@ -306,6 +245,7 @@ namespace PluralKit.Core
 
     public struct TupperboxTupper
     {
+        // TODO: support `message_count`, `nick` and `tag`
         [JsonProperty("name")] public string Name;
         [JsonProperty("avatar_url")] public string AvatarUrl;
         [JsonProperty("brackets")] public IList<string> Brackets;
@@ -321,7 +261,7 @@ namespace PluralKit.Core
             Name != null && Brackets != null && Brackets.Count % 2 == 0 &&
             (Birthday == null || DateTimeFormats.TimestampExportFormat.Parse(Birthday).Success);
 
-        public DataFileMember ToPluralKit(ref string lastSetTag, ref bool multipleTags, ref bool hasGroup)
+        public PKMember ToPluralKit(ref string lastSetTag, ref bool multipleTags, ref bool hasGroup)
         {
             // If we've set a tag before and it's not the same as this one,
             // then we have multiple unique tags and we pass that flag back to the caller
@@ -342,12 +282,12 @@ namespace PluralKit.Core
                 ? LocalDate.FromDateTime(DateTimeFormats.TimestampExportFormat.Parse(Birthday).Value.ToDateTimeUtc())
                 : (LocalDate?) null;
             
-            return new DataFileMember
+            return new PKMember 
             {
-                Id = Guid.NewGuid().ToString(), // Note: this is only ever used for lookup purposes
+                Hid = Guid.NewGuid().ToString(), // Note: this is only ever used for lookup purposes
                 Name = Name,
                 AvatarUrl = AvatarUrl,
-                Birthday = convertedBirthdate?.FormatExport(),
+                Birthday = convertedBirthdate,
                 Description = Description,
                 ProxyTags = tags,
                 KeepProxy = ShowBrackets,

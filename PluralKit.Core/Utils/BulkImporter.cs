@@ -22,6 +22,9 @@ namespace PluralKit.Core
         private readonly Dictionary<string, MemberId> _knownMembers = new Dictionary<string, MemberId>();
         private readonly Dictionary<string, PKMember> _existingMembersByHid = new Dictionary<string, PKMember>();
         private readonly Dictionary<string, PKMember> _existingMembersByName = new Dictionary<string, PKMember>();
+        private readonly Dictionary<string, GroupId> _knownGroups = new Dictionary<string, GroupId>();
+        private readonly Dictionary<string, PKGroup> _existingGroupsByHid = new Dictionary<string, PKGroup>();
+        private readonly Dictionary<string, PKGroup> _existingGroupsByName = new Dictionary<string, PKGroup>();
 
         private BulkImporter(SystemId systemId, IPKConnection conn, IPKTransaction tx)
         {
@@ -47,6 +50,14 @@ namespace PluralKit.Core
             {
                 _existingMembersByHid[m.Hid] = m;
                 _existingMembersByName[m.Name] = m;
+            }
+            
+            var groups = await _conn.QueryAsync<PKGroup>("select id, hid, name from groups where system = @System",
+                new { System = _systemId });
+            foreach (var g in groups)
+            {
+                _existingGroupsByHid[g.Hid] = g;
+                _existingGroupsByName[g.Name] = g;
             }
         }
         
@@ -86,8 +97,16 @@ namespace PluralKit.Core
             if (patch.ProxyTags.IsPresent) qb.Variable("proxy_tags", "@ProxyTags");
             if (patch.Birthday.IsPresent) qb.Variable("birthday", "@Birthday");
             if (patch.KeepProxy.IsPresent) qb.Variable("keep_proxy", "@KeepProxy");
-
-			// don't overwrite message count on existing members
+            if (patch.AllowAutoproxy.IsPresent) qb.Variable("allow_autoproxy", "@AllowAutoproxy");
+            if (patch.Visibility.IsPresent) qb.Variable("member_visibility", "@Visibility");
+            if (patch.NamePrivacy.IsPresent) qb.Variable("name_privacy", "@NamePrivacy");
+            if (patch.DescriptionPrivacy.IsPresent) qb.Variable("description_privacy", "@DescriptionPrivacy");
+            if (patch.PronounPrivacy.IsPresent) qb.Variable("pronoun_privacy", "@PronounPrivacy");
+            if (patch.BirthdayPrivacy.IsPresent) qb.Variable("birthday_privacy", "@BirthdayPrivacy");
+            if (patch.AvatarPrivacy.IsPresent) qb.Variable("avatar_privacy", "@AvatarPrivacy");
+            if (patch.MetadataPrivacy.IsPresent) qb.Variable("metadata_privacy", "@MetadataPrivacy");
+ 
+            // don't overwrite message count on existing members
 			if (existingMember == null)
 				if (patch.MessageCount.IsPresent) qb.Variable("message_count", "@MessageCount");
 
@@ -106,6 +125,14 @@ namespace PluralKit.Core
                     ProxyTags = patch.ProxyTags.Value,
                     Birthday = patch.Birthday.Value,
 					MessageCount = patch.MessageCount.Value,
+                    AllowAutoproxy = patch.AllowAutoproxy.Value,
+                    Visibility = patch.Visibility.Value,
+                    NamePrivacy = patch.NamePrivacy.Value,
+                    DescriptionPrivacy = patch.DescriptionPrivacy.Value,
+                    PronounPrivacy = patch.PronounPrivacy.Value,
+                    BirthdayPrivacy = patch.BirthdayPrivacy.Value,
+                    AvatarPrivacy = patch.AvatarPrivacy.Value,
+                    MetadataPrivacy = patch.MetadataPrivacy.Value,
                 });
 
             // Log this member ID by the given identifier
@@ -120,6 +147,55 @@ namespace PluralKit.Core
             return null;
         }
 
+        public bool IsNewGroup(string hid, string name) => FindExistingGroup(hid, name) == null;
+
+        private PKGroup? FindExistingGroup(string hid, string name)
+        {
+            if (_existingGroupsByHid.TryGetValue(hid, out var byHid)) return byHid;
+            if (_existingGroupsByName.TryGetValue(name, out var byName)) return byName;
+            return null;
+        }
+
+        public async Task<PKGroup> AddGroup(string identifier, string potentialHid, string potentialName, GroupPatch patch)
+        {
+            var existingGroup = FindExistingGroup(potentialHid, potentialName);
+            string newHid = existingGroup?.Hid ?? await _conn.QuerySingleAsync<string>("find_free_member_hid", commandType: CommandType.StoredProcedure);
+            
+            // Upsert group data and return ID
+            QueryBuilder qb = QueryBuilder.Upsert("groups", "hid")
+                .Constant("hid", "@Hid")
+                .Constant("system", "@System");
+            
+            if (patch.Name.IsPresent) qb.Variable("name", "@Name");
+            if (patch.DisplayName.IsPresent) qb.Variable("display_name", "@DisplayName");
+            if (patch.Description.IsPresent) qb.Variable("description", "@Description");
+            if (patch.Color.IsPresent) qb.Variable("color", "@Color");
+            if (patch.Icon.IsPresent) qb.Variable("icon", "@Icon");
+            if (patch.DescriptionPrivacy.IsPresent) qb.Variable("description_privacy", "@DescriptionPrivacy");
+            if (patch.IconPrivacy.IsPresent) qb.Variable("icon_privacy", "@IconPrivacy");
+            if (patch.ListPrivacy.IsPresent) qb.Variable("list_privacy", "@ListPrivacy");
+            if (patch.Visibility.IsPresent) qb.Variable("visibility", "@Visibility");
+
+            var newGroup = await _conn.QueryFirstAsync<PKGroup>(qb.Build("returning *"),
+                new
+                {
+                    Hid = newHid,
+                    System = _systemId,
+                    Name = patch.Name.Value,
+                    DisplayName = patch.DisplayName.Value,
+                    Description = patch.Description.Value,
+                    Color = patch.Color.Value,
+                    Icon = patch.Icon.Value,
+                    DescriptionPrivacy = patch.DescriptionPrivacy.Value,
+                    IconPrivacy = patch.IconPrivacy.Value,
+                    ListPrivacy = patch.ListPrivacy.Value,
+                    Visibility = patch.Visibility.Value,
+                });
+
+            _knownGroups[identifier] = newGroup.Id;
+            return newGroup;
+        }
+        
         /// <summary>
         /// Register switches in bulk.
         /// </summary>

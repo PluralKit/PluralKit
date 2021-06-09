@@ -1,26 +1,53 @@
-﻿using NodaTime;
+﻿using System.Text.RegularExpressions;
+
+using Newtonsoft.Json;
+
+using NodaTime;
 
 #nullable enable
 namespace PluralKit.Core
 {
     public class PKGroup
     {
-        public GroupId Id { get; private set; }
-        public string Hid { get; private set; } = null!;
-        public SystemId System { get; private set; }
+        [JsonIgnore] public GroupId Id { get; private set; }
+        [JsonProperty("id")] public string Hid { get; private set; } = null!;
+        [JsonIgnore] public SystemId System { get; private set; }
 
-        public string Name { get; private set; } = null!;
-        public string? DisplayName { get; private set; }
-        public string? Description { get; private set; }
-        public string? Icon { get; private set; }
-        public string? Color { get; private set; }
+        [JsonProperty("name")] public string Name { get; private set; } = null!;
+        [JsonProperty("display_name")] public string? DisplayName { get; private set; }
+        [JsonProperty("description")] public string? Description { get; private set; }
+        [JsonProperty("icon")] public string? Icon { get; private set; }
+        [JsonProperty("color")] public string? Color { get; private set; }
 
-        public PrivacyLevel DescriptionPrivacy { get; private set; }
-        public PrivacyLevel IconPrivacy { get; private set; }
-        public PrivacyLevel ListPrivacy { get; private set; }
-        public PrivacyLevel Visibility { get; private set; }
+        [JsonProperty("description_privacy")] public PrivacyLevel DescriptionPrivacy { get; private set; }
+        [JsonProperty("icon_privacy")] public PrivacyLevel IconPrivacy { get; private set; }
+        [JsonProperty("list_privacy")] public PrivacyLevel ListPrivacy { get; private set; }
+        [JsonProperty("visibility")] public PrivacyLevel Visibility { get; private set; }
         
         public Instant Created { get; private set; }
+
+        public bool Valid =>
+            Name != null &&
+            !Name.IsLongerThan(Limits.MaxGroupNameLength) &&
+            !DisplayName.IsLongerThan(Limits.MaxGroupNameLength) &&
+            !Description.IsLongerThan(Limits.MaxDescriptionLength) &&
+            (Color == null || Regex.IsMatch(Color, "[0-9a-fA-F]{6}")) &&
+
+            // sanity checks
+            !Icon.IsLongerThan(1000);
+
+        public GroupPatch ToGroupPatch() => new GroupPatch
+        {
+            Name = Name,
+            DisplayName = DisplayName,
+            Description = Description,
+            Icon = Icon,
+            Color = Color,
+            DescriptionPrivacy = DescriptionPrivacy,
+            IconPrivacy = IconPrivacy,
+            ListPrivacy = ListPrivacy,
+            Visibility = Visibility,
+        };
     }
 
     public static class PKGroupExt

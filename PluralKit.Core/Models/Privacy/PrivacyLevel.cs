@@ -4,6 +4,7 @@ namespace PluralKit.Core
 {
     public enum PrivacyLevel
     {
+        // todo: string JSON for these
         Public = 1,
         Private = 2
     }

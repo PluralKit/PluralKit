@@ -1,7 +1,9 @@
-﻿namespace PluralKit.Core
+﻿using Newtonsoft.Json;
+
+namespace PluralKit.Core
 {
     public class ListedGroup : PKGroup
     {
-        public int MemberCount { get; }
+        [JsonIgnore] public int MemberCount { get; }
     }
 }

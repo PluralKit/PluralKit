@@ -89,7 +89,10 @@ namespace PluralKit.Bot
                     else
                     {
                         // We already had a system, so show them what changed
-                        await ctx.Reply($"{Emojis.Success} Updated {result.ModifiedNames.Count} members, created {result.AddedNames.Count} members. Type `pk;system list` to check!");
+                        if (result.AddedGroupNames.Count > 0 || result.ModifiedGroupNames.Count > 0)
+                            await ctx.Reply($"{Emojis.Success} Updated {result.ModifiedNames.Count} members, created {result.AddedNames.Count} members; updated {result.ModifiedGroupNames.Count} groups, created {result.AddedGroupNames.Count} groups.");
+                        else
+                            await ctx.Reply($"{Emojis.Success} Updated {result.ModifiedNames.Count} members, created {result.AddedNames.Count} members. Type `pk;system list` to check!");
                     }
                 }
             });
