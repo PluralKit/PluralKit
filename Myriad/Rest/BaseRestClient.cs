@@ -16,6 +16,7 @@ using Myriad.Serialization;
 using Polly;
 
 using Serilog;
+using Serilog.Context;
 
 namespace Myriad.Rest
 {
@@ -172,8 +173,10 @@ namespace Myriad.Rest
         {
             return await _retryPolicy.ExecuteAsync(async _ =>
                 {
+                    using var __ = LogContext.PushProperty("EndpointName", ratelimitParams.endpointName);
+                    
                     var request = createRequest();
-                    _logger.Debug("Sending request: {RequestMethod} {RequestPath}",
+                    _logger.Debug("Request: {RequestMethod} {RequestPath}",
                         request.Method, request.RequestUri);
 
                     request.Version = _httpVersion;
@@ -185,9 +188,8 @@ namespace Myriad.Rest
                     stopwatch.Stop();
 
                     _logger.Debug(
-                        "Received response in {ResponseDurationMs} ms: {RequestMethod} {RequestPath} -> {StatusCode} {ReasonPhrase}",
-                        stopwatch.ElapsedMilliseconds, request.Method, request.RequestUri, (int) response.StatusCode,
-                        response.ReasonPhrase);
+                        "Response: {RequestMethod} {RequestPath} -> {StatusCode} {ReasonPhrase} (in {ResponseDurationMs} ms)",
+                        request.Method, request.RequestUri, (int) response.StatusCode, response.ReasonPhrase, stopwatch.ElapsedMilliseconds);
 
                     await HandleApiError(response, ignoreNotFound);
 
@@ -208,14 +210,16 @@ namespace Myriad.Rest
             if (response.StatusCode == HttpStatusCode.NotFound && ignoreNotFound)
                 return;
 
-            throw await CreateDiscordException(response);
+            var body = await response.Content.ReadAsStringAsync();
+            var apiError = TryParseApiError(body); 
+            if (apiError != null)
+                _logger.Warning("Discord API error: {DiscordErrorCode} {DiscordErrorMessage}", apiError.Code, apiError.Message);
+
+            throw CreateDiscordException(response, body, apiError);
         }
 
-        private async ValueTask<DiscordRequestException> CreateDiscordException(HttpResponseMessage response)
+        private DiscordRequestException CreateDiscordException(HttpResponseMessage response, string body, DiscordApiError? apiError)
         {
-            var body = await response.Content.ReadAsStringAsync();
-            var apiError = TryParseApiError(body);
-
             return response.StatusCode switch
             {
                 HttpStatusCode.BadRequest => new BadRequestException(response, body, apiError),

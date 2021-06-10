@@ -9,6 +9,7 @@ using Myriad.Serialization;
 using Myriad.Types;
 
 using Serilog;
+using Serilog.Context;
 
 namespace Myriad.Gateway
 {
@@ -50,7 +51,7 @@ namespace Myriad.Gateway
             _info = info;
             _ratelimiter = ratelimiter;
             _url = url;
-            _logger = logger;
+            _logger = logger.ForContext<Shard>().ForContext("ShardId", info.ShardId);
             _stateManager = new ShardStateManager(info, _jsonSerializerOptions, logger)
             {
                 HandleEvent = HandleEvent,
@@ -70,6 +71,9 @@ namespace Myriad.Gateway
         
         private async Task ShardLoop()
         {
+            // may be superfluous but this adds shard id to ambient context which is nice
+            using var _ = LogContext.PushProperty("ShardId", _info.ShardId);
+            
             while (true)
             {
                 try

@@ -140,8 +140,8 @@ namespace Myriad.Gateway
             _hasReceivedHeartbeatAck = true;
             _latency = DateTimeOffset.UtcNow - _lastHeartbeatSent;
             OnHeartbeatReceived?.Invoke(_latency!.Value);
-            _logger.Information("Shard {ShardId}: Received Heartbeat (latency {Latency} ms)",
-                _info.ShardId, _latency);
+            _logger.Debug("Shard {ShardId}: Received Heartbeat (latency {Latency:N2} ms)",
+                _info.ShardId, _latency?.TotalMilliseconds);
             return Task.CompletedTask;
         }
 

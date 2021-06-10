@@ -8,8 +8,7 @@ namespace PluralKit.Core
 
         public ModelRepository(ILogger logger)
         {
-            _logger = logger.ForContext<ILogger>()
-                .ForContext("Elastic", "yes?");
+            _logger = logger.ForContext<ModelRepository>();
         }
     }
 }

@@ -16,6 +16,7 @@ using Serilog.Context;
 
 namespace PluralKit.Bot
 {
+    // TODO: phase this out; it currently still handles metrics but that needs to be moved to Myriad probably?
     public class DiscordRequestObserver: IObserver<KeyValuePair<string, object>>
     {
         private readonly IMetrics _metrics;
@@ -77,6 +78,8 @@ namespace PluralKit.Bot
         {
             var endpoint = GetEndpointName(response.RequestMessage);
 
+            // (see phase-out notice at top of file)
+            /*
             using (LogContext.PushProperty("Elastic", "yes?"))
             {
                 if ((int) response.StatusCode >= 400)
@@ -101,6 +104,7 @@ namespace PluralKit.Bot
                     response.ReasonPhrase,
                     activity.Duration.TotalMilliseconds);
             }
+            */
 
             if (IsDiscordApiRequest(response))
             {

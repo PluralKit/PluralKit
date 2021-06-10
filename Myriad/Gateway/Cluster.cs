@@ -21,7 +21,7 @@ namespace Myriad.Gateway
         public Cluster(GatewaySettings gatewaySettings, ILogger logger)
         {
             _gatewaySettings = gatewaySettings;
-            _logger = logger;
+            _logger = logger.ForContext<Cluster>();
         }
 
         public Func<Shard, IGatewayEvent, Task>? EventReceived { get; set; }

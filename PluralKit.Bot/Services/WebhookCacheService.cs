@@ -71,7 +71,7 @@ namespace PluralKit.Bot
         public async Task<Webhook> InvalidateAndRefreshWebhook(ulong channelId, Webhook webhook)
         {
             // note: webhook.ChannelId may not be the same as channelId >.>
-            _logger.Information("Refreshing webhook for channel {Channel}", webhook.ChannelId);
+            _logger.Debug("Refreshing webhook for channel {Channel}", webhook.ChannelId);
             
             _webhooks.TryRemove(webhook.ChannelId, out _);
             return await GetWebhook(channelId);

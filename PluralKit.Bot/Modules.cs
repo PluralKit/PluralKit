@@ -116,6 +116,7 @@ namespace PluralKit.Bot
                 Timeout = TimeSpan.FromSeconds(5)
             }).AsSelf().SingleInstance();
             builder.RegisterInstance(SystemClock.Instance).As<IClock>();
+            builder.RegisterType<SerilogGatewayEnricherFactory>().AsSelf().SingleInstance();
 
             builder.RegisterType<DiscordRequestObserver>().AsSelf().SingleInstance();
         }

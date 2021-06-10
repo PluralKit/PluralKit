@@ -14,7 +14,7 @@ namespace Myriad.Gateway.Limit
         public TwilightGatewayRatelimiter(ILogger logger, string url)
         {
             _url = url;
-            _logger = logger;
+            _logger = logger.ForContext<TwilightGatewayRatelimiter>();
         }
 
         public async Task Identify(int shard)

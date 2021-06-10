@@ -56,7 +56,7 @@ namespace Myriad.Gateway.Limit
                     if (!queue.TryDequeue(out var tcs))
                         continue;
 
-                    _logger.Information(
+                    _logger.Debug(
                         "Allowing identify for bucket {BucketId} through ({QueueLength} left in bucket queue)",
                         bucket, queue.Count);
                     tcs.SetResult();

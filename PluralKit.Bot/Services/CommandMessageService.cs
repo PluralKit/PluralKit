@@ -22,7 +22,7 @@ namespace PluralKit.Bot
             _db = db;
             _repo = repo;
             _clock = clock;
-            _logger = logger;
+            _logger = logger.ForContext<CommandMessageService>();
         }
 
         public async Task RegisterMessage(ulong messageId, ulong authorId)

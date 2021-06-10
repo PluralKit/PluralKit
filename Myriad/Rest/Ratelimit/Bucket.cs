@@ -50,7 +50,7 @@ namespace Myriad.Rest.Ratelimit
 
                 if (Remaining > 0)
                 {
-                    _logger.Debug(
+                    _logger.Verbose(
                         "{BucketKey}/{BucketMajor}: Bucket has [{BucketRemaining}/{BucketLimit} left], allowing through",
                         Key, Major, Remaining, Limit);
                     Remaining--;
@@ -82,7 +82,7 @@ namespace Myriad.Rest.Ratelimit
                     var headerNextReset = DateTimeOffset.UtcNow + headers.ResetAfter.Value; // todo: server time
                     if (_nextReset == null || headerNextReset > _nextReset)
                     {
-                        _logger.Debug("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter}, remaining: {Remaining}, local remaining: {LocalRemaining})",
+                        _logger.Verbose("{BucketKey}/{BucketMajor}: Received reset time {NextReset} from server (after: {NextResetAfter}, remaining: {Remaining}, local remaining: {LocalRemaining})",
                             Key, Major, headerNextReset, headers.ResetAfter.Value, headers.Remaining, Remaining);
 
                         _nextReset = headerNextReset;
