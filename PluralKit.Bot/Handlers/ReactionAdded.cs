@@ -189,12 +189,26 @@ namespace PluralKit.Bot
             if (msg.System.PingsEnabled)
             {
                 // If the system has pings enabled, go ahead
-                var embed = new EmbedBuilder().Description($"[Jump to pinged message]({evt.JumpLink()})");
                 await _rest.CreateMessage(evt.ChannelId, new()
                 {
-                    Content =
-                        $"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{evt.UserId}>.",
-                    Embed = embed.Build(),
+                    Content = $"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{evt.UserId}>.",
+                    Components = new []
+                    {
+                        new MessageComponent
+                        {
+                            Type = ComponentType.ActionRow,
+                            Components = new[]
+                            {
+                                new MessageComponent
+                                {
+                                    Style = ButtonStyle.Link,
+                                    Type = ComponentType.Button,
+                                    Label = "Jump",
+                                    Url = evt.JumpLink()
+                                }
+                            }
+                        }
+                    },
                     AllowedMentions = new AllowedMentions {Users = new[] {msg.Message.Sender}}
                 });
             }
