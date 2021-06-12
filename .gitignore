@@ -18,6 +18,8 @@ node_modules/
 pluralkit.conf
 pluralkit.*.conf
 *.DotSettings.user
+*.csproj.user
+launchSettings.json
 
 # Generated
 logs/
