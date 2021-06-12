@@ -4,6 +4,11 @@
         <TargetFramework>net5.0</TargetFramework>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+    
+    <PropertyGroup>
+        <!-- This warning triggers on most record classes. It is unhelpful. :/ -->
+        <NoWarn>$(NoWarn);8618</NoWarn>
+    </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <DebugSymbols>true</DebugSymbols>
@@ -14,6 +19,7 @@
       <PackageReference Include="Polly" Version="7.2.1" />
       <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
       <PackageReference Include="Serilog" Version="2.10.0" />
+      <PackageReference Include="System.Linq.Async" Version="5.0.0" />
     </ItemGroup>
 
 </Project>

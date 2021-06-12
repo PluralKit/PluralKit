@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.Text.RegularExpressions;
 
 using NodaTime;
 
@@ -7,6 +8,7 @@ namespace PluralKit.Core
     public class MemberPatch: PatchObject
     {
         public Partial<string> Name { get; set; }
+        public Partial<string> Hid { get; set; }
         public Partial<string?> DisplayName { get; set; }
         public Partial<string?> AvatarUrl { get; set; }
         public Partial<string?> Color { get; set; }
@@ -27,6 +29,7 @@ namespace PluralKit.Core
 
         public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
             .With("name", Name)
+            .With("hid", Hid)
             .With("display_name", DisplayName)
             .With("avatar_url", AvatarUrl)
             .With("color", Color)
@@ -44,5 +47,14 @@ namespace PluralKit.Core
             .With("birthday_privacy", BirthdayPrivacy)
             .With("avatar_privacy", AvatarPrivacy)
             .With("metadata_privacy", MetadataPrivacy);
+
+        public new void CheckIsValid()
+        {
+            if (AvatarUrl.Value != null && !MiscUtils.TryMatchUri(AvatarUrl.Value, out var avatarUri))
+                throw new InvalidPatchException("avatar_url");
+            if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
+                throw new InvalidPatchException("color");
+        }
+
     }
 }

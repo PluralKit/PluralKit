@@ -11,6 +11,8 @@ using Myriad.Gateway;
 using NodaTime;
 using NodaTime.Extensions;
 
+using PluralKit.Core;
+
 using Serilog;
 
 namespace PluralKit.Bot
@@ -33,11 +35,16 @@ namespace PluralKit.Bot
         private readonly ILogger _logger;
         private readonly Cluster _client;
         private readonly Dictionary<int, ShardInfo> _shardInfo = new();
+
+        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
         
-        public ShardInfoService(ILogger logger, Cluster client, IMetrics metrics)
+        public ShardInfoService(ILogger logger, Cluster client, IMetrics metrics, IDatabase db, ModelRepository repo)
         {
             _client = client;
             _metrics = metrics;
+            _db = db;
+            _repo = repo;
             _logger = logger.ForContext<ShardInfoService>();
         }
 
@@ -66,26 +73,15 @@ namespace PluralKit.Bot
             } else _shardInfo[shard.ShardId] = info = new ShardInfo();
             
             // Call our own SocketOpened listener manually (and then attach the listener properly)
-            SocketOpened(shard);
-            shard.SocketOpened += () => SocketOpened(shard);
-                
+            
             // Register listeners for new shards
-            _logger.Information("Attaching listeners to new shard #{Shard}", shard.ShardId);
-            shard.Resumed += () => Resumed(shard);
-            shard.Ready += () => Ready(shard);
+            shard.Resumed += () => ReadyOrResumed(shard);
+            shard.Ready += () => ReadyOrResumed(shard);
             shard.SocketClosed += (closeStatus, message) => SocketClosed(shard, closeStatus, message);
             shard.HeartbeatReceived += latency => Heartbeated(shard, latency);
                 
             // Register that we've seen it
             info.HasAttachedListeners = true;
-
-        }
-
-        private void SocketOpened(Shard shard)
-        {
-            // We do nothing else here, since this kinda doesn't mean *much*? It's only really started once we get Ready/Resumed
-            // And it doesn't get fired first time around since we don't have time to add the event listener before it's fired'
-            _logger.Information("Shard #{Shard} opened socket", shard.ShardId);
         }
 
         private ShardInfo TryGetShard(Shard shard)
@@ -98,46 +94,54 @@ namespace PluralKit.Bot
             return info;
         }
 
-        private void Resumed(Shard shard)
+        private void ReadyOrResumed(Shard shard)
         {
-            _logger.Information("Shard #{Shard} resumed connection", shard.ShardId);
-            
-            var info = TryGetShard(shard);
-            // info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
-            info.Connected = true;
-            ReportShardStatus();
-        }
-
-        private void Ready(Shard shard)
-        {
-            _logger.Information("Shard #{Shard} sent Ready event", shard.ShardId);
-            
             var info = TryGetShard(shard);
             info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
             ReportShardStatus();
+            
+            _ = ExecuteWithDatabase(async c =>
+            {
+                await _repo.SetShardStatus(c, shard.ShardId, PKShardInfo.ShardStatus.Up);
+                await _repo.RegisterShardConnection(c, shard.ShardId);
+            });
         }
 
-        private void SocketClosed(Shard shard, WebSocketCloseStatus closeStatus, string message)
+        private void SocketClosed(Shard shard, WebSocketCloseStatus? closeStatus, string message)
         {
-            _logger.Warning("Shard #{Shard} disconnected ({CloseCode}: {CloseMessage})", 
-                shard.ShardId, closeStatus, message);
-            
             var info = TryGetShard(shard);
             info.DisconnectionCount++;
             info.Connected = false;
             ReportShardStatus();
+            
+            _ = ExecuteWithDatabase(c =>
+                _repo.SetShardStatus(c, shard.ShardId, PKShardInfo.ShardStatus.Down));
         }
 
         private void Heartbeated(Shard shard, TimeSpan latency)
         {
-            _logger.Information("Shard #{Shard} received heartbeat (latency: {Latency} ms)",
-                shard.ShardId, latency.Milliseconds);
-
             var info = TryGetShard(shard);
             info.LastHeartbeatTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
             info.ShardLatency = latency.ToDuration();
+            
+            _ = ExecuteWithDatabase(c =>
+                _repo.RegisterShardHeartbeat(c, shard.ShardId, latency.ToDuration()));
+        }
+
+        private async Task ExecuteWithDatabase(Func<IPKConnection, Task> fn)
+        {
+            // wrapper function to log errors because we "async void" it at call site :(
+            try
+            {
+                await using var conn = await _db.Obtain();
+                await fn(conn);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, "Error persisting shard status");
+            }
         }
 
         public ShardInfo GetShardInfo(Shard shard) => _shardInfo[shard.ShardId];

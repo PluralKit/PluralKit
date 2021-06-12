@@ -14,7 +14,6 @@ using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
-using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
 using NodaTime;
@@ -109,6 +108,8 @@ namespace PluralKit.Bot
                 await HandleEvent(shard, mdb);
             if (evt is MessageReactionAddEvent mra)
                 await HandleEvent(shard, mra);
+            if (evt is InteractionCreateEvent ic)
+                await HandleEvent(shard, ic);
 
             // Update shard status for shards immediately on connect
             if (evt is ReadyEvent re)
@@ -175,14 +176,13 @@ namespace PluralKit.Bot
             async Task HandleEventInner()
             {
                 await Task.Yield();
-                
-                using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
-                _logger
-                    .ForContext("Elastic", "yes?")
-                    .Verbose("Gateway event: {@Event}", evt);
-                
+
                 await using var serviceScope = _services.BeginLifetimeScope();
                 
+                using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
+                using var __ = LogContext.Push(serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shard, evt));
+                _logger.Verbose("Received gateway event: {@Event}", evt);
+
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
                 var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
                 sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), shard, evt);
@@ -217,9 +217,7 @@ namespace PluralKit.Bot
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
 
-            _logger
-                .ForContext("Elastic", "yes?")
-                .Error(exc, "Exception in event handler: {SentryEventId}", sentryEvent.EventId);
+            _logger.Error(exc, "Exception in event handler: {SentryEventId}", sentryEvent.EventId);
 
             // If the event is us responding to our own error messages, don't bother logging
             if (evt is MessageCreateEvent mc && mc.Author.Id == shard.User?.Id)
@@ -285,7 +283,7 @@ namespace PluralKit.Bot
                         {
                             new ActivityPartial
                             {
-                                Name = $"pk;help | in {totalGuilds} servers | shard #{shard.ShardInfo?.ShardId}",
+                                Name = $"pk;help | in {totalGuilds:N0} servers | shard #{shard.ShardId}",
                                 Type = ActivityType.Game,
                                 Url = "https://pluralkit.me/"
                             }

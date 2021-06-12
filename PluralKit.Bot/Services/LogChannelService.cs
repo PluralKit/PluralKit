@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 
 using Dapper;
@@ -34,23 +35,10 @@ namespace PluralKit.Bot {
 
         public async ValueTask LogMessage(MessageContext ctx, ProxyMatch proxy, Message trigger, ulong hookMessage)
         {
-            if (ctx.SystemId == null || ctx.LogChannel == null || ctx.InLogBlacklist) return;
-            
-            // Find log channel and check if valid
-            var logChannel = await FindLogChannel(trigger.GuildId!.Value, ctx.LogChannel.Value);
-            if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return;
+            var logChannel = await GetAndCheckLogChannel(ctx, trigger);
+            if (logChannel == null) return;
 
             var triggerChannel = _cache.GetChannel(trigger.ChannelId);
-            
-            // Check bot permissions
-            var perms = _bot.PermissionsIn(logChannel.Id);
-            if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
-            {
-                _logger.Information(
-                    "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
-                    ctx.LogChannel.Value, trigger.GuildId!.Value, perms);
-                return;
-            }
             
             // Send embed!
             await using var conn = await _db.Obtain();
@@ -59,6 +47,56 @@ namespace PluralKit.Bot {
                 triggerChannel);
             var url = $"https://discord.com/channels/{trigger.GuildId}/{trigger.ChannelId}/{hookMessage}";
             await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
+        }
+
+        public async ValueTask LogEditedMessage(MessageContext ctx, PKMessage proxy, Message trigger, Message originalMessage, string newContent)
+        {
+            var logChannel = await GetAndCheckLogChannel(ctx, trigger, proxy);
+            if (logChannel == null) return;
+
+            var triggerChannel = _cache.GetChannel(proxy.Channel);
+            
+            // Send embed!
+            await using var conn = await _db.Obtain();
+            var embed = _embed.CreateEditedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value), 
+                await _repo.GetMember(conn, proxy.Member), originalMessage.Id, trigger.Id, trigger.Author, newContent, originalMessage.Content,
+                triggerChannel);
+            var url = $"https://discord.com/channels/{proxy.Guild.Value}/{proxy.Channel}/{proxy.Mid}";
+            await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
+        }
+
+        private async Task<Channel?> GetAndCheckLogChannel(MessageContext ctx, Message trigger, PKMessage original = null)
+        {
+            var guildId = trigger.GuildId != null ? trigger.GuildId!.Value : original.Guild.Value;
+            var logChannelId = ctx.LogChannel;
+            var isBlacklisted = ctx.InLogBlacklist;
+
+            if (original != null)
+            {
+                // we're editing a message, get log channel info from the database
+                var guild = await _db.Execute(c => _repo.GetGuild(c, original.Guild.Value));
+                logChannelId = guild.LogChannel;
+                isBlacklisted = guild.Blacklist.Any(x => x == logChannelId);
+            }
+
+            if (ctx.SystemId == null || logChannelId == null || isBlacklisted) return null;
+            
+
+            // Find log channel and check if valid
+            var logChannel = await FindLogChannel(guildId, logChannelId.Value);
+            if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return null;
+            
+            // Check bot permissions
+            var perms = _bot.PermissionsIn(logChannel.Id);
+            if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
+            {
+                _logger.Information(
+                    "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
+                    ctx.LogChannel.Value, trigger.GuildId!.Value, perms);
+                return null;
+            }
+
+            return logChannel;
         }
 
         private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)

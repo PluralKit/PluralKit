@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net.Mail;
 using System.Text.Json.Serialization;
 
 using Myriad.Utils;
@@ -38,7 +36,9 @@ namespace Myriad.Types
             GuildDiscoveryDisqualified = 14,
             GuildDiscoveryRequalified = 15,
             Reply = 19,
-            ApplicationCommand = 20
+            ApplicationCommand = 20,
+            ThreadStarterMessage = 21,
+            GuildInviteReminder = 22
         }
 
         public ulong Id { get; init; }
@@ -54,7 +54,7 @@ namespace Myriad.Types
         public ulong[] MentionRoles { get; init; }
 
         public Attachment[] Attachments { get; init; }
-        public Embed[] Embeds { get; init; }
+        public Embed[]? Embeds { get; init; }
         public Reaction[] Reactions { get; init; }
         public bool Pinned { get; init; }
         public ulong? WebhookId { get; init; }
@@ -64,6 +64,7 @@ namespace Myriad.Types
         
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<Message?> ReferencedMessage { get; init; }
+        public MessageComponent[]? Components { get; init; }
 
         public record Reference(ulong? GuildId, ulong? ChannelId, ulong? MessageId);
 

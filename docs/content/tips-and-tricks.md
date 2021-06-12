@@ -22,6 +22,8 @@ PluralKit has a couple of useful command shorthands to reduce the typing:
 |pk;system frontpercent|pk;s fp|
 |pk;member|pk;m|
 |pk;member new|pk;m n|
+|pk;group|pk;g|
+|pk;group new|pk;g n|
 |pk;switch|pk;sw|
 |pk;message|pk;msg|
 |pk;autoproxy|pk;ap|
@@ -62,3 +64,13 @@ You cannot look up private members of another system.
 |-with-message-count|-wmc|Show each member's message count|
 |-with-created|-wc|Show each member's creation date|
 |-with-avatar|-wa, -wi, -ia, -ii, -img|Show each member's avatar URL|
+
+::: warning
+These flags only work with the full member list (`pk;system list full`).
+:::
+
+## Miscellaneous flags
+|Command|Flag|Aliases|Description|
+|---|---|---|---|
+|pk;system frontpercent|-fronters-only|-fo|Shows the system's frontpercent without the "no fronter" entry|
+|pk;group \<group> frontpercent|-fronters-only|-fo|Shows a group's frontpercent without the "no fronter" entry|

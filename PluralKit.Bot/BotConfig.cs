@@ -13,5 +13,18 @@ namespace PluralKit.Bot
         public string[] Prefixes { get; set; }
         
         public int? MaxShardConcurrency { get; set; }
+        
+        public ulong? AdminRole { get; set; }
+        
+        public ClusterSettings? Cluster { get; set; }
+        
+        public string? GatewayQueueUrl { get; set; }
+
+        public record ClusterSettings
+        {
+            public string NodeName { get; set; }
+            public int TotalShards { get; set; }
+            public int TotalNodes { get; set; }
+        }
     }
 }

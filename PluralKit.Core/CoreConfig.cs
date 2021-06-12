@@ -9,9 +9,10 @@ namespace PluralKit.Core
         public string InfluxUrl { get; set; }
         public string InfluxDb { get; set; }
         public string LogDir { get; set; }
-        public string ElasticUrl { get; set; }
+        public string? ElasticUrl { get; set; }
 
         public LogEventLevel ConsoleLogLevel { get; set; } = LogEventLevel.Debug;
+        public LogEventLevel ElasticLogLevel { get; set; } = LogEventLevel.Information;
         public LogEventLevel FileLogLevel { get; set; } = LogEventLevel.Information;
     }
 }

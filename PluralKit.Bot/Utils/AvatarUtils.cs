@@ -25,17 +25,8 @@ namespace PluralKit.Bot {
 
             using (var client = new HttpClient())
             {
-                Uri uri;
-                try
-                {
-                    uri = new Uri(url);
-                    if (!uri.IsAbsoluteUri || (uri.Scheme != "http" && uri.Scheme != "https")) 
-                        throw Errors.InvalidUrl(url);
-                }
-                catch (UriFormatException)
-                {
+                if (!PluralKit.Core.MiscUtils.TryMatchUri(url, out var uri))
                     throw Errors.InvalidUrl(url);
-                }
 
                 var response = await client.GetAsync(uri);
                 if (!response.IsSuccessStatusCode) // Check status code

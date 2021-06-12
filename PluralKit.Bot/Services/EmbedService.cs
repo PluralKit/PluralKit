@@ -112,6 +112,19 @@ namespace PluralKit.Bot {
                 .Build();
         }
 
+        public Embed CreateEditedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, string oldContent, Channel channel) {
+            var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
+            var name = member.NameFor(LookupContext.ByNonOwner); 
+            return new EmbedBuilder()
+                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner))))
+                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner)))
+                .Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)))
+                .Description(content?.NormalizeLineEndSpacing())
+                .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
+                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
+                .Build();
+        }
+
         public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)
         {
 
@@ -321,25 +334,44 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle)
+        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters)
         {
+            string color = system.Color;
+            if (group != null) 
+            {
+                color = group.Color;
+            }
+
+            uint embedColor;
+            try
+            {
+                embedColor = color?.ToDiscordColor() ?? DiscordUtils.Gray;
+            }
+            catch (ArgumentException)
+            {
+                embedColor = DiscordUtils.Gray;
+            }
+          
             var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
+            // this is kinda messy?
+            var hasFrontersPeriod = Duration.FromTicks(breakdown.MemberSwitchDurations.Values.ToList().Sum(i => i.TotalTicks));
+
             var eb = new EmbedBuilder()
                 .Title(embedTitle)
-                .Color(DiscordUtils.Gray)
+                .Color(embedColor)
                 .Footer(new($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)"));
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
             // We convert to a list of pairs so we can add the no-fronter value
             // Dictionary doesn't allow for null keys so we instead have a pair with a null key ;)
             var pairs = breakdown.MemberSwitchDurations.ToList();
-            if (breakdown.NoFronterDuration != Duration.Zero)
+            if (breakdown.NoFronterDuration != Duration.Zero && !ignoreNoFronters)
                 pairs.Add(new KeyValuePair<PKMember, Duration>(null, breakdown.NoFronterDuration));
 
             var membersOrdered = pairs.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)
             {
-                var frac = pair.Value / actualPeriod;
+                var frac = pair.Value / (ignoreNoFronters ? hasFrontersPeriod : actualPeriod);
                 eb.Field(new(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({pair.Value.FormatDuration()})"));
             }
 

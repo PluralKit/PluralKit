@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -13,7 +12,7 @@ namespace Myriad.Rest
 {
     public class DiscordApiClient
     {
-        private const string UserAgent = "Test Discord Library by @Ske#6201";
+        private const string UserAgent = "DiscordBot (https://github.com/xSke/PluralKit/tree/main/Myriad/, vMyriad)";
         private readonly BaseRestClient _client;
 
         public DiscordApiClient(string token, ILogger logger)
@@ -120,6 +119,11 @@ namespace Myriad.Rest
                                             MultipartFile[]? files = null) =>
             _client.PostMultipart<Message>($"/webhooks/{webhookId}/{webhookToken}?wait=true",
                 ("ExecuteWebhook", webhookId), request, files)!;
+
+        public Task<Message> EditWebhookMessage(ulong webhookId, string webhookToken, ulong messageId,
+                                                WebhookMessageEditRequest request) =>
+            _client.Patch<Message>($"/webhooks/{webhookId}/{webhookToken}/messages/{messageId}",
+                ("EditWebhookMessage", webhookId), request)!;
 
         public Task<Channel> CreateDm(ulong recipientId) =>
             _client.Post<Channel>($"/users/@me/channels", ("CreateDM", default), new CreateDmRequest(recipientId))!;

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Buffers;
-using System.IO;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
@@ -12,120 +10,113 @@ namespace Myriad.Gateway
 {
     public class ShardConnection: IAsyncDisposable
     {
-        private readonly MemoryStream _bufStream = new();
-
-        private readonly ClientWebSocket _client = new();
-        private readonly CancellationTokenSource _cts = new();
-        private readonly JsonSerializerOptions _jsonSerializerOptions;
+        private ClientWebSocket? _client;
         private readonly ILogger _logger;
-        private readonly Task _worker;
-
-        public ShardConnection(Uri uri, ILogger logger, JsonSerializerOptions jsonSerializerOptions)
-        {
-            _logger = logger;
-            _jsonSerializerOptions = jsonSerializerOptions;
-
-            _worker = Worker(uri);
-        }
-
-        public Func<GatewayPacket, Task>? OnReceive { get; set; }
-        public Action? OnOpen { get; set; }
-
-        public Action<WebSocketCloseStatus, string?>? OnClose { get; set; }
-
-        public WebSocketState State => _client.State;
+        private readonly ShardPacketSerializer _serializer;
         
-        public async ValueTask DisposeAsync()
+        public WebSocketState State => _client?.State ?? WebSocketState.Closed;
+        public WebSocketCloseStatus? CloseStatus => _client?.CloseStatus;
+        public string? CloseStatusDescription => _client?.CloseStatusDescription;
+        
+        public ShardConnection(JsonSerializerOptions jsonSerializerOptions, ILogger logger)
         {
-            _cts.Cancel();
-            await _worker;
-
-            _client.Dispose();
-            await _bufStream.DisposeAsync();
-            _cts.Dispose();
+            _logger = logger.ForContext<ShardConnection>();
+            _serializer = new(jsonSerializerOptions);
         }
 
-        private async Task Worker(Uri uri)
+        public async Task Connect(string url, CancellationToken ct)
         {
-            var realUrl = new UriBuilder(uri)
-            {
-                Query = "v=8&encoding=json"
-            }.Uri;
-            _logger.Debug("Connecting to gateway WebSocket at {GatewayUrl}", realUrl);
-            await _client.ConnectAsync(realUrl, default);
-            _logger.Debug("Gateway connection opened");
+            _client?.Dispose();
+            _client = new ClientWebSocket();
             
-            OnOpen?.Invoke();
-            
-            // Main worker loop, spins until we manually disconnect (which hits the cancellation token)
-            // or the server disconnects us (which sets state to closed)
-            while (!_cts.IsCancellationRequested && _client.State == WebSocketState.Open)
-            {
-                try
-                {
-                    await HandleReceive();
-                }
-                catch (Exception e)
-                {
-                    _logger.Error(e, "Error in WebSocket receive worker");
-                }
-            }
-            
-            OnClose?.Invoke(_client.CloseStatus ?? default, _client.CloseStatusDescription);
+            await _client.ConnectAsync(GetConnectionUri(url), ct);
         }
 
-        private async Task HandleReceive()
+        public async Task Disconnect(WebSocketCloseStatus closeStatus, string? reason)
         {
-            _bufStream.SetLength(0);
-            var result = await ReadData(_bufStream);
-            var data = _bufStream.GetBuffer().AsMemory(0, (int) _bufStream.Position);
-
-            if (result.MessageType == WebSocketMessageType.Text)
-                await HandleReceiveData(data);
-            else if (result.MessageType == WebSocketMessageType.Close)
-                _logger.Information("WebSocket closed by server: {StatusCode} {Reason}", _client.CloseStatus,
-                    _client.CloseStatusDescription);
-        }
-
-        private async Task HandleReceiveData(Memory<byte> data)
-        {
-            var packet = JsonSerializer.Deserialize<GatewayPacket>(data.Span, _jsonSerializerOptions)!;
-
-            try
-            {
-                if (OnReceive != null)
-                    await OnReceive.Invoke(packet);
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e, "Error in gateway handler for {OpcodeType}", packet.Opcode);
-            }
-        }
-
-        private async Task<ValueWebSocketReceiveResult> ReadData(MemoryStream stream)
-        {
-            // TODO: does this throw if we disconnect mid-read?
-            using var buf = MemoryPool<byte>.Shared.Rent();
-            ValueWebSocketReceiveResult result;
-            do
-            {
-                result = await _client.ReceiveAsync(buf.Memory, _cts.Token);
-                stream.Write(buf.Memory.Span.Slice(0, result.Count));
-            } while (!result.EndOfMessage);
-
-            return result;
+            await CloseInner(closeStatus, reason);
         }
 
         public async Task Send(GatewayPacket packet)
         {
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(packet, _jsonSerializerOptions);
-            await _client.SendAsync(bytes.AsMemory(), WebSocketMessageType.Text, true, default);
+            // from `ManagedWebSocket.s_validSendStates`
+            if (_client is not {State: WebSocketState.Open or WebSocketState.CloseReceived})
+                return;
+
+            try
+            {
+                await _serializer.WritePacket(_client, packet);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, "Error sending WebSocket message");
+            }
         }
 
-        public async Task Disconnect(WebSocketCloseStatus status, string? description)
+        public async ValueTask DisposeAsync()
         {
-            await _client.CloseAsync(status, description, default);
-            _cts.Cancel();
+            await CloseInner(WebSocketCloseStatus.NormalClosure, null);
+            _client?.Dispose();
+        }
+
+        public async Task<GatewayPacket?> Read()
+        {
+            // from `ManagedWebSocket.s_validReceiveStates`
+            if (_client is not {State: WebSocketState.Open or WebSocketState.CloseSent})
+                return null;
+
+            try
+            {
+                var (_, packet) = await _serializer.ReadPacket(_client);
+                return packet;
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, "Error reading from WebSocket");
+                // force close so we can "reset"
+                await CloseInner(WebSocketCloseStatus.NormalClosure, null);
+            }
+
+            return null;
+        }
+        
+        private Uri GetConnectionUri(string baseUri) => new UriBuilder(baseUri)
+        {
+            Query = "v=8&encoding=json"
+        }.Uri;
+
+        private async Task CloseInner(WebSocketCloseStatus closeStatus, string? description)
+        {
+            if (_client == null)
+                return;
+            
+            var client = _client;
+            _client = null;
+            
+            // from `ManagedWebSocket.s_validCloseStates`
+            if (client.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
+            {
+                // Close with timeout, mostly to work around https://github.com/dotnet/runtime/issues/51590
+                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                try
+                {
+                    await client.CloseAsync(closeStatus, description, cts.Token);
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e, "Error closing WebSocket connection");
+                }
+            }
+
+            // This shouldn't need to be wrapped in a try/catch but doing it anyway :/
+            try
+            {
+                client.Dispose();
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, "Error disposing WebSocket connection");
+            }
         }
     }
 }

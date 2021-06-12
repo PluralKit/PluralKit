@@ -84,7 +84,7 @@ namespace PluralKit.Bot {
             var totalSwitches = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.SwitchCount.Name)?.Value ?? 0;
             var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name)?.Value ?? 0;
 
-            var shardId = ctx.Shard.ShardInfo.ShardId;
+            var shardId = ctx.Shard.ShardId;
             var shardTotal = ctx.Cluster.Shards.Count;
             var shardUpTotal = _shards.Shards.Where(x => x.Connected).Count();
             var shardInfo = _shards.GetShardInfo(ctx.Shard);
@@ -126,7 +126,12 @@ namespace PluralKit.Bot {
                 if (!ulong.TryParse(guildIdStr, out var guildId))
                     throw new PKSyntaxError($"Could not parse {guildIdStr.AsCode()} as an ID.");
 
-                guild = await _rest.GetGuild(guildId);
+                try {
+                    guild = await _rest.GetGuild(guildId);
+                } catch (Myriad.Rest.Exceptions.ForbiddenException) {
+                    throw Errors.GuildNotFound(guildId);
+                }
+                
                 if (guild != null) 
                     senderGuildUser = await _rest.GetGuildMember(guildId, ctx.Author.Id);
                 if (guild == null || senderGuildUser == null) 
@@ -210,17 +215,16 @@ namespace PluralKit.Bot {
         
         public async Task GetMessage(Context ctx)
         {
-            var word = ctx.PopArgument() ?? throw new PKSyntaxError("You must pass a message ID or link.");
-
-            ulong messageId;
-            if (ulong.TryParse(word, out var id))
-                messageId = id;
-            else if (Regex.Match(word, "https://(?:\\w+.)discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)") is Match match && match.Success)
-                messageId = ulong.Parse(match.Groups[1].Value);
-            else throw new PKSyntaxError($"Could not parse {word.AsCode()} as a message ID or link.");
-
-            var message = await _db.Execute(c => _repo.GetMessage(c, messageId));
-            if (message == null) throw Errors.MessageNotFound(messageId);
+            var messageId = ctx.MatchMessage(true);
+            if (messageId == null)
+            {
+                if (!ctx.HasNext())
+                    throw new PKSyntaxError("You must pass a message ID or link.");
+                throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
+            }
+            
+            var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
+            if (message == null) throw Errors.MessageNotFound(messageId.Value);
 
             if (ctx.Match("delete") || ctx.MatchFlag("delete"))
             {
@@ -228,6 +232,16 @@ namespace PluralKit.Bot {
                     throw new PKError("You can only delete your own messages.");
                 await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
                 await ctx.Rest.DeleteMessage(ctx.Message);
+                return;
+            }
+            if (ctx.Match("author") || ctx.MatchFlag("author"))
+            {
+                var user = await _cache.GetOrFetchUser(_rest, message.Message.Sender);
+                var eb = new EmbedBuilder()
+                    .Author(new(user != null ? $"{user.Username}#{user.Discriminator}" : $"Deleted user ${message.Message.Sender}", IconUrl: user != null ? user.AvatarUrl() : null))
+                    .Description(message.Message.Sender.ToString());
+
+                await ctx.Reply(user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*", embed: eb.Build());
                 return;
             }
 

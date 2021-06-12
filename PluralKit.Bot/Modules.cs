@@ -28,6 +28,7 @@ namespace PluralKit.Bot
                 {
                     Token = botConfig.Token,
                     MaxShardConcurrency = botConfig.MaxShardConcurrency,
+                    GatewayQueueUrl = botConfig.GatewayQueueUrl,
                     Intents = GatewayIntent.Guilds |
                               GatewayIntent.DirectMessages |
                               GatewayIntent.DirectMessageReactions |
@@ -44,6 +45,7 @@ namespace PluralKit.Bot
 
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
+            builder.RegisterType<Admin>().AsSelf();
             builder.RegisterType<Autoproxy>().AsSelf();
             builder.RegisterType<Fun>().AsSelf();
             builder.RegisterType<Groups>().AsSelf();
@@ -54,6 +56,7 @@ namespace PluralKit.Bot
             builder.RegisterType<MemberEdit>().AsSelf();
             builder.RegisterType<MemberGroup>().AsSelf();
             builder.RegisterType<MemberProxy>().AsSelf();
+            builder.RegisterType<MessageEdit>().AsSelf();
             builder.RegisterType<Misc>().AsSelf();
             builder.RegisterType<Random>().AsSelf();
             builder.RegisterType<ServerConfig>().AsSelf();
@@ -72,6 +75,7 @@ namespace PluralKit.Bot
             builder.RegisterType<MessageDeleted>().As<IEventHandler<MessageDeleteEvent>>().As<IEventHandler<MessageDeleteBulkEvent>>();
             builder.RegisterType<MessageEdited>().As<IEventHandler<MessageUpdateEvent>>();
             builder.RegisterType<ReactionAdded>().As<IEventHandler<MessageReactionAddEvent>>();
+            builder.RegisterType<InteractionCreated>().As<IEventHandler<InteractionCreateEvent>>();
             
             // Event handler queue
             builder.RegisterType<HandlerQueue<MessageCreateEvent>>().AsSelf().SingleInstance();
@@ -91,6 +95,7 @@ namespace PluralKit.Bot
             builder.RegisterType<LoggerCleanService>().AsSelf().SingleInstance();
             builder.RegisterType<ErrorMessageService>().AsSelf().SingleInstance();
             builder.RegisterType<CommandMessageService>().AsSelf().SingleInstance();
+            builder.RegisterType<InteractionDispatchService>().AsSelf().SingleInstance();
             
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
@@ -112,6 +117,7 @@ namespace PluralKit.Bot
                 Timeout = TimeSpan.FromSeconds(5)
             }).AsSelf().SingleInstance();
             builder.RegisterInstance(SystemClock.Instance).As<IClock>();
+            builder.RegisterType<SerilogGatewayEnricherFactory>().AsSelf().SingleInstance();
 
             builder.RegisterType<DiscordRequestObserver>().AsSelf().SingleInstance();
         }

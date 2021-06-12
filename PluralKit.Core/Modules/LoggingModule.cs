@@ -52,7 +52,6 @@ namespace PluralKit.Core
 
                 // Don't want App.Metrics/D#+ spam
                 .MinimumLevel.Override("App.Metrics", LogEventLevel.Information)
-                .MinimumLevel.Override("DSharpPlus", LogEventLevel.Debug)
                 
                 // Actual formatting for these is handled in ScalarFormatting
                 .Destructure.AsScalar<SystemId>()
@@ -98,14 +97,12 @@ namespace PluralKit.Core
                 {
                     AutoRegisterTemplate = true,
                     AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv7,
-                    MinimumLogEventLevel = LogEventLevel.Verbose,
+                    MinimumLogEventLevel = config.ElasticLogLevel,
                     IndexFormat = "pluralkit-logs-{0:yyyy.MM.dd}",
-                    CustomFormatter = new ScalarFormatting.Elasticsearch()
+                    CustomFormatter = new ScalarFormatting.Elasticsearch(),
                 };
-               
-                logCfg.WriteTo
-                    .Conditional(e => e.Properties.ContainsKey("Elastic"), 
-                        c => c.Elasticsearch(elasticConfig));
+
+                logCfg.WriteTo.Elasticsearch(elasticConfig);
             }
 
             _fn.Invoke(logCfg);

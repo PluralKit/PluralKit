@@ -6,6 +6,7 @@ Because PluralKit deletes messages as part of proxying, this can often clutter u
 Some logger bots have offical PluralKit support, and properly handle excluding proxy deletes, as well as add PK-specific information to relevant log messages:
 
 - [**Gabby Gums**](https://github.com/amadea-system/GabbyGums)
+- [**Catalogger**](https://catalogger.starshines.xyz/docs)
 
 If your server uses an in-house bot for logging, you can use [the API](../api-documentation.md) to implement support yourself.
 

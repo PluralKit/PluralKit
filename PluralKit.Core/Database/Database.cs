@@ -33,7 +33,7 @@ namespace PluralKit.Core
             _config = config;
             _countHolder = countHolder;
             _metrics = metrics;
-            _logger = logger;
+            _logger = logger.ForContext<Database>();
             
             _connectionString = new NpgsqlConnectionStringBuilder(_config.Database)
             {

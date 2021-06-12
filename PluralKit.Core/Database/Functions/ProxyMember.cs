@@ -19,7 +19,9 @@ namespace PluralKit.Core
         public string? ServerAvatar { get; }
         public string? Avatar { get; }
 
+
         public bool AllowAutoproxy { get; }
+        public string? Color { get; }
 
         public string ProxyName(MessageContext ctx) => ctx.SystemTag != null
             ? $"{ServerName ?? DisplayName ?? Name} {ctx.SystemTag}"

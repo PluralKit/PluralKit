@@ -69,12 +69,14 @@ namespace Myriad.Rest.Ratelimit
         private void PruneStaleBuckets(DateTimeOffset now)
         {
             foreach (var (key, bucket) in _buckets)
-                if (now - bucket.LastUsed > StaleBucketTimeout)
-                {
-                    _logger.Debug("Pruning unused bucket {Bucket} (last used at {BucketLastUsed})", bucket,
-                        bucket.LastUsed);
-                    _buckets.TryRemove(key, out _);
-                }
+            {
+                if (now - bucket.LastUsed <= StaleBucketTimeout)
+                    continue;
+                
+                _logger.Debug("Pruning unused bucket {BucketKey}/{BucketMajor} (last used at {BucketLastUsed})",
+                    bucket.Key, bucket.Major, bucket.LastUsed);
+                _buckets.TryRemove(key, out _);
+            }
         }
     }
 }

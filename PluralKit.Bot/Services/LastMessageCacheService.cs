@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿#nullable enable
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 using Myriad.Types;
@@ -12,26 +13,14 @@ namespace PluralKit.Bot
 
         public void AddMessage(Message msg)
         {
-            _cache[msg.ChannelId] = new CachedMessage(msg);
+            _cache[msg.ChannelId] = new CachedMessage(msg.Id, msg.ReferencedMessage.Value?.Id);
         }
 
-        public CachedMessage GetLastMessage(ulong channel)
+        public CachedMessage? GetLastMessage(ulong channel)
         {
-            if (_cache.TryGetValue(channel, out var message)) return message;
-            return null;
+            return _cache.TryGetValue(channel, out var message) ? message : null;
         }
     }
 
-    public class CachedMessage
-    {
-        public ulong mid;
-        public ulong? referenced_message;
-
-        public CachedMessage(Message msg)
-        {
-            mid = msg.Id;
-            if (msg.ReferencedMessage.Value != null)
-                referenced_message = msg.ReferencedMessage.Value.Id;
-        }
-    }
+    public record CachedMessage(ulong Id, ulong? ReferencedMessage);
 }

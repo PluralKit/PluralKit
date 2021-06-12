@@ -155,11 +155,16 @@ namespace PluralKit.Bot {
                     // "escape hatch", clean up as if we hit X
                 }
 
+                // todo: re-check 
                 if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
                     await ctx.Rest.DeleteAllReactions(msg.ChannelId, msg.Id);
             }
             // If we get a "NotFound" error, the message has been deleted and thus not our problem
             catch (NotFoundException) { }
+            // If we get an "Unauthorized" error, we don't have permissions to remove our reaction
+            // which means we probably didn't add it in the first place, or permissions changed since then
+            // either way, nothing to do here
+            catch (UnauthorizedException) { }
         }
         
         public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items, Func<T, string> display = null)

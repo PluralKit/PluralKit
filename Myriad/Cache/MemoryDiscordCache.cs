@@ -151,10 +151,11 @@ namespace Myriad.Cache
         public bool TryGetRole(ulong roleId, out Role role) =>
             _roles.TryGetValue(roleId, out role!);
 
-        public async IAsyncEnumerable<Guild> GetAllGuilds()
+        public IAsyncEnumerable<Guild> GetAllGuilds()
         {
-            foreach (var guild in _guilds.Values)
-                yield return guild.Guild;
+            return _guilds.Values
+                .Select(g => g.Guild)
+                .ToAsyncEnumerable();
         }
 
         public IEnumerable<Channel> GetGuildChannels(ulong guildId)
