@@ -56,30 +56,30 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;unlink [account]` - Unlinks an account from this system.
 
 ## Member commands
-*Replace `<name>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
-- `pk;member <name>` - Shows information about a member.
+*Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+- `pk;member <member>` - Shows information about a member.
 - `pk;member new <name>` - Creates a new system member.
-- `pk;member <name> rename <new name>` - Changes the name of a member.
-- `pk;member <name> displayname <new display name>` - Changes the display name of a member.
-- `pk;member <name> servername <new server name>` - Changes the display name of a member, only in the current server.
-- `pk;member <name> description [description]` - Changes the description of a member.
-- `pk;member <name> avatar [avatar url|@mention|upload]` - Changes the avatar of a member.
-- `pk;member <name> serveravatar [avatar url|@mention|upload]` - Changes the avatar of a member in a specific server.
-- `pk;member <name> privacy` - Displays a members current privacy settings.
-- `pk;member <name> privacy <subject> <public|private>` - Changes a members privacy setting.
-- `pk;member <name> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
-- `pk;member <name> proxy add [tags]` - Adds a proxy tag pair to a member.
-- `pk;member <name> proxy remove [tags]` - Removes a proxy tag from a member.
-- `pk;member <name> autoproxy [on|off]` - Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.
-- `pk;member <name> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
-- `pk;member <name> pronouns [pronouns]` - Changes the pronouns of a member.
-- `pk;member <name> color [color]` - Changes the color of a member.
-- `pk;member <name> birthdate [birthdate]` - Changes the birthday of a member.
-- `pk;member <name> delete` - Deletes a member.
+- `pk;member <member> rename <new name>` - Changes the name of a member.
+- `pk;member <member> displayname <new display name>` - Changes the display name of a member.
+- `pk;member <member> servername <new server name>` - Changes the display name of a member, only in the current server.
+- `pk;member <member> description [description]` - Changes the description of a member.
+- `pk;member <member> avatar [avatar url|@mention|upload]` - Changes the avatar of a member.
+- `pk;member <member> serveravatar [avatar url|@mention|upload]` - Changes the avatar of a member in a specific server.
+- `pk;member <member> privacy` - Displays a members current privacy settings.
+- `pk;member <member> privacy <subject> <public|private>` - Changes a members privacy setting.
+- `pk;member <member> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
+- `pk;member <member> proxy add [tags]` - Adds a proxy tag pair to a member.
+- `pk;member <member> proxy remove [tags]` - Removes a proxy tag from a member.
+- `pk;member <member> autoproxy [on|off]` - Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.
+- `pk;member <member> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
+- `pk;member <member> pronouns [pronouns]` - Changes the pronouns of a member.
+- `pk;member <member> color [color]` - Changes the color of a member.
+- `pk;member <member> birthdate [birthdate]` - Changes the birthday of a member.
+- `pk;member <member> delete` - Deletes a member.
 
 ## Group commands
-*Replace `<name>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
-- `pk;group <name>` - Shows information about a group.
+*Replace `<group>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+- `pk;group <group>` - Shows information about a group.
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
 - `pk;group <group> list` - Lists all members in a group.
