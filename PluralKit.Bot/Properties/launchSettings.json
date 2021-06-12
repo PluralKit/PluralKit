@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "PluralKit.Bot": {
-      "commandName": "Project",
-      "workingDirectory": "C:\\Users\\rkaas\\source\\repos\\PluralKit"
-    }
-  }
-}
