@@ -54,6 +54,9 @@ namespace PluralKit.Bot
             if (!ShouldProxy(channel, message, ctx)) 
                 return false;
 
+            // this is hopefully temporary, so not putting it into a separate method
+            if (message.Content != null && message.Content.Length > 2000) throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
+
             // Fetch members and try to match to a specific member
             await using var conn = await _db.Obtain();
 
