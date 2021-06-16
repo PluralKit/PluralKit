@@ -117,6 +117,9 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
+            var totalSwitches = await _db.Execute(conn => _repo.GetSwitchCount(conn, system.Id));
+            if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
+
             string durationStr = ctx.RemainderOrNull() ?? "30d";
             
             var now = SystemClock.Instance.GetCurrentInstant();
