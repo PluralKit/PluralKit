@@ -54,9 +54,6 @@ namespace PluralKit.Bot
             if (!ShouldProxy(channel, message, ctx)) 
                 return false;
 
-            // this is hopefully temporary, so not putting it into a separate method
-            if (message.Content != null && message.Content.Length > 2000) throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
-
             // Fetch members and try to match to a specific member
             await using var conn = await _db.Obtain();
 
@@ -66,6 +63,9 @@ namespace PluralKit.Bot
             
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
+
+            // this is hopefully temporary, so not putting it into a separate method
+            if (message.Content != null && message.Content.Length > 2000) throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
             if (!await CheckBotPermissionsOrError(botPermissions, message.ChannelId)) 
