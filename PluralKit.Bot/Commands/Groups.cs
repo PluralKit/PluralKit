@@ -505,6 +505,9 @@ namespace PluralKit.Bot
             var targetSystem = await GetGroupSystem(ctx, target, conn);
             ctx.CheckSystemPrivacy(targetSystem, targetSystem.FrontHistoryPrivacy);
 
+            var totalSwitches = await _db.Execute(conn => _repo.GetSwitchCount(conn, targetSystem.Id));
+            if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
+
             string durationStr = ctx.RemainderOrNull() ?? "30d";
             
             var now = SystemClock.Instance.GetCurrentInstant();
