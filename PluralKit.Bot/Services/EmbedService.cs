@@ -352,9 +352,11 @@ namespace PluralKit.Bot {
                 embedColor = DiscordUtils.Gray;
             }
           
-            var actualPeriod = breakdown.RangeEnd - breakdown.RangeStart;
-            // this is kinda messy?
-            var hasFrontersPeriod = Duration.FromTicks(breakdown.MemberSwitchDurations.Values.ToList().Sum(i => i.TotalTicks));
+            var period = breakdown.RangeEnd - breakdown.RangeStart;
+            var actualPeriod = period;
+
+            if (ignoreNoFronters)
+                period = period - breakdown.NoFronterDuration;
 
             var eb = new EmbedBuilder()
                 .Title(embedTitle)
@@ -371,7 +373,7 @@ namespace PluralKit.Bot {
             var membersOrdered = pairs.OrderByDescending(pair => pair.Value).Take(maxEntriesToDisplay).ToList();
             foreach (var pair in membersOrdered)
             {
-                var frac = pair.Value / (ignoreNoFronters ? hasFrontersPeriod : actualPeriod);
+                var frac = pair.Value / period;
                 eb.Field(new(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({pair.Value.FormatDuration()})"));
             }
 
