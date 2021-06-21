@@ -334,7 +334,7 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters)
+        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters, bool showFlat)
         {
             string color = system.Color;
             if (group != null) 
@@ -351,17 +351,32 @@ namespace PluralKit.Bot {
             {
                 embedColor = DiscordUtils.Gray;
             }
-          
-            var period = breakdown.RangeEnd - breakdown.RangeStart;
-            var actualPeriod = period;
-
-            if (ignoreNoFronters)
-                period = period - breakdown.NoFronterDuration;
 
             var eb = new EmbedBuilder()
                 .Title(embedTitle)
-                .Color(embedColor)
-                .Footer(new($"Since {breakdown.RangeStart.FormatZoned(tz)} ({actualPeriod.FormatDuration()} ago)"));
+                .Color(embedColor);
+
+            string footer = $"Since {breakdown.RangeStart.FormatZoned(tz)} ({(breakdown.RangeEnd - breakdown.RangeStart).FormatDuration()} ago)";
+
+            Duration period;
+
+            if (showFlat)
+            {
+                period = Duration.FromTicks(breakdown.MemberSwitchDurations.Values.ToList().Sum(i => i.TotalTicks));
+                footer += ". Showing flat list (percentages add up to 100%)";
+                if (!ignoreNoFronters) period += breakdown.NoFronterDuration;
+                else footer += ", ignoring switch-outs";
+            }
+            else if (ignoreNoFronters)
+            {
+                period = breakdown.RangeEnd - breakdown.RangeStart - breakdown.NoFronterDuration;
+                footer += ". Ignoring switch-outs";
+            }
+            else
+                period = breakdown.RangeEnd - breakdown.RangeStart;
+
+            eb.Footer(new(footer));
+
             var maxEntriesToDisplay = 24; // max 25 fields allowed in embed - reserve 1 for "others"
 
             // We convert to a list of pairs so we can add the no-fronter value
