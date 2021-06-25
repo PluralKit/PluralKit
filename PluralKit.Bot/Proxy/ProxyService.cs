@@ -177,6 +177,15 @@ namespace PluralKit.Bot
                 if (msg.Length > 100)
                 {
                     msg = repliedTo.Content.Substring(0, 100);
+                    var openedEmotesInTruncatedString = Regex.Matches(msg, @"<a?:").Count;
+                    var fullEmotesInTruncatedString = Regex.Matches(msg, @"<a?:\w+:\d+>").Count;
+                    if (openedEmotesInTruncatedString != fullEmotesInTruncatedString)
+                    {
+                        var emoteTail = repliedTo.Content.Substring(100).Split(">")[0];
+                        if (Regex.IsMatch(msg + emoteTail, @"<a?:\w+:\d+$"))
+                            msg += emoteTail + ">";
+                    }
+                    
                     var spoilersInOriginalString = Regex.Matches(repliedTo.Content, @"\|\|").Count;
                     var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
                     if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
