@@ -186,7 +186,7 @@ namespace PluralKit.Bot
                     }
 
                     var endsWithUrl = Regex.IsMatch(msg,
-                        @"(http|https)?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$");
+                        @"(http|https)(:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})?\.?([a-zA-Z0-9()]{1,6})?\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$");
                     if (endsWithUrl)
                     {
                         var urlTail = repliedTo.Content.Substring(100).Split(" ")[0];
