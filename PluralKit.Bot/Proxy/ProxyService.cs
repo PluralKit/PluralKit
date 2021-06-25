@@ -181,7 +181,7 @@ namespace PluralKit.Bot
                     if (endsWithOpenMention)
                     {
                         var mentionTail = repliedTo.Content.Substring(100).Split(">")[0];
-                        if (Regex.IsMatch(msg + mentionTail, @"<[at]?[@#:][!&]?(\w+:)?\d+(:[tTdDfFR])?$"))
+                        if (repliedTo.Content.Contains(msg + mentionTail + ">"))
                             msg += mentionTail + ">";
                     }
                     
