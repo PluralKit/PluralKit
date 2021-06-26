@@ -25,7 +25,7 @@ export default function App() {
   return (
     <div className={ `contents ${localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}`}>
       <Router history={history} basename="/pk-webs">
-        <Navbar forceUpdate={forceUpdate} setIsSumbit={setIsSubmit} />
+        <Navbar forceUpdate={forceUpdate} setIsSubmit={setIsSubmit} />
         <div className="content">
           <BS.Container>
             <Switch>
