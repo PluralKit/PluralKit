@@ -6,9 +6,9 @@ import 'reactjs-popup/dist/index.css';
 import { useForm } from "react-hook-form";
 
 import MemberCard from './MemberCard.js'
-import MemberPages from './MemberPages.js'
-import Loading from "./Loading.js";
-import API_URL from "../Constants/constants.js";
+import MemberPages from '../../Pages/MemberPages.js'
+import Loading from "../Loading.js";
+import API_URL from "../../Constants/constants.js";
 
 import { FaPlus } from "react-icons/fa";
 

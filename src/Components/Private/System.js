@@ -8,10 +8,10 @@ import 'moment-timezone';
 import Popup from 'reactjs-popup';
 import Twemoji from 'react-twemoji';
 
-import API_URL from "../Constants/constants.js";
+import API_URL from "../../Constants/constants.js";
 
-import history from "../History.js";
-import defaultAvatar from '../default_discord_avatar.png'
+import history from "../../History.js";
+import defaultAvatar from '../../default_discord_avatar.png'
 import { FaAddressCard } from "react-icons/fa";
 
 export default function System(props) {
@@ -47,7 +47,7 @@ export default function System(props) {
 
 
     useEffect(() => {
-    const { toHTML } = require('../Functions/discord-parser.js');
+    const { toHTML } = require('../../Functions/discord-parser.js');
     
     if (user.name) {
         setName(user.name);

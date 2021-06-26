@@ -4,9 +4,9 @@ import  * as BS from 'react-bootstrap'
 import 'reactjs-popup/dist/index.css';
 
 import ProfileCard from './ProfileCard.js'
-import ProfilePages from './ProfilePages.js'
-import Loading from "./Loading.js";
-import API_URL from "../Constants/constants.js";
+import ProfilePages from '../../Pages/ProfilePages.js'
+import Loading from "../Loading.js";
+import API_URL from "../../Constants/constants.js";
 
 export default function Memberlist() {
 

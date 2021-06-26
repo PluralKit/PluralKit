@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import  * as BS from 'react-bootstrap'
 import { useForm } from "react-hook-form";
 import moment from 'moment';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import autosize from 'autosize';
-import LazyLoad from 'react-lazyload';
 import Twemoji from 'react-twemoji';
 
-import API_URL from "../Constants/constants.js";
+import API_URL from "../../Constants/constants.js";
+import history from "../../History.js";
 
-import defaultAvatar from '../default_discord_avatar.png'
+import defaultAvatar from '../../default_discord_avatar.png'
 import { FaLink, FaLock, FaTrashAlt } from "react-icons/fa";
 
-export default function MemberCard(props) {
+export default function MemberPage(props) {
 
+    const [ member, setMember] = useState(props.member);
     const system = JSON.parse(localStorage.getItem('user'));
     const sysID = system.id;
-    const [member, setMember] = useState(props.member);
 
     const [ displayName, setDisplayName ] = useState("");
     const [ birthday, setBirthday ] = useState("");
@@ -69,7 +69,7 @@ export default function MemberCard(props) {
         })
 
     useEffect(() => {
-        const { toHTML } = require('../Functions/discord-parser.js');
+        const { toHTML } = require('../../Functions/discord-parser.js');
 
         if (member.display_name) {
             setDisplayName(member.display_name)
@@ -114,7 +114,7 @@ export default function MemberCard(props) {
 
     const submitEdit = data => {
         props.edit(Object.assign(member, data));
-        
+
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -135,7 +135,7 @@ export default function MemberCard(props) {
 
     const submitPrivacy = data => {
         props.edit(Object.assign(member, data));
-
+        
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
             body: JSON.stringify(data),
@@ -196,8 +196,8 @@ export default function MemberCard(props) {
             }}).then (res => res.json()
             ).then (data => { 
                 setMember(prevState => {return {...prevState, ...data}}); 
-                setProxyTags(data.proxy_tags);
-                setErrorAlert(false);
+                setProxyTags(data.proxy_tags); 
+                setErrorAlert(false)
                 setProxyMode(false);
         }
             ).catch (error => {
@@ -219,9 +219,34 @@ export default function MemberCard(props) {
         document.body.removeChild(textField);
     }
 
-    function renderCard() {
-        return (
-            <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
+    return (
+        memberDeleted ? <BS.Card className="mb-5"><BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header>
+        <BS.Card.Body>
+            Member successfully deleted, click the button below to go back to the dash.
+            <BS.Button variant="primary" className="float-right" onClick={() => history.push("/pk-webs/dash/reload")}>Back</BS.Button>
+        </BS.Card.Body></BS.Card> :
+        <>
+        { localStorage.getItem('colorbg') ? "" : member.color ? <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
+        <div className="backdrop-overlay"/></> : "" }
+        <BS.Card className="mb-5">
+        <BS.Card.Header className="d-flex align-items-center justify-content-between">
+        <div> { member.visibility === 'public' ? <BS.OverlayTrigger placement="left" overlay={ 
+            <BS.Tooltip>
+                Copy public link
+            </BS.Tooltip>
+        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : <BS.Button variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }<BS.Button variant="link" ><b>{member.name}</b> ({member.id})</BS.Button> </div> 
+            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
+                {close => (
+                  <div className="text-center w-100 m-0" onClick={() => close()}>
+                    <div className="m-auto" style={{maxWidth: '640px'}}>
+                        <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
+                    </div>
+                  </div>
+                )}
+            </Popup> : 
+        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
+        </BS.Card.Header>
+                <BS.Card.Body style={{ borderLeft: localStorage.getItem('colorbg') ? `5px solid #${color}` : ''}}>
                 { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
                 { editMode ?
                 <>
@@ -295,7 +320,7 @@ export default function MemberCard(props) {
             { privacyMode ? <BS.Form id='Privacy' onSubmit={handleSubmitPrivacy(submitPrivacy)}>
                 <hr/>
                 <h5>Editing privacy settings</h5>
-                    <BS.Form.Row>
+                <BS.Form.Row>
                     <BS.Col className="mb-lg-2" xs={12} lg={3}>
                         <BS.Form.Label>Visibility:</BS.Form.Label>
                         <BS.Form.Control name="visibility" defaultValue={member.visibility} as="select" {...registerPrivacy("visibility")}>
@@ -367,7 +392,7 @@ export default function MemberCard(props) {
          <BS.Form onSubmit={handleSubmitProxy(submitProxy)}>
              <BS.Form.Row>
                 { proxyTags.map((item, index) => (
-                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={3}>
+                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={2}>
                         <BS.Form.Row>
                         <BS.InputGroup className="ml-1 mr-1 mb-1">
                         <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} {...registerProxy(`proxy_tags[${index}].prefix`)}/> 
@@ -389,39 +414,7 @@ export default function MemberCard(props) {
             <hr/></> : "" }
             <p><b>Description:</b></p>
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
-                { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to={`dash/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></> }
-            </> } </BS.Card.Body>
-        )
-    }
-
-    return (
-       memberDeleted ? <BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header> :
-       <LazyLoad offset={100}>
-           <BS.Card.Header className="d-flex align-items-center justify-content-between">
-        <div> { member.visibility === 'public' ? <BS.OverlayTrigger placement="left" overlay={ 
-            <BS.Tooltip>
-                Copy public link
-            </BS.Tooltip>
-        }><BS.Button variant="link" onClick={() => copyLink()}><FaLink style={{fontSize: '1.25rem'}}/></BS.Button></BS.OverlayTrigger> : 
-        <BS.Button variant="link"><FaLock style={{fontSize: '1.25rem'}} /></BS.Button> }
-        { localStorage.getItem('pagesonly') ? 
-        <Link to={`dash/${member.id}`}><BS.Button variant="link" className="float-left"><b>{member.name}</b> ({member.id})</BS.Button></Link>
-        : <BS.Accordion.Toggle  as={BS.Button} variant="link" eventKey={member.id}> <b>{member.name}</b> ({member.id})</BS.Accordion.Toggle>}</div>
-            { member.avatar_url ?   <Popup trigger={<BS.Image src={`${member.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
-                {close => (
-                    <div className="text-center w-100 m-0" onClick={() => close()}>
-                        <div className="m-auto" style={{maxWidth: '640px'}}>
-                            <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
-                        </div>
-                    </div>
-                )}
-            </Popup> : 
-        <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />}
-        </BS.Card.Header>
-        {localStorage.getItem("expandcards") ? renderCard() : <BS.Accordion.Collapse eventKey={member.id}>
-            {renderCard()}
-        </BS.Accordion.Collapse>}
-        </LazyLoad>
-        
+                { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to="/pk-webs/dash" ><BS.Button variant="primary" className="float-right">Back</BS.Button></Link></>}
+            </> } </BS.Card.Body></BS.Card></>
     )
 }

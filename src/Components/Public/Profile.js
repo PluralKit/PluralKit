@@ -6,9 +6,9 @@ import Popup from 'reactjs-popup';
 import Twemoji from 'react-twemoji';
 
 import { FaAddressCard } from "react-icons/fa";
-import defaultAvatar from '../default_discord_avatar.png'
-import Loading from "./Loading.js";
-import API_URL from "../Constants/constants.js";
+import defaultAvatar from '../../default_discord_avatar.png'
+import Loading from "../Loading.js";
+import API_URL from "../../Constants/constants.js";
 import ProfileList from "./ProfileList.js";
 
 export default function Profile () {
@@ -42,7 +42,7 @@ export default function Profile () {
     }, [sysID])
 
     useEffect(() => {
-        const { toHTML } = require('../Functions/discord-parser.js');
+        const { toHTML } = require('../../Functions/discord-parser.js');
         
         if (system.name) {
             setName(system.name);

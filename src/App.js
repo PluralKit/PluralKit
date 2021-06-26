@@ -9,10 +9,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "react-toggle/style.css"
 import { FaCog, FaSun, FaMoon } from "react-icons/fa";
 
-import Dash from './Components/Dash.js'
+import Dash from './Pages/Dash.js'
 import history from "./History.js";
 import Footer from './Components/Footer.js'
-import Public from './Components/Public.js'
+import Public from './Pages/Public.js'
 import Home from './Pages/Home.js'
 
 export default function App() {

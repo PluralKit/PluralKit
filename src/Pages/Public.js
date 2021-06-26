@@ -4,7 +4,7 @@ import { FaStar } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import history from "../History.js";
 import { Switch, Route, useRouteMatch } from 'react-router-dom';
-import Profile from './Profile.js'
+import Profile from '../Components/Public/Profile.js'
 
 export default function Public () {
     const { path, url } = useRouteMatch();
