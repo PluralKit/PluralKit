@@ -1,225 +1,244 @@
-import React, { useState, useEffect } from 'react';
-import  * as BS from 'react-bootstrap'
+import React, { useState, useEffect } from "react";
+import * as BS from "react-bootstrap";
 import { useRouteMatch } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import autosize from 'autosize';
-import moment from 'moment';
-import 'moment-timezone';
-import Popup from 'reactjs-popup';
-import Twemoji from 'react-twemoji';
-
-import API_URL from "../../Constants/constants.js";
+import autosize from "autosize";
+import "moment-timezone";
+import Popup from "reactjs-popup";
+import Twemoji from "react-twemoji";
 
 import history from "../../History.js";
-import defaultAvatar from '../../default_discord_avatar.png'
+import defaultAvatar from "../../default_discord_avatar.png";
 import { FaAddressCard } from "react-icons/fa";
+import EditSystem from "./Edit/EditSystem.js";
+import EditSystemPrivacy from "./Edit/EditSystemPrivacy.js";
 
 export default function System(props) {
+  // match the url, if there's a member ID there, don't render this component at all
+  const match = useRouteMatch("/pk-webs/dash/:memberID");
 
-    const match = useRouteMatch("/pk-webs/dash/:memberID");
+  // get the user from the localstorage
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
-    const {
-        register: registerEdit,
-        handleSubmit: handleSubmitEdit
-      } = useForm();
+  // bunch of useState stuff, used in the useEffect() hook below
+  const [name, setName] = useState("");
+  const [tag, setTag] = useState("");
+  const [timezone, setTimezone] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [desc, setDesc] = useState("");
+  const [editDesc, setEditDesc] = useState("");
 
+  // more useState, this time to actually handle state
+  // TODO: name them something more intuitive maybe?
+  const [editMode, setEditMode] = useState(false);
+  const [privacyEdit, setPrivacyEdit] = useState(false);
+  const [privacyView, setPrivacyView] = useState(false);
 
-    const {
-        register: registerPrivacy,
-        handleSubmit: handleSubmitPrivacy
-      } = useForm();
+  const [errorAlert, setErrorAlert] = useState(false);
 
-    const [ user, setUser ] = useState(JSON.parse(localStorage.getItem('user')));
+  // this useEffect does a couple of things after the user is gotten from localstorage
+  useEffect(() => {
+    // first require the discord markdown parser
+    const { toHTML } = require("../../Functions/discord-parser.js");
 
-    const [ name, setName ] = useState("");
-    const [ tag, setTag ] = useState("");
-    const [ timezone, setTimezone ] = useState("");
-    const [ avatar, setAvatar ] = useState("");
-    const [ desc, setDesc ] = useState("");
-    const [ editDesc, setEditDesc ] = useState("");
-
-    const [ editMode, setEditMode ] = useState(false);
-    const [ privacyMode, setPrivacyMode ] = useState(false);
-    const [ privacyView, setPrivacyView ] = useState(false);
-
-    const [ invalidTimezone, setInvalidTimezone ] = useState(false);
-    const [ errorAlert, setErrorAlert ] = useState(false);
-
-
-    useEffect(() => {
-    const { toHTML } = require('../../Functions/discord-parser.js');
-    
+    // check if there's a name object in user, if it's null, set name to a blank string, otherwise set name to user.name
     if (user.name) {
-        setName(user.name);
-    } else setName('');
+      setName(user.name);
+    } else setName("");
 
+    // same as above, but with the user tag instead
     if (user.tag) {
-        setTag(user.tag);
-    } else setTag('');
+      setTag(user.tag);
+    } else setTag("");
 
+    // same as above but with timezone
     if (user.tz) {
-        setTimezone(user.tz);
-    } else setTimezone('');
+      setTimezone(user.tz);
+    } else setTimezone("");
 
+    // also trims the avatar url so that 1. pngs won't be converted to jpegs and 2. won't be resized to 256x256
     if (user.avatar_url) {
-        var avatarsmall = user.avatar_url.replace('&format=jpeg', '');
-        setAvatar(avatarsmall.replace('?width=256&height=256', ''))
-    } else setAvatar('')
+      var avatarsmall = user.avatar_url.replace("&format=jpeg", "");
+      setAvatar(avatarsmall.replace("?width=256&height=256", ""));
+    } else setAvatar("");
 
+    // same as above, but with descriptions
+    // two description variables! one is just the plain description, the other is parsed and converted to html
     if (user.description) {
-        setDesc(toHTML(user.description));
-        setEditDesc(user.description);
-    } else { setDesc("(no description)");
-    setEditDesc("");
-}}, [user.description, user.tag, user.avatar_url, user.tz, user.name]);
-
-useEffect(() => {
-    autosize(document.querySelector('textarea'));
-})
-
-const submitEdit = data => {
-    if (data.tz) {
-        if (!moment.tz.zone(data.tz)) {
-        setInvalidTimezone(true);
-        return;
-        }
+      setDesc(toHTML(user.description));
+      setEditDesc(user.description);
+    } else {
+      setDesc("(no description)");
+      setEditDesc("");
     }
+  }, [user.description, user.tag, user.avatar_url, user.tz, user.name]);
 
-    fetch(`${API_URL}s`,{
-        method: 'PATCH',
-        body: JSON.stringify(data),
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
-        }}).then (res => res.json()
-        ).then ( () => { setUser(prevState => {return {...prevState, ...data}}); localStorage.setItem('user', JSON.stringify(user)); setEditMode(false)}
-        ).catch (error => {
-            console.error(error);
-            setErrorAlert(true);
-        })
+  // this just resizes the textarea when filled with larger amounts of text
+  useEffect(() => {
+    autosize(document.querySelector("textarea"));
+  });
 
-    }
+  if (match) return null;
 
-const submitPrivacy = data => {
-    fetch(`${API_URL}s`,{
-        method: 'PATCH',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
-        }}).then (res => res.json()
-        ).then (data => { setUser(prevState => {return {...prevState, ...data}}); localStorage.setItem('user', JSON.stringify(user)); setPrivacyMode(false)}
-        ).catch (error => {
-            console.error(error);
-            setErrorAlert(true);
-        })
-}
-
-        if (match) return null;
-
-        return (
-           <BS.Card className="mb-3 mt-3 w-100" >
-               <BS.Card.Header className="d-flex align-items-center justify-content-between">
-                  <BS.Card.Title className="float-left"><FaAddressCard className="mr-4 float-left" /> {name} ({user.id})</BS.Card.Title> 
-                  { user.avatar_url ? <Popup trigger={<BS.Image src={`${user.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
-                {close => (
-                    <div className="text-center w-100 m-0" onClick={() => close()}>
-                    <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
-                    </div>
-                )}
-            </Popup> : 
-               <BS.Image src={defaultAvatar} style={{width: 50, height: 50}} className="float-right" roundedCircle />}
-               </BS.Card.Header>
-               <BS.Card.Body>
-               { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
-               { editMode ?  
-               <BS.Form onSubmit={handleSubmitEdit(submitEdit)}>
-                <BS.Form.Text className='mb-4'><b>Note:</b> if you refresh the page, the old data might show up again, this is due to the bot caching data.<br/>
-                Try editing a member to clear the cache, or wait a few minutes before refreshing.</BS.Form.Text>
-                <BS.Form.Row>
-                <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                    <BS.Form.Label>Name:</BS.Form.Label>
-               <BS.Form.Control name="name" {...registerEdit("name")}  defaultValue={name}/>
-                </BS.Col>
-                <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                    <BS.Form.Label>Tag:</BS.Form.Label>
-                    <BS.Form.Control name="tag" {...registerEdit("tag")}  defaultValue={tag}/>
-                </BS.Col>
-                <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                    <BS.Form.Label>Timezone:</BS.Form.Label>
-                    <BS.Form.Control name="tz" {...registerEdit("tz")}  defaultValue={timezone} required/>
-                    { invalidTimezone ? <BS.Form.Text>Please enter a valid <a href='https://xske.github.io/tz/' rel="noreferrer" target="_blank">timezone</a></BS.Form.Text> : "" }
-                </BS.Col>
-                <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                    <BS.Form.Label>Avatar url:</BS.Form.Label> 
-                    <BS.Form.Control name="avatar_url" {...registerEdit("avatar_url")} defaultValue={avatar}/>
-                </BS.Col>
-                </BS.Form.Row>
-                <BS.Form.Group className="mt-3">
-                <BS.Form.Label>Description:</BS.Form.Label>
-                <BS.Form.Control maxLength="1000" as="textarea" name="description" {...registerEdit("description")} defaultValue={editDesc}/>
-            </BS.Form.Group>
-                <BS.Button variant="light" onClick={() => setEditMode(false)}>Cancel</BS.Button>  <BS.Button variant="primary" type="submit">Submit</BS.Button>
-                </BS.Form> :
-               <><BS.Row>
-                    <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {user.id}</BS.Col>
-                    <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Tag:</b> {tag}</BS.Col>
-                    <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Timezone:</b> {timezone}</BS.Col>
-                    { privacyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
-                </BS.Row>
-                { privacyMode ? <BS.Form onSubmit={handleSubmitPrivacy(submitPrivacy)}>
-                <hr/>
-                <h5>Editing privacy settings</h5>
-                    <BS.Form.Row>
-                    <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                        <BS.Form.Label>Description:</BS.Form.Label>
-                        <BS.Form.Control name="description_privacy" defaultValue={user.description_privacy} as="select" {...registerPrivacy("description_privacy")}>
-                            <option>public</option>
-                            <option>private</option>
-                        </BS.Form.Control>
-                    </BS.Col>
-                    <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                    <BS.Form.Label>Member list:</BS.Form.Label>
-                        <BS.Form.Control name="member_list_privacy" defaultValue={user.member_list_privacy} as="select" {...registerPrivacy("member_list_privacy")}>
-                            <option>public</option>
-                            <option>private</option>
-                        </BS.Form.Control>
-                    </BS.Col>
-                    <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                    <BS.Form.Label>Front:</BS.Form.Label>
-                        <BS.Form.Control name="front_privacy" as="select" defaultValue={user.front_privacy} {...registerPrivacy("front_privacy")}>
-                            <option>public</option>
-                            <option>private</option>
-                        </BS.Form.Control>
-                    </BS.Col>
-                    <BS.Col className="mb-lg-2" xs={12} lg={3}>
-                    <BS.Form.Label>Front history:</BS.Form.Label>
-                        <BS.Form.Control name="front_history_privacy" defaultValue={user.front_history_privacy} as="select" {...registerPrivacy("front_history_privacy")}>
-                            <option>public</option>
-                            <option>private</option>
-                        </BS.Form.Control>
-                    </BS.Col>
-                </BS.Form.Row>
-                <BS.Button variant="light" onClick={() => setPrivacyMode(false)}>Cancel</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button>                
-                <hr/>
-            </BS.Form> : privacyView ? <><hr/>
-                <h5>Viewing privacy settings</h5>
+  return (
+    <BS.Card className="mb-3 mt-3 w-100">
+      <BS.Card.Header className="d-flex align-items-center justify-content-between">
+        <BS.Card.Title className="float-left">
+          <FaAddressCard className="mr-4 float-left" /> {name} ({user.id})
+        </BS.Card.Title>
+        {user.avatar_url ? (
+          <Popup
+            trigger={
+              <BS.Image
+                src={`${user.avatar_url}`}
+                style={{ width: 50, height: 50 }}
+                tabIndex="0"
+                className="float-right"
+                roundedCircle
+              />
+            }
+            className="avatar"
+            modal
+          >
+            {(close) => (
+              <div className="text-center w-100 m-0" onClick={() => close()}>
+                <BS.Image
+                  src={`${avatar}`}
+                  style={{ "max-width": 640, height: "auto" }}
+                  thumbnail
+                />
+              </div>
+            )}
+          </Popup>
+        ) : (
+          <BS.Image
+            src={defaultAvatar}
+            style={{ width: 50, height: 50 }}
+            className="float-right"
+            roundedCircle
+          />
+        )}
+      </BS.Card.Header>
+      <BS.Card.Body>
+        {errorAlert ? (
+          <BS.Alert variant="danger">
+            Something went wrong, please try logging in and out again.
+          </BS.Alert>
+        ) : (
+          ""
+        )}
+        {editMode ? (
+          <EditSystem
+            editDesc={editDesc}
+            name={name}
+            tag={tag}
+            timezone={timezone}
+            avatar={avatar}
+            setErrorAlert={setErrorAlert}
+            user={user}
+            setUser={setUser}
+            setEditMode={setEditMode}
+          />
+        ) : (
+          <>
             <BS.Row>
-                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Description:</b> {user.description_privacy}</BS.Col>
-                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Member list: </b>{user.member_list_privacy}</BS.Col>
-                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Front:</b> {user.front_privacy}</BS.Col> 
-                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Front history:</b> {user.front_history_privacy}</BS.Col>
+              <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                <b>ID:</b> {user.id}
+              </BS.Col>
+              <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                <b>Tag:</b> {tag}
+              </BS.Col>
+              <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                <b>Timezone:</b> {timezone}
+              </BS.Col>
+              {privacyView ? (
+                ""
+              ) : (
+                <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                  <b>Privacy:</b>{" "}
+                  <BS.Button
+                    variant="light"
+                    size="sm"
+                    onClick={() => setPrivacyView(true)}
+                  >
+                    View
+                  </BS.Button>
+                </BS.Col>
+              )}
             </BS.Row>
-            <BS.Button variant="light" onClick={() => setPrivacyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setPrivacyMode(true)}>Edit</BS.Button>
-            <hr/></> : "" }
-                <p><b>Description:</b></p>
-                { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
-                { privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button><BS.Button variant="primary" className="float-right" onClick={() => history.push(`/pk-webs/profile/${user.id}`)}>Profile</BS.Button></>}</> }
-                </BS.Card.Body>
-           </BS.Card>
-        )
+            {privacyEdit ? (
+              <EditSystemPrivacy
+                setErrorAlert={setErrorAlert}
+                setUser={setUser}
+                user={user}
+                setPrivacyEdit={setPrivacyEdit}
+              />
+            ) : privacyView ? (
+              <>
+                <hr />
+                <h5>Viewing privacy settings</h5>
+                <BS.Row>
+                  <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                    <b>Description:</b> {user.description_privacy}
+                  </BS.Col>
+                  <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                    <b>Member list: </b>
+                    {user.member_list_privacy}
+                  </BS.Col>
+                  <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                    <b>Front:</b> {user.front_privacy}
+                  </BS.Col>
+                  <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                    <b>Front history:</b> {user.front_history_privacy}
+                  </BS.Col>
+                </BS.Row>
+                <BS.Button
+                  variant="light"
+                  onClick={() => setPrivacyView(false)}
+                >
+                  Exit
+                </BS.Button>{" "}
+                <BS.Button
+                  variant="primary"
+                  onClick={() => setPrivacyEdit(true)}
+                >
+                  Edit
+                </BS.Button>
+                <hr />
+              </>
+            ) : (
+              ""
+            )}
+            <p>
+              <b>Description:</b>
+            </p>
+            {localStorage.getItem("twemoji") ? (
+              <Twemoji options={{ className: "twemoji" }}>
+                <p dangerouslySetInnerHTML={{ __html: desc }}></p>
+              </Twemoji>
+            ) : (
+              <p dangerouslySetInnerHTML={{ __html: desc }}></p>
+            )}
+            {privacyEdit ? (
+              ""
+            ) : privacyView ? (
+              ""
+            ) : (
+              <>
+                <BS.Button variant="light" onClick={() => setEditMode(true)}>
+                  Edit
+                </BS.Button>
+                <BS.Button
+                  variant="primary"
+                  className="float-right"
+                  onClick={() => history.push(`/pk-webs/profile/${user.id}`)}
+                >
+                  Profile
+                </BS.Button>
+              </>
+            )}
+          </>
+        )}
+      </BS.Card.Body>
+    </BS.Card>
+  );
 }
-
-   
-
-    
