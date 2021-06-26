@@ -5,7 +5,7 @@ import * as fetch from 'node-fetch';
 import Loading from "../Components/Loading";
 import * as BS from "react-bootstrap";
 import history from "../History.js";
-import { FaLock } from "react-icons/fa";
+import { FaLockOpen, FaHome } from "react-icons/fa";
 
 import API_URL from "../Constants/constants.js";
 
@@ -97,7 +97,7 @@ const { register, handleSubmit } = useForm();
         <BS.Card className="mb-3 mt-3">
           <BS.Card.Header className="d-flex align-items-center justify-content-between">
             <BS.Card.Title>
-              <FaLock className="mr-3" />
+              <FaLockOpen className="mr-3" />
               Login
             </BS.Card.Title>
           </BS.Card.Header>
@@ -162,6 +162,32 @@ const { register, handleSubmit } = useForm();
           </BS.Card.Body>
         </BS.Card>
       )}
+      <BS.Card>
+      <BS.Card.Header>
+        <BS.Card.Title>
+          <FaHome className="mr-3" />
+          Welcome!
+        </BS.Card.Title>
+      </BS.Card.Header>
+      <BS.Card.Body>
+        <p>Pk-webs is a web interface for PluralKit, it lets you edit your system and members using PluralKit's API, without having to use commands on discord.</p>
+        <blockquote>
+          <p>This website is an ongoing project and will be sporadically updated. If you have any issues or questions, join <a href='https://discord.gg/PczBt78'>PluralKit's support server</a> and ping us (PALS#1612). Since this project is unofficial, the actual pluralkit devs will not be able to help you with everything.</p>
+        </blockquote>
+        <hr/>
+        <h5>FAQ:</h5>
+        Will groups be added to this website?
+        <blockquote>In the future, yes! Groups are not in the API as of now, which is what this site depends on. When APIv2 comes out, they will eventually be added here too.</blockquote>
+        Will switch history/editing switches be added to this website?
+        <blockquote>Probably when APIv2 comes out, right now the API is very limited in how it can handle switches. And we'd rather add everything in one go.</blockquote>
+        What about bulk editing?
+        <blockquote>Probably not. Bulk commands are planned for the main bot, and we're not sure how to fit them into the main site at the moment.</blockquote>
+        Can you add [other feature]?
+        <blockquote>Depends on the feature. Ping us in the support server and we'll let you know if it's feasible or not. If it's accessibility related, chances are good that we'll add it.</blockquote>
+        Can i contribute to this?
+        <blockquote>Yeah sure! The code is open source on <a href='https://github.com/Spectralitree/pk-webs/'>github</a>. Be warned though that we're currently in the middle of cleaning it all up and adding comments to everything, so some sections are quite messy still.</blockquote>
+      </BS.Card.Body>
+      </BS.Card>
     </>
   );
 };
