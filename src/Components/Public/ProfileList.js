@@ -23,6 +23,7 @@ export default function Memberlist() {
 
     const [searchBy, setSearchBy] = useState('name')
     const [sortBy, setSortBy] = useState('name')
+    const [sortOrder, setSortOrder] = useState('ascending')
 
     const [value, setValue] = useState('');
 
@@ -93,14 +94,22 @@ export default function Memberlist() {
     const active = currentPage;
     const pageAmount = Math.ceil(currentMembers.length / membersPerPage);
 
-      var sortMembers = currentMembers;
-      if (sortBy === 'name') {
-        sortMembers =  currentMembers.sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
-      } else if (sortBy === 'display name') {
-        sortMembers =  currentMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).slice(indexOfFirstMember, indexOfLastMember);
-      } else if (sortBy === 'ID') {
-        sortMembers =  currentMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
-      } 
+    var sortMembers = currentMembers;
+    if (sortBy === 'name') {
+      if (sortOrder === 'descending') {
+        sortMembers =  currentMembers.sort((a, b) => a.name.localeCompare(b.name)).reverse().slice(indexOfFirstMember, indexOfLastMember);
+      } else sortMembers =  currentMembers.sort((a, b) => a.name.localeCompare(b.name)).slice(indexOfFirstMember, indexOfLastMember);
+    } 
+    else if (sortBy === 'display name') {
+        if (sortOrder === 'descending') {
+          sortMembers =  currentMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).reverse().slice(indexOfFirstMember, indexOfLastMember);
+        } else sortMembers =  currentMembers.sort((a, b) => a.displayName.localeCompare(b.displayName)).slice(indexOfFirstMember, indexOfLastMember);
+    } 
+    else if (sortBy === 'ID') {
+      if (sortOrder === 'descending') {
+        sortMembers =  currentMembers.sort((a, b) => a.id.localeCompare(b.id)).reverse().slice(indexOfFirstMember, indexOfLastMember);
+      } else sortMembers =  currentMembers.sort((a, b) => a.id.localeCompare(b.id)).slice(indexOfFirstMember, indexOfLastMember);
+    }
 
       const memberList = sortMembers.map((member) => <BS.Card key={member.id} className={localStorage.getItem("expandcards") ? "mb-3" : ""}>
       <ProfileCard
@@ -114,7 +123,7 @@ export default function Memberlist() {
         <Route exact path={path}>
       <>
       <BS.Row className="mb-lg-3 justfiy-content-md-center">
-      <BS.Col xs={12} lg={4}>
+      <BS.Col xs={12} lg={3}>
       <BS.Form>
         <BS.InputGroup className="mb-3">
         <BS.Form.Control disabled placeholder='Page length:'/>
@@ -130,7 +139,7 @@ export default function Memberlist() {
           </BS.InputGroup>
       </BS.Form>
       </BS.Col>
-      <BS.Col xs={12} lg={4}>
+      <BS.Col xs={12} lg={3}>
       <BS.Form>
         <BS.InputGroup className="mb-3">
         <BS.Form.Control disabled placeholder='Search by:'/>
@@ -145,7 +154,7 @@ export default function Memberlist() {
           </BS.InputGroup>
       </BS.Form>
       </BS.Col>
-      <BS.Col xs={12} lg={4}>
+      <BS.Col xs={12} lg={3}>
       <BS.Form>
         <BS.InputGroup className="mb-3">
         <BS.Form.Control disabled placeholder='Sort by:'/>
@@ -159,6 +168,19 @@ export default function Memberlist() {
           </BS.InputGroup>
       </BS.Form>
       </BS.Col>
+      <BS.Col xs={12} lg={3}>
+        <BS.Form>
+          <BS.InputGroup className="mb-3">
+          <BS.Form.Control disabled placeholder='Sort order:'/>
+            <BS.Form.Control as="select" defaultValue={sortOrder} onChange={e => {
+              setSortOrder(e.target.value)
+              }}>
+              <option>ascending</option>
+              <option>descending</option>
+            </BS.Form.Control>
+            </BS.InputGroup>
+        </BS.Form>
+        </BS.Col>
       </BS.Row>
       <BS.Row className="justify-content-md-center">
       <BS.Col className="mb-3" xs={12} lg={7}>
