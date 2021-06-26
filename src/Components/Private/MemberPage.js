@@ -23,6 +23,7 @@ export default function MemberPage(props) {
     const [ displayName, setDisplayName ] = useState("");
     const [ birthday, setBirthday ] = useState("");
     const [ birthdate, setBirthdate ] = useState("");
+    const [ created, setCreated ] = useState("");
     const [ pronouns, setPronouns ] = useState("");
     const [ editPronouns, setEditPronouns ] = useState("");
     const [ avatar, setAvatar ] = useState("");
@@ -88,6 +89,10 @@ export default function MemberPage(props) {
         setBirthdate('');
     }
 
+        var createdmoment = moment(member.created).format('MMM D, YYYY');
+        setCreated(createdmoment);
+
+
         if (member.pronouns) {
             setPronouns(toHTML(member.pronouns));
             setEditPronouns(member.pronouns);
@@ -110,7 +115,7 @@ export default function MemberPage(props) {
         } else { setDesc("(no description)");
         setEditDesc("");
     }
-    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags]);
+    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags, member.created]);
 
     const submitEdit = data => {
         props.edit(Object.assign(member, data));
@@ -315,7 +320,7 @@ export default function MemberPage(props) {
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
-                
+                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Created:</b> {created}</BS.Col>
             </BS.Row>
             { privacyMode ? <BS.Form id='Privacy' onSubmit={handleSubmitPrivacy(submitPrivacy)}>
                 <hr/>

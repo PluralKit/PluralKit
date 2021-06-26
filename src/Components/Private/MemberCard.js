@@ -23,6 +23,7 @@ export default function MemberCard(props) {
     const [ displayName, setDisplayName ] = useState("");
     const [ birthday, setBirthday ] = useState("");
     const [ birthdate, setBirthdate ] = useState("");
+    const [ created, setCreated ] = useState("");
     const [ pronouns, setPronouns ] = useState("");
     const [ editPronouns, setEditPronouns ] = useState("");
     const [ avatar, setAvatar ] = useState("");
@@ -32,10 +33,10 @@ export default function MemberCard(props) {
     const [ proxyTags, setProxyTags ] = useState(member.proxy_tags);
 
     const [ editMode, setEditMode ] = useState(false);
-    const [ privacyMode, setPrivacyMode ] = useState(false);
+    const [ privacyEdit, setprivacyEdit ] = useState(false);
     const [ privacyView, setPrivacyView ] = useState(false);
     const [ proxyView, setProxyView ] = useState(false);
-    const [ proxyMode, setProxyMode ] = useState(false);
+    const [ proxyEdit, setproxyEdit ] = useState(false);
     
     const [open, setOpen] = useState(false);
     const closeModal = () => setOpen(false);
@@ -88,6 +89,9 @@ export default function MemberCard(props) {
         setBirthdate('');
     }
 
+        var createdmoment = moment(member.created).format('MMM D, YYYY');
+        setCreated(createdmoment);
+
         if (member.pronouns) {
             setPronouns(toHTML(member.pronouns));
             setEditPronouns(member.pronouns);
@@ -110,7 +114,7 @@ export default function MemberCard(props) {
         } else { setDesc("(no description)");
         setEditDesc("");
     }
-    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags]);
+    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags, member.created]);
 
     const submitEdit = data => {
         props.edit(Object.assign(member, data));
@@ -146,7 +150,7 @@ export default function MemberCard(props) {
             ).then (data => {
                 setMember(prevState => {return {...prevState, ...data}});
                 setErrorAlert(false); 
-                setPrivacyMode(false)
+                setprivacyEdit(false)
         }
             ).catch (error => {
                 console.error(error);
@@ -178,7 +182,7 @@ export default function MemberCard(props) {
     }
 
     function resetProxyFields() {
-        setProxyMode(false);
+        setproxyEdit(false);
         setProxyTags(member.proxy_tags);
     }
 
@@ -198,7 +202,7 @@ export default function MemberCard(props) {
                 setMember(prevState => {return {...prevState, ...data}}); 
                 setProxyTags(data.proxy_tags);
                 setErrorAlert(false);
-                setProxyMode(false);
+                setproxyEdit(false);
         }
             ).catch (error => {
                 console.error(error);
@@ -290,9 +294,9 @@ export default function MemberCard(props) {
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
-                
+                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Created:</b> {created}</BS.Col>
             </BS.Row>
-            { privacyMode ? <BS.Form id='Privacy' onSubmit={handleSubmitPrivacy(submitPrivacy)}>
+            { privacyEdit ? <BS.Form id='Privacy' onSubmit={handleSubmitPrivacy(submitPrivacy)}>
                 <hr/>
                 <h5>Editing privacy settings</h5>
                     <BS.Form.Row>
@@ -346,7 +350,7 @@ export default function MemberCard(props) {
                         </BS.Form.Control>
                     </BS.Col>
                 </BS.Form.Row>
-                <BS.Button variant="light" onClick={() => setPrivacyMode(false)}>Cancel</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button>                
+                <BS.Button variant="light" onClick={() => setprivacyEdit(false)}>Cancel</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button>                
                 <hr/>
             </BS.Form> : privacyView ? <><hr/>
                 <h5>Viewing privacy settings</h5>
@@ -359,9 +363,9 @@ export default function MemberCard(props) {
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> {member.pronoun_privacy}</BS.Col>
                 <BS.Col className="mb-3" xs={12} lg={3}><b>Meta:</b> {member.metadata_privacy}</BS.Col>
             </BS.Row>
-         <BS.Button variant="light" onClick={() => setPrivacyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setPrivacyMode(true)}>Edit</BS.Button>
+         <BS.Button variant="light" onClick={() => setPrivacyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setprivacyEdit(true)}>Edit</BS.Button>
          <hr/></> : "" }
-         { proxyMode ?
+         { proxyEdit ?
          <><hr/>
          <h5>Editing proxy tags</h5>
          <BS.Form onSubmit={handleSubmitProxy(submitProxy)}>
@@ -385,11 +389,11 @@ export default function MemberCard(props) {
          <BS.Row className="mb-2">
           { proxyTags.length === 0 ? <BS.Col className="mb-lg-2"><b>No proxy tags set.</b></BS.Col> : proxyTags.map((proxytag, index) => <BS.Col key={index} className="mb-lg-2" xs={12} lg={2}> <code>{proxytag.prefix}text{proxytag.suffix}</code></BS.Col> )}
          </BS.Row>
-         <BS.Button variant="light" onClick={() => setProxyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setProxyMode(true)}>Edit</BS.Button>
+         <BS.Button variant="light" onClick={() => setProxyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setproxyEdit(true)}>Edit</BS.Button>
             <hr/></> : "" }
             <p><b>Description:</b></p>
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
-                { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to={`dash/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></> }
+                { proxyView ? "" : privacyEdit ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to={`dash/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></> }
             </> } </BS.Card.Body>
         )
     }
