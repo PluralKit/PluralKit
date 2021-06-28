@@ -462,6 +462,15 @@ To look at the per-member breakdown of the front over a given time period, use t
     pk;system qazws frontpercent 100d12h
 
 Note that in cases of switches with multiple members, each involved member will have the full length of the switch counted towards it. This means that the percentages may add up to over 100%.
+<br> It is possible to disable this with the `-flat` flag; percentages will then add up to 100%.
+
+::: tip
+If you use the `switch-out` function, the time when no-one was fronting will show up in front history as "no fronter". To disable this, use the `-fronters-only`, or `-fo` flag:
+
+```
+pk;system frontpercent -fronters-only
+```
+:::
 
 ## Member groups
 PluralKit allows you to categorize system members in different **groups**.

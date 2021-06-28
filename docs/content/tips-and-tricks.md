@@ -73,4 +73,5 @@ These flags only work with the full member list (`pk;system list full`).
 |Command|Flag|Aliases|Description|
 |---|---|---|---|
 |pk;system frontpercent|-fronters-only|-fo|Shows the system's frontpercent without the "no fronter" entry|
+|pk;system frontpercent|-flat||Shows "flat" frontpercent - percentages add up to 100%|
 |pk;group \<group> frontpercent|-fronters-only|-fo|Shows a group's frontpercent without the "no fronter" entry|
