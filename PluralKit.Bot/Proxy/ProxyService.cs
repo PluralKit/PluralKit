@@ -177,11 +177,28 @@ namespace PluralKit.Bot
                 if (msg.Length > 100)
                 {
                     msg = repliedTo.Content.Substring(0, 100);
+                    var endsWithOpenMention = Regex.IsMatch(msg, @"<[at]?[@#:][!&]?(\w+:)?(\d+)?(:[tTdDfFR])?$");
+                    if (endsWithOpenMention)
+                    {
+                        var mentionTail = repliedTo.Content.Substring(100).Split(">")[0];
+                        if (repliedTo.Content.Contains(msg + mentionTail + ">"))
+                            msg += mentionTail + ">";
+                    }
+
+                    var endsWithUrl = Regex.IsMatch(msg,
+                        @"(http|https)(:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})?\.?([a-zA-Z0-9()]{1,6})?\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$");
+                    if (endsWithUrl)
+                    {
+                        var urlTail = repliedTo.Content.Substring(100).Split(" ")[0];
+                        msg += urlTail + " ";
+                    }
+                    
                     var spoilersInOriginalString = Regex.Matches(repliedTo.Content, @"\|\|").Count;
                     var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
                     if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
                         msg += "||";
-                    msg += "…";
+                    if (msg != repliedTo.Content)
+                        msg += "…";
                 }
                 
                 content.Append($"**[Reply to:]({jumpLink})** ");
