@@ -163,7 +163,9 @@ namespace Myriad.Gateway
         private async Task HandleReconnect()
         {
             _logger.Information("Shard {ShardId}: Received Reconnect", _info.ShardId);
-            await DoReconnect(WebSocketCloseStatus.NormalClosure, TimeSpan.FromSeconds(1));
+            // close code 1000 kills the session, so can't reconnect
+            // we use 1005 (no error specified) instead
+            await DoReconnect(WebSocketCloseStatus.Empty, TimeSpan.FromSeconds(1));
         }
         
         private Task HandleReady(ReadyEvent ready)
