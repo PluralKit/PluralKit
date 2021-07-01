@@ -129,7 +129,7 @@ namespace Myriad.Rest
             _client.Post<Channel>($"/users/@me/channels", ("CreateDM", default), new CreateDmRequest(recipientId))!;
 
         private static string EncodeEmoji(Emoji emoji) =>
-            WebUtility.UrlEncode(emoji.Name) ?? emoji.Id?.ToString() ??
+            WebUtility.UrlEncode(emoji.Id != null ? $"{emoji.Name}:{emoji.Id}" : emoji.Name) ??
             throw new ArgumentException("Could not encode emoji");
     }
 }
