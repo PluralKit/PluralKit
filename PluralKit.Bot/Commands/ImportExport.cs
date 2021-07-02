@@ -120,7 +120,7 @@ namespace PluralKit.Bot
                     issueStr += "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, those tags will be applied to the members' *display names*/nicknames instead.";
 
                 var msg = $"{issueStr}\n\nDo you want to proceed with the import?";
-                if (!await ctx.PromptYesNo(msg, "Import"))
+                if (!await ctx.PromptYesNo(msg, "Proceed"))
                     throw Errors.ImportCancelled;
             }
 
