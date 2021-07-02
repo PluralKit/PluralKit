@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Autofac;
@@ -15,64 +14,31 @@ using Myriad.Types;
 
 using NodaTime;
 
+using PluralKit.Bot.Interactive;
 using PluralKit.Core;
 
 namespace PluralKit.Bot {
     public static class ContextUtils {
         public static async Task<bool> ConfirmClear(this Context ctx, string toClear)
         {
-            if (!(await ctx.PromptYesNo($"{Emojis.Warn} Are you sure you want to clear {toClear}?"))) throw Errors.GenericCancelled();
+            if (!(await ctx.PromptYesNo($"{Emojis.Warn} Are you sure you want to clear {toClear}?", "Clear"))) throw Errors.GenericCancelled();
             else return true;
         }
 
-        public static async Task<bool> PromptYesNo(this Context ctx, string msgString, User user = null, Duration? timeout = null, AllowedMentions mentions = null, bool matchFlag = true)
+        public static async Task<bool> PromptYesNo(this Context ctx, string msgString, string acceptButton, User user = null, bool matchFlag = true)
         {
-            Message message;
             if (matchFlag && ctx.MatchFlag("y", "yes")) return true;
-            else message = await ctx.Reply(msgString, mentions: mentions);
-            var cts = new CancellationTokenSource();
-            if (user == null) user = ctx.Author;
-            if (timeout == null) timeout = Duration.FromMinutes(5);
-            
-            if (!DiscordUtils.HasReactionPermissions(ctx)) 
-                await ctx.Reply($"{Emojis.Note} PluralKit does not have permissions to add reactions in this channel. \nPlease reply with 'yes' to confirm, or 'no' to cancel.");
-            else
-            // "Fork" the task adding the reactions off so we don't have to wait for them to be finished to start listening for presses
-            await ctx.Rest.CreateReactionsBulk(message, new[] {Emojis.Success, Emojis.Error});
-            
-            bool ReactionPredicate(MessageReactionAddEvent e)
+
+            var prompt = new YesNoPrompt(ctx)
             {
-                if (e.ChannelId != message.ChannelId || e.MessageId != message.Id) return false;
-                if (e.UserId != user.Id) return false;
-                return true;
-            }
+                Message = msgString,
+                AcceptLabel = acceptButton,
+                User = user?.Id ?? ctx.Author.Id,
+            };
 
-            bool MessagePredicate(MessageCreateEvent e)
-            {
-                if (e.ChannelId != message.ChannelId) return false;
-                if (e.Author.Id != user.Id) return false;
+            await prompt.Run();
 
-                var strings = new [] {"y", "yes", "n", "no"};
-                return strings.Any(str => string.Equals(e.Content, str, StringComparison.InvariantCultureIgnoreCase));
-            }
-
-            var messageTask = ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>().WaitFor(MessagePredicate, timeout, cts.Token);
-            var reactionTask = ctx.Services.Resolve<HandlerQueue<MessageReactionAddEvent>>().WaitFor(ReactionPredicate, timeout, cts.Token);
-            
-            var theTask = await Task.WhenAny(messageTask, reactionTask);
-            cts.Cancel();
-
-            if (theTask == messageTask)
-            {
-                var responseMsg = (await messageTask);
-                var positives = new[] {"y", "yes"};
-                return positives.Any(p => string.Equals(responseMsg.Content, p, StringComparison.InvariantCultureIgnoreCase));
-            }
-
-            if (theTask == reactionTask) 
-                return (await reactionTask).Emoji.Name == Emojis.Success;
-
-            return false;
+            return prompt.Result == true;
         }
 
         public static async Task<MessageReactionAddEvent> AwaitReaction(this Context ctx, Message message, User user = null, Func<MessageReactionAddEvent, bool> predicate = null, Duration? timeout = null)

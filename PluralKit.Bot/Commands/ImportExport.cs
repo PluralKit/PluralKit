@@ -73,7 +73,7 @@ namespace PluralKit.Bot
                     if (data.LinkedAccounts != null && !data.LinkedAccounts.Contains(ctx.Author.Id))
                     {
                         var msg = $"{Emojis.Warn} You seem to importing a system profile belonging to another account. Are you sure you want to proceed?";
-                        if (!await ctx.PromptYesNo(msg)) throw Errors.ImportCancelled;
+                        if (!await ctx.PromptYesNo(msg, "Import")) throw Errors.ImportCancelled;
                     }
 
                     // If passed system is null, it'll create a new one
@@ -120,7 +120,7 @@ namespace PluralKit.Bot
                     issueStr += "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, those tags will be applied to the members' *display names*/nicknames instead.";
 
                 var msg = $"{issueStr}\n\nDo you want to proceed with the import?";
-                if (!await ctx.PromptYesNo(msg))
+                if (!await ctx.PromptYesNo(msg, "Import"))
                     throw Errors.ImportCancelled;
             }
 

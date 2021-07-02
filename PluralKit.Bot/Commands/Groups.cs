@@ -51,7 +51,7 @@ namespace PluralKit.Bot
             var existingGroup = await _repo.GetGroupByName(conn, ctx.System.Id, groupName);
             if (existingGroup != null) {
                 var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to create another group with the same name?";
-                if (!await ctx.PromptYesNo(msg))
+                if (!await ctx.PromptYesNo(msg, "Create"))
                     throw new PKError("Group creation cancelled.");
             }
             
@@ -81,7 +81,7 @@ namespace PluralKit.Bot
             var existingGroup = await _repo.GetGroupByName(conn, ctx.System.Id, newName);
             if (existingGroup != null && existingGroup.Id != target.Id) {
                 var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to rename this member to that name too?";
-                if (!await ctx.PromptYesNo(msg))
+                if (!await ctx.PromptYesNo(msg, "Rename"))
                     throw new PKError("Group creation cancelled.");
             }
 

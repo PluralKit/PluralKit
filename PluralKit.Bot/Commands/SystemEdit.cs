@@ -294,7 +294,7 @@ namespace PluralKit.Bot
 
             var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
             var msg = $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?";
-            if (!await ctx.PromptYesNo(msg)) throw Errors.TimezoneChangeCancelled;
+            if (!await ctx.PromptYesNo(msg, "Change Timezone")) throw Errors.TimezoneChangeCancelled;
             
             var patch = new SystemPatch {UiTz = zone.Id};
             await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
