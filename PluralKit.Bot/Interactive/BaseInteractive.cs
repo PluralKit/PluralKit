@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Autofac;
 
+using Myriad.Rest.Types;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
@@ -15,10 +16,11 @@ namespace PluralKit.Bot.Interactive
 {
     public abstract class BaseInteractive
     {
-        private readonly Context _ctx;
-        private readonly List<Button> _buttons = new();
-        private readonly TaskCompletionSource _tcs = new();
-        private bool _running;
+        protected readonly Context _ctx;
+        protected readonly List<Button> _buttons = new();
+        protected readonly TaskCompletionSource _tcs = new();
+        protected Message _message { get; private set; }
+        protected bool _running;
         
         protected BaseInteractive(Context ctx)
         {
@@ -52,21 +54,28 @@ namespace PluralKit.Bot.Interactive
                 });
         }
 
-        protected async Task Finish(InteractionContext ctx)
+        protected async Task Finish(InteractionContext? ctx = null)
         {
             foreach (var button in _buttons) 
                 button.Disabled = true;
-            await Update(ctx);
+
+            if (ctx != null)
+                await Update(ctx);
+            else 
+                await _ctx.Rest.EditMessage(_message.ChannelId, _message.Id, new MessageEditRequest {
+                    Components = GetComponents()
+                });
             
             _tcs.TrySetResult();
         }
 
-        protected async Task<Message> Send(string? content = null, Embed? embed = null)
+        protected async Task Send(string? content = null, Embed? embed = null, AllowedMentions? mentions = null)
         {
-            return await _ctx.Rest.CreateMessage(_ctx.Channel.Id, new MessageRequest
+            _message = await _ctx.Rest.CreateMessage(_ctx.Channel.Id, new MessageRequest
             {
                 Content = content,
                 Embed = embed,
+                AllowedMentions = mentions,
                 Components = GetComponents()
             });
         }
@@ -113,7 +122,7 @@ namespace PluralKit.Bot.Interactive
             }
         }
 
-        private void Cleanup()
+        protected void Cleanup()
         {
             var dispatch = _ctx.Services.Resolve<InteractionDispatchService>();
             foreach (var button in _buttons) 
