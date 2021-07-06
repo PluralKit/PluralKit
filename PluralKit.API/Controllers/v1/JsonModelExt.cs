@@ -158,7 +158,7 @@ namespace PluralKit.API
 
         private static PrivacyLevel ParsePrivacy(this string input, string errorName)
         {
-            if (input == null) return PrivacyLevel.Private;
+            if (input == null) return PrivacyLevel.Public;
             if (input == "") return PrivacyLevel.Private;
             if (input == "private") return PrivacyLevel.Private;
             if (input == "public") return PrivacyLevel.Public;
