@@ -67,7 +67,7 @@ namespace PluralKit.Bot
             }
 
             // Proxied messages only exist in guild text channels, so skip checking if we're elsewhere
-            if (DiscordUtils.IsValidGuildChannel(channel)) return;
+            if (!DiscordUtils.IsValidGuildChannel(channel)) return;
 
             // Ignore reactions from bots (we can't DM them anyway)
             if (user.Bot) return;
