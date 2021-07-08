@@ -192,5 +192,8 @@ namespace PluralKit.Bot
             var neededPermissions = PermissionSet.AddReactions | PermissionSet.ReadMessageHistory;
             return ((ctx.BotPermissions & neededPermissions) == neededPermissions);
         }
+
+        public static bool IsValidGuildChannel(Channel channel) =>
+            channel.Type == Channel.ChannelType.GuildText || channel.Type == Channel.ChannelType.GuildNews;
     }
 }

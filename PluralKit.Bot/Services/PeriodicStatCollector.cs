@@ -54,7 +54,7 @@ namespace PluralKit.Bot
                 guildCount++;
                 foreach (var channel in _cache.GetGuildChannels(guild.Id))
                 {
-                    if (channel.Type == Channel.ChannelType.GuildText)
+                    if (DiscordUtils.IsValidGuildChannel(channel))
                         channelCount++;
                 }
             }
