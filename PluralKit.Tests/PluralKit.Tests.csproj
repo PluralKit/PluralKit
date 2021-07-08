@@ -20,6 +20,10 @@
         </PackageReference>
     </ItemGroup>
 
+    <PropertyGroup>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\PluralKit.API\PluralKit.API.csproj" />
       <ProjectReference Include="..\PluralKit.Bot\PluralKit.Bot.csproj" />
