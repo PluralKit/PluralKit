@@ -217,8 +217,12 @@ namespace PluralKit.Bot
                 await ctx.Execute<Admin>(Admin, a => a.UpdateSystemId(ctx));
             else if (ctx.Match("umid", "updatememberid"))
                 await ctx.Execute<Admin>(Admin, a => a.UpdateMemberId(ctx));
+            else if (ctx.Match("ugid", "updategroupid"))
+                await ctx.Execute<Admin>(Admin, a => a.UpdateGroupId(ctx));
             else if (ctx.Match("uml", "updatememberlimit"))
                 await ctx.Execute<Admin>(Admin, a => a.SystemMemberLimit(ctx));
+            else if (ctx.Match("ugl", "updategrouplimit"))
+                await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
             else
                 await ctx.Reply($"{Emojis.Error} Unknown command.");
         }

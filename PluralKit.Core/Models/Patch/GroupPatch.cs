@@ -6,6 +6,7 @@ namespace PluralKit.Core
     public class GroupPatch: PatchObject
     {
         public Partial<string> Name { get; set; }
+        public Partial<string> Hid { get; set; }
         public Partial<string?> DisplayName { get; set; }
         public Partial<string?> Description { get; set; }
         public Partial<string?> Icon { get; set; }
@@ -18,6 +19,7 @@ namespace PluralKit.Core
 
         public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
             .With("name", Name)
+            .With("hid", Hid)
             .With("display_name", DisplayName)
             .With("description", Description)
             .With("icon", Icon)
