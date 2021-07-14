@@ -18,5 +18,8 @@ namespace Myriad.Rest.Types.Requests
         
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<AllowedMentions> AllowedMentions { get; init; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Optional<MessageComponent[]?> Components { get; init; }
     }
 }

@@ -92,18 +92,18 @@ namespace PluralKit.Bot
             // But, we do a prompt to confirm.
             var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id);
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
-            var lastSwitchTimeStr = lastTwoSwitches[0].Timestamp.FormatZoned(ctx.System);
+            var lastSwitchTime = lastTwoSwitches[0].Timestamp.ToUnixTimeSeconds(); // .FormatZoned(ctx.System)
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
-            var newSwitchTimeStr = time.FormatZoned();
+            var newSwitchTime = time.ToInstant().ToUnixTimeSeconds();
             var newSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - time.ToInstant()).FormatDuration();
             
             // yeet
-            var msg = $"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from {lastSwitchTimeStr} ({lastSwitchDeltaStr} ago) to {newSwitchTimeStr} ({newSwitchDeltaStr} ago). Is this OK?";
-            if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchMoveCancelled;
+            var msg = $"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from <t:{lastSwitchTime}> ({lastSwitchDeltaStr} ago) to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago). Is this OK?";
+            if (!await ctx.PromptYesNo(msg, "Move Switch")) throw Errors.SwitchMoveCancelled;
             
             // aaaand *now* we do the move
             await _repo.MoveSwitch(conn, lastTwoSwitches[0].Id, time.ToInstant());
-            await ctx.Reply($"{Emojis.Success} Switch moved to {newSwitchTimeStr} ({newSwitchDeltaStr} ago).");
+            await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
         }
         
         public async Task SwitchDelete(Context ctx)
@@ -114,7 +114,7 @@ namespace PluralKit.Bot
             {
                 // Subcommand: "delete all"
                 var purgeMsg = $"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?";
-                if (!await ctx.PromptYesNo(purgeMsg))
+                if (!await ctx.PromptYesNo(purgeMsg, "Clear Switches"))
                     throw Errors.GenericCancelled();
                 await _db.Execute(c => _repo.DeleteAllSwitches(c, ctx.System.Id));
                 await ctx.Reply($"{Emojis.Success} Cleared system switches!");
@@ -144,7 +144,7 @@ namespace PluralKit.Bot
                 msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?";
             }
 
-            if (!await ctx.PromptYesNo(msg)) throw Errors.SwitchDeleteCancelled;
+            if (!await ctx.PromptYesNo(msg, "Delete Switch")) throw Errors.SwitchDeleteCancelled;
             await _repo.DeleteSwitch(conn, lastTwoSwitches[0].Id);
             
             await ctx.Reply($"{Emojis.Success} Switch deleted.");

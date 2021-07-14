@@ -35,7 +35,7 @@ namespace PluralKit.Bot
             if (existingMember != null && existingMember.Id != target.Id) 
             {
                 var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (`{existingMember.Hid}`). Do you want to rename this member to that name too?";
-                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member renaming cancelled.");
+                if (!await ctx.PromptYesNo(msg, "Rename")) throw new PKError("Member renaming cancelled.");
             }
 
             // Rename the member
