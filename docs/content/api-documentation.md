@@ -23,6 +23,16 @@ be set to `null` or cleared.
 
 Endpoints taking JSON bodies (eg. most `PATCH` and `PUT` endpoints) require the `Content-Type: application/json` header set.
 
+## Community API Libraries
+
+The following API libraries have been created by members of our community. Please contact the developer of each library if you need support.
+
+- **Python:** *PluralKit.py* ([PyPI](https://pypi.org/project/pluralkit/) | [Docs](https://pluralkit.readthedocs.io/en/latest/source/quickstart.html) | [Source code](https://github.com/almonds0166/pluralkit.py))
+- **JavaScript:** *pkapi.js* ([npmjs](https://npmjs.com/package/pkapi.js) | [Docs](https://github.com/greysdawn/pk.js/wiki) | [Source code](https://github.com/almonds0166/pluralkit.py))
+- **Golang:** *pkgo* (install: `go get github.com/starshine-sys/pkgo` | [Docs (godoc)](https://godocs.io/github.com/starshine-sys/pkgo) | [Docs (pkg.go.dev)](https://pkg.go.dev/github.com/starshine-sys/pkgo) | [Source code](https://github.com/starshine-sys/pkgo))
+
+Do let us know in the support server if you made a new library and would like to see it listed here!
+
 ## Authentication
 Authentication is done with a simple "system token". You can get your system token by running `pk;token` using the
 Discord bot, either in a channel with the bot or in DMs. Then, pass this token in the `Authorization` HTTP header
