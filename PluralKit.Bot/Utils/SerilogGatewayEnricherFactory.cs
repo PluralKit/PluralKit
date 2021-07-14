@@ -77,7 +77,8 @@ namespace PluralKit.Bot
             MessageUpdateEvent e => e.Author.HasValue ? e.Author.Value.Id : null,
             MessageReactionAddEvent e => e.UserId,
             MessageReactionRemoveEvent e => e.UserId,
-            InteractionCreateEvent e => e.Member?.User?.Id // todo: these nullable?
+            InteractionCreateEvent e => e.Member.User.Id,
+            _ => null,
         };
 
         private ulong? GetMessageId(IGatewayEvent evt) => evt switch
@@ -90,6 +91,7 @@ namespace PluralKit.Bot
             MessageReactionRemoveAllEvent e => e.MessageId,
             MessageReactionRemoveEmojiEvent e => e.MessageId,
             InteractionCreateEvent e => e.Message?.Id,
+            _ => null,
         };
 
         private record Inner(List<LogEventProperty> Properties): ILogEventEnricher
