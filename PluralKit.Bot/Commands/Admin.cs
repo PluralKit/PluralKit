@@ -2,7 +2,6 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using PluralKit.Bot.Interactive;
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -36,12 +35,8 @@ namespace PluralKit.Bot
             if (existingSystem != null)
                 throw new PKError($"Another system already exists with ID `{newHid}`.");
 
-            var prompt = new YesNoPrompt(ctx)
-            {
-                Message = $"Change system ID of `{target.Hid}` to `{newHid}`?",
-                AcceptLabel = "Change"
-            };
-            await prompt.Run();
+            if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change"))
+                throw new PKError("ID change cancelled.");
 
             await _db.Execute(c => _repo.UpdateSystem(c, target.Id, new SystemPatch {Hid = newHid}));
             await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
@@ -63,14 +58,7 @@ namespace PluralKit.Bot
             if (existingMember != null)
                 throw new PKError($"Another member already exists with ID `{newHid}`.");
 
-            var prompt = new YesNoPrompt(ctx)
-            {
-                Message = $"Change member ID of **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`) to `{newHid}`?",
-                AcceptLabel = "Change"
-            };
-            await prompt.Run();
-
-            if (prompt.Result != true)
+            if (!await ctx.PromptYesNo($"Change member ID of **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`) to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
             
             await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch {Hid = newHid}));
@@ -93,14 +81,7 @@ namespace PluralKit.Bot
             if (existingGroup != null)
                 throw new PKError($"Another group already exists with ID `{newHid}`.");
 
-            var prompt = new YesNoPrompt(ctx)
-            {
-                Message = $"Change group ID of **{target.Name}** (`{target.Hid}`) to `{newHid}`?",
-                AcceptLabel = "Change"
-            };
-            await prompt.Run();
-
-            if (prompt.Result != true)
+            if (!await ctx.PromptYesNo($"Change group ID of **{target.Name}** (`{target.Hid}`) to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
 
             await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {Hid = newHid}));
@@ -125,15 +106,8 @@ namespace PluralKit.Bot
             var newLimitStr = ctx.PopArgument();
             if (!int.TryParse(newLimitStr, out var newLimit))
                 throw new PKError($"Couldn't parse `{newLimitStr}` as number.");
-                
-            var prompt = new YesNoPrompt(ctx)
-            {
-                Message = $"Update member limit from **{currentLimit}** to **{newLimit}**?",
-                AcceptLabel = "Update"
-            };
-            await prompt.Run();
 
-            if (prompt.Result != true)
+            if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update"))
                 throw new PKError("Member limit change cancelled.");
             
             await using var conn = await _db.Obtain();
@@ -163,14 +137,7 @@ namespace PluralKit.Bot
             if (!int.TryParse(newLimitStr, out var newLimit))
                 throw new PKError($"Couldn't parse `{newLimitStr}` as number.");
 
-            var prompt = new YesNoPrompt(ctx)
-            {
-                Message = $"Update group limit from **{currentLimit}** to **{newLimit}**?",
-                AcceptLabel = "Update"
-            };
-            await prompt.Run();
-
-            if (prompt.Result != true)
+            if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update"))
                 throw new PKError("Group limit change cancelled.");
 
             await using var conn = await _db.Obtain();
