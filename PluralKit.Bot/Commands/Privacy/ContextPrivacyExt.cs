@@ -30,7 +30,7 @@ namespace PluralKit.Bot
         public static MemberPrivacySubject PopMemberPrivacySubject(this Context ctx)
         {
             if (!MemberPrivacyUtils.TryParseMemberPrivacy(ctx.PeekArgument(), out var subject))
-                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all).");
+                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`).");
             
             ctx.PopArgument();
             return subject;
@@ -39,7 +39,7 @@ namespace PluralKit.Bot
         public static GroupPrivacySubject PopGroupPrivacySubject(this Context ctx)
         {
             if (!GroupPrivacyUtils.TryParseGroupPrivacy(ctx.PeekArgument(), out var subject))
-                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `icon`, `visibility`, or `all).");
+                throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `icon`, `visibility`, or `all`).");
             
             ctx.PopArgument();
             return subject;
