@@ -186,7 +186,7 @@ namespace PluralKit.Bot
                 else if (ctx.Match("commands"))
                     return PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
                 else return PrintCommandExpectedError(ctx, BlacklistCommands);
-            if (ctx.Match("proxy", "enable", "disable"))
+            if (ctx.Match("proxy"))
                 return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
             if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
