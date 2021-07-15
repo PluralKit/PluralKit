@@ -57,6 +57,8 @@ namespace PluralKit.Bot
             // Fetch members and try to match to a specific member
             await using var conn = await _db.Obtain();
 
+            var rootChannel = _cache.GetRootChannel(message.ChannelId);
+
             List<ProxyMember> members;
             using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
                 members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.GuildId!.Value)).ToList();
@@ -68,7 +70,7 @@ namespace PluralKit.Bot
             if (message.Content != null && message.Content.Length > 2000) throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
-            if (!await CheckBotPermissionsOrError(botPermissions, message.ChannelId)) 
+            if (!await CheckBotPermissionsOrError(botPermissions, rootChannel.Id)) 
                 return false;
 
             // this method throws, so no need to wrap it in an if statement
@@ -76,7 +78,7 @@ namespace PluralKit.Bot
             
             // Check if the sender account can mention everyone/here + embed links
             // we need to "mirror" these permissions when proxying to prevent exploits
-            var senderPermissions = PermissionExtensions.PermissionsFor(guild, channel, message);
+            var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message);
             var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
             var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
 
@@ -131,10 +133,15 @@ namespace PluralKit.Bot
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
 
+            var messageChannel = _cache.GetChannel(trigger.ChannelId);
+            var rootChannel = _cache.GetRootChannel(trigger.ChannelId);
+            var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null; 
+
             var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
             {
                 GuildId = trigger.GuildId!.Value,
-                ChannelId = trigger.ChannelId,
+                ChannelId = rootChannel.Id,
+                ThreadId = threadId,
                 Name = match.Member.ProxyName(ctx),
                 AvatarUrl = match.Member.ProxyAvatar(ctx),
                 Content = content,

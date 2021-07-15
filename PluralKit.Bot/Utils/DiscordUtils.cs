@@ -194,6 +194,11 @@ namespace PluralKit.Bot
         }
 
         public static bool IsValidGuildChannel(Channel channel) =>
-            channel.Type == Channel.ChannelType.GuildText || channel.Type == Channel.ChannelType.GuildNews;
+            channel.Type is 
+                Channel.ChannelType.GuildText or
+                Channel.ChannelType.GuildNews or 
+                Channel.ChannelType.GuildPublicThread or
+                Channel.ChannelType.GuildPrivateThread or
+                Channel.ChannelType.GuildNewsThread;
     }
 }

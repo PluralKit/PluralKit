@@ -63,6 +63,7 @@ namespace PluralKit.Bot
 
             var guild = evt.GuildId != null ? _cache.GetGuild(evt.GuildId.Value) : null;
             var channel = _cache.GetChannel(evt.ChannelId);
+            var rootChannel = _cache.GetRootChannel(evt.ChannelId);
             
             // Log metrics and message info
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
@@ -72,7 +73,7 @@ namespace PluralKit.Bot
             MessageContext ctx;
             await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-                ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.GuildId ?? default, evt.ChannelId);
+                ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.GuildId ?? default, rootChannel.Id);
             
             // Try each handler until we find one that succeeds
             if (await TryHandleLogClean(evt, ctx)) 

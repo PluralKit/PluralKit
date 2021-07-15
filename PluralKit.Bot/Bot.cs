@@ -78,7 +78,7 @@ namespace PluralKit.Bot
 
         public PermissionSet PermissionsIn(ulong channelId)
         {
-            var channel = _cache.GetChannel(channelId);
+            var channel = _cache.GetRootChannel(channelId);
 
             if (channel.GuildId != null)
             {

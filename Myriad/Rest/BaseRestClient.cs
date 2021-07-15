@@ -22,7 +22,7 @@ namespace Myriad.Rest
 {
     public class BaseRestClient: IAsyncDisposable
     {
-        private const string ApiBaseUrl = "https://discord.com/api/v8";
+        private const string ApiBaseUrl = "https://discord.com/api/v9";
 
         private readonly Version _httpVersion = new(2, 0);
         private readonly JsonSerializerOptions _jsonSerializerOptions;

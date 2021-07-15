@@ -11,7 +11,7 @@ namespace Myriad.Extensions
     public static class PermissionExtensions
     {
         public static PermissionSet PermissionsFor(this IDiscordCache cache, MessageCreateEvent message) =>
-            PermissionsFor(cache, message.ChannelId, message.Author.Id, message.Member?.Roles, isWebhook: message.Author.Discriminator == "0000");
+            PermissionsFor(cache, message.ChannelId, message.Author.Id, message.Member?.Roles, isWebhook: message.WebhookId != null);
 
         public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, GuildMember member) =>
             PermissionsFor(cache, channelId, member.User.Id, member.Roles);
@@ -21,16 +21,21 @@ namespace Myriad.Extensions
 
         public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, ICollection<ulong>? userRoles, bool isWebhook = false)
         {
-            var channel = cache.GetChannel(channelId);
+            if (!cache.TryGetChannel(channelId, out var channel))
+                // todo: handle channel not found better
+                return PermissionSet.Dm;
+            
             if (channel.GuildId == null)
                 return PermissionSet.Dm;
+
+            var rootChannel = cache.GetRootChannel(channelId);
             
             var guild = cache.GetGuild(channel.GuildId.Value);
 
             if (isWebhook)
                 return EveryonePermissions(guild);
 
-            return PermissionsFor(guild, channel, userId, userRoles);
+            return PermissionsFor(guild, rootChannel, userId, userRoles);
         }
         
         public static PermissionSet EveryonePermissions(this Guild guild) =>

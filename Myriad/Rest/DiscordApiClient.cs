@@ -116,9 +116,15 @@ namespace Myriad.Rest
             _client.Get<Webhook[]>($"/channels/{channelId}/webhooks", ("GetChannelWebhooks", channelId))!;
 
         public Task<Message> ExecuteWebhook(ulong webhookId, string webhookToken, ExecuteWebhookRequest request,
-                                            MultipartFile[]? files = null) =>
-            _client.PostMultipart<Message>($"/webhooks/{webhookId}/{webhookToken}?wait=true",
+                                            MultipartFile[]? files = null, ulong? threadId = null)
+        {
+            var url = $"/webhooks/{webhookId}/{webhookToken}?wait=true";
+            if (threadId != null)
+                url += $"&thread_id={threadId}";
+            
+            return _client.PostMultipart<Message>(url,
                 ("ExecuteWebhook", webhookId), request, files)!;
+        }
 
         public Task<Message> EditWebhookMessage(ulong webhookId, string webhookToken, ulong messageId,
                                                 WebhookMessageEditRequest request) =>

@@ -38,6 +38,14 @@ namespace Myriad.Cache
                     return cache.TrySaveDmChannelStub(md.GuildId, md.ChannelId);
                 case MessageDeleteBulkEvent md:
                     return cache.TrySaveDmChannelStub(md.GuildId, md.ChannelId);
+                case ThreadCreateEvent tc:
+                    return cache.SaveChannel(tc);
+                case ThreadUpdateEvent tu:
+                    return cache.SaveChannel(tu);
+                case ThreadDeleteEvent td:
+                    return cache.RemoveChannel(td.Id);
+                case ThreadListSyncEvent tls:
+                    return cache.SaveThreadListSync(tls);
             }
 
             return default;
@@ -53,6 +61,9 @@ namespace Myriad.Cache
 
             foreach (var member in guildCreate.Members)
                 await cache.SaveUser(member.User);
+
+            foreach (var thread in guildCreate.Threads)
+                await cache.SaveChannel(thread);
         }
 
         private static async ValueTask SaveMessageCreate(this IDiscordCache cache, MessageCreateEvent evt)
@@ -69,6 +80,12 @@ namespace Myriad.Cache
             // DM messages don't get Channel Create events first, so we need to save
             // some kind of stub channel object until we get the real one
             return guildId != null ? default : cache.SaveDmChannelStub(channelId);
+        }
+
+        private static async ValueTask SaveThreadListSync(this IDiscordCache cache, ThreadListSyncEvent evt)
+        {
+            foreach (var thread in evt.Threads) 
+                await cache.SaveChannel(thread);
         }
     }
 }
