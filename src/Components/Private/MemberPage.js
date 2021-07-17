@@ -47,7 +47,8 @@ export default function MemberPage(props) {
 
     const {
         register: registerEdit,
-        handleSubmit: handleSubmitEdit
+        handleSubmit: handleSubmitEdit,
+        setValue
       } = useForm();
 
     const {
@@ -285,7 +286,8 @@ export default function MemberPage(props) {
                 </BS.Col>
             </BS.Form.Row>
             <BS.Form.Group className="mt-3">
-                <BS.Form.Label>Description:</BS.Form.Label>
+                <BS.Form.Label>Description:</BS.Form.Label><br/>
+                { localStorage.getItem('template1') ? <BS.Button className="mb-2" size="sm" variant="primary" onClick={() => setValue('description', localStorage.getItem('template1'))}>Template 1</BS.Button> : ""} { localStorage.getItem('template2') ? <BS.Button className="mb-2" size="sm" variant="primary" onClick={() => setValue('description', localStorage.getItem('template2'))}>Template 2</BS.Button> : ""} { localStorage.getItem('template3') ? <BS.Button className="mb-2" size="sm" variant="primary" onClick={() => setValue('description', localStorage.getItem('template3'))}>Template 3</BS.Button> : ""}
                 <BS.Form.Control maxLength="1000" as="textarea" name="description" {...registerEdit("description")} defaultValue={editDesc}/>
             </BS.Form.Group>
             <BS.Button variant="light" onClick={() => setEditMode(false)}>Cancel</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button> <BS.Button variant="danger" className="float-right" onClick={() => setOpen(o => !o)}>Delete</BS.Button>
