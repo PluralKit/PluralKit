@@ -12,6 +12,7 @@ import Footer from './Components/Footer.js'
 import Public from './Pages/Public.js'
 import Home from './Pages/Home.js'
 import Settings from './Pages/Settings.js'
+import Template from './Pages/Template.js'
 import Navbar from './Components/Navbar.js'
 
 export default function App() {
@@ -41,6 +42,9 @@ export default function App() {
               </Route>
               <Route path="/pk-webs/settings">
                 <Settings forceUpdate={forceUpdate}/>
+              </Route>
+              <Route path="/pk-webs/template">
+                <Template/>
               </Route>
             </Switch>
           </BS.Container>

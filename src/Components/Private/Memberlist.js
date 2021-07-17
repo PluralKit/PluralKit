@@ -43,7 +43,7 @@ export default function Memberlist() {
       prefix: "", suffix: ""
     }]);
 
-    const {register, handleSubmit} = useForm();
+    const {register, handleSubmit, setValue: setTemplate} = useForm();
 
   const fetchMembers = useCallback( () => {
     setIsLoading(true);
@@ -401,7 +401,8 @@ export default function Memberlist() {
                 </BS.Form.Row>               
                 <hr/></> : "" }
                 <BS.Form.Group className="mt-3">
-                        <BS.Form.Label>Description:</BS.Form.Label>
+                        <BS.Form.Label>Description:</BS.Form.Label><br/>
+                        { localStorage.getItem('template1') ? <BS.Button className="mb-2" size="sm" variant="primary" onClick={() => setTemplate('description', localStorage.getItem('template1'))}>Template 1</BS.Button> : ""} { localStorage.getItem('template2') ? <BS.Button className="mb-2" size="sm" variant="primary" onClick={() => setTemplate('description', localStorage.getItem('template2'))}>Template 2</BS.Button> : ""} { localStorage.getItem('template3') ? <BS.Button className="mb-2" size="sm" variant="primary" onClick={() => setTemplate('description', localStorage.getItem('template3'))}>Template 3</BS.Button> : ""}
                         <BS.Form.Control maxLength="1000" as="textarea" rows="7" name="description" {...register("description")}  defaultValue={''}/>
                     </BS.Form.Group>
                     <BS.Button variant="primary" type="submit">Submit</BS.Button> <BS.Button variant="light" className="float-right" onClick={closeModal}>Cancel</BS.Button>
