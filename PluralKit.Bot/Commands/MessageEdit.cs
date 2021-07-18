@@ -49,6 +49,9 @@ namespace PluralKit.Bot
             {
                 await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent);
                 
+                if (ctx.Guild == null)
+                    await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new() { Name = Emojis.Success });
+
                 if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
                     await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
 
