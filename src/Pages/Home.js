@@ -28,10 +28,7 @@ const { register, handleSubmit } = useForm();
     fetch(`${API_URL}s/`, {
       method: "GET",
       headers: {
-        Authorization: JSON.stringify(localStorage.getItem("token")).slice(
-          1,
-          -1
-        ),
+        Authorization: localStorage.getItem("token"),
       },
     })
     // put all the system data in localstorage
@@ -72,7 +69,7 @@ const { register, handleSubmit } = useForm();
      fetch(`${API_URL}s/`,{
        method: 'GET',
        headers: {
-         'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+         'Authorization': localStorage.getItem("token")
        }}).then ( res => res.json()
        ).then (data => { 
          localStorage.setItem('user', JSON.stringify(data));

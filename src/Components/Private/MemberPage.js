@@ -126,7 +126,7 @@ export default function MemberPage(props) {
             body: JSON.stringify(data),
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+              'Authorization': localStorage.getItem("token")
             }}).then (res => res.json()
             ).then (data => { 
                 setMember(prevState => {return {...prevState, ...data}});
@@ -147,7 +147,7 @@ export default function MemberPage(props) {
             body: JSON.stringify(data),
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+              'Authorization': localStorage.getItem("token")
             }}).then (res => res.json()
             ).then (data => {
                 setMember(prevState => {return {...prevState, ...data}});
@@ -167,7 +167,7 @@ export default function MemberPage(props) {
             fetch(`${API_URL}m/${member.id}`,{
                 method: 'DELETE',
                 headers: {
-                'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+                'Authorization': localStorage.getItem("token")
                 }}).then (() => {
                     setErrorAlert(false);
                     setMemberDeleted(true);
@@ -198,7 +198,7 @@ export default function MemberPage(props) {
             body: JSON.stringify(newdata),
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+              'Authorization': localStorage.getItem("token")
             }}).then (res => res.json()
             ).then (data => { 
                 setMember(prevState => {return {...prevState, ...data}}); 

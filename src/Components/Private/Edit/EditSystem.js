@@ -34,10 +34,7 @@ const EditSystem = ({
       body: JSON.stringify(data),
       headers: {
         "Content-Type": "application/json",
-        Authorization: JSON.stringify(localStorage.getItem("token")).slice(
-          1,
-          -1
-        ),
+        Authorization: localStorage.getItem("token"),
       },
     })
       .then((res) => res.json())

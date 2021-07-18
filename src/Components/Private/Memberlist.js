@@ -53,7 +53,7 @@ export default function Memberlist() {
      fetch(`${API_URL}s/${userId}/members`,{
     method: 'GET',
     headers: {
-      'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+      'Authorization': localStorage.getItem("token")
     }}).then ( res => res.json()
     ).then (data => { 
       setMembers(data)
@@ -169,7 +169,7 @@ export default function Memberlist() {
         body: JSON.stringify(newdata),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': JSON.stringify(localStorage.getItem("token")).slice(1, -1)
+          'Authorization': localStorage.getItem("token")
         }}).then (res => res.json()
         ).then (data => { 
             setErrorAlert(false);
