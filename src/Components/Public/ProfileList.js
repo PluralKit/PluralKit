@@ -15,6 +15,7 @@ export default function Memberlist() {
 
     const [isLoading, setIsLoading ] = useState(false);
     const [isError, setIsError ] = useState(false);
+    const [isForbidden, setIsForbidden ] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [membersPerPage, setMembersPerPage] = useState(25);
@@ -34,15 +35,24 @@ export default function Memberlist() {
 
      fetch(`${API_URL}s/${sysID}/members`,{
     method: 'GET',
-    }).then ( res => res.json()
+    }).then ( res => {
+      if (res.status === 403) {
+        throw new Error('Access denied!');
+      }
+      res.json()
+    }
     ).then (data => { 
     setMembers(data)
       setIsLoading(false);
   })
-    .catch (error => { 
+    .catch (error => {
+      if (error.message === 'Access denied!') {
+        setIsForbidden(true);
+      } else {
         console.log(error);
         setIsError(true);
-        setIsLoading(false);
+      }
+      setIsLoading(false);
     })
   }, [sysID])
 
@@ -206,7 +216,7 @@ export default function Memberlist() {
         </BS.Pagination>
       </BS.Row>
       { isLoading ? <Loading /> : isError ? 
-      <BS.Alert variant="danger">Error fetching members.</BS.Alert> :
+      <BS.Alert variant="danger">Error fetching members.</BS.Alert> : isForbidden ? <BS.Alert variant="danger">Member list is private.</BS.Alert> :
       <>
         <BS.Accordion className="mb-3 mt-3 w-100" defaultActiveKey="0">
             {memberList}
