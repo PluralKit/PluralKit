@@ -303,7 +303,9 @@ namespace PluralKit.Bot {
                     userInfo = member.User;
                 memberInfo = member;
             }
-            else userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
+
+            if (userInfo == null)
+                userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
 
             // Calculate string displayed under "Sent by"
             string userStr;
@@ -327,7 +329,10 @@ namespace PluralKit.Bot {
             if (roles != null && roles.Count > 0)
             {
                 // TODO: what if role isn't in cache? figure out a fallback
-                var rolesString = string.Join(", ", roles.Select(id => _cache.GetRole(id).Name));
+                var rolesString = string.Join(", ", roles
+                    .Select(id => _cache.GetRole(id))
+                    .OrderByDescending(role => role.Position)
+                    .Select(role => role.Name));
                 eb.Field(new($"Account roles ({roles.Count})", rolesString.Truncate(1024)));
             }
             
