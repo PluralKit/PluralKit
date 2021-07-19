@@ -39,7 +39,7 @@ export default function Memberlist() {
       if (res.status === 403) {
         throw new Error('Access denied!');
       }
-      res.json()
+      return res.json()
     }
     ).then (data => { 
     setMembers(data)
