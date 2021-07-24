@@ -38,6 +38,7 @@ namespace PluralKit.Bot
         private static readonly Regex _salRegex = new("\\(ID: (\\d{17,19})\\)");
         private static readonly Regex _GearBotRegex = new("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
         private static readonly Regex _GiselleRegex = new("\\*\\*Message ID\\*\\*: `(\\d{17,19})`");
+        private static readonly Regex _VortexRegex = new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
 
         private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
         {
@@ -58,7 +59,8 @@ namespace PluralKit.Bot
             new LoggerBot("Vanessa", 310261055060443136, fuzzyExtractFunc: ExtractVanessa), 
             new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL),
             new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot),
-            new LoggerBot("GiselleBot", 356831787445387285, ExtractGiselleBot)
+            new LoggerBot("GiselleBot", 356831787445387285, ExtractGiselleBot),
+            new LoggerBot("Vortex", 240254129333731328, fuzzyExtractFunc: ExtractVortex),
         }.ToDictionary(b => b.Id);
 
         private static readonly Dictionary<string, LoggerBot> _botsByWebhookName = _bots.Values
@@ -349,6 +351,20 @@ namespace PluralKit.Bot
             if (embed?.Title == null || embed.Title != "🗑 Message Deleted") return null;
             var match = _GiselleRegex.Match(embed?.Description);
             return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+        }
+
+        private static FuzzyExtractResult? ExtractVortex(Message msg)
+        {
+            // timestamp is HH:MM:SS
+            // however, that can be set to the user's timezone, so we just use the message timestamp
+            var match = _VortexRegex.Match(msg.Content);
+            return match.Success
+                ? new FuzzyExtractResult
+                {
+                    User = ulong.Parse(match.Groups[2].Value),
+                    ApproxTimestamp = msg.Timestamp().ToInstant()
+                }
+                : null;
         }
 
         public class LoggerBot
