@@ -38,16 +38,16 @@ namespace PluralKit.Bot
             if (!ctx.HasNext())
                 throw new PKSyntaxError("You need to include the message to edit in.");
 
-            if (ctx.Author.Id != msg.Sender)
+            if (ctx.System.Id != msg.System.Id)
                 throw new PKError("Can't edit a message sent from a different account.");
             
             var newContent = ctx.RemainderOrNull();
 
-            var originalMsg = await _rest.GetMessage(msg.Channel, msg.Mid);
+            var originalMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);
 
             try
             {
-                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent);
+                await _webhookExecutor.EditWebhookMessage(msg.Message.Channel, msg.Message.Mid, newContent);
                 
                 if (ctx.Guild == null)
                     await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new() { Name = Emojis.Success });
@@ -63,27 +63,32 @@ namespace PluralKit.Bot
             }
         }
         
-        private async Task<PKMessage> GetMessageToEdit(Context ctx)
+        private async Task<FullMessage> GetMessageToEdit(Context ctx)
         {
+            await using var conn = await _db.Obtain();
+            FullMessage? msg = null;
+
             var referencedMessage = ctx.MatchMessage(false);
             if (referencedMessage != null)
             {
-                await using var conn = await _db.Obtain();
-                var msg = await _repo.GetMessage(conn, referencedMessage.Value);
+                msg = await _repo.GetMessage(conn, referencedMessage.Value);
                 if (msg == null)
                     throw new PKError("This is not a message proxied by PluralKit.");
-                
-                return msg.Message;
             }
 
-            if (ctx.Guild == null)
-                throw new PKError("You must use a message link to edit messages in DMs.");
+            if (msg == null)
+            {
+                if (ctx.Guild == null)
+                    throw new PKError("You must use a message link to edit messages in DMs.");
 
-            var recent = await FindRecentMessage(ctx);
-            if (recent == null)
-                throw new PKError("Could not find a recent message to edit.");
-            
-            return recent;
+                var recent = await FindRecentMessage(ctx);
+                if (recent == null)
+                    throw new PKError("Could not find a recent message to edit.");
+
+                msg = await _repo.GetMessage(conn, recent.Mid);
+            }
+
+            return msg;
         }
 
         private async Task<PKMessage?> FindRecentMessage(Context ctx)
