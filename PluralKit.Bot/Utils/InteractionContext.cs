@@ -22,8 +22,8 @@ namespace PluralKit.Bot
 
         public ulong ChannelId => _evt.ChannelId;
         public ulong? MessageId => _evt.Message?.Id;
-        public GuildMember Member => _evt.Member;
-        public User User => _evt.Member.User;
+        public GuildMember? Member => _evt.Member;
+        public User User => _evt.Member?.User ?? _evt.User;
         public string Token => _evt.Token;
         public string? CustomId => _evt.Data?.CustomId;
         public InteractionCreateEvent Event => _evt;
