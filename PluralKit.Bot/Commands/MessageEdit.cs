@@ -1,6 +1,8 @@
-#nullable enable
+﻿#nullable enable
 using System.Threading.Tasks;
 
+using Myriad.Cache;
+using Myriad.Extensions;
 using Myriad.Rest;
 using Myriad.Rest.Exceptions;
 using Myriad.Types;
@@ -21,8 +23,9 @@ namespace PluralKit.Bot
         private readonly DiscordApiClient _rest;
         private readonly WebhookExecutorService _webhookExecutor;
         private readonly LogChannelService _logChannel;
+        private readonly IDiscordCache _cache;
 
-        public MessageEdit(IDatabase db, ModelRepository repo, IClock clock, DiscordApiClient rest, WebhookExecutorService webhookExecutor, LogChannelService logChannel)
+        public MessageEdit(IDatabase db, ModelRepository repo, IClock clock, DiscordApiClient rest, WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
         {
             _db = db;
             _repo = repo;
@@ -30,6 +33,7 @@ namespace PluralKit.Bot
             _rest = rest;
             _webhookExecutor = webhookExecutor;
             _logChannel = logChannel;
+            _cache = cache;
         }
 
         public async Task EditMessage(Context ctx)
@@ -41,6 +45,9 @@ namespace PluralKit.Bot
             if (ctx.System.Id != msg.System.Id)
                 throw new PKError("Can't edit a message sent by a different system.");
             
+            if (_cache.GetRootChannel(msg.Message.Channel).Id != msg.Message.Channel)
+                throw new PKError("PluralKit cannot edit messages in threads.");
+
             var newContent = ctx.RemainderOrNull();
 
             var originalMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);
