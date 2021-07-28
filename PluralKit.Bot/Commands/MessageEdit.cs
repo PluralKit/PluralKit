@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Threading.Tasks;
 
 using Myriad.Rest;
@@ -39,7 +39,7 @@ namespace PluralKit.Bot
                 throw new PKSyntaxError("You need to include the message to edit in.");
 
             if (ctx.System.Id != msg.System.Id)
-                throw new PKError("Can't edit a message sent from a different account.");
+                throw new PKError("Can't edit a message sent by a different system.");
             
             var newContent = ctx.RemainderOrNull();
 
