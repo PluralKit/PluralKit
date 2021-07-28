@@ -178,21 +178,21 @@ namespace PluralKit.Bot
                 await Task.Yield();
 
                 await using var serviceScope = _services.BeginLifetimeScope();
-                
-                using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
-                using var __ = LogContext.Push(serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shard, evt));
-                _logger.Verbose("Received gateway event: {@Event}", evt);
 
-                // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
-                var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
-                sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), shard, evt);
-                
                 // Find an event handler that can handle the type of event (<T>) we're given
                 var handler = serviceScope.Resolve<IEventHandler<T>>();
                 var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
 
                 try
                 {
+                    using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
+                    using var __ = LogContext.Push(serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shard, evt));
+                    _logger.Verbose("Received gateway event: {@Event}", evt);
+
+                    // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
+                    var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
+                    sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), shard, evt);
+
                     using var timer = _metrics.Measure.Timer.Time(BotMetrics.EventsHandled, 
                             new MetricTags("event", typeof(T).Name.Replace("Event", "")));
 
