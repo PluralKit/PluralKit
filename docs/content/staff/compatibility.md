@@ -7,6 +7,7 @@ Some logger bots have offical PluralKit support, and properly handle excluding p
 
 - [**Gabby Gums**](https://github.com/amadea-system/GabbyGums)
 - [**Catalogger**](https://catalogger.starshines.xyz/docs)
+- [**Crosslink**](https://crss.link)
 
 If your server uses an in-house bot for logging, you can use [the API](../api-documentation.md) to implement support yourself.
 
