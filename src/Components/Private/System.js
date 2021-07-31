@@ -14,7 +14,7 @@ import EditSystemPrivacy from "./Edit/EditSystemPrivacy.js";
 
 export default function System(props) {
   // match the url, if there's a member ID there, don't render this component at all
-  const match = useRouteMatch("/pk-webs/dash/:memberID");
+  const match = useRouteMatch("/dash/:memberID");
 
   // get the user from the localstorage
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
@@ -230,7 +230,7 @@ export default function System(props) {
                 <BS.Button
                   variant="primary"
                   className="float-right"
-                  onClick={() => history.push(`/pk-webs/profile/${user.id}`)}
+                  onClick={() => history.push(`/profile/${user.id}`)}
                 >
                   Profile
                 </BS.Button>

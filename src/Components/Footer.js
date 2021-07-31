@@ -10,7 +10,7 @@ export default function Navigation() {
                     </BS.Nav.Link>
                 </BS.Nav.Item>
                 <BS.Nav.Item>
-                    <BS.Nav.Link rel="noreferrer" target="_blank" href="https://github.com/Spectralitree/pk-webs/">
+                    <BS.Nav.Link rel="noreferrer" target="_blank" href="https://pk-webs.spectralitree.com/">
                         Github 
                     </BS.Nav.Link>
                 </BS.Nav.Item>

@@ -13,7 +13,7 @@ import ProfileList from "./ProfileList.js";
 
 export default function Profile () {
 
-    const match = useRouteMatch("/pk-webs/profile/:sysID/:memberID");
+    const match = useRouteMatch("/profile/:sysID/:memberID");
 
     const { sysID } = useParams();
     const [ system, setSystem ] = useState('');

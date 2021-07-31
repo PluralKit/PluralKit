@@ -238,7 +238,7 @@ export default function Memberlist() {
         }
         </>
           </Route>
-            <Route path={`/pk-webs/profile/${sysID}/:memberID`}>
+            <Route path={`/profile/${sysID}/:memberID`}>
               { isLoading ? <Loading/> :
             <ProfilePages members={members}/>}
           </Route>

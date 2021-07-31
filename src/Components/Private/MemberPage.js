@@ -213,7 +213,7 @@ export default function MemberPage(props) {
     }
 
     function copyLink() {
-        var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
+        var link = `https://pk-webs.spectralitree.com/profile/${sysID}/${member.id}`
         var textField = document.createElement('textarea')
         textField.innerText = link
         document.body.appendChild(textField);
@@ -229,7 +229,7 @@ export default function MemberPage(props) {
         memberDeleted ? <BS.Card className="mb-5"><BS.Card.Header className="d-flex align-items-center justify-content-between"><BS.Button variant="link" className="float-left"><FaTrashAlt className="mr-4"/>Member Deleted</BS.Button></BS.Card.Header>
         <BS.Card.Body>
             Member successfully deleted, click the button below to go back to the dash.
-            <BS.Button variant="primary" className="float-right" onClick={() => history.push("/pk-webs/dash/reload")}>Back</BS.Button>
+            <BS.Button variant="primary" className="float-right" onClick={() => history.push("/dash/reload")}>Back</BS.Button>
         </BS.Card.Body></BS.Card> :
         <>
         { localStorage.getItem('colorbg') ? "" : member.color ? <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
@@ -421,7 +421,7 @@ export default function MemberPage(props) {
             <hr/></> : "" }
             <p><b>Description:</b></p>
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
-                { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to="/pk-webs/dash" ><BS.Button variant="primary" className="float-right">Back</BS.Button></Link></>}
+                { proxyView ? "" : privacyMode ? "" : privacyView ? "" : <><BS.Button variant="light" onClick={() => setEditMode(true)}>Edit</BS.Button> <Link to="/dash" ><BS.Button variant="primary" className="float-right">Back</BS.Button></Link></>}
             </> } </BS.Card.Body></BS.Card></>
     )
 }

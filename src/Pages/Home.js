@@ -39,7 +39,7 @@ const { register, handleSubmit } = useForm();
         localStorage.setItem("user", JSON.stringify(data));
         setIsSubmit(true);
         setIsLoading(false);
-        history.push("/pk-webs/dash");
+        history.push("/dash");
       })
       // remove the token and user data from localstorage if there's an error, also set the token as invalid
       // TODO: an error doesn't mean the token is invalid, change this depending on what error is thrown
@@ -122,7 +122,7 @@ const { register, handleSubmit } = useForm();
                 </p>
                 <BS.Button
                   type="primary"
-                  onClick={() => history.push("/pk-webs/dash")}
+                  onClick={() => history.push("/dash")}
                 >
                   Continue to dash
                 </BS.Button>

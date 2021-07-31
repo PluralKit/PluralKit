@@ -212,7 +212,7 @@ export default function MemberCard(props) {
     }
 
     function copyLink() {
-        var link = `https://spectralitree.github.io/pk-webs/profile/${sysID}/${member.id}`
+        var link = `https://pk-webs.spectralitree.com/profile/${sysID}/${member.id}`
         var textField = document.createElement('textarea')
         textField.innerText = link
         document.body.appendChild(textField);

@@ -25,25 +25,25 @@ export default function App() {
 
   return (
     <div className={ `contents ${localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}`}>
-      <Router history={history} basename="/pk-webs">
+      <Router history={history}>
         <Navbar forceUpdate={forceUpdate} setIsSubmit={setIsSubmit} />
         <div className="content">
           <BS.Container>
             <Switch>
-            <Route path="/pk-webs/dash">
-              { !localStorage.getItem('token') || isInvalid ? <Redirect to="/pk-webs"/> : <Dash />
+            <Route path="/dash">
+              { !localStorage.getItem('token') || isInvalid ? <Redirect to="/"/> : <Dash />
               }
               </Route>
-              <Route exact path="/pk-webs">
+              <Route exact path="/">
                 <Home isLoading={isLoading} setIsLoading={setIsLoading} isSubmit={isSubmit} setIsSubmit={setIsSubmit} isInvalid={isInvalid} setIsInvalid={setIsInvalid}/>
               </Route>
-              <Route path="/pk-webs/profile">
+              <Route path="/profile">
                 <Public />
               </Route>
-              <Route path="/pk-webs/settings">
+              <Route path="/settings">
                 <Settings forceUpdate={forceUpdate}/>
               </Route>
-              <Route path="/pk-webs/template">
+              <Route path="/template">
                 <Template/>
               </Route>
             </Switch>
