@@ -1,4 +1,6 @@
-﻿using Autofac.Extensions.DependencyInjection;
+﻿using System.Threading.Tasks;
+
+using Autofac.Extensions.DependencyInjection;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,10 +14,11 @@ namespace PluralKit.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             InitUtils.InitStatic();
-            CreateHostBuilder(args).Build().Run();
+            await BuildInfoService.LoadVersion();
+            await CreateHostBuilder(args).Build().RunAsync();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

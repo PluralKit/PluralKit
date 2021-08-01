@@ -48,4 +48,16 @@
     <ItemGroup>
       <EmbeddedResource Include="Database/**/*.sql" />
     </ItemGroup>
+
+    <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+      <Exec
+        Command="git describe --long --always --dirty --exclude=* --abbrev=8 > ../.version"
+        IgnoreExitCode="False"
+        >
+      </Exec>
+    </Target>
+
+    <ItemGroup>
+      <EmbeddedResource Include="..\.version" LogicalName="version" />
+    </ItemGroup>
 </Project>
