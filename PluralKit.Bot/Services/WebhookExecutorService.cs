@@ -71,7 +71,7 @@ namespace PluralKit.Bot
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
-            _logger.Information("Invoked webhook {Webhook} in channel {Channel} (thread {ThreadId}", webhook.Id,
+            _logger.Information("Invoked webhook {Webhook} in channel {Channel} (thread {ThreadId})", webhook.Id,
                 req.ChannelId, req.ThreadId);
             
             return webhookMessage;
@@ -137,7 +137,7 @@ namespace PluralKit.Bot
                     {
                         // Error 10015 = "Unknown Webhook" - this likely means the webhook was deleted
                         // but is still in our cache. Invalidate, refresh, try again
-                        _logger.Warning("Error invoking webhook {Webhook} in channel {Channel} (thread {ThreadId}",
+                        _logger.Warning("Error invoking webhook {Webhook} in channel {Channel} (thread {ThreadId})",
                             webhook.Id, webhook.ChannelId, req.ThreadId);
                         
                         var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(req.ChannelId, webhook);
