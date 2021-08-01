@@ -10,6 +10,7 @@ namespace PluralKit.Core
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<DbConnectionCountHolder>().SingleInstance();
+            builder.RegisterType<DatabaseMigrator>().SingleInstance();
             builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
             builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
             
