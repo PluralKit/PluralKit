@@ -154,7 +154,7 @@ namespace PluralKit.Bot
                         profile.Append($"\n**Created on:** {created.FormatZoned(zone)}");
                     
                     if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is {} avatar)
-                        profile.Append($"\n**Avatar URL:** {avatar}");
+                        profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
                     if (m.DescriptionFor(lookupCtx) is {} desc) 
                         profile.Append($"\n\n{desc}");

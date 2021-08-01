@@ -29,6 +29,6 @@ namespace PluralKit.Core
             group.DescriptionPrivacy.Get(ctx, group.Description);
         
         public static string? IconFor(this PKGroup group, LookupContext ctx) =>
-            group.IconPrivacy.Get(ctx, group.Icon);
+            group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
     }
 }

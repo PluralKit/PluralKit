@@ -60,7 +60,7 @@ namespace PluralKit.Bot
             
             var eb = new EmbedBuilder()
                 .Title($"{target.NameFor(ctx)}'s {field}")
-                .Image(new(currentValue));
+                .Image(new(currentValue?.TryGetCleanCdnUrl()));
             if (target.System == ctx.System?.Id)
                 eb.Description($"To clear, use `pk;member {target.Reference()} {cmd} clear`.");
             await ctx.Reply(embed: eb.Build());

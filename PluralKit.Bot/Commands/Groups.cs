@@ -227,7 +227,7 @@ namespace PluralKit.Bot
                 {
                     var eb = new EmbedBuilder()
                         .Title("Group icon")
-                        .Image(new(target.Icon));
+                        .Image(new(target.Icon.TryGetCleanCdnUrl()));
                     
                     if (target.System == ctx.System?.Id)
                     {

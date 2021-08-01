@@ -16,7 +16,7 @@ namespace PluralKit.API
             o.Add("name", system.Name);
             o.Add("description", system.DescriptionFor(ctx));
             o.Add("tag", system.Tag);
-            o.Add("avatar_url", system.AvatarUrl);
+            o.Add("avatar_url", system.AvatarUrl.TryGetCleanCdnUrl());
             o.Add("created", system.Created.FormatExport());
             o.Add("tz", system.UiTz);
             o.Add("description_privacy", ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
@@ -54,7 +54,7 @@ namespace PluralKit.API
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
             o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
             o.Add("pronouns", member.PronounsFor(ctx));
-            o.Add("avatar_url", member.AvatarFor(ctx));
+            o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
             o.Add("description", member.DescriptionFor(ctx));
             
             var tagArray = new JArray();

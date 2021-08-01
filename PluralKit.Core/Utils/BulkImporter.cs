@@ -101,7 +101,7 @@ namespace PluralKit.Core
                     Description = patch.Description.Value,
 					Pronouns = patch.Pronouns.Value,
                     Color = patch.Color.Value,
-                    AvatarUrl = patch.AvatarUrl.Value,
+                    AvatarUrl = patch.AvatarUrl.Value?.TryGetCleanCdnUrl(),
                     KeepProxy = patch.KeepProxy.Value,
                     ProxyTags = patch.ProxyTags.Value,
                     Birthday = patch.Birthday.Value,

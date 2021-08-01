@@ -58,7 +58,7 @@ namespace PluralKit.Core {
             member.NamePrivacy.Get(ctx, member.Name, member.DisplayName ?? member.Name);
 
         public static string AvatarFor(this PKMember member, LookupContext ctx) =>
-            member.AvatarPrivacy.Get(ctx, member.AvatarUrl);
+            member.AvatarPrivacy.Get(ctx, member.AvatarUrl.TryGetCleanCdnUrl());
 
         public static string DescriptionFor(this PKMember member, LookupContext ctx) =>
             member.DescriptionPrivacy.Get(ctx, member.Description);

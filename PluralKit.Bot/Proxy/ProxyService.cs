@@ -143,7 +143,7 @@ namespace PluralKit.Bot
                 ChannelId = rootChannel.Id,
                 ThreadId = threadId,
                 Name = match.Member.ProxyName(ctx),
-                AvatarUrl = match.Member.ProxyAvatar(ctx),
+                AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
                 Content = content,
                 Attachments = trigger.Attachments,
                 Embeds = embeds.ToArray(),

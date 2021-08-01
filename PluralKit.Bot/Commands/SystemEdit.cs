@@ -203,7 +203,7 @@ namespace PluralKit.Bot
                 {
                     var eb = new EmbedBuilder()
                         .Title("System icon")
-                        .Image(new(ctx.System.AvatarUrl))
+                        .Image(new(ctx.System.AvatarUrl.TryGetCleanCdnUrl()))
                         .Description("To clear, use `pk;system icon clear`.");
                     await ctx.Reply(embed: eb.Build());
                 }

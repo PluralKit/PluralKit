@@ -1,7 +1,6 @@
 #nullable enable
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Myriad.Extensions;
@@ -11,12 +10,6 @@ namespace PluralKit.Bot
 {
     public static class ContextAvatarExt
     {
-        // Rewrite cdn.discordapp.com URLs to media.discordapp.net for jpg/png files
-        // This lets us add resizing parameters to "borrow" their media proxy server to downsize the image
-        // which in turn makes it more likely to be underneath the size limit!
-        private static readonly Regex DiscordCdnUrl = new Regex(@"^https?://(?:cdn\.discordapp\.com|media\.discordapp\.net)/attachments/(\d{17,19})/(\d{17,19})/([^/\\&\?]+)\.(png|jpg|jpeg|webp)(\?.*)?$");
-        private static readonly string DiscordMediaUrlReplacement = "https://media.discordapp.net/attachments/$1/$2/$3.$4?width=256&height=256";
-        
         public static async Task<ParsedImage?> MatchImage(this Context ctx)
         {
             // If we have a user @mention/ID, use their avatar 
@@ -41,13 +34,13 @@ namespace PluralKit.Bot
                     throw Errors.InvalidUrl(arg);
                 
                 // ToString URL-decodes, which breaks URLs to spaces; AbsoluteUri doesn't
-                return new ParsedImage {Url = TryRewriteCdnUrl(uri.AbsoluteUri), Source = AvatarSource.Url};
+                return new ParsedImage {Url = uri.AbsoluteUri, Source = AvatarSource.Url};
             }
             
             // If we have an attachment, use that 
             if (ctx.Message.Attachments.FirstOrDefault() is {} attachment)
             {
-                var url = TryRewriteCdnUrl(attachment.ProxyUrl);
+                var url = attachment.ProxyUrl;
                 return new ParsedImage {Url = url, Source = AvatarSource.Attachment};
             }
             
@@ -55,9 +48,6 @@ namespace PluralKit.Bot
             // and if there are no attachments (which would have been caught just before)
             return null;
         }
-
-        private static string TryRewriteCdnUrl(string url) =>
-            DiscordCdnUrl.Replace(url, DiscordMediaUrlReplacement);
     }
 
     public struct ParsedImage
