@@ -277,8 +277,6 @@ namespace PluralKit.Bot
                 await PrintCommandList(ctx, "systems", SystemCommands);
             else if (ctx.Match("groups", "gs", "g"))
                 await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
-            else if (!ctx.HasNext()) // Bare command
-                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System));
             else
                 await HandleSystemCommandTargeted(ctx);
         }
