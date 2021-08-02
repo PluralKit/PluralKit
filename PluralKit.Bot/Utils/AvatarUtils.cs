@@ -10,7 +10,7 @@ using SixLabors.ImageSharp;
 
 namespace PluralKit.Bot {
     public static class AvatarUtils {
-        public static async Task VerifyAvatarOrThrow(string url)
+        public static async Task VerifyAvatarOrThrow(string url, bool isFullSizeImage = false)
         {
             if (url.Length > Limits.MaxUriLength) 
                 throw Errors.UrlTooLong(url);
@@ -45,7 +45,7 @@ namespace PluralKit.Bot {
                 var stream = await response.Content.ReadAsStreamAsync();
                 var image = await Task.Run(() => Image.Identify(stream));
                 if (image == null) throw Errors.AvatarInvalid;
-                if (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit) // Check image size
+                if (!isFullSizeImage && (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit)) // Check image size
                     throw Errors.AvatarDimensionsTooLarge(image.Width, image.Height);
             }
         }

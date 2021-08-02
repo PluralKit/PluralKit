@@ -55,6 +55,7 @@ The following three models (usually represented in JSON format) represent the va
 | description           | string?  | Yes        | 1000-character limit.                                                                     |
 | tag                   | string?  | Yes        |                                                                                           |
 | avatar_url            | url?     | Yes        | Not validated server-side.                                                                |
+| banner                | url?     | Yes        | Not validated server-side.                                                                |
 | tz                    | string?  | Yes        | Tzdb identifier. Patching with `null` will store `"UTC"`.                                 |
 | created               | datetime | No         |                                                                                           |
 | description_privacy   | string?  | Yes        | Patching with `private` will set it to private; `public` or `null` will set it to public. |
@@ -70,15 +71,16 @@ The following three models (usually represented in JSON format) represent the va
 | name                | string?    | Yes                | 50-character limit.                                                                                                                                                                 |
 | display_name        | string?    | Yes                | 50-character limit.                                                                                                                                                                 |
 | description         | string?    | Yes                | 1000-character limit.                                                                                                                                                               |
-| pronouns            | string?    | Yes                | 100-character limit.                                                                                                                                                               |
+| pronouns            | string?    | Yes                | 100-character limit.                                                                                                                                                                |
 | color               | color?     | Yes                | 6-char hex (eg. `ff7000`), sans `#`.                                                                                                                                                |
 | avatar_url          | url?       | Yes                | Not validated server-side.                                                                                                                                                          |
+| banner              | url?       | Yes                | Not validated server-side.                                                                                                                                                          |
 | birthday            | date?      | Yes                | ISO-8601 (`YYYY-MM-DD`) format, year of `0001` or `0004` means hidden year. Birthdays set after 2020-02-10 use `0004` as a sentinel year, but both options are recognized as valid. |
 | prefix              | string?    | Yes                | **Deprecated.** Use `proxy_tags` instead.                                                                                                                                           |
 | suffix              | string?    | Yes                | **Deprecated.** Use `proxy_tags` instead.                                                                                                                                           |
 | proxy_tags          | ProxyTag[] | Yes (entire array) | An array of ProxyTag (see below) objects, each representing a single prefix/suffix pair.                                                                                            |
 | keep_proxy          | bool       | Yes                | Whether to display a member's proxy tags in the proxied message.                                                                                                                    |
-| created             | datetime   | No                 |
+| created             | datetime   | No                 |                                                                                                                                                                                     |
 | privacy             | string?    | Yes                | **Deprecated.** Use `<subject>_privacy` and `visibility` fields.                                                                                                                    |
 | visibility          | string?    | Yes                | Patching with `private` will set it to private; `public` or `null` will set it to public.                                                                                           |
 | name_privacy        | string?    | Yes                | Patching with `private` will set it to private; `public` or `null` will set it to public.                                                                                           |

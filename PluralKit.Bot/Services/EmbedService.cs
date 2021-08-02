@@ -70,6 +70,9 @@ namespace PluralKit.Bot {
                 .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
                 .Color(color);
 
+            if (system.DescriptionPrivacy.CanAccess(ctx))
+                eb.Image(new(system.BannerImage));
+
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
@@ -165,6 +168,9 @@ namespace PluralKit.Bot {
                 .Footer(new(
                     $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")}"));
 
+            if (member.DescriptionPrivacy.CanAccess(ctx))
+                eb.Image(new(member.BannerImage));
+
             var description = "";
             if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
             if (guildSettings?.AvatarUrl != null)
@@ -229,6 +235,9 @@ namespace PluralKit.Bot {
                 .Author(new(nameField, IconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx))))
                 .Color(color)
                 .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
+
+            if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                eb.Image(new(target.BannerImage));
 
             if (target.DisplayName != null)
                 eb.Field(new("Display Name", target.DisplayName, true));

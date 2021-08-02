@@ -38,6 +38,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;system rename [new name]` - Changes the name of your system.
 - `pk;system description [description]` - Changes the description of your system.
 - `pk;system avatar [avatar url|@mention|upload]` - Changes the avatar of your system.
+- `pk;system banner [image url|upload]` - Changes your system's banner image.
 - `pk;system privacy` - Displays your system's current privacy settings.
 - `pk;system privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system tag [tag]` - Changes the system tag of your system.
@@ -65,6 +66,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;member <member> description [description]` - Changes the description of a member.
 - `pk;member <member> avatar [avatar url|@mention|upload]` - Changes the avatar of a member.
 - `pk;member <member> serveravatar [avatar url|@mention|upload]` - Changes the avatar of a member in a specific server.
+- `pk;member <name> banner [image url|upload]` - Changes the banner image of a member.
 - `pk;member <member> privacy` - Displays a members current privacy settings.
 - `pk;member <member> privacy <subject> <public|private>` - Changes a members privacy setting.
 - `pk;member <member> proxy [tags]` - Changes the proxy tags of a member. use below add/remove commands for members with multiple tag pairs.
@@ -91,6 +93,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;group <group> remove <member> [member 2] [member 3...]` - Removes one or more members from a group.
 - `pk;group <group> privacy <description|icon|visibility|all> <public|private>` - Changes a group's privacy settings.
 - `pk;group <group> icon [icon url|@mention|upload]` - Shows or changes a group's icon.
+- `pk;group <group> banner [image url|upload]` - Shows or changes a group's banner image.
 - `pk;group <group> delete` - Deletes a group.
 
 ## Switching commands
