@@ -158,7 +158,7 @@ namespace PluralKit.Bot {
             foreach (var channel in await _rest.GetGuildChannels(guild.Id))
             {
                 var botPermissions = _bot.PermissionsIn(channel.Id);
-                var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser.Roles);
+                var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
                 
                 if ((userPermissions & PermissionSet.ViewChannel) == 0)
                 {

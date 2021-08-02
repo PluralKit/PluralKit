@@ -11,15 +11,12 @@ namespace Myriad.Extensions
     public static class PermissionExtensions
     {
         public static PermissionSet PermissionsFor(this IDiscordCache cache, MessageCreateEvent message) =>
-            PermissionsFor(cache, message.ChannelId, message.Author.Id, message.Member?.Roles, isWebhook: message.WebhookId != null);
+            PermissionsFor(cache, message.ChannelId, message.Author.Id, message.Member, isWebhook: message.WebhookId != null);
 
         public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, GuildMember member) =>
-            PermissionsFor(cache, channelId, member.User.Id, member.Roles);
+            PermissionsFor(cache, channelId, member.User.Id, member);
 
-        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, GuildMemberPartial member) =>
-            PermissionsFor(cache, channelId, userId, member.Roles);
-
-        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, ICollection<ulong>? userRoles, bool isWebhook = false)
+        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, GuildMemberPartial? member, bool isWebhook = false)
         {
             if (!cache.TryGetChannel(channelId, out var channel))
                 // todo: handle channel not found better
@@ -35,26 +32,26 @@ namespace Myriad.Extensions
             if (isWebhook)
                 return EveryonePermissions(guild);
 
-            return PermissionsFor(guild, rootChannel, userId, userRoles);
+            return PermissionsFor(guild, rootChannel, userId, member);
         }
         
         public static PermissionSet EveryonePermissions(this Guild guild) =>
             guild.Roles.FirstOrDefault(r => r.Id == guild.Id)?.Permissions ?? PermissionSet.Dm;
         
         public static PermissionSet PermissionsFor(Guild guild, Channel channel, MessageCreateEvent msg) =>
-            PermissionsFor(guild, channel, msg.Author.Id, msg.Member?.Roles);
+            PermissionsFor(guild, channel, msg.Author.Id, msg.Member);
 
-        public static PermissionSet PermissionsFor(Guild guild, Channel channel, ulong userId,
-                                                   ICollection<ulong>? roleIds)
+        public static PermissionSet PermissionsFor(Guild guild, Channel channel, ulong userId, GuildMemberPartial? member)
         {
             if (channel.Type == Channel.ChannelType.Dm)
                 return PermissionSet.Dm;
             
-            if (roleIds == null)
-                throw new ArgumentException($"User roles must be specified for guild channels");
+            if (member == null)
+                // this happens with system (Discord platform-owned) users - they're not actually in the guild, so there is no member object.
+                return EveryonePermissions(guild);
 
-            var perms = GuildPermissions(guild, userId, roleIds);
-            perms = ApplyChannelOverwrites(perms, channel, userId, roleIds);
+            var perms = GuildPermissions(guild, userId, member.Roles);
+            perms = ApplyChannelOverwrites(perms, channel, userId, member.Roles);
 
             if ((perms & PermissionSet.Administrator) == PermissionSet.Administrator)
                 return PermissionSet.All;

@@ -83,7 +83,7 @@ namespace PluralKit.Bot
             if (channel.GuildId != null)
             {
                 var member = _guildMembers.GetValueOrDefault(channel.GuildId.Value);
-                return _cache.PermissionsFor(channelId, _cluster.User?.Id ?? default, member?.Roles);
+                return _cache.PermissionsFor(channelId, _cluster.User?.Id ?? default, member);
             }
 
             return PermissionSet.Dm;
