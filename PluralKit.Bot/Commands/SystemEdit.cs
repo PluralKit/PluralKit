@@ -157,13 +157,114 @@ namespace PluralKit.Bot
                 var newTag = ctx.RemainderOrNull(skipFlags: false);
                 if (newTag != null)
                     if (newTag.Length > Limits.MaxSystemTagLength)
-                        throw Errors.SystemNameTooLongError(newTag.Length);
+                        throw Errors.SystemTagTooLongError(newTag.Length);
                 
                 var patch = new SystemPatch {Tag = newTag};
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
                 
                 await ctx.Reply($"{Emojis.Success} System tag changed. Member names will now end with {newTag.AsCode()} when proxied.");
             }
+        }
+
+        public async Task ServerTag(Context ctx)
+        {
+            ctx.CheckSystem().CheckGuildContext();
+
+            var setDisabledWarning = $"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `pk;s servertag -enable`.";
+
+            async Task Show()
+            {
+                if (ctx.MessageContext.SystemGuildTag != null)
+                {
+                    var msg = $"Your current system tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}";
+                    if (!ctx.MessageContext.TagEnabled)
+                        msg += ", but it is currently **disabled**. To re-enable it, type `pk;s servertag -enable`.";
+                    else
+                        msg += ". To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.";
+
+                    await ctx.Reply(msg);
+                    return;
+                }
+
+                else if (!ctx.MessageContext.TagEnabled)
+                    await ctx.Reply($"Your global system tag is {ctx.System.Tag}, but it is **disabled** in this server. To re-enable it, type `pk;s servertag -enable`");
+                else
+                    await ctx.Reply($"You currently have no system tag specific to the server '{ctx.Guild.Name}'. To set one, type `pk;s servertag <tag>`. To disable the system tag in the current server, type `pk;s servertag -disable`.");
+            }
+
+            async Task Set()
+            {
+                var newTag = ctx.RemainderOrNull(skipFlags: false);
+                if (newTag != null && newTag.Length > Limits.MaxSystemTagLength)
+                        throw Errors.SystemTagTooLongError(newTag.Length);
+
+                var patch = new SystemGuildPatch {Tag = newTag};
+                await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} System server tag changed. Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
+
+                if (!ctx.MessageContext.TagEnabled)
+                    await ctx.Reply(setDisabledWarning);
+            }
+
+            async Task Clear()
+            {
+                var patch = new SystemGuildPatch {Tag = null};
+                await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} System server tag cleared. Member names will now end with the global system tag, if there is one set.");
+
+                if (!ctx.MessageContext.TagEnabled)
+                    await ctx.Reply(setDisabledWarning);
+            }
+
+            async Task EnableDisable(bool newValue)
+            {
+                var patch = new SystemGuildPatch {TagEnabled = newValue};
+                await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+
+                await ctx.Reply(PrintEnableDisableResult(newValue, newValue != ctx.MessageContext.TagEnabled));
+            }
+
+            string PrintEnableDisableResult(bool newValue, bool changedValue)
+            {
+                var opStr = newValue ? "enabled" : "disabled";
+                var str = "";
+
+                if (!changedValue)
+                    str = $"{Emojis.Note} The system tag is already {opStr} in this server.";
+                else
+                    str = $"{Emojis.Success} System tag {opStr} in this server.";
+
+                if (newValue == true)
+                {
+                    if (ctx.MessageContext.TagEnabled)
+                        if (ctx.MessageContext.SystemGuildTag == null)
+                            str += $" However, you do not have a system tag specific to this server. Messages will be proxied using your global system tag, if there is one set.";
+                        else
+                            str += $" Your current system tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}.";
+                    else
+                    {
+                        if (ctx.MessageContext.SystemGuildTag != null)
+                            str += $" Member names will now end with the server-specific tag {ctx.MessageContext.SystemGuildTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.";
+                        else
+                            str += $" Member names will now end with the global system tag when proxied in the current server, if there is one set.";
+                    }
+                }
+                
+                return str;
+            }
+
+            if (await ctx.MatchClear("your system's server tag"))
+                await Clear();
+            else if (ctx.Match("disable") || ctx.MatchFlag("disable"))
+                await EnableDisable(false);
+            else if (ctx.Match("enable") || ctx.MatchFlag("enable"))
+                await EnableDisable(true);
+            else if (!ctx.HasNext(skipFlags: false))
+                await Show();
+            else
+                await Set();
         }
         
         public async Task Avatar(Context ctx)

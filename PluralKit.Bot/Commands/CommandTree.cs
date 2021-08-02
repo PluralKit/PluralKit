@@ -15,6 +15,7 @@ namespace PluralKit.Bot
         public static Command SystemDesc = new Command("system description", "system description [description]", "Changes your system's description");
         public static Command SystemColor = new Command("system color", "system color [color]", "Changes your system's color");
         public static Command SystemTag = new Command("system tag", "system tag [tag]", "Changes your system's tag");
+        public static Command SystemServerTag = new Command("system servertag", "system servertag [tag|enable|disable]", "Changes your system's tag in the current server");
         public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
         public static Command SystemBannerImage = new Command("system banner", "system banner [url]", "Set the system's banner image");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
@@ -243,6 +244,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemRename, m => m.Name(ctx));
             else if (ctx.Match("tag"))
                 await ctx.Execute<SystemEdit>(SystemTag, m => m.Tag(ctx));
+            else if (ctx.Match("servertag"))
+                await ctx.Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx));
             else if (ctx.Match("description", "desc", "bio"))
                 await ctx.Execute<SystemEdit>(SystemDesc, m => m.Description(ctx));
             else if (ctx.Match("color", "colour"))
