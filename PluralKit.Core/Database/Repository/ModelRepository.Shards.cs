@@ -10,7 +10,7 @@ namespace PluralKit.Core
     public partial class ModelRepository
     {
         public Task<IEnumerable<PKShardInfo>> GetShards(IPKConnection conn) =>
-            conn.QueryAsync<PKShardInfo>("select * from shards");
+            conn.QueryAsync<PKShardInfo>("select * from shards order by id");
 
         public Task SetShardStatus(IPKConnection conn, int shard, PKShardInfo.ShardStatus status) =>
             conn.ExecuteAsync(
