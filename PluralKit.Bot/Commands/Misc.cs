@@ -303,7 +303,9 @@ namespace PluralKit.Bot {
 
 
             // get the channel info
-            var channel = await _rest.GetChannel(msg.ChannelId);
+            var channel = _cache.GetChannel(channelId);
+            if (channel == null)
+                throw new PKError("Unable to get the channel.");
 
             MessageContext context;
             await using (var conn = await _db.Obtain())
