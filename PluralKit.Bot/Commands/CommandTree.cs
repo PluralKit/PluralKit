@@ -80,6 +80,7 @@ namespace PluralKit.Bot
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
         public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
         public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
+        public static Command ProxyCheck = new Command("proxycheck", "proxycheck [link]", "Check why a message has not been proxied");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
         public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
@@ -164,6 +165,8 @@ namespace PluralKit.Bot
                 return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("edit", "e"))
                 return ctx.Execute<MessageEdit>(MessageEdit, m => m.EditMessage(ctx));
+            if (ctx.Match("proxycheck"))
+                return ctx.Execute<Misc>(ProxyCheck, m => m.MessageProxyCheck(ctx));
             if (ctx.Match("log"))
                 if (ctx.Match("channel"))
                     return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));

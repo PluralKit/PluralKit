@@ -162,6 +162,10 @@ namespace PluralKit.Bot
                         new MessageRequest {Content = $"{Emojis.Error} {e.Message}"});
                 }
             }
+            // Catch any failed proxy checks so they get ignored in the global error handler
+            catch (ProxyService.ProxyChecksFailedException)
+            {
+            }
 
             return false;
         }

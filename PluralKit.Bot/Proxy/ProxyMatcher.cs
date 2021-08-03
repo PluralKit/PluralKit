@@ -45,7 +45,7 @@ namespace PluralKit.Bot
 
             // Skip autoproxy match if we hit the escape character
             if (messageContent.StartsWith(AutoproxyEscapeCharacter))
-                return false;
+                throw new ProxyService.ProxyChecksFailedException("This message was not autoproxied because it starts with a backslash (`\\`).");
 
             // Find the member we should autoproxy (null if none)
             var member = ctx.AutoproxyMode switch
@@ -56,13 +56,36 @@ namespace PluralKit.Bot
                 AutoproxyMode.Front when ctx.LastSwitchMembers.Length > 0 => 
                     members.FirstOrDefault(m => m.Id == ctx.LastSwitchMembers[0]),
                 
-                AutoproxyMode.Latch when ctx.LastMessageMember != null && !IsLatchExpired(ctx) =>
+                AutoproxyMode.Latch when ctx.LastMessageMember != null =>
                     members.FirstOrDefault(m => m.Id == ctx.LastMessageMember.Value),
                 
                 _ => null
             };
+            // Throw an error if the member is null, message varies depending on autoproxy mode
+            if (member == null) 
+            {
+                if (ctx.AutoproxyMode == AutoproxyMode.Front)
+                {
+                    throw new ProxyService.ProxyChecksFailedException("You are using autoproxy front with no members switched in, please use `pk;switch <member>` to log a switch with a member.");
+                }
+                else if (ctx.AutoproxyMode == AutoproxyMode.Member)
+                {
+                    throw new ProxyService.ProxyChecksFailedException("You are using a member specific autoproxy with an invalid member. Did you delete the member?");
+                }
+                else if (ctx.AutoproxyMode == AutoproxyMode.Latch)
+                {
+                    throw new ProxyService.ProxyChecksFailedException("You are using autoproxy latch without any previously sent messages, please send a message using proxy tags first.");
+                }
+                throw new ProxyService.ProxyChecksFailedException("This message matches none of your proxy tags and autoproxy isn't enabled.");
+            } 
 
-            if (member == null || (ctx.AutoproxyMode != AutoproxyMode.Member && !member.AllowAutoproxy)) return false;
+            // Moved the IsLatchExpired() check to here, so that an expired latch and a latch without any previous messages throw different errors
+            if (ctx.AutoproxyMode == AutoproxyMode.Latch && IsLatchExpired(ctx))
+                 throw new ProxyService.ProxyChecksFailedException("Autoproxy latch has expired, please send a message using proxy tags first.");
+
+            if (ctx.AutoproxyMode != AutoproxyMode.Member && !member.AllowAutoproxy)
+                throw new ProxyService.ProxyChecksFailedException("This member has autoproxy disabled. To enable it, use `pk;m <member> autoproxy on`.");
+
             match = new ProxyMatch
             {
                 Content = messageContent,

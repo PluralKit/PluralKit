@@ -34,8 +34,10 @@ namespace PluralKit.Bot {
         private readonly DiscordApiClient _rest;
         private readonly Cluster _cluster;
         private readonly Bot _bot;
+        private readonly ProxyService _proxy;
+        private readonly ProxyMatcher _matcher;
 
-        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, EmbedService embeds, ModelRepository repo, IDatabase db, IDiscordCache cache, DiscordApiClient rest, Bot bot, Cluster cluster)
+        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, EmbedService embeds, ModelRepository repo, IDatabase db, IDiscordCache cache, DiscordApiClient rest, Bot bot, Cluster cluster, ProxyService proxy, ProxyMatcher matcher)
         {
             _botConfig = botConfig;
             _metrics = metrics;
@@ -48,6 +50,8 @@ namespace PluralKit.Bot {
             _rest = rest;
             _bot = bot;
             _cluster = cluster;
+            _proxy = proxy;
+            _matcher = matcher;
         }
         
         public async Task Invite(Context ctx)
@@ -246,6 +250,82 @@ namespace PluralKit.Bot {
             }
 
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
+        }
+
+        public async Task MessageProxyCheck(Context ctx)
+        {
+            ulong channelId;
+            ulong messageId;
+
+            // if the message isn't a reply, check for a message link
+            if (ctx.Message.Type != Message.MessageType.Reply || ctx.Message.MessageReference == null)
+            {
+                if (!ctx.HasNext())
+                    throw new PKSyntaxError("You must reply to a message or pass a message link.");
+
+                var word = ctx.PeekArgument();
+                var match = Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/(\\d+)/(\\d+)");
+                if (!match.Success)
+                    throw new PKError($"Could not parse {ctx.PeekArgument().AsCode()} as a message link.");
+                    
+                channelId = ulong.Parse(match.Groups[1].Value);
+                messageId = ulong.Parse(match.Groups[2].Value);
+            } else
+            // message is a reply, use it's values instead
+            {
+                channelId = ctx.Message.MessageReference.ChannelId.Value;
+                messageId = ctx.Message.MessageReference.MessageId.Value;
+            }
+            
+            // get the message info
+            // is the try/catch block a good idea? otherwise we'd get internal errors when we can't fetch the message
+            // which is good when pluralkit just can't view the message, but not sure about stuff like network errors
+            var msg = ctx.Message;
+            try 
+            {
+                msg = await _rest.GetMessage(channelId, messageId);
+            }
+            catch
+            {
+                throw new PKError("Unable to get the message provided.");
+            }
+
+            if (msg == null) 
+                throw new PKError("The message you are checking does not exist.");
+
+            // check if the message is not a webhook and sent by the same user as the message that's being checked
+            if (msg.WebhookId != null)
+                throw new PKError("You cannot check messages sent by a webhook.");
+            if (msg.Author.Id != ctx.Author.Id)
+                throw new PKError("You can only check your own messages.");
+
+
+            // get the channel info
+            var channel = await _rest.GetChannel(msg.ChannelId);
+
+            MessageContext context;
+            await using (var conn = await _db.Obtain())
+            using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
+                // using the channel.GuildId here since _rest.GetMessage() doesn't return the GuildId
+                context = await _repo.GetMessageContext(conn, msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
+
+            List<ProxyMember> members;
+            await using (var conn = await _db.Obtain())
+            using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
+                members = (await _repo.GetProxyMembers(conn, msg.Author.Id, channel.GuildId.Value)).ToList();
+
+            // Run everything through the checks, catch the ProxyCheckFailedException, and reply with it's message.
+            try 
+            { 
+                _proxy.ShouldProxy(channel, msg, context);
+                _matcher.TryMatch(context, members, out var match, msg.Content, msg.Attachments.Length > 0, context.AllowAutoproxy);
+
+        
+                await ctx.Reply("This message has not been proxied for unknown reasons, sorry about that!");
+            } catch (ProxyService.ProxyChecksFailedException e)
+            {
+                await ctx.Reply($"{e.Message}");
+            }
         }
     }
 }
