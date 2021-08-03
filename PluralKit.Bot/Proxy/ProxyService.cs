@@ -33,10 +33,11 @@ namespace PluralKit.Bot
         private readonly ProxyMatcher _matcher;
         private readonly IMetrics _metrics;
         private readonly IDiscordCache _cache;
+        private readonly LastMessageCacheService _lastMessage;
         private readonly DiscordApiClient _rest;
 
-        public ProxyService(LogChannelService logChannel, ILogger logger,
-                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
+        public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor, IDatabase db,
+            ProxyMatcher matcher, IMetrics metrics, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
         {
             _logChannel = logChannel;
             _webhookExecutor = webhookExecutor;
@@ -45,6 +46,7 @@ namespace PluralKit.Bot
             _metrics = metrics;
             _repo = repo;
             _cache = cache;
+            _lastMessage = lastMessage;
             _rest = rest;
             _logger = logger.ForContext<ProxyService>();
         }
@@ -142,7 +144,7 @@ namespace PluralKit.Bot
                 GuildId = trigger.GuildId!.Value,
                 ChannelId = rootChannel.Id,
                 ThreadId = threadId,
-                Name = match.Member.ProxyName(ctx),
+                Name = await FixSameName(messageChannel.Id, ctx, match.Member),
                 AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
                 Content = content,
                 Attachments = trigger.Attachments,
@@ -229,6 +231,49 @@ namespace PluralKit.Bot
                 Color = match.Member.Color?.ToDiscordColor(),
             };
         }
+
+        private async Task<string> FixSameName(ulong channel_id, MessageContext ctx, ProxyMember member)
+        {
+            var proxyName = member.ProxyName(ctx);
+
+            Message? lastMessage = null;
+
+            var lastMessageId = _lastMessage.GetLastMessage(channel_id)?.Previous;
+            if (lastMessageId == null)
+                // cache is out of date or channel is empty.
+                return proxyName;
+
+            lastMessage = await _rest.GetMessage(channel_id, lastMessageId.Value);
+
+            if (lastMessage == null)
+                // we don't have enough information to figure out if we need to fix the name, so bail here.
+                return proxyName;
+
+            await using var conn = await _db.Obtain();
+            var message = await _repo.GetMessage(conn, lastMessage.Id);
+
+            if (lastMessage.Author.Username == proxyName)
+            {
+                // last message wasn't proxied by us, but somehow has the same name
+                // it's probably from a different webhook (Tupperbox?) but let's fix it anyway!
+                if (message == null)
+                    return FixSameNameInner(proxyName);
+
+                // last message was proxied by a different member
+                if (message.Member.Id != member.Id)
+                    return FixSameNameInner(proxyName);
+            }
+
+            // if we fixed the name last message and it's the same member proxying, we want to fix it again
+            if (lastMessage.Author.Username == FixSameNameInner(proxyName) && message?.Member.Id == member.Id)
+                return FixSameNameInner(proxyName);
+
+            // No issues found, current proxy name is fine.
+            return proxyName;
+        }
+
+        private string FixSameNameInner(string name)
+            => $"{name}\u17b5";
 
         private async Task HandleProxyExecutedActions(Shard shard, IPKConnection conn, MessageContext ctx,
                                                       Message triggerMessage, Message proxyMessage,
