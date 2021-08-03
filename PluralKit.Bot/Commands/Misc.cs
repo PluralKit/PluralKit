@@ -17,6 +17,7 @@ using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
+using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
@@ -278,14 +279,12 @@ namespace PluralKit.Bot {
             }
             
             // get the message info
-            // is the try/catch block a good idea? otherwise we'd get internal errors when we can't fetch the message
-            // which is good when pluralkit just can't view the message, but not sure about stuff like network errors
             var msg = ctx.Message;
             try 
             {
                 msg = await _rest.GetMessage(channelId, messageId);
             }
-            catch
+            catch (ForbiddenException)
             {
                 throw new PKError("Unable to get the message provided.");
             }
