@@ -66,9 +66,12 @@ namespace PluralKit.Bot {
 
             var eb = new EmbedBuilder()
                 .Title(system.Name)
-                .Thumbnail(new(system.AvatarUrl))
+                .Thumbnail(new(system.AvatarUrl.TryGetCleanCdnUrl()))
                 .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
                 .Color(color);
+
+            if (system.DescriptionPrivacy.CanAccess(ctx))
+                eb.Image(new(system.BannerImage));
 
             var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
@@ -80,6 +83,12 @@ namespace PluralKit.Bot {
 
             if (system.Tag != null) 
                 eb.Field(new("Tag", system.Tag.EscapeMarkdown(), true));
+
+            if (cctx.MessageContext.SystemGuildTag != null && cctx.MessageContext.TagEnabled)
+                eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", cctx.MessageContext.SystemGuildTag.EscapeMarkdown(), true));
+
+            if (!cctx.MessageContext.TagEnabled)
+                eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", "*(tag is disabled in this server)*"));
 
             if (!system.Color.EmptyOrNull()) eb.Field(new("Color", $"#{system.Color}", true));
 
@@ -104,8 +113,8 @@ namespace PluralKit.Bot {
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
             var name = member.NameFor(LookupContext.ByNonOwner); 
             return new EmbedBuilder()
-                .Author(new($"#{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner))))
-                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner)))
+                .Author(new($"#{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl())))
+                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl()))
                 .Description(content?.NormalizeLineEndSpacing())
                 .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
                 .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
@@ -116,8 +125,8 @@ namespace PluralKit.Bot {
             var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
             var name = member.NameFor(LookupContext.ByNonOwner); 
             return new EmbedBuilder()
-                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner))))
-                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner)))
+                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl())))
+                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl()))
                 .Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)))
                 .Description(content?.NormalizeLineEndSpacing())
                 .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
@@ -159,22 +168,25 @@ namespace PluralKit.Bot {
 
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
-                .Author(new(name, IconUrl: DiscordUtils.WorkaroundForUrlBug(avatar)))
+                .Author(new(name, IconUrl: DiscordUtils.WorkaroundForUrlBug(avatar.TryGetCleanCdnUrl())))
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .Color(color)
                 .Footer(new(
                     $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")}"));
 
+            if (member.DescriptionPrivacy.CanAccess(ctx))
+                eb.Image(new(member.BannerImage));
+
             var description = "";
             if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
             if (guildSettings?.AvatarUrl != null)
                 if (member.AvatarFor(ctx) != null) 
-                    description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl}) to see the global avatar)*\n";
+                    description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl.TryGetCleanCdnUrl()}) to see the global avatar)*\n";
                 else
                     description += "*(this member has a server-specific avatar set)*\n";
             if (description != "") eb.Description(description);
             
-            if (avatar != null) eb.Thumbnail(new(avatar));
+            if (avatar != null) eb.Thumbnail(new(avatar.TryGetCleanCdnUrl()));
 
             if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.Field(new("Display Name", member.DisplayName.Truncate(1024), true));
             if (guild != null && guildDisplayName != null) eb.Field(new($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true));
@@ -230,6 +242,9 @@ namespace PluralKit.Bot {
                 .Color(color)
                 .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
 
+            if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                eb.Image(new(target.BannerImage));
+
             if (target.DisplayName != null)
                 eb.Field(new("Display Name", target.DisplayName, true));
                 
@@ -248,7 +263,7 @@ namespace PluralKit.Bot {
                 eb.Field(new("Description", desc));
 
             if (target.IconFor(pctx) is {} icon)
-                eb.Thumbnail(new(icon));
+                eb.Thumbnail(new(icon.TryGetCleanCdnUrl()));
 
             return eb.Build();
         }
@@ -303,7 +318,9 @@ namespace PluralKit.Bot {
                     userInfo = member.User;
                 memberInfo = member;
             }
-            else userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
+
+            if (userInfo == null)
+                userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
 
             // Calculate string displayed under "Sent by"
             string userStr;
@@ -314,7 +331,7 @@ namespace PluralKit.Bot {
 
             // Put it all together
             var eb = new EmbedBuilder()
-                .Author(new(msg.Member.NameFor(ctx), IconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarFor(ctx))))
+                .Author(new(msg.Member.NameFor(ctx), IconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarFor(ctx).TryGetCleanCdnUrl())))
                 .Description(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .Image(new(serverMsg?.Attachments?.FirstOrDefault()?.Url))
                 .Field(new("System",
@@ -327,7 +344,10 @@ namespace PluralKit.Bot {
             if (roles != null && roles.Count > 0)
             {
                 // TODO: what if role isn't in cache? figure out a fallback
-                var rolesString = string.Join(", ", roles.Select(id => _cache.GetRole(id).Name));
+                var rolesString = string.Join(", ", roles
+                    .Select(id => _cache.GetRole(id))
+                    .OrderByDescending(role => role.Position)
+                    .Select(role => role.Name));
                 eb.Field(new($"Account roles ({roles.Count})", rolesString.Truncate(1024)));
             }
             

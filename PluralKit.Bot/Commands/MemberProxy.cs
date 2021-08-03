@@ -34,7 +34,7 @@ namespace PluralKit.Bot
             
             async Task<bool> WarnOnConflict(ProxyTag newTag)
             {
-                var query = "select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix = @Prefix and suffix = @Suffix and id != @Existing";
+                var query = "select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix is not distinct from @Prefix and suffix is not distinct from @Suffix and id != @Existing";
                 var conflicts = (await _db.Execute(conn => conn.QueryAsync<PKMember>(query,
                     new {Prefix = newTag.Prefix, Suffix = newTag.Suffix, Existing = target.Id, system = target.System}))).ToList();
                 
@@ -42,7 +42,7 @@ namespace PluralKit.Bot
 
                 var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}**");
                 var msg = $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?";
-                return await ctx.PromptYesNo(msg);
+                return await ctx.PromptYesNo(msg, "Proceed");
             }
             
             // "Sub"command: clear flag
@@ -52,7 +52,7 @@ namespace PluralKit.Bot
                 if (target.ProxyTags.Count > 1)
                 {
                     var msg = $"{Emojis.Warn} You already have multiple proxy tags set: {target.ProxyTagsString()}\nDo you want to clear them all?";
-                    if (!await ctx.PromptYesNo(msg))
+                    if (!await ctx.PromptYesNo(msg, "Clear"))
                         throw Errors.GenericCancelled();
                 }
                 
@@ -117,7 +117,7 @@ namespace PluralKit.Bot
                 if (target.ProxyTags.Count > 1)
                 {
                     var msg = $"This member already has more than one proxy tag set: {target.ProxyTagsString()}\nDo you want to replace them?";
-                    if (!await ctx.PromptYesNo(msg))
+                    if (!await ctx.PromptYesNo(msg, "Replace"))
                         throw Errors.GenericCancelled();
                 }
                 

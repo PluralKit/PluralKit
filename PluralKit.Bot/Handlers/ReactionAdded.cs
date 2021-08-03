@@ -66,8 +66,8 @@ namespace PluralKit.Bot
                 }
             }
 
-            // Only proxies in guild text channels
-            if (channel.Type != Channel.ChannelType.GuildText) return;
+            // Proxied messages only exist in guild text channels, so skip checking if we're elsewhere
+            if (!DiscordUtils.IsValidGuildChannel(channel)) return;
 
             // Ignore reactions from bots (we can't DM them anyway)
             if (user.Bot) return;
@@ -115,8 +115,11 @@ namespace PluralKit.Bot
             if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
                 return;
             
+            using var conn = await _db.Obtain();
+            var system = await _repo.GetSystemByAccount(conn, evt.UserId);
+
             // Can only delete your own message
-            if (msg.Message.Sender != evt.UserId) return;
+            if (msg.System.Id != system.Id) return;
 
             try
             {

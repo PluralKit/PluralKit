@@ -8,6 +8,7 @@ COPY PluralKit.API/PluralKit.API.csproj /app/PluralKit.API/
 COPY PluralKit.Bot/PluralKit.Bot.csproj /app/PluralKit.Bot/
 COPY PluralKit.Core/PluralKit.Core.csproj /app/PluralKit.Core/
 COPY PluralKit.Tests/PluralKit.Tests.csproj /app/PluralKit.Tests/
+COPY .git/ /app/.git
 RUN dotnet restore PluralKit.sln
 
 # Copy the rest of the code and build

@@ -32,6 +32,7 @@ namespace PluralKit.API
 
             var o = new JObject();
             o.Add("shards", shards.ToJSON());
+            o.Add("version", BuildInfoService.Version);
             
             return Ok(o);
         }

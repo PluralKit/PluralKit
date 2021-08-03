@@ -33,6 +33,7 @@ namespace PluralKit.Bot
     {
         public ulong GuildId { get; init; }
         public ulong ChannelId { get; init; }
+        public ulong? ThreadId { get; init; }
         public string Name { get; init; }
         public string? AvatarUrl { get; init; }
         public string? Content { get; init; }
@@ -70,8 +71,8 @@ namespace PluralKit.Bot
             
             // Log the relevant metrics
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesProxied);
-            _logger.Information("Invoked webhook {Webhook} in channel {Channel}", webhook.Id,
-                req.ChannelId);
+            _logger.Information("Invoked webhook {Webhook} in channel {Channel} (thread {ThreadId})", webhook.Id,
+                req.ChannelId, req.ThreadId);
             
             return webhookMessage;
         }
@@ -122,7 +123,7 @@ namespace PluralKit.Bot
             using (_metrics.Measure.Timer.Time(BotMetrics.WebhookResponseTime)) {
                 try
                 {
-                    webhookMessage = await _rest.ExecuteWebhook(webhook.Id, webhook.Token, webhookReq, files);
+                    webhookMessage = await _rest.ExecuteWebhook(webhook.Id, webhook.Token, webhookReq, files, req.ThreadId);
                 }
                 catch (JsonReaderException)
                 {
@@ -136,7 +137,8 @@ namespace PluralKit.Bot
                     {
                         // Error 10015 = "Unknown Webhook" - this likely means the webhook was deleted
                         // but is still in our cache. Invalidate, refresh, try again
-                        _logger.Warning("Error invoking webhook {Webhook} in channel {Channel}", webhook.Id, webhook.ChannelId);
+                        _logger.Warning("Error invoking webhook {Webhook} in channel {Channel} (thread {ThreadId})",
+                            webhook.Id, webhook.ChannelId, req.ThreadId);
                         
                         var newWebhook = await _webhookCache.InvalidateAndRefreshWebhook(req.ChannelId, webhook);
                         return await ExecuteWebhookInner(newWebhook, req, hasRetried: true);
@@ -147,12 +149,12 @@ namespace PluralKit.Bot
             } 
 
             // We don't care about whether the sending succeeds, and we don't want to *wait* for it, so we just fork it off
-            var _ = TrySendRemainingAttachments(webhook, req.Name, req.AvatarUrl, attachmentChunks);
+            var _ = TrySendRemainingAttachments(webhook, req.Name, req.AvatarUrl, attachmentChunks, req.ThreadId);
 
             return webhookMessage;
         }
 
-        private async Task TrySendRemainingAttachments(Webhook webhook, string name, string avatarUrl, IReadOnlyList<IReadOnlyCollection<Message.Attachment>> attachmentChunks)
+        private async Task TrySendRemainingAttachments(Webhook webhook, string name, string avatarUrl, IReadOnlyList<IReadOnlyCollection<Message.Attachment>> attachmentChunks, ulong? threadId)
         {
             if (attachmentChunks.Count <= 1) return;
 
@@ -160,7 +162,7 @@ namespace PluralKit.Bot
             {
                 var files = await GetAttachmentFiles(attachmentChunks[i]);
                 var req = new ExecuteWebhookRequest {Username = name, AvatarUrl = avatarUrl};
-                await _rest.ExecuteWebhook(webhook.Id, webhook.Token!, req, files);
+                await _rest.ExecuteWebhook(webhook.Id, webhook.Token!, req, files, threadId);
             }
         }
         

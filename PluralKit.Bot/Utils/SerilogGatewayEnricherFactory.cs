@@ -36,10 +36,13 @@ namespace PluralKit.Bot
             
             if (channel != null)
             {
-                props.Add(new("GuildId", new ScalarValue(channel.Value)));
-                
-                var botPermissions = _bot.PermissionsIn(channel.Value);
-                props.Add(new("BotPermissions", new ScalarValue(botPermissions)));
+                props.Add(new("ChannelId", new ScalarValue(channel.Value)));
+
+                if (_cache.TryGetChannel(channel.Value, out _))
+                {
+                    var botPermissions = _bot.PermissionsIn(channel.Value);
+                    props.Add(new("BotPermissions", new ScalarValue(botPermissions)));
+                }
             }
             
             if (message != null)
@@ -77,7 +80,8 @@ namespace PluralKit.Bot
             MessageUpdateEvent e => e.Author.HasValue ? e.Author.Value.Id : null,
             MessageReactionAddEvent e => e.UserId,
             MessageReactionRemoveEvent e => e.UserId,
-            InteractionCreateEvent e => e.Member?.User?.Id // todo: these nullable?
+            InteractionCreateEvent e => e.User?.Id ?? e.Member.User.Id,
+            _ => null,
         };
 
         private ulong? GetMessageId(IGatewayEvent evt) => evt switch
@@ -90,6 +94,7 @@ namespace PluralKit.Bot
             MessageReactionRemoveAllEvent e => e.MessageId,
             MessageReactionRemoveEmojiEvent e => e.MessageId,
             InteractionCreateEvent e => e.Message?.Id,
+            _ => null,
         };
 
         private record Inner(List<LogEventProperty> Properties): ILogEventEnricher

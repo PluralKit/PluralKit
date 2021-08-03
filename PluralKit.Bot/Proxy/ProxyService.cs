@@ -33,10 +33,11 @@ namespace PluralKit.Bot
         private readonly ProxyMatcher _matcher;
         private readonly IMetrics _metrics;
         private readonly IDiscordCache _cache;
+        private readonly LastMessageCacheService _lastMessage;
         private readonly DiscordApiClient _rest;
 
-        public ProxyService(LogChannelService logChannel, ILogger logger,
-                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest)
+        public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor, IDatabase db,
+            ProxyMatcher matcher, IMetrics metrics, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
         {
             _logChannel = logChannel;
             _webhookExecutor = webhookExecutor;
@@ -45,6 +46,7 @@ namespace PluralKit.Bot
             _metrics = metrics;
             _repo = repo;
             _cache = cache;
+            _lastMessage = lastMessage;
             _rest = rest;
             _logger = logger.ForContext<ProxyService>();
         }
@@ -57,6 +59,8 @@ namespace PluralKit.Bot
             // Fetch members and try to match to a specific member
             await using var conn = await _db.Obtain();
 
+            var rootChannel = _cache.GetRootChannel(message.ChannelId);
+
             List<ProxyMember> members;
             using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
                 members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.GuildId!.Value)).ToList();
@@ -68,7 +72,7 @@ namespace PluralKit.Bot
             if (message.Content != null && message.Content.Length > 2000) throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
-            if (!await CheckBotPermissionsOrError(botPermissions, message.ChannelId)) 
+            if (!await CheckBotPermissionsOrError(botPermissions, rootChannel.Id)) 
                 return false;
 
             // this method throws, so no need to wrap it in an if statement
@@ -76,7 +80,7 @@ namespace PluralKit.Bot
             
             // Check if the sender account can mention everyone/here + embed links
             // we need to "mirror" these permissions when proxying to prevent exploits
-            var senderPermissions = PermissionExtensions.PermissionsFor(guild, channel, message);
+            var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message);
             var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
             var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
 
@@ -85,27 +89,24 @@ namespace PluralKit.Bot
             return true;
         }
 
-        public bool ShouldProxy(Channel channel, Message msg, MessageContext ctx)
+        private bool ShouldProxy(Channel channel, Message msg, MessageContext ctx)
         {
             // Make sure author has a system
-            if (ctx.SystemId == null) throw new ProxyChecksFailedException("You do not have a system registered with PluralKit. To create one, type `pk;system new`.");
+            if (ctx.SystemId == null) return false;
             
             // Make sure channel is a guild text channel and this is a normal message
-            if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildNews) throw new ProxyChecksFailedException("This channel is not a text channel.");
-            if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply) throw new ProxyChecksFailedException("This message is not a normal message.");
+            if (!DiscordUtils.IsValidGuildChannel(channel)) return false;
+            if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply) return false;
             
             // Make sure author is a normal user
-            if (msg.Author.System == true || msg.Author.Bot || msg.WebhookId != null) throw new ProxyChecksFailedException("This message was not sent by a normal user.");
+            if (msg.Author.System == true || msg.Author.Bot || msg.WebhookId != null) return false;
             
             // Make sure proxying is enabled here
-            if (ctx.InBlacklist) throw new ProxyChecksFailedException($"Proxying is disabled in this channel.");
-
-            // Make sure the system has proxying enabled in the server
-            if (!ctx.ProxyEnabled) throw new ProxyChecksFailedException("Your system has proxying disabled in this server, type `pk;proxy on` to enable it.");
+            if (!ctx.ProxyEnabled || ctx.InBlacklist) return false;
             
             // Make sure we have either an attachment or message content
             var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
-            if (isMessageBlank && msg.Attachments.Length == 0) throw new ProxyChecksFailedException("Message cannot be blank.");
+            if (isMessageBlank && msg.Attachments.Length == 0) return false;
             
             // All good!
             return true;
@@ -134,12 +135,17 @@ namespace PluralKit.Bot
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
 
+            var messageChannel = _cache.GetChannel(trigger.ChannelId);
+            var rootChannel = _cache.GetRootChannel(trigger.ChannelId);
+            var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null; 
+
             var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
             {
                 GuildId = trigger.GuildId!.Value,
-                ChannelId = trigger.ChannelId,
-                Name = match.Member.ProxyName(ctx),
-                AvatarUrl = match.Member.ProxyAvatar(ctx),
+                ChannelId = rootChannel.Id,
+                ThreadId = threadId,
+                Name = await FixSameName(messageChannel.Id, ctx, match.Member),
+                AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
                 Content = content,
                 Attachments = trigger.Attachments,
                 Embeds = embeds.ToArray(),
@@ -225,6 +231,49 @@ namespace PluralKit.Bot
                 Color = match.Member.Color?.ToDiscordColor(),
             };
         }
+
+        private async Task<string> FixSameName(ulong channel_id, MessageContext ctx, ProxyMember member)
+        {
+            var proxyName = member.ProxyName(ctx);
+
+            Message? lastMessage = null;
+
+            var lastMessageId = _lastMessage.GetLastMessage(channel_id)?.Previous;
+            if (lastMessageId == null)
+                // cache is out of date or channel is empty.
+                return proxyName;
+
+            lastMessage = await _rest.GetMessage(channel_id, lastMessageId.Value);
+
+            if (lastMessage == null)
+                // we don't have enough information to figure out if we need to fix the name, so bail here.
+                return proxyName;
+
+            await using var conn = await _db.Obtain();
+            var message = await _repo.GetMessage(conn, lastMessage.Id);
+
+            if (lastMessage.Author.Username == proxyName)
+            {
+                // last message wasn't proxied by us, but somehow has the same name
+                // it's probably from a different webhook (Tupperbox?) but let's fix it anyway!
+                if (message == null)
+                    return FixSameNameInner(proxyName);
+
+                // last message was proxied by a different member
+                if (message.Member.Id != member.Id)
+                    return FixSameNameInner(proxyName);
+            }
+
+            // if we fixed the name last message and it's the same member proxying, we want to fix it again
+            if (lastMessage.Author.Username == FixSameNameInner(proxyName) && message?.Member.Id == member.Id)
+                return FixSameNameInner(proxyName);
+
+            // No issues found, current proxy name is fine.
+            return proxyName;
+        }
+
+        private string FixSameNameInner(string name)
+            => $"{name}\u17b5";
 
         private async Task HandleProxyExecutedActions(Shard shard, IPKConnection conn, MessageContext ctx,
                                                       Message triggerMessage, Message proxyMessage,
@@ -314,13 +363,6 @@ namespace PluralKit.Bot
         private void CheckProxyNameBoundsOrError(string proxyName)
         {
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
-        }
-
-         public class ProxyChecksFailedException : Exception
-        {
-            public ProxyChecksFailedException(string message) : base(message)
-            {
-            }
         }
     }
 }

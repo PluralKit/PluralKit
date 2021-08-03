@@ -74,7 +74,7 @@ namespace PluralKit.Bot
                 .Error(exc, "HTTP error: {RequestMethod} {RequestUrl}", req.Method, req.RequestUri);
         }
 
-        private async Task HandleResponse(HttpResponseMessage response, Activity activity)
+        private void HandleResponse(HttpResponseMessage response, Activity activity)
         {
             var endpoint = GetEndpointName(response.RequestMessage);
 
@@ -134,9 +134,7 @@ namespace PluralKit.Bot
                 {
                     var data = Unsafe.As<ActivityStopData>(value.Value);
                     if (data.Response != null)
-                    {
-                        var _ = HandleResponse(data.Response, Activity.Current);
-                    }
+                        HandleResponse(data.Response, Activity.Current);
 
                     break;
                 }

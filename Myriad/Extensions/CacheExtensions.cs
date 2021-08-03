@@ -75,5 +75,15 @@ namespace Myriad.Extensions
             await cache.SaveChannel(restChannel);
             return restChannel;
         }
+
+        public static Channel GetRootChannel(this IDiscordCache cache, ulong channelOrThread)
+        {
+            var channel = cache.GetChannel(channelOrThread);
+            if (!channel.IsThread()) 
+                return channel;
+            
+            var parent = cache.GetChannel(channel.ParentId!.Value);
+            return parent;
+        }
     }
 }

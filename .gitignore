@@ -20,3 +20,4 @@ pluralkit.*.conf
 
 # Generated
 logs/
+.version

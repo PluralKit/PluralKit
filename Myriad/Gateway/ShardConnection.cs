@@ -82,7 +82,7 @@ namespace Myriad.Gateway
         
         private Uri GetConnectionUri(string baseUri) => new UriBuilder(baseUri)
         {
-            Query = "v=8&encoding=json"
+            Query = "v=9&encoding=json"
         }.Uri;
 
         private async Task CloseInner(WebSocketCloseStatus closeStatus, string? description)

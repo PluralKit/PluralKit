@@ -6,5 +6,6 @@ namespace Myriad.Gateway
     {
         public Channel[] Channels { get; init; }
         public GuildMember[] Members { get; init; }
+        public Channel[] Threads { get; init; }
     }
 }

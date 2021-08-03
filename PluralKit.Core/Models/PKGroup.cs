@@ -13,6 +13,7 @@ namespace PluralKit.Core
         public string? DisplayName { get; private set; }
         public string? Description { get; private set; }
         public string? Icon { get; private set; }
+        public string? BannerImage { get; private set; }
         public string? Color { get; private set; }
 
         public PrivacyLevel DescriptionPrivacy { get; private set; }
@@ -29,6 +30,6 @@ namespace PluralKit.Core
             group.DescriptionPrivacy.Get(ctx, group.Description);
         
         public static string? IconFor(this PKGroup group, LookupContext ctx) =>
-            group.IconPrivacy.Get(ctx, group.Icon);
+            group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
     }
 }

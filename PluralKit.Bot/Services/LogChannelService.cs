@@ -49,19 +49,18 @@ namespace PluralKit.Bot {
             await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
         }
 
-        public async ValueTask LogEditedMessage(MessageContext ctx, PKMessage proxy, Message trigger, Message originalMessage, string newContent)
+        public async ValueTask LogEditedMessage(MessageContext ctx, FullMessage proxy, Message trigger, Message originalMessage, string newContent)
         {
-            var logChannel = await GetAndCheckLogChannel(ctx, trigger, proxy);
+            var logChannel = await GetAndCheckLogChannel(ctx, trigger, proxy.Message);
             if (logChannel == null) return;
 
-            var triggerChannel = _cache.GetChannel(proxy.Channel);
+            var triggerChannel = _cache.GetChannel(proxy.Message.Channel);
             
             // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateEditedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value), 
-                await _repo.GetMember(conn, proxy.Member), originalMessage.Id, trigger.Id, trigger.Author, newContent, originalMessage.Content,
+            var embed = _embed.CreateEditedMessageEmbed(proxy.System, proxy.Member, originalMessage.Id, trigger.Id, trigger.Author, newContent, originalMessage.Content,
                 triggerChannel);
-            var url = $"https://discord.com/channels/{proxy.Guild.Value}/{proxy.Channel}/{proxy.Mid}";
+            var url = $"https://discord.com/channels/{proxy.Message.Guild.Value}/{proxy.Message.Channel}/{proxy.Message.Mid}";
             await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
         }
 

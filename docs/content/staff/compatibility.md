@@ -3,10 +3,11 @@ Many servers use *logger bots* for keeping track of edited and deleted messages,
 Because PluralKit deletes messages as part of proxying, this can often clutter up these logs. 
 
 ## Bots with PluralKit support
-Some logger bots have offical PluralKit support, and properly handle excluding proxy deletes, as well as add PK-specific information to relevant log messages:
+Some moderation bots have offical PluralKit support, and properly handle excluding proxy deletes, as well as add PK-specific information to relevant log messages:
 
 - [**Gabby Gums**](https://github.com/amadea-system/GabbyGums)
 - [**Catalogger**](https://catalogger.starshines.xyz/docs)
+- [**Crosslink**](https://crss.link) (Link detection / filtering)
 
 If your server uses an in-house bot for logging, you can use [the API](../api-documentation.md) to implement support yourself.
 
@@ -34,6 +35,7 @@ At the moment, log cleanup works with the following bots:
 - [SafetyAtLast](https://www.safetyatlast.net/) (fuzzy)
 - [UnbelievaBoat](https://unbelievaboat.com/) (precise)
 - Vanessa (fuzzy)
+- [Vortex](https://github.com/jagrosh/Vortex/wiki) (fuzzy)
 
 ::: warning
 In most cases, PluralKit will match log messages by the ID of the deleted message itself. However, some bots (marked with *(fuzzy)* above) don't include this in their logs. In this case, PluralKit will attempt to match based on other parameters, but there may be false positives. 

@@ -11,7 +11,7 @@ namespace PluralKit.Bot
             member.NameFor(ctx.LookupContextFor(member));
 
         public static string AvatarFor(this PKMember member, Context ctx) =>
-            member.AvatarFor(ctx.LookupContextFor(member));
+            member.AvatarFor(ctx.LookupContextFor(member)).TryGetCleanCdnUrl();
 
         public static string DisplayName(this PKMember member) =>
             member.DisplayName ?? member.Name;

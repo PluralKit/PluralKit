@@ -14,7 +14,8 @@
         public ApplicationCommandInteractionData? Data { get; init; }
         public ulong GuildId { get; init; }
         public ulong ChannelId { get; init; }
-        public GuildMember Member { get; init; }
+        public GuildMember? Member { get; init; }
+        public User? User { get; init; }
         public string Token { get; init; }
         public Message? Message { get; init; }
     }

@@ -30,6 +30,9 @@ namespace PluralKit.Bot
             
             return RunWrapper(services, async ct =>
             {
+                // init version service
+                await BuildInfoService.LoadVersion();
+
                 var logger = services.Resolve<ILogger>().ForContext<Init>();
                 
                 // Initialize Sentry SDK, and make sure it gets dropped at the end

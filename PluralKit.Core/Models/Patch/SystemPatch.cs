@@ -10,6 +10,7 @@ namespace PluralKit.Core
         public Partial<string?> Description { get; set; }
         public Partial<string?> Tag { get; set; }
         public Partial<string?> AvatarUrl { get; set; }
+        public Partial<string?> BannerImage { get; set; }
         public Partial<string?> Color { get; set; }
         public Partial<string?> Token { get; set; }
         public Partial<string> UiTz { get; set; }
@@ -29,6 +30,7 @@ namespace PluralKit.Core
             .With("description", Description)
             .With("tag", Tag)
             .With("avatar_url", AvatarUrl)
+            .With("banner_image", BannerImage)
             .With("color", Color)
             .With("token", Token)
             .With("ui_tz", UiTz)
@@ -46,6 +48,8 @@ namespace PluralKit.Core
         {
             if (AvatarUrl.Value != null && !MiscUtils.TryMatchUri(AvatarUrl.Value, out var avatarUri))
                 throw new InvalidPatchException("avatar_url");
+            if (BannerImage.Value != null && !MiscUtils.TryMatchUri(BannerImage.Value, out var bannerImage))
+                throw new InvalidPatchException("banner");
             if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
                 throw new InvalidPatchException("color");
         }

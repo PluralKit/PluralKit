@@ -15,6 +15,7 @@ namespace PluralKit.Core {
         public SystemId System { get; private set; }
         public string Color { get; private set; }
         public string AvatarUrl { get; private set; }
+        public string BannerImage { get; private set; }
         public string Name { get; private set; }
         public string DisplayName { get; private set; }
         public LocalDate? Birthday { get; private set; }
@@ -58,7 +59,7 @@ namespace PluralKit.Core {
             member.NamePrivacy.Get(ctx, member.Name, member.DisplayName ?? member.Name);
 
         public static string AvatarFor(this PKMember member, LookupContext ctx) =>
-            member.AvatarPrivacy.Get(ctx, member.AvatarUrl);
+            member.AvatarPrivacy.Get(ctx, member.AvatarUrl.TryGetCleanCdnUrl());
 
         public static string DescriptionFor(this PKMember member, LookupContext ctx) =>
             member.DescriptionPrivacy.Get(ctx, member.Description);

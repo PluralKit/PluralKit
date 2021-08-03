@@ -6,6 +6,7 @@
 !Myriad/
 !PluralKit.sln
 !nuget.config
+!.git
 
 # Re-exclude host build artifact directories
 **/bin

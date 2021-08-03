@@ -16,7 +16,8 @@ namespace PluralKit.API
             o.Add("name", system.Name);
             o.Add("description", system.DescriptionFor(ctx));
             o.Add("tag", system.Tag);
-            o.Add("avatar_url", system.AvatarUrl);
+            o.Add("avatar_url", system.AvatarUrl.TryGetCleanCdnUrl());
+            o.Add("banner", system.DescriptionPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
             o.Add("created", system.Created.FormatExport());
             o.Add("tz", system.UiTz);
             o.Add("description_privacy", ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
@@ -33,6 +34,7 @@ namespace PluralKit.API
             if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty().BoundsCheckField(Limits.MaxDescriptionLength, "System description");
             if (o.ContainsKey("tag")) patch.Tag = o.Value<string>("tag").NullIfEmpty().BoundsCheckField(Limits.MaxSystemTagLength, "System tag");
             if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "System avatar URL");
+            if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "System banner URL");
             if (o.ContainsKey("tz")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
             
             if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("description");
@@ -54,7 +56,8 @@ namespace PluralKit.API
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
             o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
             o.Add("pronouns", member.PronounsFor(ctx));
-            o.Add("avatar_url", member.AvatarFor(ctx));
+            o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
+            o.Add("banner", member.DescriptionPrivacy.Get(ctx, member.BannerImage).TryGetCleanCdnUrl());
             o.Add("description", member.DescriptionFor(ctx));
             
             var tagArray = new JArray();
@@ -98,6 +101,8 @@ namespace PluralKit.API
             if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
             if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty().BoundsCheckField(Limits.MaxMemberNameLength, "Member display name");
             if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "Member avatar URL");
+            if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "Member banner URL");
+
             if (o.ContainsKey("birthday"))
             {
                 var str = o.Value<string>("birthday").NullIfEmpty();
@@ -158,7 +163,7 @@ namespace PluralKit.API
 
         private static PrivacyLevel ParsePrivacy(this string input, string errorName)
         {
-            if (input == null) return PrivacyLevel.Private;
+            if (input == null) return PrivacyLevel.Public;
             if (input == "") return PrivacyLevel.Private;
             if (input == "private") return PrivacyLevel.Private;
             if (input == "public") return PrivacyLevel.Public;

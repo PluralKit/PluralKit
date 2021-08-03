@@ -23,10 +23,18 @@ namespace PluralKit.Core
         public bool AllowAutoproxy { get; }
         public string? Color { get; }
 
-        public string ProxyName(MessageContext ctx) => ctx.SystemTag != null
-            ? $"{ServerName ?? DisplayName ?? Name} {ctx.SystemTag}"
-            : ServerName ?? DisplayName ?? Name;
+        public string ProxyName(MessageContext ctx)
+        {
+            var memberName = ServerName ?? DisplayName ?? Name;
+            if (!ctx.TagEnabled)
+                return memberName;
 
+            if (ctx.SystemGuildTag != null)
+                return $"{memberName} {ctx.SystemGuildTag}";
+            else if (ctx.SystemTag != null)
+                return $"{memberName} {ctx.SystemTag}";
+            else return memberName;
+        }
         public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? Avatar ?? ctx.SystemAvatar;
 
         public ProxyMember() { }

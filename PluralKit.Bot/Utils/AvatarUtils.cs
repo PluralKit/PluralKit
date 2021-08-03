@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using PluralKit.Core;
@@ -9,7 +10,7 @@ using SixLabors.ImageSharp;
 
 namespace PluralKit.Bot {
     public static class AvatarUtils {
-        public static async Task VerifyAvatarOrThrow(string url)
+        public static async Task VerifyAvatarOrThrow(string url, bool isFullSizeImage = false)
         {
             if (url.Length > Limits.MaxUriLength) 
                 throw Errors.UrlTooLong(url);
@@ -28,6 +29,8 @@ namespace PluralKit.Bot {
                 if (!PluralKit.Core.MiscUtils.TryMatchUri(url, out var uri))
                     throw Errors.InvalidUrl(url);
 
+                url = TryRewriteCdnUrl(url);
+
                 var response = await client.GetAsync(uri);
                 if (!response.IsSuccessStatusCode) // Check status code
                     throw Errors.AvatarServerError(response.StatusCode);
@@ -42,9 +45,19 @@ namespace PluralKit.Bot {
                 var stream = await response.Content.ReadAsStreamAsync();
                 var image = await Task.Run(() => Image.Identify(stream));
                 if (image == null) throw Errors.AvatarInvalid;
-                if (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit) // Check image size
+                if (!isFullSizeImage && (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit)) // Check image size
                     throw Errors.AvatarDimensionsTooLarge(image.Width, image.Height);
             }
+        }
+
+        // Rewrite cdn.discordapp.com URLs to media.discordapp.net for jpg/png files
+        // This lets us add resizing parameters to "borrow" their media proxy server to downsize the image
+        // which in turn makes it more likely to be underneath the size limit!
+        private static readonly Regex DiscordCdnUrl = new Regex(@"^https?://(?:cdn\.discordapp\.com|media\.discordapp\.net)/attachments/(\d{17,19})/(\d{17,19})/([^/\\&\?]+)\.(png|jpg|jpeg|webp)(\?.*)?$");
+        private static readonly string DiscordMediaUrlReplacement = "https://media.discordapp.net/attachments/$1/$2/$3.$4?width=256&height=256";
+        public static string? TryRewriteCdnUrl(string? url)
+        {
+            return url == null ? null : DiscordCdnUrl.Replace(url, DiscordMediaUrlReplacement);
         }
     }
 }

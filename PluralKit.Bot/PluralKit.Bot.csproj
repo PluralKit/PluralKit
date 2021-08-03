@@ -16,6 +16,10 @@
       <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
     </ItemGroup>
 
+    <PropertyGroup>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="Humanizer.Core" Version="2.8.26" />
       <PackageReference Include="Sentry" Version="2.1.6" />

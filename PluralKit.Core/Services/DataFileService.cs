@@ -42,7 +42,7 @@ namespace PluralKit.Core
                 Birthday = m.Birthday?.FormatExport(),
                 Pronouns = m.Pronouns,
                 Color = m.Color,
-                AvatarUrl = m.AvatarUrl,
+                AvatarUrl = m.AvatarUrl.TryGetCleanCdnUrl(),
                 ProxyTags = m.ProxyTags,
                 KeepProxy = m.KeepProxy,
                 Created = m.Created.FormatExport(),
@@ -127,7 +127,7 @@ namespace PluralKit.Core
             var patch = new SystemPatch {Name = data.Name};
             if (data.Description != null) patch.Description = data.Description;
             if (data.Tag != null) patch.Tag = data.Tag;
-            if (data.AvatarUrl != null) patch.AvatarUrl = data.AvatarUrl;
+            if (data.AvatarUrl != null) patch.AvatarUrl = data.AvatarUrl.TryGetCleanCdnUrl();
             if (data.TimeZone != null) patch.UiTz = data.TimeZone ?? "UTC";
             await _repo.UpdateSystem(conn, system.Id, patch);
             

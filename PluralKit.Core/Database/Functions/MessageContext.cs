@@ -23,6 +23,8 @@ namespace PluralKit.Core
         public MemberId[] LastSwitchMembers { get; } = new MemberId[0];
         public Instant? LastSwitchTimestamp { get; }
         public string? SystemTag { get; }
+        public string? SystemGuildTag { get; }
+        public bool TagEnabled { get; }
         public string? SystemAvatar { get; }
         public bool AllowAutoproxy { get; }
         public int? LatchTimeout { get; }
