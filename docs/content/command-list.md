@@ -118,6 +118,7 @@ Some arguments indicate the use of specific Discord features. These include:
 ## Utility
 - `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
 - `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.
+- `pk;proxycheck <message link|reply>` - Checks why your message has not been proxied.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
