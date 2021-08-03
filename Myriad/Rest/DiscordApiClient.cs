@@ -29,6 +29,9 @@ namespace Myriad.Rest
         public Task<Channel?> GetChannel(ulong channelId) =>
             _client.Get<Channel>($"/channels/{channelId}", ("GetChannel", channelId));
 
+        public Task<Message[]?> GetChannelMessages(ulong channelId, int? limit = 50) =>
+            _client.Get<Message[]>($"/channels/{channelId}/messages?limit={limit}", ("GetChannelMessages", channelId));
+
         public Task<Message?> GetMessage(ulong channelId, ulong messageId) =>
             _client.Get<Message>($"/channels/{channelId}/messages/{messageId}", ("GetMessage", channelId));
 
