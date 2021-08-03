@@ -95,8 +95,6 @@ namespace PluralKit.Bot
             if (ctx.SystemId == null) throw new ProxyChecksFailedException("You do not have a system registered with PluralKit. To create one, type `pk;system new`.");
             
             // Make sure channel is a guild text channel and this is a normal message
-            if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildNews) throw new ProxyChecksFailedException("This channel is not a text channel.");
-            if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply) throw new ProxyChecksFailedException("This message is not a normal message.");
             if (!DiscordUtils.IsValidGuildChannel(channel)) throw new ProxyChecksFailedException("This channel is not a text channel.");
             if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply) throw new ProxyChecksFailedException("This message is not a normal message.");
             
