@@ -56,12 +56,6 @@ namespace PluralKit.Bot
             }
         }
 
-        public static string WorkaroundForUrlBug(string input)
-        {
-            // Workaround for https://github.com/DSharpPlus/DSharpPlus/issues/565
-            return input?.Replace("%20", "+");
-        }
-        
         public static uint? ToDiscordColor(this string color)
         {
             if (uint.TryParse(color, NumberStyles.HexNumber, null, out var colorInt))

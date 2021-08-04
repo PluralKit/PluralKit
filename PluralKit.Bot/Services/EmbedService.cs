@@ -161,7 +161,7 @@ namespace PluralKit.Bot {
 
             var eb = new EmbedBuilder()
                 // TODO: add URL of website when that's up
-                .Author(new(name, IconUrl: DiscordUtils.WorkaroundForUrlBug(avatar.TryGetCleanCdnUrl())))
+                .Author(new(name, IconUrl: avatar.TryGetCleanCdnUrl()))
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .Color(color)
                 .Footer(new(
@@ -231,7 +231,7 @@ namespace PluralKit.Bot {
             }
 
             var eb = new EmbedBuilder()
-                .Author(new(nameField, IconUrl: DiscordUtils.WorkaroundForUrlBug(target.IconFor(pctx))))
+                .Author(new(nameField, IconUrl: target.IconFor(pctx)))
                 .Color(color)
                 .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
 
@@ -324,7 +324,7 @@ namespace PluralKit.Bot {
 
             // Put it all together
             var eb = new EmbedBuilder()
-                .Author(new(msg.Member.NameFor(ctx), IconUrl: DiscordUtils.WorkaroundForUrlBug(msg.Member.AvatarFor(ctx).TryGetCleanCdnUrl())))
+                .Author(new(msg.Member.NameFor(ctx), IconUrl: msg.Member.AvatarFor(ctx).TryGetCleanCdnUrl()))
                 .Description(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
                 .Image(new(serverMsg?.Attachments?.FirstOrDefault()?.Url))
                 .Field(new("System",
