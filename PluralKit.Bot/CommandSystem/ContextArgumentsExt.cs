@@ -71,25 +71,26 @@ namespace PluralKit.Bot
             return matched;
         }
 
-        public static ulong? MatchMessage(this Context ctx, bool parseRawMessageId)
+        public static (ulong? messageId, ulong? channelId) MatchMessage(this Context ctx, bool parseRawMessageId)
         {
-            if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference != null)
-                return ctx.Message.MessageReference.MessageId;
+            if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference?.MessageId != null)
+                return (ctx.Message.MessageReference.MessageId, ctx.Message.MessageReference.ChannelId);
 
             var word = ctx.PeekArgument();
             if (word == null)
-                return null;
+                return (null, null);
 
             if (parseRawMessageId && ulong.TryParse(word, out var mid))
-                return mid;
+                return (mid, null);
             
-            var match = Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/\\d+/(\\d+)");
+            var match = Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/(\\d+)/(\\d+)");
             if (!match.Success)
-                return null;
+                return (null, null);
             
-            var messageId = ulong.Parse(match.Groups[1].Value);
+            var channelId = ulong.Parse(match.Groups[1].Value);
+            var messageId = ulong.Parse(match.Groups[2].Value);
             ctx.PopArgument();
-            return messageId;
+            return (messageId, channelId);
         }
 
         public static async Task<List<PKMember>> ParseMemberList(this Context ctx, SystemId? restrictToSystem)

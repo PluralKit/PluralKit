@@ -84,6 +84,7 @@ namespace PluralKit.Bot
         public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
         public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
         public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
+        public static Command ProxyCheck = new Command("proxycheck", "proxycheck [link]", "Checks why your message has not been proxied");
         public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
         public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
         public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
@@ -191,7 +192,10 @@ namespace PluralKit.Bot
                     return PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
                 else return PrintCommandExpectedError(ctx, BlacklistCommands);
             if (ctx.Match("proxy"))
-                return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
+                if (ctx.Match("debug"))
+                    return ctx.Execute<Misc>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+                else
+                    return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
             if (ctx.Match("mn")) return ctx.Execute<Fun>(null, m => m.Mn(ctx));
             if (ctx.Match("fire")) return ctx.Execute<Fun>(null, m => m.Fire(ctx));
@@ -202,6 +206,10 @@ namespace PluralKit.Bot
             if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
                 return ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
+            if (ctx.Match("proxycheck"))
+                return ctx.Execute<Misc>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+            if (ctx.Match("debug"))
+                return HandleDebugCommand(ctx);
             if (ctx.Match("admin"))
                 return HandleAdminCommand(ctx);
             if (ctx.Match("random", "r"))
@@ -229,6 +237,20 @@ namespace PluralKit.Bot
                 await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
             else
                 await ctx.Reply($"{Emojis.Error} Unknown command.");
+        }
+
+        private async Task HandleDebugCommand(Context ctx)
+        {
+            var availableCommandsStr = "Available debug targets: `permissions`, `proxying`";
+
+            if (ctx.Match("permissions", "perms", "permcheck"))
+                await ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
+            else if (ctx.Match("proxy", "proxying", "proxycheck"))
+                await ctx.Execute<Misc>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+            else if (!ctx.HasNext())
+                await ctx.Reply($"{Emojis.Error} You need to pass a command. {availableCommandsStr}");
+            else
+                await ctx.Reply($"{Emojis.Error} Unknown debug command {ctx.PeekArgument().AsCode()}. {availableCommandsStr}");
         }
 
         private async Task HandleSystemCommand(Context ctx)

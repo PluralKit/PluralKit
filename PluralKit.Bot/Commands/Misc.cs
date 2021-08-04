@@ -17,6 +17,7 @@ using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
+using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
@@ -34,8 +35,11 @@ namespace PluralKit.Bot {
         private readonly DiscordApiClient _rest;
         private readonly Cluster _cluster;
         private readonly Bot _bot;
+        private readonly ProxyService _proxy;
+        private readonly ProxyMatcher _matcher;
 
-        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, EmbedService embeds, ModelRepository repo, IDatabase db, IDiscordCache cache, DiscordApiClient rest, Bot bot, Cluster cluster)
+        public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards, EmbedService embeds, ModelRepository repo,
+                                IDatabase db, IDiscordCache cache, DiscordApiClient rest, Bot bot, Cluster cluster, ProxyService proxy, ProxyMatcher matcher)
         {
             _botConfig = botConfig;
             _metrics = metrics;
@@ -48,6 +52,8 @@ namespace PluralKit.Bot {
             _rest = rest;
             _bot = bot;
             _cluster = cluster;
+            _proxy = proxy;
+            _matcher = matcher;
         }
         
         public async Task Invite(Context ctx)
@@ -218,7 +224,7 @@ namespace PluralKit.Bot {
         
         public async Task GetMessage(Context ctx)
         {
-            var messageId = ctx.MatchMessage(true);
+            var (messageId, _) = ctx.MatchMessage(true);
             if (messageId == null)
             {
                 if (!ctx.HasNext())
@@ -249,6 +255,70 @@ namespace PluralKit.Bot {
             }
 
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
+        }
+
+        public async Task MessageProxyCheck(Context ctx)
+        {
+            if (!ctx.HasNext() && ctx.Message.MessageReference == null)
+                throw new PKError("You need to specify a message.");
+            
+            var failedToGetMessage = "Could not find a valid message to check, was not able to fetch the message, or the message was not sent by you.";
+
+            var (messageId, channelId) = ctx.MatchMessage(false);
+            if (messageId == null || channelId == null)
+                throw new PKError(failedToGetMessage);
+
+            await using var conn = await _db.Obtain();
+
+            var proxiedMsg = await _repo.GetMessage(conn, messageId.Value);
+            if (proxiedMsg != null)
+            {
+                await ctx.Reply($"{Emojis.Success} This message was proxied successfully.");
+                return;
+            }
+
+            // get the message info
+            var msg = ctx.Message;
+            try 
+            {
+                msg = await _rest.GetMessage(channelId.Value, messageId.Value);
+            }
+            catch (ForbiddenException)
+            {
+                throw new PKError(failedToGetMessage);
+            }
+
+            // if user is fetching a message in a different channel sent by someone else, throw a generic error message
+            if (msg == null || (msg.Author.Id != ctx.Author.Id && msg.ChannelId != ctx.Channel.Id))
+                throw new PKError(failedToGetMessage);
+
+            if ((_botConfig.Prefixes ?? BotConfig.DefaultPrefixes).Any(p => msg.Content.StartsWith(p)))
+                throw new PKError("This message starts with the bot's prefix, and was parsed as a command.");
+            if (msg.WebhookId != null)
+                throw new PKError("You cannot check messages sent by a webhook.");
+            if (msg.Author.Id != ctx.Author.Id)
+                throw new PKError("You can only check your own messages.");
+
+            // get the channel info
+            var channel = _cache.GetChannel(channelId.Value);
+            if (channel == null)
+                throw new PKError("Unable to get the channel associated with this message.");
+
+            // using channel.GuildId here since _rest.GetMessage() doesn't return the GuildId
+            var context = await _repo.GetMessageContext(conn, msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
+            var members = (await _repo.GetProxyMembers(conn, msg.Author.Id, channel.GuildId.Value)).ToList();
+
+            // Run everything through the checks, catch the ProxyCheckFailedException, and reply with the error message.
+            try 
+            { 
+                _proxy.ShouldProxy(channel, msg, context);
+                _matcher.TryMatch(context, members, out var match, msg.Content, msg.Attachments.Length > 0, context.AllowAutoproxy);
+
+                await ctx.Reply("I'm not sure why this message was not proxied, sorry.");
+            } catch (ProxyService.ProxyChecksFailedException e)
+            {
+                await ctx.Reply($"{e.Message}");
+            }
         }
     }
 }

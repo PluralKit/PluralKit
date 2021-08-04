@@ -125,7 +125,8 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
-- `pk;permcheck [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
+- `pk;debug permissions [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
+- `pk;debug proxying <message link|reply>` - Checks why your message has not been proxied.
 - `pk;edit [message link|reply] <new content>` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
 
 ## API

@@ -89,24 +89,34 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private bool ShouldProxy(Channel channel, Message msg, MessageContext ctx)
+        public bool ShouldProxy(Channel channel, Message msg, MessageContext ctx)
         {
             // Make sure author has a system
-            if (ctx.SystemId == null) return false;
+            if (ctx.SystemId == null)
+                throw new ProxyChecksFailedException(Errors.NoSystemError.Message);
             
             // Make sure channel is a guild text channel and this is a normal message
-            if (!DiscordUtils.IsValidGuildChannel(channel)) return false;
-            if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply) return false;
+            if (!DiscordUtils.IsValidGuildChannel(channel))
+                throw new ProxyChecksFailedException("This channel is not a text channel.");
+            if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply)
+                throw new ProxyChecksFailedException("This message is not a normal message.");
             
             // Make sure author is a normal user
-            if (msg.Author.System == true || msg.Author.Bot || msg.WebhookId != null) return false;
+            if (msg.Author.System == true || msg.Author.Bot || msg.WebhookId != null)
+                throw new ProxyChecksFailedException("This message was not sent by a normal user.");
             
             // Make sure proxying is enabled here
-            if (!ctx.ProxyEnabled || ctx.InBlacklist) return false;
+            if (ctx.InBlacklist)
+                throw new ProxyChecksFailedException($"Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
+
+            // Make sure the system has proxying enabled in the server
+            if (!ctx.ProxyEnabled)
+                throw new ProxyChecksFailedException("Your system has proxying disabled in this server. Type `pk;proxy on` to enable it.");
             
             // Make sure we have either an attachment or message content
             var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
-            if (isMessageBlank && msg.Attachments.Length == 0) return false;
+            if (isMessageBlank && msg.Attachments.Length == 0)
+                throw new ProxyChecksFailedException("Message cannot be blank.");
             
             // All good!
             return true;
@@ -363,6 +373,10 @@ namespace PluralKit.Bot
         private void CheckProxyNameBoundsOrError(string proxyName)
         {
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+        }
+        public class ProxyChecksFailedException : Exception
+        {
+            public ProxyChecksFailedException(string message) : base(message) {}
         }
     }
 }

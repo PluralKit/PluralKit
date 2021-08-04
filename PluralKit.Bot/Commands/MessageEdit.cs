@@ -75,7 +75,7 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
             FullMessage? msg = null;
 
-            var referencedMessage = ctx.MatchMessage(false);
+            var (referencedMessage, _) = ctx.MatchMessage(false);
             if (referencedMessage != null)
             {
                 msg = await _repo.GetMessage(conn, referencedMessage.Value);

@@ -154,6 +154,10 @@ namespace PluralKit.Bot
             {
                 return await _proxy.HandleIncomingMessage(shard, evt, ctx, guild, channel, allowAutoproxy: ctx.AllowAutoproxy, botPermissions);
             }
+
+            // Catch any failed proxy checks so they get ignored in the global error handler
+            catch (ProxyService.ProxyChecksFailedException) {}
+
             catch (PKError e)
             {
                 // User-facing errors, print to the channel properly formatted
