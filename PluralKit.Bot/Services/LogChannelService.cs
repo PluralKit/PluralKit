@@ -33,54 +33,45 @@ namespace PluralKit.Bot {
             _logger = logger.ForContext<LogChannelService>();
         }
 
-        public async ValueTask LogMessage(MessageContext ctx, ProxyMatch proxy, Message trigger, ulong hookMessage)
+        public async ValueTask LogMessage(MessageContext ctx, PKMessage proxiedMessage, Message trigger, Message hookMessage, string oldContent = null)
         {
-            var logChannel = await GetAndCheckLogChannel(ctx, trigger);
-            if (logChannel == null) return;
+            var logChannel = await GetAndCheckLogChannel(ctx, trigger, proxiedMessage);
+            if (logChannel == null)
+                return;
 
-            var triggerChannel = _cache.GetChannel(trigger.ChannelId);
+            var triggerChannel = _cache.GetChannel(proxiedMessage.Channel);
             
-            // Send embed!
             await using var conn = await _db.Obtain();
-            var embed = _embed.CreateLoggedMessageEmbed(await _repo.GetSystem(conn, ctx.SystemId.Value), 
-                await _repo.GetMember(conn, proxy.Member.Id), hookMessage, trigger.Id, trigger.Author, proxy.Content, 
-                triggerChannel);
-            var url = $"https://discord.com/channels/{trigger.GuildId}/{trigger.ChannelId}/{hookMessage}";
+            var system = await _repo.GetSystem(conn, ctx.SystemId.Value);
+            var member = await _repo.GetMember(conn, proxiedMessage.Member);
+
+            // Send embed!
+            var embed = _embed.CreateLoggedMessageEmbed(trigger, hookMessage, system.Hid, member, triggerChannel.Name, oldContent);
+            var url = $"https://discord.com/channels/{proxiedMessage.Guild.Value}/{proxiedMessage.Channel}/{proxiedMessage.Mid}";
             await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
         }
 
-        public async ValueTask LogEditedMessage(MessageContext ctx, FullMessage proxy, Message trigger, Message originalMessage, string newContent)
+        private async Task<Channel?> GetAndCheckLogChannel(MessageContext ctx, Message trigger, PKMessage proxiedMessage)
         {
-            var logChannel = await GetAndCheckLogChannel(ctx, trigger, proxy.Message);
-            if (logChannel == null) return;
+            if (proxiedMessage.Guild == null && proxiedMessage.Channel != trigger.ChannelId)
+                // a very old message is being edited outside of its original channel
+                // we can't know if we're in the correct guild, so skip fetching a log channel
+                return null;
 
-            var triggerChannel = _cache.GetChannel(proxy.Message.Channel);
-            
-            // Send embed!
-            await using var conn = await _db.Obtain();
-            var embed = _embed.CreateEditedMessageEmbed(proxy.System, proxy.Member, originalMessage.Id, trigger.Id, trigger.Author, newContent, originalMessage.Content,
-                triggerChannel);
-            var url = $"https://discord.com/channels/{proxy.Message.Guild.Value}/{proxy.Message.Channel}/{proxy.Message.Mid}";
-            await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
-        }
-
-        private async Task<Channel?> GetAndCheckLogChannel(MessageContext ctx, Message trigger, PKMessage original = null)
-        {
-            var guildId = trigger.GuildId != null ? trigger.GuildId!.Value : original.Guild.Value;
+            var guildId = proxiedMessage.Guild ?? trigger.GuildId.Value;
             var logChannelId = ctx.LogChannel;
             var isBlacklisted = ctx.InLogBlacklist;
 
-            if (original != null)
+            if (proxiedMessage.Guild != trigger.GuildId)
             {
-                // we're editing a message, get log channel info from the database
-                var guild = await _db.Execute(c => _repo.GetGuild(c, original.Guild.Value));
+                // we're editing a message from a different server, get log channel info from the database
+                var guild = await _db.Execute(c => _repo.GetGuild(c, proxiedMessage.Guild.Value));
                 logChannelId = guild.LogChannel;
                 isBlacklisted = guild.Blacklist.Any(x => x == logChannelId);
             }
 
             if (ctx.SystemId == null || logChannelId == null || isBlacklisted) return null;
             
-
             // Find log channel and check if valid
             var logChannel = await FindLogChannel(guildId, logChannelId.Value);
             if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return null;
@@ -90,7 +81,7 @@ namespace PluralKit.Bot {
             if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
             {
                 _logger.Information(
-                    "Does not have permission to proxy log, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
+                    "Does not have permission to log proxy, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
                     ctx.LogChannel.Value, trigger.GuildId!.Value, perms);
                 return null;
             }

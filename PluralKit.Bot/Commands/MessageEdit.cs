@@ -51,10 +51,12 @@ namespace PluralKit.Bot
             var newContent = ctx.RemainderOrNull();
 
             var originalMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);
+            if (originalMsg == null)
+                throw new PKError("Could not edit message.");
 
             try
             {
-                await _webhookExecutor.EditWebhookMessage(msg.Message.Channel, msg.Message.Mid, newContent);
+                var editedMsg = await _webhookExecutor.EditWebhookMessage(msg.Message.Channel, msg.Message.Mid, newContent);
                 
                 if (ctx.Guild == null)
                     await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new() { Name = Emojis.Success });
@@ -62,7 +64,7 @@ namespace PluralKit.Bot
                 if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
                     await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
 
-                await _logChannel.LogEditedMessage(ctx.MessageContext, msg, ctx.Message, originalMsg!, newContent);
+                await _logChannel.LogMessage(ctx.MessageContext, msg.Message, ctx.Message, editedMsg, originalMsg!.Content!);
             }
             catch (NotFoundException)
             {

@@ -108,30 +108,23 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateLoggedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, Channel channel) {
+        public Embed CreateLoggedMessageEmbed(Message triggerMessage, Message proxiedMessage, string systemHid, PKMember member, string channelName, string oldContent = null) {
             // TODO: pronouns in ?-reacted response using this card
-            var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
-            var name = member.NameFor(LookupContext.ByNonOwner); 
-            return new EmbedBuilder()
-                .Author(new($"#{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl())))
-                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl()))
-                .Description(content?.NormalizeLineEndSpacing())
-                .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
-                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
-                .Build();
-        }
+            var timestamp = DiscordUtils.SnowflakeToInstant(proxiedMessage.Id);
+            var name = proxiedMessage.Author.Username;
+            // sometimes Discord will just... not return the avatar hash with webhook messages
+            var avatar = proxiedMessage.Author.Avatar != null ? proxiedMessage.Author.AvatarUrl() : member.AvatarFor(LookupContext.ByNonOwner);
+            var embed = new EmbedBuilder()
+                .Author(new($"#{channelName}: {name}", IconUrl: avatar))
+                .Thumbnail(new(avatar))
+                .Description(proxiedMessage.Content?.NormalizeLineEndSpacing())
+                .Footer(new($"System ID: {systemHid} | Member ID: {member.Hid} | Sender: {triggerMessage.Author.Username}#{triggerMessage.Author.Discriminator} ({triggerMessage.Author.Id}) | Message ID: {proxiedMessage.Id} | Original Message ID: {triggerMessage.Id}"))
+                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"));
 
-        public Embed CreateEditedMessageEmbed(PKSystem system, PKMember member, ulong messageId, ulong originalMsgId, User sender, string content, string oldContent, Channel channel) {
-            var timestamp = DiscordUtils.SnowflakeToInstant(messageId);
-            var name = member.NameFor(LookupContext.ByNonOwner); 
-            return new EmbedBuilder()
-                .Author(new($"[Edited] #{channel.Name}: {name}", IconUrl: DiscordUtils.WorkaroundForUrlBug(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl())))
-                .Thumbnail(new(member.AvatarFor(LookupContext.ByNonOwner).TryGetCleanCdnUrl()))
-                .Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)))
-                .Description(content?.NormalizeLineEndSpacing())
-                .Footer(new($"System ID: {system.Hid} | Member ID: {member.Hid} | Sender: {sender.Username}#{sender.Discriminator} ({sender.Id}) | Message ID: {messageId} | Original Message ID: {originalMsgId}"))
-                .Timestamp(timestamp.ToDateTimeOffset().ToString("O"))
-                .Build();
+            if (oldContent != null)
+                embed.Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)));
+            
+            return embed.Build();
         }
 
         public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)
