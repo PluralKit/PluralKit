@@ -51,7 +51,7 @@ The following three models (usually represented in JSON format) represent the va
 | Key                   | Type     | Patchable? | Notes                                                                                     |
 | --------------------- | -------- | ---------- | ----------------------------------------------------------------------------------------- |
 | id                    | string   | No         |                                                                                           |
-| name                  | string?  | Yes        | 100-character limit.                                                                      |
+| name                  | string   | Yes        | 100-character limit.                                                                      |
 | description           | string?  | Yes        | 1000-character limit.                                                                     |
 | tag                   | string?  | Yes        |                                                                                           |
 | avatar_url            | url?     | Yes        | Not validated server-side.                                                                |
@@ -68,7 +68,7 @@ The following three models (usually represented in JSON format) represent the va
 | Key                 | Type       | Patchable?         | Notes                                                                                                                                                                               |
 | ------------------- | ---------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | id                  | string     | No                 |                                                                                                                                                                                     |
-| name                | string?    | Yes                | 50-character limit.                                                                                                                                                                 |
+| name                | string     | Yes                | 50-character limit.                                                                                                                                                                 |
 | display_name        | string?    | Yes                | 50-character limit.                                                                                                                                                                 |
 | description         | string?    | Yes                | 1000-character limit.                                                                                                                                                               |
 | pronouns            | string?    | Yes                | 100-character limit.                                                                                                                                                                |
