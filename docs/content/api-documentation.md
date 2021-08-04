@@ -44,7 +44,8 @@ responses (eg. fronter, switches, member list), the entire request will return `
 system's token (as described above) will override these privacy settings and show the full information. 
 
 ## Models
-The following three models (usually represented in JSON format) represent the various objects in PluralKit's API. A `?` after the column type indicates an optional (nullable) parameter.
+The following three models (usually represented in JSON format) represent the various objects in PluralKit's API.
+A `?` after the column type indicates a nullable parameter (value can be cleared by setting it to null).
 
 ### System model
 
