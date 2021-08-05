@@ -64,6 +64,7 @@ You cannot look up private members of another system.
 |-with-message-count|-wmc|Show each member's message count|
 |-with-created|-wc|Show each member's creation date|
 |-with-avatar|-wa, -wi, -ia, -ii, -img|Show each member's avatar URL|
+|-with-pronouns|-wp|Show each member's pronouns in the short list (shown by default in full list)|
 
 ::: warning
 These flags only work with the full member list (`pk;system list full`).

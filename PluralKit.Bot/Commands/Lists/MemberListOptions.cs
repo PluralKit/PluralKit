@@ -26,6 +26,7 @@ namespace PluralKit.Bot
         public bool IncludeLastMessage { get; set; }
         public bool IncludeCreated { get; set; }
         public bool IncludeAvatar { get; set; }
+        public bool IncludePronouns { get; set; }
         
         public string CreateFilterString()
         {
