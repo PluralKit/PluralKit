@@ -108,11 +108,9 @@ export default function System(props) {
           >
             {(close) => (
               <div className="text-center w-100 m-0" onClick={() => close()}>
-                <BS.Image
-                  src={`${avatar}`}
-                  style={{ "max-width": 640, height: "auto" }}
-                  thumbnail
-                />
+                <div className="m-auto" style={{maxWidth: '640px'}}>
+                    <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
+                </div>
               </div>
             )}
           </Popup>
@@ -161,6 +159,7 @@ export default function System(props) {
               {privacyView ? (
                 ""
               ) : (
+                <>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}>
                   <b>Privacy:</b>{" "}
                   <BS.Button
@@ -171,7 +170,33 @@ export default function System(props) {
                     View
                   </BS.Button>
                 </BS.Col>
-              )}
+                {user.banner ? 
+                  <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                  <b>Banner:</b>{" "}
+                  <Popup
+                    trigger={
+                      <BS.Button
+                    variant="light"
+                    size="sm"
+                  >
+                    View
+                  </BS.Button>
+                    }
+                    className="banner"
+                    modal
+                  >
+                    {(close) => (
+                      <div className="text-center w-100" onClick={() => close()}>
+                        <div className="m-auto" style={{maxWidth: '100%'}}>
+                            <BS.Image src={`${banner}`} style={{maxWidth: 'auto', maxHeight: '640px'}} thumbnail />
+                        </div>
+                      </div>
+                    )}
+                  </Popup>
+                  </BS.Col>
+                 : "" }
+                 </> 
+                 )}
             </BS.Row>
             {privacyEdit ? (
               <EditSystemPrivacy

@@ -85,9 +85,9 @@ export default function ProfilePage(props) {
 
     return (
        <> 
-       { member.banner && !localStorage.getItem("hidebanners") ? <div className="banner" style={{backgroundImage: `url(${banner})`}} alt=""/> : ""}
        { localStorage.getItem('colorbg') && member.color ? "" : <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
         { !localStorage.getItem('fullbg') ? <div className="backdrop-overlay"/> : "" }</> }
+        { member.banner && !localStorage.getItem("hidebanners") ? <div className="banner" style={{backgroundImage: `url(${banner})`}} alt=""/> : ""}
         <BS.Alert variant="primary" >You are currently <b>viewing</b> a member.</BS.Alert>
         <BS.Card className="mb-5">
         <BS.Card.Header className="d-flex align-items-center justify-content-between">
@@ -118,6 +118,31 @@ export default function ProfilePage(props) {
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> <span dangerouslySetInnerHTML={{__html: pronouns}}></span></BS.Col> : "" }
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
+                { proxyView || !member.banner ? "" : 
+                    <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                    <b>Banner:</b>{" "}
+                    <Popup
+                      trigger={
+                        <BS.Button
+                      variant="light"
+                      size="sm"
+                    >
+                      View
+                    </BS.Button>
+                      }
+                      className="banner"
+                      modal
+                    >
+                      {(close) => (
+                        <div className="text-center w-100" onClick={() => close()}>
+                            <div className="m-auto" style={{maxWidth: '100%'}}>
+                                <BS.Image src={`${banner}`} style={{maxWidth: 'auto', maxHeight: '640px'}} thumbnail />
+                            </div>
+                        </div>
+                      )}
+                    </Popup>
+                    </BS.Col>
+                   }
                 
             </BS.Row>
             { proxyView ? <><hr/>

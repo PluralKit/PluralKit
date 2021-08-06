@@ -81,7 +81,9 @@ export default function Profile () {
            { system.avatar_url ? <Popup trigger={<BS.Image src={`${system.avatar_url}`} style={{width: 50, height: 50}} tabIndex="0" className="float-right" roundedCircle />} className="avatar" modal>
          {close => (
              <div className="text-center w-100 m-0" onClick={() => close()}>
-             <BS.Image src={`${avatar}`} style={{'max-width': 640, height: 'auto'}} thumbnail />
+                <div className="m-auto" style={{maxWidth: '640px'}}>
+                    <BS.Image src={`${avatar}`} style={{'maxWidth': '100%', height: 'auto'}} thumbnail />
+                </div>
              </div>
          )}
      </Popup> : 
@@ -92,6 +94,31 @@ export default function Profile () {
              <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {system.id}</BS.Col>
              <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Tag:</b> {tag}</BS.Col>
              <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Timezone:</b> {timezone}</BS.Col>
+             {system.banner ? 
+                  <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                  <b>Banner:</b>{" "}
+                  <Popup
+                    trigger={
+                      <BS.Button
+                    variant="light"
+                    size="sm"
+                  >
+                    View
+                  </BS.Button>
+                    }
+                    className="banner"
+                    modal
+                  >
+                    {(close) => (
+                      <div className="text-center w-100" onClick={() => close()}>
+                        <div className="m-auto" style={{maxWidth: '100%'}}>
+                            <BS.Image src={`${banner}`} style={{maxWidth: 'auto', maxHeight: '640px'}} thumbnail />
+                        </div>
+                      </div>
+                    )}
+                  </Popup>
+                  </BS.Col>
+                 : "" }
          </BS.Row>
          <p><b>Description:</b></p>
          { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}

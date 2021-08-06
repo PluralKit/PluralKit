@@ -305,6 +305,31 @@ export default function MemberCard(props) {
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
+                { privacyView || proxyView || !member.banner ? "" : 
+                    <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                    <b>Banner:</b>{" "}
+                    <Popup
+                      trigger={
+                        <BS.Button
+                      variant="light"
+                      size="sm"
+                    >
+                      View
+                    </BS.Button>
+                      }
+                      className="banner"
+                      modal
+                    >
+                      {(close) => (
+                        <div className="text-center w-100" onClick={() => close()}>
+                            <div className="m-auto" style={{maxWidth: '100%'}}>
+                                <BS.Image src={`${banner}`} style={{maxWidth: 'auto', maxHeight: '640px'}} thumbnail />
+                            </div>
+                        </div>
+                      )}
+                    </Popup>
+                    </BS.Col>
+                   }
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Created:</b> {created}</BS.Col>
             </BS.Row>
             { privacyEdit ? <BS.Form id='Privacy' onSubmit={handleSubmitPrivacy(submitPrivacy)}>

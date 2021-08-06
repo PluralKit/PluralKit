@@ -19,6 +19,7 @@ export default function MemberCard(props) {
     const [ displayName, setDisplayName ] = useState("");
     const [ birthday, setBirthday ] = useState("");
     const [ pronouns, setPronouns ] = useState("");
+    const [ banner, setBanner ] = useState("");
     const [ color, setColor ] = useState("");
     const [ desc, setDesc ] = useState("");
     const proxyTags = member.proxy_tags;
@@ -60,10 +61,14 @@ export default function MemberCard(props) {
             setColor(member.color);
         } else setColor('');
 
+        if (member.banner) {
+            setBanner(member.banner);
+          } else setBanner("");
+
         if (member.description) {
             setDesc(toHTML(member.description));
         } else setDesc("(no description)");
-    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags]);
+    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags, member.banner]);
 
     function copyLink() {
         var link = `https://pk-webs.spectralitree.com/profile/${sysID}/${member.id}`
@@ -90,6 +95,31 @@ export default function MemberCard(props) {
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> <span dangerouslySetInnerHTML={{__html: pronouns}}></span></BS.Col> : "" }
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
+                { proxyView || !member.banner ? "" : 
+                    <BS.Col className="mb-lg-3" xs={12} lg={3}>
+                    <b>Banner:</b>{" "}
+                    <Popup
+                      trigger={
+                        <BS.Button
+                      variant="light"
+                      size="sm"
+                    >
+                      View
+                    </BS.Button>
+                      }
+                      className="banner"
+                      modal
+                    >
+                      {(close) => (
+                        <div className="text-center w-100" onClick={() => close()}>
+                            <div className="m-auto" style={{maxWidth: '100%'}}>
+                                <BS.Image src={`${banner}`} style={{maxWidth: 'auto', maxHeight: '640px'}} thumbnail />
+                            </div>
+                        </div>
+                      )}
+                    </Popup>
+                    </BS.Col>
+                   }
                 
             </BS.Row>
             { proxyView ? <><hr/>
