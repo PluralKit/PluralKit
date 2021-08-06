@@ -324,6 +324,10 @@ export default function Memberlist() {
                           <BS.Form.Control type="url" name="avatar_url" {...register("avatar_url")}  defaultValue={''} />
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
+                            <BS.Form.Label>Banner url:</BS.Form.Label> 
+                          <BS.Form.Control type="url" name="banner" {...register("banner")}  defaultValue={''} />
+                        </BS.Col>
+                        <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Color:</BS.Form.Label> 
                           <BS.Form.Control  pattern="[A-Fa-f0-9]{6}" name="color" {...register("color")}  defaultValue={''} />
                             <BS.Form.Text>(hexcode)</BS.Form.Text>

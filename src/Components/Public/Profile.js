@@ -22,6 +22,7 @@ export default function Profile () {
     const [ timezone, setTimezone ] = useState("");
     const [ desc, setDesc ] = useState("");
     const [ avatar, setAvatar ] = useState('');
+    const [ banner, setBanner ] = useState("");
 
     const [ isLoading, setIsLoading ] = useState(true);
     const [ isError, setIsError ] = useState(false);
@@ -53,6 +54,10 @@ export default function Profile () {
             setAvatar(avatarsmall.replace('?width=256&height=256', ''))
         } else setAvatar('')
 
+        if (system.banner) {
+            setBanner(system.banner);
+          } else setBanner("");
+
         if (system.tag) {
             setTag(system.tag);
         } else setTag('');
@@ -64,11 +69,12 @@ export default function Profile () {
         if (system.description) {
             setDesc(toHTML(system.description));
         } else setDesc("(no description)");
-    }, [system.description, system.tag, system.avatar_url, system.tz, system.name]);
+    }, [system.description, system.tag, system.avatar_url, system.tz, system.name, system.banner]);
 
    return (match ? <ProfileList sysID={sysID} /> :
    <>{ isLoading ? <Loading /> : isError ?  <BS.Alert variant="danger">Something went wrong, either the system doesn't exist, or there was an error fetching data.</BS.Alert> :
-    <><BS.Alert variant="primary" >You are currently <b>viewing</b> a system.</BS.Alert>
+    <>{ system.banner && !localStorage.getItem("hidebanners") ? <div className="banner" style={{backgroundImage: `url(${banner})`}} alt=""/> : ""}
+    <BS.Alert variant="primary" >You are currently <b>viewing</b> a system.</BS.Alert>
         <BS.Card className="mb-3 mt-3 w-100" >
         <BS.Card.Header className="d-flex align-items-center justify-content-between">
            <BS.Card.Title className="float-left"><FaAddressCard className="mr-4 float-left" /> {name} ({system.id})</BS.Card.Title> 

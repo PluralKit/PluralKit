@@ -27,6 +27,7 @@ export default function MemberPage(props) {
     const [ pronouns, setPronouns ] = useState("");
     const [ editPronouns, setEditPronouns ] = useState("");
     const [ avatar, setAvatar ] = useState("");
+    const [ banner, setBanner ] = useState("");
     const [ color, setColor ] = useState("");
     const [ desc, setDesc ] = useState("");
     const [ editDesc, setEditDesc ] = useState("");
@@ -105,6 +106,10 @@ export default function MemberPage(props) {
             var avatarsmall = member.avatar_url.replace('&format=jpeg', '');
             setAvatar(avatarsmall.replace('?width=256&height=256', ''))
         } else setAvatar('')
+
+        if (member.banner) {
+            setBanner(member.banner);
+          } else setBanner("");
         
         if (member.color) {
             setColor(member.color);
@@ -116,7 +121,7 @@ export default function MemberPage(props) {
         } else { setDesc("(no description)");
         setEditDesc("");
     }
-    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags, member.created]);
+    }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags, member.created, member.banner]);
 
     const submitEdit = data => {
         props.edit(Object.assign(member, data));
@@ -232,8 +237,9 @@ export default function MemberPage(props) {
             <BS.Button variant="primary" className="float-right" onClick={() => history.push("/dash/reload")}>Back</BS.Button>
         </BS.Card.Body></BS.Card> :
         <>
-        { localStorage.getItem('colorbg') ? "" : member.color ? <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
-        <div className="backdrop-overlay"/></> : "" }
+        { member.banner && !localStorage.getItem("hidebanners") ? <div className="banner" style={{backgroundImage: `url(${banner})`}} alt=""/> : ""}
+        { localStorage.getItem('colorbg') && member.color ? "" : <><div className="backdrop" style={{backgroundColor: `#${color}`}}/>
+        { !localStorage.getItem('fullbg') ? <div className="backdrop-overlay"/> : "" }</> }
         <BS.Card className="mb-5">
         <BS.Card.Header className="d-flex align-items-center justify-content-between">
         <div> { member.visibility === 'public' ? <BS.OverlayTrigger placement="left" overlay={ 
@@ -278,6 +284,10 @@ export default function MemberPage(props) {
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar url:</BS.Form.Label> 
                   <BS.Form.Control type="url" name="avatar_url" {...registerEdit("avatar_url")}  defaultValue={avatar} />
+                </BS.Col>
+                <BS.Col className="mb-lg-2" xs={12} lg={3}>
+                    <BS.Form.Label>Banner url:</BS.Form.Label> 
+                  <BS.Form.Control type="url" name="banner" {...registerEdit("banner")}  defaultValue={banner} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Color:</BS.Form.Label> 

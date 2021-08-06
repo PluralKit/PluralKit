@@ -24,6 +24,7 @@ export default function System(props) {
   const [tag, setTag] = useState("");
   const [timezone, setTimezone] = useState("");
   const [avatar, setAvatar] = useState("");
+  const [banner, setBanner] = useState("");
   const [desc, setDesc] = useState("");
   const [editDesc, setEditDesc] = useState("");
 
@@ -61,6 +62,10 @@ export default function System(props) {
       setAvatar(avatarsmall.replace("?width=256&height=256", ""));
     } else setAvatar("");
 
+    if (user.banner) {
+      setBanner(user.banner);
+    } else setBanner("");
+
     // same as above, but with descriptions
     // two description variables! one is just the plain description, the other is parsed and converted to html
     if (user.description) {
@@ -70,7 +75,7 @@ export default function System(props) {
       setDesc("(no description)");
       setEditDesc("");
     }
-  }, [user.description, user.tag, user.avatar_url, user.tz, user.name]);
+  }, [user.description, user.tag, user.avatar_url, user.tz, user.name, user.banner]);
 
   // this just resizes the textarea when filled with larger amounts of text
   useEffect(() => {
@@ -80,6 +85,8 @@ export default function System(props) {
   if (match) return null;
 
   return (
+    <>
+    { user.banner && !localStorage.getItem("hidebanners") ? <div className="banner" style={{backgroundImage: `url(${user.banner})`}} alt=""/> : ""}
     <BS.Card className="mb-3 mt-3 w-100">
       <BS.Card.Header className="d-flex align-items-center justify-content-between">
         <BS.Card.Title className="float-left">
@@ -133,6 +140,7 @@ export default function System(props) {
             tag={tag}
             timezone={timezone}
             avatar={avatar}
+            banner={banner}
             setErrorAlert={setErrorAlert}
             user={user}
             setUser={setUser}
@@ -240,5 +248,6 @@ export default function System(props) {
         )}
       </BS.Card.Body>
     </BS.Card>
+    </>
   );
 }

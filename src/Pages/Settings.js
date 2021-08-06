@@ -112,6 +112,34 @@ const Settings = ({ forceUpdate }) => {
             lg={4}
             className="mx-1 mb-4 d-flex align-items-center row"
           >
+            {localStorage.getItem("fullbg") ? (
+              <Toggle
+                className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() => {
+                  localStorage.removeItem("fullbg");
+                  forceUpdate();
+                }}
+              />
+            ) : (
+              <Toggle
+                className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                  localStorage.setItem("fullbg", "true");
+                  forceUpdate();
+                }}
+              />
+            )}
+            Remove gradient from background color?
+          </BS.Col>
+          <BS.Col
+            xs={12}
+            lg={4}
+            className="mx-1 mb-4 d-flex align-items-center row"
+          >
             {localStorage.getItem("colorbg") ? (
               <Toggle
                 className="mr-2"
@@ -133,7 +161,7 @@ const Settings = ({ forceUpdate }) => {
                 }}
               />
             )}
-            Hide colored backgrounds?
+            Hide colored backgrounds altogether?
           </BS.Col>
           <BS.Col
             xs={12}
@@ -162,6 +190,34 @@ const Settings = ({ forceUpdate }) => {
               />
             )}
             Expand member cards on default?
+          </BS.Col>
+          <BS.Col
+            xs={12}
+            lg={4}
+            className="mx-1 mb-4 d-flex align-items-center row"
+          >
+            {localStorage.getItem("hidebanners") ? (
+              <Toggle
+                className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() => {
+                  localStorage.removeItem("hidebanners");
+                  forceUpdate();
+                }}
+              />
+            ) : (
+              <Toggle
+                className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                  localStorage.setItem("hidebanners", "true");
+                  forceUpdate();
+                }}
+              />
+            )}
+            Hide system and member banners?
           </BS.Col>
         </BS.Row>
       </BS.Card.Body>

@@ -12,6 +12,7 @@ const EditSystem = ({
   tag,
   timezone,
   avatar,
+  banner,
   editDesc,
   setEditMode,
   setErrorAlert,
@@ -103,9 +104,19 @@ const EditSystem = ({
         <BS.Col className="mb-lg-2" xs={12} lg={3}>
           <BS.Form.Label>Avatar url:</BS.Form.Label>
           <BS.Form.Control
+            type="url"
             name="avatar_url"
             {...registerEdit("avatar_url")}
             defaultValue={avatar}
+          />
+        </BS.Col>
+        <BS.Col className="mb-lg-2" xs={12} lg={3}>
+          <BS.Form.Label>Banner url:</BS.Form.Label>
+          <BS.Form.Control
+            type="url"
+            name="banner"
+            {...registerEdit("banner")}
+            defaultValue={banner}
           />
         </BS.Col>
       </BS.Form.Row>
