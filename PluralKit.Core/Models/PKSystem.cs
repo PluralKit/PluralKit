@@ -1,10 +1,9 @@
 ﻿using Dapper.Contrib.Extensions;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using NodaTime;
-
-
 
 namespace PluralKit.Core {
 
@@ -34,7 +33,6 @@ namespace PluralKit.Core {
 
     public class PKSystem
     {
-        // Additions here should be mirrored in SystemStore::Save
         [Key] public SystemId Id { get; }
         public string Hid { get; }
         public string Name { get; }
@@ -63,5 +61,25 @@ namespace PluralKit.Core {
     {
         public static string DescriptionFor(this PKSystem system, LookupContext ctx) =>
             system.DescriptionPrivacy.Get(ctx, system.Description);
+
+        public static JObject ToJson(this PKSystem system, LookupContext ctx)
+        {
+            var o = new JObject();
+            o.Add("id", system.Hid);
+            o.Add("name", system.Name);
+            o.Add("description", system.DescriptionFor(ctx));
+            o.Add("tag", system.Tag);
+            o.Add("avatar_url", system.AvatarUrl.TryGetCleanCdnUrl());
+            o.Add("banner", system.DescriptionPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
+            o.Add("created", system.Created.FormatExport());
+            // todo: change this to "timezone"
+            o.Add("tz", system.UiTz);
+            // todo: just don't include these if not ByOwner
+            o.Add("description_privacy", ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
+            o.Add("member_list_privacy", ctx == LookupContext.ByOwner ? system.MemberListPrivacy.ToJsonString() : null);
+            o.Add("front_privacy", ctx == LookupContext.ByOwner ? system.FrontPrivacy.ToJsonString() : null);
+            o.Add("front_history_privacy", ctx == LookupContext.ByOwner ? system.FrontHistoryPrivacy.ToJsonString() : null);
+            return o;
+        }
     }
 }

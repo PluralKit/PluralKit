@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using NodaTime;
 using NodaTime.Text;
-
-
 
 namespace PluralKit.Core {
     public readonly struct MemberId: INumericId<MemberId, int>
@@ -101,5 +101,51 @@ namespace PluralKit.Core {
 
         public static int MessageCountFor(this PKMember member, LookupContext ctx) =>
             member.MetadataPrivacy.Get(ctx, member.MessageCount);
+
+        public static JObject ToJson(this PKMember member, LookupContext ctx)
+        {
+            var includePrivacy = ctx == LookupContext.ByOwner;
+            
+            var o = new JObject();
+            o.Add("id", member.Hid);
+            o.Add("name", member.NameFor(ctx));
+            // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
+            o.Add("color", member.Color);
+            o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
+            o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
+            o.Add("pronouns", member.PronounsFor(ctx));
+            o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
+            o.Add("banner", member.DescriptionPrivacy.Get(ctx, member.BannerImage).TryGetCleanCdnUrl());
+            o.Add("description", member.DescriptionFor(ctx));
+            
+            var tagArray = new JArray();
+            foreach (var tag in member.ProxyTags) 
+                tagArray.Add(new JObject {{"prefix", tag.Prefix}, {"suffix", tag.Suffix}});
+            o.Add("proxy_tags", tagArray);
+
+            o.Add("keep_proxy", member.KeepProxy);
+            
+            o.Add("privacy", includePrivacy ? (member.MemberVisibility.LevelName()) : null);
+
+            o.Add("visibility", includePrivacy ? (member.MemberVisibility.LevelName()) : null);
+            o.Add("name_privacy", includePrivacy ? (member.NamePrivacy.LevelName()) : null);
+            o.Add("description_privacy", includePrivacy ? (member.DescriptionPrivacy.LevelName()) : null);
+            o.Add("birthday_privacy", includePrivacy ? (member.BirthdayPrivacy.LevelName()) : null);
+            o.Add("pronoun_privacy", includePrivacy ? (member.PronounPrivacy.LevelName()) : null);
+            o.Add("avatar_privacy", includePrivacy ? (member.AvatarPrivacy.LevelName()) : null);
+            // o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy.LevelName()) : null);
+            o.Add("metadata_privacy", includePrivacy ? (member.MetadataPrivacy.LevelName()) : null);
+
+            o.Add("created", member.CreatedFor(ctx)?.FormatExport());
+
+            if (member.ProxyTags.Count > 0)
+            {
+                // Legacy compatibility only, TODO: remove at some point
+                o.Add("prefix", member.ProxyTags?.FirstOrDefault().Prefix);
+                o.Add("suffix", member.ProxyTags?.FirstOrDefault().Suffix);
+            }
+
+            return o;
+        }
     }
 }

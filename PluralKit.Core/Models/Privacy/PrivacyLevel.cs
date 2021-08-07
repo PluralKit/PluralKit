@@ -38,5 +38,17 @@ namespace PluralKit.Core
             output = input;
             return true;
         }
+        
+        public static string ToJsonString(this PrivacyLevel level) => level.LevelName();
+
+        public static PrivacyLevel ParsePrivacy(this string input, string errorName)
+        {
+            if (input == null) return PrivacyLevel.Public;
+            if (input == "") return PrivacyLevel.Private;
+            if (input == "private") return PrivacyLevel.Private;
+            if (input == "public") return PrivacyLevel.Public;
+            throw new JsonModelParseError($"Could not parse {errorName} privacy.");
+        }
+
     }
 }

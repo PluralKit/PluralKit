@@ -140,7 +140,7 @@ namespace PluralKit.API
             SystemPatch patch;
             try
             {
-                patch = JsonModelExt.ToSystemPatch(changes); 
+                patch = SystemPatch.FromJSON(changes);
                 patch.CheckIsValid();
             }
             catch (JsonModelParseError e)

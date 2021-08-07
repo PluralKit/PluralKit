@@ -61,7 +61,7 @@ namespace PluralKit.API
             MemberPatch patch;
             try
             {
-                patch = JsonModelExt.ToMemberPatch(properties);
+                patch = MemberPatch.FromJSON(properties);
                 patch.CheckIsValid();
             }
             catch (JsonModelParseError e)
@@ -95,7 +95,7 @@ namespace PluralKit.API
             MemberPatch patch;
             try
             {
-                patch = JsonModelExt.ToMemberPatch(changes);
+                patch = MemberPatch.FromJSON(changes);
                 patch.CheckIsValid();
             }
             catch (JsonModelParseError e)
