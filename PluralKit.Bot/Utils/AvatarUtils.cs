@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -31,7 +31,7 @@ namespace PluralKit.Bot {
 
                 url = TryRewriteCdnUrl(url);
 
-                var response = await client.GetAsync(uri);
+                var response = await client.GetAsync(url);
                 if (!response.IsSuccessStatusCode) // Check status code
                     throw Errors.AvatarServerError(response.StatusCode);
                 if (response.Content.Headers.ContentLength == null) // Check presence of content length
