@@ -217,7 +217,35 @@ const Settings = ({ forceUpdate }) => {
                 }}
               />
             )}
-            Hide system and member banners?
+            Hide banners at the top?
+          </BS.Col>
+          <BS.Col
+            xs={12}
+            lg={4}
+            className="mx-1 mb-4 d-flex align-items-center row"
+          >
+            {localStorage.getItem("bottombanners") ? (
+              <Toggle
+                className="mr-2"
+                defaultChecked={true}
+                icons={false}
+                onChange={() => {
+                  localStorage.removeItem("bottombanners");
+                  forceUpdate();
+                }}
+              />
+            ) : (
+              <Toggle
+                className="mr-2"
+                defaultChecked={false}
+                icons={false}
+                onChange={() => {
+                  localStorage.setItem("bottombanners", "true");
+                  forceUpdate();
+                }}
+              />
+            )}
+            Show banners at the bottom?
           </BS.Col>
         </BS.Row>
       </BS.Card.Body>

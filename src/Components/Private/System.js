@@ -251,6 +251,9 @@ export default function System(props) {
             ) : (
               <p dangerouslySetInnerHTML={{ __html: desc }}></p>
             )}
+            { !user.banner || !localStorage.getItem("bottombanners") ? "" : 
+              <BS.Image rounded className="mb-2" style={{width: '100%', maxHeight: '15rem', objectFit: 'cover'}} src={banner}/>
+            }
             {privacyEdit ? (
               ""
             ) : privacyView ? (

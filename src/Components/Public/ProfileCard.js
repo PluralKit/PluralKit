@@ -131,6 +131,9 @@ export default function MemberCard(props) {
             <hr/></> : "" }
             <p><b>Description:</b></p>
             { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
+            { !member.banner || !localStorage.getItem("bottombanners") ? "" : 
+              <BS.Image rounded className="mb-2" style={{width: '100%', maxHeight: '15rem', objectFit: 'cover'}} src={banner}/>
+            }
             <BS.Row><BS.Col><Link to={`${sysID}/${member.id}`}><BS.Button variant="primary" className="float-right">View page</BS.Button></Link></BS.Col></BS.Row> </BS.Card.Body>
         )
     }
