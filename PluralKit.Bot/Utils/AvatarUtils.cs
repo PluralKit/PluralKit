@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -41,11 +41,15 @@ namespace PluralKit.Bot {
                 if (!acceptableMimeTypes.Contains(response.Content.Headers.ContentType.MediaType)) // Check MIME type
                     throw Errors.AvatarNotAnImage(response.Content.Headers.ContentType.MediaType);
 
+                if (isFullSizeImage)
+                    // no need to do size checking on banners
+                    return;
+
                 // Parse the image header in a worker
                 var stream = await response.Content.ReadAsStreamAsync();
                 var image = await Task.Run(() => Image.Identify(stream));
                 if (image == null) throw Errors.AvatarInvalid;
-                if (!isFullSizeImage && (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit)) // Check image size
+                if (image.Width > Limits.AvatarDimensionLimit || image.Height > Limits.AvatarDimensionLimit) // Check image size
                     throw Errors.AvatarDimensionsTooLarge(image.Width, image.Height);
             }
         }
