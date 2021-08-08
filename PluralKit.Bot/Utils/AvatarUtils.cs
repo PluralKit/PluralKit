@@ -36,14 +36,15 @@ namespace PluralKit.Bot {
                     throw Errors.AvatarServerError(response.StatusCode);
                 if (response.Content.Headers.ContentLength == null) // Check presence of content length
                     throw Errors.AvatarNotAnImage(null);
-                if (response.Content.Headers.ContentLength > Limits.AvatarFileSizeLimit) // Check content length
-                    throw Errors.AvatarFileSizeLimit(response.Content.Headers.ContentLength.Value);
                 if (!acceptableMimeTypes.Contains(response.Content.Headers.ContentType.MediaType)) // Check MIME type
                     throw Errors.AvatarNotAnImage(response.Content.Headers.ContentType.MediaType);
 
                 if (isFullSizeImage)
                     // no need to do size checking on banners
                     return;
+
+                if (response.Content.Headers.ContentLength > Limits.AvatarFileSizeLimit) // Check content length
+                    throw Errors.AvatarFileSizeLimit(response.Content.Headers.ContentLength.Value);
 
                 // Parse the image header in a worker
                 var stream = await response.Content.ReadAsStreamAsync();
