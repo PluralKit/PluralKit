@@ -157,7 +157,7 @@ export default function ProfilePage(props) {
             { !member.banner || !localStorage.getItem("bottombanners") ? "" : 
               <BS.Image rounded className="mb-2" style={{width: '100%', maxHeight: '15rem', objectFit: 'cover'}} src={banner}/>
             }
-            <BS.Row><BS.Col><Link to={location.pathname.substring(0, location.pathname.lastIndexOf('/'))}><BS.Button variant="primary" className="float-right">Back</BS.Button></Link></BS.Col></BS.Row>
+            { props.list ? <BS.Row><BS.Col><Link to={location.pathname.substring(0, location.pathname.lastIndexOf('/'))}><BS.Button variant="primary" className="float-right">Back</BS.Button></Link></BS.Col></BS.Row> : ""}
             </BS.Card.Body>
         </BS.Card>
         </>
