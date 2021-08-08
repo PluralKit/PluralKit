@@ -45,7 +45,7 @@ as $$
         system_last_switch.timestamp as last_switch_timestamp,
         system.tag as system_tag,
         system.guild_tag as system_guild_tag,
-        system.tag_enabled as tag_enabled,
+        coalesce(system.tag_enabled, true) as tag_enabled,
         system.avatar_url as system_avatar,
         system.account_autoproxy as allow_autoproxy,
         system.latch_timeout as latch_timeout
