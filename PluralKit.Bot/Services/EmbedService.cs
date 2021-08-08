@@ -84,11 +84,15 @@ namespace PluralKit.Bot {
             if (system.Tag != null) 
                 eb.Field(new("Tag", system.Tag.EscapeMarkdown(), true));
 
-            if (cctx.MessageContext.SystemGuildTag != null && cctx.MessageContext.TagEnabled)
-                eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", cctx.MessageContext.SystemGuildTag.EscapeMarkdown(), true));
+            if (cctx.Guild != null)
+            {
+                if (cctx.MessageContext.SystemGuildTag != null && cctx.MessageContext.TagEnabled)
+                    eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", cctx.MessageContext.SystemGuildTag
+                        .EscapeMarkdown(), true));
 
-            if (!cctx.MessageContext.TagEnabled)
-                eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", "*(tag is disabled in this server)*"));
+                if (!cctx.MessageContext.TagEnabled)
+                    eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", "*(tag is disabled in this server)*"));
+            }
 
             if (!system.Color.EmptyOrNull()) eb.Field(new("Color", $"#{system.Color}", true));
 
