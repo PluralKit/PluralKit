@@ -95,6 +95,8 @@ namespace PluralKit.Bot
                     throw new PKError("Could not find a recent message to edit.");
 
                 msg = await _repo.GetMessage(conn, recent.Mid);
+                if (msg == null)
+                    throw new PKError("Could not find a recent message to edit.");
             }
 
             return msg;

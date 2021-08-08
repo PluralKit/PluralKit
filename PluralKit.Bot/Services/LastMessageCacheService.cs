@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 
 using Myriad.Types;
 
@@ -10,15 +9,19 @@ namespace PluralKit.Bot
     // TODO: Should this be moved to Myriad.Cache?
     public class LastMessageCacheService
     {
-        private readonly IDictionary<ulong, CachedMessage> _cache = new ConcurrentDictionary<ulong, CachedMessage>();
+        private readonly IDictionary<ulong, CacheEntry> _cache = new ConcurrentDictionary<ulong, CacheEntry>();
 
         public void AddMessage(Message msg)
         {
             var previous = GetLastMessage(msg.ChannelId);
-            _cache[msg.ChannelId] = new CachedMessage(msg.Id, msg.ReferencedMessage.Value?.Id, previous?.Id);
+            var current = ToCachedMessage(msg);
+            _cache[msg.ChannelId] = new(current, previous?.Current);
         }
 
-        public CachedMessage? GetLastMessage(ulong channel)
+        private CachedMessage ToCachedMessage(Message msg) => 
+            new(msg.Id, msg.ReferencedMessage.Value?.Id, msg.Author.Username);
+
+        public CacheEntry? GetLastMessage(ulong channel)
         {
             return _cache.TryGetValue(channel, out var message) ? message : null;
         }
@@ -29,13 +32,13 @@ namespace PluralKit.Bot
             if (storedMessage == null)
                 return;
 
-            if (message == storedMessage.Id)
+            if (message == storedMessage.Current.Id)
                 if (storedMessage.Previous != null)
-                    _cache[channel] = new CachedMessage(storedMessage.Previous.Value, null, null);
+                    _cache[channel] = new(storedMessage.Previous, null);
                 else
                     _cache.Remove(channel);
-            else if (message == storedMessage.Previous)
-                _cache[channel] = new CachedMessage(storedMessage.Id, storedMessage.ReferencedMessage, null);
+            else if (message == storedMessage.Previous?.Id)
+                _cache[channel] = new(storedMessage.Current, null);
         }
 
         public void HandleMessageDeletion(ulong channel, List<ulong> messages)
@@ -44,21 +47,21 @@ namespace PluralKit.Bot
             if (storedMessage == null)
                 return;
 
-            if (!(messages.Contains(storedMessage.Id) || (storedMessage.Previous != null && messages.Contains(storedMessage.Previous.Value))))
+            if (!(messages.Contains(storedMessage.Current.Id) || storedMessage.Previous != null && messages.Contains(storedMessage.Previous.Id)))
                 // none of the deleted messages are relevant to the cache
                 return;
 
             ulong? newLastMessage = null;
 
-            if (messages.Contains(storedMessage.Id))
-                newLastMessage = storedMessage.Previous;
+            if (messages.Contains(storedMessage.Current.Id))
+                newLastMessage = storedMessage.Previous?.Id;
 
-            if (storedMessage.Previous != null && messages.Contains(storedMessage.Previous.Value))
-                if (newLastMessage == storedMessage.Previous)
+            if (storedMessage.Previous != null && messages.Contains(storedMessage.Previous.Id))
+                if (newLastMessage == storedMessage.Previous?.Id)
                     newLastMessage = null;
                 else
                 {
-                    _cache[channel] = new CachedMessage(storedMessage.Id, storedMessage.ReferencedMessage, null);
+                    _cache[channel] = new(storedMessage.Current, null);
                     return;
                 }
 
@@ -67,5 +70,7 @@ namespace PluralKit.Bot
         }
     }
 
-    public record CachedMessage(ulong Id, ulong? ReferencedMessage, ulong? Previous);
+    public record CacheEntry(CachedMessage Current, CachedMessage? Previous);
+
+    public record CachedMessage(ulong Id, ulong? ReferencedMessage, string AuthorUsername);
 }

@@ -242,40 +242,32 @@ namespace PluralKit.Bot
             };
         }
 
-        private async Task<string> FixSameName(ulong channel_id, MessageContext ctx, ProxyMember member)
+        private async Task<string> FixSameName(ulong channelId, MessageContext ctx, ProxyMember member)
         {
             var proxyName = member.ProxyName(ctx);
-
-            Message? lastMessage = null;
-
-            var lastMessageId = _lastMessage.GetLastMessage(channel_id)?.Previous;
-            if (lastMessageId == null)
+            
+            var lastMessage = _lastMessage.GetLastMessage(channelId)?.Previous;
+            if (lastMessage == null)
                 // cache is out of date or channel is empty.
                 return proxyName;
-
-            lastMessage = await _rest.GetMessage(channel_id, lastMessageId.Value);
-
-            if (lastMessage == null)
-                // we don't have enough information to figure out if we need to fix the name, so bail here.
-                return proxyName;
-
+            
             await using var conn = await _db.Obtain();
-            var message = await _repo.GetMessage(conn, lastMessage.Id);
+            var pkMessage = await _repo.GetMessage(conn, lastMessage.Id);
 
-            if (lastMessage.Author.Username == proxyName)
+            if (lastMessage.AuthorUsername == proxyName)
             {
                 // last message wasn't proxied by us, but somehow has the same name
                 // it's probably from a different webhook (Tupperbox?) but let's fix it anyway!
-                if (message == null)
+                if (pkMessage == null)
                     return FixSameNameInner(proxyName);
 
                 // last message was proxied by a different member
-                if (message.Member.Id != member.Id)
+                if (pkMessage.Member.Id != member.Id)
                     return FixSameNameInner(proxyName);
             }
 
             // if we fixed the name last message and it's the same member proxying, we want to fix it again
-            if (lastMessage.Author.Username == FixSameNameInner(proxyName) && message?.Member.Id == member.Id)
+            if (lastMessage.AuthorUsername == FixSameNameInner(proxyName) && pkMessage?.Member.Id == member.Id)
                 return FixSameNameInner(proxyName);
 
             // No issues found, current proxy name is fine.

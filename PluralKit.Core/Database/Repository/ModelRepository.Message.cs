@@ -14,7 +14,7 @@ namespace PluralKit.Core
             _logger.Debug("Stored message {@StoredMessage} in channel {Channel}", msg, msg.Channel);
         }
         
-        public async Task<FullMessage> GetMessage(IPKConnection conn, ulong id)
+        public async Task<FullMessage?> GetMessage(IPKConnection conn, ulong id)
         {
             FullMessage Mapper(PKMessage msg, PKMember member, PKSystem system) =>
                 new FullMessage {Message = msg, System = system, Member = member};

@@ -55,7 +55,7 @@ namespace PluralKit.Bot
             if (!DiscordUtils.IsValidGuildChannel(channel))
                 return;
             var guild = _cache.GetGuild(channel.GuildId!.Value);
-            var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId);
+            var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId)?.Current;
 
             // Only react to the last message in the channel
             if (lastMessage?.Id != evt.Id)
