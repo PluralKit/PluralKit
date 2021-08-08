@@ -51,7 +51,7 @@
 
     <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
       <Exec
-        Command="git describe --long --always --dirty --exclude=* --abbrev=8 > ../.version"
+        Command="git describe --long --always --dirty --exclude=* --abbrev=7 > ../.version"
         IgnoreExitCode="False"
         >
       </Exec>
