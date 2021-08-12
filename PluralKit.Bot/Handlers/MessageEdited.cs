@@ -69,7 +69,14 @@ namespace PluralKit.Bot
 
             var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
             var botPermissions = _bot.PermissionsIn(channel.Id);
-            await _proxy.HandleIncomingMessage(shard, equivalentEvt, ctx, allowAutoproxy: false, guild: guild, channel: channel, botPermissions: botPermissions);
+
+            try
+            {
+                await _proxy.HandleIncomingMessage(shard, equivalentEvt, ctx, allowAutoproxy: false, guild: guild,
+                    channel: channel, botPermissions: botPermissions);
+            }
+            // Catch any failed proxy checks so they get ignored in the global error handler
+            catch (ProxyService.ProxyChecksFailedException) {}
         }
 
         private async Task<MessageCreateEvent> GetMessageCreateEvent(MessageUpdateEvent evt, CachedMessage lastMessage, Channel channel)
