@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 using Serilog;
@@ -9,7 +10,10 @@ namespace Myriad.Gateway.Limit
     {
         private readonly string _url;
         private readonly ILogger _logger;
-        private readonly HttpClient _httpClient = new();
+        private readonly HttpClient _httpClient = new()
+        {
+            Timeout = TimeSpan.FromSeconds(60)
+        };
         
         public TwilightGatewayRatelimiter(ILogger logger, string url)
         {
@@ -19,9 +23,19 @@ namespace Myriad.Gateway.Limit
 
         public async Task Identify(int shard)
         {
-            // Literally just request and wait :p
-            _logger.Information("Shard {ShardId}: Requesting identify at gateway queue {GatewayQueueUrl}", shard, _url);
-            await _httpClient.GetAsync(_url);
+            while (true)
+            {
+                try
+                {
+                    _logger.Information("Shard {ShardId}: Requesting identify at gateway queue {GatewayQueueUrl}",
+                        shard, _url);
+                    await _httpClient.GetAsync(_url);
+                    return;
+                }
+                catch (TimeoutException)
+                {
+                }
+            }
         }
     }
 }
