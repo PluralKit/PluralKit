@@ -38,6 +38,22 @@ namespace Myriad.Extensions
         public static PermissionSet EveryonePermissions(this Guild guild) =>
             guild.Roles.FirstOrDefault(r => r.Id == guild.Id)?.Permissions ?? PermissionSet.Dm;
         
+        public static PermissionSet EveryonePermissions(this IDiscordCache cache, Channel channel)
+        {
+            if (channel.Type == Channel.ChannelType.Dm)
+                return PermissionSet.Dm;
+
+            var overwrite = channel.PermissionOverwrites?.FirstOrDefault(r => r.Id == channel.GuildId);
+            if (overwrite == null)
+                return cache.GetGuild(channel.GuildId!.Value).EveryonePermissions();
+
+            var perms = PermissionSet.None;
+            perms &= ~overwrite.Deny;
+            perms |= overwrite.Allow;
+
+            return perms;
+        }
+
         public static PermissionSet PermissionsFor(Guild guild, Channel channel, MessageCreateEvent msg) =>
             PermissionsFor(guild, channel, msg.Author.Id, msg.Member);
 
