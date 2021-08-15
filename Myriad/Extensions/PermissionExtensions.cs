@@ -43,11 +43,12 @@ namespace Myriad.Extensions
             if (channel.Type == Channel.ChannelType.Dm)
                 return PermissionSet.Dm;
 
+            var defaultPermissions = cache.GetGuild(channel.GuildId!.Value).EveryonePermissions();
             var overwrite = channel.PermissionOverwrites?.FirstOrDefault(r => r.Id == channel.GuildId);
             if (overwrite == null)
-                return cache.GetGuild(channel.GuildId!.Value).EveryonePermissions();
+                return defaultPermissions;
 
-            var perms = PermissionSet.None;
+            var perms = defaultPermissions;
             perms &= ~overwrite.Deny;
             perms |= overwrite.Allow;
 
