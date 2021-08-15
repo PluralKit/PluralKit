@@ -132,8 +132,8 @@ namespace PluralKit.Bot
                 var repliedTo = trigger.ReferencedMessage.Value;
                 if (repliedTo != null)
                 {
-                    var nickname = await FetchReferencedMessageAuthorNickname(trigger, repliedTo);
-                    var embed = CreateReplyEmbed(match, trigger, repliedTo, nickname);
+                    var (nickname, avatar) = await FetchReferencedMessageAuthorInfo(trigger, repliedTo);
+                    var embed = CreateReplyEmbed(match, trigger, repliedTo, nickname, avatar);
                     if (embed != null)
                         embeds.Add(embed);
                 }
@@ -164,25 +164,25 @@ namespace PluralKit.Bot
             await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
         }
 
-        private async Task<string?> FetchReferencedMessageAuthorNickname(Message trigger, Message referenced)
+        private async Task<(string?, string?)> FetchReferencedMessageAuthorInfo(Message trigger, Message referenced)
         {
             if (referenced.WebhookId != null)
-                return null;
+                return (null, null);
 
             try
             {
                 var member = await _rest.GetGuildMember(trigger.GuildId!.Value, referenced.Author.Id);
-                return member?.Nick;
+                return (member?.Nick, member?.Avatar);
             }
             catch (ForbiddenException)
             {
                 _logger.Warning("Failed to fetch member {UserId} in guild {GuildId} when getting reply nickname, falling back to username",
                     referenced.Author.Id, trigger.GuildId!.Value);
-                return null;
+                return (null, null);
             }
         }
 
-        private Embed CreateReplyEmbed(ProxyMatch match, Message trigger, Message repliedTo, string? nickname)
+        private Embed CreateReplyEmbed(ProxyMatch match, Message trigger, Message repliedTo, string? nickname, string? avatar)
         {
             // repliedTo doesn't have a GuildId field :/
             var jumpLink = $"https://discord.com/channels/{trigger.GuildId}/{repliedTo.ChannelId}/{repliedTo.Id}";
@@ -231,7 +231,9 @@ namespace PluralKit.Bot
             }
             
             var username = nickname ?? repliedTo.Author.Username;
-            var avatarUrl = $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";
+            var avatarUrl = avatar != null
+                ? $"https://cdn.discordapp.com/guilds/{trigger.GuildId}/users/{repliedTo.Author.Id}/{avatar}.png"
+                : $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";
 
             return new Embed
             {
