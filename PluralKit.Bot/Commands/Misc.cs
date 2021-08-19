@@ -162,7 +162,6 @@ namespace PluralKit.Bot {
             // Loop through every channel and group them by sets of permissions missing
             var permissionsMissing = new Dictionary<ulong, List<Channel>>();
             var hiddenChannels = 0;
-            await ctx.Reply(text: "Hello");
 
             foreach (var channel in await _rest.GetGuildChannels(guild.Id))
             {
