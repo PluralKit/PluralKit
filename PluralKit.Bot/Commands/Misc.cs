@@ -155,15 +155,20 @@ namespace PluralKit.Bot {
                 PermissionSet.AttachFiles,
                 PermissionSet.EmbedLinks,
                 PermissionSet.ManageMessages,
-                PermissionSet.ManageWebhooks
+                PermissionSet.ManageWebhooks,
+                PermissionSet.UseExternalEmojis
             };
 
             // Loop through every channel and group them by sets of permissions missing
             var permissionsMissing = new Dictionary<ulong, List<Channel>>();
             var hiddenChannels = 0;
+            await ctx.Reply(text: "Hello");
+
             foreach (var channel in await _rest.GetGuildChannels(guild.Id))
             {
                 var botPermissions = _bot.PermissionsIn(channel.Id);
+                var webhookPermissions = _cache.EveryonePermissions(channel);
+
                 var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
                 
                 if ((userPermissions & PermissionSet.ViewChannel) == 0)
@@ -179,8 +184,18 @@ namespace PluralKit.Bot {
                 // TODO: Rewrite with proper bitfield math
                 ulong missingPermissionField = 0;
                 foreach (var requiredPermission in requiredPermissions)
-                    if ((botPermissions & requiredPermission) == 0)
-                        missingPermissionField |= (ulong) requiredPermission;
+                {
+                    if ((botPermissions & requiredPermission) == 0 && requiredPermission != PermissionSet.UseExternalEmojis)
+                    {
+                        missingPermissionField |= (ulong)requiredPermission;
+                    } else if (requiredPermission == PermissionSet.UseExternalEmojis)
+                    {
+                        if ((webhookPermissions & requiredPermission) == 0)
+                        {
+                            missingPermissionField |= (ulong)requiredPermission;
+                        }
+                    }
+                }
 
                 // If we're not missing any permissions, don't bother adding it to the dict
                 // This means we can check if the dict is empty to see if all channels are proxyable
@@ -214,9 +229,29 @@ namespace PluralKit.Bot {
                     eb.Color(DiscordUtils.Red);
                 }
             }
+            string footer = "";
+
+            foreach (var (missingPermissionField, channels) in permissionsMissing)
+            {
+                if (missingPermissionField == (ulong)PermissionSet.UseExternalEmojis && footer.Length < 1)
+                {
+                    footer = "Use External Emojis permissions must be granted to the @everyone/default role.";
+                }
+            }
 
             if (hiddenChannels > 0)
-                eb.Footer(new($"{"channel".ToQuantity(hiddenChannels)} were ignored as you do not have view access to them."));
+            {   
+                if (footer.Length > 0)
+                {
+                    footer = $"{"channel".ToQuantity(hiddenChannels)} were ignored as you do not have view access to them.";
+                }
+                else
+                {
+                    footer += $"\n{"channel".ToQuantity(hiddenChannels)} were ignored as you do not have view access to them.";
+                }
+            }
+
+            eb.Footer(new(footer));
 
             // Send! :)
             await ctx.Reply(embed: eb.Build());

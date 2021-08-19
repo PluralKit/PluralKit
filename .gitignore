@@ -20,4 +20,6 @@ pluralkit.*.conf
 
 # Generated
 logs/
+build/
 .version
+.vs/
