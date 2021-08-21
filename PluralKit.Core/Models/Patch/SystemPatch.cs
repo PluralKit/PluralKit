@@ -14,6 +14,9 @@ namespace PluralKit.Core
         public Partial<string?> AvatarUrl { get; set; }
         public Partial<string?> BannerImage { get; set; }
         public Partial<string?> Color { get; set; }
+        public Partial<string?> WelcomeMessage { get; set; }
+        public Partial<WelcomeMessageMode> WelcomeMessageMode { get; set; }
+        public Partial<ulong?> WelcomeMessageChannel { get; set; }
         public Partial<string?> Token { get; set; }
         public Partial<string> UiTz { get; set; }
         public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
@@ -34,6 +37,9 @@ namespace PluralKit.Core
             .With("avatar_url", AvatarUrl)
             .With("banner_image", BannerImage)
             .With("color", Color)
+            .With("welcome_message", WelcomeMessage)
+            .With("welcome_message_mode", WelcomeMessageMode)
+            .With("welcome_message_channel", WelcomeMessageChannel)
             .With("token", Token)
             .With("ui_tz", UiTz)
             .With("description_privacy", DescriptionPrivacy)

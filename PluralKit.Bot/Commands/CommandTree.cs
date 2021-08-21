@@ -18,6 +18,8 @@ namespace PluralKit.Bot
         public static Command SystemServerTag = new Command("system servertag", "system servertag [tag|enable|disable]", "Changes your system's tag in the current server");
         public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
         public static Command SystemBannerImage = new Command("system banner", "system banner [url]", "Set the system's banner image");
+        public static Command SystemWelcomeMessage = new Command("system welcome", "system welcome [message]", "Set the system's welcome message");
+        public static Command SystemWelcomeMessageMode = new Command("system welcome location", "system welcome location [inline|dm|#channel]", "Set the system's welcome message location");
         public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
         public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
         public static Command SystemProxy = new Command("system proxy", "system proxy [server id] [on|off]", "Enables or disables message proxying in a specific server");
@@ -98,7 +100,7 @@ namespace PluralKit.Bot
         public static Command Admin = new Command("admin", "admin", "Super secret admin commands (sshhhh)");
 
         public static Command[] SystemCommands = {
-            SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor, SystemDelete,
+            SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor, SystemWelcomeMessage, SystemWelcomeMessageMode, SystemDelete,
             SystemTimezone, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
         };
 
@@ -274,6 +276,11 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemColor, m => m.Color(ctx));
             else if (ctx.Match("banner", "splash", "cover"))
                 await ctx.Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx));
+            else if (ctx.Match("welcome"))
+                if (ctx.Match("location"))
+                    await ctx.Execute<SystemEdit>(SystemWelcomeMessageMode, m => m.SetWelcomeMode(ctx));
+                else
+                    await ctx.Execute<SystemEdit>(SystemWelcomeMessage, m => m.SetWelcomeMessage(ctx));
             else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
                 await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx));
             else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))

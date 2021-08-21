@@ -42,6 +42,7 @@ namespace PluralKit.Bot {
         public static PKError SystemNameTooLongError(int length) => new PKError($"System name too long ({length}/{Limits.MaxSystemNameLength} characters).");
         public static PKError SystemTagTooLongError(int length) => new PKError($"System tag too long ({length}/{Limits.MaxSystemTagLength} characters).");
         public static PKError DescriptionTooLongError(int length) => new PKError($"Description too long ({length}/{Limits.MaxDescriptionLength} characters).");
+        public static PKError WelcomeMessageTooLongError(int length) => new PKError($"Welcome message too long ({length}/{Limits.MaxWelcomeMessageLength} characters).");
         public static PKError MemberNameTooLongError(int length) => new PKError($"Member name too long ({length}/{Limits.MaxMemberNameLength} characters).");
         public static PKError MemberPronounsTooLongError(int length) => new PKError($"Member pronouns too long ({length}/{Limits.MaxMemberNameLength} characters).");
         public static PKError MemberLimitReachedError(int limit) => new PKError($"System has reached the maximum number of members ({limit}). Please delete unused members first in order to create new ones.");

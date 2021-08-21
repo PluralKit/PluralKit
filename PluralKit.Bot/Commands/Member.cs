@@ -7,6 +7,11 @@ using System.Linq;
 
 using Dapper;
 
+using Myriad.Extensions;
+using Myriad.Rest.Exceptions;
+using Myriad.Rest.Types.Requests;
+using Myriad.Rest.Types;
+using Myriad.Types;
 using Myriad.Builders;
 
 using Newtonsoft.Json.Linq;
@@ -70,21 +75,101 @@ namespace PluralKit.Bot
             }
 
             // Send confirmation and space hint
-            await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
+            var text = $"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member";
+
             if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new {System = ctx.System.Id}))) //if has private members
-                await ctx.Reply($"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
+                text += $"\n{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.";
             if (avatarArg != null)
                 if (imageMatchError == null)
-                    await ctx.Reply($"{Emojis.Success} Member avatar set to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.");
+                    text += $"\n{Emojis.Success} Member avatar set to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.";
                 else
-                    await ctx.Reply($"{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}");
+                    text += $"\n{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}";
             if (memberName.Contains(" "))
-                await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+                text += $"\n{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).";
             if (memberCount >= memberLimit)
-                await ctx.Reply($"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). You will be unable to create additional members until existing members are deleted.");
+                text += $"\n{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). You will be unable to create additional members until existing members are deleted.";
             else if (memberCount >= Limits.MaxMembersWarnThreshold(memberLimit))
-                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
+                text += $"\n{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.";
+
+            Embed? embed = null;
+            if (ctx.System.WelcomeMessage != null) {
+                var eb = new EmbedBuilder()
+                    .Title($"Welcome, {memberName}!")
+                    .Color(ctx.System.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
+                    .Description(ctx.System.WelcomeMessage)
+                    .Footer(new($"System ID: {ctx.System.Hid}"));
+
+                switch (ctx.System.WelcomeMessageMode) {
+                    case WelcomeMessageMode.Off: break;
+                    case WelcomeMessageMode.Inline:
+                    {
+                        embed = eb.Build();
+                        break;
+                    }
+                    case WelcomeMessageMode.DM:
+                    {
+                        try {
+                            var dm = await ctx.Cache.GetOrCreateDmChannel(ctx.Rest, ctx.Author.Id);
+                            await ctx.Rest.CreateMessage(dm.Id, new MessageRequest{
+                                Embed = eb.Build()
+                            });
+                        }
+                        catch (ForbiddenException)
+                        {
+                            if (ctx.Channel.Type != Channel.ChannelType.Dm)
+                                text += $"\n{Emojis.Error} Could not send welcome message in DMs. Are your DMs closed?";
+                        }
+                        break;
+                    }
+                    case WelcomeMessageMode.CustomChannel:
+                    {
+                        // This shouldn't ever happen, but if it does, act as if there's no message set at all.
+                        if (ctx.System.WelcomeMessageChannel == null) break;
+
+                        try {
+                            var channel = await ctx.Cache.GetOrFetchChannel(ctx.Rest, (ulong)ctx.System.WelcomeMessageChannel);
+
+                            // GuildId should never be null
+                            var guildMember = await ctx.Rest.GetGuildMember(channel?.GuildId ?? 0, ctx.Author.Id);
+                            if (guildMember == null) {
+                                text += $"\n{Emojis.Error} You're not in the server your welcome channel is in.";
+                                break;
+                            }
+
+                            var perms = ctx.Cache.PermissionsFor(channel.Id, guildMember);
+
+                            if (!perms.HasFlag(PermissionSet.ViewChannel | PermissionSet.ReadMessageHistory))
+                            {
+                                text += $"\n{Emojis.Error} You can't read messages in your welcome channel.";
+                                break;
+                            }
+                            if (!perms.HasFlag(PermissionSet.SendMessages))
+                            {
+                                text += $"\n{Emojis.Error} You can't send messages in your welcome channel.";
+                                break;
+                            }
+
+                            await ctx.Rest.CreateMessage(channel.Id, new MessageRequest{
+                                Content = ctx.Author.Mention(),
+                                Embed = eb.Build(),
+                                AllowedMentions = new AllowedMentions {
+                                    Users = new ulong[] { ctx.Author.Id }
+                                }
+                            });
+                        } catch (ForbiddenException) {
+                            text += $"\n{Emojis.Error} PluralKit does not have permission to send messages in your welcome channel.";
+                        } catch (NotFoundException) {
+                            text += $"\n{Emojis.Error} Could not find your welcome channel. Has it been deleted?";
+                        }
+                        break;
+                    }
+
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            await ctx.Reply(text, embed: embed);
         }
         
         public async Task ViewMember(Context ctx, PKMember target)

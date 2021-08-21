@@ -31,6 +31,13 @@ namespace PluralKit.Core {
         public override string ToString() => $"System #{Value}";
     }
 
+    public enum WelcomeMessageMode {
+        Off = 1,
+        Inline = 2,
+        DM = 3,
+        CustomChannel = 4,
+    }
+
     public class PKSystem
     {
         [Key] public SystemId Id { get; }
@@ -41,6 +48,9 @@ namespace PluralKit.Core {
         public string AvatarUrl { get; }
         public string BannerImage { get; }
         public string Color { get; }
+        public string WelcomeMessage { get; }
+        public WelcomeMessageMode WelcomeMessageMode { get; }
+        public ulong? WelcomeMessageChannel { get; }
         public string Token { get; }
         public Instant Created { get; }
         public string UiTz { get; set; }

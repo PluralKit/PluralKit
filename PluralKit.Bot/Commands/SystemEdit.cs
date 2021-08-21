@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using Myriad.Extensions;
 using Myriad.Builders;
 using Myriad.Types;
 
@@ -92,6 +93,144 @@ namespace PluralKit.Bot
                 
                 await ctx.Reply($"{Emojis.Success} System description changed.");
             }
+        }
+
+        public async Task SetWelcomeMessage(Context ctx)
+        {
+            ctx.CheckSystem();
+
+            if (await ctx.MatchClear("your system's welcome message"))
+            {
+                var clearPatch = new SystemPatch {WelcomeMessage = null};
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, clearPatch));
+
+                await ctx.Reply($"{Emojis.Success} Welcome message cleared.");
+                return;
+            }
+
+            var newMessage = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
+            if (newMessage == null)
+            {
+                if (ctx.System.WelcomeMessage == null)
+                    await ctx.Reply("Your system does not have a welcome message set. To set one, type `pk;s welcome <message>`.");
+                else if (ctx.MatchFlag("r", "raw"))
+                    await ctx.Reply($"```\n{ctx.System.WelcomeMessage}\n```");
+                else
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .Title("System welcome message")
+                        .Description(ctx.System.WelcomeMessage)
+                        .Footer(new("To print the welcome message with formatting, type `pk;s welcome -raw`. To clear it, type `pk;s welcome -clear`. To change it, type `pk;s welcome <new message>`."))
+                        .Build());
+            }
+            else
+            {
+                if (newMessage.Length > Limits.MaxDescriptionLength) throw Errors.WelcomeMessageTooLongError(newMessage.Length);
+
+                var patch = new SystemPatch {WelcomeMessage = newMessage};
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} System welcome message changed.");
+            }
+        }
+
+        public async Task SetWelcomeMode(Context ctx)
+        {
+            ctx.CheckSystem();
+
+            if (ctx.Match("off", "no", "cancel", "disable", "remove"))
+                await WelcomeModeOff(ctx);
+            else if (ctx.Match("inline"))
+                await WelcomeModeInline(ctx);
+            else if (ctx.Match("dm", "dms"))
+                await WelcomeModeDM(ctx);
+            else if (ctx.Match("channel"))
+                throw new PKSyntaxError("Channel-mode welcome messages must target a specific channel. Use the `pk;system welcome location <channel>` command, where `channel` is a channel in this server that you can see.");
+            else if (await ctx.MatchChannel() is Channel channel)
+                await WelcomeModeChannel(ctx, channel);
+            else if (!ctx.HasNext())
+                await ctx.Reply(embed: CreateWelcomeMessageStatusEmbed(ctx));
+            else
+                throw new PKSyntaxError($"Invalid welcome message mode {ctx.PopArgument().AsCode()}.");
+        }
+
+        private async Task WelcomeModeOff(Context ctx)
+        {
+            if (ctx.System.WelcomeMessageMode == WelcomeMessageMode.Off)
+                await ctx.Reply($"{Emojis.Note} Welcome messages are already disabled.");
+            else
+            {
+                await UpdateWelcomeMode(ctx, WelcomeMessageMode.Off, null);
+                await ctx.Reply($"{Emojis.Success} Welcome messages disabled.");
+            }
+        }
+
+        private async Task WelcomeModeInline(Context ctx)
+        {
+            if (ctx.System.WelcomeMessageMode == WelcomeMessageMode.Inline)
+                await ctx.Reply($"{Emojis.Note} Welcome messages are already being sent inline.");
+            else
+            {
+                await UpdateWelcomeMode(ctx, WelcomeMessageMode.Inline, null);
+                await ctx.Reply($"{Emojis.Success} Welcome messages will now be sent in the channel where `pk;member new` is run.");
+            }
+        }
+
+        private async Task WelcomeModeDM(Context ctx)
+        {
+            if (ctx.System.WelcomeMessageMode == WelcomeMessageMode.DM)
+                await ctx.Reply($"{Emojis.Note} Welcome messages are already being sent in DMs.");
+            else
+            {
+                await UpdateWelcomeMode(ctx, WelcomeMessageMode.DM, null);
+                await ctx.Reply($"{Emojis.Success} Welcome messages will now be sent in DMs.");
+            }
+        }
+
+        private async Task WelcomeModeChannel(Context ctx, Channel channel)
+        {
+            ctx.CheckGuildContext();
+
+            if (channel.GuildId != ctx.Guild.Id) throw new PKError($"<#{channel.Id}> is not in this server.");
+
+            var member = await ctx.Rest.GetGuildMember(ctx.Guild.Id, ctx.Author.Id);
+            var perms = ctx.Cache.PermissionsFor(channel.Id, member);
+
+            if (!perms.HasFlag(PermissionSet.ViewChannel | PermissionSet.SendMessages))
+                throw new PKError("You do not have permission to send messages in that channel.");
+
+            await UpdateWelcomeMode(ctx, WelcomeMessageMode.CustomChannel, channel.Id);
+            await ctx.Reply($"{Emojis.Success} Welcome messages will now be sent to <#{channel.Id}>.");
+        }
+
+        private Embed CreateWelcomeMessageStatusEmbed(Context ctx)
+        {
+            var commandList = "**pk;system welcome location inline** - Send the welcome message in the channel where `pk;member new` is run\n**pk;system welcome location dm** - Send the welcome message in DMs\n**pk;system welcome location <channel>** - Send the welcome message to a specific channel";
+
+            var eb = new EmbedBuilder()
+                .Title("Current welcome message status");
+
+            switch (ctx.System.WelcomeMessageMode) {
+                case WelcomeMessageMode.Off:
+                    eb.Description($"Welcome messages are **disabled** for your system. To enable them, use one of the following commands:\n{commandList}");
+                    break;
+                case WelcomeMessageMode.Inline:
+                    eb.Description("Welcome messages are being sent in the channel where `pk;member new` is run.");
+                    break;
+                case WelcomeMessageMode.DM:
+                    eb.Description("Welcome messages are being sent in DMs.");
+                    break;
+                case WelcomeMessageMode.CustomChannel:
+                    eb.Description($"Welcome messages are being sent to <#{ctx.System.WelcomeMessageChannel}>.");
+                    break;
+            }
+
+            return eb.Build();
+        }
+
+        private Task UpdateWelcomeMode(Context ctx, WelcomeMessageMode welcomeMode, ulong? channelId)
+        {
+            var patch = new SystemPatch {WelcomeMessageMode = welcomeMode, WelcomeMessageChannel = channelId};
+            return _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
         }
 
         public async Task Color(Context ctx) {
