@@ -12,7 +12,7 @@ namespace Myriad.Rest
 {
     public class DiscordApiClient
     {
-        public const string UserAgent = "PluralKit (https://github.com/xSke/PluralKit/tree/main/Myriad/, v1)";
+        public const string UserAgent = "DiscordBot (https://github.com/xSke/PluralKit/tree/main/Myriad/, v1)";
         private readonly BaseRestClient _client;
 
         public DiscordApiClient(string token, ILogger logger)
