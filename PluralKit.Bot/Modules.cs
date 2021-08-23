@@ -5,6 +5,7 @@ using Autofac;
 
 using Myriad.Cache;
 using Myriad.Gateway;
+using Myriad.Rest;
 
 using NodaTime;
 
@@ -113,7 +114,8 @@ namespace PluralKit.Bot
             // Utils
             builder.Register(c => new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(5)
+                Timeout = TimeSpan.FromSeconds(5),
+                DefaultRequestHeaders = {{"User-Agent", DiscordApiClient.UserAgent}}
             }).AsSelf().SingleInstance();
             builder.RegisterInstance(SystemClock.Instance).As<IClock>();
             builder.RegisterType<SerilogGatewayEnricherFactory>().AsSelf().SingleInstance();

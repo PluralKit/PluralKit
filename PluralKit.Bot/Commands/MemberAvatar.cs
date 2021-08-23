@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 using Myriad.Builders;
@@ -12,11 +13,13 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly HttpClient _client;
 
-        public MemberAvatar(IDatabase db, ModelRepository repo)
+        public MemberAvatar(IDatabase db, ModelRepository repo, HttpClient client)
         {
             _db = db;
             _repo = repo;
+            _client = client;
         }
         
         private async Task AvatarClear(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
@@ -102,7 +105,7 @@ namespace PluralKit.Bot
             }
 
             ctx.CheckSystem().CheckOwnMember(target);
-            await AvatarUtils.VerifyAvatarOrThrow(avatarArg.Value.Url);
+            await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Value.Url);
             await UpdateAvatar(location, ctx, target, avatarArg.Value.Url);
             await PrintResponse(location, ctx, target, avatarArg.Value, guildData);
         }

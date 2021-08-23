@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System;
+using System.Net.Http;
 
 using Myriad.Builders;
 
@@ -14,11 +15,13 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly HttpClient _client;
 
-        public MemberEdit(IDatabase db, ModelRepository repo)
+        public MemberEdit(IDatabase db, ModelRepository repo, HttpClient client)
         {
             _db = db;
             _repo = repo;
+            _client = client;
         }
 
         public async Task Name(Context ctx, PKMember target) 
@@ -148,7 +151,7 @@ namespace PluralKit.Bot
 
             async Task SetBannerImage(ParsedImage img)
             {
-                await AvatarUtils.VerifyAvatarOrThrow(img.Url, isFullSizeImage: true);
+                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, isFullSizeImage: true);
 
                 await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch {BannerImage = img.Url}));
 

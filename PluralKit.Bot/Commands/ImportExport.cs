@@ -22,15 +22,17 @@ namespace PluralKit.Bot
     public class ImportExport
     {
         private readonly DataFileService _dataFiles;
+        private readonly HttpClient _client;
         private readonly JsonSerializerSettings _settings = new()
         {
             // Otherwise it'll mess up/reformat the ISO strings for ???some??? reason >.>
             DateParseHandling = DateParseHandling.None
         };
         
-        public ImportExport(DataFileService dataFiles)
+        public ImportExport(DataFileService dataFiles, HttpClient client)
         {
             _dataFiles = dataFiles;
+            _client = client;
         }
 
         public async Task Import(Context ctx)
@@ -40,57 +42,54 @@ namespace PluralKit.Bot
 
             await ctx.BusyIndicator(async () =>
             {
-                using (var client = new HttpClient())
+                HttpResponseMessage response;
+                try
                 {
-                    HttpResponseMessage response;
-                    try
-                    {
-                         response = await client.GetAsync(url);
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        // Invalid URL throws this, we just error back out
-                        throw Errors.InvalidImportFile;
-                    }
+                     response = await _client.GetAsync(url);
+                }
+                catch (InvalidOperationException)
+                {
+                    // Invalid URL throws this, we just error back out
+                    throw Errors.InvalidImportFile;
+                }
 
-                    if (!response.IsSuccessStatusCode) 
-                        throw Errors.InvalidImportFile;
+                if (!response.IsSuccessStatusCode) 
+                    throw Errors.InvalidImportFile;
 
-                    DataFileSystem data;
-                    try
-                    {
-                        var json = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync(), _settings);
-                        data = await LoadSystem(ctx, json);
-                    }
-                    catch (JsonException)
-                    {
-                        throw Errors.InvalidImportFile;
-                    }
+                DataFileSystem data;
+                try
+                {
+                    var json = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync(), _settings);
+                    data = await LoadSystem(ctx, json);
+                }
+                catch (JsonException)
+                {
+                    throw Errors.InvalidImportFile;
+                }
 
-                    if (!data.Valid) 
-                        throw Errors.InvalidImportFile;
+                if (!data.Valid) 
+                    throw Errors.InvalidImportFile;
 
-                    if (data.LinkedAccounts != null && !data.LinkedAccounts.Contains(ctx.Author.Id))
-                    {
-                        var msg = $"{Emojis.Warn} You seem to importing a system profile belonging to another account. Are you sure you want to proceed?";
-                        if (!await ctx.PromptYesNo(msg, "Import")) throw Errors.ImportCancelled;
-                    }
+                if (data.LinkedAccounts != null && !data.LinkedAccounts.Contains(ctx.Author.Id))
+                {
+                    var msg = $"{Emojis.Warn} You seem to importing a system profile belonging to another account. Are you sure you want to proceed?";
+                    if (!await ctx.PromptYesNo(msg, "Import")) throw Errors.ImportCancelled;
+                }
 
-                    // If passed system is null, it'll create a new one
-                    // (and that's okay!)
-                    var result = await _dataFiles.ImportSystem(data, ctx.System, ctx.Author.Id);
-                    if (!result.Success)
-                        await ctx.Reply($"{Emojis.Error} The provided system profile could not be imported. {result.Message}");
-                    else if (ctx.System == null)
-                    {
-                        // We didn't have a system prior to importing, so give them the new system's ID
-                        await ctx.Reply($"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.System.Hid}`. Type `pk;system` for more information.");
-                    }
-                    else
-                    {
-                        // We already had a system, so show them what changed
-                        await ctx.Reply($"{Emojis.Success} Updated {result.ModifiedNames.Count} members, created {result.AddedNames.Count} members. Type `pk;system list` to check!");
-                    }
+                // If passed system is null, it'll create a new one
+                // (and that's okay!)
+                var result = await _dataFiles.ImportSystem(data, ctx.System, ctx.Author.Id);
+                if (!result.Success)
+                    await ctx.Reply($"{Emojis.Error} The provided system profile could not be imported. {result.Message}");
+                else if (ctx.System == null)
+                {
+                    // We didn't have a system prior to importing, so give them the new system's ID
+                    await ctx.Reply($"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.System.Hid}`. Type `pk;system` for more information.");
+                }
+                else
+                {
+                    // We already had a system, so show them what changed
+                    await ctx.Reply($"{Emojis.Success} Updated {result.ModifiedNames.Count} members, created {result.AddedNames.Count} members. Type `pk;system list` to check!");
                 }
             });
         }

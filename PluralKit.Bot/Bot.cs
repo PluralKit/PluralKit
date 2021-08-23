@@ -180,11 +180,21 @@ namespace PluralKit.Bot
                 await using var serviceScope = _services.BeginLifetimeScope();
 
                 // Find an event handler that can handle the type of event (<T>) we're given
-                var handler = serviceScope.Resolve<IEventHandler<T>>();
-                var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
+                IEventHandler<T> handler;
+                try
+                {
+                    handler = serviceScope.Resolve<IEventHandler<T>>();
+                }
+                catch (Exception e)
+                {
+                    _logger.Error(e, "Error instantiating handler class");
+                    return;
+                }
 
                 try
                 {
+                    var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
+
                     using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
                     using var __ = LogContext.Push(serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shard, evt));
                     _logger.Verbose("Received gateway event: {@Event}", evt);

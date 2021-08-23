@@ -62,7 +62,7 @@ namespace PluralKit.Bot
             if (avatarArg != null)
             {
                 try {
-                    await AvatarUtils.VerifyAvatarOrThrow(avatarArg.Url);
+                    await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
                     await _db.Execute(conn => _repo.UpdateMember(conn, member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }));
                 } catch (Exception e) {
                     imageMatchError = e;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,12 +23,14 @@ namespace PluralKit.Bot
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
+        private readonly HttpClient _client;
 
-        public Groups(IDatabase db, ModelRepository repo, EmbedService embeds)
+        public Groups(IDatabase db, ModelRepository repo, EmbedService embeds, HttpClient client)
         {
             _db = db;
             _repo = repo;
             _embeds = embeds;
+            _client = client;
         }
 
         public async Task CreateGroup(Context ctx)
@@ -200,7 +203,7 @@ namespace PluralKit.Bot
             {
                 ctx.CheckOwnGroup(target);
                 
-                await AvatarUtils.VerifyAvatarOrThrow(img.Url);
+                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
                 await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {Icon = img.Url}));
             
@@ -262,7 +265,7 @@ namespace PluralKit.Bot
             {
                 ctx.CheckOwnGroup(target);
 
-                await AvatarUtils.VerifyAvatarOrThrow(img.Url, isFullSizeImage: true);
+                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, isFullSizeImage: true);
 
                 await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {BannerImage = img.Url}));
 

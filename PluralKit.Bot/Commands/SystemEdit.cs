@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Myriad.Builders;
-using Myriad.Types;
 
 using NodaTime;
 using NodaTime.Text;
@@ -18,11 +18,13 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly HttpClient _client;
 
-        public SystemEdit(IDatabase db, ModelRepository repo)
+        public SystemEdit(IDatabase db, ModelRepository repo, HttpClient client)
         {
             _db = db;
             _repo = repo;
+            _client = client;
         }
 
         public async Task Name(Context ctx)
@@ -279,7 +281,7 @@ namespace PluralKit.Bot
 
             async Task SetIcon(ParsedImage img)
             {
-                await AvatarUtils.VerifyAvatarOrThrow(img.Url);
+                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
                 await _db.Execute(c => _repo.UpdateSystem(c, ctx.System.Id, new SystemPatch {AvatarUrl = img.Url}));
             
@@ -332,7 +334,7 @@ namespace PluralKit.Bot
 
             async Task SetImage(ParsedImage img)
             {
-                await AvatarUtils.VerifyAvatarOrThrow(img.Url, isFullSizeImage: true);
+                await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, isFullSizeImage: true);
 
                 await _db.Execute(c => _repo.UpdateSystem(c, ctx.System.Id, new SystemPatch {BannerImage = img.Url}));
 
