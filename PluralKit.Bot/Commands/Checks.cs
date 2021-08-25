@@ -84,6 +84,7 @@ namespace PluralKit.Bot
             foreach (var channel in await _rest.GetGuildChannels(guild.Id))
             {
                 var botPermissions = _bot.PermissionsIn(channel.Id);
+                var webhookPermissions = _cache.EveryonePermissions(channel);
                 var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
                 
                 if ((userPermissions & PermissionSet.ViewChannel) == 0)
@@ -98,9 +99,13 @@ namespace PluralKit.Bot
                 // We use a bitfield so we can set individual permission bits in the loop
                 // TODO: Rewrite with proper bitfield math
                 ulong missingPermissionField = 0;
+                
                 foreach (var requiredPermission in requiredPermissions)
                     if ((botPermissions & requiredPermission) == 0)
                         missingPermissionField |= (ulong) requiredPermission;
+                
+                if ((webhookPermissions & PermissionSet.UseExternalEmojis) == 0)
+                    missingPermissionField |= (ulong) PermissionSet.UseExternalEmojis;
 
                 // If we're not missing any permissions, don't bother adding it to the dict
                 // This means we can check if the dict is empty to see if all channels are proxyable
@@ -126,6 +131,9 @@ namespace PluralKit.Bot
                     // Each missing permission field can have multiple missing channels
                     // so we extract them all and generate a comma-separated list
                     var missingPermissionNames = ((PermissionSet) missingPermissionField).ToPermissionString();
+
+                    if (missingPermissionField == (ulong) PermissionSet.UseExternalEmojis)
+                        eb.Footer(new($"Use External Emojis permissions must be granted to the @everyone role / Default Permissions."));
                     
                     var channelsList = string.Join("\n", channels
                         .OrderBy(c => c.Position)
