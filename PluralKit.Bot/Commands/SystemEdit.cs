@@ -182,7 +182,7 @@ namespace PluralKit.Bot
                     if (!ctx.MessageContext.TagEnabled)
                         msg += ", but it is currently **disabled**. To re-enable it, type `pk;s servertag -enable`.";
                     else
-                        msg += ". To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.";
+                        msg += ". To change it, type `pk;s servertag <tag>`. To clear it, type `pk;s servertag -clear`.";
 
                     await ctx.Reply(msg);
                     return;
