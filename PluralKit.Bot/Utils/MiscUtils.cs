@@ -20,37 +20,6 @@ namespace PluralKit.Bot
         public static string ProxyTagsString(this PKMember member, string separator = ", ") => 
             string.Join(separator, member.ProxyTags.Select(t => t.ProxyString.AsCode()));
         
-        
-        private static String entityTerm<T>(int count, bool isTarget)
-        {
-            var ret = "";
-            ret += isTarget ? "Member" : "Group";
-            if ((
-                (typeof(T) == typeof(GroupId) && !isTarget) ||
-                (typeof(T) == typeof(MemberId) && isTarget)
-            ) && count > 1)
-                ret += "s";
-            return ret;
-        }
-
-        public static String GroupAddRemoveResponse<T>(List<T> entityList, List<T> actionedOn, Groups.AddRemoveOperation op)
-        {
-            var opStr = op == Groups.AddRemoveOperation.Add ? "added to" : "removed from";
-            var inStr = op == Groups.AddRemoveOperation.Add ? "in" : "not in";
-            var notActionedOn = entityList.Count - actionedOn.Count;
-
-            var groupNotActionedPosStr = typeof(T) == typeof(GroupId) ? notActionedOn.ToString() + " " : "";
-            var memberNotActionedPosStr = typeof(T) == typeof(MemberId) ? notActionedOn.ToString() + " " : "";
-            
-            if (actionedOn.Count == 0)
-                return $"{Emojis.Error} {entityTerm<T>(notActionedOn, true)} not {opStr} {entityTerm<T>(entityList.Count, false).ToLower()} ({entityTerm<T>(notActionedOn, true).ToLower()} already {inStr} {entityTerm<T>(entityList.Count, false).ToLower()}).";
-            else
-                if (notActionedOn == 0)
-                    return $"{Emojis.Success} {entityTerm<T>(actionedOn.Count, true)} {opStr} {entityTerm<T>(actionedOn.Count, false).ToLower()}.";
-                else
-                    return $"{Emojis.Success} {actionedOn.Count} {entityTerm<T>(actionedOn.Count, true).ToLower()} {opStr} {entityTerm<T>(actionedOn.Count, false).ToLower()} ({memberNotActionedPosStr}{entityTerm<T>(actionedOn.Count, true).ToLower()} already {inStr} {groupNotActionedPosStr}{entityTerm<T>(notActionedOn, false).ToLower()}).";
-        }
-
         public static bool IsOurProblem(this Exception e)
         {
             // This function filters out sporadic errors out of our control from being reported to Sentry
