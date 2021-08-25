@@ -166,9 +166,9 @@ namespace PluralKit.Bot
             if (ctx.Match("explain"))
                 return ctx.Execute<Help>(Explain, m => m.Explain(ctx));
             if (ctx.Match("message", "msg"))
-                return ctx.Execute<Misc>(Message, m => m.GetMessage(ctx));
+                return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
             if (ctx.Match("edit", "e"))
-                return ctx.Execute<MessageEdit>(MessageEdit, m => m.EditMessage(ctx));
+                return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx));
             if (ctx.Match("log"))
                 if (ctx.Match("channel"))
                     return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));
@@ -193,7 +193,7 @@ namespace PluralKit.Bot
                 else return PrintCommandExpectedError(ctx, BlacklistCommands);
             if (ctx.Match("proxy"))
                 if (ctx.Match("debug"))
-                    return ctx.Execute<Misc>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+                    return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
                 else
                     return ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
             if (ctx.Match("invite")) return ctx.Execute<Misc>(Invite, m => m.Invite(ctx));
@@ -205,9 +205,9 @@ namespace PluralKit.Bot
             if (ctx.Match("flash")) return ctx.Execute<Fun>(null, m => m.Flash(ctx));
             if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
-                return ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
+                return ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
             if (ctx.Match("proxycheck"))
-                return ctx.Execute<Misc>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+                return ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
             if (ctx.Match("debug"))
                 return HandleDebugCommand(ctx);
             if (ctx.Match("admin"))
@@ -244,9 +244,9 @@ namespace PluralKit.Bot
             var availableCommandsStr = "Available debug targets: `permissions`, `proxying`";
 
             if (ctx.Match("permissions", "perms", "permcheck"))
-                await ctx.Execute<Misc>(PermCheck, m => m.PermCheckGuild(ctx));
+                await ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
             else if (ctx.Match("proxy", "proxying", "proxycheck"))
-                await ctx.Execute<Misc>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+                await ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
             else if (!ctx.HasNext())
                 await ctx.Reply($"{Emojis.Error} You need to pass a command. {availableCommandsStr}");
             else

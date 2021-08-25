@@ -48,6 +48,7 @@ namespace PluralKit.Bot
             builder.RegisterType<CommandTree>().AsSelf();
             builder.RegisterType<Admin>().AsSelf();
             builder.RegisterType<Autoproxy>().AsSelf();
+            builder.RegisterType<Checks>().AsSelf();
             builder.RegisterType<Fun>().AsSelf();
             builder.RegisterType<Groups>().AsSelf();
             builder.RegisterType<Help>().AsSelf();
@@ -57,8 +58,8 @@ namespace PluralKit.Bot
             builder.RegisterType<MemberEdit>().AsSelf();
             builder.RegisterType<MemberGroup>().AsSelf();
             builder.RegisterType<MemberProxy>().AsSelf();
-            builder.RegisterType<MessageEdit>().AsSelf();
             builder.RegisterType<Misc>().AsSelf();
+            builder.RegisterType<ProxiedMessage>().AsSelf();
             builder.RegisterType<Random>().AsSelf();
             builder.RegisterType<ServerConfig>().AsSelf();
             builder.RegisterType<Switch>().AsSelf();

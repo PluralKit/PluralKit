@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System.Threading.Tasks;
 
+using Myriad.Builders;
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Rest;
@@ -13,22 +14,25 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
-    public class MessageEdit
+    public class ProxiedMessage
     {
         private static readonly Duration EditTimeout = Duration.FromMinutes(10);
         
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
+        private readonly EmbedService _embeds;
         private readonly IClock _clock;
         private readonly DiscordApiClient _rest;
         private readonly WebhookExecutorService _webhookExecutor;
         private readonly LogChannelService _logChannel;
         private readonly IDiscordCache _cache;
 
-        public MessageEdit(IDatabase db, ModelRepository repo, IClock clock, DiscordApiClient rest, WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
+        public ProxiedMessage(IDatabase db, ModelRepository repo, EmbedService embeds, IClock clock, DiscordApiClient rest,
+                              WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
         {
             _db = db;
             _repo = repo;
+            _embeds = embeds;
             _clock = clock;
             _rest = rest;
             _webhookExecutor = webhookExecutor;
@@ -114,6 +118,41 @@ namespace PluralKit.Bot
                 return null;
 
             return lastMessage;
+        }
+        
+        public async Task GetMessage(Context ctx)
+        {
+            var (messageId, _) = ctx.MatchMessage(true);
+            if (messageId == null)
+            {
+                if (!ctx.HasNext())
+                    throw new PKSyntaxError("You must pass a message ID or link.");
+                throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
+            }
+            
+            var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
+            if (message == null) throw Errors.MessageNotFound(messageId.Value);
+
+            if (ctx.Match("delete") || ctx.MatchFlag("delete"))
+            {
+                if (message.System.Id != ctx.System.Id)
+                    throw new PKError("You can only delete your own messages.");
+                await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
+                await ctx.Rest.DeleteMessage(ctx.Message);
+                return;
+            }
+            if (ctx.Match("author") || ctx.MatchFlag("author"))
+            {
+                var user = await _cache.GetOrFetchUser(_rest, message.Message.Sender);
+                var eb = new EmbedBuilder()
+                    .Author(new(user != null ? $"{user.Username}#{user.Discriminator}" : $"Deleted user ${message.Message.Sender}", IconUrl: user != null ? user.AvatarUrl() : null))
+                    .Description(message.Message.Sender.ToString());
+
+                await ctx.Reply(user != null ? $"{user.Mention()} ({user.Id})" : $"*(deleted user {message.Message.Sender})*", embed: eb.Build());
+                return;
+            }
+
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
         }
     }
 }
