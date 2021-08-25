@@ -135,10 +135,6 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage msg)
         {
-            // TODO: why does the bot need manage messages if it's deleting its own messages??
-            if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
-                return;
-
             // Can only delete your own message
             if (msg.AuthorId != evt.UserId) 
                 return;
