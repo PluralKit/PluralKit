@@ -78,6 +78,8 @@ namespace PluralKit.Bot
                 if (tagToAdd.IsEmpty) throw Errors.EmptyProxyTags(target);
                 if (target.ProxyTags.Contains(tagToAdd))
                     throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
+                if (tagToAdd.ProxyString.Length > Limits.MaxProxyTagLength)
+                    throw new PKError($"Proxy tag too long ({tagToAdd.ProxyString.Length} > {Limits.MaxProxyTagLength} characters).");
                 
                 if (!await WarnOnConflict(tagToAdd))
                     throw Errors.GenericCancelled();

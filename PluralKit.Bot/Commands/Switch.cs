@@ -40,6 +40,8 @@ namespace PluralKit.Bot
             // Make sure there are no dupes in the list
             // We do this by checking if removing duplicate member IDs results in a list of different length 
             if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
+            if (members.Count > Limits.MaxSwitchMemberCount)
+                throw new PKError($"Switch contains too many members ({members.Count} > {Limits.MaxSwitchMemberCount} members).");
 
             // Find the last switch and its members if applicable
             await using var conn = await _db.Obtain();
