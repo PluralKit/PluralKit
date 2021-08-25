@@ -86,11 +86,13 @@ namespace PluralKit.Bot {
 
             if (cctx.Guild != null)
             {
-                if (cctx.MessageContext.SystemGuildTag != null && cctx.MessageContext.TagEnabled)
-                    eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", cctx.MessageContext.SystemGuildTag
+                var guildSettings = await _repo.GetSystemGuild(conn, cctx.Guild.Id, system.Id);
+                
+                if (guildSettings.Tag != null && guildSettings.TagEnabled)
+                    eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", guildSettings.Tag
                         .EscapeMarkdown(), true));
 
-                if (!cctx.MessageContext.TagEnabled)
+                if (!guildSettings.TagEnabled)
                     eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", "*(tag is disabled in this server)*"));
             }
 
