@@ -83,9 +83,9 @@ namespace PluralKit.Bot
             // Warn if there's already a group by this name
             var existingGroup = await _repo.GetGroupByName(conn, ctx.System.Id, newName);
             if (existingGroup != null && existingGroup.Id != target.Id) {
-                var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to rename this member to that name too?";
+                var msg = $"{Emojis.Warn} You already have a group in your system with the name \"{existingGroup.Name}\" (with ID `{existingGroup.Hid}`). Do you want to rename this group to that name too?";
                 if (!await ctx.PromptYesNo(msg, "Rename"))
-                    throw new PKError("Group creation cancelled.");
+                    throw new PKError("Group rename cancelled.");
             }
 
             await _repo.UpdateGroup(conn, target.Id, new GroupPatch {Name = newName});
