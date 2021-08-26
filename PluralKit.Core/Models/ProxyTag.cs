@@ -14,6 +14,10 @@ namespace PluralKit.Core
         [JsonProperty("prefix")] public string Prefix { get; set; }
         [JsonProperty("suffix")] public string Suffix { get; set; }
 
+        [JsonIgnore] public bool Valid =>
+            Prefix != null || Suffix != null
+            && ProxyString.Length <= Limits.MaxProxyTagLength;
+
         [JsonIgnore] public string ProxyString => $"{Prefix ?? ""}text{Suffix ?? ""}";
 
         [JsonIgnore] public bool IsEmpty => Prefix == null && Suffix == null;

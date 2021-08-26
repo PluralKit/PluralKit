@@ -80,7 +80,7 @@ namespace PluralKit.API
             var members = _db.Execute(c => _repo.GetSystemMembers(c, system.Id));
             return Ok(await members
                 .Where(m => m.MemberVisibility.CanAccess(User.ContextFor(system)))
-                .Select(m => m.ToJson(User.ContextFor(system)))
+                .Select(m => m.ToJson(User.ContextFor(system), needsLegacyProxyTags: true))
                 .ToListAsync());
         }
 
@@ -126,7 +126,7 @@ namespace PluralKit.API
             return Ok(new FrontersReturn
             {
                 Timestamp = sw.Timestamp,
-                Members = await members.Select(m => m.ToJson(User.ContextFor(system))).ToListAsync()
+                Members = await members.Select(m => m.ToJson(User.ContextFor(system), needsLegacyProxyTags: true)).ToListAsync()
             });
         }
 
@@ -141,13 +141,13 @@ namespace PluralKit.API
             try
             {
                 patch = SystemPatch.FromJSON(changes);
-                patch.CheckIsValid();
+                patch.AssertIsValid();
             }
-            catch (JsonModelParseError e)
+            catch (FieldTooLongError e)
             {
                 return BadRequest(e.Message);
             }
-            catch (InvalidPatchException e)
+            catch (ValidationError e)
             {
                 return BadRequest($"Request field '{e.Message}' is invalid.");
             }

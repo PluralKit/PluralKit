@@ -31,14 +31,14 @@ namespace PluralKit.Core
             .With("list_privacy", ListPrivacy)
             .With("visibility", Visibility);
 
-        public new void CheckIsValid()
+        public new void AssertIsValid()
         {
             if (Icon.Value != null && !MiscUtils.TryMatchUri(Icon.Value, out var avatarUri))
-                throw new InvalidPatchException("icon");
+                throw new ValidationError("icon");
             if (BannerImage.Value != null && !MiscUtils.TryMatchUri(BannerImage.Value, out var bannerImage))
-                throw new InvalidPatchException("banner");
+                throw new ValidationError("banner");
             if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
-                throw new InvalidPatchException("color");
+                throw new ValidationError("color");
         }
 
     }

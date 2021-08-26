@@ -49,7 +49,7 @@ namespace PluralKit.API
                 Id = msg.Message.Mid.ToString(),
                 Channel = msg.Message.Channel.ToString(),
                 Sender = msg.Message.Sender.ToString(),
-                Member = msg.Member.ToJson(User.ContextFor(msg.System)),
+                Member = msg.Member.ToJson(User.ContextFor(msg.System), needsLegacyProxyTags: true),
                 System = msg.System.ToJson(User.ContextFor(msg.System)),
                 Original = msg.Message.OriginalMid?.ToString()
             };

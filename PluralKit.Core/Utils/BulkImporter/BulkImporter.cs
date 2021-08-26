@@ -1,0 +1,124 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+using Newtonsoft.Json.Linq;
+
+using Autofac;
+
+using Dapper;
+
+using Serilog;
+
+namespace PluralKit.Core
+{
+    public partial class BulkImporter : IAsyncDisposable
+    {
+        private ILogger _logger { get; init; }
+        private ModelRepository _repo { get; init; } 
+
+        private PKSystem _system { get; set; }
+        private IPKConnection _conn { get; init; }
+        private IPKTransaction _tx { get; init; }
+
+        private Func<string, Task> _confirmFunc { get; init; }
+
+        private readonly Dictionary<string, MemberId> _existingMemberHids = new();
+        private readonly Dictionary<string, MemberId> _existingMemberNames = new();
+        private readonly Dictionary<string, MemberId> _knownIdentifiers = new();
+        private ImportResultNew _result = new();
+
+        internal static async Task<ImportResultNew> PerformImport(IPKConnection conn, IPKTransaction tx, ModelRepository repo, ILogger logger,
+            ulong userId, PKSystem? system, JObject importFile, Func<string, Task> confirmFunc)
+        {
+            await using var importer = new BulkImporter()
+            {
+                _logger = logger,
+                _repo = repo,
+                _system = system,
+                _conn = conn,
+                _tx = tx,
+                _confirmFunc = confirmFunc,
+            };
+
+            if (system == null) {
+                system = await repo.CreateSystem(conn, null, tx);
+                await repo.AddAccount(conn, system.Id, userId);
+                importer._result.CreatedSystem = system.Hid;
+                importer._system = system;
+            }
+            
+            // Fetch all members in the system and log their names and hids
+            var members = await conn.QueryAsync<PKMember>("select id, hid, name from members where system = @System",
+                new {System = system.Id});
+            foreach (var m in members)
+            {
+                importer._existingMemberHids[m.Hid] = m.Id;
+                importer._existingMemberNames[m.Name] = m.Id;
+            }
+
+            try
+            {
+                if (importFile.ContainsKey("tuppers"))
+                    await importer.ImportTupperbox(importFile);
+                else if (importFile.ContainsKey("switches"))
+                    await importer.ImportPluralKit(importFile);
+                else
+                    throw new ImportException("File type is unknown.");
+                importer._result.Success = true;
+                await tx.CommitAsync();
+            }
+            catch (ImportException e)
+            {
+                importer._result.Success = false;
+                importer._result.Message = e.Message;
+            }
+            catch (ArgumentNullException)
+            {
+                importer._result.Success = false;
+            }
+
+            return importer._result;
+        }
+
+        private (MemberId?, bool) TryGetExistingMember(string hid, string name)
+        {
+            if (_existingMemberHids.TryGetValue(hid, out var byHid)) return (byHid, true);
+            if (_existingMemberNames.TryGetValue(name, out var byName)) return (byName, false);
+            return (null, false);
+        }
+
+        private async Task AssertLimitNotReached(int newMembers)
+        {
+            var memberLimit = _system.MemberLimitOverride ?? Limits.MaxMemberCount;
+            var existingMembers = await _repo.GetSystemMemberCount(_conn, _system.Id);
+            if (existingMembers + newMembers > memberLimit)
+                throw new ImportException($"Import would exceed the maximum number of members ({memberLimit}).");
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            // try rolling back the transaction
+            // this will throw if the transaction was committed, but that's fine
+            // so we just catch InvalidOperationException
+            try
+            {
+                await _tx.RollbackAsync();
+            }
+            catch (InvalidOperationException) {}
+        }
+
+        private class ImportException : Exception {
+            public ImportException(string Message) : base(Message) {}
+        }
+    }
+
+    public record ImportResultNew
+    {
+        public int Added = 0;
+        public int Modified = 0;
+        public bool Success;
+        public string? CreatedSystem;
+        public string? Message;
+    }
+}

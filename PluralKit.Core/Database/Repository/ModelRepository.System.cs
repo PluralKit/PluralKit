@@ -35,22 +35,23 @@ namespace PluralKit.Core
             return conn.QuerySingleAsync<int>(query.ToString(), new {Id = id});
         }
 
-        public async Task<PKSystem> CreateSystem(IPKConnection conn, string? systemName = null)
+        public async Task<PKSystem> CreateSystem(IPKConnection conn, string? systemName = null, IPKTransaction? tx = null)
         {
             var system = await conn.QuerySingleAsync<PKSystem>(
                 "insert into systems (hid, name) values (find_free_system_hid(), @Name) returning *",
-                new {Name = systemName});
+                new {Name = systemName},
+                transaction: tx);
             _logger.Information("Created {SystemId}", system.Id);
             return system;
         }
 
-        public Task<PKSystem> UpdateSystem(IPKConnection conn, SystemId id, SystemPatch patch)
+        public Task<PKSystem> UpdateSystem(IPKConnection conn, SystemId id, SystemPatch patch, IPKTransaction? tx = null)
         {
             _logger.Information("Updated {SystemId}: {@SystemPatch}", id, patch);
             var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("systems", "id = @id"))
                 .WithConstant("id", id)
                 .Build("returning *");
-            return conn.QueryFirstAsync<PKSystem>(query, pms);
+            return conn.QueryFirstAsync<PKSystem>(query, pms, transaction: tx);
         }
 
         public async Task AddAccount(IPKConnection conn, SystemId system, ulong accountId)

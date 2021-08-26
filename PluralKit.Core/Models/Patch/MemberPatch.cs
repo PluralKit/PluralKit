@@ -53,14 +53,28 @@ namespace PluralKit.Core
             .With("avatar_privacy", AvatarPrivacy)
             .With("metadata_privacy", MetadataPrivacy);
 
-        public new void CheckIsValid()
+        public new void AssertIsValid()
         {
-            if (AvatarUrl.Value != null && !MiscUtils.TryMatchUri(AvatarUrl.Value, out var avatarUri))
-                throw new InvalidPatchException("avatar_url");
-            if (BannerImage.Value != null && !MiscUtils.TryMatchUri(BannerImage.Value, out var bannerImage))
-                throw new InvalidPatchException("banner");
-            if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
-                throw new InvalidPatchException("color");
+            if (Name.IsPresent)
+                AssertValid(Name.Value, "display_name", Limits.MaxMemberNameLength);
+            if (DisplayName.Value != null)
+                AssertValid(DisplayName.Value, "display_name", Limits.MaxMemberNameLength);
+            if (AvatarUrl.Value != null)
+                AssertValid(AvatarUrl.Value, "avatar_url", Limits.MaxUriLength,
+                    s => MiscUtils.TryMatchUri(s, out var avatarUri));
+            if (BannerImage.Value != null)
+                AssertValid(BannerImage.Value, "banner", Limits.MaxUriLength,
+                    s => MiscUtils.TryMatchUri(s, out var bannerUri));
+            if (Color.Value != null)
+                AssertValid(Color.Value, "color", "^[0-9a-fA-F]{6}$");
+            if (Pronouns.Value != null)
+                AssertValid(Pronouns.Value, "pronouns", Limits.MaxPronounsLength);
+            if (Description.Value != null)
+                AssertValid(Description.Value, "description", Limits.MaxDescriptionLength);
+            if (ProxyTags.IsPresent && (ProxyTags.Value.Length > 100 ||
+                                        ProxyTags.Value.Any(tag => tag.ProxyString.IsLongerThan(100))))
+                // todo: have a better error for this
+                throw new ValidationError("proxy_tags");
         }
 
 #nullable disable
@@ -70,13 +84,13 @@ namespace PluralKit.Core
             var patch = new MemberPatch();
 
             if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null) 
-                throw new JsonModelParseError("Member name can not be set to null.");
+                throw new ValidationError("Member name can not be set to null.");
             
-            if (o.ContainsKey("name")) patch.Name = o.Value<string>("name").BoundsCheckField(Limits.MaxMemberNameLength, "Member name");
+            if (o.ContainsKey("name")) patch.Name = o.Value<string>("name");
             if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
-            if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty().BoundsCheckField(Limits.MaxMemberNameLength, "Member display name");
-            if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "Member avatar URL");
-            if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "Member banner URL");
+            if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
+            if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
+            if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
 
             if (o.ContainsKey("birthday"))
             {
@@ -84,26 +98,25 @@ namespace PluralKit.Core
                 var res = DateTimeFormats.DateExportFormat.Parse(str);
                 if (res.Success) patch.Birthday = res.Value;
                 else if (str == null) patch.Birthday = null;
-                else throw new JsonModelParseError("Could not parse member birthday.");
+                else throw new ValidationError("birthday");
             }
 
-            if (o.ContainsKey("pronouns")) patch.Pronouns = o.Value<string>("pronouns").NullIfEmpty().BoundsCheckField(Limits.MaxPronounsLength, "Member pronouns");
-            if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty().BoundsCheckField(Limits.MaxDescriptionLength, "Member descriptoin");
+            if (o.ContainsKey("pronouns")) patch.Pronouns = o.Value<string>("pronouns").NullIfEmpty();
+            if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty();
             if (o.ContainsKey("keep_proxy")) patch.KeepProxy = o.Value<bool>("keep_proxy");
 
             // legacy: used in old export files and APIv1
-            // todo: should we parse `proxy_tags` first?
             if (o.ContainsKey("prefix") || o.ContainsKey("suffix") && !o.ContainsKey("proxy_tags"))
                 patch.ProxyTags = new[] {new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix"))};
             else if (o.ContainsKey("proxy_tags"))
-            {
                 patch.ProxyTags = o.Value<JArray>("proxy_tags")
                     .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
+                    .Where(p => p.Valid)
                     .ToArray();
-            }
+            
             if(o.ContainsKey("privacy")) //TODO: Deprecate this completely in api v2
             {
-                var plevel = o.Value<string>("privacy").ParsePrivacy("member");
+                var plevel = o.ParsePrivacy("privacy");
                                 
                 patch.Visibility = plevel;
                 patch.NamePrivacy = plevel;
@@ -116,14 +129,14 @@ namespace PluralKit.Core
             }
             else
             {
-                if (o.ContainsKey("visibility")) patch.Visibility = o.Value<string>("visibility").ParsePrivacy("member");
-                if (o.ContainsKey("name_privacy")) patch.NamePrivacy = o.Value<string>("name_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("avatar_privacy")) patch.AvatarPrivacy = o.Value<string>("avatar_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("birthday_privacy")) patch.BirthdayPrivacy = o.Value<string>("birthday_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("pronoun_privacy")) patch.PronounPrivacy = o.Value<string>("pronoun_privacy").ParsePrivacy("member");
-                // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.Value<string>("color_privacy").ParsePrivacy("member");
-                if (o.ContainsKey("metadata_privacy")) patch.MetadataPrivacy = o.Value<string>("metadata_privacy").ParsePrivacy("member");
+                if (o.ContainsKey("visibility")) patch.Visibility = o.ParsePrivacy("visibility");
+                if (o.ContainsKey("name_privacy")) patch.NamePrivacy = o.ParsePrivacy("name_privacy");
+                if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.ParsePrivacy("description_privacy");
+                if (o.ContainsKey("avatar_privacy")) patch.AvatarPrivacy = o.ParsePrivacy("avatar_privacy");
+                if (o.ContainsKey("birthday_privacy")) patch.BirthdayPrivacy = o.ParsePrivacy("birthday_privacy");
+                if (o.ContainsKey("pronoun_privacy")) patch.PronounPrivacy = o.ParsePrivacy("pronoun_privacy");
+                // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.ParsePrivacy("member");
+                if (o.ContainsKey("metadata_privacy")) patch.MetadataPrivacy = o.ParsePrivacy("metadata_privacy");
             }
 
             return patch;

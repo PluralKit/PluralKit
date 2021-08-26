@@ -34,7 +34,7 @@ namespace PluralKit.API
             var member = await _db.Execute(conn => _repo.GetMemberByHid(conn, hid));
             if (member == null) return NotFound("Member not found.");
 
-            return Ok(member.ToJson(User.ContextFor(member)));
+            return Ok(member.ToJson(User.ContextFor(member), needsLegacyProxyTags: true));
         }
 
         [HttpPost]
@@ -62,14 +62,14 @@ namespace PluralKit.API
             try
             {
                 patch = MemberPatch.FromJSON(properties);
-                patch.CheckIsValid();
+                patch.AssertIsValid();
             }
-            catch (JsonModelParseError e)
+            catch (FieldTooLongError e)
             {
                 await tx.RollbackAsync();
                 return BadRequest(e.Message);
             }
-            catch (InvalidPatchException e)
+            catch (ValidationError e)
             {
                 await tx.RollbackAsync();
                 return BadRequest($"Request field '{e.Message}' is invalid.");
@@ -77,7 +77,7 @@ namespace PluralKit.API
             
             member = await _repo.UpdateMember(conn, member.Id, patch, transaction: tx);
             await tx.CommitAsync();
-            return Ok(member.ToJson(User.ContextFor(member)));
+            return Ok(member.ToJson(User.ContextFor(member), needsLegacyProxyTags: true));
         }
 
         [HttpPatch("{hid}")]
@@ -96,19 +96,19 @@ namespace PluralKit.API
             try
             {
                 patch = MemberPatch.FromJSON(changes);
-                patch.CheckIsValid();
+                patch.AssertIsValid();
             }
-            catch (JsonModelParseError e)
+            catch (FieldTooLongError e)
             {
                 return BadRequest(e.Message);
             }
-            catch (InvalidPatchException e)
+            catch (ValidationError e)
             {
                 return BadRequest($"Request field '{e.Message}' is invalid.");
             }
             
             var newMember = await _repo.UpdateMember(conn, member.Id, patch);
-            return Ok(newMember.ToJson(User.ContextFor(newMember)));
+            return Ok(newMember.ToJson(User.ContextFor(newMember), needsLegacyProxyTags: true));
         }
         
         [HttpDelete("{hid}")]

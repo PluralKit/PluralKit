@@ -41,89 +41,55 @@ namespace PluralKit.Bot
             if (url == null) throw Errors.NoImportFilePassed;
 
             await ctx.BusyIndicator(async () =>
-            {
-                HttpResponseMessage response;
+            { 
+                JObject data;
                 try
                 {
-                     response = await _client.GetAsync(url);
+                    var response = await _client.GetAsync(url);
+                    if (!response.IsSuccessStatusCode)
+                        throw Errors.InvalidImportFile;
+                    data = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync(), _settings);
+                    if (data == null)
+                        throw Errors.InvalidImportFile;
                 }
                 catch (InvalidOperationException)
                 {
                     // Invalid URL throws this, we just error back out
                     throw Errors.InvalidImportFile;
                 }
-
-                if (!response.IsSuccessStatusCode) 
-                    throw Errors.InvalidImportFile;
-
-                DataFileSystem data;
-                try
-                {
-                    var json = JsonConvert.DeserializeObject<JObject>(await response.Content.ReadAsStringAsync(), _settings);
-                    data = await LoadSystem(ctx, json);
-                }
                 catch (JsonException)
                 {
                     throw Errors.InvalidImportFile;
                 }
 
-                if (!data.Valid) 
-                    throw Errors.InvalidImportFile;
-
-                if (data.LinkedAccounts != null && !data.LinkedAccounts.Contains(ctx.Author.Id))
+                async Task ConfirmImport(string message)
+                {
+                    var msg = $"{message}\n\nDo you want to proceed with the import?";
+                    if (!await ctx.PromptYesNo(msg, "Proceed"))
+                        throw Errors.ImportCancelled;
+                }
+                
+                if (data.ContainsKey("accounts")
+                    && data.Value<JArray>("accounts").Type != JTokenType.Null
+                    && data.Value<JArray>("accounts").Contains((JToken) ctx.Author.Id.ToString()))
                 {
                     var msg = $"{Emojis.Warn} You seem to importing a system profile belonging to another account. Are you sure you want to proceed?";
                     if (!await ctx.PromptYesNo(msg, "Import")) throw Errors.ImportCancelled;
                 }
 
-                // If passed system is null, it'll create a new one
-                // (and that's okay!)
-                var result = await _dataFiles.ImportSystem(data, ctx.System, ctx.Author.Id);
+                var result = await _dataFiles.ImportSystem(ctx.Author.Id, ctx.System, data, ConfirmImport);
                 if (!result.Success)
-                    await ctx.Reply($"{Emojis.Error} The provided system profile could not be imported. {result.Message}");
+                    if (result.Message == null)
+                        throw Errors.InvalidImportFile;
+                    else
+                        await ctx.Reply($"{Emojis.Error} The provided system profile could not be imported: {result.Message}");
                 else if (ctx.System == null)
-                {
                     // We didn't have a system prior to importing, so give them the new system's ID
-                    await ctx.Reply($"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.System.Hid}`. Type `pk;system` for more information.");
-                }
+                    await ctx.Reply($"{Emojis.Success} PluralKit has created a system for you based on the given file. Your system ID is `{result.CreatedSystem}`. Type `pk;system` for more information.");
                 else
-                {
                     // We already had a system, so show them what changed
-                    await ctx.Reply($"{Emojis.Success} Updated {result.ModifiedNames.Count} members, created {result.AddedNames.Count} members. Type `pk;system list` to check!");
-                }
+                    await ctx.Reply($"{Emojis.Success} Updated {result.Modified} members, created {result.Added} members. Type `pk;system list` to check!");
             });
-        }
-
-        private async Task<DataFileSystem> LoadSystem(Context ctx, JObject json)
-        {
-            if (json.ContainsKey("tuppers"))
-                return await ImportFromTupperbox(ctx, json);
-
-            return json.ToObject<DataFileSystem>();
-        }
-
-        private async Task<DataFileSystem> ImportFromTupperbox(Context ctx, JObject json)
-        {
-            var tupperbox = json.ToObject<TupperboxProfile>();
-            if (!tupperbox.Valid)
-                throw Errors.InvalidImportFile;
-                            
-            var res = tupperbox.ToPluralKit();
-            if (res.HadGroups || res.HadIndividualTags)
-            {
-                var issueStr =
-                    $"{Emojis.Warn} The following potential issues were detected converting your Tupperbox input file:";
-                if (res.HadGroups)
-                    issueStr += "\n- PluralKit does not support member groups. Members will be imported without groups.";
-                if (res.HadIndividualTags)
-                    issueStr += "\n- PluralKit does not support per-member system tags. Since you had multiple members with distinct tags, those tags will be applied to the members' *display names*/nicknames instead.";
-
-                var msg = $"{issueStr}\n\nDo you want to proceed with the import?";
-                if (!await ctx.PromptYesNo(msg, "Proceed"))
-                    throw Errors.ImportCancelled;
-            }
-
-            return res.System;
         }
 
         public async Task Export(Context ctx)

@@ -102,7 +102,7 @@ namespace PluralKit.Core {
         public static int MessageCountFor(this PKMember member, LookupContext ctx) =>
             member.MetadataPrivacy.Get(ctx, member.MessageCount);
 
-        public static JObject ToJson(this PKMember member, LookupContext ctx)
+        public static JObject ToJson(this PKMember member, LookupContext ctx, bool needsLegacyProxyTags = false)
         {
             var includePrivacy = ctx == LookupContext.ByOwner;
             
@@ -138,7 +138,7 @@ namespace PluralKit.Core {
 
             o.Add("created", member.CreatedFor(ctx)?.FormatExport());
 
-            if (member.ProxyTags.Count > 0)
+            if (member.ProxyTags.Count > 0 && needsLegacyProxyTags)
             {
                 // Legacy compatibility only, TODO: remove at some point
                 o.Add("prefix", member.ProxyTags?.FirstOrDefault().Prefix);

@@ -1,7 +1,10 @@
 ﻿#nullable enable
+using System;
 using System.Text.RegularExpressions;
 
 using Newtonsoft.Json.Linq;
+
+using NodaTime;
 
 namespace PluralKit.Core
 {
@@ -46,34 +49,44 @@ namespace PluralKit.Core
             .With("member_limit_override", MemberLimitOverride)
             .With("group_limit_override", GroupLimitOverride);
 
-        public new void CheckIsValid()
+        public new void AssertIsValid()
         {
-            if (AvatarUrl.Value != null && !MiscUtils.TryMatchUri(AvatarUrl.Value, out var avatarUri))
-                throw new InvalidPatchException("avatar_url");
-            if (BannerImage.Value != null && !MiscUtils.TryMatchUri(BannerImage.Value, out var bannerImage))
-                throw new InvalidPatchException("banner");
-            if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
-                throw new InvalidPatchException("color");
+            if (Name.Value != null)
+                AssertValid(Name.Value, "name", Limits.MaxSystemNameLength);
+            if (Description.Value != null)
+                AssertValid(Description.Value, "description", Limits.MaxDescriptionLength);
+            if (Tag.Value != null)
+                AssertValid(Tag.Value, "tag", Limits.MaxSystemTagLength);
+            if (AvatarUrl.Value != null)
+                AssertValid(AvatarUrl.Value, "avatar_url", Limits.MaxUriLength,
+                    s => MiscUtils.TryMatchUri(s, out var avatarUri));
+            if (BannerImage.Value != null)
+                AssertValid(BannerImage.Value, "banner", Limits.MaxUriLength,
+                    s => MiscUtils.TryMatchUri(s, out var bannerUri));
+            if (Color.Value != null)
+                AssertValid(Color.Value, "color", "^[0-9a-fA-F]{6}$");
+            if (UiTz.IsPresent && DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz.Value) == null)
+                throw new ValidationError("avatar_url");
         }
 
         public static SystemPatch FromJSON(JObject o)
         {
             var patch = new SystemPatch();
-            if (o.ContainsKey("name")) patch.Name = o.Value<string>("name").NullIfEmpty().BoundsCheckField(Limits.MaxSystemNameLength, "System name");
-            if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty().BoundsCheckField(Limits.MaxDescriptionLength, "System description");
-            if (o.ContainsKey("tag")) patch.Tag = o.Value<string>("tag").NullIfEmpty().BoundsCheckField(Limits.MaxSystemTagLength, "System tag");
-            if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "System avatar URL");
-            if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty().BoundsCheckField(Limits.MaxUriLength, "System banner URL");
+            if (o.ContainsKey("name")) patch.Name = o.Value<string>("name").NullIfEmpty();
+            if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty();
+            if (o.ContainsKey("tag")) patch.Tag = o.Value<string>("tag").NullIfEmpty();
+            if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
+            if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
             if (o.ContainsKey("timezone")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
 
             // legacy: APIv1 uses "tz" instead of "timezone"
             // todo: remove in APIv2
             if (o.ContainsKey("tz")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
             
-            if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.Value<string>("description_privacy").ParsePrivacy("description");
-            if (o.ContainsKey("member_list_privacy")) patch.MemberListPrivacy = o.Value<string>("member_list_privacy").ParsePrivacy("member list");
-            if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = o.Value<string>("front_privacy").ParsePrivacy("front");
-            if (o.ContainsKey("front_history_privacy")) patch.FrontHistoryPrivacy = o.Value<string>("front_history_privacy").ParsePrivacy("front history");
+            if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.ParsePrivacy("description_privacy");
+            if (o.ContainsKey("member_list_privacy")) patch.MemberListPrivacy = o.ParsePrivacy("member_list_privacy");
+            if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = o.ParsePrivacy("front_privacy");
+            if (o.ContainsKey("front_history_privacy")) patch.FrontHistoryPrivacy = o.ParsePrivacy("front_history_privacy");
             return patch;
         }
     }
