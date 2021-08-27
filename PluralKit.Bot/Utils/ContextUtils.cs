@@ -65,7 +65,7 @@ namespace PluralKit.Bot {
             return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, string color, Func<EmbedBuilder, IEnumerable<T>, Task> renderer) {
+        public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, string color, Func<EmbedBuilder, IEnumerable<T>, User, Task> renderer) {
             // TODO: make this generic enough we can use it in Choose<T> below
 
             var buffer = new List<T>();
@@ -82,7 +82,7 @@ namespace PluralKit.Bot {
                 eb.Title(pageCount > 1 ? $"[{page+1}/{pageCount}] {title}" : title);
                 if (color != null)
                     eb.Color(color.ToDiscordColor());
-                await renderer(eb, buffer.Skip(page*itemsPerPage).Take(itemsPerPage));
+                await renderer(eb, buffer.Skip(page*itemsPerPage).Take(itemsPerPage), ctx.Author);
                 return eb.Build();
             }
 

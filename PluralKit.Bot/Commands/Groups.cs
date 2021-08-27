@@ -13,6 +13,7 @@ using Humanizer;
 using NodaTime;
 
 using Myriad.Builders;
+using Myriad.Types;
 
 using PluralKit.Core;
 
@@ -401,7 +402,7 @@ namespace PluralKit.Bot
             var title = system.Name != null ? $"Groups of {system.Name} (`{system.Hid}`)" : $"Groups of `{system.Hid}`";
             await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, 25, title, ctx.System.Color, Renderer);
             
-            Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
+            Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page, User author)
             {
                 eb.WithSimpleLineContent(page.Select(g =>
                 {

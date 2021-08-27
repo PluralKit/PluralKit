@@ -70,7 +70,7 @@ namespace PluralKit.Bot
                 10,
                 embedTitle,
                 system.Color,
-                async (builder, switches) =>
+                async (builder, switches, user) =>
                 {
                     var sb = new StringBuilder();
                     foreach (var entry in switches)

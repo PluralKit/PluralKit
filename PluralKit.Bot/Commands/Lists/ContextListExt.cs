@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Humanizer;
 
 using Myriad.Builders;
+using Myriad.Types;
 
 using NodaTime;
 
@@ -92,10 +93,10 @@ namespace PluralKit.Bot
             await ctx.Paginate(members.ToAsyncEnumerable(), members.Count, itemsPerPage, embedTitle, color, Renderer);
 
             // Base renderer, dispatches based on type
-            Task Renderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
+            Task Renderer(EmbedBuilder eb, IEnumerable<ListedMember> page, User author)
             {
                 // Add a global footer with the filter/sort string + result count
-                eb.Footer(new($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}."));
+                eb.Footer(new($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}. Queried By: {author.NameAndMention()}"));
                 
                 // Then call the specific renderers
                 if (opts.Type == ListType.Short)
