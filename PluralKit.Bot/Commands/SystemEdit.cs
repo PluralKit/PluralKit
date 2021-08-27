@@ -29,7 +29,26 @@ namespace PluralKit.Bot
 
         public async Task Name(Context ctx)
         {
+            var noNameSetMessage = "Your system does not have a name set. Type `pk;system name <name>` to set one.";
+
             ctx.CheckSystem();
+
+            if (!ctx.HasNext())
+            {
+                if (ctx.System.Name != null)
+                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
+                else
+                    await ctx.Reply(noNameSetMessage);
+                return;
+            }
+            if (ctx.MatchRaw())
+            {
+                if (ctx.System.Name != null)
+                    await ctx.Reply($"```\n{ctx.System.Name}\n```");
+                else
+                    await ctx.Reply(noNameSetMessage);
+                return;
+            }
 
             if (await ctx.MatchClear("your system's name"))
             {
@@ -37,31 +56,47 @@ namespace PluralKit.Bot
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, clearPatch));
 
                 await ctx.Reply($"{Emojis.Success} System name cleared.");
-                return;
             }
-
-            var newSystemName = ctx.RemainderOrNull();
-            if (newSystemName == null)
+            else
             {
-                if (ctx.System.Name != null)
-                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
-                else
-                    await ctx.Reply("Your system currently does not have a name. Type `pk;system name <name>` to set one.");
-                return;
+                var newSystemName = ctx.RemainderOrNull();
+
+                if (newSystemName.Length > Limits.MaxSystemNameLength)
+                    throw Errors.SystemNameTooLongError(newSystemName.Length);
+
+                var patch = new SystemPatch { Name = newSystemName };
+                await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
+
+                await ctx.Reply($"{Emojis.Success} System name changed.");
             }
-
-            if (newSystemName != null && newSystemName.Length > Limits.MaxSystemNameLength)
-                throw Errors.SystemNameTooLongError(newSystemName.Length);
-
-            var patch = new SystemPatch { Name = newSystemName };
-            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
-
-            await ctx.Reply($"{Emojis.Success} System name changed.");
         }
 
         public async Task Description(Context ctx)
         {
+            var noDescriptionSetMessage = "Your system does not have a description set. To set one, type `pk;s description <description>`.";
+
             ctx.CheckSystem();
+
+            if (!ctx.HasNext())
+            {
+                if (ctx.System.Description == null)
+                    await ctx.Reply(noDescriptionSetMessage);
+                else
+                    await ctx.Reply(embed: new EmbedBuilder()
+                        .Title("System description")
+                        .Description(ctx.System.Description)
+                        .Footer(new("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`."))
+                        .Build());
+                return;
+            }
+            if (ctx.MatchRaw())
+            {
+                if (ctx.System.Description == null)
+                    await ctx.Reply(noDescriptionSetMessage);
+                else
+                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
+                return;
+            }
 
             if (await ctx.MatchClear("your system's description"))
             {
@@ -71,23 +106,9 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} System description cleared.");
                 return;
             }
-
-            var newDescription = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
-            if (newDescription == null)
-            {
-                if (ctx.System.Description == null)
-                    await ctx.Reply("Your system does not have a description set. To set one, type `pk;s description <description>`.");
-                else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
-                else
-                    await ctx.Reply(embed: new EmbedBuilder()
-                        .Title("System description")
-                        .Description(ctx.System.Description)
-                        .Footer(new("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`."))
-                        .Build());
-            }
             else
             {
+                var newDescription = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
                 if (newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
 
                 var patch = new SystemPatch { Description = newDescription };
@@ -141,7 +162,24 @@ namespace PluralKit.Bot
 
         public async Task Tag(Context ctx)
         {
+            var noTagSetMessage = "You currently have no system tag. To set one, type `pk;s tag <tag>`.";
+
             ctx.CheckSystem();
+
+            if (!ctx.HasNext(skipFlags: false))
+            {
+                if (ctx.System.Tag == null)
+                    await ctx.Reply(noTagSetMessage);
+                else
+                    await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+            }
+            if (ctx.MatchRaw())
+            {
+                if (ctx.System.Tag == null)
+                    await ctx.Reply(noTagSetMessage);
+                else
+                    await ctx.Reply($"```\n{ctx.System.Tag}\n```");
+            }
 
             if (await ctx.MatchClear("your system's tag"))
             {
@@ -149,13 +187,6 @@ namespace PluralKit.Bot
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} System tag cleared.");
-            }
-            else if (!ctx.HasNext(skipFlags: false))
-            {
-                if (ctx.System.Tag == null)
-                    await ctx.Reply($"You currently have no system tag. To set one, type `pk;s tag <tag>`.");
-                else
-                    await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
             }
             else
             {

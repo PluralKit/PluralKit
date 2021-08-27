@@ -71,6 +71,9 @@ namespace PluralKit.Bot
             return matched;
         }
 
+        public static bool MatchRaw(this Context ctx) =>
+            ctx.Match("r", "raw") || ctx.MatchFlag("r", "raw");
+
         public static (ulong? messageId, ulong? channelId) MatchMessage(this Context ctx, bool parseRawMessageId)
         {
             if (ctx.Message.Type == Message.MessageType.Reply && ctx.Message.MessageReference?.MessageId != null)

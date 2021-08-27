@@ -97,46 +97,51 @@ namespace PluralKit.Bot
 
         public async Task GroupDisplayName(Context ctx, PKGroup target)
         {
+            var noDisplayNameSetMessage = "This group does not have a display name set.";
+            if (ctx.System?.Id == target.System)
+                noDisplayNameSetMessage += $" To set one, type `pk;group {target.Reference()} displayname <display name>`.";
+
+            // No perms check, display name isn't covered by member privacy
+
+            if (!ctx.HasNext())
+            {
+                if (target.DisplayName == null)
+                    await ctx.Reply(noDisplayNameSetMessage);
+                else
+                {
+                    var eb = new EmbedBuilder()
+                        .Field(new("Name", target.Name))
+                        .Field(new("Display Name", target.DisplayName));
+
+                    if (ctx.System?.Id == target.System)
+                        eb.Description($"To change display name, type `pk;group {target.Reference()} displayname <display name>`."
+                            + "To clear it, type `pk;group {target.Reference()} displayname -clear`."
+                            + "To print the raw display name, type `pk;group {target.Reference()} displayname -raw`.");
+
+                    await ctx.Reply(embed: eb.Build());
+                }
+                return;
+            }
+            if (ctx.MatchRaw())
+            {
+                if (target.DisplayName == null)
+                    await ctx.Reply(noDisplayNameSetMessage);
+                else
+                    await ctx.Reply($"```\n{target.DisplayName}\n```");
+                return;
+            }
+
+            ctx.CheckOwnGroup(target);
+
             if (await ctx.MatchClear("this group's display name"))
             {
-                ctx.CheckOwnGroup(target);
-
                 var patch = new GroupPatch { DisplayName = Partial<string>.Null() };
                 await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Group display name cleared.");
             }
-            else if (!ctx.HasNext())
-            {
-                // No perms check, display name isn't covered by member privacy
-                if (ctx.MatchFlag("r", "raw"))
-                {
-                    if (target.DisplayName == null)
-                    {
-                        if (ctx.System?.Id == target.System)
-                            await ctx.Reply($"This group does not have a display name set. To set one, type `pk;group {target.Reference()} displayname <display name>`.");
-                        else
-                            await ctx.Reply("This group does not have a display name set.");
-                    }
-                    else
-                        await ctx.Reply($"```\n{target.DisplayName}\n```");
-                }
-                else
-                {
-                    var eb = new EmbedBuilder()
-                        .Field(new("Name", target.Name))
-                        .Field(new("Display Name", target.DisplayName ?? "*(none)*"));
-
-                    if (ctx.System?.Id == target.System)
-                        eb.Description($"To change display name, type `pk;group {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;group {target.Reference()} displayname -clear`.\nTo print the raw display name, type `pk;group {target.Reference()} displayname -raw`.");
-
-                    await ctx.Reply(embed: eb.Build());
-                }
-            }
             else
             {
-                ctx.CheckOwnGroup(target);
-
                 var newDisplayName = ctx.RemainderOrNull();
 
                 var patch = new GroupPatch { DisplayName = Partial<string>.Present(newDisplayName) };
@@ -148,26 +153,17 @@ namespace PluralKit.Bot
 
         public async Task GroupDescription(Context ctx, PKGroup target)
         {
-            if (await ctx.MatchClear("this group's description"))
-            {
-                ctx.CheckOwnGroup(target);
+            if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+                throw Errors.LookupNotAllowed;
 
-                var patch = new GroupPatch { Description = Partial<string>.Null() };
-                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
-                await ctx.Reply($"{Emojis.Success} Group description cleared.");
-            }
-            else if (!ctx.HasNext())
-            {
-                if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                    throw Errors.LookupNotAllowed;
+            var noDescriptionSetMessage = "This group does not have a description set.";
+            if (ctx.System?.Id == target.System)
+                noDescriptionSetMessage += $" To set one, type `pk;group {target.Reference()} description <description>`.";
 
+            if (!ctx.HasNext())
+            {
                 if (target.Description == null)
-                    if (ctx.System?.Id == target.System)
-                        await ctx.Reply($"This group does not have a description set. To set one, type `pk;group {target.Reference()} description <description>`.");
-                    else
-                        await ctx.Reply("This group does not have a description set.");
-                else if (ctx.MatchFlag("r", "raw"))
-                    await ctx.Reply($"```\n{target.Description}\n```");
+                    await ctx.Reply(noDescriptionSetMessage);
                 else
                     await ctx.Reply(embed: new EmbedBuilder()
                         .Title("Group description")
@@ -175,11 +171,27 @@ namespace PluralKit.Bot
                         .Field(new("\u200B", $"To print the description with formatting, type `pk;group {target.Reference()} description -raw`."
                                     + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {target.Reference()} description -clear`." : "")))
                         .Build());
+                return;
+            }
+            if (ctx.MatchRaw())
+            {
+                if (target.Description == null)
+                    await ctx.Reply(noDescriptionSetMessage);
+                else
+                    await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+
+            ctx.CheckOwnGroup(target);
+
+            if (await ctx.MatchClear("this group's description"))
+            {
+                var patch = new GroupPatch { Description = Partial<string>.Null() };
+                await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
+                await ctx.Reply($"{Emojis.Success} Group description cleared.");
             }
             else
             {
-                ctx.CheckOwnGroup(target);
-
                 var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (description.IsLongerThan(Limits.MaxDescriptionLength))
                     throw Errors.DescriptionTooLongError(description.Length);
