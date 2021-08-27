@@ -1,4 +1,4 @@
-﻿namespace PluralKit.API
+namespace PluralKit.API
 {
     public class PKClaims
     {

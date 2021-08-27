@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using NodaTime;
 
 namespace PluralKit.Core
@@ -12,6 +12,6 @@ namespace PluralKit.Core
         public AnnualDate? AnnualBirthday =>
             Birthday != null
                 ? new AnnualDate(Birthday.Value.Month, Birthday.Value.Day)
-                : (AnnualDate?) null;
+                : (AnnualDate?)null;
     }
 }

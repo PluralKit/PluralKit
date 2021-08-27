@@ -77,7 +77,7 @@ namespace PluralKit.Bot
         public DiscordApiClient Rest => _rest;
 
         public PKSystem System => _senderSystem;
-        
+
         public Parameters Parameters => _parameters;
 
         internal IDatabase Database => _db;
@@ -109,7 +109,7 @@ namespace PluralKit.Bot
 
             return msg;
         }
-        
+
         public async Task Execute<T>(Command commandDef, Func<T, Task> handler)
         {
             _currentCommand = commandDef;
@@ -134,15 +134,15 @@ namespace PluralKit.Bot
             }
         }
 
-        public LookupContext LookupContextFor(PKSystem target) => 
+        public LookupContext LookupContextFor(PKSystem target) =>
             System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-        
-        public LookupContext LookupContextFor(SystemId systemId) => 
+
+        public LookupContext LookupContextFor(SystemId systemId) =>
             System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
 
         public LookupContext LookupContextFor(PKMember target) =>
             System?.Id == target.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-        
+
         public IComponentContext Services => _provider;
     }
 }

@@ -34,12 +34,12 @@ namespace PluralKit.API
             services.AddCors();
             services.AddAuthentication("SystemToken")
                 .AddScheme<SystemTokenAuthenticationHandler.Opts, SystemTokenAuthenticationHandler>("SystemToken", null);
-            
+
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("EditSystem", p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
                 options.AddPolicy("EditMember", p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
-                
+
                 options.AddPolicy("ViewMembers", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.MemberListPrivacy)));
                 options.AddPolicy("ViewFront", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontPrivacy)));
                 options.AddPolicy("ViewFrontHistory", p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontHistoryPrivacy)));
@@ -48,35 +48,35 @@ namespace PluralKit.API
             services.AddSingleton<IAuthorizationHandler, MemberOwnerHandler>();
             services.AddSingleton<IAuthorizationHandler, SystemOwnerHandler>();
             services.AddSingleton<IAuthorizationHandler, SystemPrivacyHandler>();
-            
+
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddNewtonsoftJson(); // sorry MS, this just does *more*
 
             services.AddApiVersioning();
-            
+
             services.AddVersionedApiExplorer(c =>
             {
                 c.GroupNameFormat = "'v'VV";
                 c.ApiVersionParameterSource = new UrlSegmentApiVersionReader();
                 c.SubstituteApiVersionInUrl = true;
             });
-            
+
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1.0", new OpenApiInfo {Title = "PluralKit", Version = "1.0"});
-                
+                c.SwaggerDoc("v1.0", new OpenApiInfo { Title = "PluralKit", Version = "1.0" });
+
                 c.EnableAnnotations();
                 c.AddSecurityDefinition("TokenAuth",
-                    new OpenApiSecurityScheme {Name = "Authorization", Type = SecuritySchemeType.ApiKey});
-                
+                    new OpenApiSecurityScheme { Name = "Authorization", Type = SecuritySchemeType.ApiKey });
+
                 // Exclude routes without a version, then fall back to group name matching (default behavior)
                 c.DocInclusionPredicate((docName, apiDesc) =>
                 {
                     if (!apiDesc.RelativePath.StartsWith("v1/")) return false;
                     return apiDesc.GroupName == docName;
                 });
-                
+
                 // Set the comments path for the Swagger JSON and UI.
                 // https://docs.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-3.1&tabs=visual-studio#customize-and-extend
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -103,7 +103,7 @@ namespace PluralKit.API
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                
+
                 // Only enable Swagger stuff when ASPNETCORE_ENVIRONMENT=Development (for now)
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
@@ -119,7 +119,7 @@ namespace PluralKit.API
 
             //app.UseHttpsRedirection();
             app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization"));
-            
+
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();

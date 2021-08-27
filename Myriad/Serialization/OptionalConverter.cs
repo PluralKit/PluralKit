@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -22,11 +22,11 @@ namespace Myriad.Serialization
                 JsonSerializer.Serialize(writer, value.HasValue ? value.GetValue() : default, typeof(T), options);
             }
         }
-        
+
         public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
             var innerType = typeToConvert.GetGenericArguments()[0];
-            return (JsonConverter?) Activator.CreateInstance(
+            return (JsonConverter?)Activator.CreateInstance(
                 typeof(Inner<>).MakeGenericType(innerType),
                 BindingFlags.Instance | BindingFlags.Public,
                 null,

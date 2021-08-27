@@ -24,7 +24,7 @@ namespace PluralKit.Bot
         public const uint Green = 0x00cc78;
         public const uint Red = 0xef4b3d;
         public const uint Gray = 0x979c9f;
-        
+
         private static readonly Regex USER_MENTION = new Regex("<@!?(\\d{17,19})>");
         private static readonly Regex ROLE_MENTION = new Regex("<@&(\\d{17,19})>");
         private static readonly Regex EVERYONE_HERE_MENTION = new Regex("@(everyone|here)");
@@ -36,23 +36,23 @@ namespace PluralKit.Bot
         // corresponding to: https://github.com/Khan/simple-markdown/blob/master/src/index.js#L1489
         // I added <? and >? at the start/end; they need to be handled specially later...
         private static readonly Regex UNBROKEN_LINK_REGEX = new Regex("<?(https?:\\/\\/[^\\s<]+[^<.,:;\"')\\]\\s])>?");
-        
+
         public static string NameAndMention(this User user)
         {
             return $"{user.Username}#{user.Discriminator} ({user.Mention()})";
         }
-        
+
         public static Instant SnowflakeToInstant(ulong snowflake) =>
             Instant.FromUtc(2015, 1, 1, 0, 0, 0) + Duration.FromMilliseconds(snowflake >> 22);
 
         public static ulong InstantToSnowflake(Instant time) =>
-            (ulong) (time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds << 22;
-        
+            (ulong)(time - Instant.FromUtc(2015, 1, 1, 0, 0, 0)).TotalMilliseconds << 22;
+
         public static async Task CreateReactionsBulk(this DiscordApiClient rest, Message msg, string[] reactions)
         {
             foreach (var reaction in reactions)
             {
-                await rest.CreateReaction(msg.ChannelId, msg.Id, new() {Name = reaction});
+                await rest.CreateReaction(msg.ChannelId, msg.Id, new() { Name = reaction });
             }
         }
 
@@ -97,22 +97,23 @@ namespace PluralKit.Bot
             var users = USER_MENTION.Matches(input).Select(x => ulong.Parse(x.Groups[1].Value));
             var roles = ROLE_MENTION.Matches(input).Select(x => ulong.Parse(x.Groups[1].Value));
             var everyone = EVERYONE_HERE_MENTION.IsMatch(input);
-            
+
             return new AllowedMentions
             {
                 Users = users.Distinct().ToArray(),
                 Roles = roles.Distinct().ToArray(),
-                Parse = everyone ? new[] {AllowedMentions.ParseType.Everyone} : null
+                Parse = everyone ? new[] { AllowedMentions.ParseType.Everyone } : null
             };
         }
 
         public static AllowedMentions RemoveUnmentionableRoles(this AllowedMentions mentions, Guild guild)
         {
-            return mentions with {
+            return mentions with
+            {
                 Roles = mentions.Roles
                     ?.Where(id => guild.Roles.FirstOrDefault(r => r.Id == id)?.Mentionable == true)
                     .ToArray()
-                };
+            };
         }
 
         public static string EscapeMarkdown(this string input)
@@ -146,7 +147,7 @@ namespace PluralKit.Bot
             // So, surrounding with two backticks, then escaping all backtick pairs makes it impossible(!) to "break out"
             return $"``{EscapeBacktickPair(input)}``";
         }
-        
+
         public static EmbedBuilder WithSimpleLineContent(this EmbedBuilder eb, IEnumerable<string> lines)
         {
             static int CharacterLimit(int pageNumber) =>
@@ -178,7 +179,7 @@ namespace PluralKit.Bot
                 return $"<{match.Value}>";
             });
 
-        public static string EventType(this IGatewayEvent evt) => 
+        public static string EventType(this IGatewayEvent evt) =>
             evt.GetType().Name.Replace("Event", "");
 
         public static bool HasReactionPermissions(Context ctx)
@@ -188,9 +189,9 @@ namespace PluralKit.Bot
         }
 
         public static bool IsValidGuildChannel(Channel channel) =>
-            channel.Type is 
+            channel.Type is
                 Channel.ChannelType.GuildText or
-                Channel.ChannelType.GuildNews or 
+                Channel.ChannelType.GuildNews or
                 Channel.ChannelType.GuildPublicThread or
                 Channel.ChannelType.GuildPrivateThread or
                 Channel.ChannelType.GuildNewsThread;

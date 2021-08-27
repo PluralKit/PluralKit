@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -52,7 +52,7 @@ namespace Myriad.Rest
             var waitPolicy = Policy
                 .Handle<RatelimitBucketExhaustedException>()
                 .WaitAndRetryAsync(3,
-                    (_, e, _) => ((RatelimitBucketExhaustedException) e).RetryAfter,
+                    (_, e, _) => ((RatelimitBucketExhaustedException)e).RetryAfter,
                     (_, _, _, _) => Task.CompletedTask)
                 .AsAsyncPolicy<HttpResponseMessage>();
 
@@ -68,7 +68,7 @@ namespace Myriad.Rest
             return default;
         }
 
-        public async Task<T?> Get<T>(string path, (string endpointName, ulong major) ratelimitParams) where T: class
+        public async Task<T?> Get<T>(string path, (string endpointName, ulong major) ratelimitParams) where T : class
         {
             using var response = await Send(() => new HttpRequestMessage(HttpMethod.Get, ApiBaseUrl + path),
                 ratelimitParams, true);
@@ -81,7 +81,7 @@ namespace Myriad.Rest
         }
 
         public async Task<T?> Post<T>(string path, (string endpointName, ulong major) ratelimitParams, object? body)
-            where T: class
+            where T : class
         {
             using var response = await Send(() =>
             {
@@ -91,9 +91,9 @@ namespace Myriad.Rest
             }, ratelimitParams);
             return await ReadResponse<T>(response);
         }
-        
+
         public async Task<T?> PostMultipart<T>(string path, (string endpointName, ulong major) ratelimitParams, object? payload, MultipartFile[]? files)
-            where T: class
+            where T : class
         {
             using var response = await Send(() =>
             {
@@ -105,7 +105,7 @@ namespace Myriad.Rest
         }
 
         public async Task<T?> Patch<T>(string path, (string endpointName, ulong major) ratelimitParams, object? body)
-            where T: class
+            where T : class
         {
             using var response = await Send(() =>
             {
@@ -117,7 +117,7 @@ namespace Myriad.Rest
         }
 
         public async Task<T?> Put<T>(string path, (string endpointName, ulong major) ratelimitParams, object? body)
-            where T: class
+            where T : class
         {
             using var response = await Send(() =>
             {
@@ -160,7 +160,7 @@ namespace Myriad.Rest
             request.Content = mfd;
         }
 
-        private async Task<T?> ReadResponse<T>(HttpResponseMessage response) where T: class
+        private async Task<T?> ReadResponse<T>(HttpResponseMessage response) where T : class
         {
             if (response.StatusCode == HttpStatusCode.NoContent)
                 return null;
@@ -174,7 +174,7 @@ namespace Myriad.Rest
             return await _retryPolicy.ExecuteAsync(async _ =>
                 {
                     using var __ = LogContext.PushProperty("EndpointName", ratelimitParams.endpointName);
-                    
+
                     var request = createRequest();
                     _logger.Debug("Request: {RequestMethod} {RequestPath}",
                         request.Method, request.RequestUri);
@@ -189,7 +189,7 @@ namespace Myriad.Rest
 
                     _logger.Debug(
                         "Response: {RequestMethod} {RequestPath} -> {StatusCode} {ReasonPhrase} (in {ResponseDurationMs} ms)",
-                        request.Method, request.RequestUri, (int) response.StatusCode, response.ReasonPhrase, stopwatch.ElapsedMilliseconds);
+                        request.Method, request.RequestUri, (int)response.StatusCode, response.ReasonPhrase, stopwatch.ElapsedMilliseconds);
 
                     await HandleApiError(response, ignoreNotFound);
 
@@ -211,7 +211,7 @@ namespace Myriad.Rest
                 return;
 
             var body = await response.Content.ReadAsStringAsync();
-            var apiError = TryParseApiError(body); 
+            var apiError = TryParseApiError(body);
             if (apiError != null)
                 _logger.Warning("Discord API error: {DiscordErrorCode} {DiscordErrorMessage}", apiError.Code, apiError.Message);
 

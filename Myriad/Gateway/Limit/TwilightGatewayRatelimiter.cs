@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -14,7 +14,7 @@ namespace Myriad.Gateway.Limit
         {
             Timeout = TimeSpan.FromSeconds(60)
         };
-        
+
         public TwilightGatewayRatelimiter(ILogger logger, string url)
         {
             _url = url;

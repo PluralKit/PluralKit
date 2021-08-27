@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Threading.Tasks;
 
 using Myriad.Builders;
@@ -17,7 +17,7 @@ namespace PluralKit.Bot
     public class ProxiedMessage
     {
         private static readonly Duration EditTimeout = Duration.FromMinutes(10);
-        
+
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
@@ -48,7 +48,7 @@ namespace PluralKit.Bot
 
             if (ctx.System.Id != msg.System.Id)
                 throw new PKError("Can't edit a message sent by a different system.");
-            
+
             if (_cache.GetRootChannel(msg.Message.Channel).Id != msg.Message.Channel)
                 throw new PKError("PluralKit cannot edit messages in threads.");
 
@@ -61,7 +61,7 @@ namespace PluralKit.Bot
             try
             {
                 var editedMsg = await _webhookExecutor.EditWebhookMessage(msg.Message.Channel, msg.Message.Mid, newContent);
-                
+
                 if (ctx.Guild == null)
                     await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new() { Name = Emojis.Success });
 
@@ -75,7 +75,7 @@ namespace PluralKit.Bot
                 throw new PKError("Could not edit message.");
             }
         }
-        
+
         private async Task<FullMessage> GetMessageToEdit(Context ctx)
         {
             await using var conn = await _db.Obtain();
@@ -112,14 +112,14 @@ namespace PluralKit.Bot
             var lastMessage = await _repo.GetLastMessage(conn, ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
             if (lastMessage == null)
                 return null;
-            
+
             var timestamp = DiscordUtils.SnowflakeToInstant(lastMessage.Mid);
             if (_clock.GetCurrentInstant() - timestamp > EditTimeout)
                 return null;
 
             return lastMessage;
         }
-        
+
         public async Task GetMessage(Context ctx)
         {
             var (messageId, _) = ctx.MatchMessage(true);
@@ -129,7 +129,7 @@ namespace PluralKit.Bot
                     throw new PKSyntaxError("You must pass a message ID or link.");
                 throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
             }
-            
+
             var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
             if (message == null) throw Errors.MessageNotFound(messageId.Value);
 

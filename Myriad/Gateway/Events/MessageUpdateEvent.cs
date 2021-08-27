@@ -1,4 +1,4 @@
-﻿using Myriad.Types;
+using Myriad.Types;
 using Myriad.Utils;
 
 namespace Myriad.Gateway

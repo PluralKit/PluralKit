@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 using NodaTime;
 
@@ -11,12 +11,12 @@ namespace PluralKit.Bot
     public class CommandMessageService
     {
         private static readonly Duration CommandMessageRetention = Duration.FromHours(2);
-        
+
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly IClock _clock;
         private readonly ILogger _logger;
-        
+
         public CommandMessageService(IDatabase db, ModelRepository repo, IClock clock, ILogger logger)
         {
             _db = db;
@@ -42,7 +42,7 @@ namespace PluralKit.Bot
             var deleteThresholdSnowflake = DiscordUtils.InstantToSnowflake(deleteThresholdInstant);
 
             var deletedRows = await _db.Execute(conn => _repo.DeleteCommandMessagesBefore(conn, deleteThresholdSnowflake));
-            
+
             _logger.Information("Pruned {DeletedRows} command messages older than retention {Retention} (older than {DeleteThresholdInstant} / {DeleteThresholdSnowflake})",
                 deletedRows, CommandMessageRetention, deleteThresholdInstant, deleteThresholdSnowflake);
         }

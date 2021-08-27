@@ -17,8 +17,10 @@ using NodaTime;
 using PluralKit.Bot.Interactive;
 using PluralKit.Core;
 
-namespace PluralKit.Bot {
-    public static class ContextUtils {
+namespace PluralKit.Bot
+{
+    public static class ContextUtils
+    {
         public static async Task<bool> ConfirmClear(this Context ctx, string toClear)
         {
             if (!(await ctx.PromptYesNo($"{Emojis.Warn} Are you sure you want to clear {toClear}?", "Clear"))) throw Errors.GenericCancelled();
@@ -50,7 +52,7 @@ namespace PluralKit.Bot {
                 if (predicate != null && !predicate.Invoke(evt)) return false; // Check predicate
                 return true;
             }
-            
+
             return await ctx.Services.Resolve<HandlerQueue<MessageReactionAddEvent>>().WaitFor(ReactionPredicate, timeout);
         }
 
@@ -58,20 +60,21 @@ namespace PluralKit.Bot {
         {
             bool Predicate(MessageCreateEvent e) =>
                 e.Author.Id == ctx.Author.Id && e.ChannelId == ctx.Channel.Id;
-            
+
             var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>()
                 .WaitFor(Predicate, Duration.FromMinutes(1));
-            
+
             return string.Equals(msg.Content, expectedReply, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, string color, Func<EmbedBuilder, IEnumerable<T>, Task> renderer) {
+        public static async Task Paginate<T>(this Context ctx, IAsyncEnumerable<T> items, int totalCount, int itemsPerPage, string title, string color, Func<EmbedBuilder, IEnumerable<T>, Task> renderer)
+        {
             // TODO: make this generic enough we can use it in Choose<T> below
 
             var buffer = new List<T>();
             await using var enumerator = items.GetAsyncEnumerator();
 
-            var pageCount = (int) Math.Ceiling(totalCount / (double) itemsPerPage);
+            var pageCount = (int)Math.Ceiling(totalCount / (double)itemsPerPage);
             async Task<Embed> MakeEmbedForPage(int page)
             {
                 var bufferedItemsNeeded = (page + 1) * itemsPerPage;
@@ -79,10 +82,10 @@ namespace PluralKit.Bot {
                     buffer.Add(enumerator.Current);
 
                 var eb = new EmbedBuilder();
-                eb.Title(pageCount > 1 ? $"[{page+1}/{pageCount}] {title}" : title);
+                eb.Title(pageCount > 1 ? $"[{page + 1}/{pageCount}] {title}" : title);
                 if (color != null)
                     eb.Color(color.ToDiscordColor());
-                await renderer(eb, buffer.Skip(page*itemsPerPage).Take(itemsPerPage));
+                await renderer(eb, buffer.Skip(page * itemsPerPage).Take(itemsPerPage));
                 return eb.Build();
             }
 
@@ -94,9 +97,11 @@ namespace PluralKit.Bot {
 
                 var _ = ctx.Rest.CreateReactionsBulk(msg, botEmojis); // Again, "fork"
 
-                try {
+                try
+                {
                     var currentPage = 0;
-                    while (true) {
+                    while (true)
+                    {
                         var reaction = await ctx.AwaitReaction(msg, ctx.Author, timeout: Duration.FromMinutes(5));
 
                         // Increment/decrement page counter based on which reaction was clicked
@@ -105,19 +110,21 @@ namespace PluralKit.Bot {
                         if (reaction.Emoji.Name == "\u27A1") currentPage = (currentPage + 1) % pageCount; // >
                         if (reaction.Emoji.Name == "\u23E9") currentPage = pageCount - 1; // >>
                         if (reaction.Emoji.Name == Emojis.Error) break; // X
-                        
+
                         // C#'s % operator is dumb and wrong, so we fix negative numbers
                         if (currentPage < 0) currentPage += pageCount;
-                        
+
                         // If we can, remove the user's reaction (so they can press again quickly)
                         if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
                             await ctx.Rest.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, reaction.UserId);
-                        
+
                         // Edit the embed with the new page
                         var embed = await MakeEmbedForPage(currentPage);
-                        await ctx.Rest.EditMessage(msg.ChannelId, msg.Id, new MessageEditRequest {Embed = embed});
+                        await ctx.Rest.EditMessage(msg.ChannelId, msg.Id, new MessageEditRequest { Embed = embed });
                     }
-                } catch (TimeoutException) {
+                }
+                catch (TimeoutException)
+                {
                     // "escape hatch", clean up as if we hit X
                 }
 
@@ -132,7 +139,7 @@ namespace PluralKit.Bot {
             // either way, nothing to do here
             catch (ForbiddenException) { }
         }
-        
+
         public static async Task<T> Choose<T>(this Context ctx, string description, IList<T> items, Func<T, string> display = null)
         {
             // Generate a list of :regional_indicator_?: emoji surrogate pairs (starting at codepoint 0x1F1E6)
@@ -157,27 +164,27 @@ namespace PluralKit.Bot {
             if (items.Count > pageSize)
             {
                 var currPage = 0;
-                var pageCount = (items.Count-1) / pageSize + 1;
-                
+                var pageCount = (items.Count - 1) / pageSize + 1;
+
                 // Send the original message
                 var msg = await ctx.Reply($"**[Page {currPage + 1}/{pageCount}]**\n{description}\n{MakeOptionList(currPage)}");
-                
+
                 // Add back/forward reactions and the actual indicator emojis
                 async Task AddEmojis()
                 {
                     await ctx.Rest.CreateReaction(msg.ChannelId, msg.Id, new() { Name = "\u2B05" });
                     await ctx.Rest.CreateReaction(msg.ChannelId, msg.Id, new() { Name = "\u27A1" });
-                    for (int i = 0; i < items.Count; i++) 
+                    for (int i = 0; i < items.Count; i++)
                         await ctx.Rest.CreateReaction(msg.ChannelId, msg.Id, new() { Name = indicators[i] });
                 }
 
                 var _ = AddEmojis(); // Not concerned about awaiting
-                
+
                 while (true)
                 {
                     // Wait for a reaction
                     var reaction = await ctx.AwaitReaction(msg, ctx.Author);
-                    
+
                     // If it's a movement reaction, inc/dec the page index
                     if (reaction.Emoji.Name == "\u2B05") currPage -= 1; // <
                     if (reaction.Emoji.Name == "\u27A1") currPage += 1; // >
@@ -210,17 +217,17 @@ namespace PluralKit.Bot {
                 async Task AddEmojis()
                 {
                     for (int i = 0; i < items.Count; i++)
-                        await ctx.Rest.CreateReaction(msg.ChannelId, msg.Id, new() {Name = indicators[i]});
+                        await ctx.Rest.CreateReaction(msg.ChannelId, msg.Id, new() { Name = indicators[i] });
                 }
 
                 var _ = AddEmojis();
 
                 // Then wait for a reaction and return whichever one we found
-                var reaction = await ctx.AwaitReaction(msg, ctx.Author,rx => indicators.Contains(rx.Emoji.Name));
+                var reaction = await ctx.AwaitReaction(msg, ctx.Author, rx => indicators.Contains(rx.Emoji.Name));
                 return items[Array.IndexOf(indicators, reaction.Emoji.Name)];
             }
         }
-        
+
         public static async Task BusyIndicator(this Context ctx, Func<Task> f, string emoji = "\u23f3" /* hourglass */)
         {
             await ctx.BusyIndicator<object>(async () =>
@@ -239,13 +246,13 @@ namespace PluralKit.Bot {
 
             try
             {
-                await Task.WhenAll(ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new() {Name = emoji}), task);
+                await Task.WhenAll(ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new() { Name = emoji }), task);
                 return await task;
             }
             finally
             {
                 var _ = ctx.Rest.DeleteOwnReaction(ctx.Message.ChannelId, ctx.Message.Id, new() { Name = emoji });
             }
-        } 
+        }
     }
 }

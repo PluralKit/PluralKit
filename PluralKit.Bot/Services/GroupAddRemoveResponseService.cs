@@ -12,14 +12,14 @@ namespace PluralKit.Bot
         private class Response
         {
             private readonly Groups.AddRemoveOperation _op;
-            
+
             private readonly string _actionStr;
             private readonly string _containStr;
             private readonly string _emojiStr;
 
             private readonly bool _memberPlural;
             private readonly bool _groupPlural;
-            
+
             private readonly int _actionedOn;
             private readonly int _notActionedOn;
 
@@ -27,18 +27,18 @@ namespace PluralKit.Bot
                             int notActionedOn)
             {
                 _op = action;
-                
+
                 _actionStr = action == Groups.AddRemoveOperation.Add ? "added to" : "removed from";
                 _containStr = action == Groups.AddRemoveOperation.Add ? "in" : "not in";
                 _emojiStr = actionedOn > 0 ? Emojis.Success : Emojis.Error;
 
                 _memberPlural = memberCount > 1;
                 _groupPlural = groupCount > 1;
-                
+
                 // sanity checking: we can't add multiple groups to multiple members (at least for now)
                 if (_memberPlural && _groupPlural)
                     throw new ArgumentOutOfRangeException();
-               
+
                 // sanity checking: we can't act/not act on a different number of entities than we have
                 if (_memberPlural && (actionedOn + notActionedOn) != memberCount)
                     throw new ArgumentOutOfRangeException();
@@ -48,7 +48,7 @@ namespace PluralKit.Bot
                 _actionedOn = actionedOn;
                 _notActionedOn = notActionedOn;
             }
-            
+
             // name generators
             private string MemberString(bool capitalize = false)
                 => capitalize
@@ -59,14 +59,14 @@ namespace PluralKit.Bot
                 => capitalize
                     ? (count == 1 ? "Member" : "Members")
                     : (count == 1 ? "member" : "members");
-            
+
             private string GroupString() => _groupPlural ? "groups" : "group";
 
             private string GroupString(int count)
                 => count == 1 ? "group" : "groups";
 
             // string generators
-            
+
             private string ResponseString()
             {
                 if (_actionedOn > 0 && _notActionedOn > 0 && _memberPlural)
@@ -100,9 +100,9 @@ namespace PluralKit.Bot
 
                 return $" ({msg})";
             }
-            
+
             public string ToString() => $"{_emojiStr} {ResponseString()}{InfoMessage()}.";
-            
+
             // |
         }
     }

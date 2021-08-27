@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -34,7 +34,7 @@ namespace Myriad.Rest
 
         public Task<Guild?> GetGuild(ulong id) =>
             _client.Get<Guild>($"/guilds/{id}", ("GetGuild", id));
-        
+
         public Task<Channel[]> GetGuildChannels(ulong id) =>
             _client.Get<Channel[]>($"/guilds/{id}/channels", ("GetGuildChannels", id))!;
 
@@ -108,7 +108,7 @@ namespace Myriad.Rest
 
         public Task<Webhook> CreateWebhook(ulong channelId, CreateWebhookRequest request) =>
             _client.Post<Webhook>($"/channels/{channelId}/webhooks", ("CreateWebhook", channelId), request)!;
-        
+
         public Task<Webhook> GetWebhook(ulong webhookId) =>
             _client.Get<Webhook>($"/webhooks/{webhookId}/webhooks", ("GetWebhook", webhookId))!;
 
@@ -121,7 +121,7 @@ namespace Myriad.Rest
             var url = $"/webhooks/{webhookId}/{webhookToken}?wait=true";
             if (threadId != null)
                 url += $"&thread_id={threadId}";
-            
+
             return _client.PostMultipart<Message>(url,
                 ("ExecuteWebhook", webhookId), request, files)!;
         }

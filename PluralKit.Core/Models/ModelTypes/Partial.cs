@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ namespace PluralKit.Core
         public static Partial<T> Present(T obj) => new Partial<T>(true, obj);
         public static Partial<T> Absent = new Partial<T>(false, default!);
 
-        public IEnumerable<T> ToArray() => IsPresent ? new[] {Value} : new T[0];
+        public IEnumerable<T> ToArray() => IsPresent ? new[] { Value } : new T[0];
 
         public IEnumerator<T> GetEnumerator() => ToArray().GetEnumerator();
 
@@ -52,7 +52,7 @@ namespace PluralKit.Core
             return typeof(Partial<>)
                     .MakeGenericType(innerType)
                     .GetMethod(nameof(Partial<object>.Present))!
-                .Invoke(null, new[] {innerValue});
+                .Invoke(null, new[] { innerValue });
         }
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) =>

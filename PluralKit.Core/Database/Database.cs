@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -18,7 +18,7 @@ namespace PluralKit.Core
 {
     internal class Database: IDatabase
     {
-        
+
         private readonly CoreConfig _config;
         private readonly ILogger _logger;
         private readonly IMetrics _metrics;
@@ -34,20 +34,22 @@ namespace PluralKit.Core
             _metrics = metrics;
             _migrator = migrator;
             _logger = logger.ForContext<Database>();
-            
+
             _connectionString = new NpgsqlConnectionStringBuilder(_config.Database)
             {
-                Pooling = true, Enlist = false, NoResetOnClose = true,
-                
+                Pooling = true,
+                Enlist = false,
+                NoResetOnClose = true,
+
                 // Lower timeout than default (15s -> 2s), should ideally fail-fast instead of hanging
                 Timeout = 2
             }.ConnectionString;
         }
-        
+
         public static void InitStatic()
         {
             DefaultTypeMap.MatchNamesWithUnderscores = true;
-            
+
             // Dapper by default tries to pass ulongs to Npgsql, which rejects them since PostgreSQL technically
             // doesn't support unsigned types on its own.
             // Instead we add a custom mapper to encode them as signed integers instead, converting them back and forth.
@@ -61,7 +63,7 @@ namespace PluralKit.Core
             // So we add a custom type handler that literally just passes the type through to Npgsql
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<Instant>());
             SqlMapper.AddTypeHandler(new PassthroughTypeHandler<LocalDate>());
-            
+
             // Add ID types to Dapper
             SqlMapper.AddTypeHandler(new NumericIdHandler<SystemId, int>(i => new SystemId(i)));
             SqlMapper.AddTypeHandler(new NumericIdHandler<MemberId, int>(i => new MemberId(i)));
@@ -71,25 +73,25 @@ namespace PluralKit.Core
             SqlMapper.AddTypeHandler(new NumericIdArrayHandler<MemberId, int>(i => new MemberId(i)));
             SqlMapper.AddTypeHandler(new NumericIdArrayHandler<SwitchId, int>(i => new SwitchId(i)));
             SqlMapper.AddTypeHandler(new NumericIdArrayHandler<GroupId, int>(i => new GroupId(i)));
-            
+
             // Register our custom types to Npgsql
             // Without these it'll still *work* but break at the first launch + probably cause other small issues
             NpgsqlConnection.GlobalTypeMapper.MapComposite<ProxyTag>("proxy_tag");
             NpgsqlConnection.GlobalTypeMapper.MapEnum<PrivacyLevel>("privacy_level");
         }
-        
+
         public async Task<IPKConnection> Obtain()
         {
             // Mark the request (for a handle, I guess) in the metrics
             _metrics.Measure.Meter.Mark(CoreMetrics.DatabaseRequests);
-            
+
             // Create a connection and open it
             // We wrap it in PKConnection for tracing purposes
             var conn = new PKConnection(new NpgsqlConnection(_connectionString), _countHolder, _logger, _metrics);
             await conn.OpenAsync();
             return conn;
         }
-        
+
         public async Task ApplyMigrations()
         {
             using var conn = await Obtain();
@@ -99,28 +101,28 @@ namespace PluralKit.Core
         private class PassthroughTypeHandler<T>: SqlMapper.TypeHandler<T>
         {
             public override void SetValue(IDbDataParameter parameter, T value) => parameter.Value = value;
-            public override T Parse(object value) => (T) value;
+            public override T Parse(object value) => (T)value;
         }
 
         private class UlongEncodeAsLongHandler: SqlMapper.TypeHandler<ulong>
         {
             public override ulong Parse(object value) =>
                 // Cast to long to unbox, then to ulong (???)
-                (ulong) (long) value;
+                (ulong)(long)value;
 
-            public override void SetValue(IDbDataParameter parameter, ulong value) => parameter.Value = (long) value;
+            public override void SetValue(IDbDataParameter parameter, ulong value) => parameter.Value = (long)value;
         }
 
         private class UlongArrayHandler: SqlMapper.TypeHandler<ulong[]>
         {
-            public override void SetValue(IDbDataParameter parameter, ulong[] value) => parameter.Value = Array.ConvertAll(value, i => (long) i);
+            public override void SetValue(IDbDataParameter parameter, ulong[] value) => parameter.Value = Array.ConvertAll(value, i => (long)i);
 
-            public override ulong[] Parse(object value) => Array.ConvertAll((long[]) value, i => (ulong) i);
+            public override ulong[] Parse(object value) => Array.ConvertAll((long[])value, i => (ulong)i);
         }
 
         private class NumericIdHandler<T, TInner>: SqlMapper.TypeHandler<T>
-            where T: INumericId<T, TInner>
-            where TInner: IEquatable<TInner>, IComparable<TInner>
+            where T : INumericId<T, TInner>
+            where TInner : IEquatable<TInner>, IComparable<TInner>
         {
             private readonly Func<TInner, T> _factory;
 
@@ -131,12 +133,12 @@ namespace PluralKit.Core
 
             public override void SetValue(IDbDataParameter parameter, T value) => parameter.Value = value.Value;
 
-            public override T Parse(object value) => _factory((TInner) value);
+            public override T Parse(object value) => _factory((TInner)value);
         }
 
         private class NumericIdArrayHandler<T, TInner>: SqlMapper.TypeHandler<T[]>
-            where T: INumericId<T, TInner>
-            where TInner: IEquatable<TInner>, IComparable<TInner>
+            where T : INumericId<T, TInner>
+            where TInner : IEquatable<TInner>, IComparable<TInner>
         {
             private readonly Func<TInner, T> _factory;
 
@@ -147,10 +149,10 @@ namespace PluralKit.Core
 
             public override void SetValue(IDbDataParameter parameter, T[] value) => parameter.Value = Array.ConvertAll(value, v => v.Value);
 
-            public override T[] Parse(object value) => Array.ConvertAll((TInner[]) value, v => _factory(v));
+            public override T[] Parse(object value) => Array.ConvertAll((TInner[])value, v => _factory(v));
         }
     }
-    
+
     public static class DatabaseExt
     {
         public static async Task Execute(this IDatabase db, Func<IPKConnection, Task> func)
@@ -164,11 +166,11 @@ namespace PluralKit.Core
             await using var conn = await db.Obtain();
             return await func(conn);
         }
-        
+
         public static async IAsyncEnumerable<T> Execute<T>(this IDatabase db, Func<IPKConnection, IAsyncEnumerable<T>> func)
         {
             await using var conn = await db.Obtain();
-            
+
             await foreach (var val in func(conn))
                 yield return val;
         }

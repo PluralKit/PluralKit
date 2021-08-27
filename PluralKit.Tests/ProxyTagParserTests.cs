@@ -16,7 +16,7 @@ namespace PluralKit.Tests
                 new ProxyMember("John", new ProxyTag("[", "]")),
                 new ProxyMember("Bob", new ProxyTag("{", "}"), new ProxyTag("<", ">")),
                 new ProxyMember("Prefixed", new ProxyTag("A:", "")),
-                new ProxyMember("Tagless") 
+                new ProxyMember("Tagless")
             };
 
             [Fact]
@@ -57,7 +57,7 @@ namespace PluralKit.Tests
             [InlineData("something A:prefix")]
             public void TagsOnlyMatchAtTheStartAndEnd(string input) =>
                 AssertNoMatch(members, input);
-            
+
             [Theory]
             [InlineData("[   text     ]", "   text     ")]
             [InlineData("A: text", " text")]
@@ -69,15 +69,15 @@ namespace PluralKit.Tests
         {
             private ProxyMember[] members = {
                 new ProxyMember("John", new ProxyTag("[", "]")),
-                new ProxyMember("Suffix only", new ProxyTag("", "-Q")), 
+                new ProxyMember("Suffix only", new ProxyTag("", "-Q")),
             };
 
             public void MentionAtStartGetsMovedIntoTags() =>
                 AssertMatch(members, "<@466378653216014359>[some text]", content: "some text");
-            
+
             public void SpacesBetweenMentionAndTagsAreAllowed() =>
                 AssertMatch(members, "<@466378653216014359> [some text]", content: "some text");
-            
+
             public void MentionMovingTakesPrecedenceOverTagMatching() =>
                 // (as opposed to content: "<@466378653216014359> some text")
                 // which would also be valid, but the tags should be moved first
@@ -102,21 +102,21 @@ namespace PluralKit.Tests
             [InlineData("[[[way too deep]]]", "Level Three")]
             [InlineData("[[unmatched brackets]]]", "Level Two")]
             [InlineData("[more unmatched brackets]]]]]]", "Level One")]
-            public void MostSpecificTagsAreMatched(string input, string expectedName) => 
+            public void MostSpecificTagsAreMatched(string input, string expectedName) =>
                 AssertMatch(members, input, name: expectedName);
         }
-        
+
         public class EmptyInput
         {
-            private ProxyMember[] members = {new ProxyMember("Something", new ProxyTag("[", "]"))};
-            
+            private ProxyMember[] members = { new ProxyMember("Something", new ProxyTag("[", "]")) };
+
             [Theory]
             [InlineData("")]
             [InlineData("some text")]
             [InlineData("{bogus tags, idk}")]
-            public void NoMembersMatchNothing(string input) => 
-                AssertNoMatch(new ProxyMember[]{}, input);
-            
+            public void NoMembersMatchNothing(string input) =>
+                AssertNoMatch(new ProxyMember[] { }, input);
+
             [Fact]
             public void EmptyStringMatchesNothing() =>
                 AssertNoMatch(members, "");
@@ -148,11 +148,11 @@ namespace PluralKit.Tests
             {
                 AssertMatch(members, "{ spaces in here }");
                 AssertNoMatch(members, "{no spaces}");
-                
+
                 AssertMatch(members, "A: text here");
                 AssertNoMatch(members, "A:same text without spaces");
             }
-            
+
             [Fact]
             public void SpacesBeforePrefixOrAfterSuffixAlsoCount()
             {
@@ -167,7 +167,7 @@ namespace PluralKit.Tests
                 AssertMatch(members, "{}");
             }
         }
-        
+
         internal static ProxyMatch AssertMatch(IEnumerable<ProxyMember> members, string input, string? name = null, string? prefix = null, string? suffix = null, string? content = null)
         {
             Assert.True(new ProxyTagParser().TryMatch(members, input, out var result));

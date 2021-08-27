@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +15,7 @@ namespace Myriad.Cache
         private readonly ConcurrentDictionary<ulong, CachedGuild> _guilds = new();
         private readonly ConcurrentDictionary<ulong, Role> _roles = new();
         private readonly ConcurrentDictionary<ulong, User> _users = new();
-        
+
         public ValueTask SaveGuild(Guild guild)
         {
             SaveGuildRaw(guild);
@@ -61,18 +61,20 @@ namespace Myriad.Cache
                 var found = false;
                 for (var i = 0; i < guild.Guild.Roles.Length; i++)
                 {
-                    if (guild.Guild.Roles[i].Id != role.Id) 
+                    if (guild.Guild.Roles[i].Id != role.Id)
                         continue;
-                    
+
                     guild.Guild.Roles[i] = role;
                     found = true;
                 }
 
                 if (!found)
                 {
-                    _guilds[guildId] = guild with {
-                        Guild = guild.Guild with {
-                            Roles = guild.Guild.Roles.Concat(new[] { role}).ToArray()
+                    _guilds[guildId] = guild with
+                    {
+                        Guild = guild.Guild with
+                        {
+                            Roles = guild.Guild.Roles.Concat(new[] { role }).ToArray()
                         }
                     };
                 }
@@ -87,7 +89,7 @@ namespace Myriad.Cache
             // We may get a message create before channel create and we want to have it saved
             _channels.GetOrAdd(channelId, id => new Channel
             {
-                Id = id, 
+                Id = id,
                 Type = Channel.ChannelType.Dm
             });
             return default;
@@ -134,7 +136,7 @@ namespace Myriad.Cache
             return false;
         }
 
-        public bool TryGetChannel(ulong channelId, out Channel channel) => 
+        public bool TryGetChannel(ulong channelId, out Channel channel) =>
             _channels.TryGetValue(channelId, out channel!);
 
         public bool TryGetDmChannel(ulong userId, out Channel channel)
@@ -143,7 +145,7 @@ namespace Myriad.Cache
             if (!_dmChannels.TryGetValue(userId, out var channelId))
                 return false;
             return TryGetChannel(channelId, out channel);
-        } 
+        }
 
         public bool TryGetUser(ulong userId, out User user) =>
             _users.TryGetValue(userId, out user!);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -18,7 +18,7 @@ namespace Myriad.Gateway
         private readonly ShardInfo _info;
         private readonly JsonSerializerOptions _jsonSerializerOptions;
         private ShardState _state = ShardState.Disconnected;
-        
+
         private DateTimeOffset? _lastHeartbeatSent;
         private TimeSpan? _latency;
         private bool _hasReceivedHeartbeatAck;
@@ -30,7 +30,7 @@ namespace Myriad.Gateway
         public TimeSpan? Latency => _latency;
         public User? User { get; private set; }
         public ApplicationPartial? Application { get; private set; }
-        
+
         public Func<Task> SendIdentify { get; init; }
         public Func<(string SessionId, int? LastSeq), Task> SendResume { get; init; }
         public Func<int?, Task> SendHeartbeat { get; init; }
@@ -52,7 +52,7 @@ namespace Myriad.Gateway
             _state = ShardState.Handshaking;
             return Task.CompletedTask;
         }
-        
+
         public async Task HandleConnectionClosed()
         {
             _latency = null;
@@ -71,36 +71,36 @@ namespace Myriad.Gateway
                 case GatewayOpcode.Heartbeat:
                     await HandleHeartbeatRequest();
                     break;
-                
+
                 case GatewayOpcode.HeartbeatAck:
                     await HandleHeartbeatAck();
                     break;
-                
+
                 case GatewayOpcode.Reconnect:
-                {
-                    await HandleReconnect();
-                    break;
-                }
+                    {
+                        await HandleReconnect();
+                        break;
+                    }
 
                 case GatewayOpcode.InvalidSession:
-                {
-                    var canResume = DeserializePayload<bool>(packet);
-                    await HandleInvalidSession(canResume);
-                    break;
-                }
+                    {
+                        var canResume = DeserializePayload<bool>(packet);
+                        await HandleInvalidSession(canResume);
+                        break;
+                    }
 
-                case GatewayOpcode.Dispatch: 
+                case GatewayOpcode.Dispatch:
                     _lastSeq = packet.Sequence;
 
-                    var evt = DeserializeEvent(packet.EventType!, (JsonElement) packet.Payload!);
+                    var evt = DeserializeEvent(packet.EventType!, (JsonElement)packet.Payload!);
                     if (evt != null)
                     {
-                        if (evt is ReadyEvent ready) 
+                        if (evt is ReadyEvent ready)
                             await HandleReady(ready);
-                        
-                        if (evt is ResumedEvent) 
+
+                        if (evt is ResumedEvent)
                             await HandleResumed();
-                        
+
                         await HandleEvent(evt);
                     }
                     break;
@@ -110,7 +110,7 @@ namespace Myriad.Gateway
         private async Task HandleHello(GatewayHello hello)
         {
             var interval = TimeSpan.FromMilliseconds(hello.HeartbeatInterval);
-            
+
             _hasReceivedHeartbeatAck = true;
             await _heartbeatWorker.Start(interval, HandleHeartbeatTimer);
             await IdentifyOrResume();
@@ -152,14 +152,14 @@ namespace Myriad.Gateway
                 _sessionId = null;
                 _lastSeq = null;
             }
-            
+
             _logger.Information("Shard {ShardId}: Received Invalid Session (can resume? {CanResume})",
                 _info.ShardId, canResume);
 
             var delay = TimeSpan.FromMilliseconds(new Random().Next(1000, 5000));
             await DoReconnect(WebSocketCloseStatus.NormalClosure, delay);
         }
-        
+
         private async Task HandleReconnect()
         {
             _logger.Information("Shard {ShardId}: Received Reconnect", _info.ShardId);
@@ -167,7 +167,7 @@ namespace Myriad.Gateway
             // we use 1005 (no error specified) instead
             await DoReconnect(WebSocketCloseStatus.Empty, TimeSpan.FromSeconds(1));
         }
-        
+
         private Task HandleReady(ReadyEvent ready)
         {
             _logger.Information("Shard {ShardId}: Received Ready", _info.ShardId);
@@ -218,10 +218,10 @@ namespace Myriad.Gateway
 
         private T DeserializePayload<T>(GatewayPacket packet)
         {
-            var packetPayload = (JsonElement) packet.Payload!;
+            var packetPayload = (JsonElement)packet.Payload!;
             return JsonSerializer.Deserialize<T>(packetPayload.GetRawText(), _jsonSerializerOptions)!;
         }
-        
+
         private IGatewayEvent? DeserializeEvent(string eventType, JsonElement payload)
         {
             if (!IGatewayEvent.EventTypes.TryGetValue(eventType, out var clrType))

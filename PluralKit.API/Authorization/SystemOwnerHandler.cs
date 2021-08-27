@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -12,7 +12,7 @@ namespace PluralKit.API
                                                        OwnSystemRequirement requirement, PKSystem resource)
         {
             if (!context.User.Identity.IsAuthenticated) return Task.CompletedTask;
-            if (resource.Id == context.User.CurrentSystem()) 
+            if (resource.Id == context.User.CurrentSystem())
                 context.Succeed(requirement);
             return Task.CompletedTask;
         }

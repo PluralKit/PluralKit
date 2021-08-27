@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Myriad.Gateway
 {
@@ -7,10 +7,12 @@ namespace Myriad.Gateway
         [JsonPropertyName("op")] public GatewayOpcode Opcode { get; init; }
         [JsonPropertyName("d")] public object? Payload { get; init; }
 
-        [JsonPropertyName("s")] [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("s")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? Sequence { get; init; }
 
-        [JsonPropertyName("t")] [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("t")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? EventType { get; init; }
     }
 

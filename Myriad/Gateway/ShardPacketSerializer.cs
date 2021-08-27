@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.IO;
 using System.Net.WebSockets;
@@ -10,7 +10,7 @@ namespace Myriad.Gateway
     public class ShardPacketSerializer
     {
         private const int BufferSize = 64 * 1024;
-        
+
         private readonly JsonSerializerOptions _jsonSerializerOptions;
 
         public ShardPacketSerializer(JsonSerializerOptions jsonSerializerOptions)
@@ -21,15 +21,15 @@ namespace Myriad.Gateway
         public async ValueTask<(WebSocketMessageType type, GatewayPacket? packet)> ReadPacket(ClientWebSocket socket)
         {
             using var buf = MemoryPool<byte>.Shared.Rent(BufferSize);
-            
+
             var res = await socket.ReceiveAsync(buf.Memory, default);
             if (res.MessageType == WebSocketMessageType.Close)
                 return (res.MessageType, null);
-            
+
             if (res.EndOfMessage)
                 // Entire packet fits within one buffer, deserialize directly
                 return DeserializeSingleBuffer(buf, res);
-            
+
             // Otherwise copy to stream buffer and deserialize from there
             return await DeserializeMultipleBuffer(socket, buf, res);
         }
@@ -51,7 +51,7 @@ namespace Myriad.Gateway
                 stream.Write(buf.Memory.Span.Slice(0, res.Count));
             }
 
-            return DeserializeObject(res, stream.GetBuffer().AsSpan(0, (int) stream.Length));
+            return DeserializeObject(res, stream.GetBuffer().AsSpan(0, (int)stream.Length));
         }
 
         private (WebSocketMessageType type, GatewayPacket packet) DeserializeSingleBuffer(

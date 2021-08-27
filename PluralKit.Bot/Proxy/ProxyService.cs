@@ -53,7 +53,7 @@ namespace PluralKit.Bot
 
         public async Task<bool> HandleIncomingMessage(Shard shard, MessageCreateEvent message, MessageContext ctx, Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions)
         {
-            if (!ShouldProxy(channel, message, ctx)) 
+            if (!ShouldProxy(channel, message, ctx))
                 return false;
 
             // Fetch members and try to match to a specific member
@@ -64,7 +64,7 @@ namespace PluralKit.Bot
             List<ProxyMember> members;
             using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
                 members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.GuildId!.Value)).ToList();
-            
+
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
 
@@ -72,12 +72,12 @@ namespace PluralKit.Bot
             if (message.Content != null && message.Content.Length > 2000) throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
 
             // Permission check after proxy match so we don't get spammed when not actually proxying
-            if (!await CheckBotPermissionsOrError(botPermissions, rootChannel.Id)) 
+            if (!await CheckBotPermissionsOrError(botPermissions, rootChannel.Id))
                 return false;
 
             // this method throws, so no need to wrap it in an if statement
             CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx));
-            
+
             // Check if the sender account can mention everyone/here + embed links
             // we need to "mirror" these permissions when proxying to prevent exploits
             var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message);
@@ -94,17 +94,17 @@ namespace PluralKit.Bot
             // Make sure author has a system
             if (ctx.SystemId == null)
                 throw new ProxyChecksFailedException(Errors.NoSystemError.Message);
-            
+
             // Make sure channel is a guild text channel and this is a normal message
             if (!DiscordUtils.IsValidGuildChannel(channel))
                 throw new ProxyChecksFailedException("This channel is not a text channel.");
             if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply)
                 throw new ProxyChecksFailedException("This message is not a normal message.");
-            
+
             // Make sure author is a normal user
             if (msg.Author.System == true || msg.Author.Bot || msg.WebhookId != null)
                 throw new ProxyChecksFailedException("This message was not sent by a normal user.");
-            
+
             // Make sure proxying is enabled here
             if (ctx.InBlacklist)
                 throw new ProxyChecksFailedException($"Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
@@ -112,12 +112,12 @@ namespace PluralKit.Bot
             // Make sure the system has proxying enabled in the server
             if (!ctx.ProxyEnabled)
                 throw new ProxyChecksFailedException("Your system has proxying disabled in this server. Type `pk;proxy on` to enable it.");
-            
+
             // Make sure we have either an attachment or message content
             var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
             if (isMessageBlank && msg.Attachments.Length == 0)
                 throw new ProxyChecksFailedException("Message cannot be blank.");
-            
+
             // All good!
             return true;
         }
@@ -137,17 +137,17 @@ namespace PluralKit.Bot
                     if (embed != null)
                         embeds.Add(embed);
                 }
-                
+
                 // TODO: have a clean error for when message can't be fetched instead of just being silent
             }
-            
+
             // Send the webhook
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
 
             var messageChannel = _cache.GetChannel(trigger.ChannelId);
             var rootChannel = _cache.GetRootChannel(trigger.ChannelId);
-            var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null; 
+            var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
 
             var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
             {
@@ -186,7 +186,7 @@ namespace PluralKit.Bot
         {
             // repliedTo doesn't have a GuildId field :/
             var jumpLink = $"https://discord.com/channels/{trigger.GuildId}/{repliedTo.ChannelId}/{repliedTo.Id}";
-            
+
             var content = new StringBuilder();
 
             var hasContent = !string.IsNullOrWhiteSpace(repliedTo.Content);
@@ -211,7 +211,7 @@ namespace PluralKit.Bot
                         var urlTail = repliedTo.Content.Substring(100).Split(" ")[0];
                         msg += urlTail + " ";
                     }
-                    
+
                     var spoilersInOriginalString = Regex.Matches(repliedTo.Content, @"\|\|").Count;
                     var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
                     if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
@@ -219,7 +219,7 @@ namespace PluralKit.Bot
                     if (msg != repliedTo.Content)
                         msg += "…";
                 }
-                
+
                 content.Append($"**[Reply to:]({jumpLink})** ");
                 content.Append(msg);
                 if (repliedTo.Attachments.Length > 0)
@@ -229,7 +229,7 @@ namespace PluralKit.Bot
             {
                 content.Append($"*[(click to see attachment)]({jumpLink})*");
             }
-            
+
             var username = nickname ?? repliedTo.Author.Username;
             var avatarUrl = avatar != null
                 ? $"https://cdn.discordapp.com/guilds/{trigger.GuildId}/users/{repliedTo.Author.Id}/{avatar}.png"
@@ -247,12 +247,12 @@ namespace PluralKit.Bot
         private async Task<string> FixSameName(ulong channelId, MessageContext ctx, ProxyMember member)
         {
             var proxyName = member.ProxyName(ctx);
-            
+
             var lastMessage = _lastMessage.GetLastMessage(channelId)?.Previous;
             if (lastMessage == null)
                 // cache is out of date or channel is empty.
                 return proxyName;
-            
+
             await using var conn = await _db.Obtain();
             var pkMessage = await _repo.GetMessage(conn, lastMessage.Id);
 
@@ -294,9 +294,9 @@ namespace PluralKit.Bot
             };
 
             Task SaveMessageInDatabase() => _repo.AddMessage(conn, sentMessage);
-            
+
             Task LogMessageToChannel() => _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
-            
+
             async Task DeleteProxyTriggerMessage()
             {
                 // Wait a second or so before deleting the original message
@@ -307,13 +307,13 @@ namespace PluralKit.Bot
                 }
                 catch (NotFoundException)
                 {
-                    _logger.Debug("Trigger message {TriggerMessageId} was already deleted when we attempted to; deleting proxy message {ProxyMessageId} also", 
+                    _logger.Debug("Trigger message {TriggerMessageId} was already deleted when we attempted to; deleting proxy message {ProxyMessageId} also",
                         triggerMessage.Id, proxyMessage.Id);
                     await HandleTriggerAlreadyDeleted(proxyMessage);
                     // Swallow the exception, we don't need it
                 }
             }
-            
+
             // Run post-proxy actions (simultaneously; order doesn't matter)
             // Note that only AddMessage is using our passed-in connection, careful not to pass it elsewhere and run into conflicts
             await Task.WhenAll(
@@ -341,7 +341,7 @@ namespace PluralKit.Bot
         {
             // If we can't send messages at all, just bail immediately.
             // 2020-04-22: Manage Messages does *not* override a lack of Send Messages.
-            if (!permissions.HasFlag(PermissionSet.SendMessages)) 
+            if (!permissions.HasFlag(PermissionSet.SendMessages))
                 return false;
 
             if (!permissions.HasFlag(PermissionSet.ManageWebhooks))
@@ -370,9 +370,9 @@ namespace PluralKit.Bot
         {
             if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
         }
-        public class ProxyChecksFailedException : Exception
+        public class ProxyChecksFailedException: Exception
         {
-            public ProxyChecksFailedException(string message) : base(message) {}
+            public ProxyChecksFailedException(string message) : base(message) { }
         }
     }
 }

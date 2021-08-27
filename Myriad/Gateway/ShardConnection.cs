@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading;
@@ -13,11 +13,11 @@ namespace Myriad.Gateway
         private ClientWebSocket? _client;
         private readonly ILogger _logger;
         private readonly ShardPacketSerializer _serializer;
-        
+
         public WebSocketState State => _client?.State ?? WebSocketState.Closed;
         public WebSocketCloseStatus? CloseStatus => _client?.CloseStatus;
         public string? CloseStatusDescription => _client?.CloseStatusDescription;
-        
+
         public ShardConnection(JsonSerializerOptions jsonSerializerOptions, ILogger logger)
         {
             _logger = logger.ForContext<ShardConnection>();
@@ -28,7 +28,7 @@ namespace Myriad.Gateway
         {
             _client?.Dispose();
             _client = new ClientWebSocket();
-            
+
             await _client.ConnectAsync(GetConnectionUri(url), ct);
         }
 
@@ -40,7 +40,7 @@ namespace Myriad.Gateway
         public async Task Send(GatewayPacket packet)
         {
             // from `ManagedWebSocket.s_validSendStates`
-            if (_client is not {State: WebSocketState.Open or WebSocketState.CloseReceived})
+            if (_client is not { State: WebSocketState.Open or WebSocketState.CloseReceived })
                 return;
 
             try
@@ -62,7 +62,7 @@ namespace Myriad.Gateway
         public async Task<GatewayPacket?> Read()
         {
             // from `ManagedWebSocket.s_validReceiveStates`
-            if (_client is not {State: WebSocketState.Open or WebSocketState.CloseSent})
+            if (_client is not { State: WebSocketState.Open or WebSocketState.CloseSent })
                 return null;
 
             try
@@ -79,7 +79,7 @@ namespace Myriad.Gateway
 
             return null;
         }
-        
+
         private Uri GetConnectionUri(string baseUri) => new UriBuilder(baseUri)
         {
             Query = "v=9&encoding=json"
@@ -89,10 +89,10 @@ namespace Myriad.Gateway
         {
             if (_client == null)
                 return;
-            
+
             var client = _client;
             _client = null;
-            
+
             // from `ManagedWebSocket.s_validCloseStates`
             if (client.State is WebSocketState.Open or WebSocketState.CloseReceived or WebSocketState.CloseSent)
             {

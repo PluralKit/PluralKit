@@ -24,29 +24,29 @@ namespace PluralKit.Bot
             // Load configuration and run global init stuff
             var config = InitUtils.BuildConfiguration(args).Build();
             InitUtils.InitStatic();
-            
+
             // Set up DI container and modules
             var services = BuildContainer(config);
-            
+
             return RunWrapper(services, async ct =>
             {
                 // init version service
                 await BuildInfoService.LoadVersion();
 
                 var logger = services.Resolve<ILogger>().ForContext<Init>();
-                
+
                 // Initialize Sentry SDK, and make sure it gets dropped at the end
                 using var _ = Sentry.SentrySdk.Init(services.Resolve<CoreConfig>().SentryUrl);
 
                 // "Connect to the database" (ie. set off database migrations and ensure state)
                 logger.Information("Connecting to database");
                 await services.Resolve<IDatabase>().ApplyMigrations();
-                
+
                 // Init the bot instance itself, register handlers and such to the client before beginning to connect
                 logger.Information("Initializing bot");
                 var bot = services.Resolve<Bot>();
                 bot.Init();
-                
+
                 // Install observer for request/responses
                 DiscordRequestObserver.Install(services);
 
@@ -80,14 +80,14 @@ namespace PluralKit.Bot
 
             var shutdown = new TaskCompletionSource<object>();
             var gracefulShutdownCts = new CancellationTokenSource();
-            
+
             Console.CancelKeyPress += delegate
             {
                 // ReSharper disable once AccessToDisposedClosure (will only be hit before the below disposal)
                 logger.Information("Received SIGINT/Ctrl-C, attempting graceful shutdown...");
                 gracefulShutdownCts.Cancel();
             };
-            
+
             AppDomain.CurrentDomain.ProcessExit += (_, __) =>
             {
                 // This callback is fired on a SIGKILL is sent.
@@ -109,9 +109,9 @@ namespace PluralKit.Bot
             {
                 logger.Fatal(e, "Error while running bot");
             }
-            
+
             // Allow the log buffer to flush properly before exiting
-            ((Logger) logger).Dispose();
+            ((Logger)logger).Dispose();
             await Task.Delay(500);
             shutdown.SetResult(null);
         }
@@ -138,18 +138,18 @@ namespace PluralKit.Bot
 
             var cluster = services.Resolve<Cluster>();
             var config = services.Resolve<BotConfig>();
-            
+
             if (config.Cluster != null)
             {
                 // For multi-instance deployments, calculate the "span" of shards this node is responsible for
                 var totalNodes = config.Cluster.TotalNodes;
                 var totalShards = config.Cluster.TotalShards;
                 var nodeIndex = ExtractNodeIndex(config.Cluster.NodeName);
-                
+
                 // Should evenly distribute shards even with an uneven amount of nodes
-                var shardMin = (int) Math.Round(totalShards * (float) nodeIndex / totalNodes);
-                var shardMax = (int) Math.Round(totalShards * (float) (nodeIndex + 1) / totalNodes) - 1;
-                
+                var shardMin = (int)Math.Round(totalShards * (float)nodeIndex / totalNodes);
+                var shardMax = (int)Math.Round(totalShards * (float)(nodeIndex + 1) / totalNodes) - 1;
+
                 await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency);
             }
             else

@@ -55,19 +55,22 @@ namespace PluralKit.Bot
                 if (!ulong.TryParse(guildIdStr, out var guildId))
                     throw new PKSyntaxError($"Could not parse {guildIdStr.AsCode()} as an ID.");
 
-                try {
+                try
+                {
                     guild = await _rest.GetGuild(guildId);
-                } catch (Myriad.Rest.Exceptions.ForbiddenException) {
+                }
+                catch (Myriad.Rest.Exceptions.ForbiddenException)
+                {
                     throw Errors.GuildNotFound(guildId);
                 }
-                
-                if (guild != null) 
+
+                if (guild != null)
                     senderGuildUser = await _rest.GetGuildMember(guildId, ctx.Author.Id);
-                if (guild == null || senderGuildUser == null) 
+                if (guild == null || senderGuildUser == null)
                     throw Errors.GuildNotFound(guildId);
             }
 
-            var requiredPermissions = new []
+            var requiredPermissions = new[]
             {
                 PermissionSet.ViewChannel,
                 PermissionSet.SendMessages,
@@ -87,7 +90,7 @@ namespace PluralKit.Bot
                 var botPermissions = _bot.PermissionsIn(channel.Id);
                 var webhookPermissions = _cache.EveryonePermissions(channel);
                 var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
-                
+
                 if ((userPermissions & PermissionSet.ViewChannel) == 0)
                 {
                     // If the user can't see this channel, don't calculate permissions for it
@@ -100,14 +103,14 @@ namespace PluralKit.Bot
                 // We use a bitfield so we can set individual permission bits in the loop
                 // TODO: Rewrite with proper bitfield math
                 ulong missingPermissionField = 0;
-                
+
                 foreach (var requiredPermission in requiredPermissions)
                     if ((botPermissions & requiredPermission) == 0)
-                        missingPermissionField |= (ulong) requiredPermission;
+                        missingPermissionField |= (ulong)requiredPermission;
 
                 if ((webhookPermissions & PermissionSet.UseExternalEmojis) == 0)
                 {
-                    missingPermissionField |= (ulong) PermissionSet.UseExternalEmojis;
+                    missingPermissionField |= (ulong)PermissionSet.UseExternalEmojis;
                     missingEmojiPermissions = true;
                 }
 
@@ -119,7 +122,7 @@ namespace PluralKit.Bot
                     permissionsMissing[missingPermissionField].Add(channel);
                 }
             }
-            
+
             // Generate the output embed
             var eb = new EmbedBuilder()
                 .Title($"Permission check for **{guild.Name}**");
@@ -134,7 +137,7 @@ namespace PluralKit.Bot
                 {
                     // Each missing permission field can have multiple missing channels
                     // so we extract them all and generate a comma-separated list
-                    var missingPermissionNames = ((PermissionSet) missingPermissionField).ToPermissionString();
+                    var missingPermissionNames = ((PermissionSet)missingPermissionField).ToPermissionString();
 
                     var channelsList = string.Join("\n", channels
                         .OrderBy(c => c.Position)
@@ -155,7 +158,7 @@ namespace PluralKit.Bot
 
             if (footer.Length > 0)
                 eb.Footer(new(footer));
-            
+
             // Send! :)
             await ctx.Reply(embed: eb.Build());
         }
@@ -164,7 +167,7 @@ namespace PluralKit.Bot
         {
             if (!ctx.HasNext() && ctx.Message.MessageReference == null)
                 throw new PKError("You need to specify a message.");
-            
+
             var failedToGetMessage = "Could not find a valid message to check, was not able to fetch the message, or the message was not sent by you.";
 
             var (messageId, channelId) = ctx.MatchMessage(false);
@@ -182,7 +185,7 @@ namespace PluralKit.Bot
 
             // get the message info
             var msg = ctx.Message;
-            try 
+            try
             {
                 msg = await _rest.GetMessage(channelId.Value, messageId.Value);
             }
@@ -212,13 +215,14 @@ namespace PluralKit.Bot
             var members = (await _repo.GetProxyMembers(conn, msg.Author.Id, channel.GuildId.Value)).ToList();
 
             // Run everything through the checks, catch the ProxyCheckFailedException, and reply with the error message.
-            try 
-            { 
+            try
+            {
                 _proxy.ShouldProxy(channel, msg, context);
                 _matcher.TryMatch(context, members, out var match, msg.Content, msg.Attachments.Length > 0, context.AllowAutoproxy);
 
                 await ctx.Reply("I'm not sure why this message was not proxied, sorry.");
-            } catch (ProxyService.ProxyChecksFailedException e)
+            }
+            catch (ProxyService.ProxyChecksFailedException e)
             {
                 await ctx.Reply($"{e.Message}");
             }

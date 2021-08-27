@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 
 using Autofac;
@@ -43,7 +43,7 @@ namespace PluralKit.Core
         {
             var consoleTemplate = "[{Timestamp:HH:mm:ss.fff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
             var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
-            
+
             var logCfg = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
@@ -52,7 +52,7 @@ namespace PluralKit.Core
 
                 // Don't want App.Metrics/D#+ spam
                 .MinimumLevel.Override("App.Metrics", LogEventLevel.Information)
-                
+
                 // Actual formatting for these is handled in ScalarFormatting
                 .Destructure.AsScalar<SystemId>()
                 .Destructure.AsScalar<MemberId>()
@@ -60,7 +60,7 @@ namespace PluralKit.Core
                 .Destructure.AsScalar<SwitchId>()
                 .Destructure.ByTransforming<ProxyTag>(t => new { t.Prefix, t.Suffix })
                 .Destructure.With<PatchObjectDestructuring>()
-                
+
                 .WriteTo.Async(a =>
                 {
                     // Both the same output, except one is raw compact JSON and one is plain text.
@@ -109,7 +109,7 @@ namespace PluralKit.Core
             return Log.Logger = logCfg.CreateLogger();
         }
     }
-    
+
     // Serilog why is this necessary for such a simple thing >.>
     public class UTCTimestampFormatProvider: IFormatProvider
     {

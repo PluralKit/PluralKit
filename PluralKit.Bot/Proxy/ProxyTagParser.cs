@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,10 +11,10 @@ namespace PluralKit.Bot
         public bool TryMatch(IEnumerable<ProxyMember> members, string? input, out ProxyMatch result)
         {
             result = default;
-            
+
             // Null input is valid and is equivalent to empty string
             if (input == null) return false;
-            
+
             // If the message starts with a @mention, and then proceeds to have proxy tags,
             // extract the mention and place it inside the inner message
             // eg. @Ske [text] => [@Ske text]
@@ -26,13 +26,13 @@ namespace PluralKit.Bot
             var tags = members
                 .SelectMany(member => member.ProxyTags.Select(tag => (tag, member)))
                 .OrderByDescending(p => p.tag.ProxyString.Length);
-            
+
             // Iterate now-ordered list of tags and try matching each one
             foreach (var (tag, member) in tags)
             {
                 result.ProxyTags = tag;
                 result.Member = member;
-                
+
                 // Skip blank tags (shouldn't ever happen in practice)
                 if (tag.Prefix == null && tag.Suffix == null) continue;
 
@@ -43,10 +43,10 @@ namespace PluralKit.Bot
                     if (leadingMention != null) result.Content = $"{leadingMention} {result.Content}";
                     return true;
                 }
-                
+
                 // (if not, keep going)
             }
-            
+
             // We couldn't match anything :(
             return false;
         }
@@ -54,25 +54,25 @@ namespace PluralKit.Bot
         private bool TryMatchTagsInner(string input, ProxyTag tag, out string inner)
         {
             inner = "";
-            
+
             // Normalize null tags to empty strings
             var prefix = tag.Prefix ?? "";
             var suffix = tag.Suffix ?? "";
-                
+
             // Check if our input starts/ends with the tags
-            var isMatch = input.Length >= prefix.Length + suffix.Length 
+            var isMatch = input.Length >= prefix.Length + suffix.Length
                           && input.StartsWith(prefix) && input.EndsWith(suffix);
-            
+
             // Special case: image-only proxies + proxy tags with spaces
             // Trim everything, then see if we have a "contentless tag pair" (normally disallowed, but OK if we have an attachment)
             // Note `input` is still "", even if there are spaces between
             if (!isMatch && input.Trim() == prefix.TrimEnd() + suffix.TrimStart())
                 return true;
-            if (!isMatch) return false; 
-            
+            if (!isMatch) return false;
+
             // We got a match, extract inner text
             inner = input.Substring(prefix.Length, input.Length - prefix.Length - suffix.Length);
-            
+
             // (see https://github.com/xSke/PluralKit/pull/181)
             return inner.Trim() != "\U0000fe0f";
         }
@@ -81,7 +81,7 @@ namespace PluralKit.Bot
         {
             var mentionPos = 0;
             if (!DiscordUtils.HasMentionPrefix(input, ref mentionPos, out _)) return null;
-            
+
             var leadingMention = input.Substring(0, mentionPos);
             input = input.Substring(mentionPos);
             return leadingMention;

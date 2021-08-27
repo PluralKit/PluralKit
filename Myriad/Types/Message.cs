@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
 
 using Myriad.Utils;
@@ -61,7 +61,7 @@ namespace Myriad.Types
         public MessageType Type { get; init; }
         public Reference? MessageReference { get; set; }
         public MessageFlags Flags { get; init; }
-        
+
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public Optional<Message?> ReferencedMessage { get; init; }
         public MessageComponent[]? Components { get; init; }

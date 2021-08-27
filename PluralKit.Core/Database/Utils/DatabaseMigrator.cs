@@ -62,7 +62,7 @@ namespace PluralKit.Core
 
             // If the above creates new enum/composite types, we must tell Npgsql to reload the internal type caches
             // This will propagate to every other connection as well, since it marks the global type mapper collection dirty.
-            ((PKConnection) conn).ReloadTypes();
+            ((PKConnection)conn).ReloadTypes();
         }
 
         private async Task<int> GetCurrentDatabaseVersion(IPKConnection conn)

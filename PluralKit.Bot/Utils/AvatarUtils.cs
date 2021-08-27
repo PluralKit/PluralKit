@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -8,11 +8,13 @@ using PluralKit.Core;
 
 using SixLabors.ImageSharp;
 
-namespace PluralKit.Bot {
-    public static class AvatarUtils {
+namespace PluralKit.Bot
+{
+    public static class AvatarUtils
+    {
         public static async Task VerifyAvatarOrThrow(HttpClient client, string url, bool isFullSizeImage = false)
         {
-            if (url.Length > Limits.MaxUriLength) 
+            if (url.Length > Limits.MaxUriLength)
                 throw Errors.UrlTooLong(url);
 
             // List of MIME types we consider acceptable

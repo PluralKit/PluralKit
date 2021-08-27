@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 
 using PluralKit.Core;
@@ -11,12 +11,12 @@ namespace PluralKit.API
         {
             var claim = user.FindFirst(PKClaims.SystemId);
             if (claim == null) throw new ArgumentException("User is unauthorized");
-            
+
             if (int.TryParse(claim.Value, out var id))
                 return new SystemId(id);
             throw new ArgumentException("User has non-integer system ID claim");
         }
-        
+
         public static LookupContext ContextFor(this ClaimsPrincipal user, PKSystem system)
         {
             if (!user.Identity.IsAuthenticated) return LookupContext.API;

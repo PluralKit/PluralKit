@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -6,7 +6,8 @@ using PluralKit.Core;
 
 namespace PluralKit.API
 {
-    public class MemberOwnerHandler: AuthorizationHandler<OwnSystemRequirement, PKMember> {
+    public class MemberOwnerHandler: AuthorizationHandler<OwnSystemRequirement, PKMember>
+    {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
                                                        OwnSystemRequirement requirement, PKMember resource)
         {

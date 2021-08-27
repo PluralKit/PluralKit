@@ -1,4 +1,5 @@
-namespace PluralKit.Core {
+namespace PluralKit.Core
+{
     public static class Limits
     {
         public static readonly int MaxProxyNameLength = 80;
@@ -6,7 +7,7 @@ namespace PluralKit.Core {
         public static readonly int MaxSystemNameLength = 100;
         public static readonly int MaxSystemTagLength = MaxProxyNameLength - 1;
         public static readonly int MaxMemberCount = 1000;
-        public static int MaxMembersWarnThreshold (int memberLimit) => memberLimit - 50;
+        public static int MaxMembersWarnThreshold(int memberLimit) => memberLimit - 50;
         public static readonly int MaxGroupCount = 250;
         public static readonly int MaxDescriptionLength = 1000;
         public static readonly int MaxProxyTagLength = 100;

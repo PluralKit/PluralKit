@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -72,7 +72,7 @@ namespace Myriad.Rest.Ratelimit
             {
                 if (now - bucket.LastUsed <= StaleBucketTimeout)
                     continue;
-                
+
                 _logger.Debug("Pruning unused bucket {BucketKey}/{BucketMajor} (last used at {BucketLastUsed})",
                     bucket.Key, bucket.Major, bucket.LastUsed);
                 _buckets.TryRemove(key, out _);

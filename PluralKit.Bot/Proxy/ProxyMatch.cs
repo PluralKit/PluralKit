@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using PluralKit.Core;
 
 namespace PluralKit.Bot
@@ -8,7 +8,7 @@ namespace PluralKit.Bot
         public ProxyMember Member;
         public string? Content;
         public ProxyTag? ProxyTags;
-        
+
         public string? ProxyContent
         {
             get

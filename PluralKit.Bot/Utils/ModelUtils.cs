@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 using PluralKit.Core;
@@ -24,21 +24,21 @@ namespace PluralKit.Bot
             bool IsSimple(string s) =>
                 // No spaces, no symbols, allow single quote but not at the start
                 Regex.IsMatch(s, "^[\\w\\d\\-_'?]+$") && !s.StartsWith("'");
-            
+
             // If it's very long (>25 chars), always use hid
             if (name.Length >= 25)
                 return hid;
 
             // If name is "simple" just use that
-            if (IsSimple(name)) 
+            if (IsSimple(name))
                 return name;
-            
+
             // If three or fewer "words" and they're all simple individually, quote them
             var words = name.Split(' ');
             if (words.Length <= 3 && words.All(w => w.Length > 0 && IsSimple(w)))
                 // Words with double quotes are never "simple" so we're safe to naive-quote here
                 return $"\"{name}\"";
-            
+
             // Otherwise, just use hid
             return hid;
         }

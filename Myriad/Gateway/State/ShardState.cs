@@ -1,4 +1,4 @@
-﻿namespace Myriad.Gateway.State
+namespace Myriad.Gateway.State
 {
     public enum ShardState
     {

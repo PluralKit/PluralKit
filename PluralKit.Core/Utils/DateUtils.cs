@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 using NodaTime;
@@ -11,7 +11,7 @@ namespace PluralKit.Core
         public static Duration? ParsePeriod(string str)
         {
             Duration d = Duration.Zero;
-            
+
             foreach (Match match in Regex.Matches(str, "(\\d{1,6})(\\w)"))
             {
                 var amount = int.Parse(match.Groups[1].Value);
@@ -34,7 +34,7 @@ namespace PluralKit.Core
             // NodaTime can't parse constructs like "1st" and "2nd" so we quietly replace those away
             // Gotta make sure to do the regex otherwise we'll catch things like the "st" in "August" too
             str = Regex.Replace(str, "(\\d+)(st|nd|rd|th)", "$1");
-            
+
             var patterns = new[]
             {
                 "MMM d yyyy",   // Jan 1 2019
@@ -72,12 +72,12 @@ namespace PluralKit.Core
         public static ZonedDateTime? ParseDateTime(string str, bool nudgeToPast = false, DateTimeZone zone = null)
         {
             if (zone == null) zone = DateTimeZone.Utc;
-            
+
             // Find the current timestamp in the given zone, find the (naive) midnight timestamp, then put that into the same zone (and make it naive again)
             // Should yield a <current *local @ zone* date> 12:00:00 AM.
             var now = SystemClock.Instance.GetCurrentInstant().InZone(zone).LocalDateTime;
             var midnight = now.Date.AtMidnight();
-            
+
             // First we try to parse the string as a relative time using the period parser
             var relResult = ParsePeriod(str);
             if (relResult != null)
@@ -119,7 +119,7 @@ namespace PluralKit.Core
                 "MM dd",        // 01 01
                 "MM/dd"         // 01-01
             };
-            
+
             // First, we try all the timestamps that only have a time
             foreach (var timePattern in timePatterns)
             {
@@ -130,17 +130,17 @@ namespace PluralKit.Core
                     // If we have a successful match and we need a time in the past, we try to shove a future-time a date before
                     // Example: "4:30 pm" at 3:30 pm likely refers to 4:30 pm the previous day
                     var val = result.Value;
-                    
+
                     // If we need to nudge, we just subtract a day. This only occurs when we're parsing specifically *just time*, so
                     // we know we won't nudge it by more than a day since we use today's midnight timestamp as a date template.
-                    
+
                     // Since this is a naive datetime, this ensures we're actually moving by one calendar day even if 
                     // DST changes occur, since they'll be resolved later wrt. the right side of the boundary
                     if (val > now && nudgeToPast) val = val.PlusDays(-1);
                     return val.InZoneLeniently(zone);
                 }
             }
-            
+
             // Then we try specific date+time combinations, both date first and time first, with and without commas
             foreach (var timePattern in timePatterns)
             {
@@ -158,7 +158,7 @@ namespace PluralKit.Core
                     }
                 }
             }
-            
+
             // Finally, just date patterns, still using midnight as the template
             foreach (var datePattern in datePatterns)
             {

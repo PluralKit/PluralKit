@@ -1,10 +1,10 @@
-﻿using Autofac;
+using Autofac;
 
 using Microsoft.Extensions.Configuration;
 
 namespace PluralKit.Core
 {
-    public class ConfigModule<T>: Module where T: new()
+    public class ConfigModule<T>: Module where T : new()
     {
         private readonly string _submodule;
 

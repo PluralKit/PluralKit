@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using Serilog.Core;
 using Serilog.Events;
@@ -12,7 +12,7 @@ namespace PluralKit.Core
         {
             result = null;
             if (!(value is PatchObject po)) return false;
-            
+
             var propList = new List<LogEventProperty>();
             foreach (var props in po.GetType().GetProperties())
             {

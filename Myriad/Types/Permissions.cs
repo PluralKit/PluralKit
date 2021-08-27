@@ -1,4 +1,4 @@
-﻿namespace Myriad.Types
+namespace Myriad.Types
 {
     public static class Permissions
     {

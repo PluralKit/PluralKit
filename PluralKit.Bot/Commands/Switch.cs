@@ -30,7 +30,7 @@ namespace PluralKit.Bot
         public async Task SwitchOut(Context ctx)
         {
             ctx.CheckSystem();
-            
+
             // Switch with no members = switch-out
             await DoSwitchCommand(ctx, new PKMember[] { });
         }
@@ -61,35 +61,35 @@ namespace PluralKit.Bot
             else
                 await ctx.Reply($"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
         }
-        
+
         public async Task SwitchMove(Context ctx)
         {
             ctx.CheckSystem();
-            
+
             var timeToMove = ctx.RemainderOrNull() ?? throw new PKSyntaxError("Must pass a date or time to move the switch to.");
             var tz = TzdbDateTimeZoneSource.Default.ForId(ctx.System.UiTz ?? "UTC");
-            
+
             var result = DateUtils.ParseDateTime(timeToMove, true, tz);
             if (result == null) throw Errors.InvalidDateTime(timeToMove);
 
             await using var conn = await _db.Obtain();
-            
+
             var time = result.Value;
             if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
             // Fetch the last two switches for the system to do bounds checking on
             var lastTwoSwitches = await _repo.GetSwitches(conn, ctx.System.Id).Take(2).ToListAsync();
-            
+
             // If we don't have a switch to move, don't bother
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
-            
+
             // If there's a switch *behind* the one we move, we check to make srue we're not moving the time further back than that
             if (lastTwoSwitches.Count == 2)
             {
                 if (lastTwoSwitches[1].Timestamp > time.ToInstant())
                     throw Errors.SwitchMoveBeforeSecondLast(lastTwoSwitches[1].Timestamp.InZone(tz));
             }
-            
+
             // Now we can actually do the move, yay!
             // But, we do a prompt to confirm.
             var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id);
@@ -98,16 +98,16 @@ namespace PluralKit.Bot
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
             var newSwitchTime = time.ToInstant().ToUnixTimeSeconds();
             var newSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - time.ToInstant()).FormatDuration();
-            
+
             // yeet
             var msg = $"{Emojis.Warn} This will move the latest switch ({lastSwitchMemberStr}) from <t:{lastSwitchTime}> ({lastSwitchDeltaStr} ago) to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago). Is this OK?";
             if (!await ctx.PromptYesNo(msg, "Move Switch")) throw Errors.SwitchMoveCancelled;
-            
+
             // aaaand *now* we do the move
             await _repo.MoveSwitch(conn, lastTwoSwitches[0].Id, time.ToInstant());
             await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
         }
-        
+
         public async Task SwitchDelete(Context ctx)
         {
             ctx.CheckSystem();
@@ -122,7 +122,7 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Success} Cleared system switches!");
                 return;
             }
-            
+
             await using var conn = await _db.Obtain();
 
             // Fetch the last two switches for the system to do bounds checking on
@@ -148,7 +148,7 @@ namespace PluralKit.Bot
 
             if (!await ctx.PromptYesNo(msg, "Delete Switch")) throw Errors.SwitchDeleteCancelled;
             await _repo.DeleteSwitch(conn, lastTwoSwitches[0].Id);
-            
+
             await ctx.Reply($"{Emojis.Success} Switch deleted.");
         }
     }

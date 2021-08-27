@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -83,9 +83,9 @@ namespace PluralKit.Core
         {
             var patch = new MemberPatch();
 
-            if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null) 
+            if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null)
                 throw new ValidationError("Member name can not be set to null.");
-            
+
             if (o.ContainsKey("name")) patch.Name = o.Value<string>("name");
             if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
             if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
@@ -107,17 +107,17 @@ namespace PluralKit.Core
 
             // legacy: used in old export files and APIv1
             if (o.ContainsKey("prefix") || o.ContainsKey("suffix") && !o.ContainsKey("proxy_tags"))
-                patch.ProxyTags = new[] {new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix"))};
+                patch.ProxyTags = new[] { new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")) };
             else if (o.ContainsKey("proxy_tags"))
                 patch.ProxyTags = o.Value<JArray>("proxy_tags")
                     .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
                     .Where(p => p.Valid)
                     .ToArray();
-            
-            if(o.ContainsKey("privacy")) //TODO: Deprecate this completely in api v2
+
+            if (o.ContainsKey("privacy")) //TODO: Deprecate this completely in api v2
             {
                 var plevel = o.ParsePrivacy("privacy");
-                                
+
                 patch.Visibility = plevel;
                 patch.NamePrivacy = plevel;
                 patch.AvatarPrivacy = plevel;

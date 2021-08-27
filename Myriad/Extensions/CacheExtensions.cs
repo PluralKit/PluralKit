@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Myriad.Cache;
@@ -15,7 +15,7 @@ namespace Myriad.Extensions
                 throw new KeyNotFoundException($"Guild {guildId} not found in cache");
             return guild;
         }
-        
+
         public static Channel GetChannel(this IDiscordCache cache, ulong channelId)
         {
             if (!cache.TryGetChannel(channelId, out var channel))
@@ -36,14 +36,14 @@ namespace Myriad.Extensions
                 throw new KeyNotFoundException($"User {userId} not found in cache");
             return user;
         }
-        
+
         public static Role GetRole(this IDiscordCache cache, ulong roleId)
         {
             if (!cache.TryGetRole(roleId, out var role))
                 throw new KeyNotFoundException($"User {roleId} not found in cache");
             return role;
         }
-        
+
         public static async ValueTask<User?> GetOrFetchUser(this IDiscordCache cache, DiscordApiClient rest, ulong userId)
         {
             if (cache.TryGetUser(userId, out var cacheUser))
@@ -54,7 +54,7 @@ namespace Myriad.Extensions
                 await cache.SaveUser(restUser);
             return restUser;
         }
-        
+
         public static async ValueTask<Channel?> GetOrFetchChannel(this IDiscordCache cache, DiscordApiClient rest, ulong channelId)
         {
             if (cache.TryGetChannel(channelId, out var cacheChannel))
@@ -79,9 +79,9 @@ namespace Myriad.Extensions
         public static Channel GetRootChannel(this IDiscordCache cache, ulong channelOrThread)
         {
             var channel = cache.GetChannel(channelOrThread);
-            if (!channel.IsThread()) 
+            if (!channel.IsThread())
                 return channel;
-            
+
             var parent = cache.GetChannel(channel.ParentId!.Value);
             return parent;
         }

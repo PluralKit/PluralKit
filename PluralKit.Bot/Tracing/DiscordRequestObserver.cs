@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -30,7 +30,7 @@ namespace PluralKit.Bot
             _metrics = metrics;
             _logger = logger.ForContext<DiscordRequestObserver>();
         }
-        
+
         public void OnCompleted() { }
 
         public void OnError(Exception error) { }
@@ -53,10 +53,10 @@ namespace PluralKit.Bot
             url = Regex.Replace(url, @"/reactions/[^{/]+/\d+", "/reactions/{emoji}/{user_id}");
             url = Regex.Replace(url, @"/reactions/[^{/]+", "/reactions/{emoji}");
             url = Regex.Replace(url, @"/invites/[^{/]+", "/invites/{invite_code}");
-            
+
             // catch-all for missed IDs
             url = Regex.Replace(url, @"\d{17,19}", "{snowflake}");
-            
+
             return url;
         }
 
@@ -66,7 +66,7 @@ namespace PluralKit.Bot
             var routePath = NormalizeRoutePath(localPath);
             return $"{req.Method} {routePath}";
         }
-        
+
         private void HandleException(Exception exc, HttpRequestMessage req)
         {
             _logger
@@ -109,8 +109,8 @@ namespace PluralKit.Bot
             if (IsDiscordApiRequest(response))
             {
                 var timer = _metrics.Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
-                    new[] {"endpoint", "status_code"},
-                    new[] {endpoint, ((int) response.StatusCode).ToString()}
+                    new[] { "endpoint", "status_code" },
+                    new[] { endpoint, ((int)response.StatusCode).ToString() }
                 ));
                 timer.Record(activity.Duration.Ticks / 10, TimeUnit.Microseconds);
             }
@@ -131,19 +131,19 @@ namespace PluralKit.Bot
             switch (value.Key)
             {
                 case "System.Net.Http.HttpRequestOut.Stop":
-                {
-                    var data = Unsafe.As<ActivityStopData>(value.Value);
-                    if (data.Response != null)
-                        HandleResponse(data.Response, Activity.Current);
+                    {
+                        var data = Unsafe.As<ActivityStopData>(value.Value);
+                        if (data.Response != null)
+                            HandleResponse(data.Response, Activity.Current);
 
-                    break;
-                }
+                        break;
+                    }
                 case "System.Net.Http.Exception":
-                {
-                    var data = Unsafe.As<ExceptionData>(value.Value);
-                    HandleException(data.Exception, data.Request);
-                    break;
-                }
+                    {
+                        var data = Unsafe.As<ExceptionData>(value.Value);
+                        HandleException(data.Exception, data.Request);
+                        break;
+                    }
             }
         }
 
@@ -151,7 +151,7 @@ namespace PluralKit.Bot
         {
             DiagnosticListener.AllListeners.Subscribe(new ListenerObserver(services));
         }
-        
+
 #pragma warning disable 649
         private class ActivityStopData
         {
@@ -160,7 +160,7 @@ namespace PluralKit.Bot
             public HttpRequestMessage Request;
             public TaskStatus RequestTaskStatus;
         }
-        
+
         private class ExceptionData
         {
             // Field order here matters!

@@ -11,7 +11,7 @@ namespace PluralKit.Bot
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
-        
+
         public MemberProxy(IDatabase db, ModelRepository repo)
         {
             _db = db;
@@ -31,20 +31,20 @@ namespace PluralKit.Bot
                 if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
                 return new ProxyTag(prefixAndSuffix[0], prefixAndSuffix[1]);
             }
-            
+
             async Task<bool> WarnOnConflict(ProxyTag newTag)
             {
                 var query = "select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix is not distinct from @Prefix and suffix is not distinct from @Suffix and id != @Existing";
                 var conflicts = (await _db.Execute(conn => conn.QueryAsync<PKMember>(query,
-                    new {Prefix = newTag.Prefix, Suffix = newTag.Suffix, Existing = target.Id, system = target.System}))).ToList();
-                
+                    new { Prefix = newTag.Prefix, Suffix = newTag.Suffix, Existing = target.Id, system = target.System }))).ToList();
+
                 if (conflicts.Count <= 0) return true;
 
                 var conflictList = conflicts.Select(m => $"- **{m.NameFor(ctx)}**");
                 var msg = $"{Emojis.Warn} The following members have conflicting proxy tags:\n{string.Join('\n', conflictList)}\nDo you want to proceed anyway?";
                 return await ctx.PromptYesNo(msg, "Proceed");
             }
-            
+
             // "Sub"command: clear flag
             if (await ctx.MatchClear())
             {
@@ -55,10 +55,10 @@ namespace PluralKit.Bot
                     if (!await ctx.PromptYesNo(msg, "Clear"))
                         throw Errors.GenericCancelled();
                 }
-                
-                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(new ProxyTag[0])};
+
+                var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(new ProxyTag[0]) };
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
-                
+
                 await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
             }
             // "Sub"command: no arguments; will print proxy tags
@@ -73,20 +73,20 @@ namespace PluralKit.Bot
             else if (ctx.Match("add", "append"))
             {
                 if (!ctx.HasNext(skipFlags: false)) throw new PKSyntaxError("You must pass an example proxy to add (eg. `[text]` or `J:text`).");
-                
+
                 var tagToAdd = ParseProxyTags(ctx.RemainderOrNull(skipFlags: false));
                 if (tagToAdd.IsEmpty) throw Errors.EmptyProxyTags(target);
                 if (target.ProxyTags.Contains(tagToAdd))
                     throw Errors.ProxyTagAlreadyExists(tagToAdd, target);
                 if (tagToAdd.ProxyString.Length > Limits.MaxProxyTagLength)
                     throw new PKError($"Proxy tag too long ({tagToAdd.ProxyString.Length} > {Limits.MaxProxyTagLength} characters).");
-                
+
                 if (!await WarnOnConflict(tagToAdd))
                     throw Errors.GenericCancelled();
 
                 var newTags = target.ProxyTags.ToList();
                 newTags.Add(tagToAdd);
-                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray())};
+                var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray()) };
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Added proxy tags {tagToAdd.ProxyString.AsCode()}.");
@@ -103,7 +103,7 @@ namespace PluralKit.Bot
 
                 var newTags = target.ProxyTags.ToList();
                 newTags.Remove(tagToRemove);
-                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray())};
+                var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray()) };
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
 
                 await ctx.Reply($"{Emojis.Success} Removed proxy tags {tagToRemove.ProxyString.AsCode()}.");
@@ -122,14 +122,14 @@ namespace PluralKit.Bot
                     if (!await ctx.PromptYesNo(msg, "Replace"))
                         throw Errors.GenericCancelled();
                 }
-                
+
                 if (!await WarnOnConflict(requestedTag))
                     throw Errors.GenericCancelled();
 
-                var newTags = new[] {requestedTag};
-                var patch = new MemberPatch {ProxyTags = Partial<ProxyTag[]>.Present(newTags)};
+                var newTags = new[] { requestedTag };
+                var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags) };
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
-                
+
                 await ctx.Reply($"{Emojis.Success} Member proxy tags set to {requestedTag.ProxyString.AsCode()}.");
             }
         }

@@ -22,10 +22,10 @@ namespace PluralKit.API
         [JsonProperty("system")] public JObject System;
         [JsonProperty("member")] public JObject Member;
     }
-    
+
     [ApiController]
     [ApiVersion("1.0")]
-    [Route( "v{version:apiVersion}/msg" )]
+    [Route("v{version:apiVersion}/msg")]
     public class MessageController: ControllerBase
     {
         private readonly IDatabase _db;
@@ -45,7 +45,7 @@ namespace PluralKit.API
 
             return new MessageReturn
             {
-                Timestamp = Instant.FromUnixTimeMilliseconds((long) (msg.Message.Mid >> 22) + 1420070400000),
+                Timestamp = Instant.FromUnixTimeMilliseconds((long)(msg.Message.Mid >> 22) + 1420070400000),
                 Id = msg.Message.Mid.ToString(),
                 Channel = msg.Message.Channel.ToString(),
                 Sender = msg.Message.Sender.ToString(),
@@ -53,6 +53,6 @@ namespace PluralKit.API
                 System = msg.System.ToJson(User.ContextFor(msg.System)),
                 Original = msg.Message.OriginalMid?.ToString()
             };
-        } 
+        }
     }
 }

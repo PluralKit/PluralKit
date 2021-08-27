@@ -18,7 +18,7 @@ namespace PluralKit.Bot
         private readonly IClock _clock;
         private readonly ILogger _logger;
         private readonly Task _cleanupWorker;
-        
+
         public InteractionDispatchService(IClock clock, ILogger logger)
         {
             _clock = clock;
@@ -31,7 +31,7 @@ namespace PluralKit.Bot
         {
             if (!Guid.TryParse(customId, out var customIdGuid))
                 return false;
-            
+
             if (!_handlers.TryGetValue(customIdGuid, out var handler))
                 return false;
 
@@ -52,10 +52,10 @@ namespace PluralKit.Bot
             var key = Guid.NewGuid();
             var handler = new RegisteredInteraction
             {
-                Callback = callback, 
+                Callback = callback,
                 Expiry = _clock.GetCurrentInstant() + (expiry ?? DefaultExpiry)
             };
-            
+
             _handlers[key] = handler;
             return key.ToString();
         }
@@ -93,7 +93,7 @@ namespace PluralKit.Bot
 
         public void Dispose()
         {
-            _cts.Cancel(); 
+            _cts.Cancel();
             _cts.Dispose();
         }
     }

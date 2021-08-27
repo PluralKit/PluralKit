@@ -13,7 +13,7 @@ namespace PluralKit.Bot
     {
         private readonly InteractionCreateEvent _evt;
         private readonly ILifetimeScope _services;
-        
+
         public InteractionContext(InteractionCreateEvent evt, ILifetimeScope services)
         {
             _evt = evt;
@@ -55,9 +55,9 @@ namespace PluralKit.Bot
         }
 
         public async Task Respond(InteractionResponse.ResponseType type, InteractionApplicationCommandCallbackData? data)
-        { 
+        {
             var rest = _services.Resolve<DiscordApiClient>();
-            await rest.CreateInteractionResponse(_evt.Id, _evt.Token, new InteractionResponse {Type = type, Data = data});
+            await rest.CreateInteractionResponse(_evt.Id, _evt.Token, new InteractionResponse { Type = type, Data = data });
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 using Dapper;
 
@@ -13,7 +13,7 @@ namespace PluralKit.Core
         {
             _qb = qb;
         }
-        
+
         public static UpdateQueryBuilder Insert(string table) => new UpdateQueryBuilder(QueryBuilder.Insert(table));
         public static UpdateQueryBuilder Update(string table, string condition) => new UpdateQueryBuilder(QueryBuilder.Update(table, condition));
         public static UpdateQueryBuilder Upsert(string table, string conflictField) => new UpdateQueryBuilder(QueryBuilder.Upsert(table, conflictField));

@@ -1,4 +1,4 @@
-﻿using Myriad.Types;
+using Myriad.Types;
 
 namespace Myriad.Extensions
 {

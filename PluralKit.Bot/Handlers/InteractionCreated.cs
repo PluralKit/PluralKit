@@ -11,7 +11,7 @@ namespace PluralKit.Bot
     {
         private readonly InteractionDispatchService _interactionDispatch;
         private readonly ILifetimeScope _services;
-        
+
         public InteractionCreated(InteractionDispatchService interactionDispatch, ILifetimeScope services)
         {
             _interactionDispatch = interactionDispatch;

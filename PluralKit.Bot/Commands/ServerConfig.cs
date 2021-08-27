@@ -29,23 +29,23 @@ namespace PluralKit.Bot
         public async Task SetLogChannel(Context ctx)
         {
             ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-            
+
             if (await ctx.MatchClear("the server log channel"))
             {
-                await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, new GuildPatch {LogChannel = null}));
+                await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, new GuildPatch { LogChannel = null }));
                 await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
                 return;
             }
-            
+
             if (!ctx.HasNext())
                 throw new PKSyntaxError("You must pass a #channel to set, or `clear` to clear it.");
-            
+
             Channel channel = null;
             var channelString = ctx.PeekArgument();
             channel = await ctx.MatchChannel();
             if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
 
-            var patch = new GuildPatch {LogChannel = channel.Id};
+            var patch = new GuildPatch { LogChannel = channel.Id };
             await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, patch));
             await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
         }
@@ -59,12 +59,12 @@ namespace PluralKit.Bot
                 affectedChannels = _cache.GetGuildChannels(ctx.Guild.Id).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
-            {
-                var channelString = ctx.PeekArgument();
-                var channel = await ctx.MatchChannel();
-                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
-                affectedChannels.Add(channel);
-            }
+                {
+                    var channelString = ctx.PeekArgument();
+                    var channel = await ctx.MatchChannel();
+                    if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
+                    affectedChannels.Add(channel);
+                }
 
             ulong? logChannel = null;
             await using (var conn = await _db.Obtain())
@@ -76,8 +76,8 @@ namespace PluralKit.Bot
                     blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
                 else
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
-                
-                var patch = new GuildPatch {LogBlacklist = blacklist.ToArray()};
+
+                var patch = new GuildPatch { LogBlacklist = blacklist.ToArray() };
                 await _repo.UpsertGuild(conn, ctx.Guild.Id, patch);
             }
 
@@ -91,7 +91,7 @@ namespace PluralKit.Bot
             ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
             var blacklist = await _db.Execute(c => _repo.GetGuild(c, ctx.Guild.Id));
-            
+
             // Resolve all channels from the cache and order by position
             var channels = blacklist.Blacklist
                 .Select(id => _cache.GetChannelOrNull(id))
@@ -112,7 +112,7 @@ namespace PluralKit.Bot
                 {
                     string CategoryName(ulong? id) =>
                         id != null ? _cache.GetChannel(id.Value).Name : "(no category)";
-                    
+
                     ulong? lastCategory = null;
 
                     var fieldValue = new StringBuilder();
@@ -144,13 +144,13 @@ namespace PluralKit.Bot
                 affectedChannels = _cache.GetGuildChannels(ctx.Guild.Id).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
-            {
-                var channelString = ctx.PeekArgument();
-                var channel = await ctx.MatchChannel();
-                if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
-                affectedChannels.Add(channel);
-            }
-            
+                {
+                    var channelString = ctx.PeekArgument();
+                    var channel = await ctx.MatchChannel();
+                    if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
+                    affectedChannels.Add(channel);
+                }
+
             await using (var conn = await _db.Obtain())
             {
                 var guild = await _repo.GetGuild(conn, ctx.Guild.Id);
@@ -159,8 +159,8 @@ namespace PluralKit.Bot
                     blacklist.UnionWith(affectedChannels.Select(c => c.Id));
                 else
                     blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
-                
-                var patch = new GuildPatch {Blacklist = blacklist.ToArray()};
+
+                var patch = new GuildPatch { Blacklist = blacklist.ToArray() };
                 await _repo.UpsertGuild(conn, ctx.Guild.Id, patch);
             }
 
@@ -186,14 +186,14 @@ namespace PluralKit.Bot
 
                 var guildCfg = await _db.Execute(c => _repo.GetGuild(c, ctx.Guild.Id));
                 if (guildCfg.LogCleanupEnabled)
-                    eb.Description("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`."); 
-                else 
+                    eb.Description("Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`.");
+                else
                     eb.Description("Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }
 
-            var patch = new GuildPatch {LogCleanupEnabled = newValue};
+            var patch = new GuildPatch { LogCleanupEnabled = newValue };
             await _db.Execute(conn => _repo.UpsertGuild(conn, ctx.Guild.Id, patch));
 
             if (newValue)

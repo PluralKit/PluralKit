@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Collections.Generic;
 
 namespace PluralKit.Core
@@ -11,11 +11,11 @@ namespace PluralKit.Core
         public MemberId Id { get; }
         public IReadOnlyCollection<ProxyTag> ProxyTags { get; } = new ProxyTag[0];
         public bool KeepProxy { get; }
-        
+
         public string? ServerName { get; }
         public string? DisplayName { get; }
         public string Name { get; } = "";
-        
+
         public string? ServerAvatar { get; }
         public string? Avatar { get; }
 

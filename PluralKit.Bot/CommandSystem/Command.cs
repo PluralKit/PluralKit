@@ -5,7 +5,7 @@ namespace PluralKit.Bot
         public string Key { get; }
         public string Usage { get; }
         public string Description { get; }
-        
+
         public Command(string key, string usage, string description)
         {
             Key = key;

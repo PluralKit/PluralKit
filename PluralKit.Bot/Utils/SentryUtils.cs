@@ -7,7 +7,7 @@ using Sentry;
 
 namespace PluralKit.Bot
 {
-    public interface ISentryEnricher<T> where T: IGatewayEvent
+    public interface ISentryEnricher<T> where T : IGatewayEvent
     {
         void Enrich(Scope scope, Shard shard, T evt);
     }
@@ -25,10 +25,10 @@ namespace PluralKit.Bot
         {
             _bot = bot;
         }
-        
+
         // TODO: should this class take the Scope by dependency injection instead?
         // Would allow us to create a centralized "chain of handlers" where this class could just be registered as an entry in
-        
+
         public void Enrich(Scope scope, Shard shard, MessageCreateEvent evt)
         {
             scope.AddBreadcrumb(evt.Content, "event.message", data: new Dictionary<string, string>

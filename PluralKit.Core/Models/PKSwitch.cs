@@ -1,8 +1,9 @@
-﻿using NodaTime;
+using NodaTime;
 
 
 
-namespace PluralKit.Core {
+namespace PluralKit.Core
+{
 
     public readonly struct SwitchId: INumericId<SwitchId, int>
     {
@@ -24,7 +25,7 @@ namespace PluralKit.Core {
         public static bool operator !=(SwitchId left, SwitchId right) => !left.Equals(right);
 
         public int CompareTo(SwitchId other) => Value.CompareTo(other.Value);
-        
+
         public override string ToString() => $"Switch #{Value}";
     }
 

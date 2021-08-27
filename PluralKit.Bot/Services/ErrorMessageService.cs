@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
@@ -17,11 +17,11 @@ namespace PluralKit.Bot
     {
         private static readonly Duration MinErrorInterval = Duration.FromSeconds(10);
         private readonly ConcurrentDictionary<ulong, Instant> _lastErrorInChannel = new ConcurrentDictionary<ulong, Instant>();
-        
+
         private readonly IMetrics _metrics;
         private readonly ILogger _logger;
         private readonly DiscordApiClient _rest;
-        
+
         public ErrorMessageService(IMetrics metrics, ILogger logger, DiscordApiClient rest)
         {
             _metrics = metrics;
@@ -53,7 +53,7 @@ namespace PluralKit.Bot
                     Content = $"> **Error code:** `{errorId}`",
                     Embed = embed.Build()
                 });
-                
+
                 _logger.Information("Sent error message to {ChannelId} with error code {ErrorId}", channelId, errorId);
                 _metrics.Measure.Meter.Mark(BotMetrics.ErrorMessagesSent, "sent");
             }

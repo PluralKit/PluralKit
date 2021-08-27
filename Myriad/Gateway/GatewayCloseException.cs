@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 
 namespace Myriad.Gateway
 {
     // TODO: unused?
     public class GatewayCloseException: Exception
     {
-        public GatewayCloseException(int closeCode, string closeReason): base($"{closeCode}: {closeReason}")
+        public GatewayCloseException(int closeCode, string closeReason) : base($"{closeCode}: {closeReason}")
         {
             CloseCode = closeCode;
             CloseReason = closeReason;

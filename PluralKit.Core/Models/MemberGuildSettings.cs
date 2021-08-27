@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 namespace PluralKit.Core
 {
     public class MemberGuildSettings

@@ -1,16 +1,16 @@
-﻿namespace Myriad.Types
+namespace Myriad.Types
 {
     public record Activity: ActivityPartial
     {
     }
-    
+
     public record ActivityPartial
     {
         public string Name { get; init; }
         public ActivityType Type { get; init; }
         public string? Url { get; init; }
     }
-    
+
     public enum ActivityType
     {
         Game = 0,

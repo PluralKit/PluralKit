@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Text.RegularExpressions;
 
 namespace PluralKit.Core
@@ -12,7 +12,7 @@ namespace PluralKit.Core
         public Partial<string?> Icon { get; set; }
         public Partial<string?> BannerImage { get; set; }
         public Partial<string?> Color { get; set; }
-        
+
         public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
         public Partial<PrivacyLevel> IconPrivacy { get; set; }
         public Partial<PrivacyLevel> ListPrivacy { get; set; }

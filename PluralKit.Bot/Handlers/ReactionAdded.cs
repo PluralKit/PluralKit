@@ -40,7 +40,7 @@ namespace PluralKit.Bot
         }
 
         public async Task Handle(Shard shard, MessageReactionAddEvent evt)
-        { 
+        {
             await TryHandleProxyMessageReactions(evt);
         }
 
@@ -71,42 +71,42 @@ namespace PluralKit.Bot
 
             // Ignore reactions from bots (we can't DM them anyway)
             if (user.Bot) return;
-            
+
             switch (evt.Emoji.Name)
             {
                 // Message deletion
                 case "\u274C": // Red X
-                {
-                    await using var conn = await _db.Obtain();
-                    var msg = await _repo.GetMessage(conn, evt.MessageId);
-                    if (msg != null)
-                        await HandleProxyDeleteReaction(evt, msg);
-                    
-                    break;
-                }
+                    {
+                        await using var conn = await _db.Obtain();
+                        var msg = await _repo.GetMessage(conn, evt.MessageId);
+                        if (msg != null)
+                            await HandleProxyDeleteReaction(evt, msg);
+
+                        break;
+                    }
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
-                {
-                    await using var conn = await _db.Obtain();
-                    var msg = await _repo.GetMessage(conn, evt.MessageId);
-                    if (msg != null)
-                        await HandleQueryReaction(evt, msg);
-                    
-                    break;
-                }
+                    {
+                        await using var conn = await _db.Obtain();
+                        var msg = await _repo.GetMessage(conn, evt.MessageId);
+                        if (msg != null)
+                            await HandleQueryReaction(evt, msg);
+
+                        break;
+                    }
 
                 case "\U0001F514": // Bell
                 case "\U0001F6CE": // Bellhop bell
                 case "\U0001F3D3": // Ping pong paddle (lol)
                 case "\u23F0": // Alarm clock
                 case "\u2757": // Exclamation mark
-                {
-                    await using var conn = await _db.Obtain();
-                    var msg = await _repo.GetMessage(conn, evt.MessageId);
-                    if (msg != null)
-                        await HandlePingReaction(evt, msg);
-                    break;
-                }
+                    {
+                        await using var conn = await _db.Obtain();
+                        var msg = await _repo.GetMessage(conn, evt.MessageId);
+                        if (msg != null)
+                            await HandlePingReaction(evt, msg);
+                        break;
+                    }
             }
         }
 
@@ -114,7 +114,7 @@ namespace PluralKit.Bot
         {
             if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
                 return;
-            
+
             using var conn = await _db.Obtain();
             var system = await _repo.GetSystemByAccount(conn, evt.UserId);
 
@@ -136,7 +136,7 @@ namespace PluralKit.Bot
         private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage msg)
         {
             // Can only delete your own message
-            if (msg.AuthorId != evt.UserId) 
+            if (msg.AuthorId != evt.UserId)
                 return;
 
             try
@@ -154,7 +154,7 @@ namespace PluralKit.Bot
         private async ValueTask HandleQueryReaction(MessageReactionAddEvent evt, FullMessage msg)
         {
             var guild = _cache.GetGuild(evt.GuildId!.Value);
-            
+
             // Try to DM the user info about the message
             try
             {
@@ -163,14 +163,14 @@ namespace PluralKit.Bot
                 {
                     Embed = await _embeds.CreateMemberEmbed(msg.System, msg.Member, guild, LookupContext.ByNonOwner)
                 });
-                
+
                 await _rest.CreateMessage(dm.Id, new MessageRequest
                 {
                     Embed = await _embeds.CreateMessageInfoEmbed(msg)
                 });
             }
             catch (ForbiddenException) { } // No permissions to DM, can't check for this :(
-            
+
             await TryRemoveOriginalReaction(evt);
         }
 
@@ -178,20 +178,20 @@ namespace PluralKit.Bot
         {
             if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
                 return;
-            
+
             // Check if the "pinger" has permission to send messages in this channel
             // (if not, PK shouldn't send messages on their behalf)
             var member = await _rest.GetGuildMember(evt.GuildId!.Value, evt.UserId);
             var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
             if (member == null || !_cache.PermissionsFor(evt.ChannelId, member).HasFlag(requiredPerms)) return;
-            
+
             if (msg.System.PingsEnabled)
             {
                 // If the system has pings enabled, go ahead
                 await _rest.CreateMessage(evt.ChannelId, new()
                 {
                     Content = $"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{evt.UserId}>.",
-                    Components = new []
+                    Components = new[]
                     {
                         new MessageComponent
                         {
@@ -208,7 +208,7 @@ namespace PluralKit.Bot
                             }
                         }
                     },
-                    AllowedMentions = new AllowedMentions {Users = new[] {msg.Message.Sender}}
+                    AllowedMentions = new AllowedMentions { Users = new[] { msg.Message.Sender } }
                 });
             }
             else
@@ -221,7 +221,7 @@ namespace PluralKit.Bot
                     {
                         Content = $"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:"
                     });
-                    await _rest.CreateMessage(dm.Id, new MessageRequest {Content = $"<@{msg.Message.Sender}>".AsCode()});
+                    await _rest.CreateMessage(dm.Id, new MessageRequest { Content = $"<@{msg.Message.Sender}>".AsCode() });
                 }
                 catch (ForbiddenException) { }
             }

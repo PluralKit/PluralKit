@@ -30,7 +30,7 @@ namespace PluralKit.Bot
     public class Bot
     {
         private readonly ConcurrentDictionary<ulong, GuildMemberPartial> _guildMembers = new();
-        
+
         private readonly Cluster _cluster;
         private readonly DiscordApiClient _rest;
         private readonly ILogger _logger;
@@ -44,7 +44,7 @@ namespace PluralKit.Bot
         private bool _hasReceivedReady = false;
         private Timer _periodicTask; // Never read, just kept here for GC reasons
 
-        public Bot(ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics, 
+        public Bot(ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics,
             ErrorMessageService errorMessageService, CommandMessageService commandMessageService, Cluster cluster, DiscordApiClient rest, IDiscordCache cache)
         {
             _logger = logger.ForContext<Bot>();
@@ -61,7 +61,7 @@ namespace PluralKit.Bot
         public void Init()
         {
             _cluster.EventReceived += OnEventReceived;
-            
+
             // Init the shard stuff
             _services.Resolve<ShardInfoService>().Init();
 
@@ -72,7 +72,7 @@ namespace PluralKit.Bot
             var timeTillNextWholeMinute = TimeSpan.FromMilliseconds(60000 - timeNow.ToUnixTimeMilliseconds() % 60000 + 250);
             _periodicTask = new Timer(_ =>
             {
-                 var __ = UpdatePeriodic();
+                var __ = UpdatePeriodic();
             }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
         }
 
@@ -88,7 +88,7 @@ namespace PluralKit.Bot
 
             return PermissionSet.Dm;
         }
-        
+
         private async Task OnEventReceived(Shard shard, IGatewayEvent evt)
         {
             await _cache.HandleGatewayEvent(evt);
@@ -158,7 +158,7 @@ namespace PluralKit.Bot
                         {
                             new ActivityPartial
                             {
-                                Name = "Restarting... (please wait)", 
+                                Name = "Restarting... (please wait)",
                                 Type = ActivityType.Game
                             }
                         },
@@ -167,7 +167,7 @@ namespace PluralKit.Bot
             }
         }
 
-        private Task HandleEvent<T>(Shard shard, T evt) where T: IGatewayEvent
+        private Task HandleEvent<T>(Shard shard, T evt) where T : IGatewayEvent
         {
             // We don't want to stall the event pipeline, so we'll "fork" inside here
             var _ = HandleEventInner();
@@ -203,13 +203,13 @@ namespace PluralKit.Bot
                     var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
                     sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), shard, evt);
 
-                    using var timer = _metrics.Measure.Timer.Time(BotMetrics.EventsHandled, 
+                    using var timer = _metrics.Measure.Timer.Time(BotMetrics.EventsHandled,
                             new MetricTags("event", typeof(T).Name.Replace("Event", "")));
 
                     // Delegate to the queue to see if it wants to handle this event
                     // the TryHandle call returns true if it's handled the event
                     // Usually it won't, so just pass it on to the main handler
-                    if (queue == null || !await queue.TryHandle(evt)) 
+                    if (queue == null || !await queue.TryHandle(evt))
                         await handler.Handle(shard, evt);
                 }
                 catch (Exception exc)
@@ -218,12 +218,12 @@ namespace PluralKit.Bot
                 }
             }
         }
-        
+
         private async Task HandleError<T>(Shard shard, IEventHandler<T> handler, T evt, ILifetimeScope serviceScope, Exception exc)
-            where T: IGatewayEvent
+            where T : IGatewayEvent
         {
             _metrics.Measure.Meter.Mark(BotMetrics.BotErrors, exc.GetType().FullName);
-            
+
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
 
@@ -239,7 +239,7 @@ namespace PluralKit.Bot
                 // Report error to Sentry
                 // This will just no-op if there's no URL set
                 var sentryScope = serviceScope.Resolve<Scope>();
-                
+
                 // Add some specific info about Discord error responses, as a breadcrumb
                 // TODO: headers to dict
                 // if (exc is BadRequestException bre)
@@ -248,7 +248,7 @@ namespace PluralKit.Bot
                 //     sentryScope.AddBreadcrumb(nfe.Response, "response.error", data: new Dictionary<string, string>(nfe.Response.Headers)); 
                 // if (exc is UnauthorizedException ue)
                 //     sentryScope.AddBreadcrumb(ue.Response, "response.error", data: new Dictionary<string, string>(ue.Response.Headers)); 
-                
+
                 SentrySdk.CaptureEvent(sentryEvent, sentryScope);
 
                 // Once we've sent it to Sentry, report it to the user (if we have permission to)
@@ -261,7 +261,7 @@ namespace PluralKit.Bot
                 }
             }
         }
-        
+
         private async Task UpdatePeriodic()
         {
             _logger.Debug("Running once-per-minute scheduled tasks");
@@ -273,7 +273,7 @@ namespace PluralKit.Bot
 
             // Collect some stats, submit them to the metrics backend
             await _collector.CollectStats();
-            await Task.WhenAll(((IMetricsRoot) _metrics).ReportRunner.RunAllAsync());
+            await Task.WhenAll(((IMetricsRoot)_metrics).ReportRunner.RunAllAsync());
             _logger.Debug("Submitted metrics to backend");
         }
 

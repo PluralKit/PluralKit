@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,7 +19,7 @@ namespace PluralKit.Core
 
             // First, we insert the switch itself
             var sw = await conn.QuerySingleAsync<PKSwitch>("insert into switches(system) values (@System) returning *",
-                new {System = system});
+                new { System = system });
 
             // Then we insert each member in the switch in the switch_members table
             await using (var w = conn.BeginBinaryImport("copy switch_members (switch, member) from stdin (format binary)"))
@@ -43,20 +43,20 @@ namespace PluralKit.Core
         public async Task MoveSwitch(IPKConnection conn, SwitchId id, Instant time)
         {
             await conn.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
-                new {Time = time, Id = id});
+                new { Time = time, Id = id });
 
             _logger.Information("Updated {SwitchId} timestamp: {SwitchTimestamp}", id, time);
         }
 
         public async Task DeleteSwitch(IPKConnection conn, SwitchId id)
         {
-            await conn.ExecuteAsync("delete from switches where id = @Id", new {Id = id});
+            await conn.ExecuteAsync("delete from switches where id = @Id", new { Id = id });
             _logger.Information("Deleted {Switch}", id);
         }
 
         public async Task DeleteAllSwitches(IPKConnection conn, SystemId system)
         {
-            await conn.ExecuteAsync("delete from switches where system = @Id", new {Id = system});
+            await conn.ExecuteAsync("delete from switches where system = @Id", new { Id = system });
             _logger.Information("Deleted all switches in {SystemId}", system);
         }
 
@@ -65,7 +65,7 @@ namespace PluralKit.Core
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
             return conn.QueryStreamAsync<PKSwitch>(
                 "select * from switches where system = @System order by timestamp desc",
-                new {System = system});
+                new { System = system });
         }
 
         public async Task<int> GetSwitchCount(IPKConnection conn, SystemId system)
@@ -86,7 +86,7 @@ namespace PluralKit.Core
                         FROM switches
                         WHERE switches.system = @System
                         AND switches.timestamp < @Start",
-                new {System = system, Start = start});
+                new { System = system, Start = start });
 
             // Then collect the time and members of all switches that overlap the range
             var switchMembersEntries = conn.QueryStreamAsync<SwitchMembersListEntry>(
@@ -101,7 +101,7 @@ namespace PluralKit.Core
                         )
                         AND switches.timestamp < @End
                         ORDER BY switches.timestamp DESC",
-                new {System = system, Start = start, End = end, LastSwitch = lastSwitch});
+                new { System = system, Start = start, End = end, LastSwitch = lastSwitch });
 
             // Yield each value here
             await foreach (var entry in switchMembersEntries)
@@ -114,7 +114,7 @@ namespace PluralKit.Core
         {
             return conn.QueryStreamAsync<PKMember>(
                 "select * from switch_members, members where switch_members.member = members.id and switch_members.switch = @Switch order by switch_members.id",
-                new {Switch = sw});
+                new { Switch = sw });
         }
 
         public async Task<PKSwitch> GetLatestSwitch(IPKConnection conn, SystemId system) =>
@@ -136,13 +136,13 @@ namespace PluralKit.Core
             // key used in GetPerMemberSwitchDuration below
             var membersList = await conn.QueryAsync<PKMember>(
                 "select * from members where id = any(@Switches)", // lol postgres specific `= any()` syntax
-                new {Switches = switchMembers.Select(m => m.Member.Value).Distinct().ToList()});
+                new { Switches = switchMembers.Select(m => m.Member.Value).Distinct().ToList() });
             var memberObjects = membersList.ToDictionary(m => m.Id);
 
             // check if a group ID is provided. if so, query DB for all members of said group, otherwise use membersList
             var groupMembersList = group != null ? await conn.QueryAsync<PKMember>(
                 "select * from members inner join group_members on members.id = group_members.member_id where group_id = @id",
-                new {id = group}) : membersList;
+                new { id = group }) : membersList;
             var groupMemberObjects = groupMembersList.ToDictionary(m => m.Id);
 
             // Initialize entries - still need to loop to determine the TimespanEnd below
@@ -154,7 +154,7 @@ namespace PluralKit.Core
                 select new SwitchListEntry
                 {
                     TimespanStart = g.Key,
-                    Members = g.Where(x => x.Member != default(MemberId) && groupMemberObjects.Any(m => x.Member == m.Key) ).Select(x => memberObjects[x.Member])
+                    Members = g.Where(x => x.Member != default(MemberId) && groupMemberObjects.Any(m => x.Member == m.Key)).Select(x => memberObjects[x.Member])
                         .ToList()
                 };
 
@@ -171,7 +171,9 @@ namespace PluralKit.Core
 
                 outList.Add(new SwitchListEntry
                 {
-                    Members = e.Members, TimespanStart = switchStartClamped, TimespanEnd = endTime
+                    Members = e.Members,
+                    TimespanStart = switchStartClamped,
+                    TimespanEnd = endTime
                 });
 
                 // next switch's end is this switch's start (we're working backward in time)
@@ -219,7 +221,7 @@ namespace PluralKit.Core
             };
         }
     }
-    
+
     public struct SwitchListEntry
     {
         public ICollection<PKMember> Members;
@@ -234,7 +236,7 @@ namespace PluralKit.Core
         public Instant RangeStart;
         public Instant RangeEnd;
     }
-    
+
     public struct SwitchMembersListEntry
     {
         public MemberId Member;

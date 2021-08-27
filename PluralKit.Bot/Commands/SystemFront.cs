@@ -21,7 +21,7 @@ namespace PluralKit.Bot
             _db = db;
             _repo = repo;
         }
-        
+
         struct FrontHistoryEntry
         {
             public readonly Instant? LastTime;
@@ -40,10 +40,10 @@ namespace PluralKit.Bot
             ctx.CheckSystemPrivacy(system, system.FrontPrivacy);
 
             await using var conn = await _db.Obtain();
-            
+
             var sw = await _repo.GetLatestSwitch(conn, system.Id);
             if (sw == null) throw Errors.NoRegisteredSwitches;
-            
+
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system)));
         }
 
@@ -54,7 +54,7 @@ namespace PluralKit.Bot
 
             // Gotta be careful here: if we dispose of the connection while the IAE is alive, boom 
             await using var conn = await _db.Obtain();
-            
+
             var totalSwitches = await _repo.GetSwitchCount(conn, system.Id);
             if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
 
@@ -78,10 +78,10 @@ namespace PluralKit.Bot
                         var lastSw = entry.LastTime;
 
                         var sw = entry.ThisSwitch;
-                        
+
                         // Fetch member list and format
                         await using var conn = await _db.Obtain();
-                        
+
                         var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id)).ToListAsync();
                         var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "no fronter";
 
@@ -111,7 +111,7 @@ namespace PluralKit.Bot
                 }
             );
         }
-        
+
         public async Task SystemFrontPercent(Context ctx, PKSystem system)
         {
             if (system == null) throw Errors.NoSystemError;
@@ -121,7 +121,7 @@ namespace PluralKit.Bot
             if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
 
             string durationStr = ctx.RemainderOrNull() ?? "30d";
-            
+
             var now = SystemClock.Instance.GetCurrentInstant();
 
             var rangeStart = DateUtils.ParseDateTime(durationStr, true, system.Zone);
@@ -129,7 +129,7 @@ namespace PluralKit.Bot
             if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
             var title = new StringBuilder($"Frontpercent of ");
-            if (system.Name != null) 
+            if (system.Name != null)
                 title.Append($"{system.Name} (`{system.Hid}`)");
             else
                 title.Append($"`{system.Hid}`");

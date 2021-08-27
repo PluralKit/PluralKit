@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -18,7 +18,7 @@ namespace PluralKit.Bot
             _cache[msg.ChannelId] = new(current, previous?.Current);
         }
 
-        private CachedMessage ToCachedMessage(Message msg) => 
+        private CachedMessage ToCachedMessage(Message msg) =>
             new(msg.Id, msg.ReferencedMessage.Value?.Id, msg.Author.Username);
 
         public CacheEntry? GetLastMessage(ulong channel)

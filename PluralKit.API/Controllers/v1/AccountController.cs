@@ -10,7 +10,7 @@ namespace PluralKit.API
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route( "v{version:apiVersion}/a" )]
+    [Route("v{version:apiVersion}/a")]
     public class AccountController: ControllerBase
     {
         private readonly IDatabase _db;
@@ -27,7 +27,7 @@ namespace PluralKit.API
             var system = await _db.Execute(c => _repo.GetSystemByAccount(c, aid));
             if (system == null)
                 return NotFound("Account not found.");
-            
+
             return Ok(system.ToJson(User.ContextFor(system)));
         }
     }

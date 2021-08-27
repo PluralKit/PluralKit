@@ -69,7 +69,7 @@ namespace PluralKit.Bot
             builder.RegisterType<SystemLink>().AsSelf();
             builder.RegisterType<SystemList>().AsSelf();
             builder.RegisterType<Token>().AsSelf();
-            
+
             // Bot core
             builder.RegisterType<Bot>().AsSelf().SingleInstance();
             builder.RegisterType<MessageCreated>().As<IEventHandler<MessageCreateEvent>>();
@@ -77,11 +77,11 @@ namespace PluralKit.Bot
             builder.RegisterType<MessageEdited>().As<IEventHandler<MessageUpdateEvent>>();
             builder.RegisterType<ReactionAdded>().As<IEventHandler<MessageReactionAddEvent>>();
             builder.RegisterType<InteractionCreated>().As<IEventHandler<InteractionCreateEvent>>();
-            
+
             // Event handler queue
             builder.RegisterType<HandlerQueue<MessageCreateEvent>>().AsSelf().SingleInstance();
             builder.RegisterType<HandlerQueue<MessageReactionAddEvent>>().AsSelf().SingleInstance();
-            
+
             // Bot services
             builder.RegisterType<EmbedService>().AsSelf().SingleInstance();
             builder.RegisterType<ProxyService>().AsSelf().SingleInstance();
@@ -97,7 +97,7 @@ namespace PluralKit.Bot
             builder.RegisterType<ErrorMessageService>().AsSelf().SingleInstance();
             builder.RegisterType<CommandMessageService>().AsSelf().SingleInstance();
             builder.RegisterType<InteractionDispatchService>().AsSelf().SingleInstance();
-            
+
             // Sentry stuff
             builder.Register(_ => new Scope(null)).AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<SentryEnricher>()
@@ -107,7 +107,7 @@ namespace PluralKit.Bot
                 .As<ISentryEnricher<MessageDeleteBulkEvent>>()
                 .As<ISentryEnricher<MessageReactionAddEvent>>()
                 .SingleInstance();
-            
+
             // Proxy stuff
             builder.RegisterType<ProxyMatcher>().AsSelf().SingleInstance();
             builder.RegisterType<ProxyTagParser>().AsSelf().SingleInstance();
@@ -116,7 +116,7 @@ namespace PluralKit.Bot
             builder.Register(c => new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(5),
-                DefaultRequestHeaders = {{"User-Agent", DiscordApiClient.UserAgent}}
+                DefaultRequestHeaders = { { "User-Agent", DiscordApiClient.UserAgent } }
             }).AsSelf().SingleInstance();
             builder.RegisterInstance(SystemClock.Instance).As<IClock>();
             builder.RegisterType<SerilogGatewayEnricherFactory>().AsSelf().SingleInstance();

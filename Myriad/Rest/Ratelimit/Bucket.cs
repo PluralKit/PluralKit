@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 
 using Serilog;
@@ -54,7 +54,7 @@ namespace Myriad.Rest.Ratelimit
                         "{BucketKey}/{BucketMajor}: Bucket has [{BucketRemaining}/{BucketLimit} left], allowing through",
                         Key, Major, Remaining, Limit);
                     Remaining--;
-                    
+
                     return true;
                 }
 
@@ -73,7 +73,7 @@ namespace Myriad.Rest.Ratelimit
             try
             {
                 _semaphore.Wait();
-                
+
                 _logger.Verbose("{BucketKey}/{BucketMajor}: Received rate limit headers: {@RateLimitHeaders}",
                     Key, Major, headers);
 
@@ -90,7 +90,7 @@ namespace Myriad.Rest.Ratelimit
                     }
                 }
 
-                if (headers.Limit != null) 
+                if (headers.Limit != null)
                     Limit = headers.Limit.Value;
 
                 if (headers.Remaining != null && !_hasReceivedHeaders)
@@ -98,7 +98,7 @@ namespace Myriad.Rest.Ratelimit
                     var oldRemaining = Remaining;
                     Remaining = Math.Min(headers.Remaining.Value, Remaining);
 
-                    _logger.Debug("{BucketKey}/{BucketMajor}: Received first remaining of {HeaderRemaining}, previous local remaining is {LocalRemaining}, new local remaining is {Remaining}", 
+                    _logger.Debug("{BucketKey}/{BucketMajor}: Received first remaining of {HeaderRemaining}, previous local remaining is {LocalRemaining}, new local remaining is {Remaining}",
                         Key, Major, headers.Remaining.Value, oldRemaining, Remaining);
                     _hasReceivedHeaders = true;
                 }
@@ -114,7 +114,7 @@ namespace Myriad.Rest.Ratelimit
             try
             {
                 _semaphore.Wait();
-                
+
                 // If we don't have any reset data, "snap" it to now
                 // This happens before first request and at this point the reset is invalid anyway, so it's fine
                 // but it ensures the stale timeout doesn't trigger early by using `default` value

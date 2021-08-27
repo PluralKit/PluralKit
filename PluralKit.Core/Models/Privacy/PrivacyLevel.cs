@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using Newtonsoft.Json.Linq;
 
@@ -9,18 +9,18 @@ namespace PluralKit.Core
         Public = 1,
         Private = 2
     }
-    
+
     public static class PrivacyLevelExt
     {
         public static bool CanAccess(this PrivacyLevel level, LookupContext ctx) =>
             level == PrivacyLevel.Public || ctx == LookupContext.ByOwner;
 
-        public static string LevelName(this PrivacyLevel level) => 
+        public static string LevelName(this PrivacyLevel level) =>
             level == PrivacyLevel.Public ? "public" : "private";
 
         public static T Get<T>(this PrivacyLevel level, LookupContext ctx, T input, T fallback = default) =>
             level.CanAccess(ctx) ? input : fallback;
-        
+
         public static string Explanation(this PrivacyLevel level) =>
             level switch
             {
@@ -40,7 +40,7 @@ namespace PluralKit.Core
             output = input;
             return true;
         }
-        
+
         public static string ToJsonString(this PrivacyLevel level) => level.LevelName();
 
         public static PrivacyLevel ParsePrivacy(this JObject o, string propertyName)

@@ -33,7 +33,7 @@ namespace PluralKit.Bot
                 return _repo.GetSystemMembers(c, ctx.System.Id)
                     .Where(m => m.MemberVisibility == PrivacyLevel.Public);
             }).ToListAsync();
-            
+
             if (members == null || !members.Any())
                 throw new PKError("Your system has no members! Please create at least one member before using this command.");
 

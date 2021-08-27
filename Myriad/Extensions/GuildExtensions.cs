@@ -1,7 +1,7 @@
-﻿namespace Myriad.Extensions
+namespace Myriad.Extensions
 {
     public static class GuildExtensions
     {
-        
+
     }
 }

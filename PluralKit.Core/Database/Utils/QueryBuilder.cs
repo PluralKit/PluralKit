@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Text;
 
@@ -23,32 +23,32 @@ namespace PluralKit.Core
             _conflictField = conflictField;
             _condition = condition;
         }
-        
-        public static QueryBuilder Insert(string table) => new QueryBuilder(QueryType.Insert, table,  null, null);
+
+        public static QueryBuilder Insert(string table) => new QueryBuilder(QueryType.Insert, table, null, null);
         public static QueryBuilder Update(string table, string condition) => new QueryBuilder(QueryType.Update, table, null, condition);
         public static QueryBuilder Upsert(string table, string conflictField) => new QueryBuilder(QueryType.Upsert, table, conflictField, null);
 
         public QueryBuilder Constant(string fieldName, string paramName)
         {
             if (_firstInsert) _firstInsert = false;
-            else 
+            else
             {
                 _insertFragment.Append(", ");
                 _valuesFragment.Append(", ");
             }
-            
+
             _insertFragment.Append(fieldName);
             _valuesFragment.Append(paramName);
             return this;
         }
-        
+
         public QueryBuilder Variable(string fieldName, string paramName)
         {
             Constant(fieldName, paramName);
-            
+
             if (_firstUpdate) _firstUpdate = false;
             else _updateFragment.Append(", ");
-            
+
             _updateFragment.Append(fieldName);
             _updateFragment.Append(" = ");
             _updateFragment.Append(paramName);
@@ -59,7 +59,7 @@ namespace PluralKit.Core
         {
             if (_firstInsert)
                 throw new ArgumentException("No fields have been added to the query.");
-            
+
             StringBuilder query = new StringBuilder(Type switch
             {
                 QueryType.Insert => $"insert into {Table} ({_insertFragment}) values ({_valuesFragment})",
@@ -70,7 +70,7 @@ namespace PluralKit.Core
 
             if (Type == QueryType.Update && _condition != null)
                 query.Append($" where {_condition}");
-            
+
             if (!string.IsNullOrEmpty(suffix))
                 query.Append($" {suffix}");
             query.Append(";");

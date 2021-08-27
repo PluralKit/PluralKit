@@ -43,11 +43,11 @@ namespace PluralKit.Bot
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            
+
             // Aggregate guild/channel stats
             var guildCount = 0;
             var channelCount = 0;
-            
+
             // No LINQ today, sorry
             await foreach (var guild in _cache.GetAllGuilds())
             {
@@ -58,10 +58,10 @@ namespace PluralKit.Bot
                         channelCount++;
                 }
             }
-            
+
             _metrics.Measure.Gauge.SetValue(BotMetrics.Guilds, guildCount);
             _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, channelCount);
-            
+
             // Aggregate DB stats
             var counts = await _db.Execute(c => c.QueryFirstAsync<Counts>("select (select count(*) from systems) as systems, (select count(*) from members) as members, (select count(*) from switches) as switches, (select count(*) from messages) as messages, (select count(*) from groups) as groups"));
             _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, counts.Systems);
@@ -69,7 +69,7 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, counts.Switches);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, counts.Messages);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.GroupCount, counts.Groups);
-            
+
             // Process info
             var process = Process.GetCurrentProcess();
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessPhysicalMemory, process.WorkingSet64);
@@ -78,10 +78,10 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessThreads, process.Threads.Count);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessHandles, process.HandleCount);
             _metrics.Measure.Gauge.SetValue(CoreMetrics.CpuUsage, await _cpu.EstimateCpuUsage());
-            
+
             // Database info
             _metrics.Measure.Gauge.SetValue(CoreMetrics.DatabaseConnections, _countHolder.ConnectionCount);
-            
+
             // Other shiz
             _metrics.Measure.Gauge.SetValue(BotMetrics.WebhookCacheSize, _webhookCache.CacheSize);
 
@@ -92,7 +92,7 @@ namespace PluralKit.Bot
         public class Counts
         {
             public int Systems { get; }
-            public int Members { get;  }
+            public int Members { get; }
             public int Switches { get; }
             public int Messages { get; }
             public int Groups { get; }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace PluralKit.Core
 {
@@ -25,17 +25,17 @@ namespace PluralKit.Core
                 SystemPrivacySubject.GroupList => system.GroupListPrivacy = level,
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
             };
-            
+
             return system;
         }
 
         public static SystemPatch WithAllPrivacy(this SystemPatch system, PrivacyLevel level)
         {
             foreach (var subject in Enum.GetValues(typeof(SystemPrivacySubject)))
-                WithPrivacy(system, (SystemPrivacySubject) subject, level);
+                WithPrivacy(system, (SystemPrivacySubject)subject, level);
             return system;
         }
-        
+
         public static bool TryParseSystemPrivacy(string input, out SystemPrivacySubject subject)
         {
             switch (input.ToLowerInvariant())
@@ -45,7 +45,7 @@ namespace PluralKit.Core
                 case "text":
                 case "info":
                     subject = SystemPrivacySubject.Description;
-                    break; 
+                    break;
                 case "members":
                 case "memberlist":
                 case "list":
@@ -72,6 +72,6 @@ namespace PluralKit.Core
                     return false;
             }
             return true;
-        } 
+        }
     }
 }

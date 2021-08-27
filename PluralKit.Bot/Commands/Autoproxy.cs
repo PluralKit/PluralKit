@@ -27,7 +27,7 @@ namespace PluralKit.Bot
         {
             // no need to check account here, it's already done at CommandTree
             ctx.CheckGuildContext();
-            
+
             if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
                 await AutoproxyOff(ctx);
             else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
@@ -90,7 +90,7 @@ namespace PluralKit.Bot
             var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member\n**pk;autoproxy front** - Autoproxies as current (first) fronter\n**pk;autoproxy <member>** - Autoproxies as a specific member";
             var eb = new EmbedBuilder()
                 .Title($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
-            
+
             var fronters = ctx.MessageContext.LastSwitchMembers;
             var relevantMember = ctx.MessageContext.AutoproxyMode switch
             {
@@ -99,36 +99,38 @@ namespace PluralKit.Bot
                 _ => null
             };
 
-            switch (ctx.MessageContext.AutoproxyMode) {
+            switch (ctx.MessageContext.AutoproxyMode)
+            {
                 case AutoproxyMode.Off:
                     eb.Description($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");
                     break;
                 case AutoproxyMode.Front:
-                {
-                    if (fronters.Length == 0)
-                        eb.Description("Autoproxy is currently set to **front mode** in this server, but there are currently no fronters registered. Use the `pk;switch` command to log a switch.");
-                    else
                     {
-                        if (relevantMember == null) 
-                            throw new ArgumentException("Attempted to print member autoproxy status, but the linked member ID wasn't found in the database. Should be handled appropriately.");
-                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
-                    }
+                        if (fronters.Length == 0)
+                            eb.Description("Autoproxy is currently set to **front mode** in this server, but there are currently no fronters registered. Use the `pk;switch` command to log a switch.");
+                        else
+                        {
+                            if (relevantMember == null)
+                                throw new ArgumentException("Attempted to print member autoproxy status, but the linked member ID wasn't found in the database. Should be handled appropriately.");
+                            eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 // AutoproxyMember is never null if Mode is Member, this is just to make the compiler shut up
-                case AutoproxyMode.Member when relevantMember != null: {
-                    eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
-                    break;
-                }
+                case AutoproxyMode.Member when relevantMember != null:
+                    {
+                        eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
+                        break;
+                    }
                 case AutoproxyMode.Latch:
                     eb.Description("Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. To disable, type `pk;autoproxy off`.");
                     break;
-                
+
                 default: throw new ArgumentOutOfRangeException();
             }
 
-            if (!ctx.MessageContext.AllowAutoproxy) 
+            if (!ctx.MessageContext.AllowAutoproxy)
                 eb.Field(new("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`."));
 
             return eb.Build();
@@ -139,9 +141,9 @@ namespace PluralKit.Bot
             if (!ctx.HasNext())
             {
                 var timeout = ctx.System.LatchTimeout.HasValue
-                    ? Duration.FromSeconds(ctx.System.LatchTimeout.Value) 
-                    : (Duration?) null;
-                
+                    ? Duration.FromSeconds(ctx.System.LatchTimeout.Value)
+                    : (Duration?)null;
+
                 if (timeout == null)
                     await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}.");
                 else if (timeout == Duration.Zero)
@@ -169,9 +171,9 @@ namespace PluralKit.Bot
                 else newTimeout = timeoutPeriod;
             }
 
-            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, 
-                new SystemPatch { LatchTimeout = (int?) newTimeout?.TotalSeconds }));
-            
+            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id,
+                new SystemPatch { LatchTimeout = (int?)newTimeout?.TotalSeconds }));
+
             if (newTimeout == null)
                 await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
             else if (newTimeout == Duration.Zero && overflow != Duration.Zero)
@@ -213,7 +215,7 @@ namespace PluralKit.Bot
 
         private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
         {
-            var patch = new SystemGuildPatch {AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember};
+            var patch = new SystemGuildPatch { AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember };
             return _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
         }
     }

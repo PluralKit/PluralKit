@@ -12,8 +12,10 @@ using PluralKit.Core;
 
 using Serilog;
 
-namespace PluralKit.Bot {
-    public class LogChannelService {
+namespace PluralKit.Bot
+{
+    public class LogChannelService
+    {
         private readonly EmbedService _embed;
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
@@ -40,7 +42,7 @@ namespace PluralKit.Bot {
                 return;
 
             var triggerChannel = _cache.GetChannel(proxiedMessage.Channel);
-            
+
             await using var conn = await _db.Obtain();
             var system = await _repo.GetSystem(conn, ctx.SystemId.Value);
             var member = await _repo.GetMember(conn, proxiedMessage.Member);
@@ -48,7 +50,7 @@ namespace PluralKit.Bot {
             // Send embed!
             var embed = _embed.CreateLoggedMessageEmbed(trigger, hookMessage, system.Hid, member, triggerChannel.Name, oldContent);
             var url = $"https://discord.com/channels/{proxiedMessage.Guild.Value}/{proxiedMessage.Channel}/{proxiedMessage.Mid}";
-            await _rest.CreateMessage(logChannel.Id, new() {Content = url, Embed = embed});
+            await _rest.CreateMessage(logChannel.Id, new() { Content = url, Embed = embed });
         }
 
         private async Task<Channel?> GetAndCheckLogChannel(MessageContext ctx, Message trigger, PKMessage proxiedMessage)
@@ -71,17 +73,17 @@ namespace PluralKit.Bot {
             }
 
             if (ctx.SystemId == null || logChannelId == null || isBlacklisted) return null;
-            
+
             // Find log channel and check if valid
             var logChannel = await FindLogChannel(guildId, logChannelId.Value);
             if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return null;
-            
+
             // Check bot permissions
             var perms = _bot.PermissionsIn(logChannel.Id);
             if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
             {
                 _logger.Information(
-                    "Does not have permission to log proxy, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})", 
+                    "Does not have permission to log proxy, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})",
                     ctx.LogChannel.Value, trigger.GuildId!.Value, perms);
                 return null;
             }
@@ -94,12 +96,12 @@ namespace PluralKit.Bot {
             // TODO: fetch it directly on cache miss?
             if (_cache.TryGetChannel(channelId, out var channel))
                 return channel;
-            
+
             // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too
             _logger.Warning("Attempted to fetch missing log channel {LogChannel} for guild {Guild}, removing from database", channelId, guildId);
             await using var conn = await _db.Obtain();
             await conn.ExecuteAsync("update servers set log_channel = null where id = @Guild",
-                new {Guild = guildId});
+                new { Guild = guildId });
 
             return null;
         }

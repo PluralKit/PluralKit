@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Data;
 using System.Data.Common;
@@ -19,11 +19,11 @@ namespace PluralKit.Core
     internal class PKCommand: DbCommand, IPKCommand
     {
         private NpgsqlCommand Inner { get; }
-        
+
         private readonly PKConnection _ourConnection;
         private readonly ILogger _logger;
         private readonly IMetrics _metrics;
-        
+
         public PKCommand(NpgsqlCommand inner, PKConnection ourConnection, ILogger logger, IMetrics metrics)
         {
             Inner = inner;
@@ -111,16 +111,16 @@ namespace PluralKit.Core
             {
                 var end = SystemClock.Instance.GetCurrentInstant();
                 var elapsed = end - start;
-                
+
                 _logger.Verbose("Executed query {Query} in {ElapsedTime} on connection {ConnectionId}", CommandText, elapsed, _ourConnection.ConnectionId);
-                
+
                 // One "BCL compatible tick" is 100 nanoseconds
                 var micros = elapsed.BclCompatibleTicks / 10;
                 _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", CommandText))
                     .Record(micros, TimeUnit.Microseconds, CommandText);
             }
         }
-        
+
         private static Exception SyncError(string caller) => throw new Exception($"Executed synchronous IDbCommand function {caller}!");
     }
 }

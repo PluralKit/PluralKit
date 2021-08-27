@@ -21,7 +21,8 @@ using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
-namespace PluralKit.Bot {
+namespace PluralKit.Bot
+{
     public class Misc
     {
         private readonly BotConfig _botConfig;
@@ -55,31 +56,31 @@ namespace PluralKit.Bot {
             _proxy = proxy;
             _matcher = matcher;
         }
-        
+
         public async Task Invite(Context ctx)
         {
             var clientId = _botConfig.ClientId ?? _cluster.Application?.Id;
 
-            var permissions = 
+            var permissions =
                 PermissionSet.AddReactions |
-                PermissionSet.AttachFiles | 
+                PermissionSet.AttachFiles |
                 PermissionSet.EmbedLinks |
                 PermissionSet.ManageMessages |
                 PermissionSet.ManageWebhooks |
-                PermissionSet.ReadMessageHistory | 
+                PermissionSet.ReadMessageHistory |
                 PermissionSet.SendMessages;
-            
+
             var invite = $"https://discord.com/oauth2/authorize?client_id={clientId}&scope=bot%20applications.commands&permissions={(ulong)permissions}";
             await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
         }
-        
+
         public async Task Stats(Context ctx)
         {
             var timeBefore = SystemClock.Instance.GetCurrentInstant();
             var msg = await ctx.Reply($"...");
             var timeAfter = SystemClock.Instance.GetCurrentInstant();
             var apiLatency = timeAfter - timeBefore;
-            
+
             var messagesReceived = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name)?.Value;
             var messagesProxied = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name)?.Value;
             var commandsRun = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name)?.Value;
@@ -94,7 +95,7 @@ namespace PluralKit.Bot {
             var shardTotal = ctx.Cluster.Shards.Count;
             var shardUpTotal = _shards.Shards.Where(x => x.Connected).Count();
             var shardInfo = _shards.GetShardInfo(ctx.Shard);
-            
+
             var process = Process.GetCurrentProcess();
             var memoryUsage = process.WorkingSet64;
 
@@ -102,7 +103,7 @@ namespace PluralKit.Bot {
             var shardUptime = now - shardInfo.LastConnectionTime;
 
             var embed = new EmbedBuilder();
-            if (messagesReceived != null) embed.Field(new("Messages processed",$"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)", true));
+            if (messagesReceived != null) embed.Field(new("Messages processed", $"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)", true));
             if (messagesProxied != null) embed.Field(new("Messages proxied", $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)", true));
             if (commandsRun != null) embed.Field(new("Commands executed", $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)", true));
 
@@ -114,9 +115,9 @@ namespace PluralKit.Bot {
                 .Field(new("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true))
                 .Field(new("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalGroups:N0} groups, {totalSwitches:N0} switches, {totalMessages:N0} messages"))
                 .Timestamp(now.ToDateTimeOffset().ToString("O"))
-                .Footer(new($"PluralKit {BuildInfoService.Version} • https://github.com/xSke/PluralKit"));;
+                .Footer(new($"PluralKit {BuildInfoService.Version} • https://github.com/xSke/PluralKit")); ;
             await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
-                new MessageEditRequest {Content = "", Embed = embed.Build()});
+                new MessageEditRequest { Content = "", Embed = embed.Build() });
         }
 
     }

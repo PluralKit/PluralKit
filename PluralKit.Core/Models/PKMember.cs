@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 using Newtonsoft.Json;
@@ -7,7 +7,8 @@ using Newtonsoft.Json.Linq;
 using NodaTime;
 using NodaTime.Text;
 
-namespace PluralKit.Core {
+namespace PluralKit.Core
+{
     public readonly struct MemberId: INumericId<MemberId, int>
     {
         public int Value { get; }
@@ -28,7 +29,7 @@ namespace PluralKit.Core {
         public static bool operator !=(MemberId left, MemberId right) => !left.Equals(right);
 
         public int CompareTo(MemberId other) => Value.CompareTo(other.Value);
-        
+
         public override string ToString() => $"Member #{Value}";
     }
 
@@ -61,10 +62,11 @@ namespace PluralKit.Core {
         public PrivacyLevel PronounPrivacy { get; private set; }
         public PrivacyLevel MetadataPrivacy { get; private set; }
         // public PrivacyLevel ColorPrivacy { get; private set; }
-        
+
         /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
         /// Before Feb 10 2020, the sentinel year was 0001, now it is 0004.
-        [JsonIgnore] public string BirthdayString
+        [JsonIgnore]
+        public string BirthdayString
         {
             get
             {
@@ -97,7 +99,7 @@ namespace PluralKit.Core {
             member.PronounPrivacy.Get(ctx, member.Pronouns);
 
         public static Instant? CreatedFor(this PKMember member, LookupContext ctx) =>
-            member.MetadataPrivacy.Get(ctx, (Instant?) member.Created);
+            member.MetadataPrivacy.Get(ctx, (Instant?)member.Created);
 
         public static int MessageCountFor(this PKMember member, LookupContext ctx) =>
             member.MetadataPrivacy.Get(ctx, member.MessageCount);
@@ -105,7 +107,7 @@ namespace PluralKit.Core {
         public static JObject ToJson(this PKMember member, LookupContext ctx, bool needsLegacyProxyTags = false)
         {
             var includePrivacy = ctx == LookupContext.ByOwner;
-            
+
             var o = new JObject();
             o.Add("id", member.Hid);
             o.Add("name", member.NameFor(ctx));
@@ -117,14 +119,14 @@ namespace PluralKit.Core {
             o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
             o.Add("banner", member.DescriptionPrivacy.Get(ctx, member.BannerImage).TryGetCleanCdnUrl());
             o.Add("description", member.DescriptionFor(ctx));
-            
+
             var tagArray = new JArray();
-            foreach (var tag in member.ProxyTags) 
-                tagArray.Add(new JObject {{"prefix", tag.Prefix}, {"suffix", tag.Suffix}});
+            foreach (var tag in member.ProxyTags)
+                tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
             o.Add("proxy_tags", tagArray);
 
             o.Add("keep_proxy", member.KeepProxy);
-            
+
             o.Add("privacy", includePrivacy ? (member.MemberVisibility.LevelName()) : null);
 
             o.Add("visibility", includePrivacy ? (member.MemberVisibility.LevelName()) : null);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace PluralKit.Core
 {
@@ -29,14 +29,14 @@ namespace PluralKit.Core
                 MemberPrivacySubject.Visibility => member.Visibility = level,
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
             };
-            
+
             return member;
         }
 
         public static MemberPatch WithAllPrivacy(this MemberPatch member, PrivacyLevel level)
         {
             foreach (var subject in Enum.GetValues(typeof(MemberPrivacySubject)))
-                member.WithPrivacy((MemberPrivacySubject) subject, level);
+                member.WithPrivacy((MemberPrivacySubject)subject, level);
             return member;
         }
 

@@ -1,11 +1,12 @@
-﻿using Dapper.Contrib.Extensions;
+using Dapper.Contrib.Extensions;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using NodaTime;
 
-namespace PluralKit.Core {
+namespace PluralKit.Core
+{
 
     public readonly struct SystemId: INumericId<SystemId, int>
     {
@@ -46,14 +47,14 @@ namespace PluralKit.Core {
         public string UiTz { get; set; }
         public bool PingsEnabled { get; }
         public int? LatchTimeout { get; }
-	    public PrivacyLevel DescriptionPrivacy { get; }
-        public PrivacyLevel MemberListPrivacy { get;}
+        public PrivacyLevel DescriptionPrivacy { get; }
+        public PrivacyLevel MemberListPrivacy { get; }
         public PrivacyLevel FrontPrivacy { get; }
         public PrivacyLevel FrontHistoryPrivacy { get; }
         public PrivacyLevel GroupListPrivacy { get; }
         public int? MemberLimitOverride { get; }
         public int? GroupLimitOverride { get; }
-        
+
         [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
     }
 

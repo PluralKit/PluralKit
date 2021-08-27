@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using Myriad.Cache;
 using Myriad.Extensions;
@@ -26,14 +26,14 @@ namespace PluralKit.Bot
             {
                 new("ShardId", new ScalarValue(shard.ShardId)),
             };
-            
+
             var (guild, channel) = GetGuildChannelId(evt);
             var user = GetUserId(evt);
             var message = GetMessageId(evt);
-            
+
             if (guild != null)
                 props.Add(new("GuildId", new ScalarValue(guild.Value)));
-            
+
             if (channel != null)
             {
                 props.Add(new("ChannelId", new ScalarValue(channel.Value)));
@@ -44,10 +44,10 @@ namespace PluralKit.Bot
                     props.Add(new("BotPermissions", new ScalarValue(botPermissions)));
                 }
             }
-            
+
             if (message != null)
                 props.Add(new("MessageId", new ScalarValue(message.Value)));
-            
+
             if (user != null)
                 props.Add(new("UserId", new ScalarValue(user.Value)));
 
@@ -56,7 +56,7 @@ namespace PluralKit.Bot
 
             return new Inner(props);
         }
-        
+
         private (ulong?, ulong?) GetGuildChannelId(IGatewayEvent evt) => evt switch
         {
             ChannelCreateEvent e => (e.GuildId, e.Id),
@@ -101,7 +101,7 @@ namespace PluralKit.Bot
         {
             public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
             {
-                foreach (var prop in Properties) 
+                foreach (var prop in Properties)
                     logEvent.AddPropertyIfAbsent(prop);
             }
         }

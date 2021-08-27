@@ -1,4 +1,4 @@
-﻿using Myriad.Gateway;
+using Myriad.Gateway;
 using Myriad.Types;
 
 namespace Myriad.Extensions
@@ -7,7 +7,7 @@ namespace Myriad.Extensions
     {
         public static string JumpLink(this Message msg) =>
             $"https://discord.com/channels/{msg.GuildId}/{msg.ChannelId}/{msg.Id}";
-        
+
         public static string JumpLink(this MessageReactionAddEvent msg) =>
             $"https://discord.com/channels/{msg.GuildId}/{msg.ChannelId}/{msg.MessageId}";
     }

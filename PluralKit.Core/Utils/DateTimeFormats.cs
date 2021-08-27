@@ -1,12 +1,13 @@
-﻿using NodaTime;
+using NodaTime;
 using NodaTime.Text;
 
-namespace PluralKit.Core {
+namespace PluralKit.Core
+{
     public static class DateTimeFormats
     {
         public static IPattern<Instant> TimestampExportFormat = InstantPattern.ExtendedIso;
         public static IPattern<LocalDate> DateExportFormat = LocalDatePattern.CreateWithInvariantCulture("yyyy-MM-dd");
-        
+
         // We create a composite pattern that only shows the two most significant things
         // eg. if we have something with nonzero day component, we show <x>d <x>h, but if it's
         // a smaller duration we may only bother with showing <x>h <x>m or <x>m <x>s
@@ -17,7 +18,7 @@ namespace PluralKit.Core {
             {DurationPattern.CreateWithInvariantCulture("H'h' m'm'"), d => d.Hours > 0},
             {DurationPattern.CreateWithInvariantCulture("D'd' h'h'"), d => d.Days > 0}
         }.Build();
-        
+
         public static IPattern<LocalDateTime> LocalDateTimeFormat = LocalDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss");
         public static IPattern<ZonedDateTime> ZonedDateTimeFormat = ZonedDateTimePattern.CreateWithInvariantCulture("yyyy-MM-dd HH:mm:ss x", DateTimeZoneProviders.Tzdb);
 

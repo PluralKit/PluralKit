@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 using NodaTime;
@@ -32,7 +32,7 @@ namespace PluralKit.Bot
         private bool TryMatchTags(IReadOnlyCollection<ProxyMember> members, string messageContent, bool hasAttachments, out ProxyMatch match)
         {
             if (!_parser.TryMatch(members, messageContent, out match)) return false;
-            
+
             // Edge case: If we got a match with blank inner text, we'd normally just send w/ attachments
             // However, if there are no attachments, the user probably intended something else, so we "un-match" and proceed to autoproxy
             return hasAttachments || match.Content.Trim().Length > 0;
@@ -50,19 +50,19 @@ namespace PluralKit.Bot
             // Find the member we should autoproxy (null if none)
             var member = ctx.AutoproxyMode switch
             {
-                AutoproxyMode.Member when ctx.AutoproxyMember != null => 
+                AutoproxyMode.Member when ctx.AutoproxyMember != null =>
                     members.FirstOrDefault(m => m.Id == ctx.AutoproxyMember),
 
-                AutoproxyMode.Front when ctx.LastSwitchMembers.Length > 0 => 
+                AutoproxyMode.Front when ctx.LastSwitchMembers.Length > 0 =>
                     members.FirstOrDefault(m => m.Id == ctx.LastSwitchMembers[0]),
-                
+
                 AutoproxyMode.Latch when ctx.LastMessageMember != null =>
                     members.FirstOrDefault(m => m.Id == ctx.LastMessageMember.Value),
-                
+
                 _ => null
             };
             // Throw an error if the member is null, message varies depending on autoproxy mode
-            if (member == null) 
+            if (member == null)
             {
                 if (ctx.AutoproxyMode == AutoproxyMode.Front)
                     throw new ProxyService.ProxyChecksFailedException("You are using autoproxy front, but no members are currently registered as fronting. Please use `pk;switch <member>` to log a new switch.");
@@ -78,13 +78,13 @@ namespace PluralKit.Bot
 
             // Moved the IsLatchExpired() check to here, so that an expired latch and a latch without any previous messages throw different errors
             if (ctx.AutoproxyMode == AutoproxyMode.Latch && IsLatchExpired(ctx))
-                 throw new ProxyService.ProxyChecksFailedException("Latch-mode autoproxy has timed out. Please send a new message using proxy tags.");
+                throw new ProxyService.ProxyChecksFailedException("Latch-mode autoproxy has timed out. Please send a new message using proxy tags.");
 
             match = new ProxyMatch
             {
                 Content = messageContent,
                 Member = member,
-            
+
                 // We're autoproxying, so not using any proxy tags here
                 // we just find the first pair of tags (if any), otherwise null
                 ProxyTags = member.ProxyTags.FirstOrDefault()
@@ -98,7 +98,7 @@ namespace PluralKit.Bot
             if (ctx.LatchTimeout == 0) return false;
 
             var timeout = ctx.LatchTimeout.HasValue
-                ? Duration.FromSeconds(ctx.LatchTimeout.Value) 
+                ? Duration.FromSeconds(ctx.LatchTimeout.Value)
                 : DefaultLatchExpiryTime;
 
             var timestamp = DiscordUtils.SnowflakeToInstant(ctx.LastMessage.Value);

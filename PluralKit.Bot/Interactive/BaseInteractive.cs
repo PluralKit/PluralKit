@@ -21,7 +21,7 @@ namespace PluralKit.Bot.Interactive
         protected readonly TaskCompletionSource _tcs = new();
         protected Message _message { get; private set; }
         protected bool _running;
-        
+
         protected BaseInteractive(Context ctx)
         {
             _ctx = ctx;
@@ -33,7 +33,7 @@ namespace PluralKit.Bot.Interactive
         {
             var dispatch = _ctx.Services.Resolve<InteractionDispatchService>();
             var customId = dispatch.Register(handler, Timeout);
-            
+
             var button = new Button
             {
                 Label = label,
@@ -56,16 +56,17 @@ namespace PluralKit.Bot.Interactive
 
         protected async Task Finish(InteractionContext? ctx = null)
         {
-            foreach (var button in _buttons) 
+            foreach (var button in _buttons)
                 button.Disabled = true;
 
             if (ctx != null)
                 await Update(ctx);
-            else 
-                await _ctx.Rest.EditMessage(_message.ChannelId, _message.Id, new MessageEditRequest {
+            else
+                await _ctx.Rest.EditMessage(_message.ChannelId, _message.Id, new MessageEditRequest
+                {
                     Components = GetComponents()
                 });
-            
+
             _tcs.TrySetResult();
         }
 
@@ -95,12 +96,12 @@ namespace PluralKit.Bot.Interactive
         public void Setup(Context ctx)
         {
             var dispatch = ctx.Services.Resolve<InteractionDispatchService>();
-            foreach (var button in _buttons) 
+            foreach (var button in _buttons)
                 button.CustomId = dispatch.Register(button.Handler, Timeout);
         }
 
         public abstract Task Start();
-        
+
         public async Task Run()
         {
             if (_running)
@@ -108,7 +109,7 @@ namespace PluralKit.Bot.Interactive
             _running = true;
 
             await Start();
-            
+
             var cts = new CancellationTokenSource(Timeout.ToTimeSpan());
             cts.Token.Register(() => _tcs.TrySetException(new TimeoutException("Action timed out")));
 
@@ -125,7 +126,7 @@ namespace PluralKit.Bot.Interactive
         protected void Cleanup()
         {
             var dispatch = _ctx.Services.Resolve<InteractionDispatchService>();
-            foreach (var button in _buttons) 
+            foreach (var button in _buttons)
                 dispatch.Unregister(button.CustomId!);
         }
     }

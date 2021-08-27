@@ -34,7 +34,7 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<WebhookCacheService>();
             _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<Webhook>>>();
         }
-        
+
         public async Task<Webhook> GetWebhook(ulong channelId)
         {
             // We cache the webhook through a Lazy<Task<T>>, this way we make sure to only create one webhook per channel
@@ -46,14 +46,14 @@ namespace PluralKit.Bot
                 return _webhooks.GetOrAdd(channelId, new Lazy<Task<Webhook>>(Factory));
             }
             var lazyWebhookValue = GetWebhookTaskInner();
-            
+
             // If we've cached a failed Task, we need to clear it and try again
             // This is so errors don't become "sticky" and *they* in turn get cached (not good)
             // although, keep in mind this block gets hit the call *after* the task failed (since we only await it below)
             if (lazyWebhookValue.IsValueCreated && lazyWebhookValue.Value.IsFaulted)
             {
                 _logger.Warning(lazyWebhookValue.Value.Exception, "Cached webhook task for {Channel} faulted with below exception", channelId);
-                
+
                 // Specifically don't recurse here so we don't infinite-loop - if this one errors too, it'll "stick"
                 // until next time this function gets hit (which is okay, probably).
                 _webhooks.TryRemove(channelId, out _);
@@ -72,7 +72,7 @@ namespace PluralKit.Bot
         {
             // note: webhook.ChannelId may not be the same as channelId >.>
             _logger.Debug("Refreshing webhook for channel {Channel}", webhook.ChannelId);
-            
+
             _webhooks.TryRemove(webhook.ChannelId, out _);
             return await GetWebhook(channelId);
         }
@@ -81,7 +81,7 @@ namespace PluralKit.Bot
         {
             _logger.Debug("Webhook for channel {Channel} not found in cache, trying to fetch", channelId);
             _metrics.Measure.Meter.Mark(BotMetrics.WebhookCacheMisses);
-            
+
             _logger.Debug("Finding webhook for channel {Channel}", channelId);
             var webhooks = await FetchChannelWebhooks(channelId);
 
@@ -89,12 +89,12 @@ namespace PluralKit.Bot
             var ourWebhook = webhooks.FirstOrDefault(IsWebhookMine);
             if (ourWebhook != null)
                 return ourWebhook;
-            
+
             // We don't have one, so we gotta create a new one
             // but first, make sure we haven't hit the webhook cap yet...
             if (webhooks.Length >= 10)
                 throw new PKError("This channel has the maximum amount of possible webhooks (10) already created. A server admin must delete one or more webhooks so PluralKit can create one for proxying.");
-            
+
             return await DoCreateWebhook(channelId);
         }
 
@@ -113,7 +113,7 @@ namespace PluralKit.Bot
                 return new Webhook[0];
             }
         }
-        
+
         private async Task<Webhook> DoCreateWebhook(ulong channelId)
         {
             _logger.Information("Creating new webhook for channel {Channel}", channelId);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -13,12 +13,12 @@ namespace Myriad.Serialization
             var str = reader.GetString();
             if (str == null) return default;
 
-            return (PermissionSet) ulong.Parse(str);
+            return (PermissionSet)ulong.Parse(str);
         }
 
         public override void Write(Utf8JsonWriter writer, PermissionSet value, JsonSerializerOptions options)
         {
-            writer.WriteStringValue(((ulong) value).ToString());
+            writer.WriteStringValue(((ulong)value).ToString());
         }
     }
 }

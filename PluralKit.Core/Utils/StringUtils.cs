@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
@@ -20,7 +20,7 @@ namespace PluralKit.Core
             if (str != null) return str.Length > length;
             return false;
         }
-        
+
         public static string ExtractCountryFlag(string flag)
         {
             if (flag.Length != 4) return null;
@@ -30,14 +30,14 @@ namespace PluralKit.Core
                 var cp2 = char.ConvertToUtf32(flag, 2);
                 if (cp1 < 0x1F1E6 || cp1 > 0x1F1FF) return null;
                 if (cp2 < 0x1F1E6 || cp2 > 0x1F1FF) return null;
-                return $"{(char) (cp1 - 0x1F1E6 + 'A')}{(char) (cp2 - 0x1F1E6 + 'A')}";
+                return $"{(char)(cp1 - 0x1F1E6 + 'A')}{(char)(cp2 - 0x1F1E6 + 'A')}";
             }
             catch (ArgumentException)
             {
                 return null;
             }
         }
-        
+
         public static string NullIfEmpty(this string input)
         {
             if (input == null) return null;
@@ -70,7 +70,7 @@ namespace PluralKit.Core
             foreach (var s in input)
             {
                 var limit = characterLimitByPage.Invoke(output.Count);
-                
+
                 // Would adding this string put us over the limit?
                 // (note: don't roll over if the buffer's already empty; this means an individual section is above the character limit. todo: truncate, then?)
                 if (buf.Length > 0 && buf.Length + s.Length > limit)
@@ -82,12 +82,12 @@ namespace PluralKit.Core
 
                 buf.Append(s);
             }
-            
+
             // We most likely have something left over, so add that in too
             if (buf.Length > 0)
                 output.Add(buf.ToString());
 
             return output;
-        } 
+        }
     }
 }

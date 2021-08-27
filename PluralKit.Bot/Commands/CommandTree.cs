@@ -120,13 +120,13 @@ namespace PluralKit.Bot
             GroupDelete, GroupMemberRandom, GroupFrontPercent
         };
 
-        public static Command[] SwitchCommands = {Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll};
+        public static Command[] SwitchCommands = { Switch, SwitchOut, SwitchMove, SwitchDelete, SwitchDeleteAll };
 
-        public static Command[] AutoproxyCommands = {AutoproxySet, AutoproxyTimeout, AutoproxyAccount};
-        
-        public static Command[] LogCommands = {LogChannel, LogChannelClear, LogEnable, LogDisable};
+        public static Command[] AutoproxyCommands = { AutoproxySet, AutoproxyTimeout, AutoproxyAccount };
 
-        public static Command[] BlacklistCommands = {BlacklistAdd, BlacklistRemove, BlacklistShow};
+        public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable };
+
+        public static Command[] BlacklistCommands = { BlacklistAdd, BlacklistRemove, BlacklistShow };
 
         public Task ExecuteCommand(Context ctx)
         {
@@ -214,9 +214,9 @@ namespace PluralKit.Bot
                 return HandleAdminCommand(ctx);
             if (ctx.Match("random", "r"))
                 if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
-                return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx));
-            else
-                return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx));
+                    return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx));
+                else
+                    return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx));
 
             // remove compiler warning
             return ctx.Reply(
@@ -348,7 +348,7 @@ namespace PluralKit.Bot
                 await PrintCommandNotFoundError(ctx, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent,
                     SystemInfo);
         }
-        
+
         private async Task HandleMemberCommand(Context ctx)
         {
             if (ctx.Match("new", "n", "add", "create", "register"))
@@ -392,7 +392,7 @@ namespace PluralKit.Bot
                     await ctx.Execute<MemberGroup>(MemberGroupAdd, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Add));
                 else if (ctx.Match("remove", "rem"))
                     await ctx.Execute<MemberGroup>(MemberGroupRemove, m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Remove));
-                else 
+                else
                     await ctx.Execute<MemberGroup>(MemberGroups, m => m.List(ctx, target));
             else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic", "guildavatar", "guildpic", "guildicon", "sicon"))
                 await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
@@ -414,8 +414,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
             else if (!ctx.HasNext()) // Bare command
                 await ctx.Execute<Member>(MemberInfo, m => m.ViewMember(ctx, target));
-            else 
-                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName ,MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
+            else
+                await PrintCommandNotFoundError(ctx, MemberInfo, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns, MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar, SystemList);
         }
 
         private async Task HandleGroupCommand(Context ctx)
@@ -427,7 +427,7 @@ namespace PluralKit.Bot
                 await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
             else if (ctx.Match("commands", "help"))
                 await PrintCommandList(ctx, "groups", GroupCommands);
-            else if (await ctx.MatchGroup() is {} target)
+            else if (await ctx.MatchGroup() is { } target)
             {
                 // Commands with group argument
                 if (ctx.Match("rename", "name", "changename", "setname"))
@@ -437,7 +437,7 @@ namespace PluralKit.Bot
                 else if (ctx.Match("description", "info", "bio", "text", "desc"))
                     await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
                 else if (ctx.Match("add", "a"))
-                    await ctx.Execute<Groups>(GroupAdd,g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
+                    await ctx.Execute<Groups>(GroupAdd, g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
                 else if (ctx.Match("remove", "rem", "r"))
                     await ctx.Execute<Groups>(GroupRemove, g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
                 else if (ctx.Match("members", "list", "ms", "l"))
@@ -488,14 +488,15 @@ namespace PluralKit.Bot
         }
 
         private async Task CommandHelpRoot(Context ctx)
-        {   
+        {
             if (!ctx.HasNext())
             {
                 await ctx.Reply($"{Emojis.Error} You need to pass a target command.\nAvailable command help targets: `system`, `member`, `group`, `switch`, `log`, `blacklist`.\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
                 return;
             }
 
-            switch (ctx.PeekArgument()) {
+            switch (ctx.PeekArgument())
+            {
                 case "system":
                 case "systems":
                 case "s":
@@ -561,14 +562,14 @@ namespace PluralKit.Bot
             await ctx.Reply(
                 $"{Emojis.Error} Unknown command `pk;{ctx.FullCommand().Truncate(100)}`. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
         }
-        
+
         private async Task PrintCommandExpectedError(Context ctx, params Command[] potentialCommands)
         {
             var commandListStr = CreatePotentialCommandList(potentialCommands);
             await ctx.Reply(
                 $"{Emojis.Error} You need to pass a command. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
         }
-        
+
         private static string CreatePotentialCommandList(params Command[] potentialCommands)
         {
             return string.Join("\n", potentialCommands.Select(cmd => $"- **pk;{cmd.Usage}** - *{cmd.Description}*"));

@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 using Dapper;
 
@@ -14,7 +14,7 @@ namespace PluralKit.Core
                 .Build();
             return conn.ExecuteAsync(query, pms);
         }
-        
+
         public Task UpsertSystemGuild(IPKConnection conn, SystemId system, ulong guild,
                                       SystemGuildPatch patch)
         {
@@ -36,18 +36,18 @@ namespace PluralKit.Core
                 .Build();
             return conn.ExecuteAsync(query, pms);
         }
-        
+
         public Task<GuildConfig> GetGuild(IPKConnection conn, ulong guild) =>
-            conn.QueryFirstAsync<GuildConfig>("insert into servers (id) values (@guild) on conflict (id) do update set id = @guild returning *", new {guild});
+            conn.QueryFirstAsync<GuildConfig>("insert into servers (id) values (@guild) on conflict (id) do update set id = @guild returning *", new { guild });
 
         public Task<SystemGuildSettings> GetSystemGuild(IPKConnection conn, ulong guild, SystemId system) =>
             conn.QueryFirstAsync<SystemGuildSettings>(
-                "insert into system_guild (guild, system) values (@guild, @system) on conflict (guild, system) do update set guild = @guild, system = @system returning *", 
-                new {guild, system});
+                "insert into system_guild (guild, system) values (@guild, @system) on conflict (guild, system) do update set guild = @guild, system = @system returning *",
+                new { guild, system });
 
         public Task<MemberGuildSettings> GetMemberGuild(IPKConnection conn, ulong guild, MemberId member) =>
             conn.QueryFirstAsync<MemberGuildSettings>(
                 "insert into member_guild (guild, member) values (@guild, @member) on conflict (guild, member) do update set guild = @guild, member = @member returning *",
-                new {guild, member});
+                new { guild, member });
     }
 }

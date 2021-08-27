@@ -1,4 +1,4 @@
-﻿namespace Myriad.Gateway
+namespace Myriad.Gateway
 {
     public record ResumedEvent: IGatewayEvent;
 }

@@ -1,10 +1,10 @@
-﻿namespace Myriad.Utils
+namespace Myriad.Utils
 {
     public interface IOptional
     {
         object? GetValue();
     }
-    
+
     public readonly struct Optional<T>: IOptional
     {
         public Optional(T value)

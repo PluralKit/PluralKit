@@ -1,4 +1,4 @@
-﻿namespace Myriad.Types
+namespace Myriad.Types
 {
     public record Application: ApplicationPartial
     {
@@ -16,7 +16,7 @@
         public string? Slug { get; init; }
         public string? CoverImage { get; init; }
     }
-    
+
     public record ApplicationPartial
     {
         public ulong Id { get; init; }

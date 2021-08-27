@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 using Serilog.Formatting.Elasticsearch;
@@ -30,7 +30,7 @@ namespace PluralKit.Core
             public Elasticsearch(bool omitEnclosingObject = false, string closingDelimiter = null,
                                  bool renderMessage = true, IFormatProvider formatProvider = null,
                                  ISerializer serializer = null, bool inlineFields = false,
-                                 bool renderMessageTemplate = true, bool formatStackTraceAsArray = false): base(
+                                 bool renderMessageTemplate = true, bool formatStackTraceAsArray = false) : base(
                 omitEnclosingObject, closingDelimiter, renderMessage, formatProvider, serializer, inlineFields,
                 renderMessageTemplate, formatStackTraceAsArray)
             {

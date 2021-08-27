@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,7 +8,7 @@ namespace Myriad.Gateway.State
     {
         private Task? _worker;
         private CancellationTokenSource? _workerCts;
-        
+
         public TimeSpan? CurrentHeartbeatInterval { get; private set; }
 
         public async ValueTask Start(TimeSpan heartbeatInterval, Func<Task> callback)
@@ -23,9 +23,9 @@ namespace Myriad.Gateway.State
 
         public async ValueTask Stop()
         {
-            if (_worker == null) 
+            if (_worker == null)
                 return;
-            
+
             _workerCts?.Cancel();
             try
             {
@@ -38,12 +38,12 @@ namespace Myriad.Gateway.State
             _worker = null;
             CurrentHeartbeatInterval = null;
         }
-        
+
         private async Task Worker(TimeSpan heartbeatInterval, Func<Task> callback, CancellationToken ct)
         {
             var initialDelay = GetInitialHeartbeatDelay(heartbeatInterval);
             await Task.Delay(initialDelay, ct);
-            
+
             while (!ct.IsCancellationRequested)
             {
                 await callback();

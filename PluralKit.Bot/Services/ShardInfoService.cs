@@ -38,7 +38,7 @@ namespace PluralKit.Bot
 
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
-        
+
         public ShardInfoService(ILogger logger, Cluster client, IMetrics metrics, IDatabase db, ModelRepository repo)
         {
             _client = client;
@@ -68,18 +68,19 @@ namespace PluralKit.Bot
             if (_shardInfo.TryGetValue(shard.ShardId, out var info))
             {
                 // Skip adding listeners if we've seen this shard & already added listeners to it
-                if (info.HasAttachedListeners) 
+                if (info.HasAttachedListeners)
                     return;
-            } else _shardInfo[shard.ShardId] = info = new ShardInfo();
-            
+            }
+            else _shardInfo[shard.ShardId] = info = new ShardInfo();
+
             // Call our own SocketOpened listener manually (and then attach the listener properly)
-            
+
             // Register listeners for new shards
             shard.Resumed += () => ReadyOrResumed(shard);
             shard.Ready += () => ReadyOrResumed(shard);
             shard.SocketClosed += (closeStatus, message) => SocketClosed(shard, closeStatus, message);
             shard.HeartbeatReceived += latency => Heartbeated(shard, latency);
-                
+
             // Register that we've seen it
             info.HasAttachedListeners = true;
         }
@@ -100,7 +101,7 @@ namespace PluralKit.Bot
             info.LastConnectionTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
             ReportShardStatus();
-            
+
             _ = ExecuteWithDatabase(async c =>
             {
                 await _repo.SetShardStatus(c, shard.ShardId, PKShardInfo.ShardStatus.Up);
@@ -114,7 +115,7 @@ namespace PluralKit.Bot
             info.DisconnectionCount++;
             info.Connected = false;
             ReportShardStatus();
-            
+
             _ = ExecuteWithDatabase(c =>
                 _repo.SetShardStatus(c, shard.ShardId, PKShardInfo.ShardStatus.Down));
         }
@@ -125,7 +126,7 @@ namespace PluralKit.Bot
             info.LastHeartbeatTime = SystemClock.Instance.GetCurrentInstant();
             info.Connected = true;
             info.ShardLatency = latency.ToDuration();
-            
+
             _ = ExecuteWithDatabase(c =>
                 _repo.RegisterShardHeartbeat(c, shard.ShardId, latency.ToDuration()));
         }

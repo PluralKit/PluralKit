@@ -23,14 +23,14 @@ namespace PluralKit.Bot
         public static bool MatchUserRaw(this Context ctx, out ulong id)
         {
             id = 0;
-            
+
             var text = ctx.PeekArgument();
             if (text.TryParseMention(out var mentionId))
                 id = mentionId;
 
             return id != 0;
         }
-        
+
         public static Task<PKSystem> PeekSystem(this Context ctx) => ctx.MatchSystemInner();
 
         public static async Task<PKSystem> MatchSystem(this Context ctx)
@@ -50,7 +50,7 @@ namespace PluralKit.Bot
             // - A system hid
 
             await using var conn = await ctx.Database.Obtain();
-            
+
             // Direct IDs and mentions are both handled by the below method:
             if (input.TryParseMention(out var id))
                 return await ctx.Repository.GetSystemByAccount(conn, id);
@@ -82,7 +82,7 @@ namespace PluralKit.Bot
             // And if that again fails, we try finding a member with a display name matching the argument from the system
             if (ctx.System != null && await ctx.Repository.GetMemberByDisplayName(conn, ctx.System.Id, input) is PKMember memberByDisplayName)
                 return memberByDisplayName;
-            
+
             // We didn't find anything, so we return null.
             return null;
         }
@@ -102,17 +102,17 @@ namespace PluralKit.Bot
             // Finally, we return the member value.
             return member;
         }
-        
+
         public static async Task<PKGroup> PeekGroup(this Context ctx)
         {
             var input = ctx.PeekArgument();
 
             await using var conn = await ctx.Database.Obtain();
-            if (ctx.System != null && await ctx.Repository.GetGroupByName(conn, ctx.System.Id, input) is {} byName)
+            if (ctx.System != null && await ctx.Repository.GetGroupByName(conn, ctx.System.Id, input) is { } byName)
                 return byName;
-            if (await ctx.Repository.GetGroupByHid(conn, input) is {} byHid)
+            if (await ctx.Repository.GetGroupByHid(conn, input) is { } byHid)
                 return byHid;
-            if (await ctx.Repository.GetGroupByDisplayName(conn, ctx.System.Id, input) is {} byDisplayName)
+            if (await ctx.Repository.GetGroupByDisplayName(conn, ctx.System.Id, input) is { } byDisplayName)
                 return byDisplayName;
 
             return null;
@@ -139,7 +139,7 @@ namespace PluralKit.Bot
                 return $"Member with name \"{input}\" not found. Note that a member ID is 5 characters long.";
             return $"Member not found. Note that a member ID is 5 characters long.";
         }
-        
+
         public static string CreateGroupNotFoundError(this Context ctx, string input)
         {
             // TODO: does this belong here?
@@ -154,18 +154,18 @@ namespace PluralKit.Bot
                 return $"Group with name \"{input}\" not found. Note that a group ID is 5 characters long.";
             return $"Group not found. Note that a group ID is 5 characters long.";
         }
-        
+
         public static Task<Channel> MatchChannel(this Context ctx)
         {
-            if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id)) 
+            if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id))
                 return Task.FromResult<Channel>(null);
 
             if (!ctx.Cache.TryGetChannel(id, out var channel))
                 return Task.FromResult<Channel>(null);
-            
+
             if (!DiscordUtils.IsValidGuildChannel(channel))
                 return Task.FromResult<Channel>(null);
-            
+
             ctx.PopArgument();
             return Task.FromResult(channel);
         }

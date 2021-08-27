@@ -1,4 +1,4 @@
-﻿namespace PluralKit.Core
+namespace PluralKit.Core
 {
     public enum LookupContext
     {

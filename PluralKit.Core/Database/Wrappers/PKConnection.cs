@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Data;
 using System.Data.Common;
@@ -37,28 +37,28 @@ namespace PluralKit.Core
             _logger = logger.ForContext<PKConnection>();
             _metrics = metrics;
         }
-        
+
         public override Task OpenAsync(CancellationToken ct)
         {
             if (_hasOpened) return Inner.OpenAsync(ct);
             _countHolder.Increment();
             _hasOpened = true;
             _openTime = SystemClock.Instance.GetCurrentInstant();
-            _logger.Verbose("Opened database connection {ConnectionId}, new connection count {ConnectionCount}", ConnectionId, _countHolder.ConnectionCount);       
+            _logger.Verbose("Opened database connection {ConnectionId}, new connection count {ConnectionCount}", ConnectionId, _countHolder.ConnectionCount);
             return Inner.OpenAsync(ct);
         }
 
         public override Task CloseAsync() => Inner.CloseAsync();
 
         protected override DbCommand CreateDbCommand() => new PKCommand(Inner.CreateCommand(), this, _logger, _metrics);
-        
+
         public void ReloadTypes() => Inner.ReloadTypes();
 
         public new async ValueTask<IPKTransaction> BeginTransactionAsync(IsolationLevel level, CancellationToken ct = default) => new PKTransaction(await Inner.BeginTransactionAsync(level, ct));
 
         public NpgsqlBinaryImporter BeginBinaryImport(string copyFromCommand) => Inner.BeginBinaryImport(copyFromCommand);
         public NpgsqlBinaryExporter BeginBinaryExport(string copyToCommand) => Inner.BeginBinaryExport(copyToCommand);
-        
+
         public override void ChangeDatabase(string databaseName) => Inner.ChangeDatabase(databaseName);
         public override Task ChangeDatabaseAsync(string databaseName, CancellationToken ct = default) => Inner.ChangeDatabaseAsync(databaseName, ct);
         protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => throw SyncError(nameof(BeginDbTransaction));
@@ -85,12 +85,12 @@ namespace PluralKit.Core
         public override ConnectionState State => Inner.State;
         public override string DataSource => Inner.DataSource;
         public override string ServerVersion => Inner.ServerVersion;
-        
+
         protected override void Dispose(bool disposing)
-        { 
+        {
             Inner.Dispose();
             if (_hasClosed) return;
-            
+
             LogClose();
         }
 
@@ -100,12 +100,12 @@ namespace PluralKit.Core
             LogClose();
             return Inner.DisposeAsync();
         }
-        
+
         private void LogClose()
         {
             _countHolder.Decrement();
             _hasClosed = true;
-            
+
             var duration = SystemClock.Instance.GetCurrentInstant() - _openTime;
             _logger.Verbose("Closed database connection {ConnectionId} (open for {ConnectionDuration}), new connection count {ConnectionCount}", ConnectionId, duration, _countHolder.ConnectionCount);
         }

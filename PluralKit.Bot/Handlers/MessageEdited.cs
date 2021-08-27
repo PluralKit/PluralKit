@@ -28,7 +28,7 @@ namespace PluralKit.Bot
         private readonly Bot _bot;
         private readonly DiscordApiClient _rest;
         private readonly ILogger _logger;
-        
+
         public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db, IMetrics metrics, ModelRepository repo, Cluster client, IDiscordCache cache, Bot bot, DiscordApiClient rest, ILogger logger)
         {
             _lastMessageCache = lastMessageCache;
@@ -46,11 +46,11 @@ namespace PluralKit.Bot
         public async Task Handle(Shard shard, MessageUpdateEvent evt)
         {
             if (evt.Author.Value?.Id == _client.User?.Id) return;
-            
+
             // Edit message events sometimes arrive with missing data; double-check it's all there
-            if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue) 
+            if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue)
                 return;
-            
+
             var channel = _cache.GetChannel(evt.ChannelId);
             if (!DiscordUtils.IsValidGuildChannel(channel))
                 return;
@@ -60,7 +60,7 @@ namespace PluralKit.Bot
             // Only react to the last message in the channel
             if (lastMessage?.Id != evt.Id)
                 return;
-            
+
             // Just run the normal message handling code, with a flag to disable autoproxying
             MessageContext ctx;
             await using (var conn = await _db.Obtain())
@@ -76,7 +76,7 @@ namespace PluralKit.Bot
                     channel: channel, botPermissions: botPermissions);
             }
             // Catch any failed proxy checks so they get ignored in the global error handler
-            catch (ProxyService.ProxyChecksFailedException) {}
+            catch (ProxyService.ProxyChecksFailedException) { }
         }
 
         private async Task<MessageCreateEvent> GetMessageCreateEvent(MessageUpdateEvent evt, CachedMessage lastMessage, Channel channel)
@@ -86,11 +86,11 @@ namespace PluralKit.Bot
             var messageReference = lastMessage.ReferencedMessage != null
                 ? new Message.Reference(channel.GuildId, evt.ChannelId, lastMessage.ReferencedMessage.Value)
                 : null;
-            
-            var messageType = lastMessage.ReferencedMessage != null 
-                ? Message.MessageType.Reply 
+
+            var messageType = lastMessage.ReferencedMessage != null
+                ? Message.MessageType.Reply
                 : Message.MessageType.Default;
-            
+
             // TODO: is this missing anything?
             var equivalentEvt = new MessageCreateEvent
             {
@@ -112,7 +112,7 @@ namespace PluralKit.Bot
         {
             if (referencedMessageId == null)
                 return null;
-            
+
             var botPermissions = _bot.PermissionsIn(channelId);
             if (!botPermissions.HasFlag(PermissionSet.ReadMessageHistory))
             {

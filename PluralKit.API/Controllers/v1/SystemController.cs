@@ -37,8 +37,8 @@ namespace PluralKit.API
 
     [ApiController]
     [ApiVersion("1.0")]
-    [Route( "v{version:apiVersion}/s" )]
-    public class SystemController : ControllerBase
+    [Route("v{version:apiVersion}/s")]
+    public class SystemController: ControllerBase
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
@@ -88,9 +88,9 @@ namespace PluralKit.API
         public async Task<ActionResult<IEnumerable<SwitchesReturn>>> GetSwitches(string hid, [FromQuery(Name = "before")] Instant? before)
         {
             if (before == null) before = SystemClock.Instance.GetCurrentInstant();
-            
+
             await using var conn = await _db.Obtain();
-            
+
             var system = await _repo.GetSystemByHid(conn, hid);
             if (system == null) return NotFound("System not found.");
 
@@ -104,7 +104,7 @@ namespace PluralKit.API
                     ) as members from switches
                     where switches.system = @System and switches.timestamp < @Before
                     order by switches.timestamp desc
-                    limit 100;", new {System = system.Id, Before = before});
+                    limit 100;", new { System = system.Id, Before = before });
             return Ok(res);
         }
 
@@ -112,16 +112,16 @@ namespace PluralKit.API
         public async Task<ActionResult<FrontersReturn>> GetFronters(string hid)
         {
             await using var conn = await _db.Obtain();
-            
+
             var system = await _repo.GetSystemByHid(conn, hid);
             if (system == null) return NotFound("System not found.");
-            
+
             var auth = await _auth.AuthorizeAsync(User, system, "ViewFront");
             if (!auth.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view fronter.");
-            
+
             var sw = await _repo.GetLatestSwitch(conn, system.Id);
-            if (sw == null) return NotFound("System has no registered switches."); 
-                
+            if (sw == null) return NotFound("System has no registered switches.");
+
             var members = _repo.GetSwitchMembers(conn, sw.Id);
             return Ok(new FrontersReturn
             {
@@ -162,7 +162,7 @@ namespace PluralKit.API
         {
             if (param.Members.Distinct().Count() != param.Members.Count)
                 return BadRequest("Duplicate members in member list.");
-            
+
             await using var conn = await _db.Obtain();
 
             // We get the current switch, if it exists
@@ -177,8 +177,8 @@ namespace PluralKit.API
             }
 
             // Resolve member objects for all given IDs
-            var membersList = (await conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new {Hids = param.Members})).ToList();
-            
+            var membersList = (await conn.QueryAsync<PKMember>("select * from members where hid = any(@Hids)", new { Hids = param.Members })).ToList();
+
             foreach (var member in membersList)
                 if (member.System != User.CurrentSystem())
                     return BadRequest($"Cannot switch to member '{member.Hid}' not in system.");
@@ -186,12 +186,12 @@ namespace PluralKit.API
             // membersList is in DB order, and we want it in actual input order
             // so we go through a dict and map the original input appropriately
             var membersDict = membersList.ToDictionary(m => m.Hid);
-            
+
             var membersInOrder = new List<PKMember>();
             // We do this without .Select() since we want to have the early return bail if it doesn't find the member
             foreach (var givenMemberId in param.Members)
             {
-                if (!membersDict.TryGetValue(givenMemberId, out var member)) 
+                if (!membersDict.TryGetValue(givenMemberId, out var member))
                     return BadRequest($"Member '{givenMemberId}' not found.");
                 membersInOrder.Add(member);
             }

@@ -6,7 +6,7 @@ namespace PluralKit.Bot
     {
         public string Key { get; }
         public string Description { get; }
-        
+
         public ICollection<Command> Children { get; }
 
         public CommandGroup(string key, string description, ICollection<Command> children)

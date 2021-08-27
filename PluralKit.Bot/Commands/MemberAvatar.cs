@@ -21,7 +21,7 @@ namespace PluralKit.Bot
             _repo = repo;
             _client = client;
         }
-        
+
         private async Task AvatarClear(AvatarLocation location, Context ctx, PKMember target, MemberGuildSettings? mgs)
         {
             await UpdateAvatar(location, ctx, target, null);
@@ -36,7 +36,7 @@ namespace PluralKit.Bot
             {
                 if (mgs?.AvatarUrl != null)
                     await ctx.Reply($"{Emojis.Success} Member avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Reference()} serveravatar clear` if you wish to clear that too.");
-                else 
+                else
                     await ctx.Reply($"{Emojis.Success} Member avatar cleared.");
             }
         }
@@ -57,10 +57,10 @@ namespace PluralKit.Bot
                 if (location == AvatarLocation.Server)
                     throw new PKError($"This member does not have a server avatar set. Type `pk;member {target.Reference()} avatar` to see their global avatar.");
             }
-            
+
             var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.Guild.Name})" : "avatar";
             var cmd = location == AvatarLocation.Server ? "serveravatar" : "avatar";
-            
+
             var eb = new EmbedBuilder()
                 .Title($"{target.NameFor(ctx)}'s {field}")
                 .Image(new(currentValue?.TryGetCleanCdnUrl()));
@@ -75,7 +75,7 @@ namespace PluralKit.Bot
             var guildData = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
             await AvatarCommandTree(AvatarLocation.Server, ctx, target, guildData);
         }
-        
+
         public async Task Avatar(Context ctx, PKMember target)
         {
             var guildData = ctx.Guild != null ?
@@ -119,7 +119,7 @@ namespace PluralKit.Bot
                 AvatarLocation.Member => "avatar",
                 _ => throw new ArgumentOutOfRangeException(nameof(location))
             };
-            
+
             var serverFrag = location switch
             {
                 AvatarLocation.Server => $" This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).",
@@ -137,8 +137,8 @@ namespace PluralKit.Bot
 
             // The attachment's already right there, no need to preview it.
             var hasEmbed = avatar.Source != AvatarSource.Attachment;
-            return hasEmbed 
-                ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(avatar.Url)).Build()) 
+            return hasEmbed
+                ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(avatar.Url)).Build())
                 : ctx.Reply(msg);
         }
 

@@ -57,7 +57,7 @@ namespace PluralKit.Tests
                       $"{success} Member added to 1 group (member already in 2 groups).",
                       func(addOp, 1, 3, 1, 2)
                     );
-                
+
                 [Fact]
                 public void Failure()
                     => Assert.Equal(
@@ -88,7 +88,7 @@ namespace PluralKit.Tests
                       $"{success} 1 member added to group (2 members already in group).",
                       func(addOp, 3, 1, 1, 2)
                     );
-                
+
                 [Fact]
                 public void Failure()
                     => Assert.Equal(
@@ -140,7 +140,7 @@ namespace PluralKit.Tests
                         $"{success} Member removed from 2 groups (member already not in 1 group).",
                         func(removeOp, 1, 3, 2, 1)
                     );
-                
+
                 [Fact]
                 public void Failure()
                     => Assert.Equal(
@@ -171,7 +171,7 @@ namespace PluralKit.Tests
                         $"{success} 2 members removed from group (1 member already not in group).",
                         func(removeOp, 3, 1, 2, 1)
                     );
-                
+
                 [Fact]
                 public void Failure()
                     => Assert.Equal(
@@ -180,6 +180,6 @@ namespace PluralKit.Tests
                     );
             }
 
-        }    
+        }
     }
 }

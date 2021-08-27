@@ -1,4 +1,4 @@
-﻿namespace PluralKit.Core
+namespace PluralKit.Core
 {
     public enum AutoproxyMode
     {
@@ -7,7 +7,7 @@
         Latch = 3,
         Member = 4
     }
-    
+
     public class SystemGuildSettings
     {
         public ulong Guild { get; }
@@ -16,8 +16,8 @@
 
         public AutoproxyMode AutoproxyMode { get; } = AutoproxyMode.Off;
         public MemberId? AutoproxyMember { get; }
-        
+
         public string? Tag { get; }
-        public bool TagEnabled { get;  }
+        public bool TagEnabled { get; }
     }
 }

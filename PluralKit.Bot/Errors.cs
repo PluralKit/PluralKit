@@ -6,11 +6,12 @@ using Humanizer;
 using NodaTime;
 using PluralKit.Core;
 
-namespace PluralKit.Bot {
+namespace PluralKit.Bot
+{
     /// <summary>
     /// An exception class representing user-facing errors caused when parsing and executing commands.
     /// </summary>
-    public class PKError : Exception
+    public class PKError: Exception
     {
         public PKError(string message) : base(message)
         {
@@ -21,14 +22,15 @@ namespace PluralKit.Bot {
     /// A subclass of <see cref="PKError"/> that represent command syntax errors, meaning they'll have their command
     /// usages printed in the message.
     /// </summary>
-    public class PKSyntaxError : PKError
+    public class PKSyntaxError: PKError
     {
         public PKSyntaxError(string message) : base(message)
         {
         }
     }
-    
-    public static class Errors {
+
+    public static class Errors
+    {
         // TODO: is returning constructed errors and throwing them at call site a good idea, or should these be methods that insta-throw instead?
         // or should we just like... go back to inlining them? at least for the one-time-use commands
 
@@ -50,9 +52,9 @@ namespace PluralKit.Bot {
         public static PKError BirthdayParseError(string birthday) => new PKError($"\"{birthday}\" could not be parsed as a valid date. Try a format like \"2016-12-24\" or \"May 3 1996\".");
         public static PKError ProxyMustHaveText => new PKSyntaxError("Example proxy message must contain the string 'text'.");
         public static PKError ProxyMultipleText => new PKSyntaxError("Example proxy message must contain the string 'text' exactly once.");
-        
+
         public static PKError MemberDeleteCancelled => new PKError($"Member deletion cancelled. Stay safe! {Emojis.ThumbsUp}");
-        public static PKError AvatarServerError(HttpStatusCode statusCode) => new PKError($"Server responded with status code {(int) statusCode}, are you sure your link is working?");
+        public static PKError AvatarServerError(HttpStatusCode statusCode) => new PKError($"Server responded with status code {(int)statusCode}, are you sure your link is working?");
         public static PKError AvatarFileSizeLimit(long size) => new PKError($"File size too large ({size.Bytes().ToString("#.#")} > {Limits.AvatarFileSizeLimit.Bytes().ToString("#.#")}), try shrinking or compressing the image.");
         public static PKError AvatarNotAnImage(string mimeType) => new PKError($"The given link does not point to an image{(mimeType != null ? $" ({mimeType})" : "")}. Make sure you're using a direct link (ending in .jpg, .png, .gif).");
         public static PKError AvatarDimensionsTooLarge(int width, int height) => new PKError($"Image too large ({width}x{height} > {Limits.AvatarDimensionLimit}x{Limits.AvatarDimensionLimit}), try resizing the image.");
@@ -60,7 +62,7 @@ namespace PluralKit.Bot {
         public static PKError UserHasNoAvatar => new PKError("The given user has no avatar set.");
         public static PKError InvalidUrl(string url) => new PKError($"The given URL is invalid.");
         public static PKError UrlTooLong(string url) => new PKError($"The given URL is too long ({url.Length}/{Limits.MaxUriLength} characters).");
-        
+
         public static PKError AccountAlreadyLinked => new PKError("That account is already linked to your system.");
         public static PKError AccountNotLinked => new PKError("That account isn't linked to your system.");
         public static PKError AccountInOtherSystem(PKSystem system) => new PKError($"The mentioned account is already linked to another system (see `pk;system {system.Hid}`).");
@@ -94,7 +96,7 @@ namespace PluralKit.Bot {
         public static PKError InvalidImportFile => new PKError("Imported data file invalid. Make sure this is a .json file directly exported from PluralKit or Tupperbox.");
         public static PKError ImportCancelled => new PKError("Import cancelled.");
         public static PKError MessageNotFound(ulong id) => new PKError($"Message with ID '{id}' not found. Are you sure it's a message proxied by PluralKit?");
-        
+
         public static PKError DurationParseError(string durationStr) => new PKError($"Could not parse {durationStr.AsCode()} as a valid duration. Try a format such as `30d`, `1d3h` or `20m30s`.");
         public static PKError FrontPercentTimeInFuture => new PKError("Cannot get the front percent between now and a time in the future.");
 

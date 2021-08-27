@@ -1,4 +1,4 @@
-﻿using PluralKit.Core;
+using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
@@ -14,7 +14,7 @@ namespace PluralKit.Bot
 
             if (!ctx.HasNext())
                 throw new PKSyntaxError("You must pass a privacy level (`public` or `private`)");
-            
+
             throw new PKSyntaxError($"Invalid privacy level {ctx.PopArgument().AsCode()} (must be `public` or `private`).");
         }
 
@@ -22,25 +22,25 @@ namespace PluralKit.Bot
         {
             if (!SystemPrivacyUtils.TryParseSystemPrivacy(ctx.PeekArgument(), out var subject))
                 throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `members`, `front`, `fronthistory`, `groups`, or `all`).");
-            
+
             ctx.PopArgument();
             return subject;
         }
-        
+
         public static MemberPrivacySubject PopMemberPrivacySubject(this Context ctx)
         {
             if (!MemberPrivacyUtils.TryParseMemberPrivacy(ctx.PeekArgument(), out var subject))
                 throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`).");
-            
+
             ctx.PopArgument();
             return subject;
         }
-        
+
         public static GroupPrivacySubject PopGroupPrivacySubject(this Context ctx)
         {
             if (!GroupPrivacyUtils.TryParseGroupPrivacy(ctx.PeekArgument(), out var subject))
                 throw new PKSyntaxError($"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `icon`, `visibility`, or `all`).");
-            
+
             ctx.PopArgument();
             return subject;
         }
@@ -51,7 +51,7 @@ namespace PluralKit.Bot
             if (ctx.MatchFlag("a", "all")) privacy = false;
             if (pctx == LookupContext.ByNonOwner && !privacy) throw Errors.LookupNotAllowed;
 
-            return privacy; 
+            return privacy;
         }
     }
 }

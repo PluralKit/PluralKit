@@ -49,7 +49,7 @@ namespace PluralKit.Core
 
             var hasGroup = tupper.ContainsKey("group_id") && tupper["group_id"].Type != JTokenType.Null;
             var multipleTags = false;
-            
+
             var name = tupper.Value<string>("name");
             var patch = new MemberPatch();
 
@@ -61,8 +61,8 @@ namespace PluralKit.Core
                 if (brackets.Count % 2 != 0)
                     throw new ImportException($"Field 'brackets' in tupper {name} is invalid.");
                 var tags = new List<ProxyTag>();
-                for (var i = 0; i < brackets.Count / 2; i++) 
-                    tags.Add(new ProxyTag((string) brackets[i * 2], (string) brackets[i * 2 + 1]));
+                for (var i = 0; i < brackets.Count / 2; i++)
+                    tags.Add(new ProxyTag((string)brackets[i * 2], (string)brackets[i * 2 + 1]));
                 patch.ProxyTags = tags.ToArray();
             }
             // todo: && if is new member
@@ -97,7 +97,7 @@ namespace PluralKit.Core
             }
             else
                 _result.Modified++;
-            
+
             _logger.Debug("Importing member with identifier {FileId} to system {System} (is creating new member? {IsCreatingNewMember})",
                 name, _system.Id, isNewMember);
 
@@ -113,9 +113,9 @@ namespace PluralKit.Core
             {
                 throw new ImportException($"Field {e.Message} in tupper {name} is invalid.");
             }
-            
+
             await _repo.UpdateMember(_conn, memberId, patch, _tx);
-            
+
             return (lastSetTag, multipleTags, hasGroup);
         }
     }

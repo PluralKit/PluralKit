@@ -23,7 +23,7 @@ namespace PluralKit.Bot.Interactive
 
         public string CancelLabel { get; set; } = "Cancel";
         public ButtonStyle CancelStyle { get; set; } = ButtonStyle.Secondary;
-        
+
         public override async Task Start()
         {
             AddButton(ctx => OnButtonClick(ctx, true), AcceptLabel, AcceptStyle);
@@ -32,7 +32,7 @@ namespace PluralKit.Bot.Interactive
             AllowedMentions mentions = null;
 
             if (User != _ctx.Author.Id)
-                mentions = new AllowedMentions {Users = new[] {User!.Value}};
+                mentions = new AllowedMentions { Users = new[] { User!.Value } };
 
             await Send(Message, mentions: mentions);
         }
@@ -44,7 +44,7 @@ namespace PluralKit.Bot.Interactive
                 await Update(ctx);
                 return;
             }
-            
+
             Result = result;
             await Finish(ctx);
         }
@@ -82,11 +82,11 @@ namespace PluralKit.Bot.Interactive
             _running = true;
 
             var queue = _ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>();
-            
+
             var messageDispatch = queue.WaitFor(MessagePredicate, Timeout, cts.Token);
 
             await Start();
-            
+
             cts.Token.Register(() => _tcs.TrySetException(new TimeoutException("Action timed out")));
 
             try
@@ -101,7 +101,7 @@ namespace PluralKit.Bot.Interactive
             }
         }
 
-        public YesNoPrompt(Context ctx): base(ctx)
+        public YesNoPrompt(Context ctx) : base(ctx)
         {
             User = ctx.Author.Id;
         }

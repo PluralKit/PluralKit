@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace PluralKit.Core
 {
@@ -14,7 +14,8 @@ namespace PluralKit.Core
         [JsonProperty("prefix")] public string Prefix { get; set; }
         [JsonProperty("suffix")] public string Suffix { get; set; }
 
-        [JsonIgnore] public bool Valid =>
+        [JsonIgnore]
+        public bool Valid =>
             Prefix != null || Suffix != null
             && ProxyString.Length <= Limits.MaxProxyTagLength;
 

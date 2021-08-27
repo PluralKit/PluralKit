@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -22,7 +22,7 @@ namespace PluralKit.Bot
         public async Task UpdateSystemId(Context ctx)
         {
             AssertBotAdmin(ctx);
-            
+
             var target = await ctx.MatchSystem();
             if (target == null)
                 throw new PKError("Unknown system.");
@@ -38,14 +38,14 @@ namespace PluralKit.Bot
             if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
 
-            await _db.Execute(c => _repo.UpdateSystem(c, target.Id, new SystemPatch {Hid = newHid}));
+            await _db.Execute(c => _repo.UpdateSystem(c, target.Id, new SystemPatch { Hid = newHid }));
             await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
         }
-        
+
         public async Task UpdateMemberId(Context ctx)
         {
             AssertBotAdmin(ctx);
-            
+
             var target = await ctx.MatchMember();
             if (target == null)
                 throw new PKError("Unknown member.");
@@ -60,8 +60,8 @@ namespace PluralKit.Bot
 
             if (!await ctx.PromptYesNo($"Change member ID of **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`) to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
-            
-            await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch {Hid = newHid}));
+
+            await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch { Hid = newHid }));
             await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
         }
 
@@ -84,7 +84,7 @@ namespace PluralKit.Bot
             if (!await ctx.PromptYesNo($"Change group ID of **{target.Name}** (`{target.Hid}`) to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
 
-            await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch {Hid = newHid}));
+            await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch { Hid = newHid }));
             await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
         }
 
@@ -109,7 +109,7 @@ namespace PluralKit.Bot
 
             if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update"))
                 throw new PKError("Member limit change cancelled.");
-            
+
             await using var conn = await _db.Obtain();
             await _repo.UpdateSystem(conn, target.Id, new SystemPatch
             {

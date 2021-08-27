@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -48,15 +48,15 @@ namespace PluralKit.Bot
             
             // There are two "Logger"s. They seem to be entirely unrelated. Don't ask.
             new LoggerBot("Logger#6088", 298822483060981760 , ExtractLoggerA, webhookName: "Logger"),
-            new LoggerBot("Logger#6278", 327424261180620801, ExtractLoggerB), 
-            
+            new LoggerBot("Logger#6278", 327424261180620801, ExtractLoggerB),
+
             new LoggerBot("Dyno", 155149108183695360, ExtractDyno,  webhookName: "Dyno"),
             new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja, webhookName: "Auttaja"),
-            new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot), 
-            new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot), 
-            new LoggerBot("Mantaro", 213466096718708737, ExtractMantaro), 
-            new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat, webhookName: "UnbelievaBoat"), 
-            new LoggerBot("Vanessa", 310261055060443136, fuzzyExtractFunc: ExtractVanessa), 
+            new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot),
+            new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot),
+            new LoggerBot("Mantaro", 213466096718708737, ExtractMantaro),
+            new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat, webhookName: "UnbelievaBoat"),
+            new LoggerBot("Vanessa", 310261055060443136, fuzzyExtractFunc: ExtractVanessa),
             new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL),
             new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot),
             new LoggerBot("GiselleBot", 356831787445387285, ExtractGiselleBot),
@@ -72,7 +72,7 @@ namespace PluralKit.Bot
         private readonly IDiscordCache _cache;
         private readonly Bot _bot; // todo: get rid of this nasty
         private readonly ILogger _logger;
-        
+
         public LoggerCleanService(IDatabase db, DiscordApiClient client, IDiscordCache cache, Bot bot, ILogger logger)
         {
             _db = db;
@@ -87,17 +87,17 @@ namespace PluralKit.Bot
         public async ValueTask HandleLoggerBotCleanup(Message msg)
         {
             var channel = _cache.GetChannel(msg.ChannelId);
-            
+
             if (channel.Type != Channel.ChannelType.GuildText) return;
             if (!_bot.PermissionsIn(channel.Id).HasFlag(PermissionSet.ManageMessages)) return;
- 
+
             // If this message is from a *webhook*, check if the name matches one of the bots we know
             // TODO: do we need to do a deeper webhook origin check, or would that be too hard on the rate limit?
             // If it's from a *bot*, check the bot ID to see if we know it.
             LoggerBot bot = null;
             if (msg.WebhookId != null) _botsByWebhookName.TryGetValue(msg.Author.Username, out bot);
             else if (msg.Author.Bot) _bots.TryGetValue(msg.Author.Id, out bot);
-            
+
             // If we didn't find anything before, or what we found is an unsupported bot, bail
             if (bot == null) return;
 
@@ -113,10 +113,10 @@ namespace PluralKit.Bot
                     // either way but shouldn't be too much, given it's constrained by user ID and guild.
                     var fuzzy = bot.FuzzyExtractFunc(msg);
                     if (fuzzy == null) return;
-                    
+
                     _logger.Debug("Fuzzy logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
                         bot.Name, msg.Id, fuzzy);
-                    
+
                     var mid = await _db.Execute(conn =>
                         conn.QuerySingleOrDefaultAsync<ulong?>(
                             "select mid from messages where sender = @User and mid > @ApproxID and guild = @Guild limit 1",
@@ -127,11 +127,11 @@ namespace PluralKit.Bot
                                 ApproxId = DiscordUtils.InstantToSnowflake(
                                     fuzzy.Value.ApproxTimestamp - Duration.FromSeconds(3))
                             }));
-                    
+
                     // If we didn't find a corresponding message, bail
-                    if (mid == null) 
-                        return; 
-                    
+                    if (mid == null)
+                        return;
+
                     // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
                     await _client.DeleteMessage(msg.ChannelId, msg.Id);
                 }
@@ -140,12 +140,12 @@ namespace PluralKit.Bot
                     // Other bots give us the message ID itself, and we can just extract that from the database directly.
                     var extractedId = bot.ExtractFunc(msg);
                     if (extractedId == null) return; // If we didn't find anything, bail.
-                    
+
                     _logger.Debug("Pure logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
                         bot.Name, msg.Id, extractedId);
 
                     var mid = await _db.Execute(conn => conn.QuerySingleOrDefaultAsync<ulong?>(
-                        "select mid from messages where original_mid = @Mid", new {Mid = extractedId.Value}));
+                        "select mid from messages where original_mid = @Mid", new { Mid = extractedId.Value }));
                     if (mid == null) return;
 
                     // If we've gotten this far, we found a logged deletion of a trigger message. Just yeet it!
@@ -167,9 +167,9 @@ namespace PluralKit.Bot
             // Regex also checks that this is a deletion.
             var stringWithId = msg.Embeds?.FirstOrDefault()?.Description ?? msg.Content;
             if (stringWithId == null) return null;
-            
+
             var match = _auttajaRegex.Match(stringWithId);
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static ulong? ExtractDyno(Message msg)
@@ -178,7 +178,7 @@ namespace PluralKit.Bot
             var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || !(embed.Description?.Contains("deleted in") ?? false)) return null;
             var match = _dynoRegex.Match(embed.Footer.Text ?? "");
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static ulong? ExtractLoggerA(Message msg)
@@ -188,11 +188,11 @@ namespace PluralKit.Bot
             var embed = msg.Embeds?.FirstOrDefault();
             if (embed == null) return null;
             if (!embed.Description.StartsWith("Message deleted in")) return null;
-            
+
             var idField = embed.Fields.FirstOrDefault(f => f.Name == "ID");
             if (idField.Value == null) return null; // "OrDefault" = all-null object
             var match = _loggerARegex.Match(idField.Value);
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static ulong? ExtractLoggerB(Message msg)
@@ -202,7 +202,7 @@ namespace PluralKit.Bot
             var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || !(embed.Title?.EndsWith("A Message Was Deleted!") ?? false)) return null;
             var match = _loggerBRegex.Match(embed.Footer.Text ?? "");
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static ulong? ExtractGenericBot(Message msg)
@@ -211,7 +211,7 @@ namespace PluralKit.Bot
             var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || !(embed.Title?.Contains("Message Deleted") ?? false)) return null;
             var match = _basicRegex.Match(embed.Footer.Text ?? "");
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static ulong? ExtractBlargBot(Message msg)
@@ -221,7 +221,7 @@ namespace PluralKit.Bot
             if (embed == null || !(embed.Title?.EndsWith("Message Deleted") ?? false)) return null;
             var field = embed.Fields.FirstOrDefault(f => f.Name == "Message ID");
             var match = _basicRegex.Match(field.Value ?? "");
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static ulong? ExtractMantaro(Message msg)
@@ -229,7 +229,7 @@ namespace PluralKit.Bot
             // Plain message, "Message (ID: [id]) created by [user] (ID: [id]) in channel [channel] was deleted.
             if (!(msg.Content?.Contains("was deleted.") ?? false)) return null;
             var match = _mantaroRegex.Match(msg.Content);
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static FuzzyExtractResult? ExtractCarlBot(Message msg)
@@ -239,13 +239,13 @@ namespace PluralKit.Bot
             var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || embed.Timestamp == null || !(embed.Title?.StartsWith("Message deleted in") ?? false)) return null;
             var match = _carlRegex.Match(embed.Footer.Text ?? "");
-            return match.Success 
+            return match.Success
                 ? new FuzzyExtractResult
                 {
-                    User = ulong.Parse(match.Groups[1].Value), 
+                    User = ulong.Parse(match.Groups[1].Value),
                     ApproxTimestamp = OffsetDateTimePattern.Rfc3339.Parse(embed.Timestamp).GetValueOrThrow().ToInstant()
                 }
-                : (FuzzyExtractResult?) null;
+                : (FuzzyExtractResult?)null;
         }
 
         private static FuzzyExtractResult? ExtractCircle(Message msg)
@@ -261,16 +261,17 @@ namespace PluralKit.Bot
                 var field = embed.Fields.FirstOrDefault(f => f.Name == "Message Author");
                 if (field.Value == null) return null;
                 stringWithId = field.Value;
-            } 
+            }
             if (stringWithId == null) return null;
-            
+
             var match = _circleRegex.Match(stringWithId);
-            return match.Success 
-                ? new FuzzyExtractResult {
+            return match.Success
+                ? new FuzzyExtractResult
+                {
                     User = ulong.Parse(match.Groups[1].Value),
                     ApproxTimestamp = msg.Timestamp().ToInstant()
                 }
-                : (FuzzyExtractResult?) null;
+                : (FuzzyExtractResult?)null;
         }
 
         private static FuzzyExtractResult? ExtractPancake(Message msg)
@@ -286,18 +287,18 @@ namespace PluralKit.Bot
                     User = ulong.Parse(match.Groups[1].Value),
                     ApproxTimestamp = msg.Timestamp().ToInstant()
                 }
-                : (FuzzyExtractResult?) null;
+                : (FuzzyExtractResult?)null;
         }
-        
+
         private static ulong? ExtractUnbelievaBoat(Message msg)
         {
             // Embed author is "Message Deleted", footer contains message ID per regex
             var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Footer == null || embed.Author?.Name != "Message Deleted") return null;
             var match = _unbelievaboatRegex.Match(embed.Footer.Text ?? "");
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
-        
+
         private static FuzzyExtractResult? ExtractVanessa(Message msg)
         {
             // Title is "Message Deleted", embed description contains mention
@@ -310,9 +311,9 @@ namespace PluralKit.Bot
                     User = ulong.Parse(match.Groups[1].Value),
                     ApproxTimestamp = msg.Timestamp().ToInstant()
                 }
-                : (FuzzyExtractResult?) null;
+                : (FuzzyExtractResult?)null;
         }
-        
+
         private static FuzzyExtractResult? ExtractSAL(Message msg)
         {
             // Title is "Message Deleted!", field "Message Author" contains ID
@@ -327,7 +328,7 @@ namespace PluralKit.Bot
                     User = ulong.Parse(match.Groups[1].Value),
                     ApproxTimestamp = msg.Timestamp().ToInstant()
                 }
-                : (FuzzyExtractResult?) null;
+                : (FuzzyExtractResult?)null;
         }
 
         private static FuzzyExtractResult? ExtractGearBot(Message msg)
@@ -342,7 +343,7 @@ namespace PluralKit.Bot
                     User = ulong.Parse(match.Groups[1].Value),
                     ApproxTimestamp = msg.Timestamp().ToInstant()
                 }
-                : (FuzzyExtractResult?) null;
+                : (FuzzyExtractResult?)null;
         }
 
         private static ulong? ExtractGiselleBot(Message msg)
@@ -350,7 +351,7 @@ namespace PluralKit.Bot
             var embed = msg.Embeds?.FirstOrDefault();
             if (embed?.Title == null || embed.Title != "🗑 Message Deleted") return null;
             var match = _GiselleRegex.Match(embed?.Description);
-            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?) null;
+            return match.Success ? ulong.Parse(match.Groups[1].Value) : (ulong?)null;
         }
 
         private static FuzzyExtractResult? ExtractVortex(Message msg)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -68,18 +68,18 @@ namespace Myriad.Gateway
 
             _conn = new ShardConnection(_jsonSerializerOptions, _logger);
         }
-        
+
         private async Task ShardLoop()
         {
             // may be superfluous but this adds shard id to ambient context which is nice
             using var _ = LogContext.PushProperty("ShardId", _info.ShardId);
-            
+
             while (true)
             {
                 try
                 {
                     await ConnectInner();
-                    
+
                     await HandleConnectionOpened();
 
                     while (_conn.State == WebSocketState.Open)
@@ -90,7 +90,7 @@ namespace Myriad.Gateway
 
                         await _stateManager.HandlePacketReceived(packet);
                     }
-                    
+
                     await HandleConnectionClosed(_conn.CloseStatus, _conn.CloseStatusDescription);
 
                     _logger.Information("Shard {ShardId}: Reconnecting after delay {ReconnectDelay}",
@@ -103,20 +103,20 @@ namespace Myriad.Gateway
                 catch (Exception e)
                 {
                     _logger.Error(e, "Shard {ShardId}: Error in main shard loop, reconnecting in 5 seconds...", _info.ShardId);
-                    
+
                     // todo: exponential backoff here? this should never happen, ideally...
                     await Task.Delay(TimeSpan.FromSeconds(5));
                 }
             }
         }
-        
+
         public async Task Start()
         {
             if (_worker == null)
                 _worker = ShardLoop();
 
             // we can probably TCS this instead of spin loop but w/e
-            while (State != ShardState.Identifying) 
+            while (State != ShardState.Identifying)
                 await Task.Delay(100);
         }
 
@@ -128,7 +128,7 @@ namespace Myriad.Gateway
                 Payload = payload
             });
         }
-        
+
         private async Task ConnectInner()
         {
             while (true)
@@ -148,12 +148,12 @@ namespace Myriad.Gateway
                 }
             }
         }
-        
+
         private async Task DisconnectInner(WebSocketCloseStatus closeStatus)
         {
             await _conn.Disconnect(closeStatus, null);
         }
-        
+
         private async Task SendIdentify()
         {
             await _conn.Send(new GatewayPacket
@@ -165,8 +165,8 @@ namespace Myriad.Gateway
                     Intents = _settings.Intents,
                     Properties = new GatewayIdentify.ConnectionProperties
                     {
-                        Browser = LibraryName, 
-                        Device = LibraryName, 
+                        Browser = LibraryName,
+                        Device = LibraryName,
                         Os = Environment.OSVersion.ToString()
                     },
                     Shard = _info,
@@ -175,7 +175,7 @@ namespace Myriad.Gateway
                 }
             });
         }
-        
+
         private async Task SendResume((string SessionId, int? LastSeq) arg)
         {
             await _conn.Send(new GatewayPacket
@@ -184,12 +184,12 @@ namespace Myriad.Gateway
                 Payload = new GatewayResume(_settings.Token, arg.SessionId, arg.LastSeq ?? 0)
             });
         }
-        
+
         private async Task SendHeartbeat(int? lastSeq)
         {
-            await _conn.Send(new GatewayPacket {Opcode = GatewayOpcode.Heartbeat, Payload = lastSeq});
+            await _conn.Send(new GatewayPacket { Opcode = GatewayOpcode.Heartbeat, Payload = lastSeq });
         }
-        
+
         private async Task Reconnect(WebSocketCloseStatus closeStatus, TimeSpan delay)
         {
             _reconnectDelay = delay;
@@ -202,7 +202,7 @@ namespace Myriad.Gateway
                 Ready?.Invoke();
             if (arg is ResumedEvent)
                 Resumed?.Invoke();
-            
+
             await (OnEventReceived?.Invoke(arg) ?? Task.CompletedTask);
         }
 
@@ -215,7 +215,7 @@ namespace Myriad.Gateway
 
         private async Task HandleConnectionClosed(WebSocketCloseStatus? closeStatus, string? description)
         {
-            _logger.Information("Shard {ShardId}: Connection closed ({CloseStatus}/{Description})", 
+            _logger.Information("Shard {ShardId}: Connection closed ({CloseStatus}/{Description})",
                 _info.ShardId, closeStatus, description ?? "<null>");
             await _stateManager.HandleConnectionClosed();
             SocketClosed?.Invoke(closeStatus, description);

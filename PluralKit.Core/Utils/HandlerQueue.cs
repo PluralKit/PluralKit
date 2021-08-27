@@ -23,7 +23,7 @@ namespace PluralKit.Core
                 return default;
             }
 
-            var entry = new HandlerEntry {Predicate = predicate, Handler = Handler};
+            var entry = new HandlerEntry { Predicate = predicate, Handler = Handler };
             _handlers[Interlocked.Increment(ref _seq)] = entry;
 
             // Wait for either the event task or the timeout task

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 
 namespace PluralKit.Core
@@ -7,7 +7,7 @@ namespace PluralKit.Core
     {
         public abstract UpdateQueryBuilder Apply(UpdateQueryBuilder b);
 
-        public void AssertIsValid() {}
+        public void AssertIsValid() { }
 
         protected bool AssertValid(string input, string name, int maxLength, Func<string, bool>? validate = null)
         {
@@ -28,7 +28,7 @@ namespace PluralKit.Core
 
     public class ValidationError: Exception
     {
-        public ValidationError(string message): base(message) { }
+        public ValidationError(string message) : base(message) { }
     }
 
     public class FieldTooLongError: ValidationError
@@ -37,7 +37,7 @@ namespace PluralKit.Core
         public int MaxLength;
         public int ActualLength;
 
-        public FieldTooLongError(string name, int maxLength, int actualLength):
+        public FieldTooLongError(string name, int maxLength, int actualLength) :
             base($"{name} too long ({actualLength} > {maxLength})")
         {
             Name = name;

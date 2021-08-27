@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +19,7 @@ namespace PluralKit.Bot
         public GroupId? GroupFilter { get; set; }
         public string? Search { get; set; }
         public bool SearchDescription { get; set; }
-        
+
         public ListType Type { get; set; }
         public bool IncludeMessageCount { get; set; }
         public bool IncludeLastSwitch { get; set; }
@@ -27,7 +27,7 @@ namespace PluralKit.Bot
         public bool IncludeCreated { get; set; }
         public bool IncludeAvatar { get; set; }
         public bool IncludePronouns { get; set; }
-        
+
         public string CreateFilterString()
         {
             var str = new StringBuilder();
@@ -46,7 +46,7 @@ namespace PluralKit.Bot
                 SortProperty.Random => "randomly",
                 _ => new ArgumentOutOfRangeException($"Couldn't find readable string for sort property {SortProperty}")
             });
-            
+
             if (Search != null)
             {
                 str.Append($", searching for \"{Search}\"");
@@ -67,7 +67,7 @@ namespace PluralKit.Bot
         public DatabaseViewsExt.MemberListQueryOptions ToQueryOptions() =>
             new DatabaseViewsExt.MemberListQueryOptions
             {
-                PrivacyFilter = PrivacyFilter, 
+                PrivacyFilter = PrivacyFilter,
                 GroupFilter = GroupFilter,
                 Search = Search,
                 SearchDescription = SearchDescription
@@ -80,7 +80,7 @@ namespace PluralKit.Bot
         {
             IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
                 opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
-            
+
             var randGen = new global::System.Random();
 
             var culture = StringComparer.InvariantCultureIgnoreCase;
@@ -112,7 +112,7 @@ namespace PluralKit.Bot
                 .ThenBy(m => m.NameFor(ctx), culture);
         }
     }
-    
+
     public enum SortProperty
     {
         Name,

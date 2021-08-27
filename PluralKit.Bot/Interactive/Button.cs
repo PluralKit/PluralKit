@@ -15,9 +15,9 @@ namespace PluralKit.Bot.Interactive
 
         public MessageComponent ToMessageComponent() => new()
         {
-            Type = ComponentType.Button, 
-            Label = Label, 
-            Style = Style, 
+            Type = ComponentType.Button,
+            Label = Label,
+            Style = Style,
             CustomId = CustomId,
             Disabled = Disabled
         };

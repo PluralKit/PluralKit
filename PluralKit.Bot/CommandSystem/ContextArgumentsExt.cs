@@ -14,8 +14,8 @@ namespace PluralKit.Bot
     {
         public static string PopArgument(this Context ctx) =>
             ctx.Parameters.Pop();
-        
-        public static string PeekArgument(this Context ctx) => 
+
+        public static string PeekArgument(this Context ctx) =>
             ctx.Parameters.Peek();
 
         public static string RemainderOrNull(this Context ctx, bool skipFlags = true) =>
@@ -23,10 +23,10 @@ namespace PluralKit.Bot
 
         public static bool HasNext(this Context ctx, bool skipFlags = true) =>
             ctx.RemainderOrNull(skipFlags) != null;
-        
-        public static string FullCommand(this Context ctx) => 
+
+        public static string FullCommand(this Context ctx) =>
             ctx.Parameters.FullCommand;
-        
+
         /// <summary>
         /// Checks if the next parameter is equal to one of the given keywords. Case-insensitive.
         /// </summary>
@@ -58,7 +58,7 @@ namespace PluralKit.Bot
         {
             // Flags are *ALWAYS PARSED LOWERCASE*. This means we skip out on a "ToLower" call here.
             // Can assume the caller array only contains lowercase *and* the set below only contains lowercase
-            
+
             var flags = ctx.Parameters.Flags();
             return potentialMatches.Any(potentialMatch => flags.Contains(potentialMatch));
         }
@@ -66,7 +66,7 @@ namespace PluralKit.Bot
         public static async Task<bool> MatchClear(this Context ctx, string toClear = null)
         {
             var matched = ctx.Match("clear", "reset") || ctx.MatchFlag("c", "clear");
-            if (matched && toClear != null) 
+            if (matched && toClear != null)
                 return await ctx.ConfirmClear(toClear);
             return matched;
         }
@@ -82,11 +82,11 @@ namespace PluralKit.Bot
 
             if (parseRawMessageId && ulong.TryParse(word, out var mid))
                 return (mid, null);
-            
+
             var match = Regex.Match(word, "https://(?:\\w+.)?discord(?:app)?.com/channels/\\d+/(\\d+)/(\\d+)");
             if (!match.Success)
                 return (null, null);
-            
+
             var channelId = ulong.Parse(match.Groups[1].Value);
             var messageId = ulong.Parse(match.Groups[2].Value);
             ctx.PopArgument();
@@ -108,11 +108,11 @@ namespace PluralKit.Bot
 
                 if (restrictToSystem != null && member.System != restrictToSystem)
                     throw Errors.NotOwnMemberError; // TODO: name *which* member?
-                
+
                 members.Add(member); // Then add to the final output list
             }
             if (members.Count == 0) throw new PKSyntaxError($"You must input at least one member.");
-            
+
             return members;
         }
 
@@ -131,10 +131,10 @@ namespace PluralKit.Bot
 
                 if (restrictToSystem != null && group.System != restrictToSystem)
                     throw Errors.NotOwnGroupError; // TODO: name *which* group?
-                
+
                 groups.Add(group); // Then add to the final output list
             }
-            
+
             if (groups.Count == 0) throw new PKSyntaxError($"You must input at least one group.");
 
             return groups;

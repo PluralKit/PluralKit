@@ -1,4 +1,4 @@
-﻿using Autofac;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +13,7 @@ namespace PluralKit.Core
             builder.RegisterType<DatabaseMigrator>().SingleInstance();
             builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
             builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
-            
+
             builder.Populate(new ServiceCollection().AddMemoryCache());
         }
     }

@@ -8,7 +8,7 @@ namespace PluralKit.Bot
     public class SystemList
     {
         private readonly IDatabase _db;
-        
+
         public SystemList(IDatabase db)
         {
             _db = db;
@@ -26,15 +26,15 @@ namespace PluralKit.Bot
         private string GetEmbedTitle(PKSystem target, MemberListOptions opts)
         {
             var title = new StringBuilder("Members of ");
-            
-            if (target.Name != null) 
+
+            if (target.Name != null)
                 title.Append($"{target.Name} (`{target.Hid}`)");
-            else 
+            else
                 title.Append($"`{target.Hid}`");
- 
+
             if (opts.Search != null)
                 title.Append($" matching **{opts.Search}**");
-            
+
             return title.ToString();
         }
     }

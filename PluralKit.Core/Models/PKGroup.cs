@@ -1,4 +1,4 @@
-﻿using NodaTime;
+using NodaTime;
 
 
 
@@ -24,7 +24,7 @@ namespace PluralKit.Core
         public static bool operator !=(GroupId left, GroupId right) => !left.Equals(right);
 
         public int CompareTo(GroupId other) => Value.CompareTo(other.Value);
-        
+
         public override string ToString() => $"Group #{Value}";
     }
 
@@ -46,7 +46,7 @@ namespace PluralKit.Core
         public PrivacyLevel IconPrivacy { get; private set; }
         public PrivacyLevel ListPrivacy { get; private set; }
         public PrivacyLevel Visibility { get; private set; }
-        
+
         public Instant Created { get; private set; }
     }
 
@@ -54,7 +54,7 @@ namespace PluralKit.Core
     {
         public static string? DescriptionFor(this PKGroup group, LookupContext ctx) =>
             group.DescriptionPrivacy.Get(ctx, group.Description);
-        
+
         public static string? IconFor(this PKGroup group, LookupContext ctx) =>
             group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
     }

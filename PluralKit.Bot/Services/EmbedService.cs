@@ -16,7 +16,8 @@ using NodaTime;
 
 using PluralKit.Core;
 
-namespace PluralKit.Bot {
+namespace PluralKit.Bot
+{
     public class EmbedService
     {
         private readonly IDatabase _db;
@@ -42,11 +43,11 @@ namespace PluralKit.Bot {
 
             return Task.WhenAll(ids.Select(Inner));
         }
-        
+
         public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
         {
             await using var conn = await _db.Obtain();
-            
+
             // Fetch/render info for all accounts simultaneously
             var accounts = await _repo.GetSystemAccounts(conn, system.Id);
             var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
@@ -81,13 +82,13 @@ namespace PluralKit.Bot {
                     eb.Field(new("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)))));
             }
 
-            if (system.Tag != null) 
+            if (system.Tag != null)
                 eb.Field(new("Tag", system.Tag.EscapeMarkdown(), true));
 
             if (cctx.Guild != null)
             {
                 var guildSettings = await _repo.GetSystemGuild(conn, cctx.Guild.Id, system.Id);
-                
+
                 if (guildSettings.Tag != null && guildSettings.TagEnabled)
                     eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", guildSettings.Tag
                         .EscapeMarkdown(), true));
@@ -114,7 +115,8 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Embed CreateLoggedMessageEmbed(Message triggerMessage, Message proxiedMessage, string systemHid, PKMember member, string channelName, string oldContent = null) {
+        public Embed CreateLoggedMessageEmbed(Message triggerMessage, Message proxiedMessage, string systemHid, PKMember member, string channelName, string oldContent = null)
+        {
             // TODO: pronouns in ?-reacted response using this card
             var timestamp = DiscordUtils.SnowflakeToInstant(proxiedMessage.Id);
             var name = proxiedMessage.Author.Username;
@@ -129,7 +131,7 @@ namespace PluralKit.Bot {
 
             if (oldContent != null)
                 embed.Field(new("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)));
-            
+
             return embed.Build();
         }
 
@@ -155,7 +157,7 @@ namespace PluralKit.Bot {
             }
 
             await using var conn = await _db.Obtain();
-            
+
             var guildSettings = guild != null ? await _repo.GetMemberGuild(conn, guild.Id, member.Id) : null;
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
@@ -179,19 +181,19 @@ namespace PluralKit.Bot {
             var description = "";
             if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
             if (guildSettings?.AvatarUrl != null)
-                if (member.AvatarFor(ctx) != null) 
+                if (member.AvatarFor(ctx) != null)
                     description += $"*(this member has a server-specific avatar set; [click here]({member.AvatarUrl.TryGetCleanCdnUrl()}) to see the global avatar)*\n";
                 else
                     description += "*(this member has a server-specific avatar set)*\n";
             if (description != "") eb.Description(description);
-            
+
             if (avatar != null) eb.Thumbnail(new(avatar.TryGetCleanCdnUrl()));
 
             if (!member.DisplayName.EmptyOrNull() && member.NamePrivacy.CanAccess(ctx)) eb.Field(new("Display Name", member.DisplayName.Truncate(1024), true));
             if (guild != null && guildDisplayName != null) eb.Field(new($"Server Nickname (for {guild.Name})", guildDisplayName.Truncate(1024), true));
             if (member.BirthdayFor(ctx) != null) eb.Field(new("Birthdate", member.BirthdayString, true));
-            if (member.PronounsFor(ctx) is {} pronouns && !string.IsNullOrWhiteSpace(pronouns)) eb.Field(new("Pronouns", pronouns.Truncate(1024), true));
-            if (member.MessageCountFor(ctx) is {} count && count > 0) eb.Field(new("Message Count", member.MessageCount.ToString(), true));
+            if (member.PronounsFor(ctx) is { } pronouns && !string.IsNullOrWhiteSpace(pronouns)) eb.Field(new("Pronouns", pronouns.Truncate(1024), true));
+            if (member.MessageCountFor(ctx) is { } count && count > 0) eb.Field(new("Message Count", member.MessageCount.ToString(), true));
             if (member.HasProxyTags) eb.Field(new("Proxy Tags", member.ProxyTagsString("\n").Truncate(1024), true));
             // --- For when this gets added to the member object itself or however they get added
             // if (member.LastMessage != null && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last message:" FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value)));
@@ -208,7 +210,7 @@ namespace PluralKit.Bot {
                 eb.Field(new($"Groups ({groups.Count})", content.Truncate(1000)));
             }
 
-            if (member.DescriptionFor(ctx) is {} desc) 
+            if (member.DescriptionFor(ctx) is { } desc)
                 eb.Field(new("Description", member.Description.NormalizeLineEndSpacing(), false));
 
             return eb.Build();
@@ -217,7 +219,7 @@ namespace PluralKit.Bot {
         public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
         {
             await using var conn = await _db.Obtain();
-            
+
             var pctx = ctx.LookupContextFor(system);
             var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(conn, target.Id);
 
@@ -246,7 +248,7 @@ namespace PluralKit.Bot {
 
             if (target.DisplayName != null)
                 eb.Field(new("Display Name", target.DisplayName, true));
-                
+
             if (!target.Color.EmptyOrNull()) eb.Field(new("Color", $"#{target.Color}", true));
 
             if (target.ListPrivacy.CanAccess(pctx))
@@ -261,7 +263,7 @@ namespace PluralKit.Bot {
             if (target.DescriptionFor(pctx) is { } desc)
                 eb.Field(new("Description", desc));
 
-            if (target.IconFor(pctx) is {} icon)
+            if (target.IconFor(pctx) is { } icon)
                 eb.Thumbnail(new(icon.TryGetCleanCdnUrl()));
 
             return eb.Build();
@@ -349,14 +351,14 @@ namespace PluralKit.Bot {
                     .Select(role => role.Name));
                 eb.Field(new($"Account roles ({roles.Count})", rolesString.Truncate(1024)));
             }
-            
+
             return eb.Build();
         }
 
         public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters, bool showFlat)
         {
             string color = system.Color;
-            if (group != null) 
+            if (group != null)
             {
                 color = group.Color;
             }
@@ -408,7 +410,7 @@ namespace PluralKit.Bot {
             foreach (var pair in membersOrdered)
             {
                 var frac = pair.Value / period;
-                eb.Field(new(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac*100:F0}% ({pair.Value.FormatDuration()})"));
+                eb.Field(new(pair.Key?.NameFor(ctx) ?? "*(no fronter)*", $"{frac * 100:F0}% ({pair.Value.FormatDuration()})"));
             }
 
             if (membersOrdered.Count > maxEntriesToDisplay)

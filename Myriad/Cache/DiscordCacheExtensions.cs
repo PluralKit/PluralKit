@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 using Myriad.Gateway;
 
@@ -69,9 +69,9 @@ namespace Myriad.Cache
         private static async ValueTask SaveMessageCreate(this IDiscordCache cache, MessageCreateEvent evt)
         {
             await cache.TrySaveDmChannelStub(evt.GuildId, evt.ChannelId);
-            
+
             await cache.SaveUser(evt.Author);
-            foreach (var mention in evt.Mentions) 
+            foreach (var mention in evt.Mentions)
                 await cache.SaveUser(mention);
         }
 
@@ -84,7 +84,7 @@ namespace Myriad.Cache
 
         private static async ValueTask SaveThreadListSync(this IDiscordCache cache, ThreadListSyncEvent evt)
         {
-            foreach (var thread in evt.Threads) 
+            foreach (var thread in evt.Threads)
                 await cache.SaveChannel(thread);
         }
     }

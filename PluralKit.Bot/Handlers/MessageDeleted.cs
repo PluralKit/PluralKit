@@ -14,7 +14,7 @@ namespace PluralKit.Bot
     public class MessageDeleted: IEventHandler<MessageDeleteEvent>, IEventHandler<MessageDeleteBulkEvent>
     {
         private static readonly TimeSpan MessageDeleteDelay = TimeSpan.FromSeconds(15);
-        
+
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly ILogger _logger;
@@ -27,7 +27,7 @@ namespace PluralKit.Bot
             _lastMessage = lastMessage;
             _logger = logger.ForContext<MessageDeleted>();
         }
-        
+
         public Task Handle(Shard shard, MessageDeleteEvent evt)
         {
             // Delete deleted webhook messages from the data store
@@ -54,11 +54,11 @@ namespace PluralKit.Bot
             {
                 await Task.Delay(MessageDeleteDelay);
 
-                _logger.Information("Bulk deleting {Count} messages in channel {Channel}", 
+                _logger.Information("Bulk deleting {Count} messages in channel {Channel}",
                     evt.Ids.Length, evt.ChannelId);
                 await _db.Execute(c => _repo.DeleteMessagesBulk(c, evt.Ids));
             }
-            
+
             _lastMessage.HandleMessageDeletion(evt.ChannelId, evt.Ids.ToList());
             _ = Inner();
             return Task.CompletedTask;

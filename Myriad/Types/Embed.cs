@@ -1,4 +1,4 @@
-﻿namespace Myriad.Types
+namespace Myriad.Types
 {
     public record Embed
     {
@@ -16,44 +16,44 @@
         public EmbedAuthor? Author { get; init; }
         public Field[]? Fields { get; init; }
 
-        public record EmbedFooter (
+        public record EmbedFooter(
             string Text,
             string? IconUrl = null,
             string? ProxyIconUrl = null
         );
 
-        public record EmbedImage (
+        public record EmbedImage(
             string? Url,
             uint? Width = null,
             uint? Height = null
         );
 
-        public record EmbedThumbnail (
+        public record EmbedThumbnail(
             string? Url,
             string? ProxyUrl = null,
             uint? Width = null,
             uint? Height = null
         );
 
-        public record EmbedVideo (
+        public record EmbedVideo(
             string? Url,
             uint? Width = null,
             uint? Height = null
         );
 
-        public record EmbedProvider (
+        public record EmbedProvider(
             string? Name,
             string? Url
         );
 
-        public record EmbedAuthor (
+        public record EmbedAuthor(
             string? Name = null,
             string? Url = null,
             string? IconUrl = null,
             string? ProxyIconUrl = null
         );
 
-        public record Field (
+        public record Field(
             string Name,
             string Value,
             bool Inline = false

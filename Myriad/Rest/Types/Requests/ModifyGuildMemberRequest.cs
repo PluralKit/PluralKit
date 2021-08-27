@@ -1,4 +1,4 @@
-﻿namespace Myriad.Rest.Types
+namespace Myriad.Rest.Types
 {
     public record ModifyGuildMemberRequest
     {

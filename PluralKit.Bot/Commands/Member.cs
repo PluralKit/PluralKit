@@ -21,7 +21,7 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
         private readonly HttpClient _client;
-        
+
         public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client)
         {
             _embeds = embeds;
@@ -30,16 +30,18 @@ namespace PluralKit.Bot
             _client = client;
         }
 
-        public async Task NewMember(Context ctx) {
+        public async Task NewMember(Context ctx)
+        {
             if (ctx.System == null) throw Errors.NoSystemError;
             var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
-            
+
             // Hard name length cap
             if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
 
             // Warn if there's already a member by this name
             var existingMember = await _db.Execute(c => _repo.GetMemberByName(c, ctx.System.Id, memberName));
-            if (existingMember != null) {
+            if (existingMember != null)
+            {
                 var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
                 if (!await ctx.PromptYesNo(msg, "Create")) throw new PKError("Member creation cancelled.");
             }
@@ -61,10 +63,13 @@ namespace PluralKit.Bot
             Exception imageMatchError = null;
             if (avatarArg != null)
             {
-                try {
+                try
+                {
                     await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
                     await _db.Execute(conn => _repo.UpdateMember(conn, member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }));
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     imageMatchError = e;
                 }
             }
@@ -72,7 +77,7 @@ namespace PluralKit.Bot
             // Send confirmation and space hint
             await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
             if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
-                new {System = ctx.System.Id}))) //if has private members
+                new { System = ctx.System.Id }))) //if has private members
                 await ctx.Reply($"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
             if (avatarArg != null)
                 if (imageMatchError == null)
@@ -86,7 +91,7 @@ namespace PluralKit.Bot
             else if (memberCount >= Limits.MaxMembersWarnThreshold(memberLimit))
                 await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
         }
-        
+
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _db.Execute(c => _repo.GetSystem(c, target.System));
@@ -96,10 +101,10 @@ namespace PluralKit.Bot
         public async Task Soulscream(Context ctx, PKMember target)
         {
             // this is for a meme, please don't take this code seriously. :)
-            
+
             var name = target.NameFor(ctx.LookupContextFor(target));
             var encoded = HttpUtility.UrlEncode(name);
-            
+
             var resp = await _client.GetAsync($"https://onomancer.sibr.dev/api/generateStats2?name={encoded}");
             if (resp.StatusCode != HttpStatusCode.OK)
                 // lol

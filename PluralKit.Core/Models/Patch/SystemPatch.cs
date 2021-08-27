@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Text.RegularExpressions;
 
@@ -82,7 +82,7 @@ namespace PluralKit.Core
             // legacy: APIv1 uses "tz" instead of "timezone"
             // todo: remove in APIv2
             if (o.ContainsKey("tz")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
-            
+
             if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.ParsePrivacy("description_privacy");
             if (o.ContainsKey("member_list_privacy")) patch.MemberListPrivacy = o.ParsePrivacy("member_list_privacy");
             if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = o.ParsePrivacy("front_privacy");

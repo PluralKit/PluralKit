@@ -12,10 +12,10 @@ using Serilog;
 
 namespace PluralKit.Core
 {
-    public partial class BulkImporter : IAsyncDisposable
+    public partial class BulkImporter: IAsyncDisposable
     {
         private ILogger _logger { get; init; }
-        private ModelRepository _repo { get; init; } 
+        private ModelRepository _repo { get; init; }
 
         private PKSystem _system { get; set; }
         private IPKConnection _conn { get; init; }
@@ -41,16 +41,17 @@ namespace PluralKit.Core
                 _confirmFunc = confirmFunc,
             };
 
-            if (system == null) {
+            if (system == null)
+            {
                 system = await repo.CreateSystem(conn, null, tx);
                 await repo.AddAccount(conn, system.Id, userId);
                 importer._result.CreatedSystem = system.Hid;
                 importer._system = system;
             }
-            
+
             // Fetch all members in the system and log their names and hids
             var members = await conn.QueryAsync<PKMember>("select id, hid, name from members where system = @System",
-                new {System = system.Id});
+                new { System = system.Id });
             foreach (var m in members)
             {
                 importer._existingMemberHids[m.Hid] = m.Id;
@@ -105,11 +106,12 @@ namespace PluralKit.Core
             {
                 await _tx.RollbackAsync();
             }
-            catch (InvalidOperationException) {}
+            catch (InvalidOperationException) { }
         }
 
-        private class ImportException : Exception {
-            public ImportException(string Message) : base(Message) {}
+        private class ImportException: Exception
+        {
+            public ImportException(string Message) : base(Message) { }
         }
     }
 

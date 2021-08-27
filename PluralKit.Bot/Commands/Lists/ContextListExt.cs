@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,15 +18,15 @@ namespace PluralKit.Bot
         public static MemberListOptions ParseMemberListOptions(this Context ctx, LookupContext lookupCtx)
         {
             var p = new MemberListOptions();
-            
+
             // Short or long list? (parse this first, as it can potentially take a positional argument)
             var isFull = ctx.Match("f", "full", "big", "details", "long") || ctx.MatchFlag("f", "full");
             p.Type = isFull ? ListType.Long : ListType.Short;
-            
+
             // Search query
             if (ctx.HasNext())
                 p.Search = ctx.RemainderOrNull();
-            
+
             // Include description in search?
             if (ctx.MatchFlag("search-description", "filter-description", "in-description", "sd", "description", "desc"))
                 p.SearchDescription = true;
@@ -47,7 +47,7 @@ namespace PluralKit.Bot
                 p.Reverse = true;
 
             // Privacy filter (default is public only)
-            if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null; 
+            if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null;
             if (ctx.MatchFlag("private-only", "private", "priv")) p.PrivacyFilter = PrivacyLevel.Private;
             if (ctx.MatchFlag("public-only", "public", "pub")) p.PrivacyFilter = PrivacyLevel.Public;
 
@@ -55,7 +55,7 @@ namespace PluralKit.Bot
             if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)
                 // TODO: should this just return null instead of throwing or something? >.>
                 throw new PKError("You cannot look up private members of another system.");
-            
+
             // Additional fields to include in the search results
             if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
                 p.IncludeLastSwitch = true;
@@ -69,13 +69,13 @@ namespace PluralKit.Bot
                 p.IncludeAvatar = true;
             if (ctx.MatchFlag("with-pronouns", "wp"))
                 p.IncludePronouns = true;
-            
+
             // Always show the sort property, too
             if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
-            if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage= true;
+            if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
             if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
             if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
-            
+
             // Done!
             return p;
         }
@@ -96,116 +96,123 @@ namespace PluralKit.Bot
             {
                 // Add a global footer with the filter/sort string + result count
                 eb.Footer(new($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}."));
-                
+
                 // Then call the specific renderers
                 if (opts.Type == ListType.Short)
                     ShortRenderer(eb, page);
                 else
                     LongRenderer(eb, page);
-                    
+
                 return Task.CompletedTask;
             }
 
             void ShortRenderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
-            {  
+            {
                 // We may end up over the description character limit
                 // so run it through a helper that "makes it work" :)
                 eb.WithSimpleLineContent(page.Select(m =>
                 {
                     var ret = $"[`{m.Hid}`] **{m.NameFor(ctx)}** ";
 
-                    switch (opts.SortProperty) {
-                        case SortProperty.Birthdate: {
-                            var birthday = m.BirthdayFor(lookupCtx);
-                            if (birthday != null)
-                                ret += $"(birthday: {m.BirthdayString})";
-                            break;
-                        }
-                        case SortProperty.MessageCount: {
-                            if (m.MessageCountFor(lookupCtx) is {} count)
-                                ret += $"({count} messages)";
-                            break;
-                        }
-                        case SortProperty.LastSwitch: {
-                            if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
-                                ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                            break;
-                        }
-                        case SortProperty.LastMessage: {
-                            if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
-                                ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
-                            break;
-                        }
-                        case SortProperty.CreationDate: {
-                            if (m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
-                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                            break;
-                        }
-                        default: {
-                            if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is {} count)
-                                ret += $"({count} messages)";
-                            else if (opts.IncludeLastSwitch && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
-                                ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                            else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
-                                ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
-                            else if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
-                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                            else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is {} pronouns)
-                                    ret += $"({pronouns})";
-                            else if (m.HasProxyTags)
+                    switch (opts.SortProperty)
+                    {
+                        case SortProperty.Birthdate:
                             {
-                                var proxyTagsString = m.ProxyTagsString();
-                                if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
-                                    proxyTagsString = "tags too long, see member card";
-                                ret += $"*(*{proxyTagsString}*)*";
+                                var birthday = m.BirthdayFor(lookupCtx);
+                                if (birthday != null)
+                                    ret += $"(birthday: {m.BirthdayString})";
+                                break;
                             }
-                            break;
-                        }
+                        case SortProperty.MessageCount:
+                            {
+                                if (m.MessageCountFor(lookupCtx) is { } count)
+                                    ret += $"({count} messages)";
+                                break;
+                            }
+                        case SortProperty.LastSwitch:
+                            {
+                                if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                                    ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
+                                break;
+                            }
+                        case SortProperty.LastMessage:
+                            {
+                                if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
+                                    ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
+                                break;
+                            }
+                        case SortProperty.CreationDate:
+                            {
+                                if (m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                                    ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                                break;
+                            }
+                        default:
+                            {
+                                if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
+                                    ret += $"({count} messages)";
+                                else if (opts.IncludeLastSwitch && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                                    ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
+                                else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
+                                    ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
+                                else if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                                    ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                                else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is { } pronouns)
+                                    ret += $"({pronouns})";
+                                else if (m.HasProxyTags)
+                                {
+                                    var proxyTagsString = m.ProxyTagsString();
+                                    if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
+                                        proxyTagsString = "tags too long, see member card";
+                                    ret += $"*(*{proxyTagsString}*)*";
+                                }
+                                break;
+                            }
                     }
                     return ret;
                 }));
             }
-            
+
             void LongRenderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
             {
                 var zone = ctx.System?.Zone ?? DateTimeZone.Utc;
                 foreach (var m in page)
                 {
                     var profile = new StringBuilder($"**ID**: {m.Hid}");
-                    
+
                     if (m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                         profile.Append($"\n**Display name**: {m.DisplayName}");
-                    
-                    if (m.PronounsFor(lookupCtx) is {} pronouns)
+
+                    if (m.PronounsFor(lookupCtx) is { } pronouns)
                         profile.Append($"\n**Pronouns**: {pronouns}");
-                    
-                    if (m.BirthdayFor(lookupCtx) != null) 
+
+                    if (m.BirthdayFor(lookupCtx) != null)
                         profile.Append($"\n**Birthdate**: {m.BirthdayString}");
-                    
-                    if (m.ProxyTags.Count > 0) 
+
+                    if (m.ProxyTags.Count > 0)
                         profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
-                    
-                    if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) && m.MessageCountFor(lookupCtx) is {} count && count > 0)
+
+                    if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) && m.MessageCountFor(lookupCtx) is { } count && count > 0)
                         profile.Append($"\n**Message count:** {count}");
-                    
+
                     if ((opts.IncludeLastMessage || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
                         profile.Append($"\n**Last message:** {DiscordUtils.SnowflakeToInstant(lastMsg.Value).FormatZoned(zone)}");
-                    
+
                     if ((opts.IncludeLastSwitch || opts.SortProperty == SortProperty.LastSwitch) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                         profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(zone)}");
 
                     if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                         profile.Append($"\n**Created on:** {created.FormatZoned(zone)}");
-                    
-                    if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is {} avatar)
+
+                    if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatar)
                         profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
-                    if (m.DescriptionFor(lookupCtx) is {} desc) 
+                    if (m.DescriptionFor(lookupCtx) is { } desc)
                         profile.Append($"\n\n{desc}");
-                    
+
                     if (m.MemberVisibility == PrivacyLevel.Private)
                         profile.Append("\n*(this member is hidden)*");
-                    
+
                     eb.Field(new(m.NameFor(ctx), profile.ToString().Truncate(1024)));
                 }
             }

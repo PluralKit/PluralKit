@@ -37,10 +37,10 @@ namespace PluralKit.Bot
         {
             // Start of the word
             internal readonly int startPos;
-            
+
             // End of the word
             internal readonly int endPos;
-            
+
             // How much to advance word pointer afterwards to point at the start of the *next* word
             internal readonly int advanceAfterWord;
 
@@ -66,15 +66,15 @@ namespace PluralKit.Bot
         private void ParseFlags()
         {
             _flags = new HashSet<string>();
-            
+
             var ptr = 0;
             while (NextWordPosition(ptr) is { } wp)
             {
                 ptr = wp.endPos + wp.advanceAfterWord;
-                
+
                 // Is this word a *flag* (as in, starts with a - AND is not quoted)
                 if (_cmd[wp.startPos] != '-' || wp.wasQuoted) continue; // (if not, carry on w/ next word)
-                
+
                 // Find the *end* of the flag start (technically allowing arbitrary amounts of dashes)
                 var flagNameStart = wp.startPos;
                 while (flagNameStart < _cmd.Length && _cmd[flagNameStart] == '-')
@@ -125,7 +125,7 @@ namespace PluralKit.Bot
             if (skipFlags)
             {
                 // Skip all *leading* flags when taking the remainder
-                while (NextWordPosition(_ptr) is {} wp)
+                while (NextWordPosition(_ptr) is { } wp)
                 {
                     if (_cmd[wp.startPos] != '-' || wp.wasQuoted) break;
                     _ptr = wp.endPos + wp.advanceAfterWord;
@@ -135,7 +135,7 @@ namespace PluralKit.Bot
             // *Then* get the remainder
             return _cmd.Substring(Math.Min(_ptr, _cmd.Length)).Trim();
         }
-        
+
         public string FullCommand => _cmd;
 
         private WordPosition? NextWordPosition(int position)
@@ -163,7 +163,7 @@ namespace PluralKit.Bot
 
             // Not a quoted word, just find the next space and return if it's the end of the command
             var wordEnd = _cmd.IndexOf(' ', position + 1);
-            
+
             return wordEnd == -1
                 ? new WordPosition(position, _cmd.Length, 0, false)
                 : new WordPosition(position, wordEnd, 1, false);
@@ -179,7 +179,7 @@ namespace PluralKit.Bot
                     return true;
                 }
             }
-            
+
             correspondingRightQuotes = null;
             return false;
         }

@@ -28,7 +28,7 @@ namespace PluralKit.Bot
             // Otherwise it'll mess up/reformat the ISO strings for ???some??? reason >.>
             DateParseHandling = DateParseHandling.None
         };
-        
+
         public ImportExport(DataFileService dataFiles, HttpClient client)
         {
             _dataFiles = dataFiles;
@@ -41,7 +41,7 @@ namespace PluralKit.Bot
             if (url == null) throw Errors.NoImportFilePassed;
 
             await ctx.BusyIndicator(async () =>
-            { 
+            {
                 JObject data;
                 try
                 {
@@ -68,10 +68,10 @@ namespace PluralKit.Bot
                     if (!await ctx.PromptYesNo(msg, "Proceed"))
                         throw Errors.ImportCancelled;
                 }
-                
+
                 if (data.ContainsKey("accounts")
                     && data.Value<JArray>("accounts").Type != JTokenType.Null
-                    && data.Value<JArray>("accounts").Contains((JToken) ctx.Author.Id.ToString()))
+                    && data.Value<JArray>("accounts").Contains((JToken)ctx.Author.Id.ToString()))
                 {
                     var msg = $"{Emojis.Warn} You seem to importing a system profile belonging to another account. Are you sure you want to proceed?";
                     if (!await ctx.PromptYesNo(msg, "Import")) throw Errors.ImportCancelled;
@@ -95,15 +95,15 @@ namespace PluralKit.Bot
         public async Task Export(Context ctx)
         {
             ctx.CheckSystem();
-            
+
             var json = await ctx.BusyIndicator(async () =>
             {
                 // Make the actual data file
                 var data = await _dataFiles.ExportSystem(ctx.System);
                 return JsonConvert.SerializeObject(data, Formatting.None);
             });
-            
-                            
+
+
             // Send it as a Discord attachment *in DMs*
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
@@ -112,10 +112,10 @@ namespace PluralKit.Bot
                 var dm = await ctx.Cache.GetOrCreateDmChannel(ctx.Rest, ctx.Author.Id);
 
                 var msg = await ctx.Rest.CreateMessage(dm.Id,
-                    new MessageRequest {Content = $"{Emojis.Success} Here you go!"},
-                    new[] {new MultipartFile("system.json", stream)});
+                    new MessageRequest { Content = $"{Emojis.Success} Here you go!" },
+                    new[] { new MultipartFile("system.json", stream) });
                 await ctx.Rest.CreateMessage(dm.Id, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
-                
+
                 // If the original message wasn't posted in DMs, send a public reminder
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)
                     await ctx.Reply($"{Emojis.Success} Check your DMs!");

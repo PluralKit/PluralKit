@@ -64,25 +64,25 @@ namespace PluralKit.Bot
             var guild = evt.GuildId != null ? _cache.GetGuild(evt.GuildId.Value) : null;
             var channel = _cache.GetChannel(evt.ChannelId);
             var rootChannel = _cache.GetRootChannel(evt.ChannelId);
-            
+
             // Log metrics and message info
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
             _lastMessageCache.AddMessage(evt);
-            
+
             // Get message context from DB (tracking w/ metrics)
             MessageContext ctx;
             await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
                 ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.GuildId ?? default, rootChannel.Id);
-            
+
             // Try each handler until we find one that succeeds
-            if (await TryHandleLogClean(evt, ctx)) 
+            if (await TryHandleLogClean(evt, ctx))
                 return;
-            
+
             // Only do command/proxy handling if it's a user account
-            if (evt.Author.Bot || evt.WebhookId != null || evt.Author.System == true) 
+            if (evt.Author.Bot || evt.WebhookId != null || evt.Author.System == true)
                 return;
-            
+
             if (await TryHandleCommand(shard, evt, guild, channel, ctx))
                 return;
             await TryHandleProxy(shard, evt, guild, channel, ctx);
@@ -133,11 +133,11 @@ namespace PluralKit.Bot
             foreach (var prefix in prefixes)
             {
                 if (!message.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase)) continue;
-                
+
                 argPos = prefix.Length;
                 return true;
             }
-            
+
             // Then, check mention prefix (must be the bot user, ofc)
             argPos = -1;
             if (DiscordUtils.HasMentionPrefix(message, ref argPos, out var id))
@@ -156,7 +156,7 @@ namespace PluralKit.Bot
             }
 
             // Catch any failed proxy checks so they get ignored in the global error handler
-            catch (ProxyService.ProxyChecksFailedException) {}
+            catch (ProxyService.ProxyChecksFailedException) { }
 
             catch (PKError e)
             {
@@ -164,7 +164,7 @@ namespace PluralKit.Bot
                 if (botPermissions.HasFlag(PermissionSet.SendMessages))
                 {
                     await _rest.CreateMessage(evt.ChannelId,
-                        new MessageRequest {Content = $"{Emojis.Error} {e.Message}"});
+                        new MessageRequest { Content = $"{Emojis.Error} {e.Message}" });
                 }
             }
 

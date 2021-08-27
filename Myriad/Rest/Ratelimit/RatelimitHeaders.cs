@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
@@ -13,7 +13,7 @@ namespace Myriad.Rest.Ratelimit
         private const string ResetAfterHeader = "X-RateLimit-Reset-After";
         private const string BucketHeader = "X-RateLimit-Bucket";
         private const string GlobalHeader = "X-RateLimit-Global";
-        
+
         public bool Global { get; private set; }
         public int? Limit { get; private set; }
         public int? Remaining { get; private set; }
@@ -25,7 +25,7 @@ namespace Myriad.Rest.Ratelimit
 
         public bool HasRatelimitInfo =>
             Limit != null && Remaining != null && Reset != null && ResetAfter != null && Bucket != null;
-        
+
         public RatelimitHeaders() { }
 
         public static RatelimitHeaders Parse(HttpResponseMessage response)
@@ -41,12 +41,12 @@ namespace Myriad.Rest.Ratelimit
 
             var resetTimestamp = TryGetDouble(response, ResetHeader);
             if (resetTimestamp != null)
-                headers.Reset = DateTimeOffset.FromUnixTimeMilliseconds((long) (resetTimestamp.Value * 1000));
+                headers.Reset = DateTimeOffset.FromUnixTimeMilliseconds((long)(resetTimestamp.Value * 1000));
 
             var resetAfterSeconds = TryGetDouble(response, ResetAfterHeader);
             if (resetAfterSeconds != null)
                 headers.ResetAfter = TimeSpan.FromSeconds(resetAfterSeconds.Value);
-            
+
             var global = TryGetHeader(response, GlobalHeader);
             if (global != null && bool.TryParse(global, out var globalBool))
                 headers.Global = globalBool;
@@ -58,27 +58,27 @@ namespace Myriad.Rest.Ratelimit
         {
             if (!response.Headers.TryGetValues(headerName, out var values))
                 return null;
-            
+
             return values.FirstOrDefault();
         }
 
         private static int? TryGetInt(HttpResponseMessage response, string headerName)
         {
             var valueString = TryGetHeader(response, headerName);
-            
+
             if (!int.TryParse(valueString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
                 return null;
-            
+
             return value;
         }
 
         private static double? TryGetDouble(HttpResponseMessage response, string headerName)
         {
             var valueString = TryGetHeader(response, headerName);
-            
+
             if (!double.TryParse(valueString, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
                 return null;
-            
+
             return value;
         }
     }
