@@ -158,7 +158,7 @@ namespace PluralKit.Tests
                         func(removeOp, 2, 1, 2, 0)
                     );
 
-
+                [Fact]
                 public void PartialSuccess1()
                     => Assert.Equal(
                         $"{success} 1 member removed from group (2 members already not in group).",
