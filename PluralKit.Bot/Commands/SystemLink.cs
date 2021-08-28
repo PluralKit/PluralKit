@@ -47,9 +47,7 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
 
             ulong id;
-            if (!ctx.HasNext())
-                id = ctx.Author.Id;
-            else if (!ctx.MatchUserRaw(out id))
+            if (!ctx.MatchUserRaw(out id))
                 throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
 
             var accountIds = (await _repo.GetSystemAccounts(conn, ctx.System.Id)).ToList();
