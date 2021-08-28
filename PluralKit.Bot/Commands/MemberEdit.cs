@@ -289,7 +289,7 @@ namespace PluralKit.Bot
 
             var eb = new EmbedBuilder()
                 .Title($"Member names")
-                .Footer(new($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name."));
+                .Footer(new($"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name. | Queried by {ctx.Author.NameAndMention()}"));
 
             if (target.DisplayName == null && memberGuildConfig?.DisplayName == null)
                 eb.Field(new("Name", $"**{target.NameFor(ctx)}**"));

@@ -38,7 +38,7 @@ namespace PluralKit.Bot
                 throw new PKError("Your system has no members! Please create at least one member before using this command.");
 
             var randInt = randGen.Next(members.Count);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx, ctx.System, members[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
         }
 
         public async Task Group(Context ctx)
@@ -73,7 +73,7 @@ namespace PluralKit.Bot
             var ms = members.ToList();
 
             var randInt = randGen.Next(ms.Count);
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, ms[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx, ctx.System, ms[randInt], ctx.Guild, ctx.LookupContextFor(ctx.System)));
         }
     }
 }

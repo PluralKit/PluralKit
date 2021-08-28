@@ -82,7 +82,7 @@ namespace PluralKit.Bot
                     await ctx.Reply(embed: new EmbedBuilder()
                         .Title("System description")
                         .Description(ctx.System.Description)
-                        .Footer(new("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`."))
+                        .Footer(new($"To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`. | Queried by: {ctx.Author.NameAndMention()}"))
                         .Build());
             }
             else

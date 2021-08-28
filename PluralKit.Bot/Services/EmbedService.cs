@@ -67,7 +67,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .Title(system.Name)
                 .Thumbnail(new(system.AvatarUrl.TryGetCleanCdnUrl()))
-                .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
+                .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)} | Queried by: {cctx.Author.NameAndMention()}"))
                 .Color(color);
 
             if (system.DescriptionPrivacy.CanAccess(ctx))
@@ -133,7 +133,7 @@ namespace PluralKit.Bot {
             return embed.Build();
         }
 
-        public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)
+        public async Task<Embed> CreateMemberEmbed(Context cctx, PKSystem system, PKMember member, Guild guild, LookupContext ctx)
         {
 
             // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
@@ -171,7 +171,7 @@ namespace PluralKit.Bot {
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .Color(color)
                 .Footer(new(
-                    $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")}"));
+                    $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")} {(cctx != null ? " | {cctx.Author.NameAndMention()}" : "")}"));
 
             if (member.DescriptionPrivacy.CanAccess(ctx))
                 eb.Image(new(member.BannerImage));
@@ -239,7 +239,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .Author(new(nameField, IconUrl: target.IconFor(pctx)))
                 .Color(color)
-                .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
+                .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)} | Queried by: {ctx.Author.NameAndMention()}"));
 
             if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
                 eb.Image(new(target.BannerImage));
@@ -353,7 +353,7 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public Task<Embed> CreateFrontPercentEmbed(FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters, bool showFlat)
+        public Task<Embed> CreateFrontPercentEmbed(Context cctx, FrontBreakdown breakdown, PKSystem system, PKGroup group, DateTimeZone tz, LookupContext ctx, string embedTitle, bool ignoreNoFronters, bool showFlat)
         {
             string color = system.Color;
             if (group != null) 
@@ -393,6 +393,8 @@ namespace PluralKit.Bot {
             }
             else
                 period = breakdown.RangeEnd - breakdown.RangeStart;
+
+            footer += $" | Queried by: {cctx.Author.NameAndMention()}";
 
             eb.Footer(new(footer));
 

@@ -19,7 +19,7 @@ namespace PluralKit.Bot
                 .Field(new("Useful tips", $"React with {Emojis.Error} on a proxied message to delete it (only if you sent it!)\nReact with {Emojis.RedQuestion} on a proxied message to look up information about it (like who sent it)\nReact with {Emojis.Bell} on a proxied message to \"ping\" the sender\nType **`pk;invite`** to get a link to invite this bot to your own server!"))
                 .Field(new("More information", "For a full list of commands, see [the command list](https://pluralkit.me/commands).\nFor a more in-depth explanation of message proxying, see [the documentation](https://pluralkit.me/guide#proxying).\nIf you're an existing user of Tupperbox, type `pk;import` and attach a Tupperbox export file (from `tul!export`) to import your data from there."))
                 .Field(new("Support server", "We also have a Discord server for support, discussion, suggestions, announcements, etc: https://discord.gg/PczBt78"))
-                .Footer(new($"By @Ske#6201 | Myriad by @Layl#8888 | GitHub: https://github.com/xSke/PluralKit/ | Website: https://pluralkit.me/"))
+                .Footer(new($"By @Ske#6201 | Myriad by @Layl#8888 | GitHub: https://github.com/xSke/PluralKit/ | Website: https://pluralkit.me/ | Queried by: {ctx.Author.NameAndMention()}"))
                 .Color(DiscordUtils.Blue)
                 .Build());
         }

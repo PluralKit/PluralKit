@@ -592,7 +592,7 @@ namespace PluralKit.Bot
             var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
             var showFlat = ctx.MatchFlag("flat");
             var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
-            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString(), ignoreNoFronters, showFlat));
+            await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(ctx, frontpercent, targetSystem, target, targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString(), ignoreNoFronters, showFlat));
         }
 
         private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target, IPKConnection conn)

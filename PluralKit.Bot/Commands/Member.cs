@@ -90,7 +90,7 @@ namespace PluralKit.Bot
         public async Task ViewMember(Context ctx, PKMember target)
         {
             var system = await _db.Execute(c => _repo.GetSystem(c, target.System));
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
+            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx, system, target, ctx.Guild, ctx.LookupContextFor(system)));
         }
 
         public async Task Soulscream(Context ctx, PKMember target)

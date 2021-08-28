@@ -153,8 +153,11 @@ namespace PluralKit.Bot
                 footer += "Use External Emojis permissions must be granted to the @everyone role / Default Permissions.";
             }
 
+
             if (footer.Length > 0)
-                eb.Footer(new(footer));
+                footer += " | ";
+            footer += $"Queried by: {ctx.Author.NameAndMention()}";
+            eb.Footer(new(footer));
             
             // Send! :)
             await ctx.Reply(embed: eb.Build());
