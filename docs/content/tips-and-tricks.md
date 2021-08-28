@@ -79,4 +79,5 @@ These flags only work with the full member list (`pk;system list full`).
 |pk;group \<group> frontpercent|-fronters-only|-fo|Show a group's frontpercent without the "no fronter" entry|
 |pk;group \<group> frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
 |Most commands|-all|-a|Show hidden/private information|
+|Most commands|-raw|-r|Show text with formatting, for easier copy-pasting|
 |All commands, except `delete`|-y|-yes|Skip confirmation prompt|
