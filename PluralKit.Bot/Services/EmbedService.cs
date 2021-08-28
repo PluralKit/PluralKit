@@ -67,7 +67,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .Title(system.Name)
                 .Thumbnail(new(system.AvatarUrl.TryGetCleanCdnUrl()))
-                .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)} | Queried by: {cctx.Author.NameAndMention()}"))
+                .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)} | Queried by: {cctx.Author.Id}"))
                 .Color(color);
 
             if (system.DescriptionPrivacy.CanAccess(ctx))
@@ -171,7 +171,7 @@ namespace PluralKit.Bot {
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .Color(color)
                 .Footer(new(
-                    $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")} {(cctx != null ? " | {cctx.Author.NameAndMention()}" : "")}"));
+                    $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")} {(cctx != null ? $" | Queried by: {cctx.Author.Id}" : "")}"));
 
             if (member.DescriptionPrivacy.CanAccess(ctx))
                 eb.Image(new(member.BannerImage));
@@ -239,7 +239,7 @@ namespace PluralKit.Bot {
             var eb = new EmbedBuilder()
                 .Author(new(nameField, IconUrl: target.IconFor(pctx)))
                 .Color(color)
-                .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)} | Queried by: {ctx.Author.NameAndMention()}"));
+                .Footer(new($"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)} | Queried by: {ctx.Author.Id}"));
 
             if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
                 eb.Image(new(target.BannerImage));

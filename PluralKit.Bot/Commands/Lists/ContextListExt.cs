@@ -96,7 +96,7 @@ namespace PluralKit.Bot
             Task Renderer(EmbedBuilder eb, IEnumerable<ListedMember> page, User author)
             {
                 // Add a global footer with the filter/sort string + result count
-                eb.Footer(new($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}. Queried by: {author.NameAndMention()}"));
+                eb.Footer(new($"{opts.CreateFilterString()}. {"result".ToQuantity(members.Count)}. Queried by: {author.Id}"));
                 
                 // Then call the specific renderers
                 if (opts.Type == ListType.Short)
