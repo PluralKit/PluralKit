@@ -171,7 +171,7 @@ namespace PluralKit.Bot {
                 // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
                 .Color(color)
                 .Footer(new(
-                    $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")} {(cctx != null ? $" | Queried by: {cctx.Author.Id}" : "")}"));
+                    $"System ID: {system.Hid} | Member ID: {member.Hid}{(member.MetadataPrivacy.CanAccess(ctx) ? $" | Created on {member.Created.FormatZoned(system)}" : "")}{(cctx != null ? $" | Queried by: {cctx.Author.Id}" : "")}"));
 
             if (member.DescriptionPrivacy.CanAccess(ctx))
                 eb.Image(new(member.BannerImage));
