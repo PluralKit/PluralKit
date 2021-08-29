@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using Myriad.Builders;
@@ -26,8 +27,9 @@ namespace PluralKit.Bot
         private readonly EmbedService _embeds;
         private readonly Bot _bot;
         private readonly DiscordApiClient _rest;
+        private readonly Cluster _cluster;
 
-        public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, DiscordApiClient rest, EmbedService embeds)
+        public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, DiscordApiClient rest, EmbedService embeds, Cluster cluster)
         {
             _db = db;
             _repo = repo;
@@ -37,6 +39,7 @@ namespace PluralKit.Bot
             _rest = rest;
             _embeds = embeds;
             _logger = logger.ForContext<ReactionAdded>();
+            _cluster = cluster;
         }
 
         public async Task Handle(Shard shard, MessageReactionAddEvent evt)
@@ -61,8 +64,13 @@ namespace PluralKit.Bot
                 var commandMsg = await _commandMessageService.GetCommandMessage(conn, evt.MessageId);
                 if (commandMsg != null)
                 {
-                    await HandleCommandDeleteReaction(evt, commandMsg);
+                    await HandleRecentCommandDeleteReaction(evt, commandMsg);
                     return;
+                } else
+                {
+                    var msg = await _rest.GetMessage(evt.ChannelId, evt.MessageId);
+                    if (msg != null)
+                        await HandleCommandDeleteReaction(evt, msg);
                 }
             }
 
@@ -133,7 +141,7 @@ namespace PluralKit.Bot
             await _db.Execute(c => _repo.DeleteMessage(c, evt.MessageId));
         }
 
-        private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage msg)
+        private async ValueTask HandleRecentCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage msg)
         {
             // Can only delete your own message
             if (msg.AuthorId != evt.UserId) 
@@ -146,6 +154,42 @@ namespace PluralKit.Bot
             catch (NotFoundException)
             {
                 // Message was deleted by something/someone else before we got to it
+            }
+
+            // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
+        }
+
+        private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, Message msg)
+        {
+            // Can only delete a message sent by the bot
+            if (msg.Author.Id != _cluster.Application?.Id)
+                return;
+            // only dealing with embeds
+            if (msg.Embeds.Length == 0)
+                return;
+
+            var embed = msg.Embeds[0];
+            var footer = embed.Footer.Text;
+            var querystringindex = footer.IndexOf("Queried by");
+
+            if (querystringindex == -1)
+                return;
+
+            var userid = footer.Substring(querystringindex + 12, 18);
+            //var sysid = footer.Substring(querystringindex + 12, 18);
+
+            _logger.Information($"{userid}");
+
+            if (evt.UserId == Convert.ToUInt64(userid))
+            {
+                try
+                {
+                    await _rest.DeleteMessage(evt.ChannelId, evt.MessageId);
+                }
+                catch (NotFoundException)
+                {
+                    // Message was deleted by something/someone else before we got to it
+                }
             }
 
             // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
