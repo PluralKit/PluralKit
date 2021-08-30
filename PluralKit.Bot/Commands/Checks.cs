@@ -156,7 +156,7 @@ namespace PluralKit.Bot
 
             if (footer.Length > 0)
                 footer += " | ";
-            footer += $"Queried by: {ctx.Author.Id}";
+            footer += $"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}";
             eb.Footer(new(footer));
             
             // Send! :)

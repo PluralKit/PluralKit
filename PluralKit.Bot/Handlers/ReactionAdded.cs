@@ -70,7 +70,7 @@ namespace PluralKit.Bot
                 {
                     var msg = await _rest.GetMessage(evt.ChannelId, evt.MessageId);
                     if (msg != null)
-                        await HandleCommandDeleteReaction(evt, msg);
+                        await HandleCommandDeleteReaction(conn, evt, msg);
                 }
             }
 
@@ -159,7 +159,7 @@ namespace PluralKit.Bot
             // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
         }
 
-        private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, Message msg)
+        private async ValueTask HandleCommandDeleteReaction(IPKConnection conn, MessageReactionAddEvent evt, Message msg)
         {
             // Can only delete a message sent by the bot
             if (msg.Author.Id != _cluster.Application?.Id)
@@ -175,10 +175,9 @@ namespace PluralKit.Bot
             if (querystringindex == -1)
                 return;
 
-            var userid = footer.Substring(querystringindex + 12, 18);
-            //var sysid = footer.Substring(querystringindex + 12, 18);
+            var userid = footer.Substring(querystringindex + 16, 18);
 
-            _logger.Information($"{userid}");
+            
 
             if (evt.UserId == Convert.ToUInt64(userid))
             {
@@ -190,9 +189,38 @@ namespace PluralKit.Bot
                 {
                     // Message was deleted by something/someone else before we got to it
                 }
+                return;
             }
 
-            // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
+            var sysid = "";
+
+            try
+            {
+                sysid = footer.Substring(querystringindex + 47, 5);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                //The original querier didn't have a system registered
+                return;
+            }
+            var qsys = await _repo.GetSystemByAccount(conn, evt.UserId);
+            if (qsys == null) // reactor doesn't have a system registered
+                return;
+
+            if(qsys.Hid == sysid)
+            {
+                try
+                {
+                    await _rest.DeleteMessage(evt.ChannelId, evt.MessageId);
+                }
+                catch (NotFoundException)
+                {
+                    // Message was deleted by something/someone else before we got to it
+                }
+                return;
+            }
+
+            
         }
 
         private async ValueTask HandleQueryReaction(MessageReactionAddEvent evt, FullMessage msg)
