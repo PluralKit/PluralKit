@@ -246,7 +246,9 @@ namespace PluralKit.Bot
 
         private async Task<string> FixSameName(ulong channelId, MessageContext ctx, ProxyMember member)
         {
+            // TODO: this function's disabled due to extra database pressure, find a way to do it without requiring an extra connection
             var proxyName = member.ProxyName(ctx);
+            return proxyName;
 
             var lastMessage = _lastMessage.GetLastMessage(channelId)?.Previous;
             if (lastMessage == null)
