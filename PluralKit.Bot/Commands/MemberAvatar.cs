@@ -66,6 +66,7 @@ namespace PluralKit.Bot
                 .Image(new(currentValue?.TryGetCleanCdnUrl()));
             if (target.System == ctx.System?.Id)
                 eb.Description($"To clear, use `pk;member {target.Reference()} {cmd} clear`.");
+            eb.Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
             await ctx.Reply(embed: eb.Build());
         }
 
@@ -138,7 +139,7 @@ namespace PluralKit.Bot
             // The attachment's already right there, no need to preview it.
             var hasEmbed = avatar.Source != AvatarSource.Attachment;
             return hasEmbed 
-                ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(avatar.Url)).Build()) 
+                ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(avatar.Url)).Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}")).Build()) 
                 : ctx.Reply(msg);
         }
 

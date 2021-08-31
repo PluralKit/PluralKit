@@ -83,6 +83,7 @@ namespace PluralKit.Bot
                         .Description(target.Description)
                         .Field(new("\u200B", $"To print the description with formatting, type `pk;member {target.Reference()} description -raw`." 
                                     + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} description -clear`." : "")))
+                        .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"))
                         .Build());
             }
             else
@@ -166,7 +167,7 @@ namespace PluralKit.Bot
                 // The attachment's already right there, no need to preview it.
                 var hasEmbed = img.Source != AvatarSource.Attachment;
                 await (hasEmbed 
-                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Build()) 
+                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}")).Build()) 
                     : ctx.Reply(msg));
             }
 
@@ -177,7 +178,8 @@ namespace PluralKit.Bot
                     var eb = new EmbedBuilder()
                         .Title($"{target.NameFor(ctx)}'s banner image")
                         .Image(new(target.BannerImage))
-                        .Description($"To clear, use `pk;member {target.Hid} banner clear`.");
+                        .Description($"To clear, use `pk;member {target.Hid} banner clear`.")
+                        .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
@@ -222,6 +224,7 @@ namespace PluralKit.Bot
                         .Thumbnail(new($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                         .Description($"This member's color is **#{target.Color}**."
                                          + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} color -clear`." : ""))
+                        .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"))
                         .Build());
             }
             else
@@ -359,6 +362,7 @@ namespace PluralKit.Bot
                     var eb = await CreateMemberNameInfoEmbed(ctx, target);
                     if (ctx.System?.Id == target.System)
                         eb.Description($"To change display name, type `pk;member {target.Reference()} displayname <display name>`.\nTo clear it, type `pk;member {target.Reference()} displayname -clear`.\nTo print the raw display name, type `pk;member {target.Reference()} displayname -raw`.");
+                    eb.Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
                     await ctx.Reply(embed: eb.Build());
                 }
             }
@@ -499,6 +503,7 @@ namespace PluralKit.Bot
                     .Field(new("Meta (message count, last front, last message)",target.MetadataPrivacy.Explanation()))
                     .Field(new("Visibility", target.MemberVisibility.Explanation()))
                     .Description("To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `created`, `messages`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"))
                     .Build()); 
                 return;
             }

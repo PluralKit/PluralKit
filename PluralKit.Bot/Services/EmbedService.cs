@@ -68,7 +68,8 @@ namespace PluralKit.Bot {
                 .Title(system.Name)
                 .Thumbnail(new(system.AvatarUrl.TryGetCleanCdnUrl()))
                 .Footer(new($"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)} | Queried by user {cctx.Author.Id}{(cctx.System != null ? $" (System id: {cctx.System.Hid})" : "")}"))
-                .Color(color);
+                .Color(color)
+                .Footer(new($"Queried by user {cctx.Author.Id}{(cctx.System != null ? $" (System id: {cctx.System.Hid})" : "")}"));
 
             if (system.DescriptionPrivacy.CanAccess(ctx))
                 eb.Image(new(system.BannerImage));
@@ -267,7 +268,7 @@ namespace PluralKit.Bot {
             return eb.Build();
         }
 
-        public async Task<Embed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone, LookupContext ctx)
+        public async Task<Embed> CreateFronterEmbed(PKSwitch sw, DateTimeZone zone, LookupContext ctx, Context cctx)
         {
             var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());
             var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
@@ -275,10 +276,11 @@ namespace PluralKit.Bot {
                 .Color(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
                 .Field(new($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", members.Count > 0 ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "*(no fronter)*"))
                 .Field(new("Since", $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)"))
+                .Footer(new($"Queried by user {cctx.Author.Id}{(cctx.System != null ? $" (System id: {cctx.System.Hid})" : "")}"))
                 .Build();
         }
 
-        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
+        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, Context cctx = null)
         {
             var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
             var ctx = LookupContext.ByNonOwner;
@@ -337,6 +339,7 @@ namespace PluralKit.Bot {
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true))
                 .Field(new("Member", $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)", true))
                 .Field(new("Sent by", userStr, true))
+                .Footer(new ($"{(cctx != null ? $"Queried by user {cctx.Author.Id}{(cctx.System != null ? $" (System id: {cctx.System.Hid})" : "")}" : "")}"))
                 .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"));
 
             var roles = memberInfo?.Roles?.ToList();
@@ -375,7 +378,7 @@ namespace PluralKit.Bot {
                 .Title(embedTitle)
                 .Color(embedColor);
 
-            string footer = $"Since {breakdown.RangeStart.FormatZoned(tz)} ({(breakdown.RangeEnd - breakdown.RangeStart).FormatDuration()} ago)";
+            string footer = $"Since {breakdown.RangeStart.FormatZoned(tz)} ({(breakdown.RangeEnd - breakdown.RangeStart).FormatDuration()} ago) | Queried by user {cctx.Author.Id}{(cctx.System != null ? $" (System id: {cctx.System.Hid})" : "")}";
 
             Duration period;
 

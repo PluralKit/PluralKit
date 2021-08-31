@@ -117,6 +117,7 @@ namespace PluralKit.Bot
                         .Color(ctx.System.Color.ToDiscordColor())
                         .Thumbnail(new($"https://fakeimg.pl/256x256/{ctx.System.Color}/?text=%20"))
                         .Description($"Your system's color is **#{ctx.System.Color}**. To clear it, type `pk;s color -clear`.")
+                        .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"))
                         .Build());
             }
             else
@@ -296,7 +297,7 @@ namespace PluralKit.Bot
                 // The attachment's already right there, no need to preview it.
                 var hasEmbed = img.Source != AvatarSource.Attachment;
                 await (hasEmbed 
-                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Build()) 
+                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Footer(new ($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}")).Build()) 
                     : ctx.Reply(msg));
             }
 
@@ -307,7 +308,8 @@ namespace PluralKit.Bot
                     var eb = new EmbedBuilder()
                         .Title("System icon")
                         .Image(new(ctx.System.AvatarUrl.TryGetCleanCdnUrl()))
-                        .Description("To clear, use `pk;system icon clear`.");
+                        .Description("To clear, use `pk;system icon clear`.")
+                        .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
@@ -349,7 +351,7 @@ namespace PluralKit.Bot
                 // The attachment's already right there, no need to preview it.
                 var hasEmbed = img.Source != AvatarSource.Attachment;
                 await (hasEmbed 
-                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Build()) 
+                    ? ctx.Reply(msg, embed: new EmbedBuilder().Image(new(img.Url)).Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}")).Build()) 
                     : ctx.Reply(msg));
             }
 
@@ -360,7 +362,8 @@ namespace PluralKit.Bot
                     var eb = new EmbedBuilder()
                         .Title("System banner image")
                         .Image(new(ctx.System.BannerImage))
-                        .Description("To clear, use `pk;system banner clear`.");
+                        .Description("To clear, use `pk;system banner clear`.")
+                        .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
@@ -471,7 +474,8 @@ namespace PluralKit.Bot
                     .Field(new("Group list", ctx.System.GroupListPrivacy.Explanation()))
                     .Field(new("Current fronter(s)", ctx.System.FrontPrivacy.Explanation()))
                     .Field(new("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation()))
-                    .Description("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    .Description("To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.")
+                    .Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
                 return ctx.Reply(embed: eb.Build());
             }
 

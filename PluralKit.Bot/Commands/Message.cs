@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System.Threading.Tasks;
 
 using Myriad.Builders;
@@ -152,7 +152,7 @@ namespace PluralKit.Bot
                 return;
             }
 
-            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, ctx));
         }
     }
 }

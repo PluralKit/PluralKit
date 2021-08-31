@@ -131,6 +131,8 @@ namespace PluralKit.Bot
             if (!ctx.MessageContext.AllowAutoproxy) 
                 eb.Field(new("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`."));
 
+            eb.Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
+
             return eb.Build();
         }
 

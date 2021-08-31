@@ -44,7 +44,7 @@ namespace PluralKit.Bot
             var sw = await _repo.GetLatestSwitch(conn, system.Id);
             if (sw == null) throw Errors.NoRegisteredSwitches;
             
-            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system)));
+            await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system), ctx));
         }
 
         public async Task SystemFrontHistory(Context ctx, PKSystem system)
@@ -108,6 +108,7 @@ namespace PluralKit.Bot
                     }
 
                     builder.Description(sb.ToString());
+                    builder.Footer(new($"Queried by user {ctx.Author.Id}{(ctx.System != null ? $" (System id: {ctx.System.Hid})" : "")}"));
                 }
             );
         }
