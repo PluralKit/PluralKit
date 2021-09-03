@@ -43,9 +43,13 @@ namespace PluralKit.Bot
 
             var triggerChannel = _cache.GetChannel(proxiedMessage.Channel);
 
-            await using var conn = await _db.Obtain();
-            var system = await _repo.GetSystem(conn, ctx.SystemId.Value);
-            var member = await _repo.GetMember(conn, proxiedMessage.Member);
+            PKSystem system;
+            PKMember member;
+            await using (var conn = await _db.Obtain())
+            {
+                system = await _repo.GetSystem(conn, ctx.SystemId.Value);
+                member = await _repo.GetMember(conn, proxiedMessage.Member);
+            }
 
             // Send embed!
             var embed = _embed.CreateLoggedMessageEmbed(trigger, hookMessage, system.Hid, member, triggerChannel.Name, oldContent);

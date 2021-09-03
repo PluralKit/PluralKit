@@ -10,7 +10,7 @@ namespace PluralKit.Core
             conn.QueryAsync("insert into command_messages (message_id, author_id) values (@Message, @Author)",
                 new { Message = messageId, Author = authorId });
 
-        public Task<CommandMessage> GetCommandMessage(IPKConnection conn, ulong messageId) =>
+        public Task<CommandMessage?> GetCommandMessage(IPKConnection conn, ulong messageId) =>
             conn.QuerySingleOrDefaultAsync<CommandMessage>("select * from command_messages where message_id = @Message",
                 new { Message = messageId });
 

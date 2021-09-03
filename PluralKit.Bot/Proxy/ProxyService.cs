@@ -55,15 +55,16 @@ namespace PluralKit.Bot
         {
             if (!ShouldProxy(channel, message, ctx))
                 return false;
-
-            // Fetch members and try to match to a specific member
-            await using var conn = await _db.Obtain();
-
+            
             var rootChannel = _cache.GetRootChannel(message.ChannelId);
 
             List<ProxyMember> members;
+            // Fetch members and try to match to a specific member
             using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
+            {            
+                await using var conn = await _db.Obtain();
                 members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.GuildId!.Value)).ToList();
+            }
 
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
@@ -85,7 +86,7 @@ namespace PluralKit.Bot
             var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
 
             // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(shard, conn, message, ctx, match, allowEveryone, allowEmbeds);
+            await ExecuteProxy(shard, message, ctx, match, allowEveryone, allowEmbeds);
             return true;
         }
 
@@ -122,7 +123,7 @@ namespace PluralKit.Bot
             return true;
         }
 
-        private async Task ExecuteProxy(Shard shard, IPKConnection conn, Message trigger, MessageContext ctx,
+        private async Task ExecuteProxy(Shard shard, Message trigger, MessageContext ctx,
                                         ProxyMatch match, bool allowEveryone, bool allowEmbeds)
         {
             // Create reply embed
@@ -161,7 +162,7 @@ namespace PluralKit.Bot
                 Embeds = embeds.ToArray(),
                 AllowEveryone = allowEveryone,
             });
-            await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
+            await HandleProxyExecutedActions(shard, ctx, trigger, proxyMessage, match);
         }
 
         private async Task<(string?, string?)> FetchReferencedMessageAuthorInfo(Message trigger, Message referenced)
@@ -281,7 +282,7 @@ namespace PluralKit.Bot
         private string FixSameNameInner(string name)
             => $"{name}\u17b5";
 
-        private async Task HandleProxyExecutedActions(Shard shard, IPKConnection conn, MessageContext ctx,
+        private async Task HandleProxyExecutedActions(Shard shard, MessageContext ctx,
                                                       Message triggerMessage, Message proxyMessage,
                                                       ProxyMatch match)
         {
@@ -295,7 +296,11 @@ namespace PluralKit.Bot
                 Sender = triggerMessage.Author.Id
             };
 
-            Task SaveMessageInDatabase() => _repo.AddMessage(conn, sentMessage);
+            async Task SaveMessageInDatabase()
+            {
+                await using var conn = await _db.Obtain();
+                await _repo.AddMessage(conn, sentMessage);
+            }
 
             Task LogMessageToChannel() => _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
 

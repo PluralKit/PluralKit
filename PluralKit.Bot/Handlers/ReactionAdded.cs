@@ -57,8 +57,7 @@ namespace PluralKit.Bot
             // since this can happen in DMs as well
             if (evt.Emoji.Name == "\u274c")
             {
-                await using var conn = await _db.Obtain();
-                var commandMsg = await _commandMessageService.GetCommandMessage(conn, evt.MessageId);
+                var commandMsg = await _db.Execute(c => _commandMessageService.GetCommandMessage(c, evt.MessageId));
                 if (commandMsg != null)
                 {
                     await HandleCommandDeleteReaction(evt, commandMsg);
@@ -77,8 +76,7 @@ namespace PluralKit.Bot
                 // Message deletion
                 case "\u274C": // Red X
                     {
-                        await using var conn = await _db.Obtain();
-                        var msg = await _repo.GetMessage(conn, evt.MessageId);
+                        var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
                         if (msg != null)
                             await HandleProxyDeleteReaction(evt, msg);
 
@@ -87,8 +85,7 @@ namespace PluralKit.Bot
                 case "\u2753": // Red question mark
                 case "\u2754": // White question mark
                     {
-                        await using var conn = await _db.Obtain();
-                        var msg = await _repo.GetMessage(conn, evt.MessageId);
+                        var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
                         if (msg != null)
                             await HandleQueryReaction(evt, msg);
 
@@ -101,8 +98,7 @@ namespace PluralKit.Bot
                 case "\u23F0": // Alarm clock
                 case "\u2757": // Exclamation mark
                     {
-                        await using var conn = await _db.Obtain();
-                        var msg = await _repo.GetMessage(conn, evt.MessageId);
+                        var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
                         if (msg != null)
                             await HandlePingReaction(evt, msg);
                         break;
@@ -115,11 +111,10 @@ namespace PluralKit.Bot
             if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
                 return;
 
-            using var conn = await _db.Obtain();
-            var system = await _repo.GetSystemByAccount(conn, evt.UserId);
+            var system = await _db.Execute(c => _repo.GetSystemByAccount(c, evt.UserId));
 
             // Can only delete your own message
-            if (msg.System.Id != system.Id) return;
+            if (msg.System.Id != system?.Id) return;
 
             try
             {

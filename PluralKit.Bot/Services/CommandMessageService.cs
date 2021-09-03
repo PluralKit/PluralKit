@@ -31,7 +31,7 @@ namespace PluralKit.Bot
             await _db.Execute(conn => _repo.SaveCommandMessage(conn, messageId, authorId));
         }
 
-        public async Task<CommandMessage> GetCommandMessage(IPKConnection conn, ulong messageId)
+        public async Task<CommandMessage?> GetCommandMessage(IPKConnection conn, ulong messageId)
         {
             return await _repo.GetCommandMessage(conn, messageId);
         }
