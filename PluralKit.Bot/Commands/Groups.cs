@@ -115,8 +115,8 @@ namespace PluralKit.Bot
 
                     if (ctx.System?.Id == target.System)
                         eb.Description($"To change display name, type `pk;group {target.Reference()} displayname <display name>`."
-                            + "To clear it, type `pk;group {target.Reference()} displayname -clear`."
-                            + "To print the raw display name, type `pk;group {target.Reference()} displayname -raw`.");
+                            + $"To clear it, type `pk;group {target.Reference()} displayname -clear`."
+                            + $"To print the raw display name, type `pk;group {target.Reference()} displayname -raw`.");
 
                     await ctx.Reply(embed: eb.Build());
                 }

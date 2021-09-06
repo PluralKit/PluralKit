@@ -359,8 +359,8 @@ namespace PluralKit.Bot
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
                     eb.Description($"To change display name, type `pk;member {target.Reference()} displayname <display name>`."
-                        + "To clear it, type `pk;member {target.Reference()} displayname -clear`."
-                        + "To print the raw display name, type `pk;member {target.Reference()} displayname -raw`.");
+                        + $"To clear it, type `pk;member {target.Reference()} displayname -clear`."
+                        + $"To print the raw display name, type `pk;member {target.Reference()} displayname -raw`.");
                 await ctx.Reply(embed: eb.Build());
                 return;
             }
