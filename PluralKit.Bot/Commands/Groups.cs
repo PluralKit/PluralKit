@@ -471,7 +471,7 @@ namespace PluralKit.Bot
             }
             else return; // otherwise toAction "may be undefined"
 
-            await ctx.Reply(GroupAddRemoveResponseService.GenerateResponse(op, members.Count, 1, members.Count - existingMembersInGroup.Count, existingMembersInGroup.Count));
+            await ctx.Reply(GroupAddRemoveResponseService.GenerateResponse(op, members.Count, 1, toAction.Count, members.Count - toAction.Count));
         }
 
         public async Task ListGroupMembers(Context ctx, PKGroup target)

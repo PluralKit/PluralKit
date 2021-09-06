@@ -55,7 +55,7 @@ namespace PluralKit.Bot
             }
             else return; // otherwise toAction "may be unassigned"
 
-            await ctx.Reply(GroupAddRemoveResponseService.GenerateResponse(op, 1, groups.Count, groups.Count - existingGroups.Count, existingGroups.Count));
+            await ctx.Reply(GroupAddRemoveResponseService.GenerateResponse(op, 1, groups.Count, toAction.Count, groups.Count - toAction.Count));
         }
 
         public async Task List(Context ctx, PKMember target)
