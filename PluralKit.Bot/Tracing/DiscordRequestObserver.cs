@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -53,6 +53,8 @@ namespace PluralKit.Bot
             url = Regex.Replace(url, @"/reactions/[^{/]+/\d+", "/reactions/{emoji}/{user_id}");
             url = Regex.Replace(url, @"/reactions/[^{/]+", "/reactions/{emoji}");
             url = Regex.Replace(url, @"/invites/[^{/]+", "/invites/{invite_code}");
+            url = Regex.Replace(url, @"/interactions/\d+/[^{/]+", "/interactions/{interaction_id}/{interaction_token}");
+            url = Regex.Replace(url, @"/interactions/\d+", "/interactions/{interaction_id}");
 
             // catch-all for missed IDs
             url = Regex.Replace(url, @"\d{17,19}", "{snowflake}");
