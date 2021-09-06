@@ -103,7 +103,7 @@ namespace PluralKit.Bot
 
             // No perms check, display name isn't covered by member privacy
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.DisplayName == null)
                     await ctx.Reply(noDisplayNameSetMessage);
@@ -160,7 +160,7 @@ namespace PluralKit.Bot
             if (ctx.System?.Id == target.System)
                 noDescriptionSetMessage += $" To set one, type `pk;group {target.Reference()} description <description>`.";
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);

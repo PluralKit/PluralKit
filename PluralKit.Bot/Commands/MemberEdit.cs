@@ -66,7 +66,7 @@ namespace PluralKit.Bot
             if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
                 throw Errors.LookupNotAllowed;
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);
@@ -118,7 +118,7 @@ namespace PluralKit.Bot
             if (!target.PronounPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
                 throw Errors.LookupNotAllowed;
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.Pronouns == null)
                     await ctx.Reply(noPronounsSetMessage);
@@ -354,7 +354,7 @@ namespace PluralKit.Bot
 
             // No perms check, display name isn't covered by member privacy
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
@@ -403,7 +403,7 @@ namespace PluralKit.Bot
 
             // No perms check, display name isn't covered by member privacy
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)

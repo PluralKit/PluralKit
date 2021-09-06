@@ -33,7 +33,7 @@ namespace PluralKit.Bot
 
             ctx.CheckSystem();
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (ctx.System.Name != null)
                     await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
@@ -77,7 +77,7 @@ namespace PluralKit.Bot
 
             ctx.CheckSystem();
 
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (ctx.System.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);
