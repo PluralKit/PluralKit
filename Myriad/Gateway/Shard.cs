@@ -116,8 +116,8 @@ namespace Myriad.Gateway
                 _worker = ShardLoop();
 
             // we can probably TCS this instead of spin loop but w/e
-            while (State != ShardState.Identifying)
-                await Task.Delay(100);
+            while (State < ShardState.Identifying)
+                await Task.Delay(50);
         }
 
         public async Task UpdateStatus(GatewayStatusUpdate payload)
