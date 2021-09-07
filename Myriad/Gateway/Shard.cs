@@ -115,9 +115,9 @@ namespace Myriad.Gateway
             if (_worker == null)
                 _worker = ShardLoop();
 
-            // we can probably TCS this instead of spin loop but w/e
-            while (State < ShardState.Identifying)
-                await Task.Delay(50);
+            // Ideally we'd stagger the startups so we don't smash the websocket but that's difficult with the
+            // identify rate limiter so this is the best we can do rn, maybe?
+            await Task.Delay(200);
         }
 
         public async Task UpdateStatus(GatewayStatusUpdate payload)
