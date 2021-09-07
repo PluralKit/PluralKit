@@ -172,6 +172,7 @@ namespace PluralKit.Bot
                     await ctx.Reply(noTagSetMessage);
                 else
                     await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                return;
             }
             if (ctx.MatchRaw())
             {
@@ -179,6 +180,7 @@ namespace PluralKit.Bot
                     await ctx.Reply(noTagSetMessage);
                 else
                     await ctx.Reply($"```\n{ctx.System.Tag}\n```");
+                return;
             }
 
             if (await ctx.MatchClear("your system's tag"))
