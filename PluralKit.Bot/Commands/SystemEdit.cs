@@ -171,7 +171,7 @@ namespace PluralKit.Bot
             else
             {
                 await UpdateWelcomeMode(ctx, WelcomeMessageMode.Inline, null);
-                await ctx.Reply($"{Emojis.Success} Welcome messages will now be sent in the channel where `pk;member new` is run.");
+                await ctx.Reply($"{Emojis.Success} Welcome messages will now be sent sent along with the confirmation message.");
             }
         }
 
@@ -190,12 +190,15 @@ namespace PluralKit.Bot
         {
             ctx.CheckGuildContext();
 
-            if (channel.GuildId != ctx.Guild.Id) throw new PKError($"<#{channel.Id}> is not in this server.");
+            if (channel.GuildId != ctx.Guild.Id) throw new PKError($"Could not find channel, channel is not in this server or you do not have permissions to view the channel.");
 
             var member = await ctx.Rest.GetGuildMember(ctx.Guild.Id, ctx.Author.Id);
             var perms = ctx.Cache.PermissionsFor(channel.Id, member);
 
-            if (!perms.HasFlag(PermissionSet.ViewChannel | PermissionSet.SendMessages))
+            if (!perms.HasFlag(PermissionSet.ViewChannel))
+                throw new PKError("Could not find channel, channel is not in this server or you do not have permissions to view the channel.");
+
+            if (!perms.HasFlag(PermissionSet.SendMessages))
                 throw new PKError("You do not have permission to send messages in that channel.");
 
             await UpdateWelcomeMode(ctx, WelcomeMessageMode.CustomChannel, channel.Id);
@@ -214,7 +217,7 @@ namespace PluralKit.Bot
                     eb.Description($"Welcome messages are **disabled** for your system. To enable them, use one of the following commands:\n{commandList}");
                     break;
                 case WelcomeMessageMode.Inline:
-                    eb.Description("Welcome messages are being sent in the channel where `pk;member new` is run.");
+                    eb.Description("Welcome messages are being sent along with the confirmation message.");
                     break;
                 case WelcomeMessageMode.DM:
                     eb.Description("Welcome messages are being sent in DMs.");

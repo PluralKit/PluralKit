@@ -26,13 +26,15 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
         private readonly HttpClient _client;
+        private readonly Bot _bot;
         
-        public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client)
+        public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client, Bot bot)
         {
             _embeds = embeds;
             _db = db;
             _repo = repo;
             _client = client;
+            _bot = bot;
         }
 
         public async Task NewMember(Context ctx) {
@@ -128,9 +130,19 @@ namespace PluralKit.Bot
                         if (ctx.System.WelcomeMessageChannel == null) break;
 
                         try {
-                            var channel = await ctx.Cache.GetOrFetchChannel(ctx.Rest, (ulong)ctx.System.WelcomeMessageChannel);
+                            var channel = await ctx.Cache.GetOrFetchChannel(ctx.Rest, ctx.System.WelcomeMessageChannel.Value);
+                            if (channel == null)
+                            {
+                                text += $"\n{Emojis.Error} Could not find your welcome channel, has it been deleted?";
+                                break;
+                            }
 
                             // GuildId should never be null
+                            if (channel?.GuildId == null) {
+                                text += $"\n{Emojis.Error} Your welcome channel isn't in a server.";
+                                break;
+                            }
+
                             var guildMember = await ctx.Rest.GetGuildMember(channel?.GuildId ?? 0, ctx.Author.Id);
                             if (guildMember == null) {
                                 text += $"\n{Emojis.Error} You're not in the server your welcome channel is in.";
@@ -150,6 +162,12 @@ namespace PluralKit.Bot
                                 break;
                             }
 
+                            var botPerms = _bot.PermissionsIn(channel.Id);
+                            if (!botPerms.HasFlag(PermissionSet.ViewChannel) || !botPerms.HasFlag(PermissionSet.SendMessages)) {
+                                text += $"\n{Emojis.Error} PluralKit does not have permission to send messages in your welcome channel.";
+                                break;
+                            }
+
                             await ctx.Rest.CreateMessage(channel.Id, new MessageRequest{
                                 Content = ctx.Author.Mention(),
                                 Embed = eb.Build(),
@@ -157,8 +175,6 @@ namespace PluralKit.Bot
                                     Users = new ulong[] { ctx.Author.Id }
                                 }
                             });
-                        } catch (ForbiddenException) {
-                            text += $"\n{Emojis.Error} PluralKit does not have permission to send messages in your welcome channel.";
                         } catch (NotFoundException) {
                             text += $"\n{Emojis.Error} Could not find your welcome channel. Has it been deleted?";
                         }
