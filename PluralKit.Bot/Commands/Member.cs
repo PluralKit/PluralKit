@@ -129,55 +129,51 @@ namespace PluralKit.Bot
                         // This shouldn't ever happen, but if it does, act as if there's no message set at all.
                         if (ctx.System.WelcomeMessageChannel == null) break;
 
-                        try {
-                            var channel = await ctx.Cache.GetOrFetchChannel(ctx.Rest, ctx.System.WelcomeMessageChannel.Value);
-                            if (channel == null)
-                            {
-                                text += $"\n{Emojis.Error} Could not find your welcome channel, has it been deleted?";
-                                break;
-                            }
-
-                            // GuildId should never be null
-                            if (channel?.GuildId == null) {
-                                text += $"\n{Emojis.Error} Your welcome channel isn't in a server.";
-                                break;
-                            }
-
-                            var guildMember = await ctx.Rest.GetGuildMember(channel?.GuildId ?? 0, ctx.Author.Id);
-                            if (guildMember == null) {
-                                text += $"\n{Emojis.Error} You're not in the server your welcome channel is in.";
-                                break;
-                            }
-
-                            var perms = ctx.Cache.PermissionsFor(channel.Id, guildMember);
-
-                            if (!perms.HasFlag(PermissionSet.ViewChannel | PermissionSet.ReadMessageHistory))
-                            {
-                                text += $"\n{Emojis.Error} You can't read messages in your welcome channel.";
-                                break;
-                            }
-                            if (!perms.HasFlag(PermissionSet.SendMessages))
-                            {
-                                text += $"\n{Emojis.Error} You can't send messages in your welcome channel.";
-                                break;
-                            }
-
-                            var botPerms = _bot.PermissionsIn(channel.Id);
-                            if (!botPerms.HasFlag(PermissionSet.ViewChannel) || !botPerms.HasFlag(PermissionSet.SendMessages)) {
-                                text += $"\n{Emojis.Error} PluralKit does not have permission to send messages in your welcome channel.";
-                                break;
-                            }
-
-                            await ctx.Rest.CreateMessage(channel.Id, new MessageRequest{
-                                Content = ctx.Author.Mention(),
-                                Embed = eb.Build(),
-                                AllowedMentions = new AllowedMentions {
-                                    Users = new ulong[] { ctx.Author.Id }
-                                }
-                            });
-                        } catch (NotFoundException) {
-                            text += $"\n{Emojis.Error} Could not find your welcome channel. Has it been deleted?";
+                        var channel = await ctx.Cache.GetOrFetchChannel(ctx.Rest, ctx.System.WelcomeMessageChannel.Value);
+                        if (channel == null)
+                        {
+                            text += $"\n{Emojis.Error} Could not find your welcome channel, has it been deleted?";
+                            break;
                         }
+
+                        // GuildId should never be null
+                        if (channel.GuildId == null) {
+                            text += $"\n{Emojis.Error} Your welcome channel isn't in a server.";
+                            break;
+                        }
+
+                        var guildMember = await ctx.Rest.GetGuildMember(channel.GuildId.Value, ctx.Author.Id);
+                        if (guildMember == null) {
+                            text += $"\n{Emojis.Error} You're not in the server your welcome channel is in.";
+                            break;
+                        }
+
+                        var perms = ctx.Cache.PermissionsFor(channel.Id, guildMember);
+
+                        if (!perms.HasFlag(PermissionSet.ViewChannel | PermissionSet.ReadMessageHistory))
+                        {
+                            text += $"\n{Emojis.Error} Could not find welcome channel, you are not in the server the welcome channel is in or you do not have permissions to view the welcome channel.";
+                            break;
+                        }
+                        if (!perms.HasFlag(PermissionSet.SendMessages))
+                        {
+                            text += $"\n{Emojis.Error} You can't send messages in your welcome channel.";
+                            break;
+                        }
+
+                        var botPerms = _bot.PermissionsIn(channel.Id);
+                        if (!botPerms.HasFlag(PermissionSet.ViewChannel) || !botPerms.HasFlag(PermissionSet.SendMessages)) {
+                            text += $"\n{Emojis.Error} PluralKit does not have permission to send messages in your welcome channel.";
+                            break;
+                        }
+
+                        await ctx.Rest.CreateMessage(channel.Id, new MessageRequest{
+                            Content = ctx.Author.Mention(),
+                            Embed = eb.Build(),
+                            AllowedMentions = new AllowedMentions {
+                                Users = new ulong[] { ctx.Author.Id }
+                            }
+                        });
                         break;
                     }
 
