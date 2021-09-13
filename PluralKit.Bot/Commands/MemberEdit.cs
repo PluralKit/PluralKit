@@ -67,7 +67,15 @@ namespace PluralKit.Bot
             if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
                 throw Errors.LookupNotAllowed;
 
-            if (!ctx.HasNext(false))
+            if (ctx.MatchRaw())
+            {
+                if (target.Description == null)
+                    await ctx.Reply(noDescriptionSetMessage);
+                else
+                    await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
             {
                 if (target.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);
@@ -78,14 +86,6 @@ namespace PluralKit.Bot
                         .Field(new("\u200B", $"To print the description with formatting, type `pk;member {target.Reference()} description -raw`."
                                     + (ctx.System?.Id == target.System ? $" To clear it, type `pk;member {target.Reference()} description -clear`." : "")))
                         .Build());
-                return;
-            }
-            else if (ctx.MatchRaw())
-            {
-                if (target.Description == null)
-                    await ctx.Reply(noDescriptionSetMessage);
-                else
-                    await ctx.Reply($"```\n{target.Description}\n```");
                 return;
             }
 
@@ -119,21 +119,21 @@ namespace PluralKit.Bot
             if (!target.PronounPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
                 throw Errors.LookupNotAllowed;
 
-            if (!ctx.HasNext(false))
+            if (ctx.MatchRaw())
+            {
+                if (target.Pronouns == null)
+                    await ctx.Reply(noPronounsSetMessage);
+                else
+                    await ctx.Reply($"```\n{target.Pronouns}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
             {
                 if (target.Pronouns == null)
                     await ctx.Reply(noPronounsSetMessage);
                 else
                     await ctx.Reply($"**{target.NameFor(ctx)}**'s pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;member {target.Reference()} pronouns -raw`."
                         + (ctx.System?.Id == target.System ? $" To clear them, type `pk;member {target.Reference()} pronouns -clear`." : ""));
-                return;
-            }
-            else if (ctx.MatchRaw())
-            {
-                if (target.Pronouns == null)
-                    await ctx.Reply(noPronounsSetMessage);
-                else
-                    await ctx.Reply($"```\n{target.Pronouns}\n```");
                 return;
             }
 
@@ -355,7 +355,15 @@ namespace PluralKit.Bot
 
             // No perms check, display name isn't covered by member privacy
 
-            if (!ctx.HasNext(false))
+            if (ctx.MatchRaw())
+            {
+                if (target.DisplayName == null)
+                    await ctx.Reply(noDisplayNameSetMessage);
+                else
+                    await ctx.Reply($"```\n{target.DisplayName}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
             {
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
@@ -363,14 +371,6 @@ namespace PluralKit.Bot
                         + $"To clear it, type `pk;member {target.Reference()} displayname -clear`."
                         + $"To print the raw display name, type `pk;member {target.Reference()} displayname -raw`.");
                 await ctx.Reply(embed: eb.Build());
-                return;
-            }
-            else if (ctx.MatchRaw())
-            {
-                if (target.DisplayName == null)
-                    await ctx.Reply(noDisplayNameSetMessage);
-                else
-                    await ctx.Reply($"```\n{target.DisplayName}\n```");
                 return;
             }
 
@@ -404,15 +404,7 @@ namespace PluralKit.Bot
 
             // No perms check, display name isn't covered by member privacy
 
-            if (!ctx.HasNext(false))
-            {
-                var eb = await CreateMemberNameInfoEmbed(ctx, target);
-                if (ctx.System?.Id == target.System)
-                    eb.Description($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.\nTo print the raw server name, type `pk;member {target.Reference()} servername -raw`.");
-                await ctx.Reply(embed: eb.Build());
-                return;
-            }
-            else if (ctx.MatchRaw())
+            if (ctx.MatchRaw())
             {
                 MemberGuildSettings memberGuildConfig = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
 
@@ -420,6 +412,14 @@ namespace PluralKit.Bot
                     await ctx.Reply(noServerNameSetMessage);
                 else
                     await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
+            {
+                var eb = await CreateMemberNameInfoEmbed(ctx, target);
+                if (ctx.System?.Id == target.System)
+                    eb.Description($"To change server name, type `pk;member {target.Reference()} servername <server name>`.\nTo clear it, type `pk;member {target.Reference()} servername -clear`.\nTo print the raw server name, type `pk;member {target.Reference()} servername -raw`.");
+                await ctx.Reply(embed: eb.Build());
                 return;
             }
 

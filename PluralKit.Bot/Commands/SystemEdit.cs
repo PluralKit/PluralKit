@@ -33,18 +33,18 @@ namespace PluralKit.Bot
 
             ctx.CheckSystem();
 
-            if (!ctx.HasNext(false))
-            {
-                if (ctx.System.Name != null)
-                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
-                else
-                    await ctx.Reply(noNameSetMessage);
-                return;
-            }
             if (ctx.MatchRaw())
             {
                 if (ctx.System.Name != null)
                     await ctx.Reply($"```\n{ctx.System.Name}\n```");
+                else
+                    await ctx.Reply(noNameSetMessage);
+                return;
+            }
+            if (!ctx.HasNext())
+            {
+                if (ctx.System.Name != null)
+                    await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
                 else
                     await ctx.Reply(noNameSetMessage);
                 return;
@@ -77,7 +77,15 @@ namespace PluralKit.Bot
 
             ctx.CheckSystem();
 
-            if (!ctx.HasNext(false))
+            if (ctx.MatchRaw())
+            {
+                if (ctx.System.Description == null)
+                    await ctx.Reply(noDescriptionSetMessage);
+                else
+                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
             {
                 if (ctx.System.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);
@@ -87,14 +95,6 @@ namespace PluralKit.Bot
                         .Description(ctx.System.Description)
                         .Footer(new("To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`."))
                         .Build());
-                return;
-            }
-            if (ctx.MatchRaw())
-            {
-                if (ctx.System.Description == null)
-                    await ctx.Reply(noDescriptionSetMessage);
-                else
-                    await ctx.Reply($"```\n{ctx.System.Description}\n```");
                 return;
             }
 
@@ -167,20 +167,20 @@ namespace PluralKit.Bot
 
             ctx.CheckSystem();
 
-            if (!ctx.HasNext(skipFlags: false))
-            {
-                if (ctx.System.Tag == null)
-                    await ctx.Reply(noTagSetMessage);
-                else
-                    await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
-                return;
-            }
             if (ctx.MatchRaw())
             {
                 if (ctx.System.Tag == null)
                     await ctx.Reply(noTagSetMessage);
                 else
                     await ctx.Reply($"```\n{ctx.System.Tag}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
+            {
+                if (ctx.System.Tag == null)
+                    await ctx.Reply(noTagSetMessage);
+                else
+                    await ctx.Reply($"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
                 return;
             }
 

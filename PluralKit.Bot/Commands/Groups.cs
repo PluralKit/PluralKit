@@ -103,7 +103,15 @@ namespace PluralKit.Bot
 
             // No perms check, display name isn't covered by member privacy
 
-            if (!ctx.HasNext(false))
+            if (ctx.MatchRaw())
+            {
+                if (target.DisplayName == null)
+                    await ctx.Reply(noDisplayNameSetMessage);
+                else
+                    await ctx.Reply($"```\n{target.DisplayName}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
             {
                 if (target.DisplayName == null)
                     await ctx.Reply(noDisplayNameSetMessage);
@@ -120,14 +128,6 @@ namespace PluralKit.Bot
 
                     await ctx.Reply(embed: eb.Build());
                 }
-                return;
-            }
-            if (ctx.MatchRaw())
-            {
-                if (target.DisplayName == null)
-                    await ctx.Reply(noDisplayNameSetMessage);
-                else
-                    await ctx.Reply($"```\n{target.DisplayName}\n```");
                 return;
             }
 
@@ -160,7 +160,15 @@ namespace PluralKit.Bot
             if (ctx.System?.Id == target.System)
                 noDescriptionSetMessage += $" To set one, type `pk;group {target.Reference()} description <description>`.";
 
-            if (!ctx.HasNext(false))
+            if (ctx.MatchRaw())
+            {
+                if (target.Description == null)
+                    await ctx.Reply(noDescriptionSetMessage);
+                else
+                    await ctx.Reply($"```\n{target.Description}\n```");
+                return;
+            }
+            if (!ctx.HasNext())
             {
                 if (target.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);
@@ -171,14 +179,6 @@ namespace PluralKit.Bot
                         .Field(new("\u200B", $"To print the description with formatting, type `pk;group {target.Reference()} description -raw`."
                                     + (ctx.System?.Id == target.System ? $" To clear it, type `pk;group {target.Reference()} description -clear`." : "")))
                         .Build());
-                return;
-            }
-            if (ctx.MatchRaw())
-            {
-                if (target.Description == null)
-                    await ctx.Reply(noDescriptionSetMessage);
-                else
-                    await ctx.Reply($"```\n{target.Description}\n```");
                 return;
             }
 
