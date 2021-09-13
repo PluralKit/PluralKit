@@ -41,11 +41,8 @@ namespace PluralKit.Bot
         public static PKError ExistingSystemError => new PKError("You already have a system registered with PluralKit. To view it, type `pk;system`. If you'd like to delete your system and start anew, type `pk;system delete`, or if you'd like to unlink this account from it, type `pk;unlink`.");
         public static PKError MissingMemberError => new PKSyntaxError("You need to specify a member to run this command on.");
 
-        public static PKError SystemNameTooLongError(int length) => new PKError($"System name too long ({length}/{Limits.MaxSystemNameLength} characters).");
-        public static PKError SystemTagTooLongError(int length) => new PKError($"System tag too long ({length}/{Limits.MaxSystemTagLength} characters).");
-        public static PKError DescriptionTooLongError(int length) => new PKError($"Description too long ({length}/{Limits.MaxDescriptionLength} characters).");
-        public static PKError MemberNameTooLongError(int length) => new PKError($"Member name too long ({length}/{Limits.MaxMemberNameLength} characters).");
-        public static PKError MemberPronounsTooLongError(int length) => new PKError($"Member pronouns too long ({length}/{Limits.MaxMemberNameLength} characters).");
+        public static PKError StringTooLongError(string name, int length, int maxLength) => new PKError($"{name} too long ({length}/{maxLength} characters).");
+
         public static PKError MemberLimitReachedError(int limit) => new PKError($"System has reached the maximum number of members ({limit}). Please delete unused members first in order to create new ones.");
 
         public static PKError InvalidColorError(string color) => new PKError($"\"{color}\" is not a valid color. Color must be in 6-digit RGB hex format (eg. #ff0000).");

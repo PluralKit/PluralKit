@@ -30,7 +30,7 @@ namespace PluralKit.Bot
 
             var systemName = ctx.RemainderOrNull();
             if (systemName != null && systemName.Length > Limits.MaxSystemNameLength)
-                throw Errors.SystemNameTooLongError(systemName.Length);
+                throw Errors.StringTooLongError("System name", systemName.Length, Limits.MaxSystemNameLength);
 
             var system = _db.Execute(async c =>
             {

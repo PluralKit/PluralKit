@@ -62,7 +62,7 @@ namespace PluralKit.Bot
                 var newSystemName = ctx.RemainderOrNull();
 
                 if (newSystemName.Length > Limits.MaxSystemNameLength)
-                    throw Errors.SystemNameTooLongError(newSystemName.Length);
+                    throw Errors.StringTooLongError("System name", newSystemName.Length, Limits.MaxSystemNameLength);
 
                 var patch = new SystemPatch { Name = newSystemName };
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
@@ -109,7 +109,8 @@ namespace PluralKit.Bot
             else
             {
                 var newDescription = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
-                if (newDescription.Length > Limits.MaxDescriptionLength) throw Errors.DescriptionTooLongError(newDescription.Length);
+                if (newDescription.Length > Limits.MaxDescriptionLength)
+                    throw Errors.StringTooLongError("Description", newDescription.Length, Limits.MaxDescriptionLength);
 
                 var patch = new SystemPatch { Description = newDescription };
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
@@ -195,7 +196,7 @@ namespace PluralKit.Bot
                 var newTag = ctx.RemainderOrNull(skipFlags: false);
                 if (newTag != null)
                     if (newTag.Length > Limits.MaxSystemTagLength)
-                        throw Errors.SystemTagTooLongError(newTag.Length);
+                        throw Errors.StringTooLongError("System tag", newTag.Length, Limits.MaxSystemTagLength);
 
                 var patch = new SystemPatch { Tag = newTag };
                 await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id, patch));
@@ -234,7 +235,7 @@ namespace PluralKit.Bot
             {
                 var newTag = ctx.RemainderOrNull(skipFlags: false);
                 if (newTag != null && newTag.Length > Limits.MaxSystemTagLength)
-                    throw Errors.SystemTagTooLongError(newTag.Length);
+                    throw Errors.StringTooLongError("System server tag", newTag.Length, Limits.MaxSystemTagLength);
 
                 var patch = new SystemGuildPatch { Tag = newTag };
                 await _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));

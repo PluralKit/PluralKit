@@ -31,7 +31,8 @@ namespace PluralKit.Bot
             var newName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a new name for the member.");
 
             // Hard name length cap
-            if (newName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(newName.Length);
+            if (newName.Length > Limits.MaxMemberNameLength)
+                throw Errors.StringTooLongError("Member name", newName.Length, Limits.MaxMemberNameLength);
 
             // Warn if there's already a member by this name
             var existingMember = await _db.Execute(conn => _repo.GetMemberByName(conn, ctx.System.Id, newName));
@@ -100,7 +101,7 @@ namespace PluralKit.Bot
             {
                 var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (description.IsLongerThan(Limits.MaxDescriptionLength))
-                    throw Errors.DescriptionTooLongError(description.Length);
+                    throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
 
                 var patch = new MemberPatch { Description = Partial<string>.Present(description) };
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
@@ -148,7 +149,7 @@ namespace PluralKit.Bot
             {
                 var pronouns = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (pronouns.IsLongerThan(Limits.MaxPronounsLength))
-                    throw Errors.MemberPronounsTooLongError(pronouns.Length);
+                    throw Errors.StringTooLongError("Pronouns", pronouns.Length, Limits.MaxPronounsLength);
 
                 var patch = new MemberPatch { Pronouns = Partial<string>.Present(pronouns) };
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));

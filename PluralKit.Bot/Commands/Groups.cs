@@ -194,7 +194,7 @@ namespace PluralKit.Bot
             {
                 var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
                 if (description.IsLongerThan(Limits.MaxDescriptionLength))
-                    throw Errors.DescriptionTooLongError(description.Length);
+                    throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
 
                 var patch = new GroupPatch { Description = Partial<string>.Present(description) };
                 await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));

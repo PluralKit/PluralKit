@@ -36,7 +36,8 @@ namespace PluralKit.Bot
             var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
 
             // Hard name length cap
-            if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
+            if (memberName.Length > Limits.MaxMemberNameLength)
+                throw Errors.StringTooLongError("Member name", memberName.Length, Limits.MaxMemberNameLength);
 
             // Warn if there's already a member by this name
             var existingMember = await _db.Execute(c => _repo.GetMemberByName(c, ctx.System.Id, memberName));
