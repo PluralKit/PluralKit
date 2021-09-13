@@ -114,8 +114,8 @@ namespace PluralKit.Bot
                 .Field(new("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true))
                 .Field(new("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true))
                 .Field(new("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalGroups:N0} groups, {totalSwitches:N0} switches, {totalMessages:N0} messages"))
-                .Timestamp(now.ToDateTimeOffset().ToString("O"))
-                .Footer(new($"PluralKit {BuildInfoService.Version} • https://github.com/xSke/PluralKit")); ;
+                .Timestamp(Process.GetCurrentProcess().StartTime.ToString("O"))
+                .Footer(new($"PluralKit {BuildInfoService.Version} • https://github.com/xSke/PluralKit • Last restarted: ")); ;
             await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
                 new MessageEditRequest { Content = "", Embed = embed.Build() });
         }
