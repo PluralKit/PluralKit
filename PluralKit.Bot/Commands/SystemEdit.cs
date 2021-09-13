@@ -211,10 +211,16 @@ namespace PluralKit.Bot
 
             var setDisabledWarning = $"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `pk;s servertag -enable`.";
 
-            async Task Show()
+            async Task Show(bool raw = false)
             {
                 if (ctx.MessageContext.SystemGuildTag != null)
                 {
+                    if (raw)
+                    {
+                        await ctx.Reply($"```{ctx.MessageContext.SystemGuildTag}```");
+                        return;
+                    }
+
                     var msg = $"Your current system tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}";
                     if (!ctx.MessageContext.TagEnabled)
                         msg += ", but it is currently **disabled**. To re-enable it, type `pk;s servertag -enable`.";
@@ -300,6 +306,8 @@ namespace PluralKit.Bot
                 await EnableDisable(false);
             else if (ctx.Match("enable") || ctx.MatchFlag("enable"))
                 await EnableDisable(true);
+            else if (ctx.MatchRaw())
+                await Show(raw: true);
             else if (!ctx.HasNext(skipFlags: false))
                 await Show();
             else
