@@ -60,7 +60,7 @@ namespace PluralKit.Bot
             return system;
         }
 
-        public static async Task<PKMember> PeekMember(this Context ctx)
+        public static async Task<PKMember> PeekMember(this Context ctx, SystemId? restrictToSystem = null)
         {
             var input = ctx.PeekArgument();
 
@@ -76,7 +76,7 @@ namespace PluralKit.Bot
                 return memberByName;
 
             // Then, try member HID parsing:
-            if (await ctx.Repository.GetMemberByHid(conn, input) is PKMember memberByHid)
+            if (await ctx.Repository.GetMemberByHid(conn, input, restrictToSystem) is PKMember memberByHid)
                 return memberByHid;
 
             // And if that again fails, we try finding a member with a display name matching the argument from the system
@@ -91,10 +91,10 @@ namespace PluralKit.Bot
         /// Attempts to pop a member descriptor from the stack, returning it if present. If a member could not be
         /// resolved by the next word in the argument stack, does *not* touch the stack, and returns null.
         /// </summary>
-        public static async Task<PKMember> MatchMember(this Context ctx)
+        public static async Task<PKMember> MatchMember(this Context ctx, SystemId? restrictToSystem = null)
         {
             // First, peek a member
-            var member = await ctx.PeekMember();
+            var member = await ctx.PeekMember(restrictToSystem);
 
             // If the peek was successful, we've used up the next argument, so we pop that just to get rid of it.
             if (member != null) ctx.PopArgument();
@@ -103,14 +103,14 @@ namespace PluralKit.Bot
             return member;
         }
 
-        public static async Task<PKGroup> PeekGroup(this Context ctx)
+        public static async Task<PKGroup> PeekGroup(this Context ctx, SystemId? restrictToSystem = null)
         {
             var input = ctx.PeekArgument();
 
             await using var conn = await ctx.Database.Obtain();
             if (ctx.System != null && await ctx.Repository.GetGroupByName(conn, ctx.System.Id, input) is { } byName)
                 return byName;
-            if (await ctx.Repository.GetGroupByHid(conn, input) is { } byHid)
+            if (await ctx.Repository.GetGroupByHid(conn, input, restrictToSystem) is { } byHid)
                 return byHid;
             if (await ctx.Repository.GetGroupByDisplayName(conn, ctx.System.Id, input) is { } byDisplayName)
                 return byDisplayName;
@@ -118,9 +118,9 @@ namespace PluralKit.Bot
             return null;
         }
 
-        public static async Task<PKGroup> MatchGroup(this Context ctx)
+        public static async Task<PKGroup> MatchGroup(this Context ctx, SystemId? restrictToSystem = null)
         {
-            var group = await ctx.PeekGroup();
+            var group = await ctx.PeekGroup(restrictToSystem);
             if (group != null) ctx.PopArgument();
             return group;
         }

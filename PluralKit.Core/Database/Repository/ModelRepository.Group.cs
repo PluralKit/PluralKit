@@ -17,8 +17,11 @@ namespace PluralKit.Core
         public Task<PKGroup?> GetGroupByDisplayName(IPKConnection conn, SystemId system, string display_name) =>
             conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where system = @System and lower(display_name) = lower(@Name)", new { System = system, Name = display_name });
 
-        public Task<PKGroup?> GetGroupByHid(IPKConnection conn, string hid) =>
-            conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where hid = @hid", new { hid = hid.ToLowerInvariant() });
+        public Task<PKGroup?> GetGroupByHid(IPKConnection conn, string hid, SystemId? system = null)
+            => conn.QueryFirstOrDefaultAsync<PKGroup?>(
+                "select * from groups where hid = @hid" + (system != null ? " and system = @System" : ""),
+                new { hid = hid.ToLowerInvariant(), System = system }
+            );
 
         public Task<int> GetGroupMemberCount(IPKConnection conn, GroupId id, PrivacyLevel? privacyFilter = null)
         {

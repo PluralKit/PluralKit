@@ -104,13 +104,11 @@ namespace PluralKit.Bot
             while (ctx.HasNext())
             {
                 // and attempt to match a member 
-                var member = await ctx.MatchMember();
+                var member = await ctx.MatchMember(restrictToSystem);
+
                 if (member == null)
                     // if we can't, big error. Every member name must be valid.
                     throw new PKError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));
-
-                if (restrictToSystem != null && member.System != restrictToSystem)
-                    throw Errors.NotOwnMemberError; // TODO: name *which* member?
 
                 members.Add(member); // Then add to the final output list
             }
@@ -127,7 +125,7 @@ namespace PluralKit.Bot
             while (ctx.HasNext())
             {
                 // and attempt to match a group 
-                var group = await ctx.MatchGroup();
+                var group = await ctx.MatchGroup(restrictToSystem);
                 if (group == null)
                     // if we can't, big error. Every group name must be valid.
                     throw new PKError(ctx.CreateGroupNotFoundError(ctx.PopArgument()));

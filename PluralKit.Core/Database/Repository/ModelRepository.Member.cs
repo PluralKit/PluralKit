@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -11,8 +12,11 @@ namespace PluralKit.Core
         public Task<PKMember?> GetMember(IPKConnection conn, MemberId id) =>
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where id = @id", new { id });
 
-        public Task<PKMember?> GetMemberByHid(IPKConnection conn, string hid) =>
-            conn.QuerySingleOrDefaultAsync<PKMember?>("select * from members where hid = @Hid", new { Hid = hid.ToLower() });
+        public Task<PKMember?> GetMemberByHid(IPKConnection conn, string hid, SystemId? system = null)
+            => conn.QuerySingleOrDefaultAsync<PKMember?>(
+                "select * from members where hid = @Hid" + (system != null ? " and system = @System" : ""),
+                new { Hid = hid.ToLower(), System = system }
+            );
 
         public Task<PKMember?> GetMemberByName(IPKConnection conn, SystemId system, string name) =>
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system });
