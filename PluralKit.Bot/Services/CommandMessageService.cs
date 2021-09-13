@@ -10,7 +10,7 @@ namespace PluralKit.Bot
 {
     public class CommandMessageService
     {
-        private static readonly Duration CommandMessageRetention = Duration.FromHours(2);
+        private static readonly Duration CommandMessageRetention = Duration.FromHours(24);
 
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
