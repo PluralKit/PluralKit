@@ -57,6 +57,13 @@ namespace PluralKit.Bot
             // since this can happen in DMs as well
             if (evt.Emoji.Name == "\u274c")
             {
+                // in DMs, allow deleting any PK message
+                if (channel.GuildId == null)
+                {
+                    await HandleCommandDeleteReaction(evt, null);
+                    return;
+                }
+
                 var commandMsg = await _db.Execute(c => _commandMessageService.GetCommandMessage(c, evt.MessageId));
                 if (commandMsg != null)
                 {
@@ -128,10 +135,11 @@ namespace PluralKit.Bot
             await _db.Execute(c => _repo.DeleteMessage(c, evt.MessageId));
         }
 
-        private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage msg)
+        private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage? msg)
         {
             // Can only delete your own message
-            if (msg.AuthorId != evt.UserId)
+            // (except in DMs, where msg will be null)
+            if (msg != null && msg.AuthorId != evt.UserId)
                 return;
 
             try
