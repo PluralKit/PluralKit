@@ -496,7 +496,9 @@ namespace PluralKit.Bot
         {
             if (!ctx.HasNext())
             {
-                await ctx.Reply($"{Emojis.Error} You need to pass a target command.\nAvailable command help targets: `system`, `member`, `group`, `switch`, `log`, `blacklist`.\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
+                await ctx.Reply($"Available command help targets: `system`, `member`, `group`, `switch`, `autoproxy`, `log`, `blacklist`."
+                    + "\n- **pk;commands <target>** - *View commands related to a help target.*"
+                    + "\n\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
                 return;
             }
 
@@ -543,7 +545,6 @@ namespace PluralKit.Bot
 
         private Task HandleAutoproxyCommand(Context ctx)
         {
-            // todo: merge this with the changes from #251
             if (ctx.Match("commands"))
                 return PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
 
