@@ -68,6 +68,9 @@ namespace PluralKit.Bot
                 .Field(new("Set the description", $"> pk;group **{newGroup.Reference()}** description **This is my new group, and here is the description!**"))
                 .Field(new("Set the group icon", $"> pk;group **{newGroup.Reference()}** icon\n*(with an image attached)*"));
             await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
+
+            if (existingGroupCount >= Limits.WarnThreshold(groupLimit))
+                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} members). Please review your group list for unused or duplicate groups.");
         }
 
         public async Task RenameGroup(Context ctx, PKGroup target)

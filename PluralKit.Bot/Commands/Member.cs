@@ -89,7 +89,7 @@ namespace PluralKit.Bot
                 await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
             if (memberCount >= memberLimit)
                 await ctx.Reply($"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). You will be unable to create additional members until existing members are deleted.");
-            else if (memberCount >= Limits.MaxMembersWarnThreshold(memberLimit))
+            else if (memberCount >= Limits.WarnThreshold(memberLimit))
                 await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
         }
 
