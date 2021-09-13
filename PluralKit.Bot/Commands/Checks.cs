@@ -39,6 +39,17 @@ namespace PluralKit.Bot
             _matcher = matcher;
         }
 
+        private readonly PermissionSet[] requiredPermissions = new[]
+            {
+                PermissionSet.ViewChannel,
+                PermissionSet.SendMessages,
+                PermissionSet.AddReactions,
+                PermissionSet.AttachFiles,
+                PermissionSet.EmbedLinks,
+                PermissionSet.ManageMessages,
+                PermissionSet.ManageWebhooks
+            };
+
         public async Task PermCheckGuild(Context ctx)
         {
             Guild guild;
@@ -69,17 +80,6 @@ namespace PluralKit.Bot
                 if (guild == null || senderGuildUser == null)
                     throw Errors.GuildNotFound(guildId);
             }
-
-            var requiredPermissions = new[]
-            {
-                PermissionSet.ViewChannel,
-                PermissionSet.SendMessages,
-                PermissionSet.AddReactions,
-                PermissionSet.AttachFiles,
-                PermissionSet.EmbedLinks,
-                PermissionSet.ManageMessages,
-                PermissionSet.ManageWebhooks
-            };
 
             // Loop through every channel and group them by sets of permissions missing
             var permissionsMissing = new Dictionary<ulong, List<Channel>>();
@@ -160,6 +160,66 @@ namespace PluralKit.Bot
                 eb.Footer(new(footer));
 
             // Send! :)
+            await ctx.Reply(embed: eb.Build());
+        }
+
+        public async Task PermCheckChannel(Context ctx)
+        {
+            var error = "";
+
+            var channel = await ctx.MatchChannel();
+            if (channel == null || channel.GuildId == null)
+                throw new PKError(error);
+
+            var guild = _cache.GetGuild(channel.GuildId.Value);
+            if (guild == null)
+                throw new PKError(error);
+
+            var guildMember = await _rest.GetGuildMember(channel.GuildId.Value, ctx.Author.Id);
+            if (guildMember == null)
+                throw new PKError(error);
+
+
+
+            var botPermissions = _bot.PermissionsIn(channel.Id);
+            var webhookPermissions = _cache.EveryonePermissions(channel);
+            var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, guildMember);
+
+            if ((userPermissions & PermissionSet.ViewChannel) == 0)
+                throw new PKError(error);
+
+
+
+            // We use a bitfield so we can set individual permission bits
+            ulong missingPermissions = 0;
+
+            foreach (var requiredPermission in requiredPermissions)
+                if ((botPermissions & requiredPermission) == 0)
+                    missingPermissions |= (ulong)requiredPermission;
+
+            if ((webhookPermissions & PermissionSet.UseExternalEmojis) == 0)
+                missingPermissions |= (ulong)PermissionSet.UseExternalEmojis;
+
+            // Generate the output embed
+            var eb = new EmbedBuilder()
+                .Title($"Permission check for **{channel.Name}**");
+
+            if (missingPermissions == 0)
+                eb.Description("No issues found, channel is proxyable :)");
+            else
+            {
+                var missing = "";
+
+                foreach (var permission in requiredPermissions)
+                    if (((ulong)permission & missingPermissions) == (ulong)permission)
+                        missing += $"\n- **{permission.ToPermissionString()}**";
+
+                if (((ulong)PermissionSet.UseExternalEmojis & missingPermissions) == (ulong)PermissionSet.UseExternalEmojis)
+                    missing += $"\n- **{PermissionSet.UseExternalEmojis.ToPermissionString()}**";
+
+                eb.Description($"Missing permissions:\n{missing}");
+            }
+
             await ctx.Reply(embed: eb.Build());
         }
 

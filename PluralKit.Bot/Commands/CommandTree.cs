@@ -244,7 +244,12 @@ namespace PluralKit.Bot
             var availableCommandsStr = "Available debug targets: `permissions`, `proxying`";
 
             if (ctx.Match("permissions", "perms", "permcheck"))
-                await ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
+                if (ctx.Match("channel", "ch"))
+                    await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
+                else
+                    await ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
+            else if (ctx.Match("channel"))
+                await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
             else if (ctx.Match("proxy", "proxying", "proxycheck"))
                 await ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
             else if (!ctx.HasNext())
