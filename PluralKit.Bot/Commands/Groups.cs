@@ -111,7 +111,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{target.DisplayName}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.DisplayName == null)
                     await ctx.Reply(noDisplayNameSetMessage);
@@ -168,7 +168,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{target.Description}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);

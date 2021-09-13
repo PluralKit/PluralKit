@@ -41,7 +41,7 @@ namespace PluralKit.Bot
                     await ctx.Reply(noNameSetMessage);
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (ctx.System.Name != null)
                     await ctx.Reply($"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
@@ -85,7 +85,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{ctx.System.Description}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (ctx.System.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);
@@ -175,7 +175,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{ctx.System.Tag}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (ctx.System.Tag == null)
                     await ctx.Reply(noTagSetMessage);

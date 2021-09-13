@@ -75,7 +75,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{target.Description}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.Description == null)
                     await ctx.Reply(noDescriptionSetMessage);
@@ -127,7 +127,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{target.Pronouns}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 if (target.Pronouns == null)
                     await ctx.Reply(noPronounsSetMessage);
@@ -363,7 +363,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{target.DisplayName}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
@@ -414,7 +414,7 @@ namespace PluralKit.Bot
                     await ctx.Reply($"```\n{memberGuildConfig.DisplayName}\n```");
                 return;
             }
-            if (!ctx.HasNext())
+            if (!ctx.HasNext(false))
             {
                 var eb = await CreateMemberNameInfoEmbed(ctx, target);
                 if (ctx.System?.Id == target.System)
