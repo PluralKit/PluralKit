@@ -165,7 +165,10 @@ namespace PluralKit.Bot
 
         public async Task PermCheckChannel(Context ctx)
         {
-            var error = "";
+            if (!ctx.HasNext())
+                throw new PKSyntaxError("You need to specify a channel.");
+
+            var error = "Channel not found or you do not have permissions to access it.";
 
             var channel = await ctx.MatchChannel();
             if (channel == null || channel.GuildId == null)
@@ -226,7 +229,7 @@ namespace PluralKit.Bot
         public async Task MessageProxyCheck(Context ctx)
         {
             if (!ctx.HasNext() && ctx.Message.MessageReference == null)
-                throw new PKError("You need to specify a message.");
+                throw new PKSyntaxError("You need to specify a message.");
 
             var failedToGetMessage = "Could not find a valid message to check, was not able to fetch the message, or the message was not sent by you.";
 
@@ -259,11 +262,11 @@ namespace PluralKit.Bot
                 throw new PKError(failedToGetMessage);
 
             if ((_botConfig.Prefixes ?? BotConfig.DefaultPrefixes).Any(p => msg.Content.StartsWith(p)))
-                throw new PKError("This message starts with the bot's prefix, and was parsed as a command.");
+                await ctx.Reply("This message starts with the bot's prefix, and was parsed as a command.");
             if (msg.WebhookId != null)
-                throw new PKError("You cannot check messages sent by a webhook.");
+                await ctx.Reply("You cannot check messages sent by a webhook.");
             if (msg.Author.Id != ctx.Author.Id)
-                throw new PKError("You can only check your own messages.");
+                await ctx.Reply("You can only check your own messages.");
 
             // get the channel info
             var channel = _cache.GetChannel(channelId.Value);
