@@ -72,6 +72,7 @@ namespace PluralKit.Core
             o.Add("tag", system.Tag);
             o.Add("avatar_url", system.AvatarUrl.TryGetCleanCdnUrl());
             o.Add("banner", system.DescriptionPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
+            o.Add("color", system.Color);
             o.Add("created", system.Created.FormatExport());
             // todo: change this to "timezone"
             o.Add("tz", system.UiTz);
