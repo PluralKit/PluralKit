@@ -55,6 +55,7 @@ A `?` after the column type indicates a nullable parameter (value can be cleared
 | name                  | string   | Yes        | 100-character limit.                                                                      |
 | description           | string?  | Yes        | 1000-character limit.                                                                     |
 | tag                   | string?  | Yes        |                                                                                           |
+| color                 | string?  | Yes        | 6-char hex (eg. `ff7000`), sans `#`.                                                      |
 | avatar_url            | url?     | Yes        | Not validated server-side.                                                                |
 | banner                | url?     | Yes        | Not validated server-side.                                                                |
 | tz                    | string?  | Yes        | Tzdb identifier. Patching with `null` will store `"UTC"`.                                 |
