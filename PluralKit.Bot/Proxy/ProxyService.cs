@@ -247,17 +247,14 @@ namespace PluralKit.Bot
 
         private async Task<string> FixSameName(ulong channelId, MessageContext ctx, ProxyMember member)
         {
-            // TODO: this function's disabled due to extra database pressure, find a way to do it without requiring an extra connection
             var proxyName = member.ProxyName(ctx);
-            return proxyName;
 
             var lastMessage = _lastMessage.GetLastMessage(channelId)?.Previous;
             if (lastMessage == null)
                 // cache is out of date or channel is empty.
                 return proxyName;
 
-            await using var conn = await _db.Obtain();
-            var pkMessage = await _repo.GetMessage(conn, lastMessage.Id);
+            var pkMessage = await _db.Execute(conn => _repo.GetMessage(conn, lastMessage.Id));
 
             if (lastMessage.AuthorUsername == proxyName)
             {
