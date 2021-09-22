@@ -137,7 +137,7 @@ namespace PluralKit.Bot
             {
                 if (message.System.Id != ctx.System.Id)
                     throw new PKError("You can only delete your own messages.");
-                
+
                 await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
 
                 if (ctx.Guild != null)

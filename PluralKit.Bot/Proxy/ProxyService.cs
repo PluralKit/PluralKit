@@ -55,13 +55,13 @@ namespace PluralKit.Bot
         {
             if (!ShouldProxy(channel, message, ctx))
                 return false;
-            
+
             var rootChannel = _cache.GetRootChannel(message.ChannelId);
 
             List<ProxyMember> members;
             // Fetch members and try to match to a specific member
             using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
-            {            
+            {
                 await using var conn = await _db.Obtain();
                 members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.GuildId!.Value)).ToList();
             }

@@ -56,7 +56,7 @@ namespace PluralKit.Core
         public new void AssertIsValid()
         {
             if (Name.IsPresent)
-                AssertValid(Name.Value, "display_name", Limits.MaxMemberNameLength);
+                AssertValid(Name.Value, "name", Limits.MaxMemberNameLength);
             if (DisplayName.Value != null)
                 AssertValid(DisplayName.Value, "display_name", Limits.MaxMemberNameLength);
             if (AvatarUrl.Value != null)

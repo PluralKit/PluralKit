@@ -84,7 +84,7 @@ namespace PluralKit.Core
         }
 
     }
-    
+
     public class GroupMember
     {
         public string Group { get; set; }

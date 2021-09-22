@@ -35,12 +35,20 @@ namespace PluralKit.Core
 
         public new void AssertIsValid()
         {
-            if (Icon.Value != null && !MiscUtils.TryMatchUri(Icon.Value, out var avatarUri))
-                throw new ValidationError("icon");
-            if (BannerImage.Value != null && !MiscUtils.TryMatchUri(BannerImage.Value, out var bannerImage))
-                throw new ValidationError("banner");
-            if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
-                throw new ValidationError("color");
+            if (Name.IsPresent)
+                AssertValid(Name.Value, "name", Limits.MaxGroupNameLength);
+            if (DisplayName.Value != null)
+                AssertValid(DisplayName.Value, "display_name", Limits.MaxGroupNameLength);
+            if (Description.Value != null)
+                AssertValid(Description.Value, "description", Limits.MaxDescriptionLength);
+            if (Icon.Value != null)
+                AssertValid(Icon.Value, "icon", Limits.MaxUriLength,
+                    s => MiscUtils.TryMatchUri(s, out var avatarUri));
+            if (BannerImage.Value != null)
+                AssertValid(BannerImage.Value, "banner", Limits.MaxUriLength,
+                    s => MiscUtils.TryMatchUri(s, out var bannerUri));
+            if (Color.Value != null)
+                AssertValid(Color.Value, "color", "^[0-9a-fA-F]{6}$");
         }
 #nullable disable
 
