@@ -15,7 +15,7 @@ namespace PluralKit.Core
         {
             var tuppers = importFile.Value<JArray>("tuppers");
             var newMembers = tuppers.Count(t => !_existingMemberNames.TryGetValue("name", out var memberId));
-            await AssertLimitNotReached(newMembers);
+            await AssertMemberLimitNotReached(newMembers);
 
             string lastSetTag = null;
             bool multipleTags = false;

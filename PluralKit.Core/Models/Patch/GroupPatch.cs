@@ -1,6 +1,8 @@
 #nullable enable
 using System.Text.RegularExpressions;
 
+using Newtonsoft.Json.Linq;
+
 namespace PluralKit.Core
 {
     public class GroupPatch: PatchObject
@@ -40,6 +42,40 @@ namespace PluralKit.Core
             if (Color.Value != null && (!Regex.IsMatch(Color.Value, "^[0-9a-fA-F]{6}$")))
                 throw new ValidationError("color");
         }
+#nullable disable
 
+        public static GroupPatch FromJson(JObject o)
+        {
+            var patch = new GroupPatch();
+
+            if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null)
+                throw new ValidationError("Group name can not be set to null.");
+
+            if (o.ContainsKey("name")) patch.Name = o.Value<string>("name");
+            if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
+            if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty();
+            if (o.ContainsKey("icon")) patch.Icon = o.Value<string>("icon").NullIfEmpty();
+            if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
+            if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
+
+            if (o.ContainsKey("privacy") && o["privacy"].Type != JTokenType.Null)
+            {
+                var privacy = o.Value<JObject>("privacy");
+
+                if (privacy.ContainsKey("description_privacy"))
+                    patch.DescriptionPrivacy = privacy.ParsePrivacy("description_privacy");
+
+                if (privacy.ContainsKey("icon_privacy"))
+                    patch.IconPrivacy = privacy.ParsePrivacy("icon_privacy");
+
+                if (privacy.ContainsKey("list_privacy"))
+                    patch.ListPrivacy = privacy.ParsePrivacy("list_privacy");
+
+                if (privacy.ContainsKey("visibility"))
+                    patch.Visibility = privacy.ParsePrivacy("visibility");
+            }
+
+            return patch;
+        }
     }
 }

@@ -1,6 +1,6 @@
 using NodaTime;
 
-
+using Newtonsoft.Json.Linq;
 
 namespace PluralKit.Core
 {
@@ -57,5 +57,39 @@ namespace PluralKit.Core
 
         public static string? IconFor(this PKGroup group, LookupContext ctx) =>
             group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
+
+        public static JObject ToJson(this PKGroup group, LookupContext ctx, bool isExport = false)
+        {
+            var o = new JObject();
+
+            o.Add("id", group.Hid);
+            o.Add("name", group.Name);
+            o.Add("display_name", group.DisplayName);
+            o.Add("description", group.DescriptionPrivacy.Get(ctx, group.Description));
+            o.Add("icon", group.Icon);
+            o.Add("banner", group.DescriptionPrivacy.Get(ctx, group.BannerImage));
+            o.Add("color", group.Color);
+
+            o.Add("created", group.Created.FormatExport());
+
+            if (isExport)
+                o.Add("members", new JArray());
+
+            if (ctx == LookupContext.ByOwner)
+            {
+                var p = new JObject();
+
+                p.Add("description_privacy", group.DescriptionPrivacy.ToJsonString());
+                p.Add("icon_privacy", group.IconPrivacy.ToJsonString());
+                p.Add("list_privacy", group.ListPrivacy.ToJsonString());
+                p.Add("visibility", group.Visibility.ToJsonString());
+
+                o.Add("privacy", p);
+            }
+            else
+                o.Add("privacy", null);
+
+            return o;
+        }
     }
 }

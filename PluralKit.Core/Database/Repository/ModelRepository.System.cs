@@ -27,6 +27,9 @@ namespace PluralKit.Core
         public IAsyncEnumerable<PKMember> GetSystemMembers(IPKConnection conn, SystemId system) =>
             conn.QueryStreamAsync<PKMember>("select * from members where system = @SystemID", new { SystemID = system });
 
+        public IAsyncEnumerable<PKGroup> GetSystemGroups(IPKConnection conn, SystemId system) =>
+            conn.QueryStreamAsync<PKGroup>("select * from groups where system = @System", new { System = system });
+
         public Task<int> GetSystemMemberCount(IPKConnection conn, SystemId id, PrivacyLevel? privacyFilter = null)
         {
             var query = new StringBuilder("select count(*) from members where system = @Id");
@@ -34,6 +37,9 @@ namespace PluralKit.Core
                 query.Append($" and member_visibility = {(int)privacyFilter.Value}");
             return conn.QuerySingleAsync<int>(query.ToString(), new { Id = id });
         }
+
+        public Task<int> GetSystemGroupCount(IPKConnection conn, SystemId id) =>
+            conn.QuerySingleAsync<int>("select count(*) from groups where system = @System", new { System = id });
 
         public async Task<PKSystem> CreateSystem(IPKConnection conn, string? systemName = null, IPKTransaction? tx = null)
         {

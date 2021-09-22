@@ -32,6 +32,7 @@ namespace PluralKit.Core
             await _repo.UpdateSystem(_conn, _system.Id, patch, _tx);
 
             var members = importFile.Value<JArray>("members");
+            var groups = importFile.Value<JArray>("groups");
             var switches = importFile.Value<JArray>("switches");
 
             var newMembers = members.Count(m =>
@@ -39,12 +40,26 @@ namespace PluralKit.Core
                 var (found, _) = TryGetExistingMember(m.Value<string>("id"), m.Value<string>("name"));
                 return found == null;
             });
-            await AssertLimitNotReached(newMembers);
+            await AssertMemberLimitNotReached(newMembers);
+
+            if (groups != null)
+            {
+                var newGroups = groups.Count(g =>
+                {
+                    var (found, _) = TryGetExistingGroup(g.Value<string>("id"), g.Value<string>("name"));
+                    return found == null;
+                });
+                await AssertGroupLimitNotReached(newGroups);
+            }
 
             foreach (JObject member in members)
                 await ImportMember(member);
 
-            if (switches.Any(sw => sw.Value<JArray>("members").Any(m => !_knownIdentifiers.ContainsKey((string)m))))
+            if (groups != null)
+                foreach (JObject group in groups)
+                    await ImportGroup(group);
+
+            if (switches.Any(sw => sw.Value<JArray>("members").Any(m => !_knownMemberIdentifiers.ContainsKey((string)m))))
                 throw new ImportException("One or more switches include members that haven't been imported.");
 
             await ImportSwitches(switches);
@@ -93,11 +108,76 @@ namespace PluralKit.Core
                 memberId = newMember.Id;
             }
 
-            _knownIdentifiers[id] = memberId.Value;
+            _knownMemberIdentifiers[id] = memberId.Value;
 
             await _repo.UpdateMember(_conn, memberId.Value, patch, _tx);
         }
 
+        private async Task ImportGroup(JObject group)
+        {
+            var id = group.Value<string>("id");
+            var name = group.Value<string>("name");
+
+            var (found, isHidExisting) = TryGetExistingGroup(id, name);
+            var isNewGroup = found == null;
+            var referenceName = isHidExisting ? id : name;
+
+            _logger.Debug(
+                "Importing group with identifier {FileId} to system {System} (is creating new group? {IsCreatingNewGroup})",
+                referenceName, _system.Id, isNewGroup
+            );
+
+            var patch = GroupPatch.FromJson(group);
+            try
+            {
+                patch.AssertIsValid();
+            }
+            catch (FieldTooLongError e)
+            {
+                throw new ImportException($"Field {e.Name} in group {referenceName} is too long ({e.ActualLength} > {e.MaxLength}).");
+            }
+            catch (ValidationError e)
+            {
+                throw new ImportException($"Field {e.Message} in group {referenceName} is invalid.");
+            }
+
+            GroupId? groupId = found;
+
+            if (isNewGroup)
+            {
+                var newGroup = await _repo.CreateGroup(_conn, _system.Id, patch.Name.Value, _tx);
+                groupId = newGroup.Id;
+            }
+
+            _knownGroupIdentifiers[id] = groupId.Value;
+
+            await _repo.UpdateGroup(_conn, groupId.Value, patch, _tx);
+
+            var groupMembers = group.Value<JArray>("members");
+            var currentGroupMembers = (await _conn.QueryAsync<MemberId>(
+                "select member_id from group_members where group_id = @groupId",
+                new { groupId = groupId.Value }
+            )).ToList();
+
+            await using (var importer = _conn.BeginBinaryImport("copy group_members (group_id, member_id) from stdin (format binary)"))
+            {
+                foreach (var memberIdentifier in groupMembers)
+                {
+                    if (!_knownMemberIdentifiers.TryGetValue(memberIdentifier.ToString(), out var memberId))
+                        throw new Exception($"Attempted to import group member with member identifier {memberIdentifier} but could not find a recently imported member with this id!");
+
+                    if (currentGroupMembers.Contains(memberId))
+                        continue;
+
+                    await importer.StartRowAsync();
+                    await importer.WriteAsync(groupId.Value.Value, NpgsqlDbType.Integer);
+                    await importer.WriteAsync(memberId.Value, NpgsqlDbType.Integer);
+                }
+
+                await importer.CompleteAsync();
+            }
+
+        }
         private async Task ImportSwitches(JArray switches)
         {
             var existingSwitches = (await _conn.QueryAsync<PKSwitch>("select * from switches where system = @System", new { System = _system.Id })).ToList();
@@ -154,7 +234,7 @@ namespace PluralKit.Core
                     // We still assume timestamps are unique and non-duplicate, so:
                     foreach (var memberIdentifier in switchMembers)
                     {
-                        if (!_knownIdentifiers.TryGetValue((string)memberIdentifier, out var memberId))
+                        if (!_knownMemberIdentifiers.TryGetValue((string)memberIdentifier, out var memberId))
                             throw new Exception($"Attempted to import switch with member identifier {memberIdentifier} but could not find an entry in the id map for this! :/");
 
                         await importer.StartRowAsync();

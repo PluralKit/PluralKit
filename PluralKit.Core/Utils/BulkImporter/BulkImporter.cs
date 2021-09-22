@@ -25,7 +25,12 @@ namespace PluralKit.Core
 
         private readonly Dictionary<string, MemberId> _existingMemberHids = new();
         private readonly Dictionary<string, MemberId> _existingMemberNames = new();
-        private readonly Dictionary<string, MemberId> _knownIdentifiers = new();
+        private readonly Dictionary<string, MemberId> _knownMemberIdentifiers = new();
+
+        private readonly Dictionary<string, GroupId> _existingGroupHids = new();
+        private readonly Dictionary<string, GroupId> _existingGroupNames = new();
+        private readonly Dictionary<string, GroupId> _knownGroupIdentifiers = new();
+
         private ImportResultNew _result = new();
 
         internal static async Task<ImportResultNew> PerformImport(IPKConnection conn, IPKTransaction tx, ModelRepository repo, ILogger logger,
@@ -56,6 +61,15 @@ namespace PluralKit.Core
             {
                 importer._existingMemberHids[m.Hid] = m.Id;
                 importer._existingMemberNames[m.Name] = m.Id;
+            }
+
+            // same as above for groups
+            var groups = await conn.QueryAsync<PKGroup>("select id, hid, name from groups where system = @System",
+                new { System = system.Id });
+            foreach (var g in groups)
+            {
+                importer._existingGroupHids[g.Hid] = g.Id;
+                importer._existingGroupNames[g.Name] = g.Id;
             }
 
             try
@@ -89,12 +103,27 @@ namespace PluralKit.Core
             return (null, false);
         }
 
-        private async Task AssertLimitNotReached(int newMembers)
+        private (GroupId?, bool) TryGetExistingGroup(string hid, string name)
+        {
+            if (_existingGroupHids.TryGetValue(hid, out var byHid)) return (byHid, true);
+            if (_existingGroupNames.TryGetValue(name, out var byName)) return (byName, false);
+            return (null, false);
+        }
+
+        private async Task AssertMemberLimitNotReached(int newMembers)
         {
             var memberLimit = _system.MemberLimitOverride ?? Limits.MaxMemberCount;
             var existingMembers = await _repo.GetSystemMemberCount(_conn, _system.Id);
             if (existingMembers + newMembers > memberLimit)
                 throw new ImportException($"Import would exceed the maximum number of members ({memberLimit}).");
+        }
+
+        private async Task AssertGroupLimitNotReached(int newGroups)
+        {
+            var limit = _system.GroupLimitOverride ?? Limits.MaxGroupCount;
+            var existing = await _repo.GetSystemGroupCount(_conn, _system.Id);
+            if (existing + newGroups > limit)
+                throw new ImportException($"Import would exceed the maximum number of groups ({limit}).");
         }
 
         public async ValueTask DisposeAsync()

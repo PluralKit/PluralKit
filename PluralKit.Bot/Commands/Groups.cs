@@ -45,7 +45,7 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
 
             // Check group cap
-            var existingGroupCount = await conn.QuerySingleAsync<int>("select count(*) from groups where system = @System", new { System = ctx.System.Id });
+            var existingGroupCount = await _repo.GetSystemGroupCount(conn, ctx.System.Id);
             var groupLimit = ctx.System.GroupLimitOverride ?? Limits.MaxGroupCount;
             if (existingGroupCount >= groupLimit)
                 throw new PKError($"System has reached the maximum number of groups ({groupLimit}). Please delete unused groups first in order to create new ones.");
