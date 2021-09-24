@@ -81,15 +81,22 @@ namespace PluralKit.Bot
 
         public async Task<Message> EditWebhookMessage(ulong channelId, ulong messageId, string newContent)
         {
-            var webhook = await _webhookCache.GetWebhook(channelId);
             var allowedMentions = newContent.ParseMentions() with
             {
                 Roles = Array.Empty<ulong>(),
                 Parse = Array.Empty<AllowedMentions.ParseType>()
             };
 
+            ulong? threadId = null;
+            var root = _cache.GetRootChannel(channelId);
+            if (root.Id != channelId)
+                threadId = channelId;
+
+            var webhook = await _webhookCache.GetWebhook(root.Id);
+
             return await _rest.EditWebhookMessage(webhook.Id, webhook.Token, messageId,
-                new WebhookMessageEditRequest { Content = newContent, AllowedMentions = allowedMentions });
+                new WebhookMessageEditRequest { Content = newContent, AllowedMentions = allowedMentions },
+                threadId);
         }
 
         private async Task<Message> ExecuteWebhookInner(Webhook webhook, ProxyRequest req, bool hasRetried = false)

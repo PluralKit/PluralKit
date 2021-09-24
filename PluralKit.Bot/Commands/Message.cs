@@ -49,9 +49,6 @@ namespace PluralKit.Bot
             if (ctx.System.Id != msg.System.Id)
                 throw new PKError("Can't edit a message sent by a different system.");
 
-            if (_cache.GetRootChannel(msg.Message.Channel).Id != msg.Message.Channel)
-                throw new PKError("PluralKit cannot edit messages in threads.");
-
             var newContent = ctx.RemainderOrNull().NormalizeLineEndSpacing();
 
             var originalMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);

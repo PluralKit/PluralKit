@@ -127,9 +127,14 @@ namespace Myriad.Rest
         }
 
         public Task<Message> EditWebhookMessage(ulong webhookId, string webhookToken, ulong messageId,
-                                                WebhookMessageEditRequest request) =>
-            _client.Patch<Message>($"/webhooks/{webhookId}/{webhookToken}/messages/{messageId}",
-                ("EditWebhookMessage", webhookId), request)!;
+                                                WebhookMessageEditRequest request, ulong? threadId = null)
+        {
+            var url = $"/webhooks/{webhookId}/{webhookToken}/messages/{messageId}";
+            if (threadId != null)
+                url += $"?thread_id={threadId}";
+            
+            return _client.Patch<Message>(url, ("EditWebhookMessage", webhookId), request)!;
+        }
 
         public Task<Channel> CreateDm(ulong recipientId) =>
             _client.Post<Channel>($"/users/@me/channels", ("CreateDM", default), new CreateDmRequest(recipientId))!;
