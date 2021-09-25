@@ -25,15 +25,17 @@ namespace PluralKit.Bot
         private readonly IDiscordCache _cache;
         private readonly EmbedService _embeds;
         private readonly Bot _bot;
+        private readonly Cluster _cluster;
         private readonly DiscordApiClient _rest;
 
-        public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, DiscordApiClient rest, EmbedService embeds)
+        public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, Cluster cluster, DiscordApiClient rest, EmbedService embeds)
         {
             _db = db;
             _repo = repo;
             _commandMessageService = commandMessageService;
             _cache = cache;
             _bot = bot;
+            _cluster = cluster;
             _rest = rest;
             _embeds = embeds;
             _logger = logger.ForContext<ReactionAdded>();
@@ -50,6 +52,13 @@ namespace PluralKit.Bot
             // We just ignore all of those for now, should be quite rare...
             if (!_cache.TryGetUser(evt.UserId, out var user))
                 return;
+
+            // ignore any reactions added by *us*
+            if (evt.UserId == _cluster.User?.Id)
+                return;
+
+            // Ignore reactions from bots (we can't DM them anyway)
+            if (user.Bot) return;
 
             var channel = _cache.GetChannel(evt.ChannelId);
 
@@ -74,9 +83,6 @@ namespace PluralKit.Bot
 
             // Proxied messages only exist in guild text channels, so skip checking if we're elsewhere
             if (!DiscordUtils.IsValidGuildChannel(channel)) return;
-
-            // Ignore reactions from bots (we can't DM them anyway)
-            if (user.Bot) return;
 
             switch (evt.Emoji.Name)
             {
