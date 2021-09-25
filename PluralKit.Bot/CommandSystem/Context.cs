@@ -116,7 +116,9 @@ namespace PluralKit.Bot
 
             try
             {
-                await handler(_provider.Resolve<T>());
+                using (_metrics.Measure.Timer.Time(BotMetrics.CommandTime, new MetricTags("Command", commandDef.Key)))
+                    await handler(_provider.Resolve<T>());
+
                 _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
             }
             catch (PKSyntaxError e)
