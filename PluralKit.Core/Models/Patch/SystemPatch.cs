@@ -77,6 +77,7 @@ namespace PluralKit.Core
             if (o.ContainsKey("tag")) patch.Tag = o.Value<string>("tag").NullIfEmpty();
             if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
             if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
+            if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty();
             if (o.ContainsKey("timezone")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
 
             // legacy: APIv1 uses "tz" instead of "timezone"
