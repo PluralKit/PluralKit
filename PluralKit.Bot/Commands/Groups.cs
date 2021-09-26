@@ -145,7 +145,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var newDisplayName = ctx.RemainderOrNull();
+                var newDisplayName = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
 
                 var patch = new GroupPatch { DisplayName = Partial<string>.Present(newDisplayName) };
                 await _db.Execute(conn => _repo.UpdateGroup(conn, target.Id, patch));
@@ -195,7 +195,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
+                var description = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
                 if (description.IsLongerThan(Limits.MaxDescriptionLength))
                     throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
 

@@ -59,7 +59,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var newSystemName = ctx.RemainderOrNull();
+                var newSystemName = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
 
                 if (newSystemName.Length > Limits.MaxSystemNameLength)
                     throw Errors.StringTooLongError("System name", newSystemName.Length, Limits.MaxSystemNameLength);
@@ -108,7 +108,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var newDescription = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
+                var newDescription = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
                 if (newDescription.Length > Limits.MaxDescriptionLength)
                     throw Errors.StringTooLongError("Description", newDescription.Length, Limits.MaxDescriptionLength);
 
@@ -193,7 +193,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var newTag = ctx.RemainderOrNull(skipFlags: false);
+                var newTag = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
                 if (newTag != null)
                     if (newTag.Length > Limits.MaxSystemTagLength)
                         throw Errors.StringTooLongError("System tag", newTag.Length, Limits.MaxSystemTagLength);

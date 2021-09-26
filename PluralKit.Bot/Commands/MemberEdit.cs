@@ -99,7 +99,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var description = ctx.RemainderOrNull().NormalizeLineEndSpacing();
+                var description = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
                 if (description.IsLongerThan(Limits.MaxDescriptionLength))
                     throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
 
@@ -147,7 +147,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var pronouns = ctx.RemainderOrNull().NormalizeLineEndSpacing();
+                var pronouns = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
                 if (pronouns.IsLongerThan(Limits.MaxPronounsLength))
                     throw Errors.StringTooLongError("Pronouns", pronouns.Length, Limits.MaxPronounsLength);
 
@@ -385,7 +385,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var newDisplayName = ctx.RemainderOrNull();
+                var newDisplayName = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
 
                 var patch = new MemberPatch { DisplayName = Partial<string>.Present(newDisplayName) };
                 await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
@@ -437,7 +437,7 @@ namespace PluralKit.Bot
             }
             else
             {
-                var newServerName = ctx.RemainderOrNull();
+                var newServerName = ctx.RemainderOrNull(skipFlags: false).NormalizeLineEndSpacing();
 
                 var patch = new MemberGuildPatch { DisplayName = newServerName };
                 await _db.Execute(conn => _repo.UpsertMemberGuild(conn, target.Id, ctx.Guild.Id, patch));
