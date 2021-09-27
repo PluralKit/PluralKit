@@ -127,10 +127,21 @@ namespace PluralKit.Bot
                 throw new PKSyntaxError($"Could not parse {ctx.PeekArgument().AsCode()} as a message ID or link.");
             }
 
-            var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
-            if (message == null) throw Errors.MessageNotFound(messageId.Value);
+            var isDelete = ctx.Match("delete") || ctx.MatchFlag("delete");
 
-            if (ctx.Match("delete") || ctx.MatchFlag("delete"))
+            var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
+            if (message == null)
+            {
+                if (isDelete)
+                {
+                    await DeleteCommandMessage(ctx, messageId.Value);
+                    return;
+                }
+                else
+                    throw Errors.MessageNotFound(messageId.Value);
+            }
+
+            if (isDelete)
             {
                 if (message.System.Id != ctx.System.Id)
                     throw new PKError("You can only delete your own messages.");
@@ -153,6 +164,23 @@ namespace PluralKit.Bot
             }
 
             await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
+        }
+
+        private async Task DeleteCommandMessage(Context ctx, ulong messageId)
+        {
+            var message = await _db.Execute(conn => _repo.GetCommandMessage(conn, messageId));
+            if (message == null)
+                throw Errors.MessageNotFound(messageId);
+
+            if (message.AuthorId != ctx.Author.Id)
+                throw new PKError("You can only delete command messages queried by this account.");
+
+            await ctx.Rest.DeleteMessage(message.ChannelId, message.MessageId);
+
+            if (ctx.Guild != null)
+                await ctx.Rest.DeleteMessage(ctx.Message);
+            else
+                await ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new() { Name = Emojis.Success });
         }
     }
 }

@@ -104,7 +104,7 @@ namespace PluralKit.Bot
             {
                 // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
                 // This may need to be changed at some point but works well enough for now
-                await _commandMessageService.RegisterMessage(msg.Id, Author.Id);
+                await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
             }
 
             return msg;

@@ -25,10 +25,10 @@ namespace PluralKit.Bot
             _logger = logger.ForContext<CommandMessageService>();
         }
 
-        public async Task RegisterMessage(ulong messageId, ulong authorId)
+        public async Task RegisterMessage(ulong messageId, ulong channelId, ulong authorId)
         {
-            _logger.Debug("Registering command response {MessageId} from author {AuthorId}", messageId, authorId);
-            await _db.Execute(conn => _repo.SaveCommandMessage(conn, messageId, authorId));
+            _logger.Debug("Registering command response {MessageId} from author {AuthorId} in {ChannelId}", messageId, authorId, channelId);
+            await _db.Execute(conn => _repo.SaveCommandMessage(conn, messageId, channelId, authorId));
         }
 
         public async Task<CommandMessage?> GetCommandMessage(IPKConnection conn, ulong messageId)
