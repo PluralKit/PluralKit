@@ -142,12 +142,12 @@ namespace PluralKit.Bot
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastSwitch.Timestamp).FormatDuration();
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
             var newSwitchMemberStr = string.Join(", ", members.Select(m => m.NameFor(ctx)));
-            
+
             string msg;
             if (members.Count == 0)
-              msg = $"{Emojis.Warn} This will turn the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago) into a switch-out. Is this okay?";
+                msg = $"{Emojis.Warn} This will turn the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago) into a switch-out. Is this okay?";
             else
-              msg = $"{Emojis.Warn} This will change the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago) to {newSwitchMemberStr}. Is this okay?";
+                msg = $"{Emojis.Warn} This will change the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago) to {newSwitchMemberStr}. Is this okay?";
             if (!await ctx.PromptYesNo(msg, "Edit")) throw Errors.SwitchEditCancelled;
 
             // Actually edit the switch
@@ -155,9 +155,9 @@ namespace PluralKit.Bot
 
             // Tell the user the edit suceeded
             if (members.Count == 0)
-              await ctx.Reply($"{Emojis.Success} Switch edited. The latest switch is now a switch-out.");
+                await ctx.Reply($"{Emojis.Success} Switch edited. The latest switch is now a switch-out.");
             else
-              await ctx.Reply($"{Emojis.Success} Switch edited. Current fronter is now {newSwitchMemberStr}.");
+                await ctx.Reply($"{Emojis.Success} Switch edited. Current fronter is now {newSwitchMemberStr}.");
         }
 
         public async Task SwitchDelete(Context ctx)

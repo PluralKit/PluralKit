@@ -485,10 +485,10 @@ namespace PluralKit.Bot
             else if (ctx.Match("move", "shift", "offset"))
                 await ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx));
             else if (ctx.Match("edit", "replace"))
-              if (ctx.Match("out"))
-                  await ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx));
-              else
-                  await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
+                if (ctx.Match("out"))
+                    await ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx));
+                else
+                    await ctx.Execute<Switch>(SwitchEdit, m => m.SwitchEdit(ctx));
             else if (ctx.Match("delete", "remove", "erase", "cancel", "yeet"))
                 await ctx.Execute<Switch>(SwitchDelete, m => m.SwitchDelete(ctx));
             else if (ctx.Match("commands", "help"))

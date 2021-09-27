@@ -132,7 +132,7 @@ namespace Myriad.Rest
             var url = $"/webhooks/{webhookId}/{webhookToken}/messages/{messageId}";
             if (threadId != null)
                 url += $"?thread_id={threadId}";
-            
+
             return _client.Patch<Message>(url, ("EditWebhookMessage", webhookId), request)!;
         }
 

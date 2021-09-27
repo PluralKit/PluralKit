@@ -46,7 +46,7 @@ namespace PluralKit.Core
 
             // Remove the old members from the switch
             await conn.ExecuteAsync("delete from switch_members where switch = @Switch",
-                new {Switch = switchId});
+                new { Switch = switchId });
 
             // Add the new members
             await using (var w = conn.BeginBinaryImport("copy switch_members (switch, member) from stdin (format binary)"))

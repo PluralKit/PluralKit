@@ -40,8 +40,8 @@ namespace PluralKit.Bot
                 // Skip blank tags (shouldn't ever happen in practice)
                 if (tag.Prefix == null && tag.Suffix == null) continue;
 
-                if(tag.Prefix == "<" && prefixPattern.IsMatch(input)) continue;
-                if(tag.Suffix == ">" && suffixPattern.IsMatch(input)) continue;
+                if (tag.Prefix == "<" && prefixPattern.IsMatch(input)) continue;
+                if (tag.Suffix == ">" && suffixPattern.IsMatch(input)) continue;
 
                 // Can we match with these tags?
                 if (TryMatchTagsInner(input, tag, out result.Content))
