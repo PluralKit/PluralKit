@@ -1,6 +1,7 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 using PluralKit.Core;
 
@@ -8,6 +9,9 @@ namespace PluralKit.Bot
 {
     public class ProxyTagParser
     {
+        private Regex prefixPattern = new Regex(@"^<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>");
+        private Regex suffixPattern = new Regex(@"<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>$");
+
         public bool TryMatch(IEnumerable<ProxyMember> members, string? input, out ProxyMatch result)
         {
             result = default;
@@ -35,6 +39,9 @@ namespace PluralKit.Bot
 
                 // Skip blank tags (shouldn't ever happen in practice)
                 if (tag.Prefix == null && tag.Suffix == null) continue;
+
+                if(tag.Prefix == "<" && prefixPattern.IsMatch(input)) continue;
+                if(tag.Suffix == ">" && suffixPattern.IsMatch(input)) continue;
 
                 // Can we match with these tags?
                 if (TryMatchTagsInner(input, tag, out result.Content))
