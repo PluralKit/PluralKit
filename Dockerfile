@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /app
 
 # Restore/fetch dependencies excluding app code to make use of caching
+COPY PluralKit.sln /app/
 COPY Myriad/Myriad.csproj /app/Myriad/
 COPY PluralKit.API/PluralKit.API.csproj /app/PluralKit.API/
 COPY PluralKit.Bot/PluralKit.Bot.csproj /app/PluralKit.Bot/
