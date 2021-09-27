@@ -1,3 +1,7 @@
+using System.Linq;
+
+using Autofac;
+
 using Myriad.Types;
 
 using PluralKit.Core;
@@ -50,6 +54,20 @@ namespace PluralKit.Bot
         {
             if ((ctx.UserPermissions & neededPerms) != neededPerms)
                 throw new PKError($"You must have the \"{permissionName}\" permission in this server to use this command.");
+            return ctx;
+        }
+
+        public static bool CheckBotAdmin(this Context ctx)
+        {
+            var botConfig = ctx.Services.Resolve<BotConfig>();
+            return botConfig.AdminRole != null && ctx.Member != null && ctx.Member.Roles.Contains(botConfig.AdminRole.Value);
+        }
+
+        public static Context AssertBotAdmin(this Context ctx)
+        {
+            if (!ctx.CheckBotAdmin())
+                throw new PKError("This command is only usable by bot admins.");
+
             return ctx;
         }
     }

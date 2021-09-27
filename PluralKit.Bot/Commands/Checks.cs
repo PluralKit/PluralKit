@@ -263,10 +263,12 @@ namespace PluralKit.Bot
 
             if ((_botConfig.Prefixes ?? BotConfig.DefaultPrefixes).Any(p => msg.Content.StartsWith(p)))
                 await ctx.Reply("This message starts with the bot's prefix, and was parsed as a command.");
+            if (msg.Author.Bot)
+                throw new PKError("You cannot check messages sent by a bot.");
             if (msg.WebhookId != null)
-                await ctx.Reply("You cannot check messages sent by a webhook.");
-            if (msg.Author.Id != ctx.Author.Id)
-                await ctx.Reply("You can only check your own messages.");
+                throw new PKError("You cannot check messages sent by a webhook.");
+            if (msg.Author.Id != ctx.Author.Id && !ctx.CheckBotAdmin())
+                throw new PKError("You can only check your own messages.");
 
             // get the channel info
             var channel = _cache.GetChannel(channelId.Value);

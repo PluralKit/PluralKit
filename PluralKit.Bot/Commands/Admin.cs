@@ -21,7 +21,7 @@ namespace PluralKit.Bot
 
         public async Task UpdateSystemId(Context ctx)
         {
-            AssertBotAdmin(ctx);
+            ctx.AssertBotAdmin();
 
             var target = await ctx.MatchSystem();
             if (target == null)
@@ -44,7 +44,7 @@ namespace PluralKit.Bot
 
         public async Task UpdateMemberId(Context ctx)
         {
-            AssertBotAdmin(ctx);
+            ctx.AssertBotAdmin();
 
             var target = await ctx.MatchMember();
             if (target == null)
@@ -67,7 +67,7 @@ namespace PluralKit.Bot
 
         public async Task UpdateGroupId(Context ctx)
         {
-            AssertBotAdmin(ctx);
+            ctx.AssertBotAdmin();
 
             var target = await ctx.MatchGroup();
             if (target == null)
@@ -90,7 +90,7 @@ namespace PluralKit.Bot
 
         public async Task SystemMemberLimit(Context ctx)
         {
-            AssertBotAdmin(ctx);
+            ctx.AssertBotAdmin();
 
             var target = await ctx.MatchSystem();
             if (target == null)
@@ -120,7 +120,7 @@ namespace PluralKit.Bot
 
         public async Task SystemGroupLimit(Context ctx)
         {
-            AssertBotAdmin(ctx);
+            ctx.AssertBotAdmin();
 
             var target = await ctx.MatchSystem();
             if (target == null)
@@ -146,17 +146,6 @@ namespace PluralKit.Bot
                 GroupLimitOverride = newLimit
             });
             await ctx.Reply($"{Emojis.Success} Group limit updated.");
-        }
-
-        private void AssertBotAdmin(Context ctx)
-        {
-            if (!IsBotAdmin(ctx))
-                throw new PKError("This command is only usable by bot admins.");
-        }
-
-        private bool IsBotAdmin(Context ctx)
-        {
-            return _botConfig.AdminRole != null && ctx.Member.Roles.Contains(_botConfig.AdminRole.Value);
         }
     }
 }
