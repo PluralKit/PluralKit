@@ -1,6 +1,6 @@
+using System;
+
 using NodaTime;
-
-
 
 namespace PluralKit.Core
 {
@@ -32,6 +32,7 @@ namespace PluralKit.Core
     public class PKSwitch
     {
         public SwitchId Id { get; }
+        public Guid Uuid { get; private set; }
         public SystemId System { get; set; }
         public Instant Timestamp { get; }
     }

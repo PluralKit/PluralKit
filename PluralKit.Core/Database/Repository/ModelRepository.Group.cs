@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -22,6 +23,9 @@ namespace PluralKit.Core
                 "select * from groups where hid = @hid" + (system != null ? " and system = @System" : ""),
                 new { hid = hid.ToLowerInvariant(), System = system }
             );
+
+        public Task<PKGroup?> GetGroupByGuid(IPKConnection conn, Guid guid) =>
+            conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where uuid = @Uuid", new { Uuid = guid });
 
         public Task<int> GetGroupMemberCount(IPKConnection conn, GroupId id, PrivacyLevel? privacyFilter = null)
         {

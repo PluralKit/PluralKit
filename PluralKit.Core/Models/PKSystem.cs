@@ -1,3 +1,5 @@
+using System;
+
 using Dapper.Contrib.Extensions;
 
 using Newtonsoft.Json;
@@ -36,6 +38,7 @@ namespace PluralKit.Core
     {
         [Key] public SystemId Id { get; }
         public string Hid { get; }
+        public Guid Uuid { get; private set; }
         public string Name { get; }
         public string Description { get; }
         public string Tag { get; }

@@ -1,3 +1,5 @@
+using System;
+
 using NodaTime;
 
 using Newtonsoft.Json.Linq;
@@ -33,6 +35,7 @@ namespace PluralKit.Core
     {
         public GroupId Id { get; private set; }
         public string Hid { get; private set; } = null!;
+        public Guid Uuid { get; private set; }
         public SystemId System { get; private set; }
 
         public string Name { get; private set; } = null!;

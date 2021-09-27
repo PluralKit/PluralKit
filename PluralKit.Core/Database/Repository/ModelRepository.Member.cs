@@ -18,6 +18,9 @@ namespace PluralKit.Core
                 new { Hid = hid.ToLower(), System = system }
             );
 
+        public Task<PKMember?> GetMemberByGuid(IPKConnection conn, Guid guid) =>
+            conn.QuerySingleOrDefaultAsync<PKMember?>("select * from members where uuid = @Uuid", new { Uuid = guid });
+
         public Task<PKMember?> GetMemberByName(IPKConnection conn, SystemId system, string name) =>
             conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system });
 

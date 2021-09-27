@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,9 @@ namespace PluralKit.Core
     {
         public Task<PKSystem?> GetSystem(IPKConnection conn, SystemId id) =>
             conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where id = @id", new { id });
+
+        public Task<PKSystem?> GetSystemByGuid(IPKConnection conn, Guid id) =>
+            conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where uuid = @id", new { id });
 
         public Task<PKSystem?> GetSystemByAccount(IPKConnection conn, ulong accountId) =>
             conn.QuerySingleOrDefaultAsync<PKSystem?>(
@@ -38,9 +42,13 @@ namespace PluralKit.Core
             return conn.QuerySingleAsync<int>(query.ToString(), new { Id = id });
         }
 
-        public Task<int> GetSystemGroupCount(IPKConnection conn, SystemId id) =>
-            conn.QuerySingleAsync<int>("select count(*) from groups where system = @System", new { System = id });
-
+        public Task<int> GetSystemGroupCount(IPKConnection conn, SystemId id, PrivacyLevel? privacyFilter = null)
+        {
+            var query = new StringBuilder("select count(*) from groups where system = @Id");
+            if (privacyFilter != null)
+                query.Append($" and visibility = {(int)privacyFilter.Value}");
+            return conn.QuerySingleAsync<int>(query.ToString(), new { Id = id });
+        }
         public async Task<PKSystem> CreateSystem(IPKConnection conn, string? systemName = null, IPKTransaction? tx = null)
         {
             var system = await conn.QuerySingleAsync<PKSystem>(
