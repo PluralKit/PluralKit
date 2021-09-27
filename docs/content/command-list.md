@@ -99,10 +99,11 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Switching commands
 - `pk;switch [member...]` - Registers a switch with the given members.
+- `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
+- `pk;switch edit <member...|out>` - Edits the members in the latest switch. 
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
 - `pk;switch delete` - Deletes the latest switch.
 - `pk;switch delete all` - Deletes all logged switches.
-- `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
 
 ## Autoproxy commands
 - `pk;autoproxy [off|front|latch|<member>]` - Sets your system's autoproxy mode for the current server.
