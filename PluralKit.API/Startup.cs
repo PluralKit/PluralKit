@@ -117,6 +117,13 @@ namespace PluralKit.API
                 //app.UseHsts();
             }
 
+            // add X-PluralKit-Version header
+            app.Use((ctx, next) =>
+            {
+                ctx.Response.Headers.Add("X-PluralKit-Version", BuildInfoService.Version);
+                return next();
+            });
+
             //app.UseHttpsRedirection();
             app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization"));
 

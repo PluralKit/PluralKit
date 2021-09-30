@@ -1,7 +1,5 @@
-using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
-
-using System.Linq;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,29 +10,31 @@ using PluralKit.Core;
 namespace PluralKit.API
 {
     [ApiController]
-    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
     [Route("v{version:apiVersion}")]
-    public class MetaController: ControllerBase
+    public class MetaControllerV2: PKControllerBase
     {
-        private readonly IDatabase _db;
-        private readonly ModelRepository _repo;
-        public MetaController(IDatabase db, ModelRepository repo)
-        {
-            _db = db;
-            _repo = repo;
-        }
+        public MetaControllerV2(IServiceProvider svc) : base(svc) { }
 
         [HttpGet("meta")]
-        public async Task<ActionResult<JObject>> GetMeta()
+        public async Task<ActionResult<JObject>> Meta()
         {
             await using var conn = await _db.Obtain();
             var shards = await _repo.GetShards(conn);
 
             var o = new JObject();
             o.Add("shards", shards.ToJSON());
-            o.Add("version", BuildInfoService.Version);
 
             return Ok(o);
+        }
+
+        [HttpGet("messages/{message_id}")]
+        public async Task<IActionResult> MessageGet(ulong message_id)
+        {
+            return new ObjectResult("Unimplemented")
+            {
+                StatusCode = 501
+            };
         }
     }
 }
