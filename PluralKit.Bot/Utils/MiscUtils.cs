@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -55,6 +55,9 @@ namespace PluralKit.Bot
 
             // Sometimes Discord just times everything out.
             if (e is TimeoutException) return false;
+
+            // HTTP/2 streams are complicated and break sometimes.
+            if (e is HttpRequestException) return false;
 
             // Ignore "Database is shutting down" error
             if (e is PostgresException pe && pe.SqlState == "57P03") return false;
