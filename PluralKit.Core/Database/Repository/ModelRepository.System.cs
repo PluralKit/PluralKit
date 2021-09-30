@@ -1,93 +1,120 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
-using Dapper;
+using SqlKata;
 
 namespace PluralKit.Core
 {
     public partial class ModelRepository
     {
-        public Task<PKSystem?> GetSystem(IPKConnection conn, SystemId id) =>
-            conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where id = @id", new { id });
-
-        public Task<PKSystem?> GetSystemByGuid(IPKConnection conn, Guid id) =>
-            conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where uuid = @id", new { id });
-
-        public Task<PKSystem?> GetSystemByAccount(IPKConnection conn, ulong accountId) =>
-            conn.QuerySingleOrDefaultAsync<PKSystem?>(
-                "select systems.* from systems, accounts where accounts.system = systems.id and accounts.uid = @Id",
-                new { Id = accountId });
-
-        public Task<PKSystem?> GetSystemByHid(IPKConnection conn, string hid) =>
-            conn.QuerySingleOrDefaultAsync<PKSystem?>("select * from systems where systems.hid = @Hid",
-                new { Hid = hid.ToLower() });
-
-        public Task<IEnumerable<ulong>> GetSystemAccounts(IPKConnection conn, SystemId system) =>
-            conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new { Id = system });
-
-        public IAsyncEnumerable<PKMember> GetSystemMembers(IPKConnection conn, SystemId system) =>
-            conn.QueryStreamAsync<PKMember>("select * from members where system = @SystemID", new { SystemID = system });
-
-        public IAsyncEnumerable<PKGroup> GetSystemGroups(IPKConnection conn, SystemId system) =>
-            conn.QueryStreamAsync<PKGroup>("select * from groups where system = @System", new { System = system });
-
-        public Task<int> GetSystemMemberCount(IPKConnection conn, SystemId id, PrivacyLevel? privacyFilter = null)
+        public Task<PKSystem?> GetSystem(SystemId id)
         {
-            var query = new StringBuilder("select count(*) from members where system = @Id");
-            if (privacyFilter != null)
-                query.Append($" and member_visibility = {(int)privacyFilter.Value}");
-            return conn.QuerySingleAsync<int>(query.ToString(), new { Id = id });
+            var query = new Query("systems").Where("id", id);
+            return _db.QueryFirst<PKSystem?>(query);
         }
 
-        public Task<int> GetSystemGroupCount(IPKConnection conn, SystemId id, PrivacyLevel? privacyFilter = null)
+        public Task<PKSystem?> GetSystemByGuid(Guid id)
         {
-            var query = new StringBuilder("select count(*) from groups where system = @Id");
-            if (privacyFilter != null)
-                query.Append($" and visibility = {(int)privacyFilter.Value}");
-            return conn.QuerySingleAsync<int>(query.ToString(), new { Id = id });
+            var query = new Query("systems").Where("uuid", id);
+            return _db.QueryFirst<PKSystem?>(query);
         }
-        public async Task<PKSystem> CreateSystem(IPKConnection conn, string? systemName = null, IPKTransaction? tx = null)
+
+        public Task<PKSystem?> GetSystemByAccount(ulong accountId)
         {
-            var system = await conn.QuerySingleAsync<PKSystem>(
-                "insert into systems (hid, name) values (find_free_system_hid(), @Name) returning *",
-                new { Name = systemName },
-                transaction: tx);
+            var query = new Query("accounts").Select("systems.*").LeftJoin("systems", "systems.id", "accounts.system", "=").Where("uid", accountId);
+            return _db.QueryFirst<PKSystem?>(query);
+        }
+
+        public Task<PKSystem?> GetSystemByHid(string hid)
+        {
+            var query = new Query("systems").Where("hid", hid.ToLower());
+            return _db.QueryFirst<PKSystem?>(query);
+        }
+
+        public Task<IEnumerable<ulong>> GetSystemAccounts(SystemId system)
+        {
+            var query = new Query("accounts").Select("uid").Where("system", system);
+            return _db.Query<ulong>(query);
+        }
+
+        public IAsyncEnumerable<PKMember> GetSystemMembers(SystemId system)
+        {
+            var query = new Query("members").Where("system", system);
+            return _db.QueryStream<PKMember>(query);
+        }
+
+        public IAsyncEnumerable<PKGroup> GetSystemGroups(SystemId system)
+        {
+            var query = new Query("groups").Where("system", system);
+            return _db.QueryStream<PKGroup>(query);
+        }
+
+        public Task<int> GetSystemMemberCount(SystemId system, PrivacyLevel? privacyFilter = null)
+        {
+            var query = new Query("members").SelectRaw("count(*)").Where("system", system);
+            if (privacyFilter != null)
+                query.Where("member_visibility", (int)privacyFilter.Value);
+
+            return _db.QueryFirst<int>(query);
+        }
+
+        public Task<int> GetSystemGroupCount(SystemId system, PrivacyLevel? privacyFilter = null)
+        {
+            var query = new Query("groups").SelectRaw("count(*)").Where("system", system);
+            if (privacyFilter != null)
+                query.Where("visibility", (int)privacyFilter.Value);
+
+            return _db.QueryFirst<int>(query);
+        }
+
+        public async Task<PKSystem> CreateSystem(string? systemName = null, IPKConnection? conn = null)
+        {
+            var query = new Query("systems").AsInsert(new
+            {
+                hid = new UnsafeLiteral("find_free_system_hid()"),
+                name = systemName
+            });
+            var system = await _db.QueryFirst<PKSystem>(conn, query, extraSql: "returning *");
             _logger.Information("Created {SystemId}", system.Id);
             return system;
         }
 
-        public Task<PKSystem> UpdateSystem(IPKConnection conn, SystemId id, SystemPatch patch, IPKTransaction? tx = null)
+        public Task<PKSystem> UpdateSystem(SystemId id, SystemPatch patch, IPKConnection? conn = null)
         {
             _logger.Information("Updated {SystemId}: {@SystemPatch}", id, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("systems", "id = @id"))
-                .WithConstant("id", id)
-                .Build("returning *");
-            return conn.QueryFirstAsync<PKSystem>(query, pms, transaction: tx);
+            var query = patch.Apply(new Query("systems").Where("id", id));
+            return _db.QueryFirst<PKSystem>(conn, query, extraSql: "returning *");
         }
 
-        public async Task AddAccount(IPKConnection conn, SystemId system, ulong accountId)
+        public Task AddAccount(SystemId system, ulong accountId)
         {
             // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
             // This is used in import/export, although the pk;link command checks for this case beforehand
-            await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing",
-                new { Id = accountId, SystemId = system });
+
+            var query = new Query("accounts").AsInsert(new
+            {
+                system = system,
+                uid = accountId,
+            });
+
             _logger.Information("Linked account {UserId} to {SystemId}", accountId, system);
+            return _db.ExecuteQuery(query, extraSql: "on conflict do nothing");
         }
 
-        public async Task RemoveAccount(IPKConnection conn, SystemId system, ulong accountId)
+        public async Task RemoveAccount(SystemId system, ulong accountId)
         {
-            await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId",
-                new { Id = accountId, SystemId = system });
+            var query = new Query("accounts").AsDelete().Where("uid", accountId).Where("system", system);
+            await _db.ExecuteQuery(query);
             _logger.Information("Unlinked account {UserId} from {SystemId}", accountId, system);
         }
 
-        public Task DeleteSystem(IPKConnection conn, SystemId id)
+        public Task DeleteSystem(SystemId id)
         {
+            var query = new Query("systems").AsDelete().Where("id", id);
             _logger.Information("Deleted {SystemId}", id);
-            return conn.ExecuteAsync("delete from systems where id = @Id", new { Id = id });
+            return _db.ExecuteQuery(query);
         }
     }
 }

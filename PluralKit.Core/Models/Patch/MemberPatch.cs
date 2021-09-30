@@ -6,6 +6,8 @@ using NodaTime;
 
 using Newtonsoft.Json.Linq;
 
+using SqlKata;
+
 namespace PluralKit.Core
 {
     public class MemberPatch: PatchObject
@@ -31,7 +33,7 @@ namespace PluralKit.Core
         public Partial<PrivacyLevel> AvatarPrivacy { get; set; }
         public Partial<PrivacyLevel> MetadataPrivacy { get; set; }
 
-        public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
+        public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
             .With("name", Name)
             .With("hid", Hid)
             .With("display_name", DisplayName)
@@ -51,7 +53,8 @@ namespace PluralKit.Core
             .With("pronoun_privacy", PronounPrivacy)
             .With("birthday_privacy", BirthdayPrivacy)
             .With("avatar_privacy", AvatarPrivacy)
-            .With("metadata_privacy", MetadataPrivacy);
+            .With("metadata_privacy", MetadataPrivacy)
+        );
 
         public new void AssertIsValid()
         {

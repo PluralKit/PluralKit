@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -26,13 +27,10 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            var members = await _db.Execute(c =>
-            {
-                if (ctx.MatchFlag("all", "a"))
-                    return _repo.GetSystemMembers(c, ctx.System.Id);
-                return _repo.GetSystemMembers(c, ctx.System.Id)
-                    .Where(m => m.MemberVisibility == PrivacyLevel.Public);
-            }).ToListAsync();
+            var members = await _repo.GetSystemMembers(ctx.System.Id).ToListAsync();
+
+            if (!ctx.MatchFlag("all", "a"))
+                members = members.Where(m => m.MemberVisibility == PrivacyLevel.Public).ToList();
 
             if (members == null || !members.Any())
                 throw new PKError("Your system has no members! Please create at least one member before using this command.");

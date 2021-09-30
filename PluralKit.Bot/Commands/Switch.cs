@@ -45,7 +45,7 @@ namespace PluralKit.Bot
 
             // Find the last switch and its members if applicable
             await using var conn = await _db.Obtain();
-            var lastSwitch = await _repo.GetLatestSwitch(conn, ctx.System.Id);
+            var lastSwitch = await _repo.GetLatestSwitch(ctx.System.Id);
             if (lastSwitch != null)
             {
                 var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastSwitch.Id);
@@ -72,13 +72,12 @@ namespace PluralKit.Bot
             var result = DateUtils.ParseDateTime(timeToMove, true, tz);
             if (result == null) throw Errors.InvalidDateTime(timeToMove);
 
-            await using var conn = await _db.Obtain();
 
             var time = result.Value;
             if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _repo.GetSwitches(conn, ctx.System.Id).Take(2).ToListAsync();
+            var lastTwoSwitches = await _repo.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
 
             // If we don't have a switch to move, don't bother
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
@@ -92,7 +91,7 @@ namespace PluralKit.Bot
 
             // Now we can actually do the move, yay!
             // But, we do a prompt to confirm.
-            var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id);
+            var lastSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
             var lastSwitchTime = lastTwoSwitches[0].Timestamp.ToUnixTimeSeconds(); // .FormatZoned(ctx.System)
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
@@ -104,7 +103,7 @@ namespace PluralKit.Bot
             if (!await ctx.PromptYesNo(msg, "Move Switch")) throw Errors.SwitchMoveCancelled;
 
             // aaaand *now* we do the move
-            await _repo.MoveSwitch(conn, lastTwoSwitches[0].Id, time.ToInstant());
+            await _repo.MoveSwitch(lastTwoSwitches[0].Id, time.ToInstant());
             await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
         }
 
@@ -130,7 +129,7 @@ namespace PluralKit.Bot
 
             // Find the switch to edit
             await using var conn = await _db.Obtain();
-            var lastSwitch = await _repo.GetLatestSwitch(conn, ctx.System.Id);
+            var lastSwitch = await _repo.GetLatestSwitch(ctx.System.Id);
             // Make sure there's at least one switch
             if (lastSwitch == null) throw Errors.NoRegisteredSwitches;
             var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastSwitch.Id);
@@ -170,18 +169,16 @@ namespace PluralKit.Bot
                 var purgeMsg = $"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?";
                 if (!await ctx.PromptYesNo(purgeMsg, "Clear Switches"))
                     throw Errors.GenericCancelled();
-                await _db.Execute(c => _repo.DeleteAllSwitches(c, ctx.System.Id));
+                await _repo.DeleteAllSwitches(ctx.System.Id);
                 await ctx.Reply($"{Emojis.Success} Cleared system switches!");
                 return;
             }
 
-            await using var conn = await _db.Obtain();
-
             // Fetch the last two switches for the system to do bounds checking on
-            var lastTwoSwitches = await _repo.GetSwitches(conn, ctx.System.Id).Take(2).ToListAsync();
+            var lastTwoSwitches = await _repo.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
             if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
-            var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id);
+            var lastSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
             var lastSwitchMemberStr = string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
             var lastSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[0].Timestamp).FormatDuration();
 
@@ -192,14 +189,14 @@ namespace PluralKit.Bot
             }
             else
             {
-                var secondSwitchMembers = _repo.GetSwitchMembers(conn, lastTwoSwitches[1].Id);
+                var secondSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, lastTwoSwitches[1].Id));
                 var secondSwitchMemberStr = string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
                 var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp).FormatDuration();
                 msg = $"{Emojis.Warn} This will delete the latest switch ({lastSwitchMemberStr}, {lastSwitchDeltaStr} ago). The next latest switch is {secondSwitchMemberStr} ({secondSwitchDeltaStr} ago). Is this okay?";
             }
 
             if (!await ctx.PromptYesNo(msg, "Delete Switch")) throw Errors.SwitchDeleteCancelled;
-            await _repo.DeleteSwitch(conn, lastTwoSwitches[0].Id);
+            await _repo.DeleteSwitch(lastTwoSwitches[0].Id);
 
             await ctx.Reply($"{Emojis.Success} Switch deleted.");
         }

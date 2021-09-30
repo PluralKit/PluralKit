@@ -73,7 +73,7 @@ namespace PluralKit.Bot
                     return;
                 }
 
-                var commandMsg = await _db.Execute(c => _commandMessageService.GetCommandMessage(c, evt.MessageId));
+                var commandMsg = await _commandMessageService.GetCommandMessage(evt.MessageId);
                 if (commandMsg != null)
                 {
                     await HandleCommandDeleteReaction(evt, commandMsg);
@@ -124,7 +124,7 @@ namespace PluralKit.Bot
             if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
                 return;
 
-            var system = await _db.Execute(c => _repo.GetSystemByAccount(c, evt.UserId));
+            var system = await _repo.GetSystemByAccount(evt.UserId);
 
             // Can only delete your own message
             if (msg.System.Id != system?.Id) return;
@@ -138,7 +138,7 @@ namespace PluralKit.Bot
                 // Message was deleted by something/someone else before we got to it
             }
 
-            await _db.Execute(c => _repo.DeleteMessage(c, evt.MessageId));
+            await _repo.DeleteMessage(evt.MessageId);
         }
 
         private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage? msg)

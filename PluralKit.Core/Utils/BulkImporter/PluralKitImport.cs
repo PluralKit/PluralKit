@@ -29,7 +29,7 @@ namespace PluralKit.Core
                 throw new ImportException($"Field {e.Message} in export file is invalid.");
             }
 
-            await _repo.UpdateSystem(_conn, _system.Id, patch, _tx);
+            await _repo.UpdateSystem(_system.Id, patch, _conn);
 
             var members = importFile.Value<JArray>("members");
             var groups = importFile.Value<JArray>("groups");
@@ -104,13 +104,13 @@ namespace PluralKit.Core
 
             if (isNewMember)
             {
-                var newMember = await _repo.CreateMember(_conn, _system.Id, patch.Name.Value, _tx);
+                var newMember = await _repo.CreateMember(_system.Id, patch.Name.Value, _conn);
                 memberId = newMember.Id;
             }
 
             _knownMemberIdentifiers[id] = memberId.Value;
 
-            await _repo.UpdateMember(_conn, memberId.Value, patch, _tx);
+            await _repo.UpdateMember(memberId.Value, patch, _conn);
         }
 
         private async Task ImportGroup(JObject group)
@@ -145,13 +145,13 @@ namespace PluralKit.Core
 
             if (isNewGroup)
             {
-                var newGroup = await _repo.CreateGroup(_conn, _system.Id, patch.Name.Value, _tx);
+                var newGroup = await _repo.CreateGroup(_system.Id, patch.Name.Value, _conn);
                 groupId = newGroup.Id;
             }
 
             _knownGroupIdentifiers[id] = groupId.Value;
 
-            await _repo.UpdateGroup(_conn, groupId.Value, patch, _tx);
+            await _repo.UpdateGroup(groupId.Value, patch, _conn);
 
             var groupMembers = group.Value<JArray>("members");
             var currentGroupMembers = (await _conn.QueryAsync<MemberId>(

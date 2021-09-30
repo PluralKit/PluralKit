@@ -71,9 +71,8 @@ namespace PluralKit.Bot
 
             // Get message context from DB (tracking w/ metrics)
             MessageContext ctx;
-            await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-                ctx = await _repo.GetMessageContext(conn, evt.Author.Id, evt.GuildId ?? default, rootChannel.Id);
+                ctx = await _repo.GetMessageContext(evt.Author.Id, evt.GuildId ?? default, rootChannel.Id);
 
             // Try each handler until we find one that succeeds
             if (await TryHandleLogClean(evt, ctx))
@@ -114,7 +113,7 @@ namespace PluralKit.Bot
 
             try
             {
-                var system = ctx.SystemId != null ? await _db.Execute(c => _repo.GetSystem(c, ctx.SystemId.Value)) : null;
+                var system = ctx.SystemId != null ? await _repo.GetSystem(ctx.SystemId.Value) : null;
                 await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, ctx));
             }
             catch (PKError)

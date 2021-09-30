@@ -1,10 +1,13 @@
+using SqlKata;
+
 namespace PluralKit.Core
 {
     public class AccountPatch: PatchObject
     {
         public Partial<bool> AllowAutoproxy { get; set; }
 
-        public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
-            .With("allow_autoproxy", AllowAutoproxy);
+        public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
+            .With("allow_autoproxy", AllowAutoproxy)
+        );
     }
 }

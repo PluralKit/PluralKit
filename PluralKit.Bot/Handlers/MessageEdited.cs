@@ -63,9 +63,8 @@ namespace PluralKit.Bot
 
             // Just run the normal message handling code, with a flag to disable autoproxying
             MessageContext ctx;
-            await using (var conn = await _db.Obtain())
             using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-                ctx = await _repo.GetMessageContext(conn, evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
+                ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
 
             var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
             var botPermissions = _bot.PermissionsIn(channel.Id);

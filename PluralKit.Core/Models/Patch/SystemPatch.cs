@@ -6,6 +6,8 @@ using Newtonsoft.Json.Linq;
 
 using NodaTime;
 
+using SqlKata;
+
 namespace PluralKit.Core
 {
     public class SystemPatch: PatchObject
@@ -29,7 +31,7 @@ namespace PluralKit.Core
         public Partial<int?> MemberLimitOverride { get; set; }
         public Partial<int?> GroupLimitOverride { get; set; }
 
-        public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
+        public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
             .With("name", Name)
             .With("hid", Hid)
             .With("description", Description)
@@ -47,7 +49,8 @@ namespace PluralKit.Core
             .With("pings_enabled", PingsEnabled)
             .With("latch_timeout", LatchTimeout)
             .With("member_limit_override", MemberLimitOverride)
-            .With("group_limit_override", GroupLimitOverride);
+            .With("group_limit_override", GroupLimitOverride)
+        );
 
         public new void AssertIsValid()
         {

@@ -31,14 +31,14 @@ namespace PluralKit.Bot
             if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
                 throw new PKError($"Invalid new system ID `{newHid}`.");
 
-            var existingSystem = await _db.Execute(c => _repo.GetSystemByHid(c, newHid));
+            var existingSystem = _repo.GetSystemByHid(newHid);
             if (existingSystem != null)
                 throw new PKError($"Another system already exists with ID `{newHid}`.");
 
             if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
 
-            await _db.Execute(c => _repo.UpdateSystem(c, target.Id, new SystemPatch { Hid = newHid }));
+            await _repo.UpdateSystem(target.Id, new() { Hid = newHid });
             await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
         }
 
@@ -54,14 +54,14 @@ namespace PluralKit.Bot
             if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
                 throw new PKError($"Invalid new member ID `{newHid}`.");
 
-            var existingMember = await _db.Execute(c => _repo.GetMemberByHid(c, newHid));
+            var existingMember = await _repo.GetMemberByHid(newHid);
             if (existingMember != null)
                 throw new PKError($"Another member already exists with ID `{newHid}`.");
 
             if (!await ctx.PromptYesNo($"Change member ID of **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`) to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
 
-            await _db.Execute(c => _repo.UpdateMember(c, target.Id, new MemberPatch { Hid = newHid }));
+            await _repo.UpdateMember(target.Id, new() { Hid = newHid });
             await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
         }
 
@@ -77,14 +77,14 @@ namespace PluralKit.Bot
             if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
                 throw new PKError($"Invalid new group ID `{newHid}`.");
 
-            var existingGroup = await _db.Execute(c => _repo.GetGroupByHid(c, newHid));
+            var existingGroup = _repo.GetGroupByHid(newHid);
             if (existingGroup != null)
                 throw new PKError($"Another group already exists with ID `{newHid}`.");
 
             if (!await ctx.PromptYesNo($"Change group ID of **{target.Name}** (`{target.Hid}`) to `{newHid}`?", "Change"))
                 throw new PKError("ID change cancelled.");
 
-            await _db.Execute(c => _repo.UpdateGroup(c, target.Id, new GroupPatch { Hid = newHid }));
+            await _repo.UpdateGroup(target.Id, new() { Hid = newHid });
             await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
         }
 
@@ -110,11 +110,7 @@ namespace PluralKit.Bot
             if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update"))
                 throw new PKError("Member limit change cancelled.");
 
-            await using var conn = await _db.Obtain();
-            await _repo.UpdateSystem(conn, target.Id, new SystemPatch
-            {
-                MemberLimitOverride = newLimit
-            });
+            await _repo.UpdateSystem(target.Id, new() { MemberLimitOverride = newLimit });
             await ctx.Reply($"{Emojis.Success} Member limit updated.");
         }
 
@@ -140,11 +136,7 @@ namespace PluralKit.Bot
             if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update"))
                 throw new PKError("Group limit change cancelled.");
 
-            await using var conn = await _db.Obtain();
-            await _repo.UpdateSystem(conn, target.Id, new SystemPatch
-            {
-                GroupLimitOverride = newLimit
-            });
+            await _repo.UpdateSystem(target.Id, new() { GroupLimitOverride = newLimit });
             await ctx.Reply($"{Emojis.Success} Group limit updated.");
         }
     }

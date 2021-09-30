@@ -61,10 +61,7 @@ namespace PluralKit.Bot
             List<ProxyMember> members;
             // Fetch members and try to match to a specific member
             using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
-            {
-                await using var conn = await _db.Obtain();
-                members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.GuildId!.Value)).ToList();
-            }
+                members = (await _repo.GetProxyMembers(message.Author.Id, message.GuildId!.Value)).ToList();
 
             if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
@@ -293,11 +290,8 @@ namespace PluralKit.Bot
                 Sender = triggerMessage.Author.Id
             };
 
-            async Task SaveMessageInDatabase()
-            {
-                await using var conn = await _db.Obtain();
-                await _repo.AddMessage(conn, sentMessage);
-            }
+            Task SaveMessageInDatabase()
+                => _repo.AddMessage(sentMessage);
 
             Task LogMessageToChannel() => _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
 

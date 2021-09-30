@@ -39,9 +39,7 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontPrivacy);
 
-            await using var conn = await _db.Obtain();
-
-            var sw = await _repo.GetLatestSwitch(conn, system.Id);
+            var sw = await _repo.GetLatestSwitch(system.Id);
             if (sw == null) throw Errors.NoRegisteredSwitches;
 
             await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system)));
@@ -53,12 +51,13 @@ namespace PluralKit.Bot
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
             // Gotta be careful here: if we dispose of the connection while the IAE is alive, boom 
-            await using var conn = await _db.Obtain();
+            // todo: this comment was here, but we're not getting a connection here anymore
+            // hopefully nothing breaks?
 
-            var totalSwitches = await _repo.GetSwitchCount(conn, system.Id);
+            var totalSwitches = await _repo.GetSwitchCount(system.Id);
             if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
 
-            var sws = _repo.GetSwitches(conn, system.Id)
+            var sws = _repo.GetSwitches(system.Id)
                 .Scan(new FrontHistoryEntry(null, null),
                     (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
 
@@ -80,7 +79,6 @@ namespace PluralKit.Bot
                         var sw = entry.ThisSwitch;
 
                         // Fetch member list and format
-                        await using var conn = await _db.Obtain();
 
                         var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id)).ToListAsync();
                         var membersStr = members.Any() ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "no fronter";
@@ -117,7 +115,7 @@ namespace PluralKit.Bot
             if (system == null) throw Errors.NoSystemError;
             ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
-            var totalSwitches = await _db.Execute(conn => _repo.GetSwitchCount(conn, system.Id));
+            var totalSwitches = await _repo.GetSwitchCount(system.Id);
             if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
 
             string durationStr = ctx.RemainderOrNull() ?? "30d";

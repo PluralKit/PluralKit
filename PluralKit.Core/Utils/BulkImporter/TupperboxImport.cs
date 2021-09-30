@@ -90,7 +90,7 @@ namespace PluralKit.Core
             var isNewMember = false;
             if (!_existingMemberNames.TryGetValue(name, out var memberId))
             {
-                var newMember = await _repo.CreateMember(_conn, _system.Id, name, _tx);
+                var newMember = await _repo.CreateMember(_system.Id, name, _conn);
                 memberId = newMember.Id;
                 isNewMember = true;
                 _result.Added++;
@@ -114,7 +114,7 @@ namespace PluralKit.Core
                 throw new ImportException($"Field {e.Message} in tupper {name} is invalid.");
             }
 
-            await _repo.UpdateMember(_conn, memberId, patch, _tx);
+            await _repo.UpdateMember(memberId, patch, _conn);
 
             return (lastSetTag, multipleTags, hasGroup);
         }

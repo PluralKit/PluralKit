@@ -43,13 +43,8 @@ namespace PluralKit.Bot
 
             var triggerChannel = _cache.GetChannel(proxiedMessage.Channel);
 
-            PKSystem system;
-            PKMember member;
-            await using (var conn = await _db.Obtain())
-            {
-                system = await _repo.GetSystem(conn, ctx.SystemId.Value);
-                member = await _repo.GetMember(conn, proxiedMessage.Member);
-            }
+            var system = await _repo.GetSystem(ctx.SystemId.Value);
+            var member = await _repo.GetMember(proxiedMessage.Member);
 
             // Send embed!
             var embed = _embed.CreateLoggedMessageEmbed(trigger, hookMessage, system.Hid, member, triggerChannel.Name, oldContent);
@@ -71,7 +66,7 @@ namespace PluralKit.Bot
             if (proxiedMessage.Guild != trigger.GuildId)
             {
                 // we're editing a message from a different server, get log channel info from the database
-                var guild = await _db.Execute(c => _repo.GetGuild(c, proxiedMessage.Guild.Value));
+                var guild = await _repo.GetGuild(proxiedMessage.Guild.Value);
                 logChannelId = guild.LogChannel;
                 isBlacklisted = guild.Blacklist.Any(x => x == logChannelId);
             }

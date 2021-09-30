@@ -130,6 +130,7 @@ namespace PluralKit.Bot
                     // if we can't, big error. Every group name must be valid.
                     throw new PKError(ctx.CreateGroupNotFoundError(ctx.PopArgument()));
 
+                // todo: remove this, the database query enforces the restriction
                 if (restrictToSystem != null && group.System != restrictToSystem)
                     throw Errors.NotOwnGroupError; // TODO: name *which* group?
 

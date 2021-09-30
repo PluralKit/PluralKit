@@ -1,11 +1,13 @@
 using System;
 using System.Text.RegularExpressions;
 
+using SqlKata;
+
 namespace PluralKit.Core
 {
     public abstract class PatchObject
     {
-        public abstract UpdateQueryBuilder Apply(UpdateQueryBuilder b);
+        public abstract Query Apply(Query q);
 
         public void AssertIsValid() { }
 

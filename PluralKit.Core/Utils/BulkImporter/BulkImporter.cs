@@ -48,8 +48,8 @@ namespace PluralKit.Core
 
             if (system == null)
             {
-                system = await repo.CreateSystem(conn, null, tx);
-                await repo.AddAccount(conn, system.Id, userId);
+                system = await repo.CreateSystem(null, importer._conn);
+                await repo.AddAccount(system.Id, userId);
                 importer._result.CreatedSystem = system.Hid;
                 importer._system = system;
             }
@@ -113,7 +113,7 @@ namespace PluralKit.Core
         private async Task AssertMemberLimitNotReached(int newMembers)
         {
             var memberLimit = _system.MemberLimitOverride ?? Limits.MaxMemberCount;
-            var existingMembers = await _repo.GetSystemMemberCount(_conn, _system.Id);
+            var existingMembers = await _repo.GetSystemMemberCount(_system.Id);
             if (existingMembers + newMembers > memberLimit)
                 throw new ImportException($"Import would exceed the maximum number of members ({memberLimit}).");
         }
@@ -121,7 +121,7 @@ namespace PluralKit.Core
         private async Task AssertGroupLimitNotReached(int newGroups)
         {
             var limit = _system.GroupLimitOverride ?? Limits.MaxGroupCount;
-            var existing = await _repo.GetSystemGroupCount(_conn, _system.Id);
+            var existing = await _repo.GetSystemGroupCount(_system.Id);
             if (existing + newGroups > limit)
                 throw new ImportException($"Import would exceed the maximum number of groups ({limit}).");
         }

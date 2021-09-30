@@ -72,14 +72,14 @@ namespace PluralKit.Bot
         public async Task ServerAvatar(Context ctx, PKMember target)
         {
             ctx.CheckGuildContext();
-            var guildData = await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id));
+            var guildData = await _repo.GetMemberGuild(ctx.Guild.Id, target.Id);
             await AvatarCommandTree(AvatarLocation.Server, ctx, target, guildData);
         }
 
         public async Task Avatar(Context ctx, PKMember target)
         {
             var guildData = ctx.Guild != null ?
-                await _db.Execute(c => _repo.GetMemberGuild(c, ctx.Guild.Id, target.Id))
+                await _repo.GetMemberGuild(ctx.Guild.Id, target.Id)
                 : null;
 
             await AvatarCommandTree(AvatarLocation.Member, ctx, target, guildData);
@@ -147,11 +147,9 @@ namespace PluralKit.Bot
             switch (location)
             {
                 case AvatarLocation.Server:
-                    var serverPatch = new MemberGuildPatch { AvatarUrl = url };
-                    return _db.Execute(c => _repo.UpsertMemberGuild(c, target.Id, ctx.Guild.Id, serverPatch));
+                    return _repo.UpdateMemberGuild(target.Id, ctx.Guild.Id, new() { AvatarUrl = url });
                 case AvatarLocation.Member:
-                    var memberPatch = new MemberPatch { AvatarUrl = url };
-                    return _db.Execute(c => _repo.UpdateMember(c, target.Id, memberPatch));
+                    return _repo.UpdateMember(target.Id, new() { AvatarUrl = url });
                 default:
                     throw new ArgumentOutOfRangeException($"Unknown avatar location {location}");
             }

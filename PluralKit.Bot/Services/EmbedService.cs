@@ -46,13 +46,12 @@ namespace PluralKit.Bot
 
         public async Task<Embed> CreateSystemEmbed(Context cctx, PKSystem system, LookupContext ctx)
         {
-            await using var conn = await _db.Obtain();
 
             // Fetch/render info for all accounts simultaneously
-            var accounts = await _repo.GetSystemAccounts(conn, system.Id);
+            var accounts = await _repo.GetSystemAccounts(system.Id);
             var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
-            var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(conn, system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(conn, system.Id);
+            var memberCount = cctx.MatchPrivateFlag(ctx) ? await _repo.GetSystemMemberCount(system.Id, PrivacyLevel.Public) : await _repo.GetSystemMemberCount(system.Id);
 
             uint color;
             try
@@ -74,10 +73,10 @@ namespace PluralKit.Bot
             if (system.DescriptionPrivacy.CanAccess(ctx))
                 eb.Image(new(system.BannerImage));
 
-            var latestSwitch = await _repo.GetLatestSwitch(conn, system.Id);
+            var latestSwitch = await _repo.GetLatestSwitch(system.Id);
             if (latestSwitch != null && system.FrontPrivacy.CanAccess(ctx))
             {
-                var switchMembers = await _repo.GetSwitchMembers(conn, latestSwitch.Id).ToListAsync();
+                var switchMembers = await _db.Execute(conn => _repo.GetSwitchMembers(conn, latestSwitch.Id)).ToListAsync();
                 if (switchMembers.Count > 0)
                     eb.Field(new("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)))));
             }
@@ -87,7 +86,7 @@ namespace PluralKit.Bot
 
             if (cctx.Guild != null)
             {
-                var guildSettings = await _repo.GetSystemGuild(conn, cctx.Guild.Id, system.Id);
+                var guildSettings = await _repo.GetSystemGuild(cctx.Guild.Id, system.Id);
 
                 if (guildSettings.Tag != null && guildSettings.TagEnabled)
                     eb.Field(new($"Tag (in server '{cctx.Guild.Name}')", guildSettings.Tag
@@ -151,18 +150,16 @@ namespace PluralKit.Bot
             catch (ArgumentException)
             {
                 // Bad API use can cause an invalid color string
-                // TODO: fix that in the API
-                // for now we just default to a blank color, yolo
+                // this is now fixed in the API, but might still have some remnants in the database
+                // so we just default to a blank color, yolo
                 color = DiscordUtils.Gray;
             }
 
-            await using var conn = await _db.Obtain();
-
-            var guildSettings = guild != null ? await _repo.GetMemberGuild(conn, guild.Id, member.Id) : null;
+            var guildSettings = guild != null ? await _repo.GetMemberGuild(guild.Id, member.Id) : null;
             var guildDisplayName = guildSettings?.DisplayName;
             var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
 
-            var groups = await _repo.GetMemberGroups(conn, member.Id)
+            var groups = await _repo.GetMemberGroups(member.Id)
                 .Where(g => g.Visibility.CanAccess(ctx))
                 .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
                 .ToListAsync();
@@ -218,10 +215,8 @@ namespace PluralKit.Bot
 
         public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
         {
-            await using var conn = await _db.Obtain();
-
             var pctx = ctx.LookupContextFor(system);
-            var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(conn, target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(conn, target.Id);
+            var memberCount = ctx.MatchPrivateFlag(pctx) ? await _repo.GetGroupMemberCount(target.Id, PrivacyLevel.Public) : await _repo.GetGroupMemberCount(target.Id);
 
             var nameField = target.Name;
             if (system.Name != null)

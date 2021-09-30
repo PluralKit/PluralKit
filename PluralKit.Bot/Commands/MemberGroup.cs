@@ -29,8 +29,7 @@ namespace PluralKit.Bot
                 .Distinct()
                 .ToList();
 
-            await using var conn = await _db.Obtain();
-            var existingGroups = (await _repo.GetMemberGroups(conn, target.Id).ToListAsync())
+            var existingGroups = (await _repo.GetMemberGroups(target.Id).ToListAsync())
                 .Select(g => g.Id)
                 .Distinct()
                 .ToList();
@@ -43,7 +42,7 @@ namespace PluralKit.Bot
                     .Where(group => !existingGroups.Contains(group))
                     .ToList();
 
-                await _repo.AddGroupsToMember(conn, target.Id, toAction);
+                await _repo.AddGroupsToMember(target.Id, toAction);
             }
             else if (op == Groups.AddRemoveOperation.Remove)
             {
@@ -51,7 +50,7 @@ namespace PluralKit.Bot
                     .Where(group => existingGroups.Contains(group))
                     .ToList();
 
-                await _repo.RemoveGroupsFromMember(conn, target.Id, toAction);
+                await _repo.RemoveGroupsFromMember(target.Id, toAction);
             }
             else return; // otherwise toAction "may be unassigned"
 
@@ -60,11 +59,9 @@ namespace PluralKit.Bot
 
         public async Task List(Context ctx, PKMember target)
         {
-            await using var conn = await _db.Obtain();
-
             var pctx = ctx.LookupContextFor(target.System);
 
-            var groups = await _repo.GetMemberGroups(conn, target.Id)
+            var groups = await _repo.GetMemberGroups(target.Id)
                 .Where(g => g.Visibility.CanAccess(pctx))
                 .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
                 .ToListAsync();

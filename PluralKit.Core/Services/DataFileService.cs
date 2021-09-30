@@ -40,10 +40,10 @@ namespace PluralKit.Core
             o.Add("avatar_url", system.AvatarUrl);
             o.Add("timezone", system.UiTz);
             o.Add("created", system.Created.FormatExport());
-            o.Add("accounts", new JArray((await _repo.GetSystemAccounts(conn, system.Id)).ToList()));
-            o.Add("members", new JArray((await _repo.GetSystemMembers(conn, system.Id).ToListAsync()).Select(m => m.ToJson(LookupContext.ByOwner))));
+            o.Add("accounts", new JArray((await _repo.GetSystemAccounts(system.Id)).ToList()));
+            o.Add("members", new JArray((await _repo.GetSystemMembers(system.Id).ToListAsync()).Select(m => m.ToJson(LookupContext.ByOwner))));
 
-            var groups = (await _repo.GetSystemGroups(conn, system.Id).ToListAsync());
+            var groups = (await _repo.GetSystemGroups(system.Id).ToListAsync());
             var j_groups = groups.Select(x => x.ToJson(LookupContext.ByOwner, isExport: true)).ToList();
 
             if (groups.Count > 0)

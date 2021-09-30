@@ -237,9 +237,7 @@ namespace PluralKit.Bot
             if (messageId == null || channelId == null)
                 throw new PKError(failedToGetMessage);
 
-            await using var conn = await _db.Obtain();
-
-            var proxiedMsg = await _repo.GetMessage(conn, messageId.Value);
+            var proxiedMsg = await _db.Execute(conn => _repo.GetMessage(conn, messageId.Value));
             if (proxiedMsg != null)
             {
                 await ctx.Reply($"{Emojis.Success} This message was proxied successfully.");
@@ -276,8 +274,8 @@ namespace PluralKit.Bot
                 throw new PKError("Unable to get the channel associated with this message.");
 
             // using channel.GuildId here since _rest.GetMessage() doesn't return the GuildId
-            var context = await _repo.GetMessageContext(conn, msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
-            var members = (await _repo.GetProxyMembers(conn, msg.Author.Id, channel.GuildId.Value)).ToList();
+            var context = await _repo.GetMessageContext(msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
+            var members = (await _repo.GetProxyMembers(msg.Author.Id, channel.GuildId.Value)).ToList();
 
             // Run everything through the checks, catch the ProxyCheckFailedException, and reply with the error message.
             try

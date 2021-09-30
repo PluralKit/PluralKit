@@ -31,7 +31,7 @@ namespace PluralKit.API
         [HttpGet("{hid}")]
         public async Task<ActionResult<JObject>> GetMember(string hid)
         {
-            var member = await _db.Execute(conn => _repo.GetMemberByHid(conn, hid));
+            var member = await _repo.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
             return Ok(member.ToJson(User.ContextFor(member), needsLegacyProxyTags: true));
@@ -45,9 +45,9 @@ namespace PluralKit.API
                 return BadRequest("Member name must be specified.");
 
             var systemId = User.CurrentSystem();
+            var systemData = await _repo.GetSystem(systemId);
 
             await using var conn = await _db.Obtain();
-            var systemData = await _repo.GetSystem(conn, systemId);
 
             // Enforce per-system member limit
             var memberCount = await conn.QuerySingleAsync<int>("select count(*) from members where system = @System", new { System = systemId });
@@ -56,7 +56,7 @@ namespace PluralKit.API
                 return BadRequest($"Member limit reached ({memberCount} / {memberLimit}).");
 
             await using var tx = await conn.BeginTransactionAsync();
-            var member = await _repo.CreateMember(conn, systemId, properties.Value<string>("name"), transaction: tx);
+            var member = await _repo.CreateMember(systemId, properties.Value<string>("name"), conn);
 
             MemberPatch patch;
             try
@@ -75,7 +75,7 @@ namespace PluralKit.API
                 return BadRequest($"Request field '{e.Message}' is invalid.");
             }
 
-            member = await _repo.UpdateMember(conn, member.Id, patch, transaction: tx);
+            member = await _repo.UpdateMember(member.Id, patch, conn);
             await tx.CommitAsync();
             return Ok(member.ToJson(User.ContextFor(member), needsLegacyProxyTags: true));
         }
@@ -84,9 +84,7 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult<JObject>> PatchMember(string hid, [FromBody] JObject changes)
         {
-            await using var conn = await _db.Obtain();
-
-            var member = await _repo.GetMemberByHid(conn, hid);
+            var member = await _repo.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
@@ -107,7 +105,7 @@ namespace PluralKit.API
                 return BadRequest($"Request field '{e.Message}' is invalid.");
             }
 
-            var newMember = await _repo.UpdateMember(conn, member.Id, patch);
+            var newMember = await _repo.UpdateMember(member.Id, patch);
             return Ok(newMember.ToJson(User.ContextFor(newMember), needsLegacyProxyTags: true));
         }
 
@@ -115,15 +113,13 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult> DeleteMember(string hid)
         {
-            await using var conn = await _db.Obtain();
-
-            var member = await _repo.GetMemberByHid(conn, hid);
+            var member = await _repo.GetMemberByHid(hid);
             if (member == null) return NotFound("Member not found.");
 
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
             if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
 
-            await _repo.DeleteMember(conn, member.Id);
+            await _repo.DeleteMember(member.Id);
             return Ok();
         }
     }

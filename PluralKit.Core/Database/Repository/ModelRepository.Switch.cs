@@ -9,8 +9,11 @@ using NodaTime;
 
 using NpgsqlTypes;
 
+using SqlKata;
+
 namespace PluralKit.Core
 {
+    // todo: move the rest of the queries in here to SqlKata, if possible
     public partial class ModelRepository
     {
         public async Task<PKSwitch> AddSwitch(IPKConnection conn, SystemId system, IReadOnlyCollection<MemberId> members)
@@ -69,40 +72,44 @@ namespace PluralKit.Core
             _logger.Information("Updated {SwitchId} members: {Members}", switchId, members);
         }
 
-        public async Task MoveSwitch(IPKConnection conn, SwitchId id, Instant time)
+        public Task MoveSwitch(SwitchId id, Instant time)
         {
-            await conn.ExecuteAsync("update switches set timestamp = @Time where id = @Id",
-                new { Time = time, Id = id });
-
             _logger.Information("Updated {SwitchId} timestamp: {SwitchTimestamp}", id, time);
+            var query = new Query("switches").AsUpdate(new { timestamp = time }).Where("id", id);
+            return _db.ExecuteQuery(query);
         }
 
-        public async Task DeleteSwitch(IPKConnection conn, SwitchId id)
+        public Task DeleteSwitch(SwitchId id)
         {
-            await conn.ExecuteAsync("delete from switches where id = @Id", new { Id = id });
             _logger.Information("Deleted {Switch}", id);
+            var query = new Query("switches").AsDelete().Where("id", id);
+            return _db.ExecuteQuery(query);
         }
 
-        public async Task DeleteAllSwitches(IPKConnection conn, SystemId system)
+        public Task DeleteAllSwitches(SystemId system)
         {
-            await conn.ExecuteAsync("delete from switches where system = @Id", new { Id = system });
             _logger.Information("Deleted all switches in {SystemId}", system);
+            var query = new Query("switches").AsDelete().Where("system", system);
+            return _db.ExecuteQuery(query);
         }
 
-        public IAsyncEnumerable<PKSwitch> GetSwitches(IPKConnection conn, SystemId system)
+        public IAsyncEnumerable<PKSwitch> GetSwitches(SystemId system)
         {
             // TODO: refactor the PKSwitch data structure to somehow include a hydrated member list
-            return conn.QueryStreamAsync<PKSwitch>(
-                "select * from switches where system = @System order by timestamp desc",
-                new { System = system });
+            var query = new Query("switches").Where("system", system).OrderByDesc("timestamp");
+            return _db.QueryStream<PKSwitch>(query);
         }
 
-        public Task<PKSwitch> GetSwitchByUuid(IPKConnection conn, Guid uuid) =>
-            conn.QuerySingleOrDefaultAsync<PKSwitch>("select * from switches where uuid = @Uuid", new { Uuid = uuid });
-
-        public async Task<int> GetSwitchCount(IPKConnection conn, SystemId system)
+        public Task<PKSwitch> GetSwitchByUuid(Guid uuid)
         {
-            return await conn.QuerySingleAsync<int>("select count(*) from switches where system = @Id", new { Id = system });
+            var query = new Query("switches").Where("uuid", uuid);
+            return _db.QueryFirst<PKSwitch>(query);
+        }
+
+        public Task<int> GetSwitchCount(SystemId system)
+        {
+            var query = new Query("switches").SelectRaw("count(*)").Where("system", system);
+            return _db.QueryFirst<int>(query);
         }
 
         public async IAsyncEnumerable<SwitchMembersListEntry> GetSwitchMembersList(IPKConnection conn,
@@ -149,9 +156,11 @@ namespace PluralKit.Core
                 new { Switch = sw });
         }
 
-        public async Task<PKSwitch> GetLatestSwitch(IPKConnection conn, SystemId system) =>
-            // TODO: should query directly for perf
-            await GetSwitches(conn, system).FirstOrDefaultAsync();
+        public Task<PKSwitch> GetLatestSwitch(SystemId system)
+        {
+            var query = new Query("switches").Where("system", system).OrderByDesc("timestamp").Limit(1);
+            return _db.QueryFirst<PKSwitch>(query);
+        }
 
         public async Task<IEnumerable<SwitchListEntry>> GetPeriodFronters(IPKConnection conn,
                                                                           SystemId system, GroupId? group, Instant periodStart,

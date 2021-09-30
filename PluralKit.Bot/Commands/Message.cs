@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Threading.Tasks;
 
 using Myriad.Builders;
@@ -105,8 +106,7 @@ namespace PluralKit.Bot
 
         private async Task<PKMessage?> FindRecentMessage(Context ctx)
         {
-            await using var conn = await _db.Obtain();
-            var lastMessage = await _repo.GetLastMessage(conn, ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
+            var lastMessage = await _repo.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
             if (lastMessage == null)
                 return null;
 
@@ -168,7 +168,7 @@ namespace PluralKit.Bot
 
         private async Task DeleteCommandMessage(Context ctx, ulong messageId)
         {
-            var message = await _db.Execute(conn => _repo.GetCommandMessage(conn, messageId));
+            var message = await _repo.GetCommandMessage(messageId);
             if (message == null)
                 throw Errors.MessageNotFound(messageId);
 

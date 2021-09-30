@@ -5,10 +5,11 @@ namespace PluralKit.Core
     public partial class ModelRepository
     {
         private readonly ILogger _logger;
-
-        public ModelRepository(ILogger logger)
+        private readonly IDatabase _db;
+        public ModelRepository(ILogger logger, IDatabase db)
         {
             _logger = logger.ForContext<ModelRepository>();
+            _db = db;
         }
     }
 }

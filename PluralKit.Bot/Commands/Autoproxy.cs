@@ -94,8 +94,8 @@ namespace PluralKit.Bot
             var fronters = ctx.MessageContext.LastSwitchMembers;
             var relevantMember = ctx.MessageContext.AutoproxyMode switch
             {
-                AutoproxyMode.Front => fronters.Length > 0 ? await _db.Execute(c => _repo.GetMember(c, fronters[0])) : null,
-                AutoproxyMode.Member => await _db.Execute(c => _repo.GetMember(c, ctx.MessageContext.AutoproxyMember.Value)),
+                AutoproxyMode.Front => fronters.Length > 0 ? await _repo.GetMember(fronters[0]) : null,
+                AutoproxyMode.Member => await _repo.GetMember(ctx.MessageContext.AutoproxyMember.Value),
                 _ => null
             };
 
@@ -171,8 +171,7 @@ namespace PluralKit.Bot
                 else newTimeout = timeoutPeriod;
             }
 
-            await _db.Execute(conn => _repo.UpdateSystem(conn, ctx.System.Id,
-                new SystemPatch { LatchTimeout = (int?)newTimeout?.TotalSeconds }));
+            await _repo.UpdateSystem(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout?.TotalSeconds });
 
             if (newTimeout == null)
                 await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
@@ -209,14 +208,16 @@ namespace PluralKit.Bot
                 return;
             }
             var patch = new AccountPatch { AllowAutoproxy = allow };
-            await _db.Execute(conn => _repo.UpdateAccount(conn, ctx.Author.Id, patch));
+            await _repo.UpdateAccount(ctx.Author.Id, patch);
             await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
         }
 
-        private Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
+        private async Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
         {
+            await _repo.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
+
             var patch = new SystemGuildPatch { AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember };
-            return _db.Execute(conn => _repo.UpsertSystemGuild(conn, ctx.System.Id, ctx.Guild.Id, patch));
+            await _repo.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, patch);
         }
     }
 }

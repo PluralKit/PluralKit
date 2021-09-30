@@ -29,6 +29,7 @@ namespace PluralKit.API
                 return AuthenticateResult.NoResult();
 
             var token = Request.Headers["Authorization"].FirstOrDefault();
+            // todo: move this to ModelRepository
             var systemId = await _db.Execute(c => c.QuerySingleOrDefaultAsync<SystemId?>("select id from systems where token = @token", new { token }));
             if (systemId == null) return AuthenticateResult.Fail("Invalid system token");
 

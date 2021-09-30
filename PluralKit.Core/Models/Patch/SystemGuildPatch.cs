@@ -1,4 +1,7 @@
 #nullable enable
+
+using SqlKata;
+
 namespace PluralKit.Core
 {
     public class SystemGuildPatch: PatchObject
@@ -9,11 +12,12 @@ namespace PluralKit.Core
         public Partial<string?> Tag { get; set; }
         public Partial<bool?> TagEnabled { get; set; }
 
-        public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
+        public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
             .With("proxy_enabled", ProxyEnabled)
             .With("autoproxy_mode", AutoproxyMode)
             .With("autoproxy_member", AutoproxyMember)
             .With("tag", Tag)
-            .With("tag_enabled", TagEnabled);
+            .With("tag_enabled", TagEnabled)
+        );
     }
 }

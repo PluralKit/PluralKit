@@ -1,3 +1,5 @@
+using SqlKata;
+
 namespace PluralKit.Core
 {
     public class GuildPatch: PatchObject
@@ -7,10 +9,11 @@ namespace PluralKit.Core
         public Partial<ulong[]> Blacklist { get; set; }
         public Partial<bool> LogCleanupEnabled { get; set; }
 
-        public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
+        public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
             .With("log_channel", LogChannel)
             .With("log_blacklist", LogBlacklist)
             .With("blacklist", Blacklist)
-            .With("log_cleanup_enabled", LogCleanupEnabled);
+            .With("log_cleanup_enabled", LogCleanupEnabled)
+        );
     }
 }

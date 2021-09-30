@@ -55,14 +55,14 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult<JObject>> GetOwnSystem()
         {
-            var system = await _db.Execute(c => _repo.GetSystem(c, User.CurrentSystem()));
+            var system = await _repo.GetSystem(User.CurrentSystem());
             return system.ToJson(User.ContextFor(system));
         }
 
         [HttpGet("{hid}")]
         public async Task<ActionResult<JObject>> GetSystem(string hid)
         {
-            var system = await _db.Execute(c => _repo.GetSystemByHid(c, hid));
+            var system = await _repo.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
             return Ok(system.ToJson(User.ContextFor(system)));
         }
@@ -70,14 +70,14 @@ namespace PluralKit.API
         [HttpGet("{hid}/members")]
         public async Task<ActionResult<IEnumerable<JObject>>> GetMembers(string hid)
         {
-            var system = await _db.Execute(c => _repo.GetSystemByHid(c, hid));
+            var system = await _repo.GetSystemByHid(hid);
             if (system == null)
                 return NotFound("System not found.");
 
             if (!system.MemberListPrivacy.CanAccess(User.ContextFor(system)))
                 return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view member list.");
 
-            var members = _db.Execute(c => _repo.GetSystemMembers(c, system.Id));
+            var members = _repo.GetSystemMembers(system.Id);
             return Ok(await members
                 .Where(m => m.MemberVisibility.CanAccess(User.ContextFor(system)))
                 .Select(m => m.ToJson(User.ContextFor(system), needsLegacyProxyTags: true))
@@ -89,40 +89,36 @@ namespace PluralKit.API
         {
             if (before == null) before = SystemClock.Instance.GetCurrentInstant();
 
-            await using var conn = await _db.Obtain();
-
-            var system = await _repo.GetSystemByHid(conn, hid);
+            var system = await _repo.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
 
             var auth = await _auth.AuthorizeAsync(User, system, "ViewFrontHistory");
             if (!auth.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view front history.");
 
-            var res = await conn.QueryAsync<SwitchesReturn>(
+            var res = await _db.Execute(conn => conn.QueryAsync<SwitchesReturn>(
                 @"select *, array(
                         select members.hid from switch_members, members
                         where switch_members.switch = switches.id and members.id = switch_members.member
                     ) as members from switches
                     where switches.system = @System and switches.timestamp < @Before
                     order by switches.timestamp desc
-                    limit 100;", new { System = system.Id, Before = before });
+                    limit 100;", new { System = system.Id, Before = before }));
             return Ok(res);
         }
 
         [HttpGet("{hid}/fronters")]
         public async Task<ActionResult<FrontersReturn>> GetFronters(string hid)
         {
-            await using var conn = await _db.Obtain();
-
-            var system = await _repo.GetSystemByHid(conn, hid);
+            var system = await _repo.GetSystemByHid(hid);
             if (system == null) return NotFound("System not found.");
 
             var auth = await _auth.AuthorizeAsync(User, system, "ViewFront");
             if (!auth.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, "Unauthorized to view fronter.");
 
-            var sw = await _repo.GetLatestSwitch(conn, system.Id);
+            var sw = await _repo.GetLatestSwitch(system.Id);
             if (sw == null) return NotFound("System has no registered switches.");
 
-            var members = _repo.GetSwitchMembers(conn, sw.Id);
+            var members = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));
             return Ok(new FrontersReturn
             {
                 Timestamp = sw.Timestamp,
@@ -134,8 +130,7 @@ namespace PluralKit.API
         [Authorize]
         public async Task<ActionResult<JObject>> EditSystem([FromBody] JObject changes)
         {
-            await using var conn = await _db.Obtain();
-            var system = await _repo.GetSystem(conn, User.CurrentSystem());
+            var system = await _repo.GetSystem(User.CurrentSystem());
 
             SystemPatch patch;
             try
@@ -152,7 +147,7 @@ namespace PluralKit.API
                 return BadRequest($"Request field '{e.Message}' is invalid.");
             }
 
-            system = await _repo.UpdateSystem(conn, system!.Id, patch);
+            system = await _repo.UpdateSystem(system!.Id, patch);
             return Ok(system.ToJson(User.ContextFor(system)));
         }
 
@@ -166,7 +161,7 @@ namespace PluralKit.API
             await using var conn = await _db.Obtain();
 
             // We get the current switch, if it exists
-            var latestSwitch = await _repo.GetLatestSwitch(conn, User.CurrentSystem());
+            var latestSwitch = await _repo.GetLatestSwitch(User.CurrentSystem());
             if (latestSwitch != null)
             {
                 var latestSwitchMembers = _repo.GetSwitchMembers(conn, latestSwitch.Id);

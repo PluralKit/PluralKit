@@ -32,12 +32,8 @@ namespace PluralKit.Bot
             if (systemName != null && systemName.Length > Limits.MaxSystemNameLength)
                 throw Errors.StringTooLongError("System name", systemName.Length, Limits.MaxSystemNameLength);
 
-            var system = _db.Execute(async c =>
-            {
-                var system = await _repo.CreateSystem(c, systemName);
-                await _repo.AddAccount(c, system.Id, ctx.Author.Id);
-                return system;
-            });
+            var system = await _repo.CreateSystem(systemName);
+            await _repo.AddAccount(system.Id, ctx.Author.Id);
 
             // TODO: better message, perhaps embed like in groups?
             await ctx.Reply($"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");

@@ -268,6 +268,26 @@
           "System.Threading.Timer": "4.0.1"
         }
       },
+      "SqlKata": {
+        "type": "Direct",
+        "requested": "[2.3.7, )",
+        "resolved": "2.3.7",
+        "contentHash": "erKffEMhrS2IFKXjYV83M4uc1IOCl91yeP/3uY5yIm6pRNFDNrqnTk3La1en6EGDlMRol9abTNO1erQCYf08tg==",
+        "dependencies": {
+          "System.Collections.Concurrent": "4.3.0"
+        }
+      },
+      "SqlKata.Execution": {
+        "type": "Direct",
+        "requested": "[2.3.7, )",
+        "resolved": "2.3.7",
+        "contentHash": "LybTYj99riLRH7YQNt9Kuc8VpZOvaQ7H4sQBrj2zefktS8LASOaXsHRYC/k8NEcj25w6huQpOi+HrEZ5qHXl0w==",
+        "dependencies": {
+          "Humanizer.Core": "2.8.26",
+          "SqlKata": "2.3.7",
+          "dapper": "1.50.5"
+        }
+      },
       "System.Interactive.Async": {
         "type": "Direct",
         "requested": "[5.0.0, )",
@@ -338,6 +358,11 @@
           "System.Buffers": "4.5.0",
           "System.Diagnostics.DiagnosticSource": "4.5.1"
         }
+      },
+      "Humanizer.Core": {
+        "type": "Transitive",
+        "resolved": "2.8.26",
+        "contentHash": "OiKusGL20vby4uDEswj2IgkdchC1yQ6rwbIkZDVBPIR6al2b7n3pC91elBul9q33KaBgRKhbZH3+2Ur4fnWx2A=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",

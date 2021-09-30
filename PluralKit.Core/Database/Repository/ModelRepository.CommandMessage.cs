@@ -1,22 +1,33 @@
 using System.Threading.Tasks;
 
-using Dapper;
+using SqlKata;
 
 namespace PluralKit.Core
 {
     public partial class ModelRepository
     {
-        public Task SaveCommandMessage(IPKConnection conn, ulong messageId, ulong channelId, ulong authorId) =>
-            conn.QueryAsync("insert into command_messages (message_id, channel_id, author_id) values (@Message, @Channel, @Author)",
-                new { Message = messageId, Channel = channelId, Author = authorId });
+        public Task SaveCommandMessage(ulong messageId, ulong channelId, ulong authorId)
+        {
+            var query = new Query("command_messages").AsInsert(new
+            {
+                message_id = messageId,
+                channel_id = channelId,
+                author_id = authorId,
+            });
+            return _db.ExecuteQuery(query);
+        }
 
-        public Task<CommandMessage?> GetCommandMessage(IPKConnection conn, ulong messageId) =>
-            conn.QuerySingleOrDefaultAsync<CommandMessage>("select * from command_messages where message_id = @Message",
-                new { Message = messageId });
+        public Task<CommandMessage?> GetCommandMessage(ulong messageId)
+        {
+            var query = new Query("command_messages").Where("message_id", messageId);
+            return _db.QueryFirst<CommandMessage?>(query);
+        }
 
-        public Task<int> DeleteCommandMessagesBefore(IPKConnection conn, ulong messageIdThreshold) =>
-            conn.ExecuteAsync("delete from command_messages where message_id < @Threshold",
-                new { Threshold = messageIdThreshold });
+        public Task<int> DeleteCommandMessagesBefore(ulong messageIdThreshold)
+        {
+            var query = new Query("command_messages").AsDelete().Where("message_id", "<", messageIdThreshold);
+            return _db.QueryFirst<int>(query);
+        }
     }
 
     public class CommandMessage

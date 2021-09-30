@@ -40,7 +40,7 @@ namespace PluralKit.Bot
                 throw Errors.StringTooLongError("Member name", memberName.Length, Limits.MaxMemberNameLength);
 
             // Warn if there's already a member by this name
-            var existingMember = await _db.Execute(c => _repo.GetMemberByName(c, ctx.System.Id, memberName));
+            var existingMember = await _repo.GetMemberByName(ctx.System.Id, memberName);
             if (existingMember != null)
             {
                 var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
@@ -50,13 +50,13 @@ namespace PluralKit.Bot
             await using var conn = await _db.Obtain();
 
             // Enforce per-system member limit
-            var memberCount = await _repo.GetSystemMemberCount(conn, ctx.System.Id);
+            var memberCount = await _repo.GetSystemMemberCount(ctx.System.Id);
             var memberLimit = ctx.System.MemberLimitOverride ?? Limits.MaxMemberCount;
             if (memberCount >= memberLimit)
                 throw Errors.MemberLimitReachedError(memberLimit);
 
             // Create the member
-            var member = await _repo.CreateMember(conn, ctx.System.Id, memberName);
+            var member = await _repo.CreateMember(ctx.System.Id, memberName);
             memberCount++;
 
             // Try to match an image attached to the message
@@ -67,7 +67,7 @@ namespace PluralKit.Bot
                 try
                 {
                     await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
-                    await _db.Execute(conn => _repo.UpdateMember(conn, member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }));
+                    await _repo.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url });
                 }
                 catch (Exception e)
                 {
@@ -77,6 +77,7 @@ namespace PluralKit.Bot
 
             // Send confirmation and space hint
             await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
+            // todo: move this to ModelRepository
             if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new { System = ctx.System.Id }))) //if has private members
                 await ctx.Reply($"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
@@ -95,7 +96,7 @@ namespace PluralKit.Bot
 
         public async Task ViewMember(Context ctx, PKMember target)
         {
-            var system = await _db.Execute(c => _repo.GetSystem(c, target.System));
+            var system = await _repo.GetSystem(target.System);
             await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
         }
 

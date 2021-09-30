@@ -57,7 +57,7 @@ namespace PluralKit.Bot
                 }
 
                 var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(new ProxyTag[0]) };
-                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
+                await _repo.UpdateMember(target.Id, patch);
 
                 await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
             }
@@ -87,7 +87,7 @@ namespace PluralKit.Bot
                 var newTags = target.ProxyTags.ToList();
                 newTags.Add(tagToAdd);
                 var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray()) };
-                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
+                await _repo.UpdateMember(target.Id, patch);
 
                 await ctx.Reply($"{Emojis.Success} Added proxy tags {tagToAdd.ProxyString.AsCode()}.");
             }
@@ -104,7 +104,7 @@ namespace PluralKit.Bot
                 var newTags = target.ProxyTags.ToList();
                 newTags.Remove(tagToRemove);
                 var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray()) };
-                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
+                await _repo.UpdateMember(target.Id, patch);
 
                 await ctx.Reply($"{Emojis.Success} Removed proxy tags {tagToRemove.ProxyString.AsCode()}.");
             }
@@ -128,7 +128,7 @@ namespace PluralKit.Bot
 
                 var newTags = new[] { requestedTag };
                 var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags) };
-                await _db.Execute(conn => _repo.UpdateMember(conn, target.Id, patch));
+                await _repo.UpdateMember(target.Id, patch);
 
                 await ctx.Reply($"{Emojis.Success} Member proxy tags set to {requestedTag.ProxyString.AsCode()}.");
             }

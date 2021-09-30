@@ -3,6 +3,8 @@ using System.Text.RegularExpressions;
 
 using Newtonsoft.Json.Linq;
 
+using SqlKata;
+
 namespace PluralKit.Core
 {
     public class GroupPatch: PatchObject
@@ -20,7 +22,7 @@ namespace PluralKit.Core
         public Partial<PrivacyLevel> ListPrivacy { get; set; }
         public Partial<PrivacyLevel> Visibility { get; set; }
 
-        public override UpdateQueryBuilder Apply(UpdateQueryBuilder b) => b
+        public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
             .With("name", Name)
             .With("hid", Hid)
             .With("display_name", DisplayName)
@@ -31,7 +33,8 @@ namespace PluralKit.Core
             .With("description_privacy", DescriptionPrivacy)
             .With("icon_privacy", IconPrivacy)
             .With("list_privacy", ListPrivacy)
-            .With("visibility", Visibility);
+            .With("visibility", Visibility)
+        );
 
         public new void AssertIsValid()
         {

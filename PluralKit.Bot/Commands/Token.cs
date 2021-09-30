@@ -50,8 +50,7 @@ namespace PluralKit.Bot
 
         private async Task<string> MakeAndSetNewToken(PKSystem system)
         {
-            var patch = new SystemPatch { Token = StringUtils.GenerateToken() };
-            system = await _db.Execute(conn => _repo.UpdateSystem(conn, system.Id, patch));
+            system = await _repo.UpdateSystem(system.Id, new() { Token = StringUtils.GenerateToken() });
             return system.Token;
         }
 

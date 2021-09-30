@@ -36,7 +36,7 @@ namespace PluralKit.Bot
             async Task Inner()
             {
                 await Task.Delay(MessageDeleteDelay);
-                await _db.Execute(c => _repo.DeleteMessage(c, evt.Id));
+                await _repo.DeleteMessage(evt.Id);
             }
 
             _lastMessage.HandleMessageDeletion(evt.ChannelId, evt.Id);
@@ -56,7 +56,7 @@ namespace PluralKit.Bot
 
                 _logger.Information("Bulk deleting {Count} messages in channel {Channel}",
                     evt.Ids.Length, evt.ChannelId);
-                await _db.Execute(c => _repo.DeleteMessagesBulk(c, evt.Ids));
+                await _repo.DeleteMessagesBulk(evt.Ids);
             }
 
             _lastMessage.HandleMessageDeletion(evt.ChannelId, evt.Ids.ToList());

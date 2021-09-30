@@ -28,12 +28,12 @@ namespace PluralKit.Bot
         public async Task RegisterMessage(ulong messageId, ulong channelId, ulong authorId)
         {
             _logger.Debug("Registering command response {MessageId} from author {AuthorId} in {ChannelId}", messageId, authorId, channelId);
-            await _db.Execute(conn => _repo.SaveCommandMessage(conn, messageId, channelId, authorId));
+            await _repo.SaveCommandMessage(messageId, channelId, authorId);
         }
 
-        public async Task<CommandMessage?> GetCommandMessage(IPKConnection conn, ulong messageId)
+        public async Task<CommandMessage?> GetCommandMessage(ulong messageId)
         {
-            return await _repo.GetCommandMessage(conn, messageId);
+            return await _repo.GetCommandMessage(messageId);
         }
 
         public async Task CleanupOldMessages()
@@ -41,7 +41,7 @@ namespace PluralKit.Bot
             var deleteThresholdInstant = _clock.GetCurrentInstant() - CommandMessageRetention;
             var deleteThresholdSnowflake = DiscordUtils.InstantToSnowflake(deleteThresholdInstant);
 
-            var deletedRows = await _db.Execute(conn => _repo.DeleteCommandMessagesBefore(conn, deleteThresholdSnowflake));
+            var deletedRows = await _repo.DeleteCommandMessagesBefore(deleteThresholdSnowflake);
 
             _logger.Information("Pruned {DeletedRows} command messages older than retention {Retention} (older than {DeleteThresholdInstant} / {DeleteThresholdSnowflake})",
                 deletedRows, CommandMessageRetention, deleteThresholdInstant, deleteThresholdSnowflake);

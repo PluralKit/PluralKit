@@ -24,7 +24,7 @@ namespace PluralKit.API
         [HttpGet("{aid}")]
         public async Task<ActionResult<JObject>> GetSystemByAccount(ulong aid)
         {
-            var system = await _db.Execute(c => _repo.GetSystemByAccount(c, aid));
+            var system = await _repo.GetSystemByAccount(aid);
             if (system == null)
                 return NotFound("Account not found.");
 

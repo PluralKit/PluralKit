@@ -1,55 +1,77 @@
 #nullable enable
 using System;
-using System.Data;
 using System.Threading.Tasks;
 
-using Dapper;
+using SqlKata;
 
 namespace PluralKit.Core
 {
     public partial class ModelRepository
     {
-        public Task<PKMember?> GetMember(IPKConnection conn, MemberId id) =>
-            conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where id = @id", new { id });
-
-        public Task<PKMember?> GetMemberByHid(IPKConnection conn, string hid, SystemId? system = null)
-            => conn.QuerySingleOrDefaultAsync<PKMember?>(
-                "select * from members where hid = @Hid" + (system != null ? " and system = @System" : ""),
-                new { Hid = hid.ToLower(), System = system }
-            );
-
-        public Task<PKMember?> GetMemberByGuid(IPKConnection conn, Guid guid) =>
-            conn.QuerySingleOrDefaultAsync<PKMember?>("select * from members where uuid = @Uuid", new { Uuid = guid });
-
-        public Task<PKMember?> GetMemberByName(IPKConnection conn, SystemId system, string name) =>
-            conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where lower(name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system });
-
-        public Task<PKMember?> GetMemberByDisplayName(IPKConnection conn, SystemId system, string name) =>
-            conn.QueryFirstOrDefaultAsync<PKMember?>("select * from members where lower(display_name) = lower(@Name) and system = @SystemID", new { Name = name, SystemID = system });
-
-        public async Task<PKMember> CreateMember(IPKConnection conn, SystemId id, string memberName, IDbTransaction? transaction = null)
+        public Task<PKMember?> GetMember(MemberId id)
         {
-            var member = await conn.QueryFirstAsync<PKMember>(
-                "insert into members (hid, system, name) values (find_free_member_hid(), @SystemId, @Name) returning *",
-                new { SystemId = id, Name = memberName }, transaction);
+            var query = new Query("members").Where("id", id);
+            return _db.QueryFirst<PKMember?>(query);
+        }
+
+        public Task<PKMember?> GetMemberByHid(string hid, SystemId? system = null)
+        {
+            var query = new Query("members").Where("hid", hid.ToLower());
+            if (system != null)
+                query = query.Where("system", system);
+            return _db.QueryFirst<PKMember?>(query);
+        }
+
+        public Task<PKMember?> GetMemberByGuid(Guid uuid)
+        {
+            var query = new Query("members").Where("uuid", uuid);
+            return _db.QueryFirst<PKMember?>(query);
+        }
+
+        public Task<PKMember?> GetMemberByName(SystemId system, string name)
+        {
+            var query = new Query("members").WhereRaw(
+                "lower(name) = lower(?)",
+                name.ToLower()
+            ).Where("system", system);
+            return _db.QueryFirst<PKMember?>(query);
+        }
+
+        public Task<PKMember?> GetMemberByDisplayName(SystemId system, string name)
+        {
+            var query = new Query("members").WhereRaw(
+                "lower(display_name) = lower(?)",
+                name.ToLower()
+            ).Where("system", system);
+            return _db.QueryFirst<PKMember?>(query);
+        }
+
+        public async Task<PKMember> CreateMember(SystemId systemId, string memberName, IPKConnection? conn = null)
+        {
+            var query = new Query("members").AsInsert(new
+            {
+                hid = new UnsafeLiteral("find_free_member_hid()"),
+                system = systemId,
+                name = memberName
+            });
+            var member = await _db.QueryFirst<PKMember>(conn, query, "returning *");
             _logger.Information("Created {MemberId} in {SystemId}: {MemberName}",
-                member.Id, id, memberName);
+                member.Id, systemId, memberName);
             return member;
         }
 
-        public Task<PKMember> UpdateMember(IPKConnection conn, MemberId id, MemberPatch patch, IDbTransaction? transaction = null)
+        public Task<PKMember> UpdateMember(MemberId id, MemberPatch patch, IPKConnection? conn = null)
         {
             _logger.Information("Updated {MemberId}: {@MemberPatch}", id, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("members", "id = @id"))
-                .WithConstant("id", id)
-                .Build("returning *");
-            return conn.QueryFirstAsync<PKMember>(query, pms, transaction);
+            var query = patch.Apply(new Query("members").Where("id", id));
+            return _db.QueryFirst<PKMember>(conn, query);
         }
 
-        public Task DeleteMember(IPKConnection conn, MemberId id)
+        public Task DeleteMember(MemberId id)
         {
             _logger.Information("Deleted {MemberId}", id);
-            return conn.ExecuteAsync("delete from members where id = @Id", new { Id = id });
+            var query = new Query("members").AsDelete().Where("id", id);
+            return _db.ExecuteQuery(query);
         }
     }
 }
