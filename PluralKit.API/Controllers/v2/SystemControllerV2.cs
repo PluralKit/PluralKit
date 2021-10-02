@@ -16,13 +16,12 @@ namespace PluralKit.API
     {
         public SystemControllerV2(IServiceProvider svc) : base(svc) { }
 
-        [HttpGet("{system}")]
-        public async Task<IActionResult> SystemGet(string system)
+        [HttpGet("{systemRef}")]
+        public async Task<IActionResult> SystemGet(string systemRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem(systemRef);
+            if (system == null) return NotFound();
+            else return Ok(system.ToJson(LookupContextFor(system)));
         }
 
         [HttpPatch("{system}")]

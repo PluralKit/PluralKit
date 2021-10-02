@@ -29,5 +29,33 @@ namespace PluralKit.API
             _db = svc.GetRequiredService<IDatabase>();
             _repo = svc.GetRequiredService<ModelRepository>();
         }
+
+        protected Task<PKSystem?> ResolveSystem(string systemRef)
+        {
+            if (systemRef == "@me")
+            {
+                HttpContext.Items.TryGetValue("SystemId", out var systemId);
+                if (systemId == null) return null;
+                return _repo.GetSystem((SystemId)systemId);
+            }
+
+            if (Guid.TryParse(systemRef, out var guid))
+                return _repo.GetSystemByGuid(guid);
+
+            if (_snowflakeRegex.IsMatch(systemRef))
+                return _repo.GetSystemByAccount(ulong.Parse(systemRef));
+
+            if (_shortIdRegex.IsMatch(systemRef))
+                return _repo.GetSystemByHid(systemRef);
+
+            return null;
+        }
+
+        public LookupContext LookupContextFor(PKSystem target)
+        {
+            HttpContext.Items.TryGetValue("SystemId", out var systemId);
+            if (systemId == null) return LookupContext.ByNonOwner;
+            return target.Id == (SystemId)systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        }
     }
 }

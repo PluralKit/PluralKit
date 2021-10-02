@@ -124,6 +124,8 @@ namespace PluralKit.API
                 return next();
             });
 
+            app.UseMiddleware<AuthorizationTokenHandlerMiddleware>();
+
             //app.UseHttpsRedirection();
             app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization"));
 
