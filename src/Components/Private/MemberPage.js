@@ -436,7 +436,7 @@ export default function MemberPage(props) {
                         <BS.Form.Row>
                         <BS.InputGroup className="ml-1 mr-1 mb-1">
                         <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} {...registerProxy(`proxy_tags[${index}].prefix`)}/> 
-                        <BS.Form.Control as="textarea" rows="1" disabled placeholder='text'/>
+                        <BS.Form.Control style={{flex: '0 0 3.5em'}} as="textarea" rows="1" disabled placeholder='text'/>
                         <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} {...registerProxy(`proxy_tags[${index}].suffix`)}/>
                         </BS.InputGroup>
                         </BS.Form.Row>

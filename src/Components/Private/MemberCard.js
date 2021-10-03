@@ -303,7 +303,7 @@ export default function MemberCard(props) {
                 { member.pronouns ?   <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> { localStorage.getItem("twemoji") ? <span dangerouslySetInnerHTML={{__html: twemoji.parse(pronouns)}}></span> : <span dangerouslySetInnerHTML={{__html: pronouns}}></span>}</BS.Col> : "" }
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
-                { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }0
+                { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
                 { privacyView || proxyView || !member.banner ? "" : 
                     <BS.Col className="mb-lg-3" xs={12} lg={3}>
                     <b>Banner:</b>{" "}
@@ -406,16 +406,16 @@ export default function MemberCard(props) {
          <BS.Form onSubmit={handleSubmitProxy(submitProxy)}>
              <BS.Form.Row>
                 { proxyTags.map((item, index) => (
-                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={4}>
+                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={6}>
                         <BS.Form.Row>
                         <BS.InputGroup className="ml-1 mr-1 mb-1">
                         <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} {...registerProxy(`proxy_tags[${index}].prefix`)}/> 
-                        <BS.Form.Control as="textarea" rows="1" disabled placeholder='text'/>
+                        <BS.Form.Control style={{flex: '0 0 3.5em'}} as="textarea" rows="1" disabled placeholder='text'/>
                         <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} {...registerProxy(`proxy_tags[${index}].suffix`)}/>
                         </BS.InputGroup>
                         </BS.Form.Row>
                     </BS.Col>
-                ))} <BS.Col className="mb-2" xs={12} lg={4}><BS.Button block variant="light" onClick={() => addProxyField()}>Add new</BS.Button></BS.Col>
+                ))} <BS.Col className="mb-2" xs={12} lg={3}><BS.Button block variant="light" onClick={() => addProxyField()}>Add new</BS.Button></BS.Col>
              </BS.Form.Row>
              <BS.Button variant="light" onClick={() => resetProxyFields()}>Exit</BS.Button> <BS.Button variant="primary" type="submit">Submit</BS.Button>
         </BS.Form><hr/></> : proxyView ? 
