@@ -26,11 +26,9 @@ export default function App() {
 
   useEffect(() => {
     if (localStorage.getItem("pk-darkmode")) {
-      localStorage.removeItem("pk-darkmode");
       document.body.classList.add('dark-mode')
     }
     else {
-        localStorage.setItem("pk-darkmode", "true");
         document.body.classList.remove('dark-mode')
     }
   forceUpdate();
