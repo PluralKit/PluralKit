@@ -4,7 +4,7 @@ import { useRouteMatch } from "react-router-dom";
 import autosize from "autosize";
 import "moment-timezone";
 import Popup from "reactjs-popup";
-import Twemoji from "react-twemoji";
+import twemoji from 'twemoji';
 
 import history from "../../History.js";
 import defaultAvatar from "../../default_discord_avatar.png";
@@ -244,13 +244,7 @@ export default function System(props) {
             <p>
               <b>Description:</b>
             </p>
-            {localStorage.getItem("twemoji") ? (
-              <Twemoji options={{ className: "twemoji" }}>
-                <p dangerouslySetInnerHTML={{ __html: desc }}></p>
-              </Twemoji>
-            ) : (
-              <p dangerouslySetInnerHTML={{ __html: desc }}></p>
-            )}
+            { localStorage.getItem("twemoji") ? <p dangerouslySetInnerHTML={{__html: twemoji.parse(desc)}}></p> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
             { !user.banner || !localStorage.getItem("bottombanners") ? "" : 
               <BS.Image rounded className="mb-2" style={{width: '100%', maxHeight: '15rem', objectFit: 'cover'}} src={banner}/>
             }

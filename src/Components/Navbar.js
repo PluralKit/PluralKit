@@ -3,12 +3,17 @@ import React from 'react';
 import  * as BS from 'react-bootstrap'
 import Toggle from 'react-toggle'
 import { FaSun, FaMoon } from "react-icons/fa";
-import useDarkMode from 'use-dark-mode';
 
 import history from "../History.js";
 
 const Navbar = ({ setIsSubmit, forceUpdate}) => {
-    const darkMode = useDarkMode(false);
+    
+    function toggleDarkMode() {
+        if (localStorage.getItem("pk-darkmode"))
+            localStorage.removeItem("pk-darkmode");
+        else localStorage.setItem("pk-darkmode", "true");
+        forceUpdate();
+    };
 
     function logOut() {
         setIsSubmit(false);
@@ -16,7 +21,7 @@ const Navbar = ({ setIsSubmit, forceUpdate}) => {
         localStorage.removeItem("user");
         history.push("/");
         forceUpdate();
-      }
+      };
 
     return(
         <BS.Navbar className="mb-5 align-items-center">
@@ -36,8 +41,8 @@ const Navbar = ({ setIsSubmit, forceUpdate}) => {
             <Toggle
                 defaultChecked={true}
                 icons={false}
-                onChange={darkMode.toggle} />
-                {darkMode.value ? <FaMoon className="m-1"/> : <FaSun className="m-1"/>}
+                onClick={() => toggleDarkMode()} />
+                {localStorage.getItem("pk-darkmode") ? <FaMoon className="m-1"/> : <FaSun className="m-1"/>}
             </BS.Nav>
         </BS.Navbar>
     );

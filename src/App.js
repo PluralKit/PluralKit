@@ -16,6 +16,7 @@ import Template from './Pages/Template.js'
 import Navbar from './Components/Navbar.js'
 
 export default function App() {
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
   const [isInvalid, setIsInvalid] = useState(false);
@@ -24,7 +25,7 @@ export default function App() {
   const forceUpdate = useCallback(() => updateState({}), []);
 
   return (
-    <div className={ `contents ${localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}`}>
+    <div className={ `contents ${localStorage.getItem('opendyslexic') ? "opendyslexic" : ""} ${localStorage.getItem("pk-darkmode") ? "dark-mode" : ""}`}>
       <Router history={history}>
         <Navbar forceUpdate={forceUpdate} setIsSubmit={setIsSubmit} />
         <div className="content">

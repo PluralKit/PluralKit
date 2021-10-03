@@ -1,7 +1,7 @@
 {
   "homepage": "https://pk-webs.spectralitree.com",
-  "name": "pk-web",
-  "version": "0.1.0",
+  "name": "pk-webs",
+  "version": "0.1.2",
   "private": true,
   "dependencies": {
     "@hookform/resolvers": "^1.1.2",
@@ -27,9 +27,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
     "react-toggle": "^4.1.1",
-    "react-twemoji": "^0.3.0",
     "reactjs-popup": "^2.0.4",
-    "use-dark-mode": "^2.3.1",
     "web-vitals": "^0.2.4",
     "yup": "^0.32.8"
   },

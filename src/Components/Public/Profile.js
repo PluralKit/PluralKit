@@ -3,8 +3,7 @@ import { useRouteMatch } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import * as BS from 'react-bootstrap';
 import Popup from 'reactjs-popup';
-import Twemoji from 'react-twemoji';
-
+import twemoji from 'twemoji';
 import { FaAddressCard } from "react-icons/fa";
 import defaultAvatar from '../../default_discord_avatar.png'
 import Loading from "../Loading.js";
@@ -121,7 +120,7 @@ export default function Profile () {
                  : "" }
          </BS.Row>
          <p><b>Description:</b></p>
-         { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
+         { localStorage.getItem("twemoji") ? <p dangerouslySetInnerHTML={{__html: twemoji.parse(desc)}}></p> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
          { !system.banner || !localStorage.getItem("bottombanners") ? "" : 
               <BS.Image rounded className="mb-2" style={{width: '100%', maxHeight: '15rem', objectFit: 'cover'}} src={banner}/>
             }

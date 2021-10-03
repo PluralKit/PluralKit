@@ -6,7 +6,7 @@ import moment from 'moment';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import autosize from 'autosize';
-import Twemoji from 'react-twemoji';
+import twemoji from 'twemoji';
 
 import API_URL from "../../Constants/constants.js";
 import history from "../../History.js";
@@ -324,11 +324,9 @@ export default function MemberPage(props) {
             <>
             <BS.Row>
                 <BS.Col className="mb-lg-3" xs={12} lg={3}><b>ID:</b> {member.id}</BS.Col>
-                { member.display_name ? localStorage.getItem('twemoji') ? <BS.Col className="mb-lg-3" xs={12} lg={3}><Twemoji options={{ className: 'twemoji' }}><b>Display name: </b>{displayName}</Twemoji></BS.Col> :
-                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Display name:</b> {displayName}</BS.Col> : "" }
+                { member.display_name ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Display name:</b> { localStorage.getItem("twemoji") ? <span dangerouslySetInnerHTML={{__html: twemoji.parse(displayName)}}></span> : <span dangerouslySetInnerHTML={{__html: displayName}}></span>}</BS.Col> : "" }
                 { member.birthday ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Birthday:</b> {birthday}</BS.Col> : "" }
-                { member.pronouns ?  localStorage.getItem('twemoji') ? <BS.Col className="mb-lg-3" xs={12} lg={3}><Twemoji options={{ className: 'twemoji' }}><b>Pronouns:</b> <span dangerouslySetInnerHTML={{__html: pronouns}}></span></Twemoji></BS.Col> : 
-                <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> <span dangerouslySetInnerHTML={{__html: pronouns}}></span></BS.Col> : "" }
+                { member.pronouns ?   <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Pronouns:</b> { localStorage.getItem("twemoji") ? <span dangerouslySetInnerHTML={{__html: twemoji.parse(pronouns)}}></span> : <span dangerouslySetInnerHTML={{__html: pronouns}}></span>}</BS.Col> : "" }
                 { member.color ? <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Color:</b> {color}</BS.Col> : "" }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Privacy:</b> <BS.Button variant="light" size="sm" onClick={() => setPrivacyView(true)}>View</BS.Button></BS.Col> }
                 { privacyView ? "" : proxyView ? "" : <BS.Col className="mb-lg-3" xs={12} lg={3}><b>Proxy tags:</b> <BS.Button variant="light" size="sm" onClick={() => setProxyView(true)}>View</BS.Button></BS.Col> }
@@ -455,7 +453,7 @@ export default function MemberPage(props) {
          <BS.Button variant="light" onClick={() => setProxyView(false)}>Exit</BS.Button>  <BS.Button variant="primary" onClick={() => setProxyMode(true)}>Edit</BS.Button>
             <hr/></> : "" }
             <p><b>Description:</b></p>
-            { localStorage.getItem('twemoji') ? <Twemoji options={{ className: 'twemoji' }}><p dangerouslySetInnerHTML={{__html: desc}}></p></Twemoji> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
+            { localStorage.getItem("twemoji") ? <p dangerouslySetInnerHTML={{__html: twemoji.parse(desc)}}></p> : <p dangerouslySetInnerHTML={{__html: desc}}></p>}
             { !member.banner || !localStorage.getItem("bottombanners") ? "" : 
               <BS.Image rounded className="mb-2" style={{width: '100%', maxHeight: '15rem', objectFit: 'cover'}} src={banner}/>
             }

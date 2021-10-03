@@ -7,19 +7,16 @@
   z-index: -5;
 }
 
-html {
+html, body {
   position: relative;
   min-height: 100vh;
-}
-
-body {
-  position: relative;
 }
 
 .contents {
   display: flex;
   flex-flow: column;
-  height: 100vh
+  flex: 1;
+  min-height: 100vh;
 }
 
 .content {
@@ -279,14 +276,9 @@ blockquote {
   margin-right: -100px; ;
 }
 
-.d-emoji {
-  height: 22px;
-  width: auto;
-}
-
-.twemoji {
-  height: 22px;
-  width: auto;
+.emoji, .d-emoji {
+  width: 1.25em;
+  height: auto;
 }
 
 .backdrop {
