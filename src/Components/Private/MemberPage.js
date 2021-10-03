@@ -279,7 +279,7 @@ export default function MemberPage(props) {
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Pronouns:</BS.Form.Label>
-                    <BS.Form.Control maxLength="100" name="pronouns" {...registerEdit("pronouns")} defaultValue={editPronouns} />
+                    <BS.Form.Control as="textarea" rows="1" maxLength="100" name="pronouns" {...registerEdit("pronouns")} defaultValue={editPronouns} />
                 </BS.Col>
                 <BS.Col className="mb-lg-2" xs={12} lg={3}>
                     <BS.Form.Label>Avatar url:</BS.Form.Label> 
