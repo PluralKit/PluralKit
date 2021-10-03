@@ -317,7 +317,7 @@ export default function Memberlist() {
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Pronouns:</BS.Form.Label>
-                            <BS.Form.Control name="pronouns" {...register("pronouns")} defaultValue={''} />
+                            <BS.Form.Control as="textarea" rows="1" name="pronouns" {...register("pronouns")} defaultValue={''} />
                         </BS.Col>
                         <BS.Col className="mb-lg-2" xs={12} lg={3}>
                             <BS.Form.Label>Avatar url:</BS.Form.Label> 
@@ -346,12 +346,12 @@ export default function Memberlist() {
                 <h5>Proxy Tags</h5>
                     <BS.Form.Row>
                   { proxyTags.map((item, index) => (
-                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={2}>
+                    <BS.Col key={index} className="mb-lg-2" xs={12} lg={6}>
                         <BS.Form.Row>
                         <BS.InputGroup className="ml-1 mr-1 mb-1">
-                        <BS.Form.Control name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} {...register(`proxy_tags[${index}].prefix`)}/> 
-                        <BS.Form.Control disabled placeholder='text'/>
-                        <BS.Form.Control name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} {...register(`proxy_tags[${index}].suffix`)}/>
+                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].prefix`} defaultValue={item.prefix} {...register(`proxy_tags[${index}].prefix`)}/> 
+                        <BS.Form.Control style={{flex: '0 0 3.5em'}} as="textarea" rows="1" disabled placeholder='text'/>
+                        <BS.Form.Control as="textarea" rows="1" name={`proxy_tags[${index}].suffix`} defaultValue={item.suffix} {...register(`proxy_tags[${index}].suffix`)}/>
                         </BS.InputGroup>
                         </BS.Form.Row>
                     </BS.Col>
