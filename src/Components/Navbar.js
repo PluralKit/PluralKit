@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import  * as BS from 'react-bootstrap'
 import Toggle from 'react-toggle'
@@ -9,9 +9,14 @@ import history from "../History.js";
 const Navbar = ({ setIsSubmit, forceUpdate}) => {
     
     function toggleDarkMode() {
-        if (localStorage.getItem("pk-darkmode"))
+        if (localStorage.getItem("pk-darkmode")) {
             localStorage.removeItem("pk-darkmode");
-        else localStorage.setItem("pk-darkmode", "true");
+            document.body.classList.add('dark-mode')
+        }
+        else {
+            localStorage.setItem("pk-darkmode", "true");
+            document.body.classList.remove('dark-mode')
+        }
         forceUpdate();
     };
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback} from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Router, Switch, Route, Redirect } from 'react-router-dom';
 import  * as BS from 'react-bootstrap'
 
@@ -24,8 +24,20 @@ export default function App() {
   const [, updateState] = useState();
   const forceUpdate = useCallback(() => updateState({}), []);
 
+  useEffect(() => {
+    if (localStorage.getItem("pk-darkmode")) {
+      localStorage.removeItem("pk-darkmode");
+      document.body.classList.add('dark-mode')
+    }
+    else {
+        localStorage.setItem("pk-darkmode", "true");
+        document.body.classList.remove('dark-mode')
+    }
+  forceUpdate();
+}, []);
+
   return (
-    <div className={ `contents ${localStorage.getItem('opendyslexic') ? "opendyslexic" : ""} ${localStorage.getItem("pk-darkmode") ? "dark-mode" : ""}`}>
+    <div className={ `contents ${localStorage.getItem('opendyslexic') ? "opendyslexic" : ""}`}>
       <Router history={history}>
         <Navbar forceUpdate={forceUpdate} setIsSubmit={setIsSubmit} />
         <div className="content">
@@ -36,7 +48,7 @@ export default function App() {
               }
               </Route>
               <Route exact path="/">
-                <Home isLoading={isLoading} setIsLoading={setIsLoading} isSubmit={isSubmit} setIsSubmit={setIsSubmit} isInvalid={isInvalid} setIsInvalid={setIsInvalid}/>
+                <Home forceUpdate={forceUpdate} isLoading={isLoading} setIsLoading={setIsLoading} isSubmit={isSubmit} setIsSubmit={setIsSubmit} isInvalid={isInvalid} setIsInvalid={setIsInvalid}/>
               </Route>
               <Route path="/profile">
                 <Public />
