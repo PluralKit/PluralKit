@@ -100,7 +100,7 @@ namespace PluralKit.Bot
                                 $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago)\n";
                         }
 
-                        if (sb.Length + stringToAdd.Length >= 1024)
+                        if (sb.Length + stringToAdd.Length >= 4096)
                             break;
                         sb.Append(stringToAdd);
                     }
