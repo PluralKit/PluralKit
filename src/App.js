@@ -31,7 +31,7 @@ export default function App() {
     else {
         document.body.classList.remove('dark-mode')
     }
-  forceUpdate();
+    forceUpdate();
 }, []);
 
   return (
