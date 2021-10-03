@@ -10,6 +10,7 @@ const EditSystemPrivacy = ({
   setUser,
   user,
   setPrivacyEdit,
+  setErrorMessage
 }) => {
   const { register: registerPrivacy, handleSubmit: handleSubmitPrivacy } =
     useForm();
@@ -24,18 +25,29 @@ const EditSystemPrivacy = ({
         Authorization: localStorage.getItem("token"),
       },
     })
-      .then((res) => res.json())
-      .then((data) => {
-        setUser((prevState) => {
-          return { ...prevState, ...data };
-        });
-        localStorage.setItem("user", JSON.stringify(user));
-        setPrivacyEdit(false);
-      })
-      .catch((error) => {
-        console.error(error);
-        setErrorAlert(true);
+    .then((res) => {
+      if (!res.ok)
+        throw new Error('HTTP Status ' + res.status)
+      return res.json();
+    })
+    .then(() => {
+      setUser((prevState) => {
+        return { ...prevState, ...data };
       });
+      localStorage.setItem("user", JSON.stringify(user));
+      setPrivacyEdit(false);
+    })
+    .catch((error) => {
+      console.log(error);
+      setErrorMessage(error.message);
+      if (error.message === 'HTTP Status 401') {
+          setErrorMessage("Your token is invalid, please log out and enter a new token.")
+      };
+      if (error.message === 'HTTP Status 500') {
+        setErrorMessage("500: Internal server error.")
+      }
+      setErrorAlert(true);
+    });
   };
 
   return (

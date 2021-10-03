@@ -45,6 +45,7 @@ export default function MemberCard(props) {
     const [ errorAlert, setErrorAlert ] = useState(false);
     const [ wrongID, setWrongID ] = useState(false);
     const [ memberDeleted, setMemberDeleted ] = useState(false);
+    const [ errorMessage, setErrorMessage ] = useState("");
 
     const {
         register: registerEdit,
@@ -122,46 +123,45 @@ export default function MemberCard(props) {
     }
     }, [member.description, member.color, member.birthday, member.display_name, member.pronouns, member.avatar_url, member.proxy_tags, member.created, member.banner]);
 
-    const submitEdit = data => {
-        props.edit(Object.assign(member, data));
-        
+    function submitEditPatch(data) {
         fetch(`${API_URL}m/${member.id}`,{
             method: 'PATCH',
             body: JSON.stringify(data),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': localStorage.getItem("token")
-            }}).then (res => res.json()
+            }}).then (res => {
+                if (!res.ok) {
+                    throw new Error('HTTP Status ' + res.status);
+                }
+                return res.json();
+            }
             ).then (data => { 
                 setMember(prevState => {return {...prevState, ...data}});
                 setErrorAlert(false);
                 setEditMode(false);
         }
             ).catch (error => {
-                console.error(error);
+                console.log(error);
+                setErrorMessage(error.message);
+                if (error.message === 'HTTP Status 401') {
+                    setErrorMessage("401: Your token is invalid, please log out and enter a new token.")
+                };
+                if (error.message === 'HTTP Status 500') {
+                    setErrorMessage("500: Internal server error.")
+                }
                 setErrorAlert(true);
             });
     }
 
+    const submitEdit = data => {
+        props.edit(Object.assign(member, data));
+        submitEditPatch(data);
+    }
+
     const submitPrivacy = data => {
         props.edit(Object.assign(member, data));
-
-        fetch(`${API_URL}m/${member.id}`,{
-            method: 'PATCH',
-            body: JSON.stringify(data),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': localStorage.getItem("token")
-            }}).then (res => res.json()
-            ).then (data => {
-                setMember(prevState => {return {...prevState, ...data}});
-                setErrorAlert(false); 
-                setprivacyEdit(false)
-        }
-            ).catch (error => {
-                console.error(error);
-                setErrorAlert(true);
-             })
+        submitEditPatch(data);
     }
 
     const deleteMember = data => {
@@ -232,7 +232,7 @@ export default function MemberCard(props) {
     function renderCard() {
         return (
             <BS.Card.Body style={{borderLeft: `5px solid #${color}` }}>
-                { errorAlert ? <BS.Alert variant="danger">Something went wrong, please try logging in and out again.</BS.Alert> : "" }
+                { errorAlert ? <BS.Alert variant="danger">{errorMessage}</BS.Alert> : "" }
                 { editMode ?
                 <>
                 <BS.Form id='Edit' onSubmit={handleSubmitEdit(submitEdit)}>

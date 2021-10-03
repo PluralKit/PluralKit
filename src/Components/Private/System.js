@@ -12,7 +12,7 @@ import { FaAddressCard } from "react-icons/fa";
 import EditSystem from "./Edit/EditSystem.js";
 import EditSystemPrivacy from "./Edit/EditSystemPrivacy.js";
 
-export default function System(props) {
+export default function System() {
   // match the url, if there's a member ID there, don't render this component at all
   const match = useRouteMatch("/dash/:memberID");
 
@@ -35,6 +35,7 @@ export default function System(props) {
   const [privacyView, setPrivacyView] = useState(false);
 
   const [errorAlert, setErrorAlert] = useState(false);
+  const [ errorMessage, setErrorMessage ] = useState("");
 
   // this useEffect does a couple of things after the user is gotten from localstorage
   useEffect(() => {
@@ -126,7 +127,7 @@ export default function System(props) {
       <BS.Card.Body>
         {errorAlert ? (
           <BS.Alert variant="danger">
-            Something went wrong, please try logging in and out again.
+            {errorMessage}
           </BS.Alert>
         ) : (
           ""
@@ -143,6 +144,7 @@ export default function System(props) {
             user={user}
             setUser={setUser}
             setEditMode={setEditMode}
+            setErrorMessage={setErrorMessage}
           />
         ) : (
           <>
@@ -204,6 +206,7 @@ export default function System(props) {
                 setUser={setUser}
                 user={user}
                 setPrivacyEdit={setPrivacyEdit}
+                setErrorMessage={setErrorMessage}
               />
             ) : privacyView ? (
               <>

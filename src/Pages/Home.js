@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as fetch from 'node-fetch';
 
@@ -9,8 +9,10 @@ import { FaLockOpen, FaHome } from "react-icons/fa";
 
 import API_URL from "../Constants/constants.js";
 
-const Home = ({isInvalid, setIsInvalid, isLoading, setIsLoading, isSubmit, setIsSubmit, }) => {
-const { register, handleSubmit } = useForm();
+const Home = ({isInvalid, setIsInvalid, isLoading, setIsLoading, isSubmit, setIsSubmit, forceUpdate }) => {
+  const { register, handleSubmit } = useForm();
+
+  const [ errorMessage, setErrorMessage ] = useState("");
 
   // submit login form, add the token to the localstorage
   const onSubmit = (data) => {
@@ -32,9 +34,11 @@ const { register, handleSubmit } = useForm();
       },
     })
     // put all the system data in localstorage
-    // TODO: remove this from localstorage? since we know how to pass stuff along components now
-    // then push the user to the dash!
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok)
+          throw new Error('HTTP Status ' + res.status);
+        return res.json();
+      })
       .then((data) => {
         localStorage.setItem("user", JSON.stringify(data));
         setIsSubmit(true);
@@ -42,15 +46,26 @@ const { register, handleSubmit } = useForm();
         history.push("/dash");
       })
       // remove the token and user data from localstorage if there's an error, also set the token as invalid
-      // TODO: an error doesn't mean the token is invalid, change this depending on what error is thrown
       .catch((error) => {
         console.log(error);
         setIsInvalid(true);
+        setErrorMessage(error.message);
+        if (error.message === "HTTP Status 401")
+          errorMessage = "Your token is invalid."
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setIsLoading(false);
       });
   }
+
+  // Logout function
+  function logOut() {
+    setIsSubmit(false);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    history.push("/");
+    forceUpdate();
+  };
 
   // when the homepage loads, check if there's a token, if there is, check if it's still valid
   // removing the dependency array causes a rerender loop, so just ignore ESlint here
@@ -110,7 +125,7 @@ const { register, handleSubmit } = useForm();
             {/* if the inserted token is invalid, show invalid error! 
               this also shows if the token used in checkLogIn() is invalid */}
             {isInvalid ? (
-              <BS.Alert variant="danger">Invalid token.</BS.Alert>
+              <BS.Alert variant="danger">{errorMessage}</BS.Alert>
             ) : (
               ""
             )}
@@ -121,10 +136,14 @@ const { register, handleSubmit } = useForm();
                   You are logged in already, click here to continue to the dash.
                 </p>
                 <BS.Button
-                  type="primary"
+                  variant="primary"
                   onClick={() => history.push("/dash")}
                 >
                   Continue to dash
+                </BS.Button>
+                <BS.Button style={{float: 'right'}} variant="danger"
+                  onClick={() => logOut()}
+                >Log out
                 </BS.Button>
               </>
             ) : (

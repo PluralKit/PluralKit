@@ -16,8 +16,9 @@ const EditSystem = ({
   editDesc,
   setEditMode,
   setErrorAlert,
-  setUser,
   user,
+  setUser,
+  setErrorMessage
 }) => {
   const [invalidTimezone, setInvalidTimezone] = useState(false);
 
@@ -38,7 +39,11 @@ const EditSystem = ({
         Authorization: localStorage.getItem("token"),
       },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok)
+          throw new Error('HTTP Status ' + res.status)
+        return res.json();
+      })
       .then(() => {
         setUser((prevState) => {
           return { ...prevState, ...data };
@@ -47,7 +52,14 @@ const EditSystem = ({
         setEditMode(false);
       })
       .catch((error) => {
-        console.error(error);
+        console.log(error);
+        setErrorMessage(error.message);
+        if (error.message === 'HTTP Status 401') {
+            setErrorMessage("Your token is invalid, please log out and enter a new token.")
+        };
+        if (error.message === 'HTTP Status 500') {
+          setErrorMessage("500: Internal server error.")
+        }
         setErrorAlert(true);
       });
   };
