@@ -77,7 +77,7 @@ namespace PluralKit.Bot
             if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
                 throw new PKError($"Invalid new group ID `{newHid}`.");
 
-            var existingGroup = _repo.GetGroupByHid(newHid);
+            var existingGroup = await _repo.GetGroupByHid(newHid);
             if (existingGroup != null)
                 throw new PKError($"Another group already exists with ID `{newHid}`.");
 
