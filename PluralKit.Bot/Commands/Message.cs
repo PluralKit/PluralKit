@@ -150,6 +150,9 @@ namespace PluralKit.Bot
 
                 if (ctx.Guild != null)
                     await ctx.Rest.DeleteMessage(ctx.Message);
+                else
+                    await ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new() { Name = Emojis.Success });
+
                 return;
             }
             if (ctx.Match("author") || ctx.MatchFlag("author"))
