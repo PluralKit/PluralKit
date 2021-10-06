@@ -31,7 +31,7 @@ namespace PluralKit.Bot
             if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
                 throw new PKError($"Invalid new system ID `{newHid}`.");
 
-            var existingSystem = _repo.GetSystemByHid(newHid);
+            var existingSystem = await _repo.GetSystemByHid(newHid);
             if (existingSystem != null)
                 throw new PKError($"Another system already exists with ID `{newHid}`.");
 
