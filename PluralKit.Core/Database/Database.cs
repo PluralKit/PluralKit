@@ -186,6 +186,16 @@ namespace PluralKit.Core
                 return await conn.ExecuteAsync(query.Sql + $" {extraSql}", query.NamedBindings);
         }
 
+        public async Task<int> ExecuteQuery(IPKConnection? conn, Query q, string extraSql = "", [CallerMemberName] string queryName = "")
+        {
+            if (conn == null)
+                return await ExecuteQuery(q, extraSql, queryName);
+
+            var query = _compiler.Compile(q);
+            using (_metrics.Measure.Timer.Time(CoreMetrics.DatabaseQuery, new MetricTags("Query", queryName)))
+                return await conn.ExecuteAsync(query.Sql + $" {extraSql}", query.NamedBindings);
+        }
+
         public async Task<T> QueryFirst<T>(Query q, string extraSql = "", [CallerMemberName] string queryName = "")
         {
             var query = _compiler.Compile(q);
