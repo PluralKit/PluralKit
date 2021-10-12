@@ -46,7 +46,7 @@ namespace PluralKit.API
         public static PKError MemberNotFound = new(404, 20002, "Member not found.");
         public static PKError GroupNotFound = new(404, 20003, "Group not found.");
         public static PKError MessageNotFound = new(404, 20004, "Message not found.");
-        public static PKError SwitchNotFound = new(404, 20005, "Switch not found.");
+        public static PKError SwitchNotFound = new(404, 20005, "Switch not found, switch is associated to different system, or unauthorized to view front history.");
         public static PKError UnauthorizedMemberList = new(403, 30001, "Unauthorized to view member list");
         public static PKError UnauthorizedGroupList = new(403, 30002, "Unauthorized to view group list");
         public static PKError UnauthorizedGroupMemberList = new(403, 30003, "Unauthorized to view group member list");

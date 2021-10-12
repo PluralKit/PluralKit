@@ -105,13 +105,13 @@ namespace PluralKit.API
             if (system == null)
                 throw APIErrors.SystemNotFound;
 
+            var sw = await _repo.GetSwitchByUuid(switchId);
+            if (sw == null || system.Id != sw.System)
+                throw APIErrors.SwitchNotFound;
+
             var ctx = this.ContextFor(system);
 
             if (!system.FrontHistoryPrivacy.CanAccess(ctx))
-                throw APIErrors.UnauthorizedFrontHistory;
-
-            var sw = await _repo.GetSwitchByUuid(switchId);
-            if (sw == null)
                 throw APIErrors.SwitchNotFound;
 
             var members = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));
