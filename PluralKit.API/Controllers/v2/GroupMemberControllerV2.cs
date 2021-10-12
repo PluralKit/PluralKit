@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
+using Dapper;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -59,58 +62,195 @@ namespace PluralKit.API
             return Ok(o);
         }
 
-        [HttpPut("groups/{group_id}/members/{member_id}")]
-        public async Task<IActionResult> GroupMemberPut(string group_id, string member_id)
+        [HttpPut("groups/{groupRef}/members/{memberRef}")]
+        public async Task<IActionResult> GroupMemberPut(string groupRef, string memberRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+
+            var group = await ResolveGroup(groupRef);
+            if (group == null)
+                throw APIErrors.GroupNotFound;
+            if (group.System != system.Id)
+                throw APIErrors.NotOwnGroupError;
+
+            var member = await ResolveMember(memberRef);
+            Console.WriteLine(member);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+            if (member.System != system.Id)
+                throw APIErrors.NotOwnMemberError;
+
+            var existingMembers = await _repo.GetGroupMembers(group.Id).Select(x => x.Id).ToListAsync();
+            if (!existingMembers.Contains(member.Id))
+                await _repo.AddMembersToGroup(group.Id, new List<MemberId>() { member.Id });
+
+            return NoContent();
         }
 
-        [HttpPut("groups/{group_id}/members")]
-        public async Task<IActionResult> GroupMembersPut(string group_id, [FromBody] JArray members)
+        [HttpPut("groups/{groupRef}/members")]
+        public async Task<IActionResult> GroupMembersPut(string groupRef, [FromBody] JArray memberRefs)
         {
-            return new ObjectResult("Unimplemented")
+            if (memberRefs.Count == 0)
+                throw APIErrors.GenericBadRequest;
+
+            var system = await ResolveSystem("@me");
+
+            var group = await ResolveGroup(groupRef);
+            if (group == null)
+                throw APIErrors.GroupNotFound;
+            if (group.System != system.Id)
+                throw APIErrors.NotOwnGroupError;
+
+            var members = new List<MemberId>();
+
+            foreach (var JmemberRef in memberRefs)
             {
-                StatusCode = 501
-            };
+                var memberRef = JmemberRef.Value<string>();
+                var member = await ResolveMember(memberRef);
+
+                if (member == null)
+                    throw APIErrors.MemberNotFound;
+                if (member.System != system.Id)
+                    throw APIErrors.NotOwnMemberErrorWithRef(memberRef);
+
+                members.Add(member.Id);
+            }
+
+            var existingMembers = await _repo.GetGroupMembers(group.Id).Select(x => x.Id).ToListAsync();
+            members = members.Where(x => !existingMembers.Contains(x)).ToList();
+
+            if (members.Count > 0)
+                await _repo.AddMembersToGroup(group.Id, members);
+
+            return NoContent();
         }
 
-        [HttpDelete("groups/{group_id}/members/{member_id}")]
-        public async Task<IActionResult> GroupMemberDelete(string group_id, string member_id)
+        [HttpDelete("groups/{groupRef}/members/{memberRef}")]
+        public async Task<IActionResult> GroupMemberDelete(string groupRef, string memberRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+
+            var group = await ResolveGroup(groupRef);
+            if (group == null)
+                throw APIErrors.GroupNotFound;
+            if (group.System != system.Id)
+                throw APIErrors.NotOwnGroupError;
+
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+            if (member.System != system.Id)
+                throw APIErrors.NotOwnMemberError;
+
+            await _repo.RemoveMembersFromGroup(group.Id, new List<MemberId>() { member.Id });
+
+            return NoContent();
         }
 
-        [HttpDelete("groups/{group_id}/members")]
-        public async Task<IActionResult> GroupMembersDelete(string group_id, [FromBody] JArray members)
+        [HttpDelete("groups/{groupRef}/members")]
+        public async Task<IActionResult> GroupMembersDelete(string groupRef, [FromBody] JArray memberRefs)
         {
-            return new ObjectResult("Unimplemented")
+            if (memberRefs.Count == 0)
+                throw APIErrors.GenericBadRequest;
+
+            var system = await ResolveSystem("@me");
+
+            var group = await ResolveGroup(groupRef);
+            if (group == null)
+                throw APIErrors.GroupNotFound;
+            if (group.System != system.Id)
+                throw APIErrors.NotOwnGroupError;
+
+            var members = new List<MemberId>();
+
+            foreach (var JmemberRef in memberRefs)
             {
-                StatusCode = 501
-            };
+                var memberRef = JmemberRef.Value<string>();
+                var member = await ResolveMember(memberRef);
+
+                if (member == null)
+                    throw APIErrors.MemberNotFound;
+                if (member.System != system.Id)
+                    throw APIErrors.NotOwnMemberError;
+
+                members.Add(member.Id);
+            }
+
+            await _repo.RemoveMembersFromGroup(group.Id, members);
+
+            return NoContent();
         }
 
-        [HttpPut("members/{member_id}/groups")]
-        public async Task<IActionResult> MemberGroupsPut(string member_id, [FromBody] JArray groups)
+        [HttpPut("members/{memberRef}/groups")]
+        public async Task<IActionResult> MemberGroupsPut(string memberRef, [FromBody] JArray groupRefs)
         {
-            return new ObjectResult("Unimplemented")
+            if (groupRefs.Count == 0)
+                throw APIErrors.GenericBadRequest;
+
+            var system = await ResolveSystem("@me");
+
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+            if (member.System != system.Id)
+                throw APIErrors.NotOwnMemberError;
+
+            var groups = new List<GroupId>();
+
+            foreach (var JgroupRef in groupRefs)
             {
-                StatusCode = 501
-            };
+                var groupRef = JgroupRef.Value<string>();
+                var group = await ResolveGroup(groupRef);
+
+                if (group == null)
+                    throw APIErrors.GroupNotFound;
+                if (group.System != system.Id)
+                    throw APIErrors.NotOwnGroupErrorWithRef(groupRef);
+
+                groups.Add(group.Id);
+            }
+
+            var existingGroups = await _repo.GetMemberGroups(member.Id).Select(x => x.Id).ToListAsync();
+            groups = groups.Where(x => !existingGroups.Contains(x)).ToList();
+
+            if (groups.Count > 0)
+                await _repo.AddGroupsToMember(member.Id, groups);
+
+            return NoContent();
         }
 
-        [HttpDelete("members/{member_id}/groups")]
-        public async Task<IActionResult> MemberGroupsDelete(string member_id, [FromBody] JArray groups)
+        [HttpDelete("members/{memberRef}/groups")]
+        public async Task<IActionResult> MemberGroupsDelete(string memberRef, [FromBody] JArray groupRefs)
         {
-            return new ObjectResult("Unimplemented")
+            if (groupRefs.Count == 0)
+                throw APIErrors.GenericBadRequest;
+
+            var system = await ResolveSystem("@me");
+
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+            if (member.System != system.Id)
+                throw APIErrors.NotOwnMemberError;
+
+            var groups = new List<GroupId>();
+
+            foreach (var JgroupRef in groupRefs)
             {
-                StatusCode = 501
-            };
+                var groupRef = JgroupRef.Value<string>();
+                var group = await ResolveGroup(groupRef);
+
+                if (group == null)
+                    throw APIErrors.GroupNotFound;
+                if (group.System != system.Id)
+                    throw APIErrors.NotOwnGroupErrorWithRef(groupRef);
+
+                groups.Add(group.Id);
+            }
+
+            await _repo.RemoveGroupsFromMember(member.Id, groups);
+
+            return NoContent();
         }
 
     }
