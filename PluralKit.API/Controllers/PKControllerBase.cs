@@ -49,7 +49,7 @@ namespace PluralKit.API
             if (_shortIdRegex.IsMatch(systemRef))
                 return _repo.GetSystemByHid(systemRef);
 
-            return null;
+            return Task.FromResult<PKSystem?>(null);
         }
 
         protected Task<PKMember?> ResolveMember(string memberRef)
@@ -60,7 +60,7 @@ namespace PluralKit.API
             if (_shortIdRegex.IsMatch(memberRef))
                 return _repo.GetMemberByHid(memberRef);
 
-            return null;
+            return Task.FromResult<PKMember?>(null);
         }
 
         protected Task<PKGroup?> ResolveGroup(string groupRef)
@@ -71,7 +71,7 @@ namespace PluralKit.API
             if (_shortIdRegex.IsMatch(groupRef))
                 return _repo.GetGroupByHid(groupRef);
 
-            return null;
+            return Task.FromResult<PKGroup?>(null);
         }
 
         public LookupContext ContextFor(PKSystem system)
