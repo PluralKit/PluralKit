@@ -88,7 +88,7 @@ namespace PluralKit.Core
             return _db.QueryFirst<PKSystem>(conn, query, extraSql: "returning *");
         }
 
-        public Task AddAccount(SystemId system, ulong accountId)
+        public Task AddAccount(SystemId system, ulong accountId, IPKConnection? conn = null)
         {
             // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
             // This is used in import/export, although the pk;link command checks for this case beforehand
@@ -100,7 +100,7 @@ namespace PluralKit.Core
             });
 
             _logger.Information("Linked account {UserId} to {SystemId}", accountId, system);
-            return _db.ExecuteQuery(query, extraSql: "on conflict do nothing");
+            return _db.ExecuteQuery(conn, query, extraSql: "on conflict do nothing");
         }
 
         public async Task RemoveAccount(SystemId system, ulong accountId)

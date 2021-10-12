@@ -17,7 +17,7 @@ namespace PluralKit.Core
         {
             _logger.Information("Updated guild {GuildId}: {@GuildPatch}", guild, patch);
             var query = patch.Apply(new Query("servers").Where("id", guild));
-            return _db.ExecuteQuery(query);
+            return _db.ExecuteQuery(query, extraSql: "returning *");
         }
 
 
@@ -37,7 +37,7 @@ namespace PluralKit.Core
         {
             _logger.Information("Updated {SystemId} in guild {GuildId}: {@SystemGuildPatch}", system, guild, patch);
             var query = patch.Apply(new Query("system_guild").Where("system", system).Where("guild", guild));
-            return _db.ExecuteQuery(query);
+            return _db.ExecuteQuery(query, extraSql: "returning *");
         }
 
 
@@ -57,7 +57,7 @@ namespace PluralKit.Core
         {
             _logger.Information("Updated {MemberId} in guild {GuildId}: {@MemberGuildPatch}", member, guild, patch);
             var query = patch.Apply(new Query("member_guild").Where("member", member).Where("guild", guild));
-            return _db.ExecuteQuery(query);
+            return _db.ExecuteQuery(query, extraSql: "returning *");
         }
     }
 }

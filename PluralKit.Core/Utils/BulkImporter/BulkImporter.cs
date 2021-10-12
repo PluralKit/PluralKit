@@ -49,7 +49,7 @@ namespace PluralKit.Core
             if (system == null)
             {
                 system = await repo.CreateSystem(null, importer._conn);
-                await repo.AddAccount(system.Id, userId);
+                await repo.AddAccount(system.Id, userId, importer._conn);
                 importer._result.CreatedSystem = system.Hid;
                 importer._system = system;
             }

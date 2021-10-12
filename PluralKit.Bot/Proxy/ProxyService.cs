@@ -230,7 +230,7 @@ namespace PluralKit.Bot
 
             var username = nickname ?? repliedTo.Author.Username;
             var avatarUrl = avatar != null
-                ? $"https://cdn.discordapp.com/guilds/{trigger.GuildId}/users/{repliedTo.Author.Id}/{avatar}.png"
+                ? $"https://cdn.discordapp.com/guilds/{trigger.GuildId}/users/{repliedTo.Author.Id}/avatars/{avatar}.png"
                 : $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";
 
             return new Embed

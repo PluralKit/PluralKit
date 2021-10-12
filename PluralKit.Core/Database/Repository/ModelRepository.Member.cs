@@ -64,7 +64,7 @@ namespace PluralKit.Core
         {
             _logger.Information("Updated {MemberId}: {@MemberPatch}", id, patch);
             var query = patch.Apply(new Query("members").Where("id", id));
-            return _db.QueryFirst<PKMember>(conn, query);
+            return _db.QueryFirst<PKMember>(conn, query, extraSql: "returning *");
         }
 
         public Task DeleteMember(MemberId id)

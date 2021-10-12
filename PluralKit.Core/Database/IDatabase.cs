@@ -15,6 +15,7 @@ namespace PluralKit.Core
         Task<T> Execute<T>(Func<IPKConnection, Task<T>> func);
         IAsyncEnumerable<T> Execute<T>(Func<IPKConnection, IAsyncEnumerable<T>> func);
         Task<int> ExecuteQuery(Query q, string extraSql = "", [CallerMemberName] string queryName = "");
+        Task<int> ExecuteQuery(IPKConnection? conn, Query q, string extraSql = "", [CallerMemberName] string queryName = "");
         Task<T> QueryFirst<T>(Query q, string extraSql = "", [CallerMemberName] string queryName = "");
         Task<T> QueryFirst<T>(IPKConnection? conn, Query q, string extraSql = "", [CallerMemberName] string queryName = "");
         Task<IEnumerable<T>> Query<T>(Query q, [CallerMemberName] string queryName = "");
