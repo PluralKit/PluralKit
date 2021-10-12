@@ -7,13 +7,19 @@ using Autofac;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+
+using Newtonsoft.Json;
+
+using Serilog;
 
 using PluralKit.Core;
 
@@ -91,7 +97,7 @@ namespace PluralKit.API
             builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build())
                 .As<IConfiguration>();
             builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
-            builder.RegisterModule(new LoggingModule("api"));
+            builder.RegisterModule(new LoggingModule("api", cfg: new LoggerConfiguration().Filter.ByExcluding(exc => exc.Exception is PKError)));
             builder.RegisterModule(new MetricsModule("API"));
             builder.RegisterModule<DataStoreModule>();
             builder.RegisterModule<APIModule>();
@@ -123,6 +129,23 @@ namespace PluralKit.API
                 ctx.Response.Headers.Add("X-PluralKit-Version", BuildInfoService.Version);
                 return next();
             });
+
+            app.UseExceptionHandler(handler => handler.Run(async ctx =>
+            {
+                var exc = ctx.Features.Get<IExceptionHandlerPathFeature>();
+                if (exc.Error is not PKError)
+                {
+                    ctx.Response.StatusCode = 500;
+                    await ctx.Response.WriteAsync("{\"message\":\"500: Internal Server Error\",\"code\":0}");
+                    return;
+                }
+
+                var err = (PKError)exc.Error;
+                ctx.Response.StatusCode = err.ResponseCode;
+
+                var json = JsonConvert.SerializeObject(err.ToJson());
+                await ctx.Response.WriteAsync(json);
+            }));
 
             app.UseMiddleware<AuthorizationTokenHandlerMiddleware>();
 

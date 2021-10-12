@@ -17,11 +17,13 @@ namespace PluralKit.Core
     {
         private readonly string _component;
         private readonly Action<LoggerConfiguration> _fn;
+        private LoggerConfiguration _cfg { get; init; }
 
-        public LoggingModule(string component, Action<LoggerConfiguration> fn = null)
+        public LoggingModule(string component, Action<LoggerConfiguration> fn = null, LoggerConfiguration cfg = null)
         {
             _component = component;
             _fn = fn ?? (_ => { });
+            _cfg = cfg ?? new LoggerConfiguration();
         }
 
         protected override void Load(ContainerBuilder builder)
@@ -44,7 +46,7 @@ namespace PluralKit.Core
             var consoleTemplate = "[{Timestamp:HH:mm:ss.fff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
             var outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}] {Level:u3} {Message:lj}{NewLine}{Exception}";
 
-            var logCfg = new LoggerConfiguration()
+            var logCfg = _cfg
                 .Enrich.FromLogContext()
                 .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
                 .Enrich.WithProperty("Component", _component)
@@ -52,6 +54,9 @@ namespace PluralKit.Core
 
                 // Don't want App.Metrics/D#+ spam
                 .MinimumLevel.Override("App.Metrics", LogEventLevel.Information)
+
+                // nor ASP.NET spam
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
 
                 // Actual formatting for these is handled in ScalarFormatting
                 .Destructure.AsScalar<SystemId>()
