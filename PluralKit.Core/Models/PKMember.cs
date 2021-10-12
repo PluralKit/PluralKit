@@ -112,10 +112,15 @@ namespace PluralKit.Core
 
             var o = new JObject();
             o.Add("id", member.Hid);
-            o.Add("name", member.NameFor(ctx));
 
-            if (systemStr != null && v == APIVersion.V2)
-                o.Add("system", systemStr);
+            if (v == APIVersion.V2)
+            {
+                o.Add("uuid", member.Uuid.ToString());
+                if (systemStr != null)
+                    o.Add("system", systemStr);
+            }
+
+            o.Add("name", member.NameFor(ctx));
 
             // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
             o.Add("color", member.Color);

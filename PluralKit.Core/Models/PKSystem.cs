@@ -70,6 +70,9 @@ namespace PluralKit.Core
         {
             var o = new JObject();
             o.Add("id", system.Hid);
+            if (v == APIVersion.V2)
+                o.Add("uuid", system.Uuid.ToString());
+
             o.Add("name", system.Name);
             o.Add("description", system.DescriptionFor(ctx));
             o.Add("tag", system.Tag);

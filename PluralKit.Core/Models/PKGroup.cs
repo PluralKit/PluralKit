@@ -66,6 +66,7 @@ namespace PluralKit.Core
             var o = new JObject();
 
             o.Add("id", group.Hid);
+            o.Add("uuid", group.Uuid.ToString());
             o.Add("name", group.Name);
 
             if (systemStr != null)
