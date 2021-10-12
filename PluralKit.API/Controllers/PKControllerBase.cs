@@ -35,7 +35,8 @@ namespace PluralKit.API
             if (systemRef == "@me")
             {
                 HttpContext.Items.TryGetValue("SystemId", out var systemId);
-                if (systemId == null) return null;
+                if (systemId == null)
+                    throw APIErrors.GenericAuthError;
                 return _repo.GetSystem((SystemId)systemId);
             }
 
@@ -51,11 +52,47 @@ namespace PluralKit.API
             return null;
         }
 
-        public LookupContext LookupContextFor(PKSystem target)
+        protected Task<PKMember?> ResolveMember(string memberRef)
+        {
+            if (Guid.TryParse(memberRef, out var guid))
+                return _repo.GetMemberByGuid(guid);
+
+            if (_shortIdRegex.IsMatch(memberRef))
+                return _repo.GetMemberByHid(memberRef);
+
+            return null;
+        }
+
+        protected Task<PKGroup?> ResolveGroup(string groupRef)
+        {
+            if (Guid.TryParse(groupRef, out var guid))
+                return _repo.GetGroupByGuid(guid);
+
+            if (_shortIdRegex.IsMatch(groupRef))
+                return _repo.GetGroupByHid(groupRef);
+
+            return null;
+        }
+
+        public LookupContext ContextFor(PKSystem system)
         {
             HttpContext.Items.TryGetValue("SystemId", out var systemId);
             if (systemId == null) return LookupContext.ByNonOwner;
-            return target.Id == (SystemId)systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+            return ((SystemId)systemId) == system.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        }
+
+        public LookupContext ContextFor(PKMember member)
+        {
+            HttpContext.Items.TryGetValue("SystemId", out var systemId);
+            if (systemId == null) return LookupContext.ByNonOwner;
+            return ((SystemId)systemId) == member.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        }
+
+        public LookupContext ContextFor(PKGroup group)
+        {
+            HttpContext.Items.TryGetValue("SystemId", out var systemId);
+            if (systemId == null) return LookupContext.ByNonOwner;
+            return ((SystemId)systemId) == group.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
         }
     }
 }

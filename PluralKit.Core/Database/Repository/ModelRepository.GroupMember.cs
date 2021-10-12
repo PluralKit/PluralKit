@@ -16,6 +16,15 @@ namespace PluralKit.Core
             return _db.QueryStream<PKGroup>(query);
         }
 
+        public IAsyncEnumerable<PKMember> GetGroupMembers(GroupId id)
+        {
+            var query = new Query("group_members")
+                .Select("members.*")
+                .Join("members", "group_members.member_id", "members.id")
+                .Where("group_members.group_id", id);
+            return _db.QueryStream<PKMember>(query);
+        }
+
         // todo: add this to metrics tracking
         public async Task AddGroupsToMember(MemberId member, IReadOnlyCollection<GroupId> groups)
         {

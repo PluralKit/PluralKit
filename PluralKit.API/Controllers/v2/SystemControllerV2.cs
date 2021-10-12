@@ -21,7 +21,7 @@ namespace PluralKit.API
         {
             var system = await ResolveSystem(systemRef);
             if (system == null) return NotFound();
-            else return Ok(system.ToJson(LookupContextFor(system)));
+            else return Ok(system.ToJson(this.ContextFor(system), v: APIVersion.V2));
         }
 
         [HttpPatch("{system}")]

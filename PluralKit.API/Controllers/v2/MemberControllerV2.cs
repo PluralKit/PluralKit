@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
@@ -17,13 +18,23 @@ namespace PluralKit.API
         public MemberControllerV2(IServiceProvider svc) : base(svc) { }
 
 
-        [HttpGet("systems/{system}/members")]
-        public async Task<IActionResult> GetSystemMembers(string system)
+        [HttpGet("systems/{systemRef}/members")]
+        public async Task<IActionResult> GetSystemMembers(string systemRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem(systemRef);
+            if (system == null)
+                throw APIErrors.SystemNotFound;
+
+            var ctx = this.ContextFor(system);
+
+            if (!system.MemberListPrivacy.CanAccess(this.ContextFor(system)))
+                throw APIErrors.UnauthorizedMemberList;
+
+            var members = _repo.GetSystemMembers(system.Id);
+            return Ok(await members
+                .Where(m => m.MemberVisibility.CanAccess(ctx))
+                .Select(m => m.ToJson(ctx, v: APIVersion.V2))
+                .ToListAsync());
         }
 
         [HttpPost("members")]
@@ -35,13 +46,16 @@ namespace PluralKit.API
             };
         }
 
-        [HttpGet("members/{member}")]
-        public async Task<IActionResult> MemberGet(string member)
+        [HttpGet("members/{memberRef}")]
+        public async Task<IActionResult> MemberGet(string memberRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+
+            var system = await _repo.GetSystem(member.System);
+
+            return Ok(member.ToJson(this.ContextFor(member), systemStr: system.Hid, v: APIVersion.V2));
         }
 
         [HttpPatch("members/{member}")]

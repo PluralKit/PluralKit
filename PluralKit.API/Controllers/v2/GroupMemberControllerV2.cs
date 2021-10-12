@@ -1,9 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json.Linq;
+
+using PluralKit.Core;
 
 namespace PluralKit.API
 {
@@ -14,22 +17,46 @@ namespace PluralKit.API
     {
         public GroupMemberControllerV2(IServiceProvider svc) : base(svc) { }
 
-        [HttpGet("groups/{group_id}/members")]
-        public async Task<IActionResult> GetGroupMembers(string group_id)
+        [HttpGet("groups/{groupRef}/members")]
+        public async Task<IActionResult> GetGroupMembers(string groupRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var group = await ResolveGroup(groupRef);
+            if (group == null)
+                throw APIErrors.GroupNotFound;
+
+            var ctx = this.ContextFor(group);
+
+            if (!group.ListPrivacy.CanAccess(ctx))
+                throw APIErrors.UnauthorizedGroupMemberList;
+
+            var members = _repo.GetGroupMembers(group.Id).Where(m => m.MemberVisibility.CanAccess(ctx));
+
+            var o = new JArray();
+
+            await foreach (var member in members)
+                o.Add(member.ToJson(ctx, v: APIVersion.V2));
+
+            return Ok(o);
         }
 
-        [HttpGet("members/{member_id}/groups")]
-        public async Task<IActionResult> GetMemberGroups(string member_id)
+        [HttpGet("members/{memberRef}/groups")]
+        public async Task<IActionResult> GetMemberGroups(string memberRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var member = await ResolveMember(memberRef);
+            var ctx = this.ContextFor(member);
+
+            var system = await _repo.GetSystem(member.System);
+            if (!system.GroupListPrivacy.CanAccess(ctx))
+                throw APIErrors.UnauthorizedGroupList;
+
+            var groups = _repo.GetMemberGroups(member.Id).Where(g => g.Visibility.CanAccess(ctx));
+
+            var o = new JArray();
+
+            await foreach (var group in groups)
+                o.Add(group.ToJson(ctx));
+
+            return Ok(o);
         }
 
         [HttpPut("groups/{group_id}/members/{member_id}")]
