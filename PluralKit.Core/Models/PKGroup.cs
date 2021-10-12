@@ -61,12 +61,16 @@ namespace PluralKit.Core
         public static string? IconFor(this PKGroup group, LookupContext ctx) =>
             group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
 
-        public static JObject ToJson(this PKGroup group, LookupContext ctx, bool isExport = false)
+        public static JObject ToJson(this PKGroup group, LookupContext ctx, string? systemStr = null, bool isExport = false)
         {
             var o = new JObject();
 
             o.Add("id", group.Hid);
             o.Add("name", group.Name);
+
+            if (systemStr != null)
+                o.Add("system", systemStr);
+
             o.Add("display_name", group.DisplayName);
             o.Add("description", group.DescriptionPrivacy.Get(ctx, group.Description));
             o.Add("icon", group.Icon);
