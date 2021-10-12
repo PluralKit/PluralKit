@@ -131,13 +131,20 @@ namespace PluralKit.API
             };
         }
 
-        [HttpDelete("systems/{system}/switches/{switch_id}")]
-        public async Task<IActionResult> SwitchDelete(string system, string switch_id)
+        [HttpDelete("systems/@me/switches/{switchRef}")]
+        public async Task<IActionResult> SwitchDelete(string switchRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            if (!Guid.TryParse(switchRef, out var switchId))
+                throw APIErrors.SwitchNotFound;
+
+            var system = await ResolveSystem("@me");
+            var sw = await _repo.GetSwitchByUuid(switchId);
+            if (sw == null || system.Id != sw.System)
+                throw APIErrors.SwitchNotFound;
+
+            await _repo.DeleteSwitch(sw.Id);
+
+            return NoContent();
         }
 
     }

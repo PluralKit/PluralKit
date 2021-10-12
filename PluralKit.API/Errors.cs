@@ -52,6 +52,8 @@ namespace PluralKit.API
         public static PKError UnauthorizedGroupMemberList = new(403, 30003, "Unauthorized to view group member list");
         public static PKError UnauthorizedCurrentFronters = new(403, 30004, "Unauthorized to view current fronters.");
         public static PKError UnauthorizedFrontHistory = new(403, 30004, "Unauthorized to view front history.");
+        public static PKError NotOwnMemberError = new(403, 40001, "Target member is not part of your system.");
+        public static PKError NotOwnGroupError = new(403, 40002, "Target group is not part of your system.");
         public static PKError Unimplemented = new(501, 50001, "Unimplemented");
     }
 }

@@ -66,15 +66,20 @@ namespace PluralKit.API
             };
         }
 
-        [HttpDelete("groups/{group_id}")]
-        public async Task<IActionResult> GroupDelete(string group_id)
+        [HttpDelete("groups/{groupRef}")]
+        public async Task<IActionResult> GroupDelete(string groupRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var group = await ResolveGroup(groupRef);
+            if (group == null)
+                throw APIErrors.GroupNotFound;
+
+            var system = await ResolveSystem("@me");
+            if (system.Id != group.System)
+                throw APIErrors.NotOwnGroupError;
+
+            await _repo.DeleteGroup(group.Id);
+
+            return NoContent();
         }
-
-
     }
 }

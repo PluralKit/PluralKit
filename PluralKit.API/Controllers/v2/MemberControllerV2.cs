@@ -67,15 +67,20 @@ namespace PluralKit.API
             };
         }
 
-        [HttpDelete("members/{member}")]
-        public async Task<IActionResult> MemberDelete(string member)
+        [HttpDelete("members/{memberRef}")]
+        public async Task<IActionResult> MemberDelete(string memberRef)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+
+            var system = await ResolveSystem("@me");
+            if (system.Id != member.System)
+                throw APIErrors.NotOwnMemberError;
+
+            await _repo.DeleteMember(member.Id);
+
+            return NoContent();
         }
-
-
     }
 }
