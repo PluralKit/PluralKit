@@ -21,8 +21,14 @@ namespace PluralKit.Core
         }
 
 
-        public Task<SystemGuildSettings> GetSystemGuild(ulong guild, SystemId system)
+        public Task<SystemGuildSettings> GetSystemGuild(ulong guild, SystemId system, bool defaultInsert = true)
         {
+            if (!defaultInsert)
+                return _db.QueryFirst<SystemGuildSettings>(new Query("system_guild")
+                    .Where("guild", guild)
+                    .Where("system", system)
+                );
+
             var query = new Query("system_guild").AsInsert(new
             {
                 guild = guild,
@@ -33,16 +39,22 @@ namespace PluralKit.Core
             );
         }
 
-        public Task UpdateSystemGuild(SystemId system, ulong guild, SystemGuildPatch patch)
+        public Task<SystemGuildSettings> UpdateSystemGuild(SystemId system, ulong guild, SystemGuildPatch patch)
         {
             _logger.Information("Updated {SystemId} in guild {GuildId}: {@SystemGuildPatch}", system, guild, patch);
             var query = patch.Apply(new Query("system_guild").Where("system", system).Where("guild", guild));
-            return _db.ExecuteQuery(query, extraSql: "returning *");
+            return _db.QueryFirst<SystemGuildSettings>(query, extraSql: "returning *");
         }
 
 
-        public Task<MemberGuildSettings> GetMemberGuild(ulong guild, MemberId member)
+        public Task<MemberGuildSettings> GetMemberGuild(ulong guild, MemberId member, bool defaultInsert = true)
         {
+            if (!defaultInsert)
+                return _db.QueryFirst<MemberGuildSettings>(new Query("member_guild")
+                    .Where("guild", guild)
+                    .Where("member", member)
+                );
+
             var query = new Query("member_guild").AsInsert(new
             {
                 guild = guild,
@@ -53,11 +65,11 @@ namespace PluralKit.Core
             );
         }
 
-        public Task UpdateMemberGuild(MemberId member, ulong guild, MemberGuildPatch patch)
+        public Task<MemberGuildSettings> UpdateMemberGuild(MemberId member, ulong guild, MemberGuildPatch patch)
         {
             _logger.Information("Updated {MemberId} in guild {GuildId}: {@MemberGuildPatch}", member, guild, patch);
             var query = patch.Apply(new Query("member_guild").Where("member", member).Where("guild", guild));
-            return _db.ExecuteQuery(query, extraSql: "returning *");
+            return _db.QueryFirst<MemberGuildSettings>(query, extraSql: "returning *");
         }
     }
 }

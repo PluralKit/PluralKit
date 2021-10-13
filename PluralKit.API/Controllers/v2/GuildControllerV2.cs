@@ -17,40 +17,119 @@ namespace PluralKit.API
         public GuildControllerV2(IServiceProvider svc) : base(svc) { }
 
 
-        [HttpGet("systems/{system}/guilds/{guild_id}")]
-        public async Task<IActionResult> SystemGuildGet(string system, ulong guild_id)
+        [HttpGet("systems/@me/guilds/{guild_id}")]
+        public async Task<IActionResult> SystemGuildGet(ulong guild_id)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+            var settings = await _repo.GetSystemGuild(guild_id, system.Id, defaultInsert: false);
+            if (settings == null)
+                throw APIErrors.SystemGuildNotFound;
+
+            PKMember member = null;
+            if (settings.AutoproxyMember != null)
+                member = await _repo.GetMember(settings.AutoproxyMember.Value);
+
+            return Ok(settings.ToJson(member?.Hid));
         }
 
-        [HttpPatch("systems/{system}/guilds/{guild_id}")]
-        public async Task<IActionResult> SystemGuildPatch(string system, ulong guild_id, [FromBody] JObject data)
+        [HttpPatch("systems/@me/guilds/{guild_id}")]
+        public async Task<IActionResult> DoSystemGuildPatch(ulong guild_id, [FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
+            var system = await ResolveSystem("@me");
+            var settings = await _repo.GetSystemGuild(guild_id, system.Id, defaultInsert: false);
+            if (settings == null)
+                throw APIErrors.SystemGuildNotFound;
+
+            MemberId? memberId = null;
+            if (data.ContainsKey("autoproxy_member"))
             {
-                StatusCode = 501
-            };
+                if (data["autoproxy_member"].Type != JTokenType.Null)
+                {
+                    var member = await ResolveMember(data.Value<string>("autoproxy_member"));
+                    if (member == null)
+                        throw APIErrors.MemberNotFound;
+
+                    memberId = member.Id;
+                }
+            }
+            else
+                memberId = settings.AutoproxyMember;
+
+            SystemGuildPatch patch = null;
+            try
+            {
+                patch = SystemGuildPatch.FromJson(data, memberId);
+                patch.AssertIsValid();
+            }
+            catch (ValidationError e)
+            {
+                // todo
+                return BadRequest(e.Message);
+            }
+
+            // this is less than great, but at least it's legible
+            if (patch.AutoproxyMember.Value == null)
+                if (patch.AutoproxyMode.IsPresent)
+                {
+                    if (patch.AutoproxyMode.Value == AutoproxyMode.Member)
+                        throw APIErrors.MissingAutoproxyMember;
+                }
+                else if (settings.AutoproxyMode == AutoproxyMode.Member)
+                    throw APIErrors.MissingAutoproxyMember;
+
+            var newSettings = await _repo.UpdateSystemGuild(system.Id, guild_id, patch);
+
+            PKMember? newMember = null;
+            if (newSettings.AutoproxyMember != null)
+                newMember = await _repo.GetMember(newSettings.AutoproxyMember.Value);
+            return Ok(newSettings.ToJson(newMember?.Hid));
         }
 
-        [HttpGet("members/{member}/guilds/{guild_id}")]
-        public async Task<IActionResult> MemberGuildGet(string member, ulong guild_id)
+        [HttpGet("members/{memberRef}/guilds/{guild_id}")]
+        public async Task<IActionResult> MemberGuildGet(string memberRef, ulong guild_id)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+            if (member.System != system.Id)
+                throw APIErrors.NotOwnMemberError;
+
+            var settings = await _repo.GetMemberGuild(guild_id, member.Id, defaultInsert: false);
+            if (settings == null)
+                throw APIErrors.MemberGuildNotFound;
+
+            return Ok(settings.ToJson());
         }
 
-        [HttpPatch("members/{member}/guilds/{guild_id}")]
-        public async Task<IActionResult> MemberGuildPatch(string member, ulong guild_id, [FromBody] JObject data)
+        [HttpPatch("members/{memberRef}/guilds/{guild_id}")]
+        public async Task<IActionResult> DoMemberGuildPatch(string memberRef, ulong guild_id, [FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
+            var system = await ResolveSystem("@me");
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw APIErrors.MemberNotFound;
+            if (member.System != system.Id)
+                throw APIErrors.NotOwnMemberError;
+
+            var settings = await _repo.GetMemberGuild(guild_id, member.Id, defaultInsert: false);
+            if (settings == null)
+                throw APIErrors.MemberGuildNotFound;
+
+            MemberGuildPatch patch = null;
+            try
             {
-                StatusCode = 501
-            };
+                patch = MemberGuildPatch.FromJson(data);
+                patch.AssertIsValid();
+            }
+            catch (ValidationError e)
+            {
+                // todo
+                return BadRequest(e.Message);
+            }
+
+            var newSettings = await _repo.UpdateMemberGuild(member.Id, guild_id, patch);
+            return Ok(newSettings.ToJson());
         }
 
 
