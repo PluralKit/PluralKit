@@ -163,10 +163,12 @@ namespace PluralKit.API
             if (!Guid.TryParse(switchRef, out var switchId))
                 throw APIErrors.InvalidSwitchId;
 
-            var value = data.Value<Instant>("timestamp");
-            if (value == null)
+            var valueStr = data.Value<string>("timestamp").NullIfEmpty();
+            if (valueStr == null)
                 // todo
                 throw APIErrors.GenericBadRequest;
+
+            var value = Instant.FromDateTimeOffset(DateTime.Parse(valueStr).ToUniversalTime());
 
             var system = await ResolveSystem("@me");
             if (system == null)
