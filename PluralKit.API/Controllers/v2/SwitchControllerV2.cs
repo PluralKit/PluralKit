@@ -29,12 +29,12 @@ namespace PluralKit.API
         {
             var system = await ResolveSystem(systemRef);
             if (system == null)
-                throw APIErrors.SystemNotFound;
+                throw Errors.SystemNotFound;
 
             var ctx = this.ContextFor(system);
 
             if (!system.FrontHistoryPrivacy.CanAccess(ctx))
-                throw APIErrors.UnauthorizedFrontHistory;
+                throw Errors.UnauthorizedFrontHistory;
 
             if (before == null)
                 before = SystemClock.Instance.GetCurrentInstant();
@@ -58,12 +58,12 @@ namespace PluralKit.API
         {
             var system = await ResolveSystem(systemRef);
             if (system == null)
-                throw APIErrors.SystemNotFound;
+                throw Errors.SystemNotFound;
 
             var ctx = this.ContextFor(system);
 
             if (!system.FrontPrivacy.CanAccess(ctx))
-                throw APIErrors.UnauthorizedCurrentFronters;
+                throw Errors.UnauthorizedCurrentFronters;
 
             var sw = await _repo.GetLatestSwitch(system.Id);
             if (sw == null)
@@ -83,12 +83,12 @@ namespace PluralKit.API
         public async Task<IActionResult> SwitchCreate([FromBody] PostSwitchParams data)
         {
             if (data.Members.Distinct().Count() != data.Members.Count)
-                throw APIErrors.DuplicateMembersInList;
+                throw Errors.DuplicateMembersInList;
 
             var system = await ResolveSystem("@me");
 
             if (data.Timestamp != null && await _repo.GetSwitches(system.Id).Select(x => x.Timestamp).ContainsAsync(data.Timestamp.Value))
-                throw APIErrors.SameSwitchTimestampError;
+                throw Errors.SameSwitchTimestampError;
 
             var members = new List<PKMember>();
 
@@ -97,9 +97,9 @@ namespace PluralKit.API
                 var member = await ResolveMember(memberRef);
                 if (member == null)
                     // todo: which member
-                    throw APIErrors.MemberNotFound;
+                    throw Errors.MemberNotFound;
                 if (member.System != system.Id)
-                    throw APIErrors.NotOwnMemberErrorWithRef(memberRef);
+                    throw Errors.NotOwnMemberErrorWithRef(memberRef);
                 members.Add(member);
             }
 
@@ -111,7 +111,7 @@ namespace PluralKit.API
 
                 // Bail if this switch is identical to the latest one
                 if (await latestSwitchMembers.Select(m => m.Hid).SequenceEqualAsync(members.Select(m => m.Hid).ToAsyncEnumerable()))
-                    throw APIErrors.SameSwitchMembersError;
+                    throw Errors.SameSwitchMembersError;
             }
 
             var newSwitch = await _db.Execute(conn => _repo.AddSwitch(conn, system.Id, members.Select(m => m.Id).ToList()));
@@ -131,20 +131,20 @@ namespace PluralKit.API
         public async Task<IActionResult> SwitchGet(string systemRef, string switchRef)
         {
             if (!Guid.TryParse(switchRef, out var switchId))
-                throw APIErrors.InvalidSwitchId;
+                throw Errors.InvalidSwitchId;
 
             var system = await ResolveSystem(systemRef);
             if (system == null)
-                throw APIErrors.SystemNotFound;
+                throw Errors.SystemNotFound;
 
             var sw = await _repo.GetSwitchByUuid(switchId);
             if (sw == null || system.Id != sw.System)
-                throw APIErrors.SwitchNotFoundPublic;
+                throw Errors.SwitchNotFoundPublic;
 
             var ctx = this.ContextFor(system);
 
             if (!system.FrontHistoryPrivacy.CanAccess(ctx))
-                throw APIErrors.SwitchNotFoundPublic;
+                throw Errors.SwitchNotFoundPublic;
 
             var members = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));
             return Ok(new FrontersReturnNew
@@ -161,25 +161,25 @@ namespace PluralKit.API
             // for now, don't need to make a PatchObject for this, since it's only one param
 
             if (!Guid.TryParse(switchRef, out var switchId))
-                throw APIErrors.InvalidSwitchId;
+                throw Errors.InvalidSwitchId;
 
             var valueStr = data.Value<string>("timestamp").NullIfEmpty();
             if (valueStr == null)
                 // todo
-                throw APIErrors.GenericBadRequest;
+                throw Errors.GenericBadRequest;
 
             var value = Instant.FromDateTimeOffset(DateTime.Parse(valueStr).ToUniversalTime());
 
             var system = await ResolveSystem("@me");
             if (system == null)
-                throw APIErrors.SystemNotFound;
+                throw Errors.SystemNotFound;
 
             var sw = await _repo.GetSwitchByUuid(switchId);
             if (sw == null || system.Id != sw.System)
-                throw APIErrors.SwitchNotFoundPublic;
+                throw Errors.SwitchNotFoundPublic;
 
             if (await _repo.GetSwitches(system.Id).Select(x => x.Timestamp).ContainsAsync(value))
-                throw APIErrors.SameSwitchTimestampError;
+                throw Errors.SameSwitchTimestampError;
 
             await _repo.MoveSwitch(sw.Id, value);
 
@@ -198,13 +198,13 @@ namespace PluralKit.API
             if (!Guid.TryParse(switchRef, out var switchId))
 
                 if (data.Distinct().Count() != data.Count)
-                    throw APIErrors.DuplicateMembersInList;
+                    throw Errors.DuplicateMembersInList;
 
             var system = await ResolveSystem("@me");
 
             var sw = await _repo.GetSwitchByUuid(switchId);
             if (sw == null)
-                throw APIErrors.SwitchNotFound;
+                throw Errors.SwitchNotFound;
 
             var members = new List<PKMember>();
 
@@ -215,9 +215,9 @@ namespace PluralKit.API
                 var member = await ResolveMember(memberRef);
                 if (member == null)
                     // todo: which member
-                    throw APIErrors.MemberNotFound;
+                    throw Errors.MemberNotFound;
                 if (member.System != system.Id)
-                    throw APIErrors.NotOwnMemberErrorWithRef(memberRef);
+                    throw Errors.NotOwnMemberErrorWithRef(memberRef);
 
                 members.Add(member);
             }
@@ -225,7 +225,7 @@ namespace PluralKit.API
             var latestSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));
 
             if (await latestSwitchMembers.Select(m => m.Hid).SequenceEqualAsync(members.Select(m => m.Hid).ToAsyncEnumerable()))
-                throw APIErrors.SameSwitchMembersError;
+                throw Errors.SameSwitchMembersError;
 
             await _db.Execute(conn => _repo.EditSwitch(conn, sw.Id, members.Select(x => x.Id).ToList()));
             return Ok(new FrontersReturnNew
@@ -240,12 +240,12 @@ namespace PluralKit.API
         public async Task<IActionResult> SwitchDelete(string switchRef)
         {
             if (!Guid.TryParse(switchRef, out var switchId))
-                throw APIErrors.InvalidSwitchId;
+                throw Errors.InvalidSwitchId;
 
             var system = await ResolveSystem("@me");
             var sw = await _repo.GetSwitchByUuid(switchId);
             if (sw == null || system.Id != sw.System)
-                throw APIErrors.SwitchNotFoundPublic;
+                throw Errors.SwitchNotFoundPublic;
 
             await _repo.DeleteSwitch(sw.Id);
 

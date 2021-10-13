@@ -23,7 +23,7 @@ namespace PluralKit.API
             var system = await ResolveSystem("@me");
             var settings = await _repo.GetSystemGuild(guild_id, system.Id, defaultInsert: false);
             if (settings == null)
-                throw APIErrors.SystemGuildNotFound;
+                throw Errors.SystemGuildNotFound;
 
             PKMember member = null;
             if (settings.AutoproxyMember != null)
@@ -38,7 +38,7 @@ namespace PluralKit.API
             var system = await ResolveSystem("@me");
             var settings = await _repo.GetSystemGuild(guild_id, system.Id, defaultInsert: false);
             if (settings == null)
-                throw APIErrors.SystemGuildNotFound;
+                throw Errors.SystemGuildNotFound;
 
             MemberId? memberId = null;
             if (data.ContainsKey("autoproxy_member"))
@@ -47,7 +47,7 @@ namespace PluralKit.API
                 {
                     var member = await ResolveMember(data.Value<string>("autoproxy_member"));
                     if (member == null)
-                        throw APIErrors.MemberNotFound;
+                        throw Errors.MemberNotFound;
 
                     memberId = member.Id;
                 }
@@ -66,10 +66,10 @@ namespace PluralKit.API
                 if (patch.AutoproxyMode.IsPresent)
                 {
                     if (patch.AutoproxyMode.Value == AutoproxyMode.Member)
-                        throw APIErrors.MissingAutoproxyMember;
+                        throw Errors.MissingAutoproxyMember;
                 }
                 else if (settings.AutoproxyMode == AutoproxyMode.Member)
-                    throw APIErrors.MissingAutoproxyMember;
+                    throw Errors.MissingAutoproxyMember;
 
             var newSettings = await _repo.UpdateSystemGuild(system.Id, guild_id, patch);
 
@@ -85,13 +85,13 @@ namespace PluralKit.API
             var system = await ResolveSystem("@me");
             var member = await ResolveMember(memberRef);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
             if (member.System != system.Id)
-                throw APIErrors.NotOwnMemberError;
+                throw Errors.NotOwnMemberError;
 
             var settings = await _repo.GetMemberGuild(guild_id, member.Id, defaultInsert: false);
             if (settings == null)
-                throw APIErrors.MemberGuildNotFound;
+                throw Errors.MemberGuildNotFound;
 
             return Ok(settings.ToJson());
         }
@@ -102,13 +102,13 @@ namespace PluralKit.API
             var system = await ResolveSystem("@me");
             var member = await ResolveMember(memberRef);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
             if (member.System != system.Id)
-                throw APIErrors.NotOwnMemberError;
+                throw Errors.NotOwnMemberError;
 
             var settings = await _repo.GetMemberGuild(guild_id, member.Id, defaultInsert: false);
             if (settings == null)
-                throw APIErrors.MemberGuildNotFound;
+                throw Errors.MemberGuildNotFound;
 
             var patch = MemberGuildPatch.FromJson(data);
 

@@ -75,7 +75,7 @@ namespace PluralKit.API
         }
     }
 
-    public static class APIErrors
+    public static class Errors
     {
         public static PKError GenericBadRequest = new(400, 0, "400: Bad Request");
         public static PKError GenericAuthError = new(401, 0, "401: Missing or invalid Authorization header");
@@ -103,5 +103,22 @@ namespace PluralKit.API
         public static PKError SameSwitchTimestampError = new(400, 40005, "Switch with provided timestamp already exists.");
         public static PKError InvalidSwitchId = new(400, 40006, "Invalid switch ID.");
         public static PKError Unimplemented = new(501, 50001, "Unimplemented");
+    }
+
+    public static class APIErrorHandlerExt
+    {
+        public static bool IsUserError(this Exception exc)
+        {
+            // caused by users sending an incorrect JSON type (array where an object is expected, etc)
+            if (exc is InvalidCastException && exc.Message.Contains("Newtonsoft.Json"))
+                return true;
+
+            // Hacky parsing of timestamps results in hacky error handling. Probably fix this one at some point.
+            if (exc is FormatException && exc.Message.Contains("was not recognized as a valid DateTime"))
+                return true;
+
+            // This may expanded at some point.
+            return false;
+        }
     }
 }

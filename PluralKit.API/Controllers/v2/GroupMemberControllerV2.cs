@@ -25,12 +25,12 @@ namespace PluralKit.API
         {
             var group = await ResolveGroup(groupRef);
             if (group == null)
-                throw APIErrors.GroupNotFound;
+                throw Errors.GroupNotFound;
 
             var ctx = this.ContextFor(group);
 
             if (!group.ListPrivacy.CanAccess(ctx))
-                throw APIErrors.UnauthorizedGroupMemberList;
+                throw Errors.UnauthorizedGroupMemberList;
 
             var members = _repo.GetGroupMembers(group.Id).Where(m => m.MemberVisibility.CanAccess(ctx));
 
@@ -50,7 +50,7 @@ namespace PluralKit.API
 
             var system = await _repo.GetSystem(member.System);
             if (!system.GroupListPrivacy.CanAccess(ctx))
-                throw APIErrors.UnauthorizedGroupList;
+                throw Errors.UnauthorizedGroupList;
 
             var groups = _repo.GetMemberGroups(member.Id).Where(g => g.Visibility.CanAccess(ctx));
 
@@ -69,16 +69,16 @@ namespace PluralKit.API
 
             var group = await ResolveGroup(groupRef);
             if (group == null)
-                throw APIErrors.GroupNotFound;
+                throw Errors.GroupNotFound;
             if (group.System != system.Id)
-                throw APIErrors.NotOwnGroupError;
+                throw Errors.NotOwnGroupError;
 
             var member = await ResolveMember(memberRef);
             Console.WriteLine(member);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
             if (member.System != system.Id)
-                throw APIErrors.NotOwnMemberError;
+                throw Errors.NotOwnMemberError;
 
             var existingMembers = await _repo.GetGroupMembers(group.Id).Select(x => x.Id).ToListAsync();
             if (!existingMembers.Contains(member.Id))
@@ -91,15 +91,15 @@ namespace PluralKit.API
         public async Task<IActionResult> GroupMembersPut(string groupRef, [FromBody] JArray memberRefs)
         {
             if (memberRefs.Count == 0)
-                throw APIErrors.GenericBadRequest;
+                throw Errors.GenericBadRequest;
 
             var system = await ResolveSystem("@me");
 
             var group = await ResolveGroup(groupRef);
             if (group == null)
-                throw APIErrors.GroupNotFound;
+                throw Errors.GroupNotFound;
             if (group.System != system.Id)
-                throw APIErrors.NotOwnGroupError;
+                throw Errors.NotOwnGroupError;
 
             var members = new List<MemberId>();
 
@@ -109,9 +109,9 @@ namespace PluralKit.API
                 var member = await ResolveMember(memberRef);
 
                 if (member == null)
-                    throw APIErrors.MemberNotFound;
+                    throw Errors.MemberNotFound;
                 if (member.System != system.Id)
-                    throw APIErrors.NotOwnMemberErrorWithRef(memberRef);
+                    throw Errors.NotOwnMemberErrorWithRef(memberRef);
 
                 members.Add(member.Id);
             }
@@ -132,15 +132,15 @@ namespace PluralKit.API
 
             var group = await ResolveGroup(groupRef);
             if (group == null)
-                throw APIErrors.GroupNotFound;
+                throw Errors.GroupNotFound;
             if (group.System != system.Id)
-                throw APIErrors.NotOwnGroupError;
+                throw Errors.NotOwnGroupError;
 
             var member = await ResolveMember(memberRef);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
             if (member.System != system.Id)
-                throw APIErrors.NotOwnMemberError;
+                throw Errors.NotOwnMemberError;
 
             await _repo.RemoveMembersFromGroup(group.Id, new List<MemberId>() { member.Id });
 
@@ -151,15 +151,15 @@ namespace PluralKit.API
         public async Task<IActionResult> GroupMembersDelete(string groupRef, [FromBody] JArray memberRefs)
         {
             if (memberRefs.Count == 0)
-                throw APIErrors.GenericBadRequest;
+                throw Errors.GenericBadRequest;
 
             var system = await ResolveSystem("@me");
 
             var group = await ResolveGroup(groupRef);
             if (group == null)
-                throw APIErrors.GroupNotFound;
+                throw Errors.GroupNotFound;
             if (group.System != system.Id)
-                throw APIErrors.NotOwnGroupError;
+                throw Errors.NotOwnGroupError;
 
             var members = new List<MemberId>();
 
@@ -169,9 +169,9 @@ namespace PluralKit.API
                 var member = await ResolveMember(memberRef);
 
                 if (member == null)
-                    throw APIErrors.MemberNotFound;
+                    throw Errors.MemberNotFound;
                 if (member.System != system.Id)
-                    throw APIErrors.NotOwnMemberError;
+                    throw Errors.NotOwnMemberError;
 
                 members.Add(member.Id);
             }
@@ -185,15 +185,15 @@ namespace PluralKit.API
         public async Task<IActionResult> MemberGroupsPut(string memberRef, [FromBody] JArray groupRefs)
         {
             if (groupRefs.Count == 0)
-                throw APIErrors.GenericBadRequest;
+                throw Errors.GenericBadRequest;
 
             var system = await ResolveSystem("@me");
 
             var member = await ResolveMember(memberRef);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
             if (member.System != system.Id)
-                throw APIErrors.NotOwnMemberError;
+                throw Errors.NotOwnMemberError;
 
             var groups = new List<GroupId>();
 
@@ -203,9 +203,9 @@ namespace PluralKit.API
                 var group = await ResolveGroup(groupRef);
 
                 if (group == null)
-                    throw APIErrors.GroupNotFound;
+                    throw Errors.GroupNotFound;
                 if (group.System != system.Id)
-                    throw APIErrors.NotOwnGroupErrorWithRef(groupRef);
+                    throw Errors.NotOwnGroupErrorWithRef(groupRef);
 
                 groups.Add(group.Id);
             }
@@ -223,15 +223,15 @@ namespace PluralKit.API
         public async Task<IActionResult> MemberGroupsDelete(string memberRef, [FromBody] JArray groupRefs)
         {
             if (groupRefs.Count == 0)
-                throw APIErrors.GenericBadRequest;
+                throw Errors.GenericBadRequest;
 
             var system = await ResolveSystem("@me");
 
             var member = await ResolveMember(memberRef);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
             if (member.System != system.Id)
-                throw APIErrors.NotOwnMemberError;
+                throw Errors.NotOwnMemberError;
 
             var groups = new List<GroupId>();
 
@@ -241,9 +241,9 @@ namespace PluralKit.API
                 var group = await ResolveGroup(groupRef);
 
                 if (group == null)
-                    throw APIErrors.GroupNotFound;
+                    throw Errors.GroupNotFound;
                 if (group.System != system.Id)
-                    throw APIErrors.NotOwnGroupErrorWithRef(groupRef);
+                    throw Errors.NotOwnGroupErrorWithRef(groupRef);
 
                 groups.Add(group.Id);
             }

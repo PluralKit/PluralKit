@@ -36,7 +36,7 @@ namespace PluralKit.API
             {
                 HttpContext.Items.TryGetValue("SystemId", out var systemId);
                 if (systemId == null)
-                    throw APIErrors.GenericAuthError;
+                    throw Errors.GenericAuthError;
                 return _repo.GetSystem((SystemId)systemId);
             }
 

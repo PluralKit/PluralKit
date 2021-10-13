@@ -23,12 +23,12 @@ namespace PluralKit.API
         {
             var system = await ResolveSystem(systemRef);
             if (system == null)
-                throw APIErrors.SystemNotFound;
+                throw Errors.SystemNotFound;
 
             var ctx = this.ContextFor(system);
 
             if (!system.MemberListPrivacy.CanAccess(this.ContextFor(system)))
-                throw APIErrors.UnauthorizedMemberList;
+                throw Errors.UnauthorizedMemberList;
 
             var members = _repo.GetSystemMembers(system.Id);
             return Ok(await members
@@ -51,7 +51,7 @@ namespace PluralKit.API
         {
             var member = await ResolveMember(memberRef);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
 
             var system = await _repo.GetSystem(member.System);
 
@@ -72,11 +72,11 @@ namespace PluralKit.API
         {
             var member = await ResolveMember(memberRef);
             if (member == null)
-                throw APIErrors.MemberNotFound;
+                throw Errors.MemberNotFound;
 
             var system = await ResolveSystem("@me");
             if (system.Id != member.System)
-                throw APIErrors.NotOwnMemberError;
+                throw Errors.NotOwnMemberError;
 
             await _repo.DeleteMember(member.Id);
 

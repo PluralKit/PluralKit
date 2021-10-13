@@ -22,12 +22,12 @@ namespace PluralKit.API
         {
             var system = await ResolveSystem(systemRef);
             if (system == null)
-                throw APIErrors.SystemNotFound;
+                throw Errors.SystemNotFound;
 
             var ctx = this.ContextFor(system);
 
             if (!system.GroupListPrivacy.CanAccess(User.ContextFor(system)))
-                throw APIErrors.UnauthorizedGroupList;
+                throw Errors.UnauthorizedGroupList;
 
             var groups = _repo.GetSystemGroups(system.Id);
             return Ok(await groups
@@ -50,7 +50,7 @@ namespace PluralKit.API
         {
             var group = await ResolveGroup(groupRef);
             if (group == null)
-                throw APIErrors.GroupNotFound;
+                throw Errors.GroupNotFound;
 
             var system = await _repo.GetSystem(group.System);
 
@@ -71,11 +71,11 @@ namespace PluralKit.API
         {
             var group = await ResolveGroup(groupRef);
             if (group == null)
-                throw APIErrors.GroupNotFound;
+                throw Errors.GroupNotFound;
 
             var system = await ResolveSystem("@me");
             if (system.Id != group.System)
-                throw APIErrors.NotOwnGroupError;
+                throw Errors.NotOwnGroupError;
 
             await _repo.DeleteGroup(group.Id);
 

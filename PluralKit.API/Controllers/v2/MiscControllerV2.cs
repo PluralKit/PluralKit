@@ -35,7 +35,7 @@ namespace PluralKit.API
         {
             var msg = await _db.Execute(c => _repo.GetMessage(c, messageId));
             if (msg == null)
-                throw APIErrors.MessageNotFound;
+                throw Errors.MessageNotFound;
 
             var ctx = this.ContextFor(msg.System);
 
