@@ -87,6 +87,19 @@ namespace PluralKit.Core
                 patch.DisplayName = $"{name} {tag}";
             }
 
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
+            {
+                var err = patch.Errors[0];
+                if (err is FieldTooLongError)
+                    throw new ImportException($"Field {err.Key} in tupper {name} is too long "
+                        + $"({(err as FieldTooLongError).ActualLength} > {(err as FieldTooLongError).MaxLength}).");
+                else if (err.Text != null)
+                    throw new ImportException($"tupper {name}: {err.Text}");
+                else
+                    throw new ImportException($"Field {err.Key} in tupper {name} is invalid.");
+            }
+
             var isNewMember = false;
             if (!_existingMemberNames.TryGetValue(name, out var memberId))
             {
@@ -100,19 +113,6 @@ namespace PluralKit.Core
 
             _logger.Debug("Importing member with identifier {FileId} to system {System} (is creating new member? {IsCreatingNewMember})",
                 name, _system.Id, isNewMember);
-
-            try
-            {
-                patch.AssertIsValid();
-            }
-            catch (FieldTooLongError e)
-            {
-                throw new ImportException($"Field {e.Name} in tupper {name} is too long ({e.ActualLength} > {e.MaxLength}).");
-            }
-            catch (ValidationError e)
-            {
-                throw new ImportException($"Field {e.Message} in tupper {name} is invalid.");
-            }
 
             await _repo.UpdateMember(memberId, patch, _conn);
 

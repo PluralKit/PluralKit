@@ -154,6 +154,15 @@ namespace PluralKit.API
                     return;
                 }
 
+                // for some reason, if we don't specifically cast to ModelParseError, it uses the base's ToJson method
+                if (exc.Error is ModelParseError fe)
+                {
+                    ctx.Response.StatusCode = fe.ResponseCode;
+                    await ctx.Response.WriteAsync(JsonConvert.SerializeObject(fe.ToJson()));
+
+                    return;
+                }
+
                 var err = (PKError)exc.Error;
                 ctx.Response.StatusCode = err.ResponseCode;
 

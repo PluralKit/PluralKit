@@ -41,27 +41,27 @@ namespace PluralKit.Core
             return o;
         }
 
-        public static AutoproxyMode? ParseAutoproxyMode(this JToken o)
+        public static (AutoproxyMode?, ValidationError?) ParseAutoproxyMode(this JToken o)
         {
             if (o.Type == JTokenType.Null)
-                return AutoproxyMode.Off;
+                return (AutoproxyMode.Off, null);
             else if (o.Type != JTokenType.String)
-                return null;
+                return (null, new ValidationError("autoproxy_mode"));
 
             var value = o.Value<string>();
 
             switch (value)
             {
                 case "off":
-                    return AutoproxyMode.Off;
+                    return (AutoproxyMode.Off, null);
                 case "front":
-                    return AutoproxyMode.Front;
+                    return (AutoproxyMode.Front, null);
                 case "latch":
-                    return AutoproxyMode.Latch;
+                    return (AutoproxyMode.Latch, null);
                 case "member":
-                    return AutoproxyMode.Member;
+                    return (AutoproxyMode.Member, null);
                 default:
-                    throw new ValidationError($"Value '{value}' is not a valid autoproxy mode.");
+                    return (null, new ValidationError("autoproxy_mode", $"Value '{value}' is not a valid autoproxy mode."));
             }
         }
     }

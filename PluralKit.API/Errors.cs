@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 
 using Newtonsoft.Json.Linq;
+
+using PluralKit.Core;
 
 namespace PluralKit.API
 {
@@ -25,15 +28,49 @@ namespace PluralKit.API
 
     public class ModelParseError: PKError
     {
-        public ModelParseError() : base(400, 40001, "Error parsing JSON model")
+        private IEnumerable<ValidationError> _errors { get; init; }
+        public ModelParseError(IEnumerable<ValidationError> errors) : base(400, 40001, "Error parsing JSON model")
         {
-            // todo
+            _errors = errors;
         }
 
         public new JObject ToJson()
         {
             var j = base.ToJson();
+            var e = new JObject();
 
+            foreach (var err in _errors)
+            {
+                var o = new JObject();
+
+                if (err is FieldTooLongError fe)
+                {
+                    o.Add("message", $"Field {err.Key} is too long.");
+                    o.Add("actual_length", fe.ActualLength);
+                    o.Add("max_length", fe.MaxLength);
+                }
+                else if (err.Text != null)
+                    o.Add("message", err.Text);
+                else
+                    o.Add("message", $"Field {err.Key} is invalid.");
+
+                if (e[err.Key] != null)
+                {
+                    if (e[err.Key].Type == JTokenType.Object)
+                    {
+                        var current = e[err.Key];
+                        e.Remove(err.Key);
+                        e.Add(err.Key, new JArray());
+                        (e[err.Key] as JArray).Add(current);
+                    }
+
+                    (e[err.Key] as JArray).Add(o);
+                }
+                else
+                    e.Add(err.Key, o);
+            }
+
+            j.Add("errors", e);
             return j;
         }
     }

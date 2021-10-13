@@ -36,8 +36,14 @@ namespace PluralKit.Core
             if (o.ContainsKey("proxying_enabled") && o["proxying_enabled"].Type != JTokenType.Null)
                 patch.ProxyEnabled = o.Value<bool>("proxying_enabled");
 
-            if (o.ContainsKey("autoproxy_mode") && o["autoproxy_mode"].ParseAutoproxyMode() is { } autoproxyMode)
-                patch.AutoproxyMode = autoproxyMode;
+            if (o.ContainsKey("autoproxy_mode"))
+            {
+                var (val, err) = o["autoproxy_mode"].ParseAutoproxyMode();
+                if (err != null)
+                    patch.Errors.Add(err);
+                else
+                    patch.AutoproxyMode = val.Value;
+            }
 
             patch.AutoproxyMember = memberId;
 

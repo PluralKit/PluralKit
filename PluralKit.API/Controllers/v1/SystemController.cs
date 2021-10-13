@@ -133,19 +133,17 @@ namespace PluralKit.API
         {
             var system = await _repo.GetSystem(User.CurrentSystem());
 
-            SystemPatch patch;
-            try
+            var patch = SystemPatch.FromJSON(changes);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
             {
-                patch = SystemPatch.FromJSON(changes);
-                patch.AssertIsValid();
-            }
-            catch (FieldTooLongError e)
-            {
-                return BadRequest(e.Message);
-            }
-            catch (ValidationError e)
-            {
-                return BadRequest($"Request field '{e.Message}' is invalid.");
+                var err = patch.Errors[0];
+                if (err is FieldTooLongError)
+                    return BadRequest($"Field {err.Key} is too long "
+                        + $"({(err as FieldTooLongError).ActualLength} > {(err as FieldTooLongError).MaxLength}).");
+
+                return BadRequest($"Field {err.Key} is invalid.");
             }
 
             system = await _repo.UpdateSystem(system!.Id, patch);

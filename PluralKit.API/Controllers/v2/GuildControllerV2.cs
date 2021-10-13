@@ -55,17 +55,11 @@ namespace PluralKit.API
             else
                 memberId = settings.AutoproxyMember;
 
-            SystemGuildPatch patch = null;
-            try
-            {
-                patch = SystemGuildPatch.FromJson(data, memberId);
-                patch.AssertIsValid();
-            }
-            catch (ValidationError e)
-            {
-                // todo
-                return BadRequest(e.Message);
-            }
+            var patch = SystemGuildPatch.FromJson(data, memberId);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
+                throw new ModelParseError(patch.Errors);
 
             // this is less than great, but at least it's legible
             if (patch.AutoproxyMember.Value == null)
@@ -116,17 +110,11 @@ namespace PluralKit.API
             if (settings == null)
                 throw APIErrors.MemberGuildNotFound;
 
-            MemberGuildPatch patch = null;
-            try
-            {
-                patch = MemberGuildPatch.FromJson(data);
-                patch.AssertIsValid();
-            }
-            catch (ValidationError e)
-            {
-                // todo
-                return BadRequest(e.Message);
-            }
+            var patch = MemberGuildPatch.FromJson(data);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
+                throw new ModelParseError(patch.Errors);
 
             var newSettings = await _repo.UpdateMemberGuild(member.Id, guild_id, patch);
             return Ok(newSettings.ToJson());

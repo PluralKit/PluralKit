@@ -1,7 +1,5 @@
 using System;
 
-using Newtonsoft.Json.Linq;
-
 namespace PluralKit.Core
 {
     public enum PrivacyLevel
@@ -42,18 +40,5 @@ namespace PluralKit.Core
         }
 
         public static string ToJsonString(this PrivacyLevel level) => level.LevelName();
-
-        public static PrivacyLevel ParsePrivacy(this JObject o, string propertyName)
-        {
-            var input = o.Value<string>(propertyName);
-
-            if (input == null) return PrivacyLevel.Public;
-            if (input == "") return PrivacyLevel.Private;
-            if (input == "private") return PrivacyLevel.Private;
-            if (input == "public") return PrivacyLevel.Public;
-
-            throw new ValidationError(propertyName);
-        }
-
     }
 }

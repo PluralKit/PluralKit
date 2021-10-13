@@ -69,7 +69,7 @@ namespace PluralKit.Core
             if (Color.Value != null)
                 AssertValid(Color.Value, "color", "^[0-9a-fA-F]{6}$");
             if (UiTz.IsPresent && DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz.Value) == null)
-                throw new ValidationError("avatar_url");
+                Errors.Add(new ValidationError("timezone"));
         }
 
 #nullable disable
@@ -91,10 +91,10 @@ namespace PluralKit.Core
                     {
                         if (o.ContainsKey("tz")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
 
-                        if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.ParsePrivacy("description_privacy");
-                        if (o.ContainsKey("member_list_privacy")) patch.MemberListPrivacy = o.ParsePrivacy("member_list_privacy");
-                        if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = o.ParsePrivacy("front_privacy");
-                        if (o.ContainsKey("front_history_privacy")) patch.FrontHistoryPrivacy = o.ParsePrivacy("front_history_privacy");
+                        if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
+                        if (o.ContainsKey("member_list_privacy")) patch.MemberListPrivacy = patch.ParsePrivacy(o, "member_list_privacy");
+                        if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = patch.ParsePrivacy(o, "front_privacy");
+                        if (o.ContainsKey("front_history_privacy")) patch.FrontHistoryPrivacy = patch.ParsePrivacy(o, "front_history_privacy");
 
                         break;
                     }
@@ -105,16 +105,16 @@ namespace PluralKit.Core
                             var privacy = o.Value<JObject>("privacy");
 
                             if (privacy.ContainsKey("description_privacy"))
-                                patch.DescriptionPrivacy = privacy.ParsePrivacy("description_privacy");
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
 
                             if (privacy.ContainsKey("member_list_privacy"))
-                                patch.DescriptionPrivacy = privacy.ParsePrivacy("member_list_privacy");
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "member_list_privacy");
 
                             if (privacy.ContainsKey("front_privacy"))
-                                patch.DescriptionPrivacy = privacy.ParsePrivacy("front_privacy");
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "front_privacy");
 
                             if (privacy.ContainsKey("front_history_privacy"))
-                                patch.DescriptionPrivacy = privacy.ParsePrivacy("front_history_privacy");
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "front_history_privacy");
                         }
 
                         break;

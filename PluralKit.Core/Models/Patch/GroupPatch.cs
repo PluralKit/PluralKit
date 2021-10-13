@@ -38,7 +38,7 @@ namespace PluralKit.Core
 
         public new void AssertIsValid()
         {
-            if (Name.IsPresent)
+            if (Name.Value != null)
                 AssertValid(Name.Value, "name", Limits.MaxGroupNameLength);
             if (DisplayName.Value != null)
                 AssertValid(DisplayName.Value, "display_name", Limits.MaxGroupNameLength);
@@ -59,10 +59,13 @@ namespace PluralKit.Core
         {
             var patch = new GroupPatch();
 
-            if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null)
-                throw new ValidationError("Group name can not be set to null.");
+            if (o.ContainsKey("name"))
+            {
+                patch.Name = o.Value<string>("name").NullIfEmpty();
+                if (patch.Name.Value == null)
+                    patch.Errors.Add(new ValidationError("name", "Group name can not be set to null."));
+            }
 
-            if (o.ContainsKey("name")) patch.Name = o.Value<string>("name");
             if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
             if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty();
             if (o.ContainsKey("icon")) patch.Icon = o.Value<string>("icon").NullIfEmpty();
@@ -74,16 +77,16 @@ namespace PluralKit.Core
                 var privacy = o.Value<JObject>("privacy");
 
                 if (privacy.ContainsKey("description_privacy"))
-                    patch.DescriptionPrivacy = privacy.ParsePrivacy("description_privacy");
+                    patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
 
                 if (privacy.ContainsKey("icon_privacy"))
-                    patch.IconPrivacy = privacy.ParsePrivacy("icon_privacy");
+                    patch.IconPrivacy = patch.ParsePrivacy(privacy, "icon_privacy");
 
                 if (privacy.ContainsKey("list_privacy"))
-                    patch.ListPrivacy = privacy.ParsePrivacy("list_privacy");
+                    patch.ListPrivacy = patch.ParsePrivacy(privacy, "list_privacy");
 
                 if (privacy.ContainsKey("visibility"))
-                    patch.Visibility = privacy.ParsePrivacy("visibility");
+                    patch.Visibility = patch.ParsePrivacy(privacy, "visibility");
             }
 
             return patch;
