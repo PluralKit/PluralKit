@@ -46,7 +46,8 @@ namespace PluralKit.API
         public static PKError MemberNotFound = new(404, 20002, "Member not found.");
         public static PKError GroupNotFound = new(404, 20003, "Group not found.");
         public static PKError MessageNotFound = new(404, 20004, "Message not found.");
-        public static PKError SwitchNotFound = new(404, 20005, "Switch not found, switch is associated to different system, or unauthorized to view front history.");
+        public static PKError SwitchNotFound = new(404, 20005, "Switch not found.");
+        public static PKError SwitchNotFoundPublic = new(404, 20005, "Switch not found, switch associated with different system, or unauthorized to view front history.");
         public static PKError SystemGuildNotFound = new(404, 20006, "No system guild settings found for target guild.");
         public static PKError MemberGuildNotFound = new(404, 20007, "No member guild settings found for target guild.");
         public static PKError UnauthorizedMemberList = new(403, 30001, "Unauthorized to view member list");
@@ -55,11 +56,15 @@ namespace PluralKit.API
         public static PKError UnauthorizedCurrentFronters = new(403, 30004, "Unauthorized to view current fronters.");
         public static PKError UnauthorizedFrontHistory = new(403, 30005, "Unauthorized to view front history.");
         public static PKError NotOwnMemberError = new(403, 30006, "Target member is not part of your system.");
-        public static PKError NotOwnGroupError = new(403, 30006, "Target group is not part of your system.");
+        public static PKError NotOwnGroupError = new(403, 30007, "Target group is not part of your system.");
         // todo: somehow add the memberRef to the JSON
         public static PKError NotOwnMemberErrorWithRef(string memberRef) => new(403, 30008, $"Member '{memberRef}' is not part of your system.");
         public static PKError NotOwnGroupErrorWithRef(string groupRef) => new(403, 30009, $"Group '{groupRef}' is not part of your system.");
         public static PKError MissingAutoproxyMember = new(400, 40002, "Missing autoproxy member for member-mode autoproxy.");
+        public static PKError DuplicateMembersInList = new(400, 40003, "Duplicate members in member list.");
+        public static PKError SameSwitchMembersError = new(400, 40004, "Member list identical to current fronter list.");
+        public static PKError SameSwitchTimestampError = new(400, 40005, "Switch with provided timestamp already exists.");
+        public static PKError InvalidSwitchId = new(400, 40006, "Invalid switch ID.");
         public static PKError Unimplemented = new(501, 50001, "Unimplemented");
     }
 }

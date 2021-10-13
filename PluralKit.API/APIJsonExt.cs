@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
 
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
+using NodaTime;
 
 using PluralKit.Core;
 
@@ -32,4 +36,19 @@ namespace PluralKit.API
             return o;
         }
     }
+
+    public struct FrontersReturnNew
+    {
+        [JsonProperty("id")] public Guid Uuid { get; set; }
+        [JsonProperty("timestamp")] public Instant Timestamp { get; set; }
+        [JsonProperty("members")] public IEnumerable<JObject> Members { get; set; }
+    }
+
+    public struct SwitchesReturnNew
+    {
+        [JsonProperty("id")] public Guid Uuid { get; set; }
+        [JsonProperty("timestamp")] public Instant Timestamp { get; set; }
+        [JsonProperty("members")] public IEnumerable<string> Members { get; set; }
+    }
+
 }

@@ -57,7 +57,12 @@ namespace PluralKit.API
 
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
-                .AddNewtonsoftJson(); // sorry MS, this just does *more*
+                // sorry MS, this just does *more*
+                .AddNewtonsoftJson((opts) =>
+                {
+                    // ... though by default it messes up timestamps in JSON
+                    opts.SerializerSettings.DateParseHandling = DateParseHandling.None;
+                });
 
             services.AddApiVersioning();
 

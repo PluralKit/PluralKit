@@ -16,13 +16,6 @@ using PluralKit.Core;
 
 namespace PluralKit.API
 {
-    public struct SwitchesReturnNew
-    {
-        [JsonProperty("timestamp")] public Instant Timestamp { get; set; }
-        [JsonProperty("id")] public Guid Uuid { get; set; }
-        [JsonProperty("members")] public IEnumerable<string> Members { get; set; }
-    }
-
     [ApiController]
     [ApiVersion("2.0")]
     [Route("v{version:apiVersion}")]
@@ -77,21 +70,60 @@ namespace PluralKit.API
                 return NoContent();
 
             var members = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));
-            return Ok(new FrontersReturn
+            return Ok(new FrontersReturnNew
             {
                 Timestamp = sw.Timestamp,
-                Members = await members.Select(m => m.ToJson(ctx, v: APIVersion.V2)).ToListAsync()
+                Members = await members.Select(m => m.ToJson(ctx, v: APIVersion.V2)).ToListAsync(),
+                Uuid = sw.Uuid,
             });
         }
 
 
-        [HttpPost("systems/{system}/switches")]
-        public async Task<IActionResult> SwitchCreate(string system, [FromBody] JObject data)
+        [HttpPost("systems/@me/switches")]
+        public async Task<IActionResult> SwitchCreate([FromBody] PostSwitchParams data)
         {
-            return new ObjectResult("Unimplemented")
+            if (data.Members.Distinct().Count() != data.Members.Count)
+                throw APIErrors.DuplicateMembersInList;
+
+            var system = await ResolveSystem("@me");
+
+            if (data.Timestamp != null && await _repo.GetSwitches(system.Id).Select(x => x.Timestamp).ContainsAsync(data.Timestamp.Value))
+                throw APIErrors.SameSwitchTimestampError;
+
+            var members = new List<PKMember>();
+
+            foreach (var memberRef in data.Members)
             {
-                StatusCode = 501
-            };
+                var member = await ResolveMember(memberRef);
+                if (member == null)
+                    // todo: which member
+                    throw APIErrors.MemberNotFound;
+                if (member.System != system.Id)
+                    throw APIErrors.NotOwnMemberErrorWithRef(memberRef);
+                members.Add(member);
+            }
+
+            // We get the current switch, if it exists
+            var latestSwitch = await _repo.GetLatestSwitch(system.Id);
+            if (latestSwitch != null && (data.Timestamp == null || data.Timestamp > latestSwitch.Timestamp))
+            {
+                var latestSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, latestSwitch.Id));
+
+                // Bail if this switch is identical to the latest one
+                if (await latestSwitchMembers.Select(m => m.Hid).SequenceEqualAsync(members.Select(m => m.Hid).ToAsyncEnumerable()))
+                    throw APIErrors.SameSwitchMembersError;
+            }
+
+            var newSwitch = await _db.Execute(conn => _repo.AddSwitch(conn, system.Id, members.Select(m => m.Id).ToList()));
+            if (data.Timestamp != null)
+                await _repo.MoveSwitch(newSwitch.Id, data.Timestamp.Value);
+
+            return Ok(new FrontersReturnNew
+            {
+                Uuid = newSwitch.Uuid,
+                Timestamp = data.Timestamp != null ? data.Timestamp.Value : newSwitch.Timestamp,
+                Members = members.Select(x => x.ToJson(LookupContext.ByOwner, v: APIVersion.V2)),
+            });
         }
 
 
@@ -99,7 +131,7 @@ namespace PluralKit.API
         public async Task<IActionResult> SwitchGet(string systemRef, string switchRef)
         {
             if (!Guid.TryParse(switchRef, out var switchId))
-                throw APIErrors.SwitchNotFound;
+                throw APIErrors.InvalidSwitchId;
 
             var system = await ResolveSystem(systemRef);
             if (system == null)
@@ -107,45 +139,115 @@ namespace PluralKit.API
 
             var sw = await _repo.GetSwitchByUuid(switchId);
             if (sw == null || system.Id != sw.System)
-                throw APIErrors.SwitchNotFound;
+                throw APIErrors.SwitchNotFoundPublic;
 
             var ctx = this.ContextFor(system);
 
             if (!system.FrontHistoryPrivacy.CanAccess(ctx))
-                throw APIErrors.SwitchNotFound;
+                throw APIErrors.SwitchNotFoundPublic;
 
             var members = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));
-            return Ok(new FrontersReturn
+            return Ok(new FrontersReturnNew
             {
+                Uuid = sw.Uuid,
                 Timestamp = sw.Timestamp,
                 Members = await members.Select(m => m.ToJson(ctx, v: APIVersion.V2)).ToListAsync()
             });
         }
 
-        [HttpPatch("systems/{system}/switches/{switch_id}")]
-        public async Task<IActionResult> SwitchPatch(string system, [FromBody] JObject data)
+        [HttpPatch("systems/@me/switches/{switchRef}")]
+        public async Task<IActionResult> SwitchPatch(string switchRef, [FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
+            // for now, don't need to make a PatchObject for this, since it's only one param
+
+            if (!Guid.TryParse(switchRef, out var switchId))
+                throw APIErrors.InvalidSwitchId;
+
+            var value = data.Value<Instant>("timestamp");
+            if (value == null)
+                // todo
+                throw APIErrors.GenericBadRequest;
+
+            var system = await ResolveSystem("@me");
+            if (system == null)
+                throw APIErrors.SystemNotFound;
+
+            var sw = await _repo.GetSwitchByUuid(switchId);
+            if (sw == null || system.Id != sw.System)
+                throw APIErrors.SwitchNotFoundPublic;
+
+            if (await _repo.GetSwitches(system.Id).Select(x => x.Timestamp).ContainsAsync(value))
+                throw APIErrors.SameSwitchTimestampError;
+
+            await _repo.MoveSwitch(sw.Id, value);
+
+            var members = await _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id)).ToListAsync();
+            return Ok(new FrontersReturnNew
             {
-                StatusCode = 501
-            };
+                Uuid = sw.Uuid,
+                Timestamp = sw.Timestamp,
+                Members = members.Select(x => x.ToJson(LookupContext.ByOwner, v: APIVersion.V2)),
+            });
+        }
+
+        [HttpPatch("systems/@me/switches/{switchRef}/members")]
+        public async Task<IActionResult> SwitchMemberPatch(string switchRef, [FromBody] JArray data)
+        {
+            if (!Guid.TryParse(switchRef, out var switchId))
+
+                if (data.Distinct().Count() != data.Count)
+                    throw APIErrors.DuplicateMembersInList;
+
+            var system = await ResolveSystem("@me");
+
+            var sw = await _repo.GetSwitchByUuid(switchId);
+            if (sw == null)
+                throw APIErrors.SwitchNotFound;
+
+            var members = new List<PKMember>();
+
+            foreach (var JmemberRef in data)
+            {
+                var memberRef = JmemberRef.Value<string>();
+
+                var member = await ResolveMember(memberRef);
+                if (member == null)
+                    // todo: which member
+                    throw APIErrors.MemberNotFound;
+                if (member.System != system.Id)
+                    throw APIErrors.NotOwnMemberErrorWithRef(memberRef);
+
+                members.Add(member);
+            }
+
+            var latestSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id));
+
+            if (await latestSwitchMembers.Select(m => m.Hid).SequenceEqualAsync(members.Select(m => m.Hid).ToAsyncEnumerable()))
+                throw APIErrors.SameSwitchMembersError;
+
+            await _db.Execute(conn => _repo.EditSwitch(conn, sw.Id, members.Select(x => x.Id).ToList()));
+            return Ok(new FrontersReturnNew
+            {
+                Uuid = sw.Uuid,
+                Timestamp = sw.Timestamp,
+                Members = members.Select(x => x.ToJson(LookupContext.ByOwner, v: APIVersion.V2)),
+            });
         }
 
         [HttpDelete("systems/@me/switches/{switchRef}")]
         public async Task<IActionResult> SwitchDelete(string switchRef)
         {
             if (!Guid.TryParse(switchRef, out var switchId))
-                throw APIErrors.SwitchNotFound;
+                throw APIErrors.InvalidSwitchId;
 
             var system = await ResolveSystem("@me");
             var sw = await _repo.GetSwitchByUuid(switchId);
             if (sw == null || system.Id != sw.System)
-                throw APIErrors.SwitchNotFound;
+                throw APIErrors.SwitchNotFoundPublic;
 
             await _repo.DeleteSwitch(sw.Id);
 
             return NoContent();
         }
-
     }
 }

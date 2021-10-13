@@ -32,6 +32,7 @@ namespace PluralKit.API
 
     public struct PostSwitchParams
     {
+        public Instant? Timestamp { get; set; }
         public ICollection<string> Members { get; set; }
     }
 
