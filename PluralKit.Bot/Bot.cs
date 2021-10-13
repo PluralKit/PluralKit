@@ -257,7 +257,11 @@ namespace PluralKit.Bot
                 {
                     var botPerms = PermissionsIn(reportChannel.Value);
                     if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
-                        await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
+                    {
+                        // i'm just going to disable this for now we need to find something nicer
+                        // await _errorMessageService.SendErrorMessage(reportChannel.Value,
+                            // sentryEvent.EventId.ToString());
+                    }
                 }
             }
         }
