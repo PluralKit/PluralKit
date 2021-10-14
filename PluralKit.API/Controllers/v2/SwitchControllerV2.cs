@@ -165,8 +165,7 @@ namespace PluralKit.API
 
             var valueStr = data.Value<string>("timestamp").NullIfEmpty();
             if (valueStr == null)
-                // todo
-                throw Errors.GenericBadRequest;
+                throw new ModelParseError(new List<ValidationError>() { new ValidationError("timestamp", $"Key 'timestamp' is required.") });
 
             var value = Instant.FromDateTimeOffset(DateTime.Parse(valueStr).ToUniversalTime());
 

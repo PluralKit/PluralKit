@@ -40,10 +40,24 @@ namespace PluralKit.API
         [HttpPost("members")]
         public async Task<IActionResult> MemberCreate([FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var patch = MemberPatch.FromJSON(data);
+            patch.AssertIsValid();
+            if (!patch.Name.IsPresent)
+                patch.Errors.Add(new ValidationError("name", $"Key 'name' is required when creating new member."));
+            if (patch.Errors.Count > 0)
+                throw new ModelParseError(patch.Errors);
+
+            var system = await ResolveSystem("@me");
+
+            using var conn = await _db.Obtain();
+            using var tx = await conn.BeginTransactionAsync();
+
+            var newMember = await _repo.CreateMember(system.Id, patch.Name.Value, conn);
+            newMember = await _repo.UpdateMember(newMember.Id, patch, conn);
+
+            await tx.CommitAsync();
+
+            return Ok(newMember.ToJson(LookupContext.ByOwner, v: APIVersion.V2));
         }
 
         [HttpGet("members/{memberRef}")]
@@ -58,13 +72,24 @@ namespace PluralKit.API
             return Ok(member.ToJson(this.ContextFor(member), systemStr: system.Hid, v: APIVersion.V2));
         }
 
-        [HttpPatch("members/{member}")]
-        public async Task<IActionResult> MemberPatch(string member, [FromBody] JObject data)
+        [HttpPatch("members/{memberRef}")]
+        public async Task<IActionResult> DoMemberPatch(string memberRef, [FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+            var member = await ResolveMember(memberRef);
+            if (member == null)
+                throw Errors.MemberNotFound;
+            if (member.System != system.Id)
+                throw Errors.NotOwnMemberError;
+
+            var patch = MemberPatch.FromJSON(data, APIVersion.V2);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
+                throw new ModelParseError(patch.Errors);
+
+            var newMember = await _repo.UpdateMember(member.Id, patch);
+            return Ok(newMember.ToJson(LookupContext.ByOwner, v: APIVersion.V2));
         }
 
         [HttpDelete("members/{memberRef}")]

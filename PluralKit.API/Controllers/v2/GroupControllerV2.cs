@@ -37,12 +37,26 @@ namespace PluralKit.API
         }
 
         [HttpPost("groups")]
-        public async Task<IActionResult> GroupCreate(string group_id)
+        public async Task<IActionResult> GroupCreate([FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+
+            var patch = GroupPatch.FromJson(data);
+            patch.AssertIsValid();
+            if (!patch.Name.IsPresent)
+                patch.Errors.Add(new ValidationError("name", $"Key 'name' is required when creating new group."));
+            if (patch.Errors.Count > 0)
+                throw new ModelParseError(patch.Errors);
+
+            using var conn = await _db.Obtain();
+            using var tx = await conn.BeginTransactionAsync();
+
+            var newGroup = await _repo.CreateGroup(system.Id, patch.Name.Value, conn);
+            newGroup = await _repo.UpdateGroup(newGroup.Id, patch, conn);
+
+            await tx.CommitAsync();
+
+            return Ok(newGroup.ToJson(LookupContext.ByOwner));
         }
 
         [HttpGet("groups/{groupRef}")]
@@ -57,13 +71,24 @@ namespace PluralKit.API
             return Ok(group.ToJson(this.ContextFor(group), systemStr: system.Hid));
         }
 
-        [HttpPatch("groups/{group_id}")]
-        public async Task<IActionResult> GroupPatch(string group_id)
+        [HttpPatch("groups/{groupRef}")]
+        public async Task<IActionResult> DoGroupPatch(string groupRef, [FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+            var group = await ResolveGroup(groupRef);
+            if (group == null)
+                throw Errors.GroupNotFound;
+            if (group.System != system.Id)
+                throw Errors.NotOwnGroupError;
+
+            var patch = GroupPatch.FromJson(data);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
+                throw new ModelParseError(patch.Errors);
+
+            var newGroup = await _repo.UpdateGroup(group.Id, patch);
+            return Ok(newGroup.ToJson(LookupContext.ByOwner));
         }
 
         [HttpDelete("groups/{groupRef}")]

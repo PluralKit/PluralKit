@@ -24,13 +24,18 @@ namespace PluralKit.API
             else return Ok(system.ToJson(this.ContextFor(system), v: APIVersion.V2));
         }
 
-        [HttpPatch("{system}")]
-        public async Task<IActionResult> SystemPatch(string system, [FromBody] JObject data)
+        [HttpPatch]
+        public async Task<IActionResult> DoSystemPatch([FromBody] JObject data)
         {
-            return new ObjectResult("Unimplemented")
-            {
-                StatusCode = 501
-            };
+            var system = await ResolveSystem("@me");
+            var patch = SystemPatch.FromJSON(data, APIVersion.V2);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
+                throw new ModelParseError(patch.Errors);
+
+            var newSystem = await _repo.UpdateSystem(system.Id, patch);
+            return Ok(newSystem.ToJson(LookupContext.ByOwner, v: APIVersion.V2));
         }
     }
 }
