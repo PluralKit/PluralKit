@@ -188,7 +188,7 @@ const Home = ({isInvalid, setIsInvalid, isLoading, setIsLoading, isSubmit, setIs
       <BS.Card.Body>
         <p>Pk-webs is a web interface for PluralKit, it lets you edit your system and members using PluralKit's API, without having to use commands on discord.</p>
         <blockquote>
-          <p>This website is an ongoing project and will be sporadically updated. If you have any issues or questions, join <a href='https://discord.gg/PczBt78'>PluralKit's support server</a> and ping us (PALS#1612). Since this project is unofficial, the actual pluralkit devs will not be able to help you with everything.</p>
+          <p>This website is an ongoing project and will be sporadically updated. If you have any issues or questions, join <a href='https://discord.gg/PczBt78'>PluralKit's support server</a> and ping us (Fulmine#1917). Since this project is unofficial, the actual pluralkit devs will not be able to help you with everything.</p>
         </blockquote>
         <hr/>
         <h5>FAQ:</h5>
