@@ -62,7 +62,11 @@ namespace PluralKit.API
                 {
                     // ... though by default it messes up timestamps in JSON
                     opts.SerializerSettings.DateParseHandling = DateParseHandling.None;
-                });
+                })
+                .ConfigureApiBehaviorOptions(options =>
+                    options.InvalidModelStateResponseFactory = (context) =>
+                        throw Errors.GenericBadRequest
+                );
 
             services.AddApiVersioning();
 
