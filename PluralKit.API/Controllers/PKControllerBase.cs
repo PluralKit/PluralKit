@@ -74,21 +74,21 @@ namespace PluralKit.API
             return Task.FromResult<PKGroup?>(null);
         }
 
-        public LookupContext ContextFor(PKSystem system)
+        protected LookupContext ContextFor(PKSystem system)
         {
             HttpContext.Items.TryGetValue("SystemId", out var systemId);
             if (systemId == null) return LookupContext.ByNonOwner;
             return ((SystemId)systemId) == system.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
         }
 
-        public LookupContext ContextFor(PKMember member)
+        protected LookupContext ContextFor(PKMember member)
         {
             HttpContext.Items.TryGetValue("SystemId", out var systemId);
             if (systemId == null) return LookupContext.ByNonOwner;
             return ((SystemId)systemId) == member.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
         }
 
-        public LookupContext ContextFor(PKGroup group)
+        protected LookupContext ContextFor(PKGroup group)
         {
             HttpContext.Items.TryGetValue("SystemId", out var systemId);
             if (systemId == null) return LookupContext.ByNonOwner;
