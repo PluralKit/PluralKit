@@ -260,7 +260,7 @@ namespace PluralKit.Bot
                     {
                         // i'm just going to disable this for now we need to find something nicer
                         // await _errorMessageService.SendErrorMessage(reportChannel.Value,
-                            // sentryEvent.EventId.ToString());
+                        // sentryEvent.EventId.ToString());
                     }
                 }
             }
@@ -271,9 +271,6 @@ namespace PluralKit.Bot
             _logger.Debug("Running once-per-minute scheduled tasks");
 
             await UpdateBotStatus();
-
-            // Clean up message cache in postgres
-            await _commandMessageService.CleanupOldMessages();
 
             // Collect some stats, submit them to the metrics backend
             await _collector.CollectStats();

@@ -20,7 +20,7 @@ namespace PluralKit.Bot
         private readonly IDiscordCache _cache;
         private readonly CpuStatService _cpu;
 
-        private readonly IDatabase _db;
+        private readonly ModelRepository _repo;
 
         private readonly WebhookCacheService _webhookCache;
 
@@ -28,13 +28,13 @@ namespace PluralKit.Bot
 
         private readonly ILogger _logger;
 
-        public PeriodicStatCollector(IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, IDatabase db, IDiscordCache cache)
+        public PeriodicStatCollector(IMetrics metrics, ILogger logger, WebhookCacheService webhookCache, DbConnectionCountHolder countHolder, CpuStatService cpu, ModelRepository repo, IDiscordCache cache)
         {
             _metrics = metrics;
             _webhookCache = webhookCache;
             _countHolder = countHolder;
             _cpu = cpu;
-            _db = db;
+            _repo = repo;
             _cache = cache;
             _logger = logger.ForContext<PeriodicStatCollector>();
         }
@@ -63,12 +63,15 @@ namespace PluralKit.Bot
             _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, channelCount);
 
             // Aggregate DB stats
-            var counts = await _db.Execute(c => c.QueryFirstAsync<Counts>("select (select count(*) from systems) as systems, (select count(*) from members) as members, (select count(*) from switches) as switches, (select count(*) from messages) as messages, (select count(*) from groups) as groups"));
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, counts.Systems);
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, counts.Members);
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, counts.Switches);
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, counts.Messages);
-            _metrics.Measure.Gauge.SetValue(CoreMetrics.GroupCount, counts.Groups);
+            // just fetching from database here - actual updating of the data is done in PluralKit.ScheduledTasks
+            // if you're not running ScheduledTasks and want up-to-date counts, uncomment the following line:
+            // await _repo.UpdateStats();
+            var counts = await _repo.GetStats();
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, counts.SystemCount);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, counts.MemberCount);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.GroupCount, counts.GroupCount);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, counts.SwitchCount);
+            _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, counts.MessageCount);
 
             // Process info
             var process = Process.GetCurrentProcess();
@@ -87,15 +90,6 @@ namespace PluralKit.Bot
 
             stopwatch.Stop();
             _logger.Debug("Updated metrics in {Time}", stopwatch.ElapsedDuration());
-        }
-
-        public class Counts
-        {
-            public int Systems { get; }
-            public int Members { get; }
-            public int Switches { get; }
-            public int Messages { get; }
-            public int Groups { get; }
         }
     }
 }
