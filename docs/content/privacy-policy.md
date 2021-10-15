@@ -30,3 +30,11 @@ You can export your system information using the `pk;export` command. This does 
 You can delete your information using `pk;system delete`. This will delete all system information and associated members, switches, and messages. This will not delete your information from the database backups. Contact me if you want that wiped, too.
 
 The bot is [open-source](https://github.com/xSke/PluralKit). While I can't *prove* this is the code that's running on the production server... it is, promise.
+
+## Website
+
+We use [Plausible](https://plausible.io) for website analytics. The analytics are publicly accessible at [https://plausible.io/pluralkit.me](https://plausible.io/pluralkit.me).
+
+In short, Plausible logs information related to *your current visit on this website*, not information *about you*. A full list of everything that Plausible logs can be found on their [data policy](https://plausible.io/data-policy) page.
+
+If you do not wish for your visits to be included in the analytics, please follow [Plausible's opt-out guide](https://plausible.io/docs/excluding). <noscript>*JavaScript is disabled in this browser, which automatically blocks Plausible Analytics.*</noscript>

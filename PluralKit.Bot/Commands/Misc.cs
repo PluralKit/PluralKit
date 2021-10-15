@@ -85,11 +85,7 @@ namespace PluralKit.Bot
             var messagesProxied = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name)?.Value;
             var commandsRun = _metrics.Snapshot.GetForContext("Bot").Meters.FirstOrDefault(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name)?.Value;
 
-            var totalSystems = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.SystemCount.Name)?.Value ?? 0;
-            var totalMembers = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MemberCount.Name)?.Value ?? 0;
-            var totalGroups = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.GroupCount.Name)?.Value ?? 0;
-            var totalSwitches = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.SwitchCount.Name)?.Value ?? 0;
-            var totalMessages = _metrics.Snapshot.GetForContext("Application").Gauges.FirstOrDefault(m => m.MultidimensionalName == CoreMetrics.MessageCount.Name)?.Value ?? 0;
+            var counts = await _repo.GetStats();
 
             var shardId = ctx.Shard.ShardId;
             var shardTotal = ctx.Cluster.Shards.Count;
@@ -113,7 +109,11 @@ namespace PluralKit.Bot
                 .Field(new("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true))
                 .Field(new("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true))
                 .Field(new("Latency", $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.ShardLatency.Milliseconds} ms", true))
-                .Field(new("Total numbers", $"{totalSystems:N0} systems, {totalMembers:N0} members, {totalGroups:N0} groups, {totalSwitches:N0} switches, {totalMessages:N0} messages"))
+                .Field(new("Total numbers", $"{counts.SystemCount:N0} systems,"
+                    + $" {counts.MemberCount:N0} members,"
+                    + $" {counts.GroupCount:N0} groups,"
+                    + $" {counts.SwitchCount:N0} switches,"
+                    + $" {counts.MessageCount:N0} messages"))
                 .Timestamp(Process.GetCurrentProcess().StartTime.ToString("O"))
                 .Footer(new($"PluralKit {BuildInfoService.Version} • https://github.com/xSke/PluralKit • Last restarted: ")); ;
             await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,

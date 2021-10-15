@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.Bot", "PluralKit.Bot\PluralKit.Bot.csproj", "{F2C5562D-FD96-4C11-B54E-93737D127959}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.Core", "PluralKit.Core\PluralKit.Core.csproj", "{5DBE037D-179D-4C05-8A28-35E37129C961}"
@@ -9,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.Tests", "PluralKit.Tests\PluralKit.Tests.csproj", "{752FE725-5EE1-45E9-B721-0CDD28171AC8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Myriad", "Myriad\Myriad.csproj", "{ACB9BF37-F29C-4068-A7D1-2EFF2C308C4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluralKit.ScheduledTasks", "PluralKit.ScheduledTasks\PluralKit.ScheduledTasks.csproj", "{374A8EB3-655D-4230-982B-459AE3553991}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,5 +39,9 @@ Global
 		{ACB9BF37-F29C-4068-A7D1-2EFF2C308C4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ACB9BF37-F29C-4068-A7D1-2EFF2C308C4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ACB9BF37-F29C-4068-A7D1-2EFF2C308C4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{374A8EB3-655D-4230-982B-459AE3553991}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{374A8EB3-655D-4230-982B-459AE3553991}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{374A8EB3-655D-4230-982B-459AE3553991}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{374A8EB3-655D-4230-982B-459AE3553991}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

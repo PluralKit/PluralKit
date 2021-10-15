@@ -10,8 +10,6 @@ namespace PluralKit.Bot
 {
     public class CommandMessageService
     {
-        private static readonly Duration CommandMessageRetention = Duration.FromHours(24);
-
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly IClock _clock;
@@ -34,17 +32,6 @@ namespace PluralKit.Bot
         public async Task<CommandMessage?> GetCommandMessage(ulong messageId)
         {
             return await _repo.GetCommandMessage(messageId);
-        }
-
-        public async Task CleanupOldMessages()
-        {
-            var deleteThresholdInstant = _clock.GetCurrentInstant() - CommandMessageRetention;
-            var deleteThresholdSnowflake = DiscordUtils.InstantToSnowflake(deleteThresholdInstant);
-
-            var deletedRows = await _repo.DeleteCommandMessagesBefore(deleteThresholdSnowflake);
-
-            _logger.Information("Pruned {DeletedRows} command messages older than retention {Retention} (older than {DeleteThresholdInstant} / {DeleteThresholdSnowflake})",
-                deletedRows, CommandMessageRetention, deleteThresholdInstant, deleteThresholdSnowflake);
         }
     }
 }
