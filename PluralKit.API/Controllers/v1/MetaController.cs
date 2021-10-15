@@ -28,7 +28,7 @@ namespace PluralKit.API
         public async Task<ActionResult<JObject>> GetMeta()
         {
             await using var conn = await _db.Obtain();
-            var shards = await _repo.GetShards(conn);
+            var shards = await _repo.GetShards();
 
             var o = new JObject();
             o.Add("shards", shards.ToJSON());

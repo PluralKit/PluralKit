@@ -35,6 +35,19 @@ namespace PluralKit.API
 
             return o;
         }
+
+        public static JObject ToJson(this ModelRepository.Counts counts)
+        {
+            var o = new JObject();
+
+            o.Add("system_count", counts.SystemCount);
+            o.Add("member_count", counts.MemberCount);
+            o.Add("group_count", counts.GroupCount);
+            o.Add("switch_count", counts.SwitchCount);
+            o.Add("message_count", counts.MessageCount);
+
+            return o;
+        }
     }
 
     public struct FrontersReturnNew
