@@ -7,4 +7,4 @@ alter table info add column group_count int;
 alter table info add column switch_count int;
 alter table info add column message_count int;
 
-update info set schema_version = 18;
+update info set schema_version = 19;
