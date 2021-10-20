@@ -6,6 +6,7 @@ using System.Net.Http;
 using Myriad.Builders;
 
 using NodaTime;
+using NodaTime.Extensions;
 
 using PluralKit.Core;
 
@@ -288,7 +289,13 @@ namespace PluralKit.Bot
                 ctx.CheckOwnMember(target);
 
                 var birthdayStr = ctx.RemainderOrNull();
-                var birthday = DateUtils.ParseDate(birthdayStr, true);
+                
+                LocalDate? birthday;
+                if (birthdayStr == "today" || birthdayStr == "now" )
+                    birthday = SystemClock.Instance.InZone(ctx.System.Zone).GetCurrentDate();
+                else
+                    birthday = DateUtils.ParseDate(birthdayStr, true);
+                    
                 if (birthday == null) throw Errors.BirthdayParseError(birthdayStr);
 
                 var patch = new MemberPatch { Birthday = Partial<LocalDate?>.Present(birthday) };
