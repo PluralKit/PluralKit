@@ -110,6 +110,9 @@ namespace PluralKit.Core
                             if (privacy.ContainsKey("member_list_privacy"))
                                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "member_list_privacy");
 
+                            if (privacy.ContainsKey("group_list_privacy"))
+                                patch.GroupListPrivacy = patch.ParsePrivacy(privacy, "group_list_privacy");
+
                             if (privacy.ContainsKey("front_privacy"))
                                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "front_privacy");
 

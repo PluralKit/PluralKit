@@ -104,6 +104,7 @@ namespace PluralKit.Core
 
                             p.Add("description_privacy", system.DescriptionPrivacy.ToJsonString());
                             p.Add("member_list_privacy", system.MemberListPrivacy.ToJsonString());
+                            p.Add("group_list_privacy", system.GroupListPrivacy.ToJsonString());
                             p.Add("front_privacy", system.FrontPrivacy.ToJsonString());
                             p.Add("front_history_privacy", system.FrontHistoryPrivacy.ToJsonString());
 
