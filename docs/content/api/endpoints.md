@@ -32,7 +32,7 @@ GET `/systems/@me/guilds/{guild_id}`
 
 Returns a [system guild settings](/api/models#system-guild-settings) object.
 
-::: note
+::: tip
 You must already have updated per-guild settings for your system in the target guild before being able to get or update them from the API.
 :::
 
@@ -91,7 +91,7 @@ GET `/members/{memberRef}/groups`
 
 PUT `/members/{memberRef}/groups`
 
-::: warn
+::: warning
 Not all HTTP implementations support PUT requests with a body. If yours does not, consider using the [Add Member To Group](#add-member-to-group) endpoint instead.
 :::
 
@@ -99,7 +99,7 @@ Not all HTTP implementations support PUT requests with a body. If yours does not
 
 DELETE `/members/{memberRef}/groups`
 
-::: warn
+::: warning
 Not all HTTP implementations support DELETE requests with a body. If yours does not, consider using the [Remove Member From Group](#remove-member-from-group) endpoint instead.
 :::
 
@@ -109,8 +109,8 @@ GET `/members/{memberRef}/guilds/{guild_id}`
 
 Returns a [member guild settings](/api/models#member-guild-settings) object.
 
-::: note
-You must already have updated per-guild settings for a member in the target guild before being able to get or update them from the API.
+::: tip
+You must already have updated per-guild settings for the target member in the target guild before being able to get or update them from the API.
 :::
 
 ### Update Member Guild Settings
@@ -172,7 +172,7 @@ PUT `/groups/{groupRef}/members/{memberRef}`
 
 PUT `/groups/{groupRef}/members`
 
-::: warn
+::: warning
 Not all HTTP implementations support PUT requests with a body. If yours does not, consider using the [Add Member To Group](#add-group-member) endpoint instead.
 :::
 
@@ -184,7 +184,7 @@ DELETE `/groups/{groupRef}/members/{memberRef}`
 
 DELETE `/groups/{groupRef}/members`
 
-::: warn
+::: warning
 Not all HTTP implementations support DELETE requests with a body. If yours does not, consider using the [Remove Member From Group](#remove-member-from-group) endpoint instead.
 :::
 

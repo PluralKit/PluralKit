@@ -80,6 +80,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 
 |key|type|notes|
 |---|---|---|
+|id|uuid||
 |timestamp|datetime||
 | members   | list of id/Member | Is sometimes in plain ID list form (eg. `GET /systems/:id/switches`), sometimes includes the full Member model (eg. `GET /systems/:id/fronters`). |
 

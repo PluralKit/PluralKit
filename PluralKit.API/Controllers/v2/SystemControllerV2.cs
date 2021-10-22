@@ -24,7 +24,7 @@ namespace PluralKit.API
             else return Ok(system.ToJson(this.ContextFor(system), v: APIVersion.V2));
         }
 
-        [HttpPatch]
+        [HttpPatch("@me")]
         public async Task<IActionResult> DoSystemPatch([FromBody] JObject data)
         {
             var system = await ResolveSystem("@me");

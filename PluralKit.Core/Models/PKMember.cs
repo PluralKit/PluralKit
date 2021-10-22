@@ -123,8 +123,8 @@ namespace PluralKit.Core
             o.Add("name", member.NameFor(ctx));
 
             // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
-            o.Add("color", member.Color);
             o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
+            o.Add("color", member.Color);
             o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
             o.Add("pronouns", member.PronounsFor(ctx));
             o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
