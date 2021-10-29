@@ -76,6 +76,7 @@ namespace PluralKit.Core
                 patch.Birthday = LocalDate.FromDateTime(parsed.Value.ToDateTimeUtc());
             }
             if (tupper.ContainsKey("description")) patch.Description = tupper.Value<string>("description");
+            if (tupper.ContainsKey("nick")) patch.DisplayName = tupper.Value<string>("nick");
             if (tupper.ContainsKey("tag") && tupper["tag"].Type != JTokenType.Null)
             {
                 var tag = tupper.Value<string>("tag");
