@@ -173,6 +173,8 @@ namespace PluralKit.Bot
                 if (content == null)
                     throw new PKError("No message content found in that message");
 
+                await ctx.Reply(text: $"```{content}```");
+
                 if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
                 {
                     var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
@@ -180,10 +182,6 @@ namespace PluralKit.Bot
                         ctx.Channel.Id,
                         new MessageRequest { Content = "Message contains codeblocks, check the attachements" },
                         new[] {new MultipartFile("message.txt", stream) });
-                }
-                else
-                {
-                    await ctx.Reply(text: $"```{content}```");
                 }
 
                 return;
