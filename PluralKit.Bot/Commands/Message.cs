@@ -1,6 +1,9 @@
 #nullable enable
 using System;
+using System.IO;
 using System.Threading.Tasks;
+using System.Text;
+using System.Text.RegularExpressions;
 
 using Myriad.Builders;
 using Myriad.Cache;
@@ -10,6 +13,9 @@ using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
 using NodaTime;
+
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
 
 using PluralKit.Core;
 
@@ -128,6 +134,7 @@ namespace PluralKit.Bot
             }
 
             var isDelete = ctx.Match("delete") || ctx.MatchFlag("delete");
+            var isRaw = ctx.Match("raw") || ctx.MatchFlag("raw");
 
             var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
             if (message == null)
@@ -152,6 +159,32 @@ namespace PluralKit.Bot
                     await ctx.Rest.DeleteMessage(ctx.Message);
                 else
                     await ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new() { Name = Emojis.Success });
+
+                return;
+            }
+            if (isRaw)
+            {
+                //TODO: Try this in channel with no readMesssageHistory permissions
+                var discordMessage = await _rest.GetMessage(message.Message.Channel, message.Message.Mid);
+                if (discordMessage == null)
+                    throw Errors.MessageNotFound(message.Message.Mid);
+
+                var content = discordMessage.Content;
+                if (content == null)
+                    throw new PKError("No message content found in that message");
+
+                if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+                {
+                    var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                    await ctx.Rest.CreateMessage(
+                        ctx.Channel.Id,
+                        new MessageRequest { Content = "Message contains codeblocks, check the attachements" },
+                        new[] {new MultipartFile("message.txt", stream) });
+                }
+                else
+                {
+                    await ctx.Reply(text: $"```{content}```");
+                }
 
                 return;
             }
