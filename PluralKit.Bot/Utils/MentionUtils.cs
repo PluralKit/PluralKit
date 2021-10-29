@@ -83,13 +83,12 @@ namespace PluralKit.Bot.Utils
         /// </summary>
         public static bool TryParseChannel(string text, out ulong channelId)
         {
-            if (text.Length >= 3 && text[0] == '<' && text[1] == '#' && text[text.Length - 1] == '>')
-            {
+            if (text.Length > 3 && text[0] == '<' && text[1] == '#' && text[text.Length - 1] == '>')
                 text = text.Substring(2, text.Length - 3); //<#123>
 
-                if (ulong.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out channelId))
-                    return true;
-            }
+            if (ulong.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out channelId))
+                return true;
+
             channelId = 0;
             return false;
         }
