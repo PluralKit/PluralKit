@@ -37,7 +37,7 @@ namespace PluralKit.Bot
         public static Command MemberDesc = new Command("member description", "member <member> description [description]", "Changes a member's description");
         public static Command MemberPronouns = new Command("member pronouns", "member <member> pronouns [pronouns]", "Changes a member's pronouns");
         public static Command MemberColor = new Command("member color", "member <member> color [color]", "Changes a member's color");
-        public static Command MemberBirthday = new Command("member birthday", "member <member> birthday [birthday]", "Changes a member's birthday");
+        public static Command MemberBirthday = new Command("member birthday", "member <member> birthday [birthday|today]", "Changes a member's birthday");
         public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
         public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
         public static Command MemberBannerImage = new Command("member banner", "member <member> banner [url]", "Set the member's banner image");

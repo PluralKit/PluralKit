@@ -77,7 +77,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;member <member> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
 - `pk;member <member> pronouns [pronouns]` - Changes the pronouns of a member.
 - `pk;member <member> color [color]` - Changes the color of a member.
-- `pk;member <member> birthdate [birthdate]` - Changes the birthday of a member.
+- `pk;member <member> birthdate [birthdate|today]` - Changes the birthday of a member.
 - `pk;member <member> delete` - Deletes a member.
 
 ## Group commands
