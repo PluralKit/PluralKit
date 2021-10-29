@@ -253,16 +253,12 @@ namespace PluralKit.Bot
 
                 // Once we've sent it to Sentry, report it to the user (if we have permission to)
                 var reportChannel = handler.ErrorChannelFor(evt);
-                if (reportChannel != null)
-                {
-                    var botPerms = PermissionsIn(reportChannel.Value);
-                    if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
-                    {
-                        // i'm just going to disable this for now we need to find something nicer
-                        // await _errorMessageService.SendErrorMessage(reportChannel.Value,
-                        // sentryEvent.EventId.ToString());
-                    }
-                }
+                if (reportChannel == null)
+                    return;
+
+                var botPerms = PermissionsIn(reportChannel.Value);
+                if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
+                    await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
             }
         }
 

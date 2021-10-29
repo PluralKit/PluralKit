@@ -19,6 +19,7 @@ namespace PluralKit.Bot
     public class MessageCreated: IEventHandler<MessageCreateEvent>
     {
         private readonly Bot _bot;
+        private readonly Cluster _cluster;
         private readonly CommandTree _tree;
         private readonly IDiscordCache _cache;
         private readonly LastMessageCacheService _lastMessageCache;
@@ -31,9 +32,9 @@ namespace PluralKit.Bot
         private readonly BotConfig _config;
         private readonly DiscordApiClient _rest;
 
-        public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean,
-                              IMetrics metrics, ProxyService proxy,
-                              CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config, ModelRepository repo, IDiscordCache cache, Bot bot, DiscordApiClient rest)
+        public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean, IMetrics metrics, ProxyService proxy,
+                            CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config, ModelRepository repo, IDiscordCache cache,
+                            Bot bot, Cluster cluster, DiscordApiClient rest)
         {
             _lastMessageCache = lastMessageCache;
             _loggerClean = loggerClean;
@@ -46,10 +47,18 @@ namespace PluralKit.Bot
             _repo = repo;
             _cache = cache;
             _bot = bot;
+            _cluster = cluster;
             _rest = rest;
         }
 
-        public ulong? ErrorChannelFor(MessageCreateEvent evt) => evt.ChannelId;
+        // for now, only return error messages for explicit commands
+        public ulong? ErrorChannelFor(MessageCreateEvent evt)
+        {
+            if (!HasCommandPrefix(evt.Content, _cluster.User?.Id ?? default, out var cmdStart) || cmdStart == evt.Content.Length)
+                return null;
+
+            return evt.ChannelId;
+        }
 
         private bool IsDuplicateMessage(Message msg) =>
             // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
