@@ -18,18 +18,20 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly IDiscordCache _cache;
         private readonly LoggerCleanService _cleanService;
-        public ServerConfig(LoggerCleanService cleanService, IDatabase db, ModelRepository repo, IDiscordCache cache)
+        private readonly Bot _bot;
+        public ServerConfig(LoggerCleanService cleanService, IDatabase db, ModelRepository repo, IDiscordCache cache, Bot bot)
         {
             _cleanService = cleanService;
             _db = db;
             _repo = repo;
             _cache = cache;
+            _bot = bot;
         }
 
         public async Task SetLogChannel(Context ctx)
         {
             ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-            await _repo.GetGuild(ctx.Guild.Id);
+            var settings = await _repo.GetGuild(ctx.Guild.Id);
 
             if (await ctx.MatchClear("the server log channel"))
             {
@@ -39,15 +41,32 @@ namespace PluralKit.Bot
             }
 
             if (!ctx.HasNext())
-                throw new PKSyntaxError("You must pass a #channel to set, or `clear` to clear it.");
+            {
+                if (settings.LogChannel == null)
+                {
+                    await ctx.Reply("This server does not have a log channel set.");
+                    return;
+                }
+
+                await ctx.Reply($"This server's log channel is currently set to <#{settings.LogChannel}>.");
+                return;
+            }
 
             Channel channel = null;
             var channelString = ctx.PeekArgument();
             channel = await ctx.MatchChannel();
             if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
+            if (channel.Type != Channel.ChannelType.GuildText)
+                throw new PKError("PluralKit cannot log messages to this type of channel.");
+
+            var perms = _bot.PermissionsIn(channel.Id);
+            if (!perms.HasFlag(PermissionSet.SendMessages))
+                throw new PKError("PluralKit is missing **Send Messages** permissions in the new log channel.");
+            if (!perms.HasFlag(PermissionSet.EmbedLinks))
+                throw new PKError("PluralKit is missing **Embed Links** permissions in the new log channel.");
 
             await _repo.UpdateGuild(ctx.Guild.Id, new() { LogChannel = channel.Id });
-            await ctx.Reply($"{Emojis.Success} Proxy logging channel set to #{channel.Name}.");
+            await ctx.Reply($"{Emojis.Success} Proxy logging channel set to <#{channel.Id}>.");
         }
 
         public async Task SetLogEnabled(Context ctx, bool enable)

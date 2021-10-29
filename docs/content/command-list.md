@@ -112,6 +112,7 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
+- `pk;log channel` - Shows the currently set log channel
 - `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
 - `pk;log channel -clear` - Clears the currently set log channel.
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
