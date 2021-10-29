@@ -280,15 +280,7 @@ namespace PluralKit.Bot
             var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
             var ctx = LookupContext.ByNonOwner;
 
-            Message serverMsg = null;
-            try
-            {
-                serverMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);
-            }
-            catch (ForbiddenException)
-            {
-                // no permission, couldn't fetch, oh well
-            }
+            var serverMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
 
             // Need this whole dance to handle cases where:
             // - the user is deleted (userInfo == null)

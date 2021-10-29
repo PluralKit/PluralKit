@@ -245,15 +245,9 @@ namespace PluralKit.Bot
             }
 
             // get the message info
-            var msg = ctx.Message;
-            try
-            {
-                msg = await _rest.GetMessage(channelId.Value, messageId.Value);
-            }
-            catch (ForbiddenException)
-            {
+            var msg = await _rest.GetMessageOrNull(channelId.Value, messageId.Value);
+            if (msg == null)
                 throw new PKError(failedToGetMessage);
-            }
 
             // if user is fetching a message in a different channel sent by someone else, throw a generic error message
             if (msg == null || (msg.Author.Id != ctx.Author.Id && msg.ChannelId != ctx.Channel.Id))

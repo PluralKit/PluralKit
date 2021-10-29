@@ -9,6 +9,7 @@ using Myriad.Builders;
 using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
+using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types;
 using Myriad.Types;
 
@@ -53,6 +54,19 @@ namespace PluralKit.Bot
             foreach (var reaction in reactions)
             {
                 await rest.CreateReaction(msg.ChannelId, msg.Id, new() { Name = reaction });
+            }
+        }
+
+        public static async Task<Message?> GetMessageOrNull(this DiscordApiClient rest, ulong channelId, ulong messageId)
+        {
+            try
+            {
+                return await rest.GetMessage(channelId, messageId);
+            }
+            catch (ForbiddenException)
+            {
+                // no permission, couldn't fetch, oh well
+                return null;
             }
         }
 

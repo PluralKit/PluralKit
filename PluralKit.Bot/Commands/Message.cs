@@ -1,11 +1,15 @@
 #nullable enable
-using System;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Myriad.Builders;
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Rest;
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
 using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
@@ -52,7 +56,7 @@ namespace PluralKit.Bot
 
             var newContent = ctx.RemainderOrNull().NormalizeLineEndSpacing();
 
-            var originalMsg = await _rest.GetMessage(msg.Message.Channel, msg.Message.Mid);
+            var originalMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
             if (originalMsg == null)
                 throw new PKError("Could not edit message.");
 
@@ -139,6 +143,33 @@ namespace PluralKit.Bot
                 }
                 else
                     throw Errors.MessageNotFound(messageId.Value);
+            }
+
+            if (ctx.MatchRaw())
+            {
+                var discordMessage = await _rest.GetMessageOrNull(message.Message.Channel, message.Message.Mid);
+                if (discordMessage == null)
+                    throw new PKError("Message deleted or inaccessible.");
+
+                var content = discordMessage.Content;
+                if (content == null || content == "")
+                {
+                    await ctx.Reply("No message content found in that message.");
+                    return;
+                }
+
+                await ctx.Reply(text: $"```{content}```");
+
+                if (Regex.IsMatch(content, "```.*```", RegexOptions.Singleline))
+                {
+                    var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                    await ctx.Rest.CreateMessage(
+                        ctx.Channel.Id,
+                        new MessageRequest { Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment." },
+                        new[] { new MultipartFile("message.txt", stream) });
+                }
+
+                return;
             }
 
             if (isDelete)
