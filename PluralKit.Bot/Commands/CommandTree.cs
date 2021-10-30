@@ -205,6 +205,7 @@ namespace PluralKit.Bot
             if (ctx.Match("freeze")) return ctx.Execute<Fun>(null, m => m.Freeze(ctx));
             if (ctx.Match("starstorm")) return ctx.Execute<Fun>(null, m => m.Starstorm(ctx));
             if (ctx.Match("flash")) return ctx.Execute<Fun>(null, m => m.Flash(ctx));
+            if (ctx.Match("error")) return ctx.Execute<Fun>(null, m => m.Error(ctx));
             if (ctx.Match("stats")) return ctx.Execute<Misc>(null, m => m.Stats(ctx));
             if (ctx.Match("permcheck"))
                 return ctx.Execute<Checks>(PermCheck, m => m.PermCheckGuild(ctx));
