@@ -76,5 +76,21 @@ namespace PluralKit.Core
                 .WhereIn("member_id", members);
             return _db.ExecuteQuery(query);
         }
+
+        public Task ClearGroupMembers(GroupId group)
+        {
+            _logger.Information("Cleared members of {GroupId}", group);
+            var query = new Query("group_members").AsDelete()
+                .Where("group_id", group);
+            return _db.ExecuteQuery(query);
+        }
+
+        public Task ClearMemberGroups(MemberId member)
+        {
+            _logger.Information("Cleared groups of {GroupId}", member);
+            var query = new Query("group_members").AsDelete()
+                .Where("member_id", member);
+            return _db.ExecuteQuery(query);
+        }
     }
 }

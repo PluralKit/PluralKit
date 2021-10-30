@@ -89,19 +89,25 @@ GET `/members/{memberRef}/groups`
 
 ### Add Member To Groups
 
-PUT `/members/{memberRef}/groups`
+POST `/members/{memberRef}/groups/add`
 
-::: warning
-Not all HTTP implementations support PUT requests with a body. If yours does not, consider using the [Add Member To Group](#add-member-to-group) endpoint instead.
-:::
+Takes a list of group references as input. Returns 204 No Content on success.
 
 ### Remove Member From Groups
 
-DELETE `/members/{memberRef}/groups`
+POST `/members/{memberRef}/groups/remove`
 
-::: warning
-Not all HTTP implementations support DELETE requests with a body. If yours does not, consider using the [Remove Member From Group](#remove-member-from-group) endpoint instead.
+::: tip
+If you want to remove *all* groups from a member, consider using the [Overwrite Member Groups](#overwrite-member-groups) endpoint instead.
 :::
+
+Takes a list of group references as input. Returns 204 No Content on success.
+
+### Overwrite Member Groups
+
+POST `/members/{memberRef}/groups/overwrite`
+
+Takes a list of group references as input. (An empty list is accepted.) Returns 204 No Content on success.
 
 ### Get Member Guild Settings
 
@@ -164,30 +170,29 @@ Returns 204 No Content on success.
 
 GET `/groups/{groupRef}/members`
 
-### Add Member To Group
-
-PUT `/groups/{groupRef}/members/{memberRef}`
+Returns an array of [member objects](/api/models#member-model).
 
 ### Add Members To Group
 
-PUT `/groups/{groupRef}/members`
+POST `/groups/{groupRef}/members/add`
 
-::: warning
-Not all HTTP implementations support PUT requests with a body. If yours does not, consider using the [Add Member To Group](#add-group-member) endpoint instead.
-:::
+Takes an array of member references as input. Returns 204 No Content on success.
 
 ### Remove Member From Group
 
-DELETE `/groups/{groupRef}/members/{memberRef}`
+POST `/groups/{groupRef}/members/remove`
 
-### Remove Members From Group
-
-DELETE `/groups/{groupRef}/members`
-
-::: warning
-Not all HTTP implementations support DELETE requests with a body. If yours does not, consider using the [Remove Member From Group](#remove-member-from-group) endpoint instead.
+::: tip
+If you want to remove *all* members from a group, consider using the [Overwrite Group Members](#overwrite-group-members) endpoint instead.
 :::
 
+Takes an array of member references as input. Returns 204 No Content on success.
+
+### Overwrite Group Members
+
+POST `/groups/{groupRef}/members/overwrite`
+
+Takes an array of member references as input. (An empty list is accepted.) Returns 204 No Content on success.
 
 ---
 ## Switches
