@@ -1,12 +1,16 @@
 ---
 title: Reference
-permalink: /api/reference
+permalink: /api
 ---
 
 # API Reference
 
 PluralKit has a basic HTTP REST API for querying and modifying your system.
 The root endpoint of the API is `https://api.pluralkit.me/v2/`.
+
+::: warning
+This documentation is currently pre-release. Until this notice is removed, please refer to the [legacy API documentation](/api/legacy) for model and endpoint information.
+:::
 
 #### Authorization header token example
 ```
