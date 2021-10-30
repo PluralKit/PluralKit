@@ -329,6 +329,8 @@ namespace PluralKit.Bot
                 await ctx.Reply(
                     $"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\nPerhaps you meant to use one of the following commands?\n{list}");
             }
+            else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
+                await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
             else if (ctx.Match("list", "l", "members"))
                 await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
             else if (ctx.Match("find", "search", "query", "fd", "s"))

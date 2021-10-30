@@ -304,9 +304,10 @@ namespace PluralKit.Bot
                 await Set();
         }
 
-        public async Task Avatar(Context ctx)
+        public async Task Avatar(Context ctx, PKSystem target = null)
         {
-            ctx.CheckSystem();
+            if (target == null)
+                ctx.CheckSystem();
 
             async Task ClearIcon()
             {
@@ -337,16 +338,24 @@ namespace PluralKit.Bot
 
             async Task ShowIcon()
             {
-                if ((ctx.System.AvatarUrl?.Trim() ?? "").Length > 0)
+                var system = target ?? ctx.System;
+                if ((system.AvatarUrl?.Trim() ?? "").Length > 0)
                 {
                     var eb = new EmbedBuilder()
                         .Title("System icon")
-                        .Image(new(ctx.System.AvatarUrl.TryGetCleanCdnUrl()))
-                        .Description("To clear, use `pk;system icon clear`.");
+                        .Image(new(system.AvatarUrl.TryGetCleanCdnUrl()));
+                    if (system.Id == ctx.System?.Id)
+                        eb.Description("To clear, use `pk;system icon clear`.");
                     await ctx.Reply(embed: eb.Build());
                 }
                 else
                     throw new PKSyntaxError("This system does not have an icon set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+            }
+
+            if (target != null && target?.Id != ctx.System?.Id)
+            {
+                await ShowIcon();
+                return;
             }
 
             if (await ctx.MatchClear("your system's icon"))
