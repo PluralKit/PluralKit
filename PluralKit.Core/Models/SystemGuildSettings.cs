@@ -1,5 +1,10 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Converters;
+
 namespace PluralKit.Core
 {
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum AutoproxyMode
     {
         Off = 1,
@@ -19,5 +24,45 @@ namespace PluralKit.Core
 
         public string? Tag { get; }
         public bool TagEnabled { get; }
+    }
+
+    public static class SystemGuildExt
+    {
+        public static JObject ToJson(this SystemGuildSettings settings, string? memberHid = null)
+        {
+            var o = new JObject();
+
+            o.Add("proxying_enabled", settings.ProxyEnabled);
+            o.Add("autoproxy_mode", settings.AutoproxyMode.ToString().ToLower());
+            o.Add("autoproxy_member", memberHid);
+            o.Add("tag", settings.Tag);
+            o.Add("tag_enabled", settings.TagEnabled);
+
+            return o;
+        }
+
+        public static (AutoproxyMode?, ValidationError?) ParseAutoproxyMode(this JToken o)
+        {
+            if (o.Type == JTokenType.Null)
+                return (AutoproxyMode.Off, null);
+            else if (o.Type != JTokenType.String)
+                return (null, new ValidationError("autoproxy_mode"));
+
+            var value = o.Value<string>();
+
+            switch (value)
+            {
+                case "off":
+                    return (AutoproxyMode.Off, null);
+                case "front":
+                    return (AutoproxyMode.Front, null);
+                case "latch":
+                    return (AutoproxyMode.Latch, null);
+                case "member":
+                    return (AutoproxyMode.Member, null);
+                default:
+                    return (null, new ValidationError("autoproxy_mode", $"Value '{value}' is not a valid autoproxy mode."));
+            }
+        }
     }
 }

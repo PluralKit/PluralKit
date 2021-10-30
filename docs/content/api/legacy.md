@@ -1,47 +1,13 @@
 ---
-title: API documentation
-description: PluralKit's API documentation.
-permalink: /api
+title: Legacy API documentation
+permalink: /api/legacy
 ---
 
-**2020-05-07**: [The PluralKit API is now documented on Swagger.](https://app.swaggerhub.com/apis-docs/xSke/PluralKit/1.1)
-Accompanying it is an [OpenAPI v3.0 definition](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml). It's mostly complete, but is still subject to change - so don't go generating API clients and mock servers with it quite yet. It may still be useful, though :) 
+# Legacy API documentation
 
-# API documentation
-
-PluralKit has a basic HTTP REST API for querying and modifying your system.
-The root endpoint of the API is `https://api.pluralkit.me/v1/`.
-
-#### Authorization header token example
-```
-Authorization: z865MC7JNhLtZuSq1NXQYVe+FgZJHBfeBCXOPYYRwH4liDCDrsd7zdOuR45mX257
-```
-
-Endpoints will always return all fields, using `null` when a value is missing. On `PATCH` endpoints,
-missing fields from the JSON request will be ignored and preserved as is, but on `POST` endpoints will
-be set to `null` or cleared.
-
-Endpoints taking JSON bodies (eg. most `PATCH` and `PUT` endpoints) require the `Content-Type: application/json` header set.
-
-## Community API Libraries
-
-The following API libraries have been created by members of our community. Please contact the developer of each library if you need support.
-
-- **Python:** *PluralKit.py* ([PyPI](https://pypi.org/project/pluralkit/) | [Docs](https://pluralkit.readthedocs.io/en/latest/source/quickstart.html) | [Source code](https://github.com/almonds0166/pluralkit.py))
-- **JavaScript:** *pkapi.js* ([npmjs](https://npmjs.com/package/pkapi.js) | [Docs](https://github.com/greysdawn/pk.js/wiki) | [Source code](https://github.com/greysdawn/pk.js))
-- **Golang:** *pkgo* (install: `go get github.com/starshine-sys/pkgo` | [Docs (godoc)](https://godocs.io/github.com/starshine-sys/pkgo) | [Docs (pkg.go.dev)](https://pkg.go.dev/github.com/starshine-sys/pkgo) | [Source code](https://github.com/starshine-sys/pkgo))
-
-Do let us know in the support server if you made a new library and would like to see it listed here!
-
-## Authentication
-Authentication is done with a simple "system token". You can get your system token by running `pk;token` using the
-Discord bot, either in a channel with the bot or in DMs. Then, pass this token in the `Authorization` HTTP header
-on requests that require it. Failure to do so on endpoints that require authentication will return a `401 Unauthorized`.
-
-Some endpoints show information that a given system may have set to private. If this is a specific field
-(eg. description), the field will simply contain `null` rather than the true value. If this applies to entire endpoint
-responses (eg. fronter, switches, member list), the entire request will return `403 Forbidden`. Authenticating with the
-system's token (as described above) will override these privacy settings and show the full information. 
+::: warning
+This is the documentation for v1 of the PluralKit API. Please use v2 going forwards - v1 is deprecated and will be removed eventually.
+:::
 
 ## Models
 The following three models (usually represented in JSON format) represent the various objects in PluralKit's API.
@@ -537,31 +503,3 @@ The returned system and member's privacy settings will be respected, and as such
     }
 }
 ```
-
-## Version history
-* 2020-07-28
-  * The unversioned API endpoints have been removed.
-* 2020-06-17 (v1.1)
-  * The API now has values for granular member privacy. The new fields are as follows: `visibility`, `name_privacy`, `description_privacy`, `avatar_privacy`, `birthday_privacy`, `pronoun_privacy`, `metadata_privacy`. All are strings and accept the values of `public`, `private` and `null`.
-  * The `privacy` field has now been deprecated and should not be used. It's still returned (mirroring the `visibility` field), and writing to it will write to *all privacy options*.
-* 2020-05-07
-  * The API (v1) is now formally(ish) defined with OpenAPI v3.0. [The definition file can be found here.](https://github.com/xSke/PluralKit/blob/master/PluralKit.API/openapi.yaml)
-* 2020-02-10
-  * Birthdates with no year can now be stored using `0004` as a year, for better leap year support. Both options remain valid and either may be returned by the API.
-  * Added privacy set/get support, meaning you will now see privacy values in authed requests and can set them.
-* 2020-01-08
-  * Added privacy support, meaning some responses will now lack information or return 403s, depending on the specific system and member's privacy settings.
-* 2019-12-28
-  * Changed behaviour of missing fields in PATCH responses, will now preserve the old value instead of clearing
-  * This is technically a breaking change, but not *significantly* so, so I won't bump the version number.
-* 2019-10-31
-  * Added `proxy_tags` field to members
-  * Added `keep_proxy` field to members
-  * Deprecated `prefix` and `suffix` member fields, will be removed at some point (tm)
-* 2019-07-17
-  * Added endpoint for querying system by account
-  * Added endpoint for querying message contents
-* 2019-07-10 **(v1)**
-  * First specified version
-* (prehistory)
-  * Initial release

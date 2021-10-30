@@ -58,21 +58,21 @@ namespace PluralKit.API
             await using var tx = await conn.BeginTransactionAsync();
             var member = await _repo.CreateMember(systemId, properties.Value<string>("name"), conn);
 
-            MemberPatch patch;
-            try
-            {
-                patch = MemberPatch.FromJSON(properties);
-                patch.AssertIsValid();
-            }
-            catch (FieldTooLongError e)
+            var patch = MemberPatch.FromJSON(properties);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
             {
                 await tx.RollbackAsync();
-                return BadRequest(e.Message);
-            }
-            catch (ValidationError e)
-            {
-                await tx.RollbackAsync();
-                return BadRequest($"Request field '{e.Message}' is invalid.");
+
+                var err = patch.Errors[0];
+                if (err is FieldTooLongError)
+                    return BadRequest($"Field {err.Key} is too long "
+                        + $"({(err as FieldTooLongError).ActualLength} > {(err as FieldTooLongError).MaxLength}).");
+                else if (err.Text != null)
+                    return BadRequest(err.Text);
+                else
+                    return BadRequest($"Field {err.Key} is invalid.");
             }
 
             member = await _repo.UpdateMember(member.Id, patch, conn);
@@ -90,19 +90,19 @@ namespace PluralKit.API
             var res = await _auth.AuthorizeAsync(User, member, "EditMember");
             if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
 
-            MemberPatch patch;
-            try
+            var patch = MemberPatch.FromJSON(changes);
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
             {
-                patch = MemberPatch.FromJSON(changes);
-                patch.AssertIsValid();
-            }
-            catch (FieldTooLongError e)
-            {
-                return BadRequest(e.Message);
-            }
-            catch (ValidationError e)
-            {
-                return BadRequest($"Request field '{e.Message}' is invalid.");
+                var err = patch.Errors[0];
+                if (err is FieldTooLongError)
+                    return BadRequest($"Field {err.Key} is too long "
+                        + $"({(err as FieldTooLongError).ActualLength} > {(err as FieldTooLongError).MaxLength}).");
+                else if (err.Text != null)
+                    return BadRequest(err.Text);
+                else
+                    return BadRequest($"Field {err.Key} is invalid.");
             }
 
             var newMember = await _repo.UpdateMember(member.Id, patch);

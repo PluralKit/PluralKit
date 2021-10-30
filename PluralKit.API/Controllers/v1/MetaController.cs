@@ -28,7 +28,7 @@ namespace PluralKit.API
         public async Task<ActionResult<JObject>> GetMeta()
         {
             await using var conn = await _db.Obtain();
-            var shards = await _repo.GetShards(conn);
+            var shards = await _repo.GetShards();
 
             var o = new JObject();
             o.Add("shards", shards.ToJSON());
@@ -36,33 +36,5 @@ namespace PluralKit.API
 
             return Ok(o);
         }
-    }
-
-    public static class MetaJsonExt
-    {
-        public static JArray ToJSON(this IEnumerable<PKShardInfo> shards)
-        {
-            var o = new JArray();
-
-            foreach (var shard in shards)
-            {
-                var s = new JObject();
-                s.Add("id", shard.Id);
-
-                if (shard.Status == PKShardInfo.ShardStatus.Down)
-                    s.Add("status", "down");
-                else
-                    s.Add("status", "up");
-
-                s.Add("ping", shard.Ping);
-                s.Add("last_heartbeat", shard.LastHeartbeat.ToString());
-                s.Add("last_connection", shard.LastConnection.ToString());
-
-                o.Add(s);
-            }
-
-            return o;
-        }
-
     }
 }

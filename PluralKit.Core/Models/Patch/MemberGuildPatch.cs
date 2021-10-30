@@ -1,5 +1,7 @@
 #nullable enable
 
+using Newtonsoft.Json.Linq;
+
 using SqlKata;
 
 namespace PluralKit.Core
@@ -13,5 +15,28 @@ namespace PluralKit.Core
             .With("display_name", DisplayName)
             .With("avatar_url", AvatarUrl)
         );
+
+        public new void AssertIsValid()
+        {
+            if (DisplayName.Value != null)
+                AssertValid(DisplayName.Value, "display_name", Limits.MaxMemberNameLength);
+            if (AvatarUrl.Value != null)
+                AssertValid(AvatarUrl.Value, "avatar_url", Limits.MaxUriLength,
+                    s => MiscUtils.TryMatchUri(s, out var avatarUri));
+        }
+
+#nullable disable
+        public static MemberGuildPatch FromJson(JObject o)
+        {
+            var patch = new MemberGuildPatch();
+
+            if (o.ContainsKey("display_name"))
+                patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
+
+            if (o.ContainsKey("avatar_url"))
+                patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
+
+            return patch;
+        }
     }
 }

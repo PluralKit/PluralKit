@@ -20,13 +20,17 @@ namespace PluralKit.Core
         {
             var patch = SystemPatch.FromJSON(importFile);
 
-            try
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
             {
-                patch.AssertIsValid();
-            }
-            catch (ValidationError e)
-            {
-                throw new ImportException($"Field {e.Message} in export file is invalid.");
+                var err = patch.Errors[0];
+                if (err is FieldTooLongError)
+                    throw new ImportException($"Field {err.Key} in export file is too long "
+                        + $"({(err as FieldTooLongError).ActualLength} > {(err as FieldTooLongError).MaxLength}).");
+                else if (err.Text != null)
+                    throw new ImportException(err.Text);
+                else
+                    throw new ImportException($"Field {err.Key} in export file is invalid.");
             }
 
             await _repo.UpdateSystem(_system.Id, patch, _conn);
@@ -87,17 +91,18 @@ namespace PluralKit.Core
             );
 
             var patch = MemberPatch.FromJSON(member);
-            try
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
             {
-                patch.AssertIsValid();
-            }
-            catch (FieldTooLongError e)
-            {
-                throw new ImportException($"Field {e.Name} in member {referenceName} is too long ({e.ActualLength} > {e.MaxLength}).");
-            }
-            catch (ValidationError e)
-            {
-                throw new ImportException($"Field {e.Message} in member {referenceName} is invalid.");
+                var err = patch.Errors[0];
+                if (err is FieldTooLongError)
+                    throw new ImportException($"Field {err.Key} in member {name} is too long "
+                        + $"({(err as FieldTooLongError).ActualLength} > {(err as FieldTooLongError).MaxLength}).");
+                else if (err.Text != null)
+                    throw new ImportException($"member {name}: {err.Text}");
+                else
+                    throw new ImportException($"Field {err.Key} in member {name} is invalid.");
             }
 
             MemberId? memberId = found;
@@ -128,17 +133,18 @@ namespace PluralKit.Core
             );
 
             var patch = GroupPatch.FromJson(group);
-            try
+
+            patch.AssertIsValid();
+            if (patch.Errors.Count > 0)
             {
-                patch.AssertIsValid();
-            }
-            catch (FieldTooLongError e)
-            {
-                throw new ImportException($"Field {e.Name} in group {referenceName} is too long ({e.ActualLength} > {e.MaxLength}).");
-            }
-            catch (ValidationError e)
-            {
-                throw new ImportException($"Field {e.Message} in group {referenceName} is invalid.");
+                var err = patch.Errors[0];
+                if (err is FieldTooLongError)
+                    throw new ImportException($"Field {err.Key} in group {name} is too long "
+                        + $"({(err as FieldTooLongError).ActualLength} > {(err as FieldTooLongError).MaxLength}).");
+                else if (err.Text != null)
+                    throw new ImportException($"group {name}: {err.Text}");
+                else
+                    throw new ImportException($"Field {err.Key} in group {name} is invalid.");
             }
 
             GroupId? groupId = found;

@@ -1,5 +1,7 @@
 #nullable enable
 
+using Newtonsoft.Json.Linq;
+
 using SqlKata;
 
 namespace PluralKit.Core
@@ -19,5 +21,39 @@ namespace PluralKit.Core
             .With("tag", Tag)
             .With("tag_enabled", TagEnabled)
         );
+
+        public new void AssertIsValid()
+        {
+            if (Tag.Value != null)
+                AssertValid(Tag.Value, "tag", Limits.MaxSystemTagLength);
+        }
+
+#nullable disable
+        public static SystemGuildPatch FromJson(JObject o, MemberId? memberId)
+        {
+            var patch = new SystemGuildPatch();
+
+            if (o.ContainsKey("proxying_enabled") && o["proxying_enabled"].Type != JTokenType.Null)
+                patch.ProxyEnabled = o.Value<bool>("proxying_enabled");
+
+            if (o.ContainsKey("autoproxy_mode"))
+            {
+                var (val, err) = o["autoproxy_mode"].ParseAutoproxyMode();
+                if (err != null)
+                    patch.Errors.Add(err);
+                else
+                    patch.AutoproxyMode = val.Value;
+            }
+
+            patch.AutoproxyMember = memberId;
+
+            if (o.ContainsKey("tag"))
+                patch.Tag = o.Value<string>("tag").NullIfEmpty();
+
+            if (o.ContainsKey("tag_enabled") && o["tag_enabled"].Type != JTokenType.Null)
+                patch.TagEnabled = o.Value<bool>("tag_enabled");
+
+            return patch;
+        }
     }
 }

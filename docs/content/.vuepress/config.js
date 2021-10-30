@@ -41,7 +41,6 @@ module.exports = {
           "/getting-started",
           "/user-guide",
           "/command-list",
-          "/api-documentation",
           "/privacy-policy",
           "/faq",
           "/tips-and-tricks"
@@ -56,6 +55,19 @@ module.exports = {
           "/staff/disabling",
           "/staff/logging",
           "/staff/compatibility",
+        ]
+      },
+      {
+        title: "API Documentation",
+        collapsable: false,
+        children: [
+          "/api/changelog",
+          "/api/reference",
+          "/api/endpoints",
+          "/api/models",
+          "/api/errors",
+          // "/api/integrations",
+          "/api/legacy"
         ]
       },
       ["https://discord.gg/PczBt78", "Join the support server"],

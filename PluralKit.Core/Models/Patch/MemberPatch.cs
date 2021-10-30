@@ -58,7 +58,7 @@ namespace PluralKit.Core
 
         public new void AssertIsValid()
         {
-            if (Name.IsPresent)
+            if (Name.Value != null)
                 AssertValid(Name.Value, "name", Limits.MaxMemberNameLength);
             if (DisplayName.Value != null)
                 AssertValid(DisplayName.Value, "display_name", Limits.MaxMemberNameLength);
@@ -77,17 +77,21 @@ namespace PluralKit.Core
             if (ProxyTags.IsPresent && (ProxyTags.Value.Length > 100 ||
                                         ProxyTags.Value.Any(tag => tag.ProxyString.IsLongerThan(100))))
                 // todo: have a better error for this
-                throw new ValidationError("proxy_tags");
+                Errors.Add(new ValidationError("proxy_tags"));
         }
 
 #nullable disable
 
-        public static MemberPatch FromJSON(JObject o)
+        public static MemberPatch FromJSON(JObject o, APIVersion v = APIVersion.V1)
         {
             var patch = new MemberPatch();
 
-            if (o.ContainsKey("name") && o["name"].Type == JTokenType.Null)
-                throw new ValidationError("Member name can not be set to null.");
+            if (o.ContainsKey("name"))
+            {
+                patch.Name = o.Value<string>("name").NullIfEmpty();
+                if (patch.Name.Value == null)
+                    patch.Errors.Add(new ValidationError("name", "Member name can not be set to null."));
+            }
 
             if (o.ContainsKey("name")) patch.Name = o.Value<string>("name");
             if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
@@ -101,45 +105,89 @@ namespace PluralKit.Core
                 var res = DateTimeFormats.DateExportFormat.Parse(str);
                 if (res.Success) patch.Birthday = res.Value;
                 else if (str == null) patch.Birthday = null;
-                else throw new ValidationError("birthday");
+                else patch.Errors.Add(new ValidationError("birthday"));
             }
 
             if (o.ContainsKey("pronouns")) patch.Pronouns = o.Value<string>("pronouns").NullIfEmpty();
             if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty();
             if (o.ContainsKey("keep_proxy")) patch.KeepProxy = o.Value<bool>("keep_proxy");
 
-            // legacy: used in old export files and APIv1
-            if (o.ContainsKey("prefix") || o.ContainsKey("suffix") && !o.ContainsKey("proxy_tags"))
-                patch.ProxyTags = new[] { new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")) };
-            else if (o.ContainsKey("proxy_tags"))
-                patch.ProxyTags = o.Value<JArray>("proxy_tags")
-                    .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
-                    .Where(p => p.Valid)
-                    .ToArray();
-
-            if (o.ContainsKey("privacy")) //TODO: Deprecate this completely in api v2
+            switch (v)
             {
-                var plevel = o.ParsePrivacy("privacy");
+                case APIVersion.V1:
+                    {
+                        // legacy: used in old export files and APIv1
+                        if (o.ContainsKey("prefix") || o.ContainsKey("suffix") && !o.ContainsKey("proxy_tags"))
+                            patch.ProxyTags = new[] { new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")) };
+                        else if (o.ContainsKey("proxy_tags"))
+                            patch.ProxyTags = o.Value<JArray>("proxy_tags")
+                                .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
+                                .Where(p => p.Valid)
+                                .ToArray();
 
-                patch.Visibility = plevel;
-                patch.NamePrivacy = plevel;
-                patch.AvatarPrivacy = plevel;
-                patch.DescriptionPrivacy = plevel;
-                patch.BirthdayPrivacy = plevel;
-                patch.PronounPrivacy = plevel;
-                // member.ColorPrivacy = plevel;
-                patch.MetadataPrivacy = plevel;
-            }
-            else
-            {
-                if (o.ContainsKey("visibility")) patch.Visibility = o.ParsePrivacy("visibility");
-                if (o.ContainsKey("name_privacy")) patch.NamePrivacy = o.ParsePrivacy("name_privacy");
-                if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.ParsePrivacy("description_privacy");
-                if (o.ContainsKey("avatar_privacy")) patch.AvatarPrivacy = o.ParsePrivacy("avatar_privacy");
-                if (o.ContainsKey("birthday_privacy")) patch.BirthdayPrivacy = o.ParsePrivacy("birthday_privacy");
-                if (o.ContainsKey("pronoun_privacy")) patch.PronounPrivacy = o.ParsePrivacy("pronoun_privacy");
-                // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.ParsePrivacy("member");
-                if (o.ContainsKey("metadata_privacy")) patch.MetadataPrivacy = o.ParsePrivacy("metadata_privacy");
+                        if (o.ContainsKey("privacy"))
+                        {
+                            var plevel = patch.ParsePrivacy(o, "privacy");
+
+                            patch.Visibility = plevel;
+                            patch.NamePrivacy = plevel;
+                            patch.AvatarPrivacy = plevel;
+                            patch.DescriptionPrivacy = plevel;
+                            patch.BirthdayPrivacy = plevel;
+                            patch.PronounPrivacy = plevel;
+                            // member.ColorPrivacy = plevel;
+                            patch.MetadataPrivacy = plevel;
+                        }
+                        else
+                        {
+                            if (o.ContainsKey("visibility")) patch.Visibility = patch.ParsePrivacy(o, "visibility");
+                            if (o.ContainsKey("name_privacy")) patch.NamePrivacy = patch.ParsePrivacy(o, "name_privacy");
+                            if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
+                            if (o.ContainsKey("avatar_privacy")) patch.AvatarPrivacy = patch.ParsePrivacy(o, "avatar_privacy");
+                            if (o.ContainsKey("birthday_privacy")) patch.BirthdayPrivacy = patch.ParsePrivacy(o, "birthday_privacy");
+                            if (o.ContainsKey("pronoun_privacy")) patch.PronounPrivacy = patch.ParsePrivacy(o, "pronoun_privacy");
+                            // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.ParsePrivacy("member");
+                            if (o.ContainsKey("metadata_privacy")) patch.MetadataPrivacy = patch.ParsePrivacy(o, "metadata_privacy");
+                        }
+                        break;
+                    }
+                case APIVersion.V2:
+                    {
+
+                        if (o.ContainsKey("proxy_tags"))
+                            patch.ProxyTags = o.Value<JArray>("proxy_tags")
+                                .OfType<JObject>().Select(o => new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")))
+                                .Where(p => p.Valid)
+                                .ToArray();
+
+                        if (o.ContainsKey("privacy") && o["privacy"].Type != JTokenType.Null)
+                        {
+                            var privacy = o.Value<JObject>("privacy");
+
+                            if (privacy.ContainsKey("visibility"))
+                                patch.Visibility = patch.ParsePrivacy(privacy, "visibility");
+
+                            if (privacy.ContainsKey("name_privacy"))
+                                patch.NamePrivacy = patch.ParsePrivacy(privacy, "name_privacy");
+
+                            if (privacy.ContainsKey("description_privacy"))
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
+
+                            if (privacy.ContainsKey("avatar_privacy"))
+                                patch.AvatarPrivacy = patch.ParsePrivacy(privacy, "avatar_privacy");
+
+                            if (privacy.ContainsKey("birthday_privacy"))
+                                patch.BirthdayPrivacy = patch.ParsePrivacy(privacy, "birthday_privacy");
+
+                            if (privacy.ContainsKey("pronoun_privacy"))
+                                patch.PronounPrivacy = patch.ParsePrivacy(privacy, "pronoun_privacy");
+
+                            if (privacy.ContainsKey("metadata_privacy"))
+                                patch.MetadataPrivacy = patch.ParsePrivacy(privacy, "metadata_privacy");
+                        }
+
+                        break;
+                    }
             }
 
             return patch;

@@ -69,10 +69,12 @@ namespace PluralKit.Core
             if (Color.Value != null)
                 AssertValid(Color.Value, "color", "^[0-9a-fA-F]{6}$");
             if (UiTz.IsPresent && DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz.Value) == null)
-                throw new ValidationError("avatar_url");
+                Errors.Add(new ValidationError("timezone"));
         }
 
-        public static SystemPatch FromJSON(JObject o)
+#nullable disable
+
+        public static SystemPatch FromJSON(JObject o, APIVersion v = APIVersion.V1)
         {
             var patch = new SystemPatch();
             if (o.ContainsKey("name")) patch.Name = o.Value<string>("name").NullIfEmpty();
@@ -81,16 +83,47 @@ namespace PluralKit.Core
             if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
             if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
             if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty();
-            if (o.ContainsKey("timezone")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
+            if (o.ContainsKey("timezone")) patch.UiTz = o.Value<string>("timezone") ?? "UTC";
 
-            // legacy: APIv1 uses "tz" instead of "timezone"
-            // todo: remove in APIv2
-            if (o.ContainsKey("tz")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
+            switch (v)
+            {
+                case APIVersion.V1:
+                    {
+                        if (o.ContainsKey("tz")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
 
-            if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = o.ParsePrivacy("description_privacy");
-            if (o.ContainsKey("member_list_privacy")) patch.MemberListPrivacy = o.ParsePrivacy("member_list_privacy");
-            if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = o.ParsePrivacy("front_privacy");
-            if (o.ContainsKey("front_history_privacy")) patch.FrontHistoryPrivacy = o.ParsePrivacy("front_history_privacy");
+                        if (o.ContainsKey("description_privacy")) patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
+                        if (o.ContainsKey("member_list_privacy")) patch.MemberListPrivacy = patch.ParsePrivacy(o, "member_list_privacy");
+                        if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = patch.ParsePrivacy(o, "front_privacy");
+                        if (o.ContainsKey("front_history_privacy")) patch.FrontHistoryPrivacy = patch.ParsePrivacy(o, "front_history_privacy");
+
+                        break;
+                    }
+                case APIVersion.V2:
+                    {
+                        if (o.ContainsKey("privacy") && o["privacy"].Type != JTokenType.Null)
+                        {
+                            var privacy = o.Value<JObject>("privacy");
+
+                            if (privacy.ContainsKey("description_privacy"))
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
+
+                            if (privacy.ContainsKey("member_list_privacy"))
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "member_list_privacy");
+
+                            if (privacy.ContainsKey("group_list_privacy"))
+                                patch.GroupListPrivacy = patch.ParsePrivacy(privacy, "group_list_privacy");
+
+                            if (privacy.ContainsKey("front_privacy"))
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "front_privacy");
+
+                            if (privacy.ContainsKey("front_history_privacy"))
+                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "front_history_privacy");
+                        }
+
+                        break;
+                    }
+            }
+
             return patch;
         }
     }

@@ -16,6 +16,15 @@ namespace PluralKit.Core
             return _db.QueryStream<PKGroup>(query);
         }
 
+        public IAsyncEnumerable<PKMember> GetGroupMembers(GroupId id)
+        {
+            var query = new Query("group_members")
+                .Select("members.*")
+                .Join("members", "group_members.member_id", "members.id")
+                .Where("group_members.group_id", id);
+            return _db.QueryStream<PKMember>(query);
+        }
+
         // todo: add this to metrics tracking
         public async Task AddGroupsToMember(MemberId member, IReadOnlyCollection<GroupId> groups)
         {
@@ -65,6 +74,22 @@ namespace PluralKit.Core
             var query = new Query("group_members").AsDelete()
                 .Where("group_id", group)
                 .WhereIn("member_id", members);
+            return _db.ExecuteQuery(query);
+        }
+
+        public Task ClearGroupMembers(GroupId group)
+        {
+            _logger.Information("Cleared members of {GroupId}", group);
+            var query = new Query("group_members").AsDelete()
+                .Where("group_id", group);
+            return _db.ExecuteQuery(query);
+        }
+
+        public Task ClearMemberGroups(MemberId member)
+        {
+            _logger.Information("Cleared groups of {GroupId}", member);
+            var query = new Query("group_members").AsDelete()
+                .Where("member_id", member);
             return _db.ExecuteQuery(query);
         }
     }
