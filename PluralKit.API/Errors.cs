@@ -54,20 +54,10 @@ namespace PluralKit.API
                 else
                     o.Add("message", $"Field {err.Key} is invalid.");
 
-                if (e[err.Key] != null)
-                {
-                    if (e[err.Key].Type == JTokenType.Object)
-                    {
-                        var current = e[err.Key];
-                        e.Remove(err.Key);
-                        e.Add(err.Key, new JArray());
-                        (e[err.Key] as JArray).Add(current);
-                    }
+                if (e[err.Key] == null)
+                    e.Add(err.Key, new JArray());
 
-                    (e[err.Key] as JArray).Add(o);
-                }
-                else
-                    e.Add(err.Key, o);
+                (e[err.Key] as JArray).Add(o);
             }
 
             j.Add("errors", e);

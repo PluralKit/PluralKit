@@ -13,10 +13,10 @@ When something goes wrong, the API will send back a 4xx HTTP status code, along 
 |---|---|---|
 |code|int|numerical error code|
 |message|string|description of the error|
-|?errors|map of keys to error objects*|details on the error|
+|?errors|map of entity keys to list of error objects*|details on the error|
 |?retry_after|int|if this is a rate limit error, the number of milliseconds after which you can retry the request|
 
-* Only returned for model parsing errors. Values can be individual error objects, or arrays of error objects.
+* Only returned for model parsing errors.
 
 ### Error Object
 
