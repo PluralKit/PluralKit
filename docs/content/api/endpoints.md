@@ -264,3 +264,14 @@ Returns a [switch object](/api/models#switch-model) containing a list of member 
 DELETE `/systems/{systemRef}/switches/{switchRef}`
 
 Returns 204 No Content on success.
+
+---
+## Misc
+
+### Get Proxied Message Information
+
+GET `/messages/{message}`
+
+Message can be the ID of a proxied message, or the ID of the message that sent the proxy.
+
+Returns a [message object](/api/models#message-object).
