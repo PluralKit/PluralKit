@@ -10,7 +10,7 @@ namespace PluralKit.Tests
     public class GroupAddRemoveResponseTests
     {
         private static Func<Groups.AddRemoveOperation, int, int, int, int, string>
-            func = GroupAddRemoveResponseService.GenerateResponse;
+            func = GroupMemberUtils.GenerateResponse;
         private static Groups.AddRemoveOperation addOp = Groups.AddRemoveOperation.Add;
         private static Groups.AddRemoveOperation removeOp = Groups.AddRemoveOperation.Remove;
         private static string success = Emojis.Success;

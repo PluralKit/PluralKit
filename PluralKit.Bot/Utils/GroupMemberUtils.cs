@@ -4,7 +4,7 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
-    public static class GroupAddRemoveResponseService
+    public static class GroupMemberUtils
     {
         public static string GenerateResponse(Groups.AddRemoveOperation action, int memberCount, int groupCount, int actionedOn, int notActionedOn)
         {
