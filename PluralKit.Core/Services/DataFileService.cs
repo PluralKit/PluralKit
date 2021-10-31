@@ -31,15 +31,11 @@ namespace PluralKit.Core
             await using var conn = await _db.Obtain();
 
             var o = new JObject();
-
             o.Add("version", 1);
-            o.Add("id", system.Hid);
-            o.Add("name", system.Name);
-            o.Add("description", system.Description);
-            o.Add("tag", system.Tag);
-            o.Add("avatar_url", system.AvatarUrl);
+
+            o.Merge(system.ToJson(LookupContext.ByOwner));
+
             o.Add("timezone", system.UiTz);
-            o.Add("created", system.Created.FormatExport());
             o.Add("accounts", new JArray((await _repo.GetSystemAccounts(system.Id)).ToList()));
             o.Add("members", new JArray((await _repo.GetSystemMembers(system.Id).ToListAsync()).Select(m => m.ToJson(LookupContext.ByOwner))));
 
