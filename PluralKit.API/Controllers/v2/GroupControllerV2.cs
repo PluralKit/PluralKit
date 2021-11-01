@@ -18,7 +18,7 @@ namespace PluralKit.API
         public GroupControllerV2(IServiceProvider svc) : base(svc) { }
 
         [HttpGet("systems/{systemRef}/groups")]
-        public async Task<IActionResult> GetSystemGroups(string systemRef)
+        public async Task<IActionResult> GetSystemGroups(string systemRef, [FromQuery] bool with_members)
         {
             var system = await ResolveSystem(systemRef);
             if (system == null)
@@ -26,14 +26,29 @@ namespace PluralKit.API
 
             var ctx = this.ContextFor(system);
 
+            if (with_members && !system.MemberListPrivacy.CanAccess(ctx))
+                throw Errors.UnauthorizedMemberList;
+
             if (!system.GroupListPrivacy.CanAccess(User.ContextFor(system)))
                 throw Errors.UnauthorizedGroupList;
 
             var groups = _repo.GetSystemGroups(system.Id);
-            return Ok(await groups
+
+            var j_groups = await groups
                 .Where(g => g.Visibility.CanAccess(ctx))
-                .Select(g => g.ToJson(ctx))
-                .ToListAsync());
+                .Select(g => g.ToJson(ctx, needsMembersArray: with_members))
+                .ToListAsync();
+
+            if (with_members && j_groups.Count > 0)
+            {
+                var q = await _repo.GetGroupMemberInfo(await groups.Select(x => x.Id).ToListAsync());
+
+                foreach (var row in q)
+                    if (row.MemberVisibility.CanAccess(ctx))
+                        ((JArray)j_groups.Find(x => x.Value<string>("id") == row.Group)["members"]).Add(row.MemberUuid);
+            }
+
+            return Ok(j_groups);
         }
 
         [HttpPost("groups")]

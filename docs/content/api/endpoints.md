@@ -136,6 +136,11 @@ Returns a [member guild settings](/api/models#member-guild-settings) object on s
 
 GET `/systems/{systemRef}/groups`
 
+Query String Parameters
+|name|type|description
+|---|---|---|
+|with_members|boolean|includes `members` key with array of member UUIDs in each group object|
+
 Returns a list of [group objects](/api/models/#group-model).
 
 ### Create Group

@@ -61,7 +61,7 @@ namespace PluralKit.Core
         public static string? IconFor(this PKGroup group, LookupContext ctx) =>
             group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
 
-        public static JObject ToJson(this PKGroup group, LookupContext ctx, string? systemStr = null, bool isExport = false)
+        public static JObject ToJson(this PKGroup group, LookupContext ctx, string? systemStr = null, bool needsMembersArray = false)
         {
             var o = new JObject();
 
@@ -80,7 +80,7 @@ namespace PluralKit.Core
 
             o.Add("created", group.Created.FormatExport());
 
-            if (isExport)
+            if (needsMembersArray)
                 o.Add("members", new JArray());
 
             if (ctx == LookupContext.ByOwner)

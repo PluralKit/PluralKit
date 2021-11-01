@@ -40,15 +40,11 @@ namespace PluralKit.Core
             o.Add("members", new JArray((await _repo.GetSystemMembers(system.Id).ToListAsync()).Select(m => m.ToJson(LookupContext.ByOwner))));
 
             var groups = (await _repo.GetSystemGroups(system.Id).ToListAsync());
-            var j_groups = groups.Select(x => x.ToJson(LookupContext.ByOwner, isExport: true)).ToList();
+            var j_groups = groups.Select(x => x.ToJson(LookupContext.ByOwner, needsMembersArray: true)).ToList();
 
             if (groups.Count > 0)
             {
-                var q = await conn.QueryAsync<GroupMember>(@$"select groups.hid as group, members.hid as member from group_members
-                        left join groups on groups.id = group_members.group_id
-                        left join members on members.id = group_members.member_id 
-                    where group_members.group_id in ({string.Join(", ", groups.Select(x => x.Id.Value.ToString()))})
-                ");
+                var q = await _repo.GetGroupMemberInfo(groups.Select(x => x.Id));
 
                 foreach (var row in q)
                     ((JArray)j_groups.Find(x => x.Value<string>("id") == row.Group)["members"]).Add(row.Member);
@@ -79,11 +75,5 @@ namespace PluralKit.Core
             return await BulkImporter.PerformImport(conn, tx, _repo, _logger, userId, system, importFile, confirmFunc);
         }
 
-    }
-
-    public class GroupMember
-    {
-        public string Group { get; set; }
-        public string Member { get; set; }
     }
 }

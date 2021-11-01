@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using SqlKata;
@@ -23,6 +25,15 @@ namespace PluralKit.Core
                 .Join("members", "group_members.member_id", "members.id")
                 .Where("group_members.group_id", id);
             return _db.QueryStream<PKMember>(query);
+        }
+
+        public Task<IEnumerable<GroupMember>> GetGroupMemberInfo(IEnumerable<GroupId> ids)
+        {
+            return _db.Query<GroupMember>(new Query("group_members")
+                .LeftJoin("groups", "groups.id", "group_members.group_id")
+                .LeftJoin("members", "members.id", "group_members.member_id")
+                .Select("groups.hid as group", "members.hid as member", "members.uuid as member_uuid", "members.member_visibility")
+                .WhereIn("group_members.group_id", ids.Select(x => x.Value).ToArray()));
         }
 
         // todo: add this to metrics tracking
@@ -92,5 +103,13 @@ namespace PluralKit.Core
                 .Where("member_id", member);
             return _db.ExecuteQuery(query);
         }
+    }
+
+    public class GroupMember
+    {
+        public string Group { get; set; }
+        public string Member { get; set; }
+        public Guid MemberUuid { get; set; }
+        public PrivacyLevel MemberVisibility { get; set; }
     }
 }
