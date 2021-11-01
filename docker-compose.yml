@@ -27,6 +27,13 @@ services:
       - "127.0.0.1:2838:5000"
     restart: unless-stopped
 
+  scheduled_tasks:
+    image: pluralkit
+    command: ["bin/PluralKit.ScheduledTasks.dll"]
+    environment:
+      - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
+    restart: unless-stopped
+
   db:
     image: postgres:12-alpine
     volumes:
