@@ -120,6 +120,12 @@ namespace PluralKit.Bot
 
             string durationStr = ctx.RemainderOrNull() ?? "30d";
 
+            // Picked the UNIX epoch as a random date
+            // even though we don't store switch timestamps in UNIX time
+            // I assume most people won't have switches logged previously to that (?)
+            if (durationStr == "full")
+                durationStr = "1970-01-01";
+
             var now = SystemClock.Instance.GetCurrentInstant();
 
             var rangeStart = DateUtils.ParseDateTime(durationStr, true, system.Zone);
