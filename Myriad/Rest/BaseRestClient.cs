@@ -179,7 +179,7 @@ namespace Myriad.Rest
 
                     var request = createRequest();
                     _logger.Debug("Request: {RequestMethod} {RequestPath}",
-                        request.Method, request.RequestUri?.ToString().Substring(_baseUrl.Length));
+                        request.Method, CleanForLogging(request.RequestUri!));
 
                     request.Version = _httpVersion;
                     request.VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
@@ -204,7 +204,7 @@ namespace Myriad.Rest
 
                     _logger.Debug(
                         "Response: {RequestMethod} {RequestPath} -> {StatusCode} {ReasonPhrase} (in {ResponseDurationMs} ms)",
-                        request.Method, request.RequestUri?.ToString().Substring(_baseUrl.Length), (int)response.StatusCode,
+                        request.Method, CleanForLogging(request.RequestUri!), (int)response.StatusCode,
                         response.ReasonPhrase, stopwatch.ElapsedMilliseconds);
 
                     await HandleApiError(response, ignoreNotFound);
@@ -304,6 +304,21 @@ namespace Myriad.Rest
             var localPath = Regex.Replace(req.RequestUri!.LocalPath, @"/api/v\d+", "");
             var routePath = NormalizeRoutePath(localPath);
             return $"{req.Method} {routePath}";
+        }
+
+        private string CleanForLogging(Uri uri)
+        {
+            var path = uri.ToString();
+
+            // don't show tokens in logs
+            // todo: anything missing here?
+            path = Regex.Replace(path, @"/webhooks/(\d+)/[^/]+", "/webhooks/$1/:token");
+            path = Regex.Replace(path, @"/interactions/(\d+)/[^{/]+", "/interactions/$1/:token");
+
+            // remove base URL
+            path = path.Substring(_baseUrl.Length);
+
+            return path;
         }
     }
 }
