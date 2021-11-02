@@ -126,5 +126,57 @@ namespace PluralKit.Core
 
             return patch;
         }
+
+        public JObject ToJson()
+        {
+            var o = new JObject();
+
+            if (Name.IsPresent)
+                o.Add("name", Name.Value);
+            if (Hid.IsPresent)
+                o.Add("id", Hid.Value);
+            if (Description.IsPresent)
+                o.Add("description", Description.Value);
+            if (Tag.IsPresent)
+                o.Add("tag", Tag.Value);
+            if (AvatarUrl.IsPresent)
+                o.Add("avatar_url", AvatarUrl.Value);
+            if (BannerImage.IsPresent)
+                o.Add("banner", BannerImage.Value);
+            if (Color.IsPresent)
+                o.Add("color", Color.Value);
+            if (UiTz.IsPresent)
+                o.Add("timezone", UiTz.Value);
+
+            if (
+                   DescriptionPrivacy.IsPresent
+                || MemberListPrivacy.IsPresent
+                || GroupListPrivacy.IsPresent
+                || FrontPrivacy.IsPresent
+                || FrontHistoryPrivacy.IsPresent
+            )
+            {
+                var p = new JObject();
+
+                if (DescriptionPrivacy.IsPresent)
+                    p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());
+
+                if (MemberListPrivacy.IsPresent)
+                    p.Add("member_list_privacy", MemberListPrivacy.Value.ToJsonString());
+
+                if (GroupListPrivacy.IsPresent)
+                    p.Add("group_list_privacy", GroupListPrivacy.Value.ToJsonString());
+
+                if (FrontPrivacy.IsPresent)
+                    p.Add("front_privacy", FrontPrivacy.Value.ToJsonString());
+
+                if (FrontHistoryPrivacy.IsPresent)
+                    p.Add("front_history_privacy", FrontHistoryPrivacy.Value.ToJsonString());
+
+                o.Add("privacy", p);
+            }
+
+            return o;
+        }
     }
 }

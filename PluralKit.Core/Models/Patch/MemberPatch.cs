@@ -192,5 +192,77 @@ namespace PluralKit.Core
 
             return patch;
         }
+
+        public JObject ToJson()
+        {
+            var o = new JObject();
+
+            if (Name.IsPresent)
+                o.Add("name", Name.Value);
+            if (Hid.IsPresent)
+                o.Add("id", Hid.Value);
+            if (DisplayName.IsPresent)
+                o.Add("display_name", DisplayName.Value);
+            if (AvatarUrl.IsPresent)
+                o.Add("avatar_url", AvatarUrl.Value);
+            if (BannerImage.IsPresent)
+                o.Add("banner", BannerImage.Value);
+            if (Color.IsPresent)
+                o.Add("color", Color.Value);
+            if (Birthday.IsPresent)
+                o.Add("birthday", Birthday.Value?.FormatExport());
+            if (Pronouns.IsPresent)
+                o.Add("pronouns", Pronouns.Value);
+            if (Description.IsPresent)
+                o.Add("description", Description.Value);
+            if (ProxyTags.IsPresent)
+            {
+                var tagArray = new JArray();
+                foreach (var tag in ProxyTags.Value)
+                    tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
+                o.Add("proxy_tags", tagArray);
+            }
+
+            if (KeepProxy.IsPresent)
+                o.Add("keep_proxy", KeepProxy.Value);
+
+            if (
+                   Visibility.IsPresent
+                || NamePrivacy.IsPresent
+                || DescriptionPrivacy.IsPresent
+                || PronounPrivacy.IsPresent
+                || BirthdayPrivacy.IsPresent
+                || AvatarPrivacy.IsPresent
+                || MetadataPrivacy.IsPresent
+            )
+            {
+                var p = new JObject();
+
+                if (Visibility.IsPresent)
+                    p.Add("visibility", Visibility.Value.ToJsonString());
+
+                if (NamePrivacy.IsPresent)
+                    p.Add("name_privacy", NamePrivacy.Value.ToJsonString());
+
+                if (DescriptionPrivacy.IsPresent)
+                    p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());
+
+                if (PronounPrivacy.IsPresent)
+                    p.Add("pronoun_privacy", PronounPrivacy.Value.ToJsonString());
+
+                if (BirthdayPrivacy.IsPresent)
+                    p.Add("birthday_privacy", BirthdayPrivacy.Value.ToJsonString());
+
+                if (AvatarPrivacy.IsPresent)
+                    p.Add("avatar_privacy", AvatarPrivacy.Value.ToJsonString());
+
+                if (MetadataPrivacy.IsPresent)
+                    p.Add("metadata_privacy", MetadataPrivacy.Value.ToJsonString());
+
+                o.Add("privacy", p);
+            }
+
+            return o;
+        }
     }
 }

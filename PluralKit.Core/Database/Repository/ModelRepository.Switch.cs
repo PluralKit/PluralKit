@@ -100,6 +100,9 @@ namespace PluralKit.Core
             return _db.QueryStream<PKSwitch>(query);
         }
 
+        public Task<PKSwitch?> GetSwitch(SwitchId id)
+            => _db.QueryFirst<PKSwitch?>(new Query("switches").Where("id", id));
+
         public Task<PKSwitch> GetSwitchByUuid(Guid uuid)
         {
             var query = new Query("switches").Where("uuid", uuid);

@@ -14,6 +14,8 @@ namespace PluralKit.Core
             builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
             builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
 
+            builder.RegisterType<DispatchService>().AsSelf().SingleInstance();
+
             builder.Populate(new ServiceCollection().AddMemoryCache());
         }
     }

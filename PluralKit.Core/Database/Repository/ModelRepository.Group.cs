@@ -8,6 +8,12 @@ namespace PluralKit.Core
 {
     public partial class ModelRepository
     {
+        public Task<PKGroup?> GetGroup(GroupId id)
+        {
+            var query = new Query("groups").Where("id", id);
+            return _db.QueryFirst<PKGroup?>(query);
+        }
+
         public Task<PKGroup?> GetGroupByName(SystemId system, string name)
         {
             var query = new Query("groups").Where("system", system).WhereRaw("lower(name) = lower(?)", name.ToLower());

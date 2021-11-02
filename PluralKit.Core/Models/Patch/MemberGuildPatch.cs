@@ -38,5 +38,18 @@ namespace PluralKit.Core
 
             return patch;
         }
+
+        public JObject ToJson()
+        {
+            var o = new JObject();
+
+            if (DisplayName.IsPresent)
+                o.Add("display_name", DisplayName.Value);
+
+            if (AvatarUrl.IsPresent)
+                o.Add("avatar_url", AvatarUrl.Value);
+
+            return o;
+        }
     }
 }
