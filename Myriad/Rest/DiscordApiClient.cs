@@ -18,7 +18,10 @@ namespace Myriad.Rest
         public DiscordApiClient(string token, ILogger logger)
         {
             _client = new BaseRestClient(UserAgent, token, logger);
+            _client.OnResponseEvent += OnResponseEvent;
         }
+
+        public EventHandler<(string, int, long)> OnResponseEvent;
 
         public Task<GatewayInfo> GetGateway() =>
             _client.Get<GatewayInfo>("/gateway", ("GetGateway", default))!;

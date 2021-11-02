@@ -47,9 +47,6 @@ namespace PluralKit.Bot
                 var bot = services.Resolve<Bot>();
                 bot.Init();
 
-                // Install observer for request/responses
-                DiscordRequestObserver.Install(services);
-
                 // Start the Discord shards themselves (handlers already set up)
                 logger.Information("Connecting to Discord");
                 await StartCluster(services);

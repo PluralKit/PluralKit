@@ -3,6 +3,8 @@ using System.Net.Http;
 
 using Autofac;
 
+using App.Metrics;
+
 using Myriad.Cache;
 using Myriad.Gateway;
 using Myriad.Rest;
@@ -40,9 +42,27 @@ namespace PluralKit.Bot
                 };
             }).AsSelf().SingleInstance();
             builder.RegisterType<Cluster>().AsSelf().SingleInstance();
-            builder.Register(c => new Myriad.Rest.DiscordApiClient(c.Resolve<BotConfig>().Token, c.Resolve<ILogger>()))
-                .AsSelf().SingleInstance();
             builder.RegisterType<MemoryDiscordCache>().AsSelf().As<IDiscordCache>().SingleInstance();
+
+            builder.Register(c =>
+            {
+                var client = new Myriad.Rest.DiscordApiClient(
+                    c.Resolve<BotConfig>().Token,
+                    c.Resolve<ILogger>()
+                );
+
+                client.OnResponseEvent += ((_, ev) =>
+                {
+                    var (endpoint, statusCode, ticks) = ev;
+                    var timer = c.Resolve<IMetrics>().Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
+                        new[] { "endpoint", "status_code" },
+                        new[] { endpoint, statusCode.ToString() }
+                    ));
+                    timer.Record(ticks / 10, TimeUnit.Microseconds);
+                });
+
+                return client;
+            }).AsSelf().SingleInstance();
 
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
@@ -118,10 +138,8 @@ namespace PluralKit.Bot
                 Timeout = TimeSpan.FromSeconds(5),
                 DefaultRequestHeaders = { { "User-Agent", DiscordApiClient.UserAgent } }
             }).AsSelf().SingleInstance();
-            builder.RegisterInstance(SystemClock.Instance).As<IClock>();
+            builder.RegisterInstance(SystemClock.Instance).As<NodaTime.IClock>();
             builder.RegisterType<SerilogGatewayEnricherFactory>().AsSelf().SingleInstance();
-
-            builder.RegisterType<DiscordRequestObserver>().AsSelf().SingleInstance();
         }
     }
 }

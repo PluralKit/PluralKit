@@ -227,8 +227,6 @@ namespace PluralKit.Bot
             // Make this beforehand so we can access the event ID for logging
             var sentryEvent = new SentryEvent(exc);
 
-            _logger.Error(exc, "Exception in event handler: {SentryEventId}", sentryEvent.EventId);
-
             // If the event is us responding to our own error messages, don't bother logging
             if (evt is MessageCreateEvent mc && mc.Author.Id == shard.User?.Id)
                 return;
@@ -236,6 +234,9 @@ namespace PluralKit.Bot
             var shouldReport = exc.IsOurProblem();
             if (shouldReport)
             {
+                // only log exceptions if they're our problem
+                _logger.Error(exc, "Exception in event handler: {SentryEventId}", sentryEvent.EventId);
+
                 // Report error to Sentry
                 // This will just no-op if there's no URL set
                 var sentryScope = serviceScope.Resolve<Scope>();

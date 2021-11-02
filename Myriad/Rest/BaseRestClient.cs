@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Myriad.Rest.Exceptions;
@@ -60,6 +61,7 @@ namespace Myriad.Rest
         }
 
         public HttpClient Client { get; }
+        public EventHandler<(string, int, long)> OnResponseEvent;
 
         public ValueTask DisposeAsync()
         {
@@ -182,16 +184,36 @@ namespace Myriad.Rest
                     request.Version = _httpVersion;
                     request.VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
 
+                    HttpResponseMessage response;
+
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    var response = await Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-                    stopwatch.Stop();
+                    try
+                    {
+                        response = await Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                        stopwatch.Stop();
+                    }
+                    catch (Exception exc)
+                    {
+                        _logger.Error(exc, "HTTP error: {RequestMethod} {RequestUrl}", request.Method, request.RequestUri);
+
+                        // kill the running thread
+                        // in PluralKit.Bot, this error is ignored in "IsOurProblem" (PluralKit.Bot/Utils/MiscUtils.cs)
+                        throw;
+                    }
 
                     _logger.Debug(
                         "Response: {RequestMethod} {RequestPath} -> {StatusCode} {ReasonPhrase} (in {ResponseDurationMs} ms)",
                         request.Method, request.RequestUri, (int)response.StatusCode, response.ReasonPhrase, stopwatch.ElapsedMilliseconds);
 
                     await HandleApiError(response, ignoreNotFound);
+
+                    if (OnResponseEvent != null)
+                        OnResponseEvent.Invoke(null, (
+                            GetEndpointMetricsName(response.RequestMessage!),
+                            (int)response.StatusCode,
+                            stopwatch.ElapsedTicks
+                        ));
 
                     return response;
                 },
@@ -247,6 +269,40 @@ namespace Myriad.Rest
             }
 
             return null;
+        }
+
+        private string NormalizeRoutePath(string url)
+        {
+            url = Regex.Replace(url, @"/channels/\d+", "/channels/{channel_id}");
+            url = Regex.Replace(url, @"/messages/\d+", "/messages/{message_id}");
+            url = Regex.Replace(url, @"/members/\d+", "/members/{user_id}");
+            url = Regex.Replace(url, @"/webhooks/\d+/[^/]+", "/webhooks/{webhook_id}/{webhook_token}");
+            url = Regex.Replace(url, @"/webhooks/\d+", "/webhooks/{webhook_id}");
+            url = Regex.Replace(url, @"/users/\d+", "/users/{user_id}");
+            url = Regex.Replace(url, @"/bans/\d+", "/bans/{user_id}");
+            url = Regex.Replace(url, @"/roles/\d+", "/roles/{role_id}");
+            url = Regex.Replace(url, @"/pins/\d+", "/pins/{message_id}");
+            url = Regex.Replace(url, @"/emojis/\d+", "/emojis/{emoji_id}");
+            url = Regex.Replace(url, @"/guilds/\d+", "/guilds/{guild_id}");
+            url = Regex.Replace(url, @"/integrations/\d+", "/integrations/{integration_id}");
+            url = Regex.Replace(url, @"/permissions/\d+", "/permissions/{overwrite_id}");
+            url = Regex.Replace(url, @"/reactions/[^{/]+/\d+", "/reactions/{emoji}/{user_id}");
+            url = Regex.Replace(url, @"/reactions/[^{/]+", "/reactions/{emoji}");
+            url = Regex.Replace(url, @"/invites/[^{/]+", "/invites/{invite_code}");
+            url = Regex.Replace(url, @"/interactions/\d+/[^{/]+", "/interactions/{interaction_id}/{interaction_token}");
+            url = Regex.Replace(url, @"/interactions/\d+", "/interactions/{interaction_id}");
+
+            // catch-all for missed IDs
+            url = Regex.Replace(url, @"\d{17,19}", "{snowflake}");
+
+            return url;
+        }
+
+        private string GetEndpointMetricsName(HttpRequestMessage req)
+        {
+            var localPath = Regex.Replace(req.RequestUri!.LocalPath, @"/api/v\d+", "");
+            var routePath = NormalizeRoutePath(localPath);
+            return $"{req.Method} {routePath}";
         }
     }
 }
