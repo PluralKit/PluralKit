@@ -20,6 +20,8 @@ namespace PluralKit.Bot
 
         public string? GatewayQueueUrl { get; set; }
 
+        public string? DiscordBaseUrl { get; set; }
+
         public record ClusterSettings
         {
             public string NodeName { get; set; }

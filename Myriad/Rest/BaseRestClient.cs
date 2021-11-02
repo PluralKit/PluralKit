@@ -23,17 +23,17 @@ namespace Myriad.Rest
 {
     public class BaseRestClient: IAsyncDisposable
     {
-        private const string ApiBaseUrl = "https://discord.com/api/v9";
-
         private readonly Version _httpVersion = new(2, 0);
         private readonly JsonSerializerOptions _jsonSerializerOptions;
         private readonly ILogger _logger;
         private readonly Ratelimiter _ratelimiter;
         private readonly AsyncPolicy<HttpResponseMessage> _retryPolicy;
+        private readonly string _baseUrl;
 
-        public BaseRestClient(string userAgent, string token, ILogger logger)
+        public BaseRestClient(string userAgent, string token, ILogger logger, string baseUrl)
         {
             _logger = logger.ForContext<BaseRestClient>();
+            _baseUrl = baseUrl;
 
             if (!token.StartsWith("Bot "))
                 token = "Bot " + token;
@@ -72,7 +72,7 @@ namespace Myriad.Rest
 
         public async Task<T?> Get<T>(string path, (string endpointName, ulong major) ratelimitParams) where T : class
         {
-            using var response = await Send(() => new HttpRequestMessage(HttpMethod.Get, ApiBaseUrl + path),
+            using var response = await Send(() => new HttpRequestMessage(HttpMethod.Get, _baseUrl + path),
                 ratelimitParams, true);
 
             // GET-only special case: 404s are nulls and not exceptions
@@ -87,7 +87,7 @@ namespace Myriad.Rest
         {
             using var response = await Send(() =>
             {
-                var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + path);
+                var request = new HttpRequestMessage(HttpMethod.Post, _baseUrl + path);
                 SetRequestJsonBody(request, body);
                 return request;
             }, ratelimitParams);
@@ -99,7 +99,7 @@ namespace Myriad.Rest
         {
             using var response = await Send(() =>
             {
-                var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + path);
+                var request = new HttpRequestMessage(HttpMethod.Post, _baseUrl + path);
                 SetRequestFormDataBody(request, payload, files);
                 return request;
             }, ratelimitParams);
@@ -111,7 +111,7 @@ namespace Myriad.Rest
         {
             using var response = await Send(() =>
             {
-                var request = new HttpRequestMessage(HttpMethod.Patch, ApiBaseUrl + path);
+                var request = new HttpRequestMessage(HttpMethod.Patch, _baseUrl + path);
                 SetRequestJsonBody(request, body);
                 return request;
             }, ratelimitParams);
@@ -123,7 +123,7 @@ namespace Myriad.Rest
         {
             using var response = await Send(() =>
             {
-                var request = new HttpRequestMessage(HttpMethod.Put, ApiBaseUrl + path);
+                var request = new HttpRequestMessage(HttpMethod.Put, _baseUrl + path);
                 SetRequestJsonBody(request, body);
                 return request;
             }, ratelimitParams);
@@ -132,7 +132,7 @@ namespace Myriad.Rest
 
         public async Task Delete(string path, (string endpointName, ulong major) ratelimitParams)
         {
-            using var _ = await Send(() => new HttpRequestMessage(HttpMethod.Delete, ApiBaseUrl + path), ratelimitParams);
+            using var _ = await Send(() => new HttpRequestMessage(HttpMethod.Delete, _baseUrl + path), ratelimitParams);
         }
 
         private void SetRequestJsonBody(HttpRequestMessage request, object? body)
@@ -179,7 +179,7 @@ namespace Myriad.Rest
 
                     var request = createRequest();
                     _logger.Debug("Request: {RequestMethod} {RequestPath}",
-                        request.Method, request.RequestUri);
+                        request.Method, request.RequestUri?.ToString().Substring(_baseUrl.Length));
 
                     request.Version = _httpVersion;
                     request.VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
@@ -204,7 +204,8 @@ namespace Myriad.Rest
 
                     _logger.Debug(
                         "Response: {RequestMethod} {RequestPath} -> {StatusCode} {ReasonPhrase} (in {ResponseDurationMs} ms)",
-                        request.Method, request.RequestUri, (int)response.StatusCode, response.ReasonPhrase, stopwatch.ElapsedMilliseconds);
+                        request.Method, request.RequestUri?.ToString().Substring(_baseUrl.Length), (int)response.StatusCode,
+                        response.ReasonPhrase, stopwatch.ElapsedMilliseconds);
 
                     await HandleApiError(response, ignoreNotFound);
 

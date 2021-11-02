@@ -48,7 +48,8 @@ namespace PluralKit.Bot
             {
                 var client = new Myriad.Rest.DiscordApiClient(
                     c.Resolve<BotConfig>().Token,
-                    c.Resolve<ILogger>()
+                    c.Resolve<ILogger>(),
+                    c.Resolve<BotConfig>().DiscordBaseUrl
                 );
 
                 client.OnResponseEvent += ((_, ev) =>

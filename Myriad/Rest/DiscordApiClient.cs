@@ -13,11 +13,12 @@ namespace Myriad.Rest
     public class DiscordApiClient
     {
         public const string UserAgent = "DiscordBot (https://github.com/xSke/PluralKit/tree/main/Myriad/, v1)";
+        private const string DefaultApiBaseUrl = "https://discord.com/api/v9";
         private readonly BaseRestClient _client;
 
-        public DiscordApiClient(string token, ILogger logger)
+        public DiscordApiClient(string token, ILogger logger, string? baseUrl = null)
         {
-            _client = new BaseRestClient(UserAgent, token, logger);
+            _client = new BaseRestClient(UserAgent, token, logger, baseUrl ?? DefaultApiBaseUrl);
             _client.OnResponseEvent += OnResponseEvent;
         }
 
