@@ -286,6 +286,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx));
             else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
                 await ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx));
+            else if (ctx.Match("webhook", "hook"))
+                await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
             else if (ctx.Match("timezone", "tz"))
                 await ctx.Execute<SystemEdit>(SystemTimezone, m => m.SystemTimezone(ctx));
             else if (ctx.Match("proxy"))

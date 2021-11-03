@@ -20,6 +20,8 @@ namespace PluralKit.Core
         public Partial<string?> BannerImage { get; set; }
         public Partial<string?> Color { get; set; }
         public Partial<string?> Token { get; set; }
+        public Partial<string?> WebhookUrl { get; set; }
+        public Partial<string?> WebhookToken { get; set; }
         public Partial<string> UiTz { get; set; }
         public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
         public Partial<PrivacyLevel> MemberListPrivacy { get; set; }
@@ -40,6 +42,8 @@ namespace PluralKit.Core
             .With("banner_image", BannerImage)
             .With("color", Color)
             .With("token", Token)
+            .With("webhook_url", WebhookUrl)
+            .With("webhook_token", WebhookToken)
             .With("ui_tz", UiTz)
             .With("description_privacy", DescriptionPrivacy)
             .With("member_list_privacy", MemberListPrivacy)

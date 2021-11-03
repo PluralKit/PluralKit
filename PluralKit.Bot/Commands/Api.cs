@@ -11,12 +11,12 @@ namespace PluralKit.Bot
 {
     public class Api
     {
-        private readonly IDatabase _db;
         private readonly ModelRepository _repo;
-        public Api(IDatabase db, ModelRepository repo)
+        private readonly DispatchService _dispatch;
+        public Api(ModelRepository repo, DispatchService dispatch)
         {
-            _db = db;
             _repo = repo;
+            _dispatch = dispatch;
         }
 
         public async Task GetToken(Context ctx)
@@ -90,6 +90,55 @@ namespace PluralKit.Bot
                 if (ctx.Channel.Type != Channel.ChannelType.Dm)
                     await ctx.Reply($"{Emojis.Error} Could not send token in DMs. Are your DMs closed?");
             }
+        }
+
+        public async Task SystemWebhook(Context ctx)
+        {
+            ctx.CheckDMContext();
+
+            if (!ctx.HasNext(false))
+            {
+                if (ctx.System.WebhookUrl == null)
+                    await ctx.Reply("Your system does not have a webhook URL set. Set one with `pk;system webhook <url>`!");
+                else
+                    await ctx.Reply($"Your system's webhook URL is <{ctx.System.WebhookUrl}>.");
+                return;
+            }
+
+            if (await ctx.MatchClear("your system's webhook URL"))
+            {
+                await _repo.UpdateSystem(ctx.System.Id, new()
+                {
+                    WebhookUrl = null,
+                    Token = null,
+                });
+
+                await ctx.Reply($"{Emojis.Success} System webhook URL removed.");
+                return;
+            }
+
+            var newUrl = ctx.RemainderOrNull();
+            if (!await DispatchExt.ValidateUri(newUrl))
+            {
+                await ctx.Reply($"New URL '{newUrl}' is invalid. Are you sure this is a valid, publicly accessible URL?");
+                return;
+            }
+
+            var newToken = StringUtils.GenerateToken();
+
+            await _repo.UpdateSystem(ctx.System.Id, new()
+            {
+                WebhookUrl = newUrl,
+                Token = newToken,
+            });
+
+            await ctx.Reply($"{Emojis.Success} Successfully the new webhook URL for your system."
+                + $"\n\n{Emojis.Warn} The following token is used to authenticate requests from PluralKit to you."
+                + " If it leaks, you should clear and re-set the webhook URL to get a new token."
+                + "\ntodo: add link to docs or something"
+            );
+
+            await ctx.Reply(newToken);
         }
     }
 }
