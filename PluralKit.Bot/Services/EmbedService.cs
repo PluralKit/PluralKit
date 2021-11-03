@@ -332,11 +332,13 @@ namespace PluralKit.Bot
             if (roles != null && roles.Count > 0)
             {
                 var rolesString = string.Join(", ", roles
-                    .Select(id => {
+                    .Select(id =>
+                    {
                         _cache.TryGetRole(id, out var role);
                         if (role != null)
                             return role;
-                        return new Role() {
+                        return new Role()
+                        {
                             Name = "*(unknown role)*",
                             Position = 0,
                         };
