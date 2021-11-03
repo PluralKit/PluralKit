@@ -56,6 +56,22 @@ namespace PluralKit.Bot
             return await ctx.Services.Resolve<HandlerQueue<MessageReactionAddEvent>>().WaitFor(ReactionPredicate, timeout);
         }
 
+        public static async Task<int> GetNumWithReply(this Context ctx)
+        {
+            bool Predicate(MessageCreateEvent e) =>
+                e.Author.Id == ctx.Author.Id && e.ChannelId == ctx.Channel.Id;
+
+            var msg = await ctx.Services.Resolve<HandlerQueue<MessageCreateEvent>>()
+                .WaitFor(Predicate, Duration.FromMinutes(0.5));
+
+            int.TryParse(msg.Content, out int num);
+            num--;
+
+            if(num < 0) await ctx.Reply($"{Emojis.Error} Operation canceled (invalid number).");
+
+            return num;
+        }
+
         public static async Task<bool> ConfirmWithReply(this Context ctx, string expectedReply)
         {
             bool Predicate(MessageCreateEvent e) =>
@@ -93,7 +109,7 @@ namespace PluralKit.Bot
             {
                 var msg = await ctx.Reply(embed: await MakeEmbedForPage(0));
                 if (pageCount <= 1) return; // If we only have one (or no) page, don't bother with the reaction/pagination logic, lol
-                string[] botEmojis = { "\u23EA", "\u2B05", "\u27A1", "\u23E9", Emojis.Error };
+                string[] botEmojis = { "\u23EA", "\u2B05", "\u27A1", "\u23E9", Emojis.Error, "\uD83D\uDD22" };
 
                 var _ = ctx.Rest.CreateReactionsBulk(msg, botEmojis); // Again, "fork"
 
@@ -106,13 +122,44 @@ namespace PluralKit.Bot
 
                         // Increment/decrement page counter based on which reaction was clicked
                         if (reaction.Emoji.Name == "\u23EA") currentPage = 0; // <<
-                        if (reaction.Emoji.Name == "\u2B05") currentPage = (currentPage - 1) % pageCount; // <
-                        if (reaction.Emoji.Name == "\u27A1") currentPage = (currentPage + 1) % pageCount; // >
-                        if (reaction.Emoji.Name == "\u23E9") currentPage = pageCount - 1; // >>
-                        if (reaction.Emoji.Name == Emojis.Error) break; // X
+                        else if (reaction.Emoji.Name == "\u2B05") currentPage = (currentPage - 1) % pageCount; // <
+                        else if (reaction.Emoji.Name == "\u27A1") currentPage = (currentPage + 1) % pageCount; // >
+                        else if (reaction.Emoji.Name == "\u23E9") currentPage = pageCount - 1; // >>
+                        else if (reaction.Emoji.Name == Emojis.Error) break; // X
+
+                        // if number reaction was added go to that page
+                        var repliedNum = -1;
+                        if (reaction.Emoji.Name == "\u0031\uFE0F\u20E3") repliedNum = 0;
+                        else if (reaction.Emoji.Name == "\u0032\uFE0F\u20E3") repliedNum = 1;
+                        else if (reaction.Emoji.Name == "\u0033\uFE0F\u20E3") repliedNum = 2;
+                        else if (reaction.Emoji.Name == "\u0034\uFE0F\u20E3") repliedNum = 3;
+                        else if (reaction.Emoji.Name == "\u0035\uFE0F\u20E3") repliedNum = 4;
+                        else if (reaction.Emoji.Name == "\u0036\uFE0F\u20E3") repliedNum = 5;
+                        else if (reaction.Emoji.Name == "\u0037\uFE0F\u20E3") repliedNum = 6;
+                        else if (reaction.Emoji.Name == "\u0038\uFE0F\u20E3") repliedNum = 7;
+                        else if (reaction.Emoji.Name == "\u0039\uFE0F\u20E3") repliedNum = 8;
+                        else if (reaction.Emoji.Name == "\uD83D\uDD1F") repliedNum = 9;
+                        
+                        else if (reaction.Emoji.Name == "\uD83D\uDD22")
+                        {
+                            try
+                            {
+                                await ctx.Reply("What page would you like to go to?");
+                                repliedNum = await ctx.GetNumWithReply();
+                            } catch (TimeoutException)
+                            {
+                                ctx.Reply($"{Emojis.Error} Operation canceled (timed out).");
+                            }
+                            
+                        }
+                        if (repliedNum >= pageCount)
+                            await ctx.Reply($"{Emojis.Error} Operation canceled (page number too high).");
+                        else if (repliedNum >= 0)
+                            currentPage = repliedNum;
+
 
                         // C#'s % operator is dumb and wrong, so we fix negative numbers
-                        if (currentPage < 0) currentPage += pageCount;
+                            if (currentPage < 0) currentPage += pageCount;
 
                         // If we can, remove the user's reaction (so they can press again quickly)
                         if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
