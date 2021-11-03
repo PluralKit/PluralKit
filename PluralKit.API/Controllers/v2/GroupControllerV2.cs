@@ -56,6 +56,12 @@ namespace PluralKit.API
         {
             var system = await ResolveSystem("@me");
 
+            // Check group cap
+            var existingGroupCount = await _repo.GetSystemGroupCount(system.Id);
+            var groupLimit = system.GroupLimitOverride ?? Limits.MaxGroupCount;
+            if (existingGroupCount >= groupLimit)
+                throw Errors.GroupLimitReached;
+
             var patch = GroupPatch.FromJson(data);
             patch.AssertIsValid();
             if (!patch.Name.IsPresent)

@@ -40,14 +40,19 @@ namespace PluralKit.API
         [HttpPost("members")]
         public async Task<IActionResult> MemberCreate([FromBody] JObject data)
         {
+            var system = await ResolveSystem("@me");
+
+            var memberCount = await _repo.GetSystemMemberCount(system.Id);
+            var memberLimit = system.MemberLimitOverride ?? Limits.MaxMemberCount;
+            if (memberCount >= memberLimit)
+                throw Errors.MemberLimitReached;
+
             var patch = MemberPatch.FromJSON(data);
             patch.AssertIsValid();
             if (!patch.Name.IsPresent)
                 patch.Errors.Add(new ValidationError("name", $"Key 'name' is required when creating new member."));
             if (patch.Errors.Count > 0)
                 throw new ModelParseError(patch.Errors);
-
-            var system = await ResolveSystem("@me");
 
             using var conn = await _db.Obtain();
             using var tx = await conn.BeginTransactionAsync();

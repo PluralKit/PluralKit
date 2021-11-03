@@ -94,6 +94,8 @@ namespace PluralKit.API
         public static PKError SameSwitchMembersError = new(400, 40004, "Member list identical to current fronter list.");
         public static PKError SameSwitchTimestampError = new(400, 40005, "Switch with provided timestamp already exists.");
         public static PKError InvalidSwitchId = new(400, 40006, "Invalid switch ID.");
+        public static PKError MemberLimitReached = new(400, 40007, "Member limit reached.");
+        public static PKError GroupLimitReached = new(400, 40008, "Group limit reached.");
         public static PKError Unimplemented = new(501, 50001, "Unimplemented");
     }
 
