@@ -68,6 +68,7 @@ namespace PluralKit.Bot
             // Commands
             builder.RegisterType<CommandTree>().AsSelf();
             builder.RegisterType<Admin>().AsSelf();
+            builder.RegisterType<Api>().AsSelf();
             builder.RegisterType<Autoproxy>().AsSelf();
             builder.RegisterType<Checks>().AsSelf();
             builder.RegisterType<Fun>().AsSelf();
@@ -89,7 +90,6 @@ namespace PluralKit.Bot
             builder.RegisterType<SystemFront>().AsSelf();
             builder.RegisterType<SystemLink>().AsSelf();
             builder.RegisterType<SystemList>().AsSelf();
-            builder.RegisterType<Token>().AsSelf();
 
             // Bot core
             builder.RegisterType<Bot>().AsSelf().SingleInstance();

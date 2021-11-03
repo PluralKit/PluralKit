@@ -9,11 +9,11 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot
 {
-    public class Token
+    public class Api
     {
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
-        public Token(IDatabase db, ModelRepository repo)
+        public Api(IDatabase db, ModelRepository repo)
         {
             _db = db;
             _repo = repo;
