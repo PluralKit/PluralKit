@@ -148,7 +148,7 @@ namespace PluralKit.Bot
                                 repliedNum = await ctx.GetNumWithReply();
                             } catch (TimeoutException)
                             {
-                                ctx.Reply($"{Emojis.Error} Operation canceled (timed out).");
+                                await ctx.Reply($"{Emojis.Error} Operation canceled (timed out).");
                             }
                             
                         }
