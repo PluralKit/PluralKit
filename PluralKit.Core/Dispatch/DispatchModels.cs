@@ -76,13 +76,15 @@ namespace PluralKit.Core
             return o;
         }
 
-        public static async Task<bool> ValidateUri(string uri)
+        public static async Task<bool> ValidateUri(string url)
         {
+            var uri = new Uri(url);
+
             IPHostEntry host = null;
 
             try
             {
-                host = await Dns.GetHostEntryAsync(uri);
+                host = await Dns.GetHostEntryAsync(uri.DnsSafeHost);
             }
             catch (Exception) { }
 
