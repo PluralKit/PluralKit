@@ -51,7 +51,7 @@ const Home = ({isInvalid, setIsInvalid, isLoading, setIsLoading, isSubmit, setIs
         setIsInvalid(true);
         setErrorMessage(error.message);
         if (error.message === "HTTP Status 401")
-          errorMessage = "Your token is invalid."
+          setErrorMessage("Your token is invalid.")
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setIsLoading(false);
