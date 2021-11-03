@@ -40,7 +40,7 @@ namespace Myriad.Extensions
         public static Role GetRole(this IDiscordCache cache, ulong roleId)
         {
             if (!cache.TryGetRole(roleId, out var role))
-                throw new KeyNotFoundException($"User {roleId} not found in cache");
+                throw new KeyNotFoundException($"Role {roleId} not found in cache");
             return role;
         }
 

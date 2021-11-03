@@ -331,9 +331,16 @@ namespace PluralKit.Bot
             var roles = memberInfo?.Roles?.ToList();
             if (roles != null && roles.Count > 0)
             {
-                // TODO: what if role isn't in cache? figure out a fallback
                 var rolesString = string.Join(", ", roles
-                    .Select(id => _cache.GetRole(id))
+                    .Select(id => {
+                        _cache.TryGetRole(id, out var role);
+                        if (role != null)
+                            return role;
+                        return new Role() {
+                            Name = "*(unknown role)*",
+                            Position = 0,
+                        };
+                    })
                     .OrderByDescending(role => role.Position)
                     .Select(role => role.Name));
                 eb.Field(new($"Account roles ({roles.Count})", rolesString.Truncate(1024)));
