@@ -16,7 +16,6 @@
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.32",
     "node-fetch": "^2.6.1",
-    "node-sass": "^4.14.1",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.0",
     "react-dom": "^17.0.1",
@@ -28,6 +27,7 @@
     "react-scripts": "4.0.1",
     "react-toggle": "^4.1.1",
     "reactjs-popup": "^2.0.4",
+    "sass": "^1.43.4",
     "web-vitals": "^0.2.4",
     "yup": "^0.32.8"
   },
