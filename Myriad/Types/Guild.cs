@@ -1,5 +1,13 @@
 namespace Myriad.Types
 {
+    public enum PremiumTier
+    {
+        NONE,
+        TIER_1,
+        TIER_2,
+        TIER_3,
+    }
+
     public record Guild
     {
         public ulong Id { get; init; }
@@ -15,6 +23,7 @@ namespace Myriad.Types
         public bool? WidgetEnabled { get; init; }
         public ulong? WidgetChannelId { get; init; }
         public int VerificationLevel { get; init; }
+        public PremiumTier PremiumTier { get; init; }
 
         public Role[] Roles { get; init; }
         public string[] Features { get; init; }

@@ -146,6 +146,7 @@ namespace PluralKit.Bot
             var messageChannel = _cache.GetChannel(trigger.ChannelId);
             var rootChannel = _cache.GetRootChannel(trigger.ChannelId);
             var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
+            var guild = _cache.GetGuild(trigger.GuildId.Value);
 
             var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
             {
@@ -156,6 +157,7 @@ namespace PluralKit.Bot
                 AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
                 Content = content,
                 Attachments = trigger.Attachments,
+                FileSizeLimit = guild.FileSizeLimit(),
                 Embeds = embeds.ToArray(),
                 AllowEveryone = allowEveryone,
             });

@@ -40,6 +40,7 @@ namespace PluralKit.Bot
         public string? AvatarUrl { get; init; }
         public string? Content { get; init; }
         public Message.Attachment[] Attachments { get; init; }
+        public int FileSizeLimit { get; init; }
         public Embed[] Embeds { get; init; }
         public bool AllowEveryone { get; init; }
     }
@@ -122,7 +123,7 @@ namespace PluralKit.Bot
             };
 
             MultipartFile[] files = null;
-            var attachmentChunks = ChunkAttachmentsOrThrow(req.Attachments, 8 * 1024 * 1024);
+            var attachmentChunks = ChunkAttachmentsOrThrow(req.Attachments, req.FileSizeLimit * 1024 * 1024);
             if (attachmentChunks.Count > 0)
             {
                 _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks",
