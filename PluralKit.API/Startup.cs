@@ -148,30 +148,31 @@ namespace PluralKit.API
                 {
                     ctx.Response.StatusCode = 400;
                     await ctx.Response.WriteAsync("{\"message\":\"400: Bad Request\",\"code\":0}");
-                    return;
                 }
 
-                if (exc.Error is not PKError)
+                else if (exc.Error is not PKError)
                 {
                     ctx.Response.StatusCode = 500;
                     await ctx.Response.WriteAsync("{\"message\":\"500: Internal Server Error\",\"code\":0}");
-                    return;
                 }
 
                 // for some reason, if we don't specifically cast to ModelParseError, it uses the base's ToJson method
-                if (exc.Error is ModelParseError fe)
+                else if (exc.Error is ModelParseError fe)
                 {
                     ctx.Response.StatusCode = fe.ResponseCode;
                     await ctx.Response.WriteAsync(JsonConvert.SerializeObject(fe.ToJson()));
-
-                    return;
                 }
 
-                var err = (PKError)exc.Error;
-                ctx.Response.StatusCode = err.ResponseCode;
+                else
+                {
+                    var err = (PKError)exc.Error;
+                    ctx.Response.StatusCode = err.ResponseCode;
 
-                var json = JsonConvert.SerializeObject(err.ToJson());
-                await ctx.Response.WriteAsync(json);
+                    var json = JsonConvert.SerializeObject(err.ToJson());
+                    await ctx.Response.WriteAsync(json);
+                }
+
+                await ctx.Response.CompleteAsync();
             }));
 
             app.UseMiddleware<AuthorizationTokenHandlerMiddleware>();
