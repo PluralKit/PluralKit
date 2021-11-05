@@ -33,7 +33,7 @@ The bot is [open-source](https://github.com/xSke/PluralKit). While I can't *prov
 
 ## Website
 
-We use [Plausible](https://plausible.io) for website analytics. The analytics are publicly accessible at [https://plausible.io/pluralkit.me](https://plausible.io/pluralkit.me).
+We use [Plausible](https://plausible.io) for website analytics. The analytics are publicly accessible at [https://plausible.pluralkit.me/pluralkit.me](https://plausible.pluralkit.me/pluralkit.me).
 
 In short, Plausible logs information related to *your current visit on this website*, not information *about you*. A full list of everything that Plausible logs can be found on their [data policy](https://plausible.io/data-policy) page.
 
