@@ -1,3 +1,329 @@
 @import "~bootstrap/scss/bootstrap";
 
-@import "Custom";
+@font-face {
+  font-family: 'openDyslexic';
+  src: url('https://dl.dropboxusercontent.com/s/qfpakpjedhsrdb9/OpenDyslexicAlta-Regular.ttf');
+}
+
+#root {
+  z-index: -5;
+}
+
+html, body {
+  position: relative;
+  min-height: 100vh;
+}
+
+.contents {
+  display: flex;
+  flex-flow: column;
+  flex: 1;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+}
+
+.opendyslexic {
+  font-family: "OpenDyslexic";  
+}
+
+.dark-mode {
+  background-color: $gray-800;
+}
+
+.card-header {
+  background-color: $gray-200 !important;
+  opacity: 1 !important;
+}
+
+.dark-mode .card {
+  color: $white;
+  background-color: $gray-800;
+  border: 1px solid #191c1f !important;
+}
+
+.card-body {
+  background-color: $white;
+}
+
+.dark-mode .card-body {
+  color: $white;
+  background-color: $gray-800;
+}
+
+.dark-mode .card-header {
+  color: $gray-100 !important;
+  background-color: $gray-900 !important;
+}
+
+.navbar {
+  background-color: $gray-100;
+  flex: 0 0 auto;
+  z-index: 5;
+}
+
+.dark-mode .navbar {
+  color: $gray-100;
+  background-color: $gray-900;
+}
+
+.dark-mode .navbar-brand {
+  color: $gray-100 !important;
+}
+
+.dark-mode .form-label {
+  color: $white !important;
+}
+
+.dark-mode .form-control {
+  color: $gray-200;
+  border-color: #191c1f;
+  background-color: $gray-900;
+}
+
+.dark-mode .form-control:disabled {
+  color: $gray-600;
+  border-color: #191c1f;
+  background-color: $gray-900;
+}
+
+.dark-mode .form-control:focus {
+  color: $gray-200;
+  border-color: #191c1f;
+  background-color: $gray-900;
+}
+
+.dark-mode .btn-light {
+  background-color: $gray-900;
+  border-color: #191c1f;
+  color: $gray-100;
+}
+
+.dark-mode .btn-light:focus {
+  background-color: $gray-900;
+  border-color: #191c1f;
+  color: $gray-100;
+}
+
+.card-header .btn-link {
+  color: $gray-900;
+}
+
+.card-header .btn-link:focus {
+  color: $gray-900;
+  text-decoration: none;
+}
+
+.card-header .btn-link:hover {
+  color: $gray-900;
+  text-decoration: none;
+}
+
+.card-header .btn-link {
+  font-size: 1.25rem !important;
+  font-weight: 500;
+}
+
+.dark-mode .btn-link {
+  color: $white;
+}
+
+.dark-mode .btn-link:focus {
+  color: $white;
+  text-decoration: none;
+}
+
+.dark-mode .btn-link:hover {
+  color: $white;
+  text-decoration: none;
+}
+
+.dark-mode .alert-danger {
+  color: $white;
+  background-color: $danger;
+  border: $gray-900;
+}
+
+.dark-mode .alert-primary {
+  color: $white;
+  background-color: $primary;
+  border: $gray-900;
+}
+
+.dark-mode .alert-light {
+  color: $white;
+  background-color: $gray-900;
+  border: #191c1f;
+}
+
+code {
+  color: black !important;
+  background-color: $gray-300;
+  padding: 3px 7px;
+  border-radius: 3px;
+  margin: 3px;
+  display: inline-block;
+}
+
+.dark-mode code {
+  color: white !important;
+  background-color: $gray-900;
+}
+
+pre {
+  margin: 2px !important;
+}
+
+code.hljs {
+  display: block;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin: 3px 3px 7px 3px;
+}
+
+.d-spoiler {
+  color: $gray-300 !important;
+  background-color: $gray-300;
+  padding: 3px 5px;
+  border-radius: 3px;
+  margin: 3px;
+  display: inline-block;
+  transition-delay: 6000s;
+}
+
+.d-spoiler::selection {
+  color: $gray-300;
+}
+
+.dark-mode .d-spoiler {
+  color: $gray-900 !important;
+  background-color: $gray-900;
+  padding: 3px 5px;
+  border-radius: 3px;
+  margin: 3px;
+  display: inline-block;
+  transition-delay: 6000s;
+}
+
+.dark-mode .d-spoiler::selection {
+  color: $gray-900;
+}
+
+.d-spoiler:active {
+  color: $gray-900 !important;
+  background-color: $gray-200;
+  transition-delay: 0s;
+  transition: background-color 0.2s ease;
+}
+
+.dark-mode .d-spoiler:active {
+  color: $gray-200 !important;
+  background-color: $gray-700;
+  transition-delay: 0s;
+  transition: background-color 0.2s ease;
+}
+
+blockquote {
+  border-left: 6px solid $gray-200;
+  padding: 2px 5px 2px 15px;
+  margin: 7px !important;
+  margin-left: 9px !important;
+}
+
+.dark-mode blockquote {
+  border-left: 6px solid $gray-700;
+}
+
+.popup-content {
+  background: none !important;
+  border: none !important;
+  width: 100% !important;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.popup-overlay {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+.dark-mode .nav-link {
+  color: $white !important;
+}
+
+.footer {
+  width: 100% !important;
+  flex: 0 0 auto;
+}
+
+.dark-mode .page-item:not(.active) .page-link {
+  background-color: $gray-900 !important;
+  color: $white !important;
+  border-color: #191c1f !important;
+}
+
+.toggles {
+  position: absolute !important;
+  right: 50%; 
+  margin-right: -100px; ;
+}
+
+.emoji, .d-emoji {
+  width: 1.25em;
+  height: auto;
+}
+
+.backdrop {
+  position:fixed;
+  padding:0;
+  margin:0;
+
+  top:0;
+  left:0;
+
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+}
+
+.backdrop-overlay {
+  position:fixed;
+  padding:0;
+  margin:0;
+
+  top:0;
+  left:0;
+
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom,  rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.dark-mode .backdrop-overlay {
+  background: linear-gradient(to bottom,  rgba(52, 58, 64, 1) 0%, rgba(52, 58, 64, 0) 100%);
+}
+
+textarea {
+  resize: none !important;
+}
+
+.banner {
+  position: absolute;
+  top: 3.125rem;
+  left: 0;
+  width: 100%;
+  height: 30vh;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 -3px 10px -10px #000000, inset 0 10px 10px -10px #000000;
+}
+
+@media only screen and (min-width: 992px) {
+  .banner {
+    height: 50vh;
+  }
+}
+
+.banner-content {
+  max-height: 650px !important;
+}
