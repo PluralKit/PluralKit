@@ -20,7 +20,7 @@ namespace PluralKit.API
         public async Task<IActionResult> SystemGet(string systemRef)
         {
             var system = await ResolveSystem(systemRef);
-            if (system == null) return NotFound();
+            if (system == null) throw Errors.SystemNotFound;
             else return Ok(system.ToJson(this.ContextFor(system), v: APIVersion.V2));
         }
 
