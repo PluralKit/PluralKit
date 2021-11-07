@@ -12,6 +12,8 @@ using Myriad.Rest;
 
 using PluralKit.Core;
 
+using Sentry;
+
 using Serilog;
 using Serilog.Core;
 
@@ -36,7 +38,15 @@ namespace PluralKit.Bot
                 var logger = services.Resolve<ILogger>().ForContext<Init>();
 
                 // Initialize Sentry SDK, and make sure it gets dropped at the end
-                using var _ = Sentry.SentrySdk.Init(services.Resolve<CoreConfig>().SentryUrl);
+                var sentryDsn = services.Resolve<CoreConfig>().SentryUrl;
+                if (sentryDsn != null)
+                {
+                    using var _ = Sentry.SentrySdk.Init((opts) =>
+                    {
+                        opts.Dsn = new Dsn(sentryDsn);
+                        opts.Release = BuildInfoService.FullVersion;
+                    });
+                }
 
                 // "Connect to the database" (ie. set off database migrations and ensure state)
                 logger.Information("Connecting to database");
