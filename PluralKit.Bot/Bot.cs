@@ -252,14 +252,16 @@ namespace PluralKit.Bot
 
                 SentrySdk.CaptureEvent(sentryEvent, sentryScope);
 
-                // Once we've sent it to Sentry, report it to the user (if we have permission to)
-                var reportChannel = handler.ErrorChannelFor(evt);
-                if (reportChannel == null)
-                    return;
+                // most of these errors aren't useful... 
 
-                var botPerms = PermissionsIn(reportChannel.Value);
-                if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
-                    await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
+                // // Once we've sent it to Sentry, report it to the user (if we have permission to)
+                // var reportChannel = handler.ErrorChannelFor(evt);
+                // if (reportChannel == null)
+                //     return;
+
+                // var botPerms = PermissionsIn(reportChannel.Value);
+                // if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
+                //     await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
             }
         }
 
