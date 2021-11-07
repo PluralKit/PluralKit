@@ -8,10 +8,6 @@ permalink: /api
 PluralKit has a basic HTTP REST API for querying and modifying your system.
 The root endpoint of the API is `https://api.pluralkit.me/v2/`.
 
-::: warning
-This documentation is currently pre-release. Until this notice is removed, please refer to the [legacy API documentation](/api/legacy) for model and endpoint information.
-:::
-
 #### Authorization header token example
 ```
 Authorization: z865MC7JNhLtZuSq1NXQYVe+FgZJHBfeBCXOPYYRwH4liDCDrsd7zdOuR45mX257

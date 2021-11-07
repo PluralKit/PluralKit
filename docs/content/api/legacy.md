@@ -4,10 +4,8 @@ permalink: /api/legacy
 ---
 
 # Legacy API documentation
-<!-- 
 ::: warning
 This is the documentation for v1 of the PluralKit API. Please use v2 going forwards - v1 is deprecated and will be removed eventually.
-::: -->
 
 ## Models
 The following three models (usually represented in JSON format) represent the various objects in PluralKit's API.

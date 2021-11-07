@@ -5,6 +5,8 @@ permalink: /api/changelog
 
 # Version history
 
+* 2021-11-07 (v2)
+  * API v2 has been released. API v1 is now deprecated.
 * 2020-07-28
   * The unversioned API endpoints have been removed.
 * 2020-06-17 (v1.1)
