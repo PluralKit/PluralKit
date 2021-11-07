@@ -146,7 +146,7 @@ namespace PluralKit.Bot
                                     await ctx.Reply($"{Emojis.Error} Operation canceled (invalid number).");
                                     continue;
                                 }
-                                if (repliedNum >= pageCount)
+                                if (repliedNum > pageCount)
                                 {
                                     await ctx.Reply($"{Emojis.Error} That page number is too high (page count is {pageCount}).");
                                     continue;
