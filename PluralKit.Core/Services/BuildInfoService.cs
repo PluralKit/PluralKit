@@ -22,10 +22,6 @@ namespace PluralKit.Core
 
             // show only short commit hash to users
             Version = FullVersion.Remove(7);
-
-            // fix "dirty" git message
-            if (FullVersion.EndsWith("-dirty"))
-                Version += "-dirty";
         }
     }
 }
