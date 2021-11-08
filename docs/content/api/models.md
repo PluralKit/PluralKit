@@ -48,6 +48,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |description|?string|1000-character limit|
 |created|?datetime||
+|proxy_tags|array of [ProxyTag objects](#proxytag-object)|
 |keep_proxy|boolean||
 |privacy|?member privacy object||
 
@@ -59,6 +60,8 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 | ------ | ------- |
 | prefix | ?string |
 | suffix | ?string |
+
+* Note: `prefix + "text" + suffix` must be shorter than 100 characters in total.
 
 ### Group model
 
