@@ -123,6 +123,12 @@ namespace PluralKit.Bot
                                     ret += $"(birthday: {m.BirthdayString})";
                                 break;
                             }
+                        case SortProperty.DisplayName:
+                            {
+                                if (m.DisplayName != null)
+                                    ret += $"({m.DisplayName})";
+                                break;
+                            }
                         case SortProperty.MessageCount:
                             {
                                 if (m.MessageCountFor(lookupCtx) is { } count)
