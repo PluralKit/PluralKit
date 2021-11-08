@@ -30,7 +30,7 @@ Returns a [system object](/api/models#system-model).
 
 GET `/systems/@me/guilds/{guild_id}`
 
-Returns a [system guild settings](/api/models#system-guild-settings) object.
+Returns a [system guild settings](/api/models#system-guild-settings-model) object.
 
 ::: tip
 You must already have updated per-guild settings for your system in the target guild before being able to get or update them from the API.
@@ -40,9 +40,9 @@ You must already have updated per-guild settings for your system in the target g
 
 PATCH `/systems/@me/guilds/{guild_id}`
 
-Takes a partial [system guild settings](/api/models#system-guild-settings) object.
+Takes a partial [system guild settings](/api/models#system-guild-settings-model) object.
 
-Returns a [system guild settings](/api/models#system-guild-settings) object on success.
+Returns a [system guild settings](/api/models#system-guild-settings-model) object on success.
 
 ---
 ## Members
@@ -113,7 +113,7 @@ Takes a list of group references as input. (An empty list is accepted.) Returns 
 
 GET `/members/{memberRef}/guilds/{guild_id}`
 
-Returns a [member guild settings](/api/models#member-guild-settings) object.
+Returns a [member guild settings](/api/models#member-guild-settings-model) object.
 
 ::: tip
 You must already have updated per-guild settings for the target member in the target guild before being able to get or update them from the API.
@@ -123,9 +123,9 @@ You must already have updated per-guild settings for the target member in the ta
 
 PATCH `/members/{memberRef}/guilds/{guild_id}`
 
-Takes a partial [member guild settings](/api/models#member-guild-settings) object.
+Takes a partial [member guild settings](/api/models#member-guild-settings-model) object.
 
-Returns a [member guild settings](/api/models#member-guild-settings) object on success.
+Returns a [member guild settings](/api/models#member-guild-settings-model) object on success.
 
 ---
 ## Groups
