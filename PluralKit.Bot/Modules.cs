@@ -52,10 +52,12 @@ namespace PluralKit.Bot
                     c.Resolve<BotConfig>().DiscordBaseUrl
                 );
 
+                var metrics = c.Resolve<IMetrics>();
+
                 client.OnResponseEvent += ((_, ev) =>
                 {
                     var (endpoint, statusCode, ticks) = ev;
-                    var timer = c.Resolve<IMetrics>().Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
+                    var timer = metrics.Provider.Timer.Instance(BotMetrics.DiscordApiRequests, new MetricTags(
                         new[] { "endpoint", "status_code" },
                         new[] { endpoint, statusCode.ToString() }
                     ));

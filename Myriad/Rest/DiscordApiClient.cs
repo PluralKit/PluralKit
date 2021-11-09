@@ -19,7 +19,7 @@ namespace Myriad.Rest
         public DiscordApiClient(string token, ILogger logger, string? baseUrl = null)
         {
             _client = new BaseRestClient(UserAgent, token, logger, baseUrl ?? DefaultApiBaseUrl);
-            _client.OnResponseEvent += OnResponseEvent;
+            _client.OnResponseEvent += (_, ev) => OnResponseEvent?.Invoke(null, ev);
         }
 
         public EventHandler<(string, int, long)> OnResponseEvent;

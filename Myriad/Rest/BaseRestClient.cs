@@ -209,12 +209,11 @@ namespace Myriad.Rest
 
                     await HandleApiError(response, ignoreNotFound);
 
-                    if (OnResponseEvent != null)
-                        OnResponseEvent.Invoke(null, (
-                            GetEndpointMetricsName(response.RequestMessage!),
-                            (int)response.StatusCode,
-                            stopwatch.ElapsedTicks
-                        ));
+                    OnResponseEvent?.Invoke(null, (
+                        GetEndpointMetricsName(response.RequestMessage!),
+                        (int)response.StatusCode,
+                        stopwatch.ElapsedTicks
+                    ));
 
                     return response;
                 },
