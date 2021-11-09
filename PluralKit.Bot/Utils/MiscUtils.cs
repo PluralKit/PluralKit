@@ -62,6 +62,10 @@ namespace PluralKit.Bot
             // Ignore "Database is shutting down" error
             if (e is PostgresException pe && pe.SqlState == "57P03") return false;
 
+            // Ignore database timing out as well.
+            if (e is NpgsqlException tpe && tpe.InnerException is TimeoutException)
+                return false;
+
             // Ignore thread pool exhaustion errors
             if (e is NpgsqlException npe && npe.Message.Contains("The connection pool has been exhausted")) return false;
 
