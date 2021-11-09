@@ -22,6 +22,8 @@ namespace PluralKit.Bot
 
         public string? DiscordBaseUrl { get; set; }
 
+        public bool DisableErrorReporting { get; set; } = false;
+
         public record ClusterSettings
         {
             public string NodeName { get; set; }

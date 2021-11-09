@@ -37,6 +37,7 @@ namespace PluralKit.Bot
         private readonly ILifetimeScope _services;
         private readonly PeriodicStatCollector _collector;
         private readonly IMetrics _metrics;
+        private readonly BotConfig _config;
         private readonly ErrorMessageService _errorMessageService;
         private readonly CommandMessageService _commandMessageService;
         private readonly IDiscordCache _cache;
@@ -44,13 +45,14 @@ namespace PluralKit.Bot
         private bool _hasReceivedReady = false;
         private Timer _periodicTask; // Never read, just kept here for GC reasons
 
-        public Bot(ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics,
+        public Bot(ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics, BotConfig config,
             ErrorMessageService errorMessageService, CommandMessageService commandMessageService, Cluster cluster, DiscordApiClient rest, IDiscordCache cache)
         {
             _logger = logger.ForContext<Bot>();
             _services = services;
             _collector = collector;
             _metrics = metrics;
+            _config = config;
             _errorMessageService = errorMessageService;
             _commandMessageService = commandMessageService;
             _cluster = cluster;
@@ -252,16 +254,18 @@ namespace PluralKit.Bot
 
                 SentrySdk.CaptureEvent(sentryEvent, sentryScope);
 
-                // most of these errors aren't useful... 
+                // most of these errors aren't useful...
+                if (_config.DisableErrorReporting)
+                    return;
 
-                // // Once we've sent it to Sentry, report it to the user (if we have permission to)
-                // var reportChannel = handler.ErrorChannelFor(evt);
-                // if (reportChannel == null)
-                //     return;
+                // Once we've sent it to Sentry, report it to the user (if we have permission to)
+                var reportChannel = handler.ErrorChannelFor(evt);
+                if (reportChannel == null)
+                    return;
 
-                // var botPerms = PermissionsIn(reportChannel.Value);
-                // if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
-                //     await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
+                var botPerms = PermissionsIn(reportChannel.Value);
+                if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
+                    await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
             }
         }
 
