@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 using App.Metrics;
@@ -15,8 +16,12 @@ namespace PluralKit.Bot
 {
     public class ErrorMessageService
     {
+        // globally rate limit errors for now, don't want to spam users when something breaks
         private static readonly Duration MinErrorInterval = Duration.FromSeconds(10);
-        private readonly ConcurrentDictionary<ulong, Instant> _lastErrorInChannel = new ConcurrentDictionary<ulong, Instant>();
+        private static readonly Duration IntervalFromStartup = Duration.FromMinutes(5);
+
+        // private readonly ConcurrentDictionary<ulong, Instant> _lastErrorInChannel = new ConcurrentDictionary<ulong, Instant>();
+        private Instant lastErrorTime { get; set; }
 
         private readonly IMetrics _metrics;
         private readonly ILogger _logger;
@@ -27,6 +32,8 @@ namespace PluralKit.Bot
             _metrics = metrics;
             _logger = logger;
             _rest = rest;
+
+            lastErrorTime = SystemClock.Instance.GetCurrentInstant();
         }
 
         public async Task SendErrorMessage(ulong channelId, string errorId)
@@ -67,14 +74,20 @@ namespace PluralKit.Bot
 
         private bool ShouldSendErrorMessage(ulong channelId, Instant now)
         {
-            if (_lastErrorInChannel.TryGetValue(channelId, out var lastErrorTime))
-            {
-                var interval = now - lastErrorTime;
-                if (interval < MinErrorInterval)
-                    return false;
-            }
+            // if (_lastErrorInChannel.TryGetValue(channelId, out var lastErrorTime))
 
-            _lastErrorInChannel[channelId] = now;
+            var startupTime = Instant.FromDateTimeUtc(Process.GetCurrentProcess().StartTime);
+            // don't send errors during startup
+            // mostly because Npgsql throws a bunch of errors when opening connections sometimes???
+            if ((now - startupTime) < IntervalFromStartup)
+                return false;
+
+            var interval = now - lastErrorTime;
+            if (interval < MinErrorInterval)
+                return false;
+
+            // _lastErrorInChannel[channelId] = now;
+            lastErrorTime = now;
             return true;
         }
     }
