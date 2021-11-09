@@ -38,15 +38,13 @@ namespace PluralKit.Bot
                 var logger = services.Resolve<ILogger>().ForContext<Init>();
 
                 // Initialize Sentry SDK, and make sure it gets dropped at the end
-                var sentryDsn = services.Resolve<CoreConfig>().SentryUrl;
-                if (sentryDsn != null)
+
+                using var _ = Sentry.SentrySdk.Init((opts) =>
                 {
-                    using var _ = Sentry.SentrySdk.Init((opts) =>
-                    {
-                        opts.Dsn = new Dsn(sentryDsn);
-                        opts.Release = BuildInfoService.FullVersion;
-                    });
-                }
+                    opts.Dsn = services.Resolve<CoreConfig>().SentryUrl;
+                    opts.Release = BuildInfoService.FullVersion;
+                    opts.AutoSessionTracking = true;
+                });
 
                 // "Connect to the database" (ie. set off database migrations and ensure state)
                 logger.Information("Connecting to database");

@@ -22,7 +22,7 @@
 
     <ItemGroup>
       <PackageReference Include="Humanizer.Core" Version="2.8.26" />
-      <PackageReference Include="Sentry" Version="2.1.6" />
+      <PackageReference Include="Sentry" Version="3.11.1" />
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2" />
     </ItemGroup>
 </Project>
