@@ -114,7 +114,7 @@ namespace PluralKit.Bot
                     + $" {counts.GroupCount:N0} groups,"
                     + $" {counts.SwitchCount:N0} switches,"
                     + $" {counts.MessageCount:N0} messages"))
-                .Timestamp(Process.GetCurrentProcess().StartTime.ToString("O"))
+                .Timestamp(process.StartTime.ToString("O"))
                 .Footer(new($"PluralKit {BuildInfoService.Version} • https://github.com/xSke/PluralKit • Last restarted: ")); ;
             await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
                 new MessageEditRequest { Content = "", Embed = embed.Build() });
