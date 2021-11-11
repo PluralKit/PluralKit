@@ -175,7 +175,7 @@ namespace PluralKit.Bot
 
                 await _rest.CreateMessage(dm.Id, new MessageRequest
                 {
-                    Embed = await _embeds.CreateMessageInfoEmbed(msg)
+                    Embed = await _embeds.CreateMessageInfoEmbed(msg, true)
                 });
             }
             catch (ForbiddenException) { } // No permissions to DM, can't check for this :(

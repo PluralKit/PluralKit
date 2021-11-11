@@ -169,29 +169,15 @@ namespace PluralKit.Bot
                 throw new PKSyntaxError("You need to specify a channel.");
 
             var error = "Channel not found or you do not have permissions to access it.";
-
             var channel = await ctx.MatchChannel();
             if (channel == null || channel.GuildId == null)
                 throw new PKError(error);
 
-            var guild = _cache.GetGuild(channel.GuildId.Value);
-            if (guild == null)
+            if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
                 throw new PKError(error);
-
-            var guildMember = await _rest.GetGuildMember(channel.GuildId.Value, ctx.Author.Id);
-            if (guildMember == null)
-                throw new PKError(error);
-
-
 
             var botPermissions = _bot.PermissionsIn(channel.Id);
             var webhookPermissions = _cache.EveryonePermissions(channel);
-            var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, guildMember);
-
-            if ((userPermissions & PermissionSet.ViewChannel) == 0)
-                throw new PKError(error);
-
-
 
             // We use a bitfield so we can set individual permission bits
             ulong missingPermissions = 0;

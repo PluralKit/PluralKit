@@ -275,7 +275,7 @@ namespace PluralKit.Bot
                 .Build();
         }
 
-        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg)
+        public async Task<Embed> CreateMessageInfoEmbed(FullMessage msg, bool showContent)
         {
             var channel = await _cache.GetOrFetchChannel(_rest, msg.Message.Channel);
             var ctx = LookupContext.ByNonOwner;
@@ -317,11 +317,15 @@ namespace PluralKit.Bot
             else if (userInfo != null) userStr = userInfo.NameAndMention();
             else userStr = $"*(deleted user {msg.Message.Sender})*";
 
+            var content = serverMsg?.Content?.NormalizeLineEndSpacing();
+            if (content == null || !showContent)
+                content = "*(message contents deleted or inaccessible)*";
+
             // Put it all together
             var eb = new EmbedBuilder()
                 .Author(new(msg.Member.NameFor(ctx), IconUrl: msg.Member.AvatarFor(ctx).TryGetCleanCdnUrl()))
-                .Description(serverMsg?.Content?.NormalizeLineEndSpacing() ?? "*(message contents deleted or inaccessible)*")
-                .Image(new(serverMsg?.Attachments?.FirstOrDefault()?.Url))
+                .Description(content)
+                .Image(showContent ? new(serverMsg?.Attachments?.FirstOrDefault()?.Url) : null)
                 .Field(new("System",
                     msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true))
                 .Field(new("Member", $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)", true))
@@ -329,7 +333,7 @@ namespace PluralKit.Bot
                 .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"));
 
             var roles = memberInfo?.Roles?.ToList();
-            if (roles != null && roles.Count > 0)
+            if (roles != null && roles.Count > 0 && showContent)
             {
                 var rolesString = string.Join(", ", roles
                     .Select(id =>

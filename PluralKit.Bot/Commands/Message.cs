@@ -105,6 +105,20 @@ namespace PluralKit.Bot
                     throw new PKError("Could not find a recent message to edit.");
             }
 
+            if (msg.Message.Channel != ctx.Channel.Id)
+            {
+                var error = "The channel where the message was sent does not exist anymore, or you are missing permissions to access it.";
+
+                var channel = _cache.GetChannel(msg.Message.Channel);
+                if (channel == null)
+                    throw new PKError(error);
+
+                if (!await ctx.CheckPermissionsInGuildChannel(channel,
+                    PermissionSet.ViewChannel | PermissionSet.SendMessages
+                ))
+                    throw new PKError(error);
+            }
+
             return msg;
         }
 
@@ -145,11 +159,20 @@ namespace PluralKit.Bot
                     throw Errors.MessageNotFound(messageId.Value);
             }
 
+            var showContent = true;
+            var noShowContentError = "Message deleted or inaccessible.";
+
+            var channel = _cache.GetChannel(message.Message.Channel);
+            if (channel == null)
+                showContent = false;
+            else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
+                showContent = false;
+
             if (ctx.MatchRaw())
             {
                 var discordMessage = await _rest.GetMessageOrNull(message.Message.Channel, message.Message.Mid);
-                if (discordMessage == null)
-                    throw new PKError("Message deleted or inaccessible.");
+                if (discordMessage == null || !showContent)
+                    throw new PKError(noShowContentError);
 
                 var content = discordMessage.Content;
                 if (content == null || content == "")
@@ -174,12 +197,15 @@ namespace PluralKit.Bot
 
             if (isDelete)
             {
+                if (!showContent)
+                    throw new PKError(noShowContentError);
+
                 if (message.System.Id != ctx.System.Id)
                     throw new PKError("You can only delete your own messages.");
 
                 await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);
 
-                if (ctx.Guild != null)
+                if (ctx.Channel.Id == message.Message.Channel)
                     await ctx.Rest.DeleteMessage(ctx.Message);
                 else
                     await ctx.Rest.CreateReaction(ctx.Message.ChannelId, ctx.Message.Id, new() { Name = Emojis.Success });
@@ -197,7 +223,7 @@ namespace PluralKit.Bot
                 return;
             }
 
-            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message));
+            await ctx.Reply(embed: await _embeds.CreateMessageInfoEmbed(message, showContent));
         }
 
         private async Task DeleteCommandMessage(Context ctx, ulong messageId)
