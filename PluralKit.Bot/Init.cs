@@ -44,6 +44,7 @@ namespace PluralKit.Bot
                     opts.Dsn = services.Resolve<CoreConfig>().SentryUrl;
                     opts.Release = BuildInfoService.FullVersion;
                     opts.AutoSessionTracking = true;
+                    opts.DisableTaskUnobservedTaskExceptionCapture();
                 });
 
                 // "Connect to the database" (ie. set off database migrations and ensure state)
