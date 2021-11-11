@@ -76,7 +76,7 @@ namespace PluralKit.Bot
         {
             // if (_lastErrorInChannel.TryGetValue(channelId, out var lastErrorTime))
 
-            var startupTime = Instant.FromDateTimeUtc(Process.GetCurrentProcess().StartTime);
+            var startupTime = Instant.FromDateTimeUtc(Process.GetCurrentProcess().StartTime.ToUniversalTime());
             // don't send errors during startup
             // mostly because Npgsql throws a bunch of errors when opening connections sometimes???
             if ((now - startupTime) < IntervalFromStartup)
