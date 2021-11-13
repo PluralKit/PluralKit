@@ -234,7 +234,7 @@ JSON Body Parameters
 |?timestamp|datetime*|when the switch started|
 |members|list of strings**|members present in the switch (or empty list for switch-out)|
 
-* Defaults to "now" when missing.
+\* Defaults to "now" when missing.
 
 ** Can be short IDs or UUIDs.
 
