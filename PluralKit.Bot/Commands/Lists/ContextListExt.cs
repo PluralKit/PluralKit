@@ -163,6 +163,8 @@ namespace PluralKit.Bot
                                     ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
                                 else if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                                     ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                                else if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatarUrl)
+                                    ret += $"([avatar URL]({avatarUrl}))";
                                 else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is { } pronouns)
                                     ret += $"({pronouns})";
                                 else if (m.HasProxyTags)
