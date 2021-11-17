@@ -205,6 +205,7 @@ namespace PluralKit.Bot
         public static bool IsValidGuildChannel(Channel channel) =>
             channel.Type is
                 Channel.ChannelType.GuildText or
+                Channel.ChannelType.GuildVoice or
                 Channel.ChannelType.GuildNews or
                 Channel.ChannelType.GuildPublicThread or
                 Channel.ChannelType.GuildPrivateThread or
