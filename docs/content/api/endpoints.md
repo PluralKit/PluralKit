@@ -212,7 +212,7 @@ Query String Parameters
 
 |key|type|description|
 |---|---|---|
-|before|timestamp|date to get latest switch from (inclusive)|
+|before|timestamp|date to get latest switch from|
 |limit|int|number of switches to get|
 
 Returns a [switch object](/api/models#switch-model) containing a list of IDs.

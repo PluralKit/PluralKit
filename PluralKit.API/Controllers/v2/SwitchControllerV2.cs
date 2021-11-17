@@ -47,7 +47,7 @@ namespace PluralKit.API
                         select members.hid from switch_members, members
                         where switch_members.switch = switches.id and members.id = switch_members.member
                     ) as members from switches
-                    where switches.system = @System and switches.timestamp <= @Before
+                    where switches.system = @System and switches.timestamp < @Before
                     order by switches.timestamp desc
                     limit @Limit;", new { System = system.Id, Before = before, Limit = limit }));
             return Ok(res);
