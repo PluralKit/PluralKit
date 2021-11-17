@@ -68,17 +68,22 @@ namespace PluralKit.Bot
             // - A textual name of a member *in your own system*
             // - a textual display name of a member *in your own system*
 
-            // First, if we have a system, try finding by member name in system
-            if (ctx.System != null && await ctx.Repository.GetMemberByName(ctx.System.Id, input) is PKMember memberByName)
-                return memberByName;
+            // Skip name / display name matching if the user does not have a system
+            // or if they specifically request by-HID matching
+            if (ctx.System != null && !ctx.MatchFlag("id", "by-id"))
+            {
+                // First, try finding by member name in system
+                if (await ctx.Repository.GetMemberByName(ctx.System.Id, input) is PKMember memberByName)
+                    return memberByName;
 
-            // Then, try member HID parsing:
+                // And if that fails, we try finding a member with a display name matching the argument from the system
+                if (ctx.System != null && await ctx.Repository.GetMemberByDisplayName(ctx.System.Id, input) is PKMember memberByDisplayName)
+                    return memberByDisplayName;
+            }
+
+            // Finally (or if by-HID lookup is specified), try member HID parsing:
             if (await ctx.Repository.GetMemberByHid(input, restrictToSystem) is PKMember memberByHid)
                 return memberByHid;
-
-            // And if that again fails, we try finding a member with a display name matching the argument from the system
-            if (ctx.System != null && await ctx.Repository.GetMemberByDisplayName(ctx.System.Id, input) is PKMember memberByDisplayName)
-                return memberByDisplayName;
 
             // We didn't find anything, so we return null.
             return null;
@@ -104,12 +109,18 @@ namespace PluralKit.Bot
         {
             var input = ctx.PeekArgument();
 
-            if (ctx.System != null && await ctx.Repository.GetGroupByName(ctx.System.Id, input) is { } byName)
-                return byName;
+            // see PeekMember for an explanation of the logic used here
+
+            if (ctx.System != null && !ctx.MatchFlag("id", "by-id"))
+            {
+                if (await ctx.Repository.GetGroupByName(ctx.System.Id, input) is { } byName)
+                    return byName;
+                if (await ctx.Repository.GetGroupByDisplayName(ctx.System.Id, input) is { } byDisplayName)
+                    return byDisplayName;
+            }
+
             if (await ctx.Repository.GetGroupByHid(input, restrictToSystem) is { } byHid)
                 return byHid;
-            if (await ctx.Repository.GetGroupByDisplayName(ctx.System.Id, input) is { } byDisplayName)
-                return byDisplayName;
 
             return null;
         }
@@ -121,34 +132,24 @@ namespace PluralKit.Bot
             return group;
         }
 
-        public static string CreateMemberNotFoundError(this Context ctx, string input)
+        public static string CreateNotFoundError(this Context ctx, string entity, string input)
         {
-            // TODO: does this belong here?
-            if (input.Length == 5)
+            var isIDOnlyQuery = ctx.System == null || ctx.MatchFlag("id", "by-id");
+
+            if (isIDOnlyQuery)
             {
-                if (ctx.System != null)
-                    return $"Member with ID or name \"{input}\" not found.";
-                return $"Member with ID \"{input}\" not found."; // Accounts without systems can't query by name
+                if (input.Length == 5)
+                    return $"{entity} with ID \"{input}\" not found.";
+                else
+                    return $"{entity} not found. Note that a {entity.ToLower()} ID is 5 characters long.";
             }
-
-            if (ctx.System != null)
-                return $"Member with name \"{input}\" not found. Note that a member ID is 5 characters long.";
-            return $"Member not found. Note that a member ID is 5 characters long.";
-        }
-
-        public static string CreateGroupNotFoundError(this Context ctx, string input)
-        {
-            // TODO: does this belong here?
-            if (input.Length == 5)
+            else
             {
-                if (ctx.System != null)
-                    return $"Group with ID or name \"{input}\" not found.";
-                return $"Group with ID \"{input}\" not found."; // Accounts without systems can't query by name
+                if (input.Length == 5)
+                    return $"{entity} with ID or name \"{input}\" not found.";
+                else
+                    return $"{entity} with name \"{input}\" not found. Note that a {entity.ToLower()} ID is 5 characters long.";
             }
-
-            if (ctx.System != null)
-                return $"Group with name \"{input}\" not found. Note that a group ID is 5 characters long.";
-            return $"Group not found. Note that a group ID is 5 characters long.";
         }
 
         public static Task<Channel> MatchChannel(this Context ctx)

@@ -108,7 +108,7 @@ namespace PluralKit.Bot
 
                 if (member == null)
                     // if we can't, big error. Every member name must be valid.
-                    throw new PKError(ctx.CreateMemberNotFoundError(ctx.PopArgument()));
+                    throw new PKError(ctx.CreateNotFoundError("Member", ctx.PopArgument()));
 
                 members.Add(member); // Then add to the final output list
             }
@@ -128,7 +128,7 @@ namespace PluralKit.Bot
                 var group = await ctx.MatchGroup(restrictToSystem);
                 if (group == null)
                     // if we can't, big error. Every group name must be valid.
-                    throw new PKError(ctx.CreateGroupNotFoundError(ctx.PopArgument()));
+                    throw new PKError(ctx.CreateNotFoundError("Group", ctx.PopArgument()));
 
                 // todo: remove this, the database query enforces the restriction
                 if (restrictToSystem != null && group.System != restrictToSystem)

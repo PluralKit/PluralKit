@@ -373,7 +373,7 @@ namespace PluralKit.Bot
                 await PrintCommandExpectedError(ctx, MemberNew, MemberInfo, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
                     MemberColor, MemberBirthday, MemberProxy, MemberDelete, MemberAvatar);
             else
-                await ctx.Reply($"{Emojis.Error} {ctx.CreateMemberNotFoundError(ctx.PopArgument())}");
+                await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Member", ctx.PopArgument())}");
         }
 
         private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
@@ -478,7 +478,7 @@ namespace PluralKit.Bot
             else if (!ctx.HasNext())
                 await PrintCommandExpectedError(ctx, GroupCommands);
             else
-                await ctx.Reply($"{Emojis.Error} {ctx.CreateGroupNotFoundError(ctx.PopArgument())}");
+                await ctx.Reply($"{Emojis.Error} {ctx.CreateNotFoundError("Group", ctx.PopArgument())}");
         }
 
         private async Task HandleSwitchCommand(Context ctx)
