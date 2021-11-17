@@ -7,6 +7,8 @@ permalink: /api/endpoints
 
 The base URL for the PluralKit API is `https://api.pluralkit.me/v2`. Endpoint URLs should be added to the base URL to get a full URL to query.
 
+All query string parameters are optional, but if present they require a non-null value.
+
 ---
 ## Systems
 
