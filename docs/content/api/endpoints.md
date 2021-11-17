@@ -213,7 +213,10 @@ Query String Parameters
 |key|type|description|
 |---|---|---|
 |before|timestamp|date to get latest switch from|
-|limit|int|number of switches to get|
+|limit|int|number of switches to get (defaults to 100)||
+::: warning
+This endpoint returns at most 100 switches. To get more switches, make multiple requests using the `before` parameter for pagination.
+:::
 
 Returns a [switch object](/api/models#switch-model) containing a list of IDs.
 
