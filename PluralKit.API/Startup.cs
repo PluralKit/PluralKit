@@ -106,7 +106,7 @@ namespace PluralKit.API
             builder.RegisterInstance(InitUtils.BuildConfiguration(Environment.GetCommandLineArgs()).Build())
                 .As<IConfiguration>();
             builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
-            builder.RegisterModule(new LoggingModule("api", cfg: new LoggerConfiguration().Filter.ByExcluding(exc => exc.Exception is PKError)));
+            builder.RegisterModule(new LoggingModule("api", cfg: new LoggerConfiguration().Filter.ByExcluding(exc => exc.Exception.IsUserError())));
             builder.RegisterModule(new MetricsModule("API"));
             builder.RegisterModule<DataStoreModule>();
             builder.RegisterModule<APIModule>();
