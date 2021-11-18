@@ -19,7 +19,7 @@ namespace Myriad.Extensions
 
         public static async Task<PermissionSet> PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, GuildMemberPartial? member, bool isWebhook = false)
         {
-            if (!await cache.TryGetChannel(channelId, out var channel))
+            if (!(await cache.TryGetChannel(channelId) is Channel channel))
                 // todo: handle channel not found better
                 return PermissionSet.Dm;
 

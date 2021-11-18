@@ -157,7 +157,7 @@ namespace PluralKit.Bot
             if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id))
                 return null;
 
-            if (!await ctx.Cache.TryGetChannel(id, out var channel))
+            if (!(await ctx.Cache.TryGetChannel(id) is Channel channel))
                 return null;
 
             if (!DiscordUtils.IsValidGuildChannel(channel))
@@ -167,12 +167,12 @@ namespace PluralKit.Bot
             return channel;
         }
 
-        public static Guild MatchGuild(this Context ctx)
+        public static async Task<Guild> MatchGuild(this Context ctx)
         {
             try
             {
                 var id = ulong.Parse(ctx.PeekArgument());
-                ctx.Cache.TryGetGuild(id, out var guild);
+                var guild = await ctx.Cache.TryGetGuild(id);
                 if (guild != null)
                     ctx.PopArgument();
 

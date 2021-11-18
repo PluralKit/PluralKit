@@ -93,7 +93,7 @@ namespace PluralKit.Bot
         private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)
         {
             // TODO: fetch it directly on cache miss?
-            if (await _cache.TryGetChannel(channelId, out var channel))
+            if (await _cache.TryGetChannel(channelId) is Channel channel)
                 return channel;
 
             // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too

@@ -124,34 +124,36 @@ namespace Myriad.Cache
             return default;
         }
 
-        public Task<bool> TryGetGuild(ulong guildId, out Guild guild)
+        public Task<Guild?> TryGetGuild(ulong guildId)
         {
-            if (_guilds.TryGetValue(guildId, out var cg))
-            {
-                guild = cg.Guild;
-                return Task.FromResult(true);
-            }
-
-            guild = null!;
-            return Task.FromResult(false);
+            _guilds.TryGetValue(guildId, out var cg);
+            return Task.FromResult(cg?.Guild);
         }
 
-        public Task<bool> TryGetChannel(ulong channelId, out Channel channel) =>
-            Task.FromResult(_channels.TryGetValue(channelId, out channel!));
-
-        public Task<bool> TryGetDmChannel(ulong userId, out Channel channel)
+        public Task<Channel?> TryGetChannel(ulong channelId)
         {
-            channel = default!;
+            _channels.TryGetValue(channelId, out var channel);
+            return Task.FromResult(channel);
+        }
+
+        public Task<Channel?> TryGetDmChannel(ulong userId)
+        {
             if (!_dmChannels.TryGetValue(userId, out var channelId))
-                return Task.FromResult(false);
-            return TryGetChannel(channelId, out channel);
+                return Task.FromResult((Channel?) null);
+            return TryGetChannel(channelId);
         }
 
-        public Task<bool> TryGetUser(ulong userId, out User user) =>
-            Task.FromResult(_users.TryGetValue(userId, out user!));
+        public Task<User?> TryGetUser(ulong userId)
+        {
+            _users.TryGetValue(userId, out var user);
+            return Task.FromResult(user);
+        }
 
-        public Task<bool> TryGetRole(ulong roleId, out Role role) =>
-            Task.FromResult(_roles.TryGetValue(roleId, out role!));
+        public Task<Role?> TryGetRole(ulong roleId)
+        {
+            _roles.TryGetValue(roleId, out var role);
+            return Task.FromResult(role);
+        }
 
         public IAsyncEnumerable<Guild> GetAllGuilds()
         {

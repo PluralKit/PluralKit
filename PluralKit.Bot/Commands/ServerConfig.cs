@@ -110,7 +110,7 @@ namespace PluralKit.Bot
 
             // Resolve all channels from the cache and order by position
             var channels = (await Task.WhenAll(blacklist.Blacklist
-                .Select(id => _cache.GetChannelOrNull(id))))
+                .Select(id => _cache.TryGetChannel(id))))
                 .Where(c => c != null)
                 .OrderBy(c => c.Position)
                 .ToList();

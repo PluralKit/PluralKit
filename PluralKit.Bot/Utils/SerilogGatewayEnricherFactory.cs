@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
+using Myriad.Types;
 
 using Serilog.Core;
 using Serilog.Events;
@@ -39,7 +40,7 @@ namespace PluralKit.Bot
             {
                 props.Add(new("ChannelId", new ScalarValue(channel.Value)));
 
-                if (await _cache.TryGetChannel(channel.Value, out _))
+                if (await _cache.TryGetChannel(channel.Value) != null)
                 {
                     var botPermissions = await _bot.PermissionsIn(channel.Value);
                     props.Add(new("BotPermissions", new ScalarValue(botPermissions)));

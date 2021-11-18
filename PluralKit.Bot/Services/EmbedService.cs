@@ -335,10 +335,10 @@ namespace PluralKit.Bot
             var roles = memberInfo?.Roles?.ToList();
             if (roles != null && roles.Count > 0 && showContent)
             {
-                var rolesString = string.Join(", ", roles
-                    .Select(id =>
+                var rolesString = string.Join(", ", (await Task.WhenAll(roles
+                    .Select(async id =>
                     {
-                        _cache.TryGetRole(id, out var role);
+                        var role = await _cache.TryGetRole(id);
                         if (role != null)
                             return role;
                         return new Role()
@@ -346,7 +346,7 @@ namespace PluralKit.Bot
                             Name = "*(unknown role)*",
                             Position = 0,
                         };
-                    })
+                    })))
                     .OrderByDescending(role => role.Position)
                     .Select(role => role.Name));
                 eb.Field(new($"Account roles ({roles.Count})", rolesString.Truncate(1024)));

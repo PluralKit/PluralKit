@@ -436,7 +436,7 @@ namespace PluralKit.Bot
         {
             ctx.CheckSystem();
 
-            var guild = ctx.MatchGuild() ?? ctx.Guild ??
+            var guild = await ctx.MatchGuild() ?? ctx.Guild ??
                 throw new PKError("You must run this command in a server or pass a server ID.");
 
             var gs = await _repo.GetSystemGuild(guild.Id, ctx.System.Id);

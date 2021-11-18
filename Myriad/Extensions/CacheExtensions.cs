@@ -11,42 +11,35 @@ namespace Myriad.Extensions
     {
         public static async Task<Guild> GetGuild(this IDiscordCache cache, ulong guildId)
         {
-            if (!await cache.TryGetGuild(guildId, out var guild))
+            if (!(await cache.TryGetGuild(guildId) is Guild guild))
                 throw new KeyNotFoundException($"Guild {guildId} not found in cache");
             return guild;
         }
 
         public static async Task<Channel> GetChannel(this IDiscordCache cache, ulong channelId)
         {
-            if (!await cache.TryGetChannel(channelId, out var channel))
+            if (!(await cache.TryGetChannel(channelId) is Channel channel))
                 throw new KeyNotFoundException($"Channel {channelId} not found in cache");
             return channel;
         }
 
-        public static async Task<Channel?> GetChannelOrNull(this IDiscordCache cache, ulong channelId)
-        {
-            if (await cache.TryGetChannel(channelId, out var channel))
-                return channel;
-            return null;
-        }
-
         public static async Task<User> GetUser(this IDiscordCache cache, ulong userId)
         {
-            if (!await cache.TryGetUser(userId, out var user))
+            if (!(await cache.TryGetUser(userId) is User user))
                 throw new KeyNotFoundException($"User {userId} not found in cache");
             return user;
         }
 
         public static async Task<Role> GetRole(this IDiscordCache cache, ulong roleId)
         {
-            if (!await cache.TryGetRole(roleId, out var role))
+            if (!(await cache.TryGetRole(roleId) is Role role))
                 throw new KeyNotFoundException($"Role {roleId} not found in cache");
             return role;
         }
 
         public static async ValueTask<User?> GetOrFetchUser(this IDiscordCache cache, DiscordApiClient rest, ulong userId)
         {
-            if (await cache.TryGetUser(userId, out var cacheUser))
+            if (await cache.TryGetUser(userId) is User cacheUser)
                 return cacheUser;
 
             var restUser = await rest.GetUser(userId);
@@ -57,7 +50,7 @@ namespace Myriad.Extensions
 
         public static async ValueTask<Channel?> GetOrFetchChannel(this IDiscordCache cache, DiscordApiClient rest, ulong channelId)
         {
-            if (await cache.TryGetChannel(channelId, out var cacheChannel))
+            if (await cache.TryGetChannel(channelId) is {} cacheChannel)
                 return cacheChannel;
 
             var restChannel = await rest.GetChannel(channelId);
@@ -68,7 +61,7 @@ namespace Myriad.Extensions
 
         public static async Task<Channel> GetOrCreateDmChannel(this IDiscordCache cache, DiscordApiClient rest, ulong recipientId)
         {
-            if (await cache.TryGetDmChannel(recipientId, out var cacheChannel))
+            if (await cache.TryGetDmChannel(recipientId) is {} cacheChannel)
                 return cacheChannel;
 
             var restChannel = await rest.CreateDm(recipientId);

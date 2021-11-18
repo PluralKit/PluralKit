@@ -50,7 +50,7 @@ namespace PluralKit.Bot
         {
             // Sometimes we get events from users that aren't in the user cache
             // We just ignore all of those for now, should be quite rare...
-            if (!await _cache.TryGetUser(evt.UserId, out var user))
+            if (!(await _cache.TryGetUser(evt.UserId) is User user))
                 return;
 
             // ignore any reactions added by *us*
