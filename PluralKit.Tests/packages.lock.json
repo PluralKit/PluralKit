@@ -674,23 +674,8 @@
       },
       "Sentry": {
         "type": "Transitive",
-        "resolved": "2.1.6",
-        "contentHash": "Haii3y9JZX9Z/HrHyy8r0cLj6WvTTFS4xbGI0UtItZ53yB/hGaWeXD5mvk47HAVOHeix8Gg64tguxIBCicoMAQ==",
-        "dependencies": {
-          "Newtonsoft.Json": "11.0.2",
-          "Sentry.PlatformAbstractions": "1.1.1",
-          "Sentry.Protocol": "2.1.6"
-        }
-      },
-      "Sentry.PlatformAbstractions": {
-        "type": "Transitive",
-        "resolved": "1.1.1",
-        "contentHash": "ug99ZPdcQQY2Q2smO5tWfxUdMQF8f90UdCKMSfhucJVOAQtKWM0rXcqLvVZRlXDzeB/xNQWLSuw56I5MuaOS9g=="
-      },
-      "Sentry.Protocol": {
-        "type": "Transitive",
-        "resolved": "2.1.6",
-        "contentHash": "AXVI9e/mYp5NI/r+Tfk//YyXGGCUxq698xnOuJbiDUJ2FYw88BdB1Ewmv29pA8FTh/MLBWTPIwTVBWMouZrQBA=="
+        "resolved": "3.11.1",
+        "contentHash": "T/NLfs6MMkUSYsPEDajB9ad0124T18I0uUod5MNOev3iwjvcnIEQBrStEX2olbIxzqfvGXzQ/QFqTfA2ElLPlA=="
       },
       "Serilog": {
         "type": "Transitive",
@@ -837,6 +822,24 @@
         "type": "Transitive",
         "resolved": "1.0.2",
         "contentHash": "iZJ37Iss3pUkFl961x1aka85QuvgY9oNZabHijzVnHs4QTz6EMNx3zjJDyvK/0+Ryj6JPv/PC7GVIJXLHtu2nQ=="
+      },
+      "SqlKata": {
+        "type": "Transitive",
+        "resolved": "2.3.7",
+        "contentHash": "erKffEMhrS2IFKXjYV83M4uc1IOCl91yeP/3uY5yIm6pRNFDNrqnTk3La1en6EGDlMRol9abTNO1erQCYf08tg==",
+        "dependencies": {
+          "System.Collections.Concurrent": "4.3.0"
+        }
+      },
+      "SqlKata.Execution": {
+        "type": "Transitive",
+        "resolved": "2.3.7",
+        "contentHash": "LybTYj99riLRH7YQNt9Kuc8VpZOvaQ7H4sQBrj2zefktS8LASOaXsHRYC/k8NEcj25w6huQpOi+HrEZ5qHXl0w==",
+        "dependencies": {
+          "Humanizer.Core": "2.8.26",
+          "SqlKata": "2.3.7",
+          "dapper": "1.50.5"
+        }
       },
       "Swashbuckle.AspNetCore": {
         "type": "Transitive",
@@ -1714,7 +1717,7 @@
           "Humanizer.Core": "2.8.26",
           "Myriad": "1.0.0",
           "PluralKit.Core": "1.0.0",
-          "Sentry": "2.1.6",
+          "Sentry": "3.11.1",
           "SixLabors.ImageSharp": "1.0.2"
         }
       },
@@ -1748,6 +1751,8 @@
           "Serilog.Sinks.Console": "4.0.0-dev-00834",
           "Serilog.Sinks.Elasticsearch": "8.4.1",
           "Serilog.Sinks.File": "4.1.0",
+          "SqlKata": "2.3.7",
+          "SqlKata.Execution": "2.3.7",
           "System.Interactive.Async": "5.0.0"
         }
       }
