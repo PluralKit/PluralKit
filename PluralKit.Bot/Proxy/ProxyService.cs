@@ -56,7 +56,7 @@ namespace PluralKit.Bot
             if (!ShouldProxy(channel, message, ctx))
                 return false;
 
-            var rootChannel = _cache.GetRootChannel(message.ChannelId);
+            var rootChannel = await _cache.GetRootChannel(message.ChannelId);
 
             List<ProxyMember> members;
             // Fetch members and try to match to a specific member
@@ -143,10 +143,10 @@ namespace PluralKit.Bot
             var content = match.ProxyContent;
             if (!allowEmbeds) content = content.BreakLinkEmbeds();
 
-            var messageChannel = _cache.GetChannel(trigger.ChannelId);
-            var rootChannel = _cache.GetRootChannel(trigger.ChannelId);
+            var messageChannel = await _cache.GetChannel(trigger.ChannelId);
+            var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
             var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
-            var guild = _cache.GetGuild(trigger.GuildId.Value);
+            var guild = await _cache.GetGuild(trigger.GuildId.Value);
 
             var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
             {

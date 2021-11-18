@@ -87,8 +87,8 @@ namespace PluralKit.Bot
             var missingEmojiPermissions = false;
             foreach (var channel in await _rest.GetGuildChannels(guild.Id))
             {
-                var botPermissions = _bot.PermissionsIn(channel.Id);
-                var webhookPermissions = _cache.EveryonePermissions(channel);
+                var botPermissions = await _bot.PermissionsIn(channel.Id);
+                var webhookPermissions = await _cache.EveryonePermissions(channel);
                 var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
 
                 if ((userPermissions & PermissionSet.ViewChannel) == 0)
@@ -176,8 +176,8 @@ namespace PluralKit.Bot
             if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
                 throw new PKError(error);
 
-            var botPermissions = _bot.PermissionsIn(channel.Id);
-            var webhookPermissions = _cache.EveryonePermissions(channel);
+            var botPermissions = await _bot.PermissionsIn(channel.Id);
+            var webhookPermissions = await _cache.EveryonePermissions(channel);
 
             // We use a bitfield so we can set individual permission bits
             ulong missingPermissions = 0;
@@ -249,7 +249,7 @@ namespace PluralKit.Bot
                 throw new PKError("You can only check your own messages.");
 
             // get the channel info
-            var channel = _cache.GetChannel(channelId.Value);
+            var channel = await _cache.GetChannel(channelId.Value);
             if (channel == null)
                 throw new PKError("Unable to get the channel associated with this message.");
 

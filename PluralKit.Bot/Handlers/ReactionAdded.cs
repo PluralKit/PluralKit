@@ -50,7 +50,7 @@ namespace PluralKit.Bot
         {
             // Sometimes we get events from users that aren't in the user cache
             // We just ignore all of those for now, should be quite rare...
-            if (!_cache.TryGetUser(evt.UserId, out var user))
+            if (!await _cache.TryGetUser(evt.UserId, out var user))
                 return;
 
             // ignore any reactions added by *us*
@@ -60,7 +60,7 @@ namespace PluralKit.Bot
             // Ignore reactions from bots (we can't DM them anyway)
             if (user.Bot) return;
 
-            var channel = _cache.GetChannel(evt.ChannelId);
+            var channel = await _cache.GetChannel(evt.ChannelId);
 
             // check if it's a command message first
             // since this can happen in DMs as well
@@ -121,7 +121,7 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEvent evt, FullMessage msg)
         {
-            if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
+            if (!(await _bot.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
                 return;
 
             var system = await _repo.GetSystemByAccount(evt.UserId);
@@ -162,7 +162,7 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleQueryReaction(MessageReactionAddEvent evt, FullMessage msg)
         {
-            var guild = _cache.GetGuild(evt.GuildId!.Value);
+            var guild = await _cache.GetGuild(evt.GuildId!.Value);
 
             // Try to DM the user info about the message
             try
@@ -185,14 +185,14 @@ namespace PluralKit.Bot
 
         private async ValueTask HandlePingReaction(MessageReactionAddEvent evt, FullMessage msg)
         {
-            if (!_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
+            if (!(await _bot.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
                 return;
 
             // Check if the "pinger" has permission to send messages in this channel
             // (if not, PK shouldn't send messages on their behalf)
             var member = await _rest.GetGuildMember(evt.GuildId!.Value, evt.UserId);
             var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
-            if (member == null || !_cache.PermissionsFor(evt.ChannelId, member).HasFlag(requiredPerms)) return;
+            if (member == null || !(await _cache.PermissionsFor(evt.ChannelId, member)).HasFlag(requiredPerms)) return;
 
             if (msg.System.PingsEnabled)
             {
@@ -240,7 +240,7 @@ namespace PluralKit.Bot
 
         private async Task TryRemoveOriginalReaction(MessageReactionAddEvent evt)
         {
-            if (_bot.PermissionsIn(evt.ChannelId).HasFlag(PermissionSet.ManageMessages))
+            if ((await _bot.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteUserReaction(evt.ChannelId, evt.MessageId, evt.Emoji, evt.UserId);
         }
     }

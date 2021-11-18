@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Myriad.Cache;
 using Myriad.Gateway;
@@ -10,24 +11,24 @@ namespace Myriad.Extensions
 {
     public static class PermissionExtensions
     {
-        public static PermissionSet PermissionsFor(this IDiscordCache cache, MessageCreateEvent message) =>
+        public static Task<PermissionSet> PermissionsFor(this IDiscordCache cache, MessageCreateEvent message) =>
             PermissionsFor(cache, message.ChannelId, message.Author.Id, message.Member, isWebhook: message.WebhookId != null);
 
-        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, GuildMember member) =>
+        public static Task<PermissionSet> PermissionsFor(this IDiscordCache cache, ulong channelId, GuildMember member) =>
             PermissionsFor(cache, channelId, member.User.Id, member);
 
-        public static PermissionSet PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, GuildMemberPartial? member, bool isWebhook = false)
+        public static async Task<PermissionSet> PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId, GuildMemberPartial? member, bool isWebhook = false)
         {
-            if (!cache.TryGetChannel(channelId, out var channel))
+            if (!await cache.TryGetChannel(channelId, out var channel))
                 // todo: handle channel not found better
                 return PermissionSet.Dm;
 
             if (channel.GuildId == null)
                 return PermissionSet.Dm;
 
-            var rootChannel = cache.GetRootChannel(channelId);
+            var rootChannel = await cache.GetRootChannel(channelId);
 
-            var guild = cache.GetGuild(channel.GuildId.Value);
+            var guild = await cache.GetGuild(channel.GuildId.Value);
 
             if (isWebhook)
                 return EveryonePermissions(guild);
@@ -38,12 +39,12 @@ namespace Myriad.Extensions
         public static PermissionSet EveryonePermissions(this Guild guild) =>
             guild.Roles.FirstOrDefault(r => r.Id == guild.Id)?.Permissions ?? PermissionSet.Dm;
 
-        public static PermissionSet EveryonePermissions(this IDiscordCache cache, Channel channel)
+        public static async Task<PermissionSet> EveryonePermissions(this IDiscordCache cache, Channel channel)
         {
             if (channel.Type == Channel.ChannelType.Dm)
                 return PermissionSet.Dm;
 
-            var defaultPermissions = cache.GetGuild(channel.GuildId!.Value).EveryonePermissions();
+            var defaultPermissions = (await cache.GetGuild(channel.GuildId!.Value)).EveryonePermissions();
             var overwrite = channel.PermissionOverwrites?.FirstOrDefault(r => r.Id == channel.GuildId);
             if (overwrite == null)
                 return defaultPermissions;

@@ -42,7 +42,9 @@ namespace PluralKit.Bot
                 };
             }).AsSelf().SingleInstance();
             builder.RegisterType<Cluster>().AsSelf().SingleInstance();
-            builder.RegisterType<MemoryDiscordCache>().AsSelf().As<IDiscordCache>().SingleInstance();
+            builder.Register(c => {
+                return new MemoryDiscordCache();
+            }).AsSelf().As<IDiscordCache>().SingleInstance();
 
             builder.Register(c =>
             {

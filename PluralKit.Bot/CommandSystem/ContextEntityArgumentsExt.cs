@@ -152,19 +152,19 @@ namespace PluralKit.Bot
             }
         }
 
-        public static Task<Channel> MatchChannel(this Context ctx)
+        public static async Task<Channel> MatchChannel(this Context ctx)
         {
             if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id))
-                return Task.FromResult<Channel>(null);
+                return null;
 
-            if (!ctx.Cache.TryGetChannel(id, out var channel))
-                return Task.FromResult<Channel>(null);
+            if (!await ctx.Cache.TryGetChannel(id, out var channel))
+                return null;
 
             if (!DiscordUtils.IsValidGuildChannel(channel))
-                return Task.FromResult<Channel>(null);
+                return null;
 
             ctx.PopArgument();
-            return Task.FromResult(channel);
+            return channel;
         }
 
         public static Guild MatchGuild(this Context ctx)

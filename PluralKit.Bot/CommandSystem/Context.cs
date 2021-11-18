@@ -71,8 +71,8 @@ namespace PluralKit.Bot
         public Cluster Cluster => _cluster;
         public MessageContext MessageContext => _messageContext;
 
-        public PermissionSet BotPermissions => _provider.Resolve<Bot>().PermissionsIn(_channel.Id);
-        public PermissionSet UserPermissions => _cache.PermissionsFor(_message);
+        public Task<PermissionSet> BotPermissions => _provider.Resolve<Bot>().PermissionsIn(_channel.Id);
+        public Task<PermissionSet> UserPermissions => _cache.PermissionsFor(_message);
 
         public DiscordApiClient Rest => _rest;
 
@@ -85,11 +85,13 @@ namespace PluralKit.Bot
 
         public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
         {
-            if (!BotPermissions.HasFlag(PermissionSet.SendMessages))
+            var botPerms = await BotPermissions;
+
+            if (!botPerms.HasFlag(PermissionSet.SendMessages))
                 // Will be "swallowed" during the error handler anyway, this message is never shown.
                 throw new PKError("PluralKit does not have permission to send messages in this channel.");
 
-            if (embed != null && !BotPermissions.HasFlag(PermissionSet.EmbedLinks))
+            if (embed != null && !botPerms.HasFlag(PermissionSet.EmbedLinks))
                 throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
 
             var msg = await _rest.CreateMessage(_channel.Id, new MessageRequest

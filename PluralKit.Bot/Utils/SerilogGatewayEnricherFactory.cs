@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using Myriad.Cache;
 using Myriad.Extensions;
@@ -20,7 +21,7 @@ namespace PluralKit.Bot
             _cache = cache;
         }
 
-        public ILogEventEnricher GetEnricher(Shard shard, IGatewayEvent evt)
+        public async Task<ILogEventEnricher> GetEnricher(Shard shard, IGatewayEvent evt)
         {
             var props = new List<LogEventProperty>
             {
@@ -38,9 +39,9 @@ namespace PluralKit.Bot
             {
                 props.Add(new("ChannelId", new ScalarValue(channel.Value)));
 
-                if (_cache.TryGetChannel(channel.Value, out _))
+                if (await _cache.TryGetChannel(channel.Value, out _))
                 {
-                    var botPermissions = _bot.PermissionsIn(channel.Value);
+                    var botPermissions = await _bot.PermissionsIn(channel.Value);
                     props.Add(new("BotPermissions", new ScalarValue(botPermissions)));
                 }
             }
@@ -52,7 +53,7 @@ namespace PluralKit.Bot
                 props.Add(new("UserId", new ScalarValue(user.Value)));
 
             if (evt is MessageCreateEvent mce)
-                props.Add(new("UserPermissions", new ScalarValue(_cache.PermissionsFor(mce))));
+                props.Add(new("UserPermissions", new ScalarValue(await _cache.PermissionsFor(mce))));
 
             return new Inner(props);
         }

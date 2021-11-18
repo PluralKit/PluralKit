@@ -165,7 +165,7 @@ namespace PluralKit.Bot
                         if (currentPage < 0) currentPage += pageCount;
 
                         // If we can, remove the user's reaction (so they can press again quickly)
-                        if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
+                        if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                             await ctx.Rest.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, reaction.UserId);
 
                         // Edit the embed with the new page
@@ -179,7 +179,7 @@ namespace PluralKit.Bot
                 }
 
                 // todo: re-check 
-                if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
+                if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                     await ctx.Rest.DeleteAllReactions(msg.ChannelId, msg.Id);
             }
             // If we get a "NotFound" error, the message has been deleted and thus not our problem
@@ -292,7 +292,7 @@ namespace PluralKit.Bot
             var task = f();
 
             // If we don't have permission to add reactions, don't bother, and just await the task normally.
-            if (!DiscordUtils.HasReactionPermissions(ctx)) return await task;
+            if (!await DiscordUtils.HasReactionPermissions(ctx)) return await task;
 
             try
             {

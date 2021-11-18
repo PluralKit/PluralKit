@@ -67,7 +67,7 @@ namespace PluralKit.Bot
                 if (ctx.Guild == null)
                     await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new() { Name = Emojis.Success });
 
-                if (ctx.BotPermissions.HasFlag(PermissionSet.ManageMessages))
+                if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                     await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
 
                 await _logChannel.LogMessage(ctx.MessageContext, msg.Message, ctx.Message, editedMsg, originalMsg!.Content!);
@@ -109,7 +109,7 @@ namespace PluralKit.Bot
             {
                 var error = "The channel where the message was sent does not exist anymore, or you are missing permissions to access it.";
 
-                var channel = _cache.GetChannel(msg.Message.Channel);
+                var channel = await _cache.GetChannel(msg.Message.Channel);
                 if (channel == null)
                     throw new PKError(error);
 
@@ -162,7 +162,7 @@ namespace PluralKit.Bot
             var showContent = true;
             var noShowContentError = "Message deleted or inaccessible.";
 
-            var channel = _cache.GetChannel(message.Message.Channel);
+            var channel = await _cache.GetChannel(message.Message.Channel);
             if (channel == null)
                 showContent = false;
             else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))

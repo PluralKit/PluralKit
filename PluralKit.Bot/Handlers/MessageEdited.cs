@@ -51,10 +51,10 @@ namespace PluralKit.Bot
             if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue)
                 return;
 
-            var channel = _cache.GetChannel(evt.ChannelId);
+            var channel = await _cache.GetChannel(evt.ChannelId);
             if (!DiscordUtils.IsValidGuildChannel(channel))
                 return;
-            var guild = _cache.GetGuild(channel.GuildId!.Value);
+            var guild = await _cache.GetGuild(channel.GuildId!.Value);
             var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId)?.Current;
 
             // Only react to the last message in the channel
@@ -67,7 +67,7 @@ namespace PluralKit.Bot
                 ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
 
             var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
-            var botPermissions = _bot.PermissionsIn(channel.Id);
+            var botPermissions = await _bot.PermissionsIn(channel.Id);
 
             try
             {
@@ -112,7 +112,7 @@ namespace PluralKit.Bot
             if (referencedMessageId == null)
                 return null;
 
-            var botPermissions = _bot.PermissionsIn(channelId);
+            var botPermissions = await _bot.PermissionsIn(channelId);
             if (!botPermissions.HasFlag(PermissionSet.ReadMessageHistory))
             {
                 _logger.Warning("Tried to get referenced message in channel {ChannelId} to reply but bot does not have Read Message History",

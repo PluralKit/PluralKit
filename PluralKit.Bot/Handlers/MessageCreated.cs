@@ -70,9 +70,9 @@ namespace PluralKit.Bot
             if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
             if (IsDuplicateMessage(evt)) return;
 
-            var guild = evt.GuildId != null ? _cache.GetGuild(evt.GuildId.Value) : null;
-            var channel = _cache.GetChannel(evt.ChannelId);
-            var rootChannel = _cache.GetRootChannel(evt.ChannelId);
+            var guild = evt.GuildId != null ? await _cache.GetGuild(evt.GuildId.Value) : null;
+            var channel = await _cache.GetChannel(evt.ChannelId);
+            var rootChannel = await _cache.GetRootChannel(evt.ChannelId);
 
             // Log metrics and message info
             _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
@@ -98,7 +98,7 @@ namespace PluralKit.Bot
 
         private async ValueTask<bool> TryHandleLogClean(MessageCreateEvent evt, MessageContext ctx)
         {
-            var channel = _cache.GetChannel(evt.ChannelId);
+            var channel = await _cache.GetChannel(evt.ChannelId);
             if (!evt.Author.Bot || channel.Type != Channel.ChannelType.GuildText ||
                 !ctx.LogCleanupEnabled) return false;
 
@@ -156,7 +156,7 @@ namespace PluralKit.Bot
 
         private async ValueTask<bool> TryHandleProxy(Shard shard, MessageCreateEvent evt, Guild guild, Channel channel, MessageContext ctx)
         {
-            var botPermissions = _bot.PermissionsIn(channel.Id);
+            var botPermissions = await _bot.PermissionsIn(channel.Id);
 
             try
             {

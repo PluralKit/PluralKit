@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using Myriad.Extensions;
 using Myriad.Gateway;
+using Myriad.Types;
 
 using Sentry;
 
@@ -42,8 +44,10 @@ namespace PluralKit.Bot
 
             // Also report information about the bot's permissions in the channel
             // We get a lot of permission errors so this'll be useful for determining problems
-            var perms = _bot.PermissionsIn(evt.ChannelId);
-            scope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
+
+            // todo: re-add this
+            // var perms = _bot.PermissionsIn(evt.ChannelId);
+            // scope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
         }
 
         public void Enrich(Scope scope, Shard shard, MessageDeleteEvent evt)

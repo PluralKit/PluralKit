@@ -52,16 +52,16 @@ namespace PluralKit.Bot
             return ctx;
         }
 
-        public static Context CheckAuthorPermission(this Context ctx, PermissionSet neededPerms, string permissionName)
+        public static async Task<Context> CheckAuthorPermission(this Context ctx, PermissionSet neededPerms, string permissionName)
         {
-            if ((ctx.UserPermissions & neededPerms) != neededPerms)
+            if ((await ctx.UserPermissions & neededPerms) != neededPerms)
                 throw new PKError($"You must have the \"{permissionName}\" permission in this server to use this command.");
             return ctx;
         }
 
         public static async Task<bool> CheckPermissionsInGuildChannel(this Context ctx, Channel channel, PermissionSet neededPerms)
         {
-            var guild = ctx.Cache.GetGuild(channel.GuildId.Value);
+            var guild = await ctx.Cache.GetGuild(channel.GuildId.Value);
             if (guild == null)
                 return false;
 

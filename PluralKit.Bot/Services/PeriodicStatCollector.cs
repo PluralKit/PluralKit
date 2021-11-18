@@ -52,7 +52,7 @@ namespace PluralKit.Bot
             await foreach (var guild in _cache.GetAllGuilds())
             {
                 guildCount++;
-                foreach (var channel in _cache.GetGuildChannels(guild.Id))
+                foreach (var channel in await _cache.GetGuildChannels(guild.Id))
                 {
                     if (DiscordUtils.IsValidGuildChannel(channel))
                         channelCount++;

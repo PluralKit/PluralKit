@@ -196,10 +196,10 @@ namespace PluralKit.Bot
         public static string EventType(this IGatewayEvent evt) =>
             evt.GetType().Name.Replace("Event", "");
 
-        public static bool HasReactionPermissions(Context ctx)
+        public static async Task<bool> HasReactionPermissions(Context ctx)
         {
             var neededPermissions = PermissionSet.AddReactions | PermissionSet.ReadMessageHistory;
-            return ((ctx.BotPermissions & neededPermissions) == neededPermissions);
+            return ((await ctx.BotPermissions & neededPermissions) == neededPermissions);
         }
 
         public static bool IsValidGuildChannel(Channel channel) =>

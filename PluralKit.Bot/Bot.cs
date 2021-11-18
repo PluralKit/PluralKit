@@ -78,14 +78,14 @@ namespace PluralKit.Bot
             }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
         }
 
-        public PermissionSet PermissionsIn(ulong channelId)
+        public async Task <PermissionSet> PermissionsIn(ulong channelId)
         {
-            var channel = _cache.GetRootChannel(channelId);
+            var channel = await _cache.GetRootChannel(channelId);
 
             if (channel.GuildId != null)
             {
                 var member = _guildMembers.GetValueOrDefault(channel.GuildId.Value);
-                return _cache.PermissionsFor(channelId, _cluster.User?.Id ?? default, member);
+                return await _cache.PermissionsFor(channelId, _cluster.User?.Id ?? default, member);
             }
 
             return PermissionSet.Dm;
@@ -198,7 +198,7 @@ namespace PluralKit.Bot
                     var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
 
                     using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
-                    using var __ = LogContext.Push(serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shard, evt));
+                    using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shard, evt));
                     _logger.Verbose("Received gateway event: {@Event}", evt);
 
                     // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
@@ -263,7 +263,7 @@ namespace PluralKit.Bot
                 if (reportChannel == null)
                     return;
 
-                var botPerms = PermissionsIn(reportChannel.Value);
+                var botPerms = await PermissionsIn(reportChannel.Value);
                 if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
                     await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
             }

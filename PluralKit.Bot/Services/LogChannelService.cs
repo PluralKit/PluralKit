@@ -41,7 +41,7 @@ namespace PluralKit.Bot
             if (logChannel == null)
                 return;
 
-            var triggerChannel = _cache.GetChannel(proxiedMessage.Channel);
+            var triggerChannel = await _cache.GetChannel(proxiedMessage.Channel);
 
             var system = await _repo.GetSystem(ctx.SystemId.Value);
             var member = await _repo.GetMember(proxiedMessage.Member);
@@ -78,7 +78,7 @@ namespace PluralKit.Bot
             if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return null;
 
             // Check bot permissions
-            var perms = _bot.PermissionsIn(logChannel.Id);
+            var perms = await _bot.PermissionsIn(logChannel.Id);
             if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
             {
                 _logger.Information(
@@ -93,7 +93,7 @@ namespace PluralKit.Bot
         private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)
         {
             // TODO: fetch it directly on cache miss?
-            if (_cache.TryGetChannel(channelId, out var channel))
+            if (await _cache.TryGetChannel(channelId, out var channel))
                 return channel;
 
             // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too

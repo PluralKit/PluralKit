@@ -89,7 +89,7 @@ namespace PluralKit.Bot
             };
 
             ulong? threadId = null;
-            var root = _cache.GetRootChannel(channelId);
+            var root = await _cache.GetRootChannel(channelId);
             if (root.Id != channelId)
                 threadId = channelId;
 
@@ -102,7 +102,7 @@ namespace PluralKit.Bot
 
         private async Task<Message> ExecuteWebhookInner(Webhook webhook, ProxyRequest req, bool hasRetried = false)
         {
-            var guild = _cache.GetGuild(req.GuildId);
+            var guild = await _cache.GetGuild(req.GuildId);
             var content = req.Content.Truncate(2000);
 
             var allowedMentions = content.ParseMentions();

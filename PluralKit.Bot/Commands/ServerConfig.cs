@@ -30,7 +30,7 @@ namespace PluralKit.Bot
 
         public async Task SetLogChannel(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+            await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
             var settings = await _repo.GetGuild(ctx.Guild.Id);
 
             if (await ctx.MatchClear("the server log channel"))
@@ -59,7 +59,7 @@ namespace PluralKit.Bot
             if (channel.Type != Channel.ChannelType.GuildText)
                 throw new PKError("PluralKit cannot log messages to this type of channel.");
 
-            var perms = _bot.PermissionsIn(channel.Id);
+            var perms = await _bot.PermissionsIn(channel.Id);
             if (!perms.HasFlag(PermissionSet.SendMessages))
                 throw new PKError("PluralKit is missing **Send Messages** permissions in the new log channel.");
             if (!perms.HasFlag(PermissionSet.EmbedLinks))
@@ -71,11 +71,11 @@ namespace PluralKit.Bot
 
         public async Task SetLogEnabled(Context ctx, bool enable)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+            await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
             var affectedChannels = new List<Channel>();
             if (ctx.Match("all"))
-                affectedChannels = _cache.GetGuildChannels(ctx.Guild.Id).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
+                affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id)).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
                 {
@@ -104,13 +104,13 @@ namespace PluralKit.Bot
 
         public async Task ShowBlacklisted(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+            await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
             var blacklist = await _repo.GetGuild(ctx.Guild.Id);
 
             // Resolve all channels from the cache and order by position
-            var channels = blacklist.Blacklist
-                .Select(id => _cache.GetChannelOrNull(id))
+            var channels = (await Task.WhenAll(blacklist.Blacklist
+                .Select(id => _cache.GetChannelOrNull(id))))
                 .Where(c => c != null)
                 .OrderBy(c => c.Position)
                 .ToList();
@@ -124,10 +124,10 @@ namespace PluralKit.Bot
             await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
                 $"Blacklisted channels for {ctx.Guild.Name}",
                 null,
-                (eb, l) =>
+                async (eb, l) =>
                 {
-                    string CategoryName(ulong? id) =>
-                        id != null ? _cache.GetChannel(id.Value).Name : "(no category)";
+                    async Task<string> CategoryName(ulong? id) =>
+                        id != null ? (await _cache.GetChannel(id.Value)).Name : "(no category)";
 
                     ulong? lastCategory = null;
 
@@ -136,7 +136,7 @@ namespace PluralKit.Bot
                     {
                         if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
                         {
-                            eb.Field(new(CategoryName(lastCategory), fieldValue.ToString()));
+                            eb.Field(new(await CategoryName(lastCategory), fieldValue.ToString()));
                             fieldValue.Clear();
                         }
                         else fieldValue.Append("\n");
@@ -145,19 +145,17 @@ namespace PluralKit.Bot
                         lastCategory = channel.ParentId;
                     }
 
-                    eb.Field(new(CategoryName(lastCategory), fieldValue.ToString()));
-
-                    return Task.CompletedTask;
+                    eb.Field(new(await CategoryName(lastCategory), fieldValue.ToString()));
                 });
         }
 
         public async Task SetBlacklisted(Context ctx, bool shouldAdd)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+            await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
             var affectedChannels = new List<Channel>();
             if (ctx.Match("all"))
-                affectedChannels = _cache.GetGuildChannels(ctx.Guild.Id).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
+                affectedChannels = (await _cache.GetGuildChannels(ctx.Guild.Id)).Where(x => x.Type == Channel.ChannelType.GuildText).ToList();
             else if (!ctx.HasNext()) throw new PKSyntaxError("You must pass one or more #channels.");
             else while (ctx.HasNext())
                 {
@@ -182,7 +180,7 @@ namespace PluralKit.Bot
 
         public async Task SetLogCleanup(Context ctx)
         {
-            ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+            await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
             var botList = string.Join(", ", _cleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
 
