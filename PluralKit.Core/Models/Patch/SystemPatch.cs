@@ -108,16 +108,16 @@ namespace PluralKit.Core
                                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
 
                             if (privacy.ContainsKey("member_list_privacy"))
-                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "member_list_privacy");
+                                patch.MemberListPrivacy = patch.ParsePrivacy(privacy, "member_list_privacy");
 
                             if (privacy.ContainsKey("group_list_privacy"))
                                 patch.GroupListPrivacy = patch.ParsePrivacy(privacy, "group_list_privacy");
 
                             if (privacy.ContainsKey("front_privacy"))
-                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "front_privacy");
+                                patch.FrontPrivacy = patch.ParsePrivacy(privacy, "front_privacy");
 
                             if (privacy.ContainsKey("front_history_privacy"))
-                                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "front_history_privacy");
+                                patch.FrontHistoryPrivacy = patch.ParsePrivacy(privacy, "front_history_privacy");
                         }
 
                         break;
