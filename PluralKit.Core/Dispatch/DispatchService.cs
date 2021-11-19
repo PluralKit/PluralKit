@@ -138,6 +138,7 @@ namespace PluralKit.Core
 
             var data = new UpdateDispatchData();
             data.Event = DispatchEvent.CREATE_MESSAGE;
+            data.SigningToken = system.WebhookToken;
             data.SystemId = system.Uuid.ToString();
             data.EventData = newMessage.ToDispatchJson(member.Uuid.ToString());
 
@@ -161,6 +162,7 @@ namespace PluralKit.Core
 
             var data = new UpdateDispatchData();
             data.Event = DispatchEvent.UPDATE_SYSTEM_GUILD;
+            data.SigningToken = system.WebhookToken;
             data.SystemId = system.Uuid.ToString();
             data.GuildId = guild_id;
             data.EventData = patch.ToJson(memberRef);
@@ -179,6 +181,7 @@ namespace PluralKit.Core
 
             var data = new UpdateDispatchData();
             data.Event = DispatchEvent.UPDATE_MEMBER_GUILD;
+            data.SigningToken = system.WebhookToken;
             data.SystemId = system.Uuid.ToString();
             data.EntityId = member.Uuid.ToString();
             data.GuildId = guild_id;
