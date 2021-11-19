@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
@@ -78,22 +80,24 @@ namespace PluralKit.Core
 
         public static async Task<bool> ValidateUri(string url)
         {
-            var uri = new Uri(url);
-
             IPHostEntry host = null;
 
             try
             {
+                var uri = new Uri(url);
                 host = await Dns.GetHostEntryAsync(uri.DnsSafeHost);
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                return false;
+            }
 
             if (host == null || host.AddressList.Length == 0)
                 return false;
 
 #pragma warning disable CS0618
 
-            foreach (var address in host.AddressList)
+            foreach (var address in host.AddressList.Where(address => address.AddressFamily is AddressFamily.InterNetwork))
             {
                 if ((address.Address & 0x7f000000) == 0x7f000000) // 127.0/8
                     return false;
@@ -105,7 +109,11 @@ namespace PluralKit.Core
                     return false;
             }
 
-            return true;
+            if (host.AddressList.Any(address => address.IsIPv6LinkLocal))
+                return false;
+
+            // we only support IPv4 in prod :(
+            return host.AddressList.Any(address => address.AddressFamily is AddressFamily.InterNetwork);
         }
     }
 }

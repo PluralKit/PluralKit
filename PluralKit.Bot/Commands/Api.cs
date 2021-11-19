@@ -110,7 +110,7 @@ namespace PluralKit.Bot
                 await _repo.UpdateSystem(ctx.System.Id, new()
                 {
                     WebhookUrl = null,
-                    Token = null,
+                    WebhookToken = null,
                 });
 
                 await ctx.Reply($"{Emojis.Success} System webhook URL removed.");
@@ -119,17 +119,14 @@ namespace PluralKit.Bot
 
             var newUrl = ctx.RemainderOrNull();
             if (!await DispatchExt.ValidateUri(newUrl))
-            {
-                await ctx.Reply($"New URL '{newUrl}' is invalid. Are you sure this is a valid, publicly accessible URL?");
-                return;
-            }
+                throw new PKError($"The URL {newUrl.AsCode()} is invalid or I cannot access it. Are you sure this is a valid, publicly accessible URL?");
 
             var newToken = StringUtils.GenerateToken();
 
             await _repo.UpdateSystem(ctx.System.Id, new()
             {
                 WebhookUrl = newUrl,
-                Token = newToken,
+                WebhookToken = newToken,
             });
 
             await ctx.Reply($"{Emojis.Success} Successfully the new webhook URL for your system."
