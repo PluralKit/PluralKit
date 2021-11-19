@@ -39,6 +39,9 @@ namespace PluralKit.API
                 .Select(g => g.ToJson(ctx, needsMembersArray: with_members))
                 .ToListAsync();
 
+            if (with_members && !system.MemberListPrivacy.CanAccess(ctx))
+                throw Errors.UnauthorizedMemberList;
+
             if (with_members && j_groups.Count > 0)
             {
                 var q = await _repo.GetGroupMemberInfo(await groups.Select(x => x.Id).ToListAsync());
