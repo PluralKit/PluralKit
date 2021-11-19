@@ -78,7 +78,7 @@ namespace PluralKit.Bot
             }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
         }
 
-        public async Task <PermissionSet> PermissionsIn(ulong channelId)
+        public async Task<PermissionSet> PermissionsIn(ulong channelId)
         {
             var channel = await _cache.GetRootChannel(channelId);
 

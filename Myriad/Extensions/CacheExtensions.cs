@@ -50,7 +50,7 @@ namespace Myriad.Extensions
 
         public static async ValueTask<Channel?> GetOrFetchChannel(this IDiscordCache cache, DiscordApiClient rest, ulong channelId)
         {
-            if (await cache.TryGetChannel(channelId) is {} cacheChannel)
+            if (await cache.TryGetChannel(channelId) is { } cacheChannel)
                 return cacheChannel;
 
             var restChannel = await rest.GetChannel(channelId);
@@ -61,7 +61,7 @@ namespace Myriad.Extensions
 
         public static async Task<Channel> GetOrCreateDmChannel(this IDiscordCache cache, DiscordApiClient rest, ulong recipientId)
         {
-            if (await cache.TryGetDmChannel(recipientId) is {} cacheChannel)
+            if (await cache.TryGetDmChannel(recipientId) is { } cacheChannel)
                 return cacheChannel;
 
             var restChannel = await rest.CreateDm(recipientId);

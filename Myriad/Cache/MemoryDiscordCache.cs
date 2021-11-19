@@ -139,7 +139,7 @@ namespace Myriad.Cache
         public Task<Channel?> TryGetDmChannel(ulong userId)
         {
             if (!_dmChannels.TryGetValue(userId, out var channelId))
-                return Task.FromResult((Channel?) null);
+                return Task.FromResult((Channel?)null);
             return TryGetChannel(channelId);
         }
 
