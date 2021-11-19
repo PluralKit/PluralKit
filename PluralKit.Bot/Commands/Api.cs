@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Myriad.Extensions;
@@ -13,6 +14,7 @@ namespace PluralKit.Bot
     {
         private readonly ModelRepository _repo;
         private readonly DispatchService _dispatch;
+        private static readonly Regex _webhookRegex = new(@"https://(?:\\w+.)?discord(?:app)?.com/api(?:/v.*)?/webhooks/(.*)");
         public Api(ModelRepository repo, DispatchService dispatch)
         {
             _repo = repo;
@@ -120,6 +122,9 @@ namespace PluralKit.Bot
             var newUrl = ctx.RemainderOrNull();
             if (!await DispatchExt.ValidateUri(newUrl))
                 throw new PKError($"The URL {newUrl.AsCode()} is invalid or I cannot access it. Are you sure this is a valid, publicly accessible URL?");
+
+            if (_webhookRegex.IsMatch(newUrl))
+                throw new PKError("PluralKit does not currently support setting a Discord webhook URL as your system's webhook URL.");
 
             var newToken = StringUtils.GenerateToken();
 
