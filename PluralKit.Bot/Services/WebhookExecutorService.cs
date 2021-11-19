@@ -123,7 +123,7 @@ namespace PluralKit.Bot
             };
 
             MultipartFile[] files = null;
-            var attachmentChunks = ChunkAttachmentsOrThrow(req.Attachments, req.FileSizeLimit * 1024 * 1024);
+            var attachmentChunks = ChunkAttachmentsOrThrow(req.Attachments, req.FileSizeLimit);
             if (attachmentChunks.Count > 0)
             {
                 _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks",
@@ -214,11 +214,14 @@ namespace PluralKit.Bot
             var chunks = new List<List<Message.Attachment>>();
             var list = new List<Message.Attachment>();
 
+            // sizeThreshold is in MB (user-readable)
+            var bytesThreshold = sizeThreshold * 1024 * 1024;
+
             foreach (var attachment in attachments)
             {
-                if (attachment.Size >= sizeThreshold) throw Errors.AttachmentTooLarge(sizeThreshold);
+                if (attachment.Size >= bytesThreshold) throw Errors.AttachmentTooLarge(sizeThreshold);
 
-                if (list.Sum(a => a.Size) + attachment.Size >= sizeThreshold)
+                if (list.Sum(a => a.Size) + attachment.Size >= bytesThreshold)
                 {
                     chunks.Add(list);
                     list = new List<Message.Attachment>();
