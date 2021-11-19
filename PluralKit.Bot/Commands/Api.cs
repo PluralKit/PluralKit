@@ -94,7 +94,7 @@ namespace PluralKit.Bot
 
         public async Task SystemWebhook(Context ctx)
         {
-            ctx.CheckDMContext();
+            ctx.CheckSystem().CheckDMContext();
 
             if (!ctx.HasNext(false))
             {
