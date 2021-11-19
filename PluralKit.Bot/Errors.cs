@@ -112,7 +112,7 @@ namespace PluralKit.Bot
 
         public static PKError GenericCancelled() => new PKError("Operation cancelled.");
 
-        public static PKError AttachmentTooLarge => new PKError("PluralKit cannot proxy attachments over 8 megabytes (as webhooks aren't considered as having Discord Nitro) :(");
+        public static PKError AttachmentTooLarge(int mb) => new PKError($"PluralKit cannot proxy attachments over {mb} megabytes in this server (as webhooks aren't considered as having Discord Nitro) :(");
         public static PKError LookupNotAllowed => new PKError("You do not have permission to access this information.");
         public static PKError ChannelNotFound(string channelString) => new PKError($"Channel \"{channelString}\" not found or is not in this server.");
     }

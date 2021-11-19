@@ -200,7 +200,7 @@ namespace PluralKit.Bot
 
             foreach (var attachment in attachments)
             {
-                if (attachment.Size >= sizeThreshold) throw Errors.AttachmentTooLarge;
+                if (attachment.Size >= sizeThreshold) throw Errors.AttachmentTooLarge(sizeThreshold);
 
                 if (list.Sum(a => a.Size) + attachment.Size >= sizeThreshold)
                 {
