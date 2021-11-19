@@ -58,8 +58,7 @@ namespace PluralKit.Core
                 o.Add("id", data.EntityId);
             if (data.GuildId != null)
                 o.Add("guild_id", data.GuildId);
-            if (data.EventData != null)
-                o.Add("data", data.EventData);
+            o.Add("data", data.EventData);
 
             return new StringContent(JsonConvert.SerializeObject(o));
         }
