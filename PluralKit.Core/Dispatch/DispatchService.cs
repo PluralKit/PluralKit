@@ -191,6 +191,23 @@ namespace PluralKit.Core
             await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());
         }
 
+        public async Task Dispatch(ulong accountId, AccountPatch patch)
+        {
+            var repo = _provider.Resolve<ModelRepository>();
+            var system = await repo.GetSystemByAccount(accountId);
+            if (system.WebhookUrl == null)
+                return;
+
+            var data = new UpdateDispatchData();
+            data.Event = DispatchEvent.UPDATE_MEMBER_GUILD;
+            data.SigningToken = system.WebhookToken;
+            data.EntityId = accountId.ToString();
+            data.EventData = patch.ToJson();
+
+            _logger.Debug("Dispatching webhook for account {AccountId} (system {SystemId})", accountId, system.Id);
+            await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());
+        }
+
         public async Task Dispatch(SystemId systemId, Guid uuid, DispatchEvent evt)
         {
             var repo = _provider.Resolve<ModelRepository>();

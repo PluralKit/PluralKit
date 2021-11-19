@@ -39,13 +39,14 @@ namespace PluralKit.Core
             );
         }
 
-        public Task<SystemGuildSettings> UpdateSystemGuild(SystemId system, ulong guild, SystemGuildPatch patch)
+        public async Task<SystemGuildSettings> UpdateSystemGuild(SystemId system, ulong guild, SystemGuildPatch patch)
         {
             _logger.Information("Updated {SystemId} in guild {GuildId}: {@SystemGuildPatch}", system, guild, patch);
             var query = patch.Apply(new Query("system_guild").Where("system", system).Where("guild", guild));
-            return _db.QueryFirst<SystemGuildSettings>(query, extraSql: "returning *");
+            var settings = await _db.QueryFirst<SystemGuildSettings>(query, extraSql: "returning *");
+            _ = _dispatch.Dispatch(system, guild, patch);
+            return settings;
         }
-
 
         public Task<MemberGuildSettings> GetMemberGuild(ulong guild, MemberId member, bool defaultInsert = true)
         {
@@ -69,6 +70,7 @@ namespace PluralKit.Core
         {
             _logger.Information("Updated {MemberId} in guild {GuildId}: {@MemberGuildPatch}", member, guild, patch);
             var query = patch.Apply(new Query("member_guild").Where("member", member).Where("guild", guild));
+            _ = _dispatch.Dispatch(member, guild, patch);
             return _db.QueryFirst<MemberGuildSettings>(query, extraSql: "returning *");
         }
     }

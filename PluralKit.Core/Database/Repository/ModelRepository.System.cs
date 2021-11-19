@@ -78,17 +78,27 @@ namespace PluralKit.Core
             });
             var system = await _db.QueryFirst<PKSystem>(conn, query, extraSql: "returning *");
             _logger.Information("Created {SystemId}", system.Id);
+
+            // no dispatch call here - system was just created, we don't have a webhook URL
             return system;
         }
 
-        public Task<PKSystem> UpdateSystem(SystemId id, SystemPatch patch, IPKConnection? conn = null)
+        public async Task<PKSystem> UpdateSystem(SystemId id, SystemPatch patch, IPKConnection? conn = null)
         {
             _logger.Information("Updated {SystemId}: {@SystemPatch}", id, patch);
             var query = patch.Apply(new Query("systems").Where("id", id));
-            return _db.QueryFirst<PKSystem>(conn, query, extraSql: "returning *");
+            var res = await _db.QueryFirst<PKSystem>(conn, query, extraSql: "returning *");
+
+            _ = _dispatch.Dispatch(id, new UpdateDispatchData()
+            {
+                Event = DispatchEvent.UPDATE_SYSTEM,
+                EventData = patch.ToJson(),
+            });
+
+            return res;
         }
 
-        public Task AddAccount(SystemId system, ulong accountId, IPKConnection? conn = null)
+        public async Task AddAccount(SystemId system, ulong accountId, IPKConnection? conn = null)
         {
             // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
             // This is used in import/export, although the pk;link command checks for this case beforehand
@@ -100,7 +110,13 @@ namespace PluralKit.Core
             });
 
             _logger.Information("Linked account {UserId} to {SystemId}", accountId, system);
-            return _db.ExecuteQuery(conn, query, extraSql: "on conflict do nothing");
+            await _db.ExecuteQuery(conn, query, extraSql: "on conflict do nothing");
+
+            _ = _dispatch.Dispatch(system, new UpdateDispatchData()
+            {
+                Event = DispatchEvent.LINK_ACCOUNT,
+                EntityId = accountId.ToString(),
+            });
         }
 
         public async Task RemoveAccount(SystemId system, ulong accountId)
@@ -108,6 +124,11 @@ namespace PluralKit.Core
             var query = new Query("accounts").AsDelete().Where("uid", accountId).Where("system", system);
             await _db.ExecuteQuery(query);
             _logger.Information("Unlinked account {UserId} from {SystemId}", accountId, system);
+            _ = _dispatch.Dispatch(system, new UpdateDispatchData()
+            {
+                Event = DispatchEvent.UNLINK_ACCOUNT,
+                EntityId = accountId.ToString(),
+            });
         }
 
         public Task DeleteSystem(SystemId id)
