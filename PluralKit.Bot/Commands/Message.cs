@@ -189,7 +189,7 @@ namespace PluralKit.Bot
                     await ctx.Rest.CreateMessage(
                         ctx.Channel.Id,
                         new MessageRequest { Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment." },
-                        new[] { new MultipartFile("message.txt", stream) });
+                        new[] { new MultipartFile("message.txt", stream, null) });
                 }
 
                 return;

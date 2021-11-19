@@ -154,8 +154,8 @@ namespace Myriad.Rest
             {
                 for (var i = 0; i < files.Length; i++)
                 {
-                    var (filename, stream) = files[i];
-                    mfd.Add(new StreamContent(stream), $"file{i}", filename);
+                    var (filename, stream, _) = files[i];
+                    mfd.Add(new StreamContent(stream), $"files[{i}]", filename);
                 }
             }
 

@@ -129,6 +129,12 @@ namespace PluralKit.Bot
                 _logger.Information("Invoking webhook with {AttachmentCount} attachments totalling {AttachmentSize} MiB in {AttachmentChunks} chunks",
                     req.Attachments.Length, req.Attachments.Select(a => a.Size).Sum() / 1024 / 1024, attachmentChunks.Count);
                 files = await GetAttachmentFiles(attachmentChunks[0]);
+                webhookReq.Attachments = files.Select(f => new Message.Attachment()
+                {
+                    Id = (ulong)Array.IndexOf(files, f),
+                    Description = f.Description,
+                    Filename = f.Filename
+                }).ToArray();
             }
 
             Message webhookMessage;
@@ -174,7 +180,17 @@ namespace PluralKit.Bot
             for (var i = 1; i < attachmentChunks.Count; i++)
             {
                 var files = await GetAttachmentFiles(attachmentChunks[i]);
-                var req = new ExecuteWebhookRequest { Username = name, AvatarUrl = avatarUrl };
+                var req = new ExecuteWebhookRequest
+                {
+                    Username = name,
+                    AvatarUrl = avatarUrl,
+                    Attachments = files.Select(f => new Message.Attachment()
+                    {
+                        Id = (ulong)Array.IndexOf(files, f),
+                        Description = f.Description,
+                        Filename = f.Filename,
+                    }).ToArray()
+                };
                 await _rest.ExecuteWebhook(webhook.Id, webhook.Token!, req, files, threadId);
             }
         }
@@ -184,7 +200,7 @@ namespace PluralKit.Bot
             async Task<MultipartFile> GetStream(Message.Attachment attachment)
             {
                 var attachmentResponse = await _client.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead);
-                return new(attachment.Filename, await attachmentResponse.Content.ReadAsStreamAsync());
+                return new(attachment.Filename, await attachmentResponse.Content.ReadAsStreamAsync(), attachment.Description);
             }
 
             return await Task.WhenAll(attachments.Select(GetStream));

@@ -113,7 +113,7 @@ namespace PluralKit.Bot
 
                 var msg = await ctx.Rest.CreateMessage(dm.Id,
                     new MessageRequest { Content = $"{Emojis.Success} Here you go!" },
-                    new[] { new MultipartFile("system.json", stream) });
+                    new[] { new MultipartFile("system.json", stream, null) });
                 await ctx.Rest.CreateMessage(dm.Id, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
 
                 // If the original message wasn't posted in DMs, send a public reminder

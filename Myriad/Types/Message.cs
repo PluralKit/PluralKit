@@ -71,6 +71,7 @@ namespace Myriad.Types
         public record Attachment
         {
             public ulong Id { get; init; }
+            public string? Description { get; init; }
             public string Filename { get; init; }
             public int Size { get; init; }
             public string Url { get; init; }
