@@ -29,7 +29,6 @@ namespace PluralKit.Bot
 {
     public class Bot
     {
-        private readonly ConcurrentDictionary<ulong, GuildMemberPartial> _guildMembers = new();
 
         private readonly Cluster _cluster;
         private readonly DiscordApiClient _rest;
@@ -84,7 +83,7 @@ namespace PluralKit.Bot
 
             if (channel.GuildId != null)
             {
-                var member = _guildMembers.GetValueOrDefault(channel.GuildId.Value);
+                var member = await _cache.TryGetSelfMember(channel.GuildId.Value);
                 return await _cache.PermissionsFor(channelId, _cluster.User?.Id ?? default, member);
             }
 
@@ -93,9 +92,8 @@ namespace PluralKit.Bot
 
         private async Task OnEventReceived(Shard shard, IGatewayEvent evt)
         {
+            await _cache.TryUpdateSelfMember(shard, evt);
             await _cache.HandleGatewayEvent(evt);
-
-            TryUpdateSelfMember(shard, evt);
 
             // HandleEvent takes a type parameter, automatically inferred by the event type
             // It will then look up an IEventHandler<TypeOfEvent> in the DI container and call that object's handler method
@@ -118,18 +116,6 @@ namespace PluralKit.Bot
                 await HandleReady(shard, re);
             if (evt is ResumedEvent)
                 await HandleResumed(shard);
-        }
-
-        private void TryUpdateSelfMember(Shard shard, IGatewayEvent evt)
-        {
-            if (evt is GuildCreateEvent gc)
-                _guildMembers[gc.Id] = gc.Members.FirstOrDefault(m => m.User.Id == shard.User?.Id);
-            if (evt is MessageCreateEvent mc && mc.Member != null && mc.Author.Id == shard.User?.Id)
-                _guildMembers[mc.GuildId!.Value] = mc.Member;
-            if (evt is GuildMemberAddEvent gma && gma.User.Id == shard.User?.Id)
-                _guildMembers[gma.GuildId] = gma;
-            if (evt is GuildMemberUpdateEvent gmu && gmu.User.Id == shard.User?.Id)
-                _guildMembers[gmu.GuildId] = gmu;
         }
 
         private Task HandleResumed(Shard shard)

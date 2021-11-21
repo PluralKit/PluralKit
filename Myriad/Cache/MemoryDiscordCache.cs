@@ -15,6 +15,7 @@ namespace Myriad.Cache
         private readonly ConcurrentDictionary<ulong, CachedGuild> _guilds = new();
         private readonly ConcurrentDictionary<ulong, Role> _roles = new();
         private readonly ConcurrentDictionary<ulong, User> _users = new();
+        private readonly ConcurrentDictionary<ulong, GuildMemberPartial> _guildMembers = new();
 
         public ValueTask SaveGuild(Guild guild)
         {
@@ -48,6 +49,12 @@ namespace Myriad.Cache
         public ValueTask SaveUser(User user)
         {
             _users[user.Id] = user;
+            return default;
+        }
+
+        public ValueTask SaveSelfMember(ulong guildId, GuildMemberPartial member)
+        {
+            _guildMembers[guildId] = member;
             return default;
         }
 
@@ -147,6 +154,12 @@ namespace Myriad.Cache
         {
             _users.TryGetValue(userId, out var user);
             return Task.FromResult(user);
+        }
+
+        public Task<GuildMemberPartial?> TryGetSelfMember(ulong guildId)
+        {
+            _guildMembers.TryGetValue(guildId, out var guildMember);
+            return Task.FromResult(guildMember);
         }
 
         public Task<Role?> TryGetRole(ulong roleId)
