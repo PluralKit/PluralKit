@@ -68,7 +68,7 @@ namespace PluralKit.Bot
             await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
 
             if (existingGroupCount >= Limits.WarnThreshold(groupLimit))
-                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} members). Please review your group list for unused or duplicate groups.");
+                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system group limit ({existingGroupCount} / {groupLimit} groups). Please review your group list for unused or duplicate groups.");
         }
 
         public async Task RenameGroup(Context ctx, PKGroup target)
