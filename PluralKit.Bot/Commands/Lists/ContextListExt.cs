@@ -60,7 +60,8 @@ namespace PluralKit.Bot
             if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))
                 p.IncludeLastSwitch = true;
             if (ctx.MatchFlag("with-last-message", "with-last-proxy", "wlm", "wlp"))
-                p.IncludeLastMessage = true;
+                throw new PKError("Sorting by last message is temporarily disabled due to database issues, sorry.");
+                // p.IncludeLastMessage = true;
             if (ctx.MatchFlag("with-message-count", "wmc"))
                 p.IncludeMessageCount = true;
             if (ctx.MatchFlag("with-created", "wc"))
@@ -141,12 +142,12 @@ namespace PluralKit.Bot
                                     ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
                                 break;
                             }
-                        case SortProperty.LastMessage:
-                            {
-                                if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
-                                    ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
-                                break;
-                            }
+                        // case SortProperty.LastMessage:
+                        //     {
+                        //         if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
+                        //             ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
+                        //         break;
+                        //     }
                         case SortProperty.CreationDate:
                             {
                                 if (m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
@@ -159,8 +160,8 @@ namespace PluralKit.Bot
                                     ret += $"({count} messages)";
                                 else if (opts.IncludeLastSwitch && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                                     ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                                else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
-                                    ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
+                                // else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
+                                //     ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
                                 else if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
                                     ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                                 else if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatarUrl)
@@ -203,8 +204,8 @@ namespace PluralKit.Bot
                     if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) && m.MessageCountFor(lookupCtx) is { } count && count > 0)
                         profile.Append($"\n**Message count:** {count}");
 
-                    if ((opts.IncludeLastMessage || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
-                        profile.Append($"\n**Last message:** {DiscordUtils.SnowflakeToInstant(lastMsg.Value).FormatZoned(zone)}");
+                    // if ((opts.IncludeLastMessage || opts.SortProperty == SortProperty.LastMessage) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
+                    //     profile.Append($"\n**Last message:** {DiscordUtils.SnowflakeToInstant(lastMsg.Value).FormatZoned(zone)}");
 
                     if ((opts.IncludeLastSwitch || opts.SortProperty == SortProperty.LastSwitch) && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
                         profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(zone)}");
