@@ -54,10 +54,8 @@ namespace PluralKit.Core
             o.Add("type", data.Event.ToString());
             o.Add("signing_token", data.SigningToken);
             o.Add("system_id", data.SystemId);
-            if (data.EntityId != null)
-                o.Add("id", data.EntityId);
-            if (data.GuildId != null)
-                o.Add("guild_id", data.GuildId);
+            o.Add("id", data.EntityId);
+            o.Add("guild_id", data.GuildId);
             o.Add("data", data.EventData);
 
             return new StringContent(JsonConvert.SerializeObject(o));
