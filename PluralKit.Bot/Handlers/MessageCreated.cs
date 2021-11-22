@@ -54,7 +54,9 @@ namespace PluralKit.Bot
         // for now, only return error messages for explicit commands
         public ulong? ErrorChannelFor(MessageCreateEvent evt)
         {
-            if (!HasCommandPrefix(evt.Content, _cluster.User?.Id ?? default, out var cmdStart) || cmdStart == evt.Content.Length)
+            // todo: fix @mention prefix
+            // it only breaks error reporting so I'm not *too* worried about it, but should be fixed eventually
+            if (!HasCommandPrefix(evt.Content, default, out var cmdStart) || cmdStart == evt.Content.Length)
                 return null;
 
             return evt.ChannelId;
@@ -156,7 +158,7 @@ namespace PluralKit.Bot
 
         private async ValueTask<bool> TryHandleProxy(Shard shard, MessageCreateEvent evt, Guild guild, Channel channel, MessageContext ctx)
         {
-            var botPermissions = await _bot.PermissionsIn(channel.Id);
+            var botPermissions = await _cache.PermissionsIn(channel.Id);
 
             try
             {

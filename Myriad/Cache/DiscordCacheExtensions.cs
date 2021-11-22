@@ -1,7 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+using Myriad.Extensions;
 using Myriad.Gateway;
+using Myriad.Types;
 
 namespace Myriad.Cache
 {
@@ -11,6 +13,8 @@ namespace Myriad.Cache
         {
             switch (evt)
             {
+                case ReadyEvent ready:
+                    return cache.SaveOwnUser(ready.User.Id);
                 case GuildCreateEvent gc:
                     return cache.SaveGuildCreate(gc);
                 case GuildUpdateEvent gu:
@@ -102,5 +106,20 @@ namespace Myriad.Cache
             foreach (var thread in evt.Threads)
                 await cache.SaveChannel(thread);
         }
+
+        public static async Task<PermissionSet> PermissionsIn(this IDiscordCache cache, ulong channelId)
+        {
+            var channel = await cache.GetRootChannel(channelId);
+
+            if (channel.GuildId != null)
+            {
+                var userId = await cache.GetOwnUser();
+                var member = await cache.TryGetSelfMember(channel.GuildId.Value);
+                return await cache.PermissionsFor(channelId, userId, member);
+            }
+
+            return PermissionSet.Dm;
+        }
+
     }
 }

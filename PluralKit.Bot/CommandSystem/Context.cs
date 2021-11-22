@@ -71,7 +71,7 @@ namespace PluralKit.Bot
         public Cluster Cluster => _cluster;
         public MessageContext MessageContext => _messageContext;
 
-        public Task<PermissionSet> BotPermissions => _provider.Resolve<Bot>().PermissionsIn(_channel.Id);
+        public Task<PermissionSet> BotPermissions => _provider.Resolve<IDiscordCache>().PermissionsIn(_channel.Id);
         public Task<PermissionSet> UserPermissions => _cache.PermissionsFor(_message);
 
         public DiscordApiClient Rest => _rest;

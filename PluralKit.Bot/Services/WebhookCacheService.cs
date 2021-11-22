@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using App.Metrics;
 
-using Myriad.Gateway;
+using Myriad.Cache;
 using Myriad.Rest;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
@@ -24,13 +24,13 @@ namespace PluralKit.Bot
 
         private readonly IMetrics _metrics;
         private readonly ILogger _logger;
-        private readonly Cluster _cluster;
+        private readonly IDiscordCache _cache;
 
-        public WebhookCacheService(ILogger logger, IMetrics metrics, DiscordApiClient rest, Cluster cluster)
+        public WebhookCacheService(ILogger logger, IMetrics metrics, DiscordApiClient rest, IDiscordCache cache)
         {
             _metrics = metrics;
             _rest = rest;
-            _cluster = cluster;
+            _cache = cache;
             _logger = logger.ForContext<WebhookCacheService>();
             _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<Webhook>>>();
         }
@@ -86,7 +86,8 @@ namespace PluralKit.Bot
             var webhooks = await FetchChannelWebhooks(channelId);
 
             // If the channel has a webhook created by PK, just return that one
-            var ourWebhook = webhooks.FirstOrDefault(IsWebhookMine);
+            var ourUserId = await _cache.GetOwnUser();
+            var ourWebhook = webhooks.FirstOrDefault(hook => IsWebhookMine(ourUserId, hook));
             if (ourWebhook != null)
                 return ourWebhook;
 
@@ -120,7 +121,7 @@ namespace PluralKit.Bot
             return await _rest.CreateWebhook(channelId, new CreateWebhookRequest(WebhookName));
         }
 
-        private bool IsWebhookMine(Webhook arg) => arg.User?.Id == _cluster.User?.Id && arg.Name == WebhookName;
+        private bool IsWebhookMine(ulong userId, Webhook arg) => arg.User?.Id == userId && arg.Name == WebhookName;
 
         public int CacheSize => _webhooks.Count;
     }

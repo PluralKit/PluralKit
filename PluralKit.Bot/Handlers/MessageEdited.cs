@@ -45,7 +45,7 @@ namespace PluralKit.Bot
 
         public async Task Handle(Shard shard, MessageUpdateEvent evt)
         {
-            if (evt.Author.Value?.Id == _client.User?.Id) return;
+            if (evt.Author.Value?.Id == await _cache.GetOwnUser()) return;
 
             // Edit message events sometimes arrive with missing data; double-check it's all there
             if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue)
@@ -67,7 +67,7 @@ namespace PluralKit.Bot
                 ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
 
             var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
-            var botPermissions = await _bot.PermissionsIn(channel.Id);
+            var botPermissions = await _cache.PermissionsIn(channel.Id);
 
             try
             {
@@ -112,7 +112,7 @@ namespace PluralKit.Bot
             if (referencedMessageId == null)
                 return null;
 
-            var botPermissions = await _bot.PermissionsIn(channelId);
+            var botPermissions = await _cache.PermissionsIn(channelId);
             if (!botPermissions.HasFlag(PermissionSet.ReadMessageHistory))
             {
                 _logger.Warning("Tried to get referenced message in channel {ChannelId} to reply but bot does not have Read Message History",

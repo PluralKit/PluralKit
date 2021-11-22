@@ -59,7 +59,7 @@ namespace PluralKit.Bot
             if (channel.Type != Channel.ChannelType.GuildText)
                 throw new PKError("PluralKit cannot log messages to this type of channel.");
 
-            var perms = await _bot.PermissionsIn(channel.Id);
+            var perms = await _cache.PermissionsIn(channel.Id);
             if (!perms.HasFlag(PermissionSet.SendMessages))
                 throw new PKError("PluralKit is missing **Send Messages** permissions in the new log channel.");
             if (!perms.HasFlag(PermissionSet.EmbedLinks))

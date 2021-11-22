@@ -77,19 +77,6 @@ namespace PluralKit.Bot
             }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
         }
 
-        public async Task<PermissionSet> PermissionsIn(ulong channelId)
-        {
-            var channel = await _cache.GetRootChannel(channelId);
-
-            if (channel.GuildId != null)
-            {
-                var member = await _cache.TryGetSelfMember(channel.GuildId.Value);
-                return await _cache.PermissionsFor(channelId, _cluster.User?.Id ?? default, member);
-            }
-
-            return PermissionSet.Dm;
-        }
-
         private async Task OnEventReceived(Shard shard, IGatewayEvent evt)
         {
             await _cache.TryUpdateSelfMember(shard, evt);
@@ -249,7 +236,7 @@ namespace PluralKit.Bot
                 if (reportChannel == null)
                     return;
 
-                var botPerms = await PermissionsIn(reportChannel.Value);
+                var botPerms = await _cache.PermissionsIn(reportChannel.Value);
                 if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
                     await _errorMessageService.SendErrorMessage(reportChannel.Value, sentryEvent.EventId.ToString());
             }

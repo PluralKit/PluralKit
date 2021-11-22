@@ -78,7 +78,7 @@ namespace PluralKit.Bot
             if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return null;
 
             // Check bot permissions
-            var perms = await _bot.PermissionsIn(logChannel.Id);
+            var perms = await _cache.PermissionsIn(logChannel.Id);
             if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
             {
                 _logger.Information(

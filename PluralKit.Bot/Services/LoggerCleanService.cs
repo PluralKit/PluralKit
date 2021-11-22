@@ -89,7 +89,7 @@ namespace PluralKit.Bot
             var channel = await _cache.GetChannel(msg.ChannelId);
 
             if (channel.Type != Channel.ChannelType.GuildText) return;
-            if (!(await _bot.PermissionsIn(channel.Id)).HasFlag(PermissionSet.ManageMessages)) return;
+            if (!(await _cache.PermissionsIn(channel.Id)).HasFlag(PermissionSet.ManageMessages)) return;
 
             // If this message is from a *webhook*, check if the name matches one of the bots we know
             // TODO: do we need to do a deeper webhook origin check, or would that be too hard on the rate limit?

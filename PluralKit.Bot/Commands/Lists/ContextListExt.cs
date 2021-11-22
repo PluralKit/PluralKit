@@ -61,7 +61,7 @@ namespace PluralKit.Bot
                 p.IncludeLastSwitch = true;
             if (ctx.MatchFlag("with-last-message", "with-last-proxy", "wlm", "wlp"))
                 throw new PKError("Sorting by last message is temporarily disabled due to database issues, sorry.");
-                // p.IncludeLastMessage = true;
+            // p.IncludeLastMessage = true;
             if (ctx.MatchFlag("with-message-count", "wmc"))
                 p.IncludeMessageCount = true;
             if (ctx.MatchFlag("with-created", "wc"))

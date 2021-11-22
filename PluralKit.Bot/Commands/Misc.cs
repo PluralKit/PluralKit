@@ -59,7 +59,7 @@ namespace PluralKit.Bot
 
         public async Task Invite(Context ctx)
         {
-            var clientId = _botConfig.ClientId ?? _cluster.Application?.Id;
+            var clientId = _botConfig.ClientId ?? await _cache.GetOwnUser();
 
             var permissions =
                 PermissionSet.AddReactions |

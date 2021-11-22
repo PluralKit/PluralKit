@@ -28,8 +28,6 @@ namespace Myriad.Gateway
         public event Action<Shard>? ShardCreated;
 
         public IReadOnlyDictionary<int, Shard> Shards => _shards;
-        public User? User => _shards.Values.Select(s => s.User).FirstOrDefault(s => s != null);
-        public ApplicationPartial? Application => _shards.Values.Select(s => s.Application).FirstOrDefault(s => s != null);
 
         public async Task Start(GatewayInfo.Bot info)
         {

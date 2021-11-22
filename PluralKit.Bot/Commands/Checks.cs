@@ -87,7 +87,7 @@ namespace PluralKit.Bot
             var missingEmojiPermissions = false;
             foreach (var channel in await _rest.GetGuildChannels(guild.Id))
             {
-                var botPermissions = await _bot.PermissionsIn(channel.Id);
+                var botPermissions = await _cache.PermissionsIn(channel.Id);
                 var webhookPermissions = await _cache.EveryonePermissions(channel);
                 var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
 
@@ -176,7 +176,7 @@ namespace PluralKit.Bot
             if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
                 throw new PKError(error);
 
-            var botPermissions = await _bot.PermissionsIn(channel.Id);
+            var botPermissions = await _cache.PermissionsIn(channel.Id);
             var webhookPermissions = await _cache.EveryonePermissions(channel);
 
             // We use a bitfield so we can set individual permission bits

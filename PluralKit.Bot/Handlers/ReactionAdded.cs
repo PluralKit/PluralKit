@@ -54,7 +54,7 @@ namespace PluralKit.Bot
                 return;
 
             // ignore any reactions added by *us*
-            if (evt.UserId == _cluster.User?.Id)
+            if (evt.UserId == await _cache.GetOwnUser())
                 return;
 
             // Ignore reactions from bots (we can't DM them anyway)
@@ -121,7 +121,7 @@ namespace PluralKit.Bot
 
         private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEvent evt, FullMessage msg)
         {
-            if (!(await _bot.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+            if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
                 return;
 
             var system = await _repo.GetSystemByAccount(evt.UserId);
@@ -185,7 +185,7 @@ namespace PluralKit.Bot
 
         private async ValueTask HandlePingReaction(MessageReactionAddEvent evt, FullMessage msg)
         {
-            if (!(await _bot.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+            if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
                 return;
 
             // Check if the "pinger" has permission to send messages in this channel
@@ -240,7 +240,7 @@ namespace PluralKit.Bot
 
         private async Task TryRemoveOriginalReaction(MessageReactionAddEvent evt)
         {
-            if ((await _bot.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+            if ((await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteUserReaction(evt.ChannelId, evt.MessageId, evt.Emoji, evt.UserId);
         }
     }

@@ -7,6 +7,7 @@ namespace Myriad.Cache
 {
     public interface IDiscordCache
     {
+        public ValueTask SaveOwnUser(ulong userId);
         public ValueTask SaveGuild(Guild guild);
         public ValueTask SaveChannel(Channel channel);
         public ValueTask SaveUser(User user);
@@ -19,6 +20,7 @@ namespace Myriad.Cache
         public ValueTask RemoveUser(ulong userId);
         public ValueTask RemoveRole(ulong guildId, ulong roleId);
 
+        public Task<ulong> GetOwnUser();
         public Task<Guild?> TryGetGuild(ulong guildId);
         public Task<Channel?> TryGetChannel(ulong channelId);
         public Task<Channel?> TryGetDmChannel(ulong userId);

@@ -42,7 +42,7 @@ namespace PluralKit.Bot
 
                 if (await _cache.TryGetChannel(channel.Value) != null)
                 {
-                    var botPermissions = await _bot.PermissionsIn(channel.Value);
+                    var botPermissions = await _cache.PermissionsIn(channel.Value);
                     props.Add(new("BotPermissions", new ScalarValue(botPermissions)));
                 }
             }
