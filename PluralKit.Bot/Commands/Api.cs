@@ -14,7 +14,7 @@ namespace PluralKit.Bot
     {
         private readonly ModelRepository _repo;
         private readonly DispatchService _dispatch;
-        private static readonly Regex _webhookRegex = new(@"https://(?:\\w+.)?discord(?:app)?.com/api(?:/v.*)?/webhooks/(.*)");
+        private static readonly Regex _webhookRegex = new("https://(?:\\w+.)?discord(?:app)?.com/api(?:/v.*)?/webhooks/(.*)");
         public Api(ModelRepository repo, DispatchService dispatch)
         {
             _repo = repo;
