@@ -21,7 +21,7 @@ namespace PluralKit.Core
             _provider = provider;
         }
 
-        private async Task DoPostRequest(SystemId system, string webhookUrl, HttpContent content)
+        public async Task DoPostRequest(SystemId system, string webhookUrl, HttpContent content, bool isVerify = false)
         {
             if (!await DispatchExt.ValidateUri(webhookUrl))
             {
@@ -35,7 +35,10 @@ namespace PluralKit.Core
             }
             catch (HttpRequestException e)
             {
-                _logger.Error("Could not dispatch webhook request!", e);
+                if (isVerify)
+                    throw;
+                else
+                    _logger.Error("Could not dispatch webhook request!", e);
             }
         }
 

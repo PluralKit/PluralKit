@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -125,6 +126,15 @@ namespace PluralKit.Bot
 
             if (_webhookRegex.IsMatch(newUrl))
                 throw new PKError("PluralKit does not currently support setting a Discord webhook URL as your system's webhook URL.");
+
+            try
+            {
+                await _dispatch.DoPostRequest(ctx.System.Id, newUrl, null, true);
+            }
+            catch (Exception e)
+            {
+                throw new PKError($"Could not verify that the new URL is working: {e.Message}");
+            }
 
             var newToken = StringUtils.GenerateToken();
 
