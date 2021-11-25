@@ -33,9 +33,7 @@ system's token (as described above) will override these privacy settings and sho
 
 ## Rate Limiting
 
-By default, there is a per-IP limit of 2 requests per second across the API. If you exceed this limit, you will get a 429 response code with a [rate limit error](#) body .....
-
-todo: this isn't implemented yet.
+By default, there is a per-IP limit of 2 requests per second across the API. If you exceed this limit, you will get a 429 response code and will have to try again later.
 
 ## Community API Libraries
 
