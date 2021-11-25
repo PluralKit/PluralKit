@@ -130,7 +130,7 @@ namespace PluralKit.Core
                     p.Add("list_privacy", ListPrivacy.Value.ToJsonString());
 
                 if (Visibility.IsPresent)
-                    p.Add("visibilithy", Visibility.Value.ToJsonString());
+                    p.Add("visibility", Visibility.Value.ToJsonString());
 
                 o.Add("privacy", p);
             }
