@@ -69,11 +69,6 @@ namespace PluralKit.Core
             var member = await _db.QueryFirst<PKMember>(conn, query, "returning *");
             _logger.Information("Created {MemberId} in {SystemId}: {MemberName}",
                 member.Id, systemId, memberName);
-            _ = _dispatch.Dispatch(member.Id, new()
-            {
-                Event = DispatchEvent.CREATE_MEMBER,
-                EventData = JObject.FromObject(new { name = memberName }),
-            });
             return member;
         }
 
@@ -81,11 +76,13 @@ namespace PluralKit.Core
         {
             _logger.Information("Updated {MemberId}: {@MemberPatch}", id, patch);
             var query = patch.Apply(new Query("members").Where("id", id));
-            _ = _dispatch.Dispatch(id, new()
-            {
-                Event = DispatchEvent.UPDATE_MEMBER,
-                EventData = patch.ToJson(),
-            });
+
+            if (conn == null)
+                _ = _dispatch.Dispatch(id, new()
+                {
+                    Event = DispatchEvent.UPDATE_MEMBER,
+                    EventData = patch.ToJson(),
+                });
             return _db.QueryFirst<PKMember>(conn, query, extraSql: "returning *");
         }
 

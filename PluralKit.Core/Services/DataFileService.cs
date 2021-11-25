@@ -18,12 +18,14 @@ namespace PluralKit.Core
         private readonly IDatabase _db;
         private readonly ModelRepository _repo;
         private readonly ILogger _logger;
+        private readonly DispatchService _dispatch;
 
-        public DataFileService(IDatabase db, ModelRepository repo, ILogger logger)
+        public DataFileService(IDatabase db, ModelRepository repo, ILogger logger, DispatchService dispatch)
         {
             _db = db;
             _repo = repo;
             _logger = logger;
+            _dispatch = dispatch;
         }
 
         public async Task<JObject> ExportSystem(PKSystem system)
@@ -72,7 +74,7 @@ namespace PluralKit.Core
             await using var conn = await _db.Obtain();
             await using var tx = await conn.BeginTransactionAsync();
 
-            return await BulkImporter.PerformImport(conn, tx, _repo, _logger, userId, system, importFile, confirmFunc);
+            return await BulkImporter.PerformImport(conn, tx, _repo, _logger, _dispatch, userId, system, importFile, confirmFunc);
         }
 
     }

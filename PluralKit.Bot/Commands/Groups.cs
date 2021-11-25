@@ -10,6 +10,8 @@ using Dapper;
 
 using Humanizer;
 
+using Newtonsoft.Json.Linq;
+
 using NodaTime;
 
 using Myriad.Builders;
@@ -24,13 +26,15 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
         private readonly HttpClient _client;
+        private readonly DispatchService _dispatch;
 
-        public Groups(IDatabase db, ModelRepository repo, EmbedService embeds, HttpClient client)
+        public Groups(IDatabase db, ModelRepository repo, EmbedService embeds, HttpClient client, DispatchService dispatch)
         {
             _db = db;
             _repo = repo;
             _embeds = embeds;
             _client = client;
+            _dispatch = dispatch;
         }
 
         public async Task CreateGroup(Context ctx)
@@ -58,6 +62,12 @@ namespace PluralKit.Bot
             }
 
             var newGroup = await _repo.CreateGroup(ctx.System.Id, groupName);
+
+            _ = _dispatch.Dispatch(newGroup.Id, new UpdateDispatchData()
+            {
+                Event = DispatchEvent.CREATE_GROUP,
+                EventData = JObject.FromObject(new { name = groupName }),
+            });
 
             var eb = new EmbedBuilder()
                 .Description($"Your new group, **{groupName}**, has been created, with the group ID **`{newGroup.Hid}`**.\nBelow are a couple of useful commands:")

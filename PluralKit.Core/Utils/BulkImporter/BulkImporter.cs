@@ -34,7 +34,7 @@ namespace PluralKit.Core
         private ImportResultNew _result = new();
 
         internal static async Task<ImportResultNew> PerformImport(IPKConnection conn, IPKTransaction tx, ModelRepository repo, ILogger logger,
-            ulong userId, PKSystem? system, JObject importFile, Func<string, Task> confirmFunc)
+            DispatchService dispatch, ulong userId, PKSystem? system, JObject importFile, Func<string, Task> confirmFunc)
         {
             await using var importer = new BulkImporter()
             {
@@ -82,6 +82,11 @@ namespace PluralKit.Core
                     throw new ImportException("File type is unknown.");
                 importer._result.Success = true;
                 await tx.CommitAsync();
+
+                _ = dispatch.Dispatch(system.Id, new UpdateDispatchData()
+                {
+                    Event = DispatchEvent.SUCCESSFUL_IMPORT
+                });
             }
             catch (ImportException e)
             {

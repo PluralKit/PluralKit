@@ -33,6 +33,7 @@ namespace PluralKit.Core
         UPDATE_SWITCH_MEMBERS,
         DELETE_SWITCH,
         DELETE_ALL_SWITCHES,
+        SUCCESSFUL_IMPORT,
     }
 
     public struct UpdateDispatchData

@@ -64,11 +64,6 @@ namespace PluralKit.Core
                 name = name
             });
             var group = await _db.QueryFirst<PKGroup>(conn, query, extraSql: "returning *");
-            _ = _dispatch.Dispatch(group.Id, new UpdateDispatchData()
-            {
-                Event = DispatchEvent.CREATE_GROUP,
-                EventData = JObject.FromObject(new { name = name }),
-            });
             _logger.Information("Created group {GroupId} in system {SystemId}: {GroupName}", group.Id, system, name);
             return group;
         }
@@ -78,11 +73,13 @@ namespace PluralKit.Core
             _logger.Information("Updated {GroupId}: {@GroupPatch}", id, patch);
             var query = patch.Apply(new Query("groups").Where("id", id));
             var group = await _db.QueryFirst<PKGroup>(conn, query, extraSql: "returning *");
-            _ = _dispatch.Dispatch(id, new()
-            {
-                Event = DispatchEvent.UPDATE_GROUP,
-                EventData = patch.ToJson(),
-            });
+
+            if (conn == null)
+                _ = _dispatch.Dispatch(id, new()
+                {
+                    Event = DispatchEvent.UPDATE_GROUP,
+                    EventData = patch.ToJson(),
+                });
             return group;
         }
 

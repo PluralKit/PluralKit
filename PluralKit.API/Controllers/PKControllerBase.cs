@@ -22,12 +22,14 @@ namespace PluralKit.API
         protected readonly ApiConfig _config;
         protected readonly IDatabase _db;
         protected readonly ModelRepository _repo;
+        protected readonly DispatchService _dispatch;
 
         public PKControllerBase(IServiceProvider svc)
         {
             _config = svc.GetRequiredService<ApiConfig>();
             _db = svc.GetRequiredService<IDatabase>();
             _repo = svc.GetRequiredService<ModelRepository>();
+            _dispatch = svc.GetRequiredService<DispatchService>();
         }
 
         protected Task<PKSystem?> ResolveSystem(string systemRef)
