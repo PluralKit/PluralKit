@@ -30,17 +30,19 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly ILogger _logger;
         private readonly WebhookExecutorService _webhookExecutor;
+        private readonly DispatchService _dispatch;
         private readonly ProxyMatcher _matcher;
         private readonly IMetrics _metrics;
         private readonly IDiscordCache _cache;
         private readonly LastMessageCacheService _lastMessage;
         private readonly DiscordApiClient _rest;
 
-        public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor, IDatabase db,
+        public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor, DispatchService dispatch, IDatabase db,
             ProxyMatcher matcher, IMetrics metrics, ModelRepository repo, IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
         {
             _logChannel = logChannel;
             _webhookExecutor = webhookExecutor;
+            _dispatch = dispatch;
             _db = db;
             _matcher = matcher;
             _metrics = metrics;
@@ -297,6 +299,8 @@ namespace PluralKit.Bot
 
             Task LogMessageToChannel() => _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
 
+            Task DispatchWebhook() => _dispatch.Dispatch(ctx.SystemId.Value, sentMessage);
+
             async Task DeleteProxyTriggerMessage()
             {
                 // Wait a second or so before deleting the original message
@@ -315,11 +319,11 @@ namespace PluralKit.Bot
             }
 
             // Run post-proxy actions (simultaneously; order doesn't matter)
-            // Note that only AddMessage is using our passed-in connection, careful not to pass it elsewhere and run into conflicts
             await Task.WhenAll(
                 DeleteProxyTriggerMessage(),
                 SaveMessageInDatabase(),
-                LogMessageToChannel()
+                LogMessageToChannel(),
+                DispatchWebhook()
             );
         }
 

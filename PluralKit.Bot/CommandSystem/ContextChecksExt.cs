@@ -18,6 +18,12 @@ namespace PluralKit.Bot
             throw new PKError("This command can not be run in a DM.");
         }
 
+        public static Context CheckDMContext(this Context ctx)
+        {
+            if (ctx.Channel.GuildId == null) return ctx;
+            throw new PKError("This command must be run in a DM.");
+        }
+
         public static Context CheckSystemPrivacy(this Context ctx, PKSystem target, PrivacyLevel level)
         {
             if (level.CanAccess(ctx.LookupContextFor(target))) return ctx;

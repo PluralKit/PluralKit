@@ -1,6 +1,9 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+
+using Newtonsoft.Json.Linq;
 
 using SqlKata;
 
@@ -46,6 +49,15 @@ namespace PluralKit.Core
             return _db.QueryFirst<PKMember?>(query);
         }
 
+        public Task<IEnumerable<Guid>> GetMemberGuids(IEnumerable<MemberId> ids)
+        {
+            var query = new Query("members")
+                .Select("uuid")
+                .WhereIn("id", ids);
+
+            return _db.Query<Guid>(query);
+        }
+
         public async Task<PKMember> CreateMember(SystemId systemId, string memberName, IPKConnection? conn = null)
         {
             var query = new Query("members").AsInsert(new
@@ -64,14 +76,27 @@ namespace PluralKit.Core
         {
             _logger.Information("Updated {MemberId}: {@MemberPatch}", id, patch);
             var query = patch.Apply(new Query("members").Where("id", id));
+
+            if (conn == null)
+                _ = _dispatch.Dispatch(id, new()
+                {
+                    Event = DispatchEvent.UPDATE_MEMBER,
+                    EventData = patch.ToJson(),
+                });
             return _db.QueryFirst<PKMember>(conn, query, extraSql: "returning *");
         }
 
-        public Task DeleteMember(MemberId id)
+        public async Task DeleteMember(MemberId id)
         {
+            var oldMember = await GetMember(id);
+
             _logger.Information("Deleted {MemberId}", id);
             var query = new Query("members").AsDelete().Where("id", id);
-            return _db.ExecuteQuery(query);
+            await _db.ExecuteQuery(query);
+
+            // shh, compiler
+            if (oldMember != null)
+                _ = _dispatch.Dispatch(oldMember.System, oldMember.Uuid, DispatchEvent.DELETE_MEMBER);
         }
     }
 }

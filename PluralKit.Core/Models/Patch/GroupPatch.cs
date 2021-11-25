@@ -91,5 +91,51 @@ namespace PluralKit.Core
 
             return patch;
         }
+
+        public JObject ToJson()
+        {
+            var o = new JObject();
+
+            if (Name.IsPresent)
+                o.Add("name", Name.Value);
+            if (Hid.IsPresent)
+                o.Add("id", Hid.Value);
+            if (DisplayName.IsPresent)
+                o.Add("display_name", DisplayName.Value);
+            if (Description.IsPresent)
+                o.Add("description", Description.Value);
+            if (Icon.IsPresent)
+                o.Add("icon", Icon.Value);
+            if (BannerImage.IsPresent)
+                o.Add("banner", BannerImage.Value);
+            if (Color.IsPresent)
+                o.Add("color", Color.Value);
+
+            if (
+                   DescriptionPrivacy.IsPresent
+                || IconPrivacy.IsPresent
+                || ListPrivacy.IsPresent
+                || Visibility.IsPresent
+            )
+            {
+                var p = new JObject();
+
+                if (DescriptionPrivacy.IsPresent)
+                    p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());
+
+                if (IconPrivacy.IsPresent)
+                    p.Add("icon_privacy", IconPrivacy.Value.ToJsonString());
+
+                if (ListPrivacy.IsPresent)
+                    p.Add("list_privacy", ListPrivacy.Value.ToJsonString());
+
+                if (Visibility.IsPresent)
+                    p.Add("visibilithy", Visibility.Value.ToJsonString());
+
+                o.Add("privacy", p);
+            }
+
+            return o;
+        }
     }
 }

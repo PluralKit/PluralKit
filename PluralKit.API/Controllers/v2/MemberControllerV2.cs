@@ -60,6 +60,12 @@ namespace PluralKit.API
             var newMember = await _repo.CreateMember(system.Id, patch.Name.Value, conn);
             newMember = await _repo.UpdateMember(newMember.Id, patch, conn);
 
+            _ = _dispatch.Dispatch(newMember.Id, new()
+            {
+                Event = DispatchEvent.CREATE_MEMBER,
+                EventData = patch.ToJson(),
+            });
+
             await tx.CommitAsync();
 
             return Ok(newMember.ToJson(LookupContext.ByOwner, v: APIVersion.V2));

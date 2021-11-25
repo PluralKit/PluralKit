@@ -78,6 +78,14 @@ namespace PluralKit.API
             var newGroup = await _repo.CreateGroup(system.Id, patch.Name.Value, conn);
             newGroup = await _repo.UpdateGroup(newGroup.Id, patch, conn);
 
+
+            _ = _dispatch.Dispatch(newGroup.Id, new UpdateDispatchData()
+            {
+                Event = DispatchEvent.CREATE_GROUP,
+                EventData = patch.ToJson(),
+            });
+
+
             await tx.CommitAsync();
 
             return Ok(newGroup.ToJson(LookupContext.ByOwner));

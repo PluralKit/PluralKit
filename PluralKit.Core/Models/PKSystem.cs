@@ -46,6 +46,8 @@ namespace PluralKit.Core
         public string BannerImage { get; }
         public string Color { get; }
         public string Token { get; }
+        public string WebhookUrl { get; }
+        public string WebhookToken { get; }
         public Instant Created { get; }
         public string UiTz { get; set; }
         public bool PingsEnabled { get; }
@@ -100,6 +102,10 @@ namespace PluralKit.Core
 
                         if (ctx == LookupContext.ByOwner)
                         {
+                            // todo: should this be moved to a different JSON model?
+                            o.Add("webhook_url", system.WebhookUrl);
+                            o.Add("webhook_token", system.WebhookToken);
+
                             var p = new JObject();
 
                             p.Add("description_privacy", system.DescriptionPrivacy.ToJsonString());

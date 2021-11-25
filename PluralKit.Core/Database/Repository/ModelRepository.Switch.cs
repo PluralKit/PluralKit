@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using Dapper;
 
+using Newtonsoft.Json.Linq;
+
 using NodaTime;
 
 using NpgsqlTypes;
@@ -42,8 +44,19 @@ namespace PluralKit.Core
             await tx.CommitAsync();
 
             _logger.Information("Created {SwitchId} in {SystemId}: {Members}", sw.Id, system, members);
+            _ = _dispatch.Dispatch(sw.Id, new()
+            {
+                Event = DispatchEvent.CREATE_SWITCH,
+                EventData = JObject.FromObject(new
+                {
+                    id = sw.Uuid.ToString(),
+                    timestamp = sw.Timestamp.FormatExport(),
+                    members = await GetMemberGuids(members),
+                }),
+            });
             return sw;
         }
+
         public async Task EditSwitch(IPKConnection conn, SwitchId switchId, IReadOnlyCollection<MemberId> members)
         {
             // Use a transaction here since we're doing multiple executed commands in one
@@ -69,28 +82,52 @@ namespace PluralKit.Core
             // Finally we commit the tx, since the using block will otherwise rollback it
             await tx.CommitAsync();
 
+            _ = _dispatch.Dispatch(switchId, new()
+            {
+                Event = DispatchEvent.UPDATE_SWITCH_MEMBERS,
+                EventData = JObject.FromObject(new
+                {
+                    members = await GetMemberGuids(members),
+                }),
+            });
+
             _logger.Information("Updated {SwitchId} members: {Members}", switchId, members);
         }
 
-        public Task MoveSwitch(SwitchId id, Instant time)
+        public async Task MoveSwitch(SwitchId id, Instant time)
         {
             _logger.Information("Updated {SwitchId} timestamp: {SwitchTimestamp}", id, time);
             var query = new Query("switches").AsUpdate(new { timestamp = time }).Where("id", id);
-            return _db.ExecuteQuery(query);
+            await _db.ExecuteQuery(query);
+            _ = _dispatch.Dispatch(id, new()
+            {
+                Event = DispatchEvent.UPDATE_SWITCH,
+                EventData = JObject.FromObject(new
+                {
+                    timestamp = time.FormatExport(),
+                }),
+            });
         }
 
-        public Task DeleteSwitch(SwitchId id)
+        public async Task DeleteSwitch(SwitchId id)
         {
-            _logger.Information("Deleted {Switch}", id);
+            var existingSwitch = await GetSwitch(id);
+
             var query = new Query("switches").AsDelete().Where("id", id);
-            return _db.ExecuteQuery(query);
+            await _db.ExecuteQuery(query);
+            _logger.Information("Deleted {Switch}", id);
+            _ = _dispatch.Dispatch(existingSwitch.System, existingSwitch.Uuid, DispatchEvent.DELETE_SWITCH);
         }
 
-        public Task DeleteAllSwitches(SystemId system)
+        public async Task DeleteAllSwitches(SystemId system)
         {
             _logger.Information("Deleted all switches in {SystemId}", system);
             var query = new Query("switches").AsDelete().Where("system", system);
-            return _db.ExecuteQuery(query);
+            await _db.ExecuteQuery(query);
+            _ = _dispatch.Dispatch(system, new UpdateDispatchData()
+            {
+                Event = DispatchEvent.DELETE_ALL_SWITCHES
+            });
         }
 
         public IAsyncEnumerable<PKSwitch> GetSwitches(SystemId system)
@@ -99,6 +136,9 @@ namespace PluralKit.Core
             var query = new Query("switches").Where("system", system).OrderByDesc("timestamp");
             return _db.QueryStream<PKSwitch>(query);
         }
+
+        public Task<PKSwitch?> GetSwitch(SwitchId id)
+            => _db.QueryFirst<PKSwitch?>(new Query("switches").Where("id", id));
 
         public Task<PKSwitch> GetSwitchByUuid(Guid uuid)
         {

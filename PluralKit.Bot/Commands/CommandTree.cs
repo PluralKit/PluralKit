@@ -152,9 +152,9 @@ namespace PluralKit.Bot
                 return ctx.Execute<SystemLink>(Unlink, m => m.UnlinkAccount(ctx));
             if (ctx.Match("token"))
                 if (ctx.Match("refresh", "renew", "invalidate", "reroll", "regen"))
-                    return ctx.Execute<Token>(TokenRefresh, m => m.RefreshToken(ctx));
+                    return ctx.Execute<Api>(TokenRefresh, m => m.RefreshToken(ctx));
                 else
-                    return ctx.Execute<Token>(TokenGet, m => m.GetToken(ctx));
+                    return ctx.Execute<Api>(TokenGet, m => m.GetToken(ctx));
             if (ctx.Match("import"))
                 return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
             if (ctx.Match("export"))
@@ -286,6 +286,8 @@ namespace PluralKit.Bot
                 await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx));
             else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
                 await ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx));
+            else if (ctx.Match("webhook", "hook"))
+                await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
             else if (ctx.Match("timezone", "tz"))
                 await ctx.Execute<SystemEdit>(SystemTimezone, m => m.SystemTimezone(ctx));
             else if (ctx.Match("proxy"))

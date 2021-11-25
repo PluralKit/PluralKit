@@ -55,5 +55,27 @@ namespace PluralKit.Core
 
             return patch;
         }
+
+        public JObject ToJson(string memberRef)
+        {
+            var o = new JObject();
+
+            if (ProxyEnabled.IsPresent)
+                o.Add("proxying_enabled", ProxyEnabled.Value);
+
+            if (AutoproxyMode.IsPresent)
+                o.Add("autoproxy_mode", AutoproxyMode.Value.ToString().ToLower());
+
+            if (AutoproxyMember.IsPresent)
+                o.Add("autoproxy_member", memberRef);
+
+            if (Tag.IsPresent)
+                o.Add("tag", Tag.Value);
+
+            if (TagEnabled.IsPresent)
+                o.Add("tag_enabled", TagEnabled.Value);
+
+            return o;
+        }
     }
 }

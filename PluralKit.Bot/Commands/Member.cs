@@ -21,13 +21,15 @@ namespace PluralKit.Bot
         private readonly ModelRepository _repo;
         private readonly EmbedService _embeds;
         private readonly HttpClient _client;
+        private readonly DispatchService _dispatch;
 
-        public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client)
+        public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client, DispatchService dispatch)
         {
             _embeds = embeds;
             _db = db;
             _repo = repo;
             _client = client;
+            _dispatch = dispatch;
         }
 
         public async Task NewMember(Context ctx)
@@ -62,18 +64,33 @@ namespace PluralKit.Bot
             // Try to match an image attached to the message
             var avatarArg = ctx.Message.Attachments.FirstOrDefault();
             Exception imageMatchError = null;
+            bool sentDispatch = false;
             if (avatarArg != null)
             {
                 try
                 {
                     await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
-                    await _repo.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url });
+                    await _db.Execute(conn => _repo.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }, conn));
+
+                    _ = _dispatch.Dispatch(member.Id, new()
+                    {
+                        Event = DispatchEvent.CREATE_MEMBER,
+                        EventData = JObject.FromObject(new { name = memberName, avatar_url = avatarArg.Url }),
+                    });
+                    sentDispatch = true;
                 }
                 catch (Exception e)
                 {
                     imageMatchError = e;
                 }
             }
+
+            if (!sentDispatch)
+                _ = _dispatch.Dispatch(member.Id, new()
+                {
+                    Event = DispatchEvent.CREATE_MEMBER,
+                    EventData = JObject.FromObject(new { name = memberName }),
+                });
 
             // Send confirmation and space hint
             await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
