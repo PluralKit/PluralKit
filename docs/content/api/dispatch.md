@@ -23,7 +23,7 @@ PluralKit will send invalid requests to your endpoint, with `PING` event type, o
 
 |key|type|description|
 |---|---|---|
-|type|string|[event type](#event-type-enum)|
+|type|string|[event type](#dispatch-events)|
 |signing_token|string|the [signing token](#security) for your webhook URL|
 |system_id|string|the system ID associated with this event|
 |id|string?|the ID of the entity referenced by the event (can be a system/member/group/switch/Discord user ID)|
@@ -47,8 +47,8 @@ PluralKit will send invalid requests to your endpoint, with `PING` event type, o
 |DELETE_GROUP|a group was deleted|null|old group ID can be found in the top-level `id` key`|
 |LINK_ACCOUNT|a new Discord account was linked to your system|null|new account ID can be found in the top-level `id` key|
 |UNLINK_ACCOUNT|a Discord account was unlinked from your system|null|old account ID can be found in the top-level `id` key|
-|UPDATE_SYSTEM_GUILD|your system settings in a specific server were updated|[system guild settings](/api/models#system-guild-settings) with only modified keys|
-|UPDATE_MEMBER_GUILD|the settings for a member in a specific server were updated|[member guild settings](/api/models#member-guild-settings) with only modified keys|
+|UPDATE_SYSTEM_GUILD|your system settings in a specific server were updated|[system guild settings](/api/models#system-guild-settings-model) with only modified keys|
+|UPDATE_MEMBER_GUILD|the settings for a member in a specific server were updated|[member guild settings](/api/models#member-guild-settings-model) with only modified keys|
 |CREATE_MESSAGE|a message was sent|[message object](/api/models#message-model)|
 |CREATE_SWITCH|a new switch was logged|[switch object](/api/models#switch-model)|
 |UPDATE_SWITCH|a switch was updated|[switch object](/api/models#switch-model) with only modified keys|
