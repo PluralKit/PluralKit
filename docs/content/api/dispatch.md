@@ -1,11 +1,13 @@
 ---
-title: Dispatch Webhooks
+title: Dispatch
 permalink: /api/dispatch
 ---
 
 # Dispatch Webhooks
 
-todo: write text here
+Dispatch webhooks are a way to get notified when you update your system information on PluralKit. It can be used for integrations where you want to perform some action when you run a bot command on Discord, but also don't want to (or can't) set up a Discord bot to listem to messages.
+
+You will need a publicly-accessible webserver that can receive and process JSON-formatted POST requests.
 
 ## Security
 

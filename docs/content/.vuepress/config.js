@@ -66,7 +66,7 @@ module.exports = {
           "/api/endpoints",
           "/api/models",
           "/api/errors",
-          // "/api/integrations",
+          "/api/dispatch",
           "/api/legacy"
         ]
       },
