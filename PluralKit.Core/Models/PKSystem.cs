@@ -104,7 +104,7 @@ namespace PluralKit.Core
                         {
                             // todo: should this be moved to a different JSON model?
                             o.Add("webhook_url", system.WebhookUrl);
-                            o.Add("webhook_token", system.WebhookToken);
+                            // o.Add("webhook_token", system.WebhookToken);
 
                             var p = new JObject();
 

@@ -39,9 +39,11 @@ namespace PluralKit.Core
             return patch;
         }
 
-        public JObject ToJson()
+        public JObject ToJson(ulong guild_id)
         {
             var o = new JObject();
+
+            o.Add("guild_id", guild_id.ToString());
 
             if (DisplayName.IsPresent)
                 o.Add("display_name", DisplayName.Value);

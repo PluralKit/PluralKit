@@ -29,10 +29,7 @@ PluralKit will send invalid requests to your endpoint, with `PING` event type, o
 |signing_token|string|the [signing token](#security) for your webhook URL|
 |system_id|string|the system ID associated with this event|
 |id|string?|the ID of the entity referenced by the event (can be a system/member/group/switch/Discord user ID)|
-|guild_id|snowflake?*|the ID of the guild where this event occurred|
 |data|object?|event data|
-
-\* only sent for guild settings update events. in message create events, the guild id is sent in the `data` object as `guild` key
 
 ## Dispatch Events
 

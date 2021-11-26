@@ -42,7 +42,6 @@ namespace PluralKit.Core
         public DispatchEvent Event;
         public string SystemId;
         public string? EntityId;
-        public ulong? GuildId;
         public string SigningToken;
         public JObject? EventData;
     }
@@ -57,7 +56,6 @@ namespace PluralKit.Core
             o.Add("signing_token", data.SigningToken);
             o.Add("system_id", data.SystemId);
             o.Add("id", data.EntityId);
-            o.Add("guild_id", data.GuildId.ToString());
             o.Add("data", data.EventData);
 
             return new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");

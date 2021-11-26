@@ -174,8 +174,7 @@ namespace PluralKit.Core
             data.Event = DispatchEvent.UPDATE_SYSTEM_GUILD;
             data.SigningToken = system.WebhookToken;
             data.SystemId = system.Uuid.ToString();
-            data.GuildId = guild_id;
-            data.EventData = patch.ToJson(memberRef);
+            data.EventData = patch.ToJson(memberRef, guild_id);
 
             _logger.Debug("Dispatching webhook for system {SystemId} in guild {GuildId}", system.Id, guild_id);
             await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());
@@ -194,8 +193,7 @@ namespace PluralKit.Core
             data.SigningToken = system.WebhookToken;
             data.SystemId = system.Uuid.ToString();
             data.EntityId = member.Uuid.ToString();
-            data.GuildId = guild_id;
-            data.EventData = patch.ToJson();
+            data.EventData = patch.ToJson(guild_id);
 
             _logger.Debug("Dispatching webhook for member {MemberId} (system {SystemId}) in guild {GuildId}", member.Id, system.Id, guild_id);
             await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());

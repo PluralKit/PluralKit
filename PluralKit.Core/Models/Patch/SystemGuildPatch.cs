@@ -56,9 +56,11 @@ namespace PluralKit.Core
             return patch;
         }
 
-        public JObject ToJson(string memberRef)
+        public JObject ToJson(string memberRef, ulong guild_id)
         {
             var o = new JObject();
+
+            o.Add("guild_id", guild_id.ToString());
 
             if (ProxyEnabled.IsPresent)
                 o.Add("proxying_enabled", ProxyEnabled.Value);
