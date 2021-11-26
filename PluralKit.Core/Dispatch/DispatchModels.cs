@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
@@ -59,7 +60,7 @@ namespace PluralKit.Core
             o.Add("guild_id", data.GuildId.ToString());
             o.Add("data", data.EventData);
 
-            return new StringContent(JsonConvert.SerializeObject(o));
+            return new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
         }
 
         public static JObject ToDispatchJson(this PKMessage msg, string memberRef)
