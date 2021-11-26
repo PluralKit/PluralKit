@@ -32,7 +32,7 @@ PluralKit will send invalid requests to your endpoint, with `PING` event type, o
 |guild_id|snowflake?*|the ID of the guild where this event occurred|
 |data|object?|event data|
 
-\* only sent for guild settings update events. in message create events, the guild id is sent in the `data` object
+\* only sent for guild settings update events. in message create events, the guild id is sent in the `data` object as `guild` key
 
 ## Dispatch Events
 

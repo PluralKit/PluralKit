@@ -63,20 +63,6 @@ namespace PluralKit.Core
             return new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
         }
 
-        public static JObject ToDispatchJson(this PKMessage msg, string memberRef)
-        {
-            var o = new JObject();
-
-            o.Add("timestamp", Instant.FromUnixTimeMilliseconds((long)(msg.Mid >> 22) + 1420070400000).FormatExport());
-            o.Add("id", msg.Mid.ToString());
-            o.Add("original", msg.OriginalMid.ToString());
-            o.Add("sender", msg.Sender.ToString());
-            o.Add("channel", msg.Channel.ToString());
-            o.Add("member", memberRef);
-
-            return o;
-        }
-
         public static async Task<bool> ValidateUri(string url)
         {
             IPHostEntry host = null;

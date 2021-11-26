@@ -139,11 +139,18 @@ namespace PluralKit.Core
 
             var member = await repo.GetMember(newMessage.Member);
 
+            var fullMessage = new FullMessage
+            {
+                Message = newMessage,
+                Member = member,
+                System = system
+            };
+
             var data = new UpdateDispatchData();
             data.Event = DispatchEvent.CREATE_MESSAGE;
             data.SigningToken = system.WebhookToken;
             data.SystemId = system.Uuid.ToString();
-            data.EventData = newMessage.ToDispatchJson(member.Uuid.ToString());
+            data.EventData = fullMessage.ToJson(LookupContext.ByOwner, APIVersion.V2);
 
             _logger.Debug("Dispatching webhook for message create (system {SystemId})", system.Id);
             await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());

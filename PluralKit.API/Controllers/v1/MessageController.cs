@@ -11,18 +11,6 @@ using PluralKit.Core;
 
 namespace PluralKit.API
 {
-    public struct MessageReturn
-    {
-        [JsonProperty("timestamp")] public Instant Timestamp;
-        [JsonProperty("id")] public string Id;
-        [JsonProperty("original")] public string Original;
-        [JsonProperty("sender")] public string Sender;
-        [JsonProperty("channel")] public string Channel;
-
-        [JsonProperty("system")] public JObject System;
-        [JsonProperty("member")] public JObject Member;
-    }
-
     [ApiController]
     [ApiVersion("1.0")]
     [Route("v{version:apiVersion}/msg")]
@@ -38,21 +26,12 @@ namespace PluralKit.API
         }
 
         [HttpGet("{mid}")]
-        public async Task<ActionResult<MessageReturn>> GetMessage(ulong mid)
+        public async Task<ActionResult<JObject>> GetMessage(ulong mid)
         {
             var msg = await _db.Execute(c => _repo.GetMessage(c, mid));
             if (msg == null) return NotFound("Message not found.");
 
-            return new MessageReturn
-            {
-                Timestamp = Instant.FromUnixTimeMilliseconds((long)(msg.Message.Mid >> 22) + 1420070400000),
-                Id = msg.Message.Mid.ToString(),
-                Channel = msg.Message.Channel.ToString(),
-                Sender = msg.Message.Sender.ToString(),
-                Member = msg.Member.ToJson(User.ContextFor(msg.System), needsLegacyProxyTags: true),
-                System = msg.System.ToJson(User.ContextFor(msg.System)),
-                Original = msg.Message.OriginalMid?.ToString()
-            };
+            return msg.ToJson(User.ContextFor(msg.System), APIVersion.V1);
         }
     }
 }

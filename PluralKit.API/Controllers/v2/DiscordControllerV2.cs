@@ -14,9 +14,9 @@ namespace PluralKit.API
     [ApiController]
     [ApiVersion("2.0")]
     [Route("v{version:apiVersion}")]
-    public class GuildControllerV2: PKControllerBase
+    public class DiscordControllerV2: PKControllerBase
     {
-        public GuildControllerV2(IServiceProvider svc) : base(svc) { }
+        public DiscordControllerV2(IServiceProvider svc) : base(svc) { }
 
 
         [HttpGet("systems/@me/guilds/{guild_id}")]
@@ -123,25 +123,14 @@ namespace PluralKit.API
         }
 
         [HttpGet("messages/{messageId}")]
-        public async Task<ActionResult<MessageReturn>> MessageGet(ulong messageId)
+        public async Task<ActionResult<JObject>> MessageGet(ulong messageId)
         {
             var msg = await _db.Execute(c => _repo.GetMessage(c, messageId));
             if (msg == null)
                 throw Errors.MessageNotFound;
 
             var ctx = this.ContextFor(msg.System);
-
-            // todo: don't rely on v1 stuff
-            return new MessageReturn
-            {
-                Timestamp = Instant.FromUnixTimeMilliseconds((long)(msg.Message.Mid >> 22) + 1420070400000),
-                Id = msg.Message.Mid.ToString(),
-                Channel = msg.Message.Channel.ToString(),
-                Sender = msg.Message.Sender.ToString(),
-                System = msg.System.ToJson(ctx, v: APIVersion.V2),
-                Member = msg.Member.ToJson(ctx, v: APIVersion.V2),
-                Original = msg.Message.OriginalMid?.ToString()
-            };
+            return msg.ToJson(ctx, APIVersion.V2);
         }
     }
 }

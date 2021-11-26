@@ -96,6 +96,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |original| snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.|
 |sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
 |channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
+|guild|snowflake|The ID of the server the message was sent in. Encoded as string for precision reasons.|
 |system|full System object|The system that proxied the message.|
 |member|full Member object|The member that proxied the message.|
 

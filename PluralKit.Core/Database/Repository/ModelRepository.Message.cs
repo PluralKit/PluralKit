@@ -71,21 +71,4 @@ namespace PluralKit.Core
             return _db.QueryFirst<PKMessage?>(query);
         }
     }
-
-    public class PKMessage
-    {
-        public ulong Mid { get; set; }
-        public ulong? Guild { get; set; } // null value means "no data" (ie. from before this field being added)
-        public ulong Channel { get; set; }
-        public MemberId Member { get; set; }
-        public ulong Sender { get; set; }
-        public ulong? OriginalMid { get; set; }
-    }
-
-    public class FullMessage
-    {
-        public PKMessage Message;
-        public PKMember Member;
-        public PKSystem System;
-    }
 }
