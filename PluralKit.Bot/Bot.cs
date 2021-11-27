@@ -258,7 +258,7 @@ public class Bot
                     {
                         new Activity
                         {
-                            Name = $"pk;help | in {totalGuilds:N0} servers | shard #{shard.ShardId}",
+                            Name = $"{(_config.Prefixes ?? BotConfig.DefaultPrefixes)[0]}help | in {totalGuilds:N0} servers | shard #{shard.ShardId}",
                             Type = ActivityType.Game,
                             Url = "https://pluralkit.me/"
                         }
