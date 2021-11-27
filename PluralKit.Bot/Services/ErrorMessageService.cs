@@ -20,11 +20,13 @@ public class ErrorMessageService
     private static readonly Duration IntervalFromStartup = Duration.FromMinutes(5);
     private readonly ILogger _logger;
 
+    private readonly BotConfig _botConfig;
     private readonly IMetrics _metrics;
     private readonly DiscordApiClient _rest;
 
-    public ErrorMessageService(IMetrics metrics, ILogger logger, DiscordApiClient rest)
+    public ErrorMessageService(BotConfig botConfig, IMetrics metrics, ILogger logger, DiscordApiClient rest)
     {
+        _botConfig = botConfig;
         _metrics = metrics;
         _logger = logger;
         _rest = rest;
@@ -46,11 +48,14 @@ public class ErrorMessageService
             return;
         }
 
+        var channelInfo = _botConfig.IsBetaBot
+            ? "**#hi-please-break-the-beta-bot** on **[the support server *(click to join)*](https://discord.gg/THvbH59btW)**"
+            : "**#bug-reports-and-errors** on **[the support server *(click to join)*](https://discord.gg/PczBt78)**";
+
         var embed = new EmbedBuilder()
             .Color(0xE74C3C)
             .Title("Internal error occurred")
-            .Description(
-                "For support, please send the error code above in **#bug-reports-and-errors** on **[the support server *(click to join)*](https://discord.gg/PczBt78)** with a description of what you were doing at the time.")
+            .Description($"For support, please send the error code above in {channelInfo} with a description of what you were doing at the time.")
             .Footer(new Embed.EmbedFooter(errorId))
             .Timestamp(now.ToDateTimeOffset().ToString("O"));
 
@@ -77,7 +82,7 @@ public class ErrorMessageService
         var startupTime = Instant.FromDateTimeUtc(Process.GetCurrentProcess().StartTime.ToUniversalTime());
         // don't send errors during startup
         // mostly because Npgsql throws a bunch of errors when opening connections sometimes???
-        if (now - startupTime < IntervalFromStartup)
+        if (now - startupTime < IntervalFromStartup && !_botConfig.IsBetaBot)
             return false;
 
         var interval = now - lastErrorTime;

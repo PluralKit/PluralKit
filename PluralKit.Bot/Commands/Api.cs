@@ -14,11 +14,13 @@ public class Api
     private static readonly Regex _webhookRegex =
         new("https://(?:\\w+.)?discord(?:app)?.com/api(?:/v.*)?/webhooks/(.*)");
 
+    private readonly BotConfig _botConfig;
     private readonly DispatchService _dispatch;
     private readonly ModelRepository _repo;
 
-    public Api(ModelRepository repo, DispatchService dispatch)
+    public Api(BotConfig botConfig, ModelRepository repo, DispatchService dispatch)
     {
+        _botConfig = botConfig;
         _repo = repo;
         _dispatch = dispatch;
     }
@@ -41,6 +43,13 @@ public class Api
                             + $" If it leaks or you need a new one, you can invalidate this one with `pk;token refresh`.\n\nYour token is below:"
                 });
             await ctx.Rest.CreateMessage(dm.Id, new MessageRequest { Content = token });
+
+            if (_botConfig.IsBetaBot)
+                await ctx.Rest.CreateMessage(dm.Id, new MessageRequest
+                {
+                    Content = $"{Emojis.Note} The beta bot's API base URL is currently <{_botConfig.BetaBotAPIUrl}>."
+                                                                                    + " You need to use this URL instead of the base URL listed on the documentation website."
+                });
 
             // If we're not already in a DM, reply with a reminder to check
             if (ctx.Channel.Type != Channel.ChannelType.Dm)
@@ -86,6 +95,13 @@ public class Api
             // breaking their existing token as a side effect :)
             var token = await MakeAndSetNewToken(ctx.System);
             await ctx.Rest.CreateMessage(dm.Id, new MessageRequest { Content = token });
+
+            if (_botConfig.IsBetaBot)
+                await ctx.Rest.CreateMessage(dm.Id, new MessageRequest
+                {
+                    Content = $"{Emojis.Note} The beta bot's API base URL is currently <{_botConfig.BetaBotAPIUrl}>."
+                                                                                   + " You need to use this URL instead of the base URL listed on the documentation website."
+                });
 
             // If we're not already in a DM, reply with a reminder to check
             if (ctx.Channel.Type != Channel.ChannelType.Dm)

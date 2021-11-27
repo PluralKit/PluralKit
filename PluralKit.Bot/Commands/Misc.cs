@@ -50,7 +50,9 @@ public class Misc
 
         var invite =
             $"https://discord.com/oauth2/authorize?client_id={clientId}&scope=bot%20applications.commands&permissions={(ulong)permissions}";
-        await ctx.Reply($"{Emojis.Success} Use this link to add PluralKit to your server:\n<{invite}>");
+
+        var botName = _botConfig.IsBetaBot ? "PluralKit Beta" : "PluralKit";
+        await ctx.Reply($"{Emojis.Success} Use this link to add {botName} to your server:\n<{invite}>");
     }
 
     public async Task Stats(Context ctx)

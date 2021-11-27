@@ -24,6 +24,9 @@ public class BotConfig
 
     public bool DisableErrorReporting { get; set; } = false;
 
+    public bool IsBetaBot { get; set; } = false!;
+    public string BetaBotAPIUrl { get; set; }
+
     public record ClusterSettings
     {
         public string NodeName { get; set; }
