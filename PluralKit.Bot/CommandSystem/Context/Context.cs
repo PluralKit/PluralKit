@@ -21,8 +21,6 @@ public class Context
 {
     private readonly ILifetimeScope _provider;
 
-    private readonly Parameters _parameters;
-
     private readonly IMetrics _metrics;
     private readonly CommandMessageService _commandMessageService;
 
@@ -43,7 +41,7 @@ public class Context
         _metrics = provider.Resolve<IMetrics>();
         _provider = provider;
         _commandMessageService = provider.Resolve<CommandMessageService>();
-        _parameters = new Parameters(message.Content?.Substring(commandParseOffset));
+        Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
     }
