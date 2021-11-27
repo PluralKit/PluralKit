@@ -4,137 +4,8 @@ using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
-public class CommandTree
+public partial class CommandTree
 {
-    // todo: move these to a different file
-    public static Command SystemInfo = new Command("system", "system [system]", "Looks up information about a system");
-    public static Command SystemNew = new Command("system new", "system new [name]", "Creates a new system");
-    public static Command SystemRename = new Command("system name", "system rename [name]", "Renames your system");
-    public static Command SystemDesc = new Command("system description", "system description [description]", "Changes your system's description");
-    public static Command SystemColor = new Command("system color", "system color [color]", "Changes your system's color");
-    public static Command SystemTag = new Command("system tag", "system tag [tag]", "Changes your system's tag");
-    public static Command SystemServerTag = new Command("system servertag", "system servertag [tag|enable|disable]", "Changes your system's tag in the current server");
-    public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
-    public static Command SystemBannerImage = new Command("system banner", "system banner [url]", "Set the system's banner image");
-    public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
-    public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
-    public static Command SystemProxy = new Command("system proxy", "system proxy [server id] [on|off]", "Enables or disables message proxying in a specific server");
-    public static Command SystemList = new Command("system list", "system [system] list [full]", "Lists a system's members");
-    public static Command SystemFind = new Command("system find", "system [system] find [full] <search term>", "Searches a system's members given a search term");
-    public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
-    public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
-    public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
-    public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
-    public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
-    public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
-    public static Command AutoproxyTimeout = new Command("autoproxy", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
-    public static Command AutoproxyAccount = new Command("autoproxy", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
-    public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
-    public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
-    public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
-    public static Command MemberDesc = new Command("member description", "member <member> description [description]", "Changes a member's description");
-    public static Command MemberPronouns = new Command("member pronouns", "member <member> pronouns [pronouns]", "Changes a member's pronouns");
-    public static Command MemberColor = new Command("member color", "member <member> color [color]", "Changes a member's color");
-    public static Command MemberBirthday = new Command("member birthday", "member <member> birthday [birthday]", "Changes a member's birthday");
-    public static Command MemberProxy = new Command("member proxy", "member <member> proxy [add|remove] [example proxy]", "Changes, adds, or removes a member's proxy tags");
-    public static Command MemberDelete = new Command("member delete", "member <member> delete", "Deletes a member");
-    public static Command MemberBannerImage = new Command("member banner", "member <member> banner [url]", "Set the member's banner image");
-    public static Command MemberAvatar = new Command("member avatar", "member <member> avatar [url|@mention]", "Changes a member's avatar");
-    public static Command MemberGroups = new Command("member group", "member <member> group", "Shows the groups a member is in");
-    public static Command MemberGroupAdd = new Command("member group", "member <member> group add <group> [group 2] [group 3...]", "Adds a member to one or more groups");
-    public static Command MemberGroupRemove = new Command("member group", "member <member> group remove <group> [group 2] [group 3...]", "Removes a member from one or more groups");
-    public static Command MemberServerAvatar = new Command("member serveravatar", "member <member> serveravatar [url|@mention]", "Changes a member's avatar in the current server");
-    public static Command MemberDisplayName = new Command("member displayname", "member <member> displayname [display name]", "Changes a member's display name");
-    public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
-    public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.");
-    public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
-    public static Command MemberRandom = new Command("random", "random", "Shows the info card of a randomly selected member in your system.");
-    public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
-    public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
-    public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
-    public static Command GroupList = new Command("group list", "group list", "Lists all groups in this system");
-    public static Command GroupMemberList = new Command("group members", "group <group> list", "Lists all members in a group");
-    public static Command GroupRename = new Command("group rename", "group <group> rename <new name>", "Renames a group");
-    public static Command GroupDisplayName = new Command("group displayname", "group <group> displayname [display name]", "Changes a group's display name");
-    public static Command GroupDesc = new Command("group description", "group <group> description [description]", "Changes a group's description");
-    public static Command GroupColor = new Command("group color", "group <group> color [color]", "Changes a group's color");
-    public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
-    public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
-    public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
-    public static Command GroupBannerImage = new Command("group banner", "group <group> banner [url]", "Set the group's banner image");
-    public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");
-    public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
-    public static Command GroupFrontPercent = new Command("group frontpercent", "group <group> frontpercent [timespan]", "Shows a group's front breakdown.");
-    public static Command GroupMemberRandom = new Command("group random", "group <group> random", "Shows the info card of a randomly selected member in a group.");
-    public static Command GroupRandom = new Command("random", "random group", "Shows the info card of a randomly selected group in your system.");
-    public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
-    public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
-    public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");
-    public static Command SwitchEdit = new Command("switch edit", "switch edit <member> [member 2] [member 3...]", "Edits the members in the latest switch");
-    public static Command SwitchEditOut = new Command("switch edit out", "switch edit out", "Turns the latest switch into a switch-out");
-    public static Command SwitchDelete = new Command("switch delete", "switch delete", "Deletes the latest switch");
-    public static Command SwitchDeleteAll = new Command("switch delete", "switch delete all", "Deletes all logged switches");
-    public static Command Link = new Command("link", "link <account>", "Links your system to another account");
-    public static Command Unlink = new Command("unlink", "unlink [account]", "Unlinks your system from an account");
-    public static Command TokenGet = new Command("token", "token", "Gets your system's API token");
-    public static Command TokenRefresh = new Command("token refresh", "token refresh", "Resets your system's API token");
-    public static Command Import = new Command("import", "import [fileurl]", "Imports system information from a data file");
-    public static Command Export = new Command("export", "export", "Exports system information to a data file");
-    public static Command Help = new Command("help", "help", "Shows help information about PluralKit");
-    public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
-    public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
-    public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
-    public static Command ProxyCheck = new Command("debug proxy", "debug proxy [link|reply]", "Checks why your message has not been proxied");
-    public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
-    public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
-    public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
-    public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
-    public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
-    public static Command BlacklistShow = new Command("blacklist show", "blacklist show", "Displays the current proxy blacklist");
-    public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
-    public static Command BlacklistRemove = new Command("blacklist remove", "blacklist remove all|<channel> [channel 2] [channel 3...]", "Removes certain channels from the proxy blacklist");
-    public static Command Invite = new Command("invite", "invite", "Gets a link to invite PluralKit to other servers");
-    public static Command PermCheck = new Command("permcheck", "permcheck <guild>", "Checks whether a server's permission setup is correct");
-    public static Command Admin = new Command("admin", "admin", "Super secret admin commands (sshhhh)");
-
-    public static Command[] SystemCommands =
-    {
-        SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor,
-        SystemDelete, SystemTimezone, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent,
-        SystemPrivacy, SystemProxy
-    };
-
-    public static Command[] MemberCommands =
-    {
-        MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-        MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberGroups, MemberGroupAdd,
-        MemberGroupRemove, MemberDelete, MemberAvatar, MemberServerAvatar, MemberBannerImage, MemberPrivacy,
-        MemberRandom
-    };
-
-    public static Command[] GroupCommands =
-    {
-        GroupInfo, GroupList, GroupNew, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc, GroupIcon,
-        GroupBannerImage, GroupColor, GroupPrivacy, GroupDelete
-    };
-
-    public static Command[] GroupCommandsTargeted =
-    {
-        GroupInfo, GroupAdd, GroupRemove, GroupMemberList, GroupRename, GroupDesc, GroupIcon, GroupPrivacy,
-        GroupDelete, GroupMemberRandom, GroupFrontPercent
-    };
-
-    public static Command[] SwitchCommands =
-    {
-        Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll
-    };
-
-    public static Command[] AutoproxyCommands = { AutoproxySet, AutoproxyTimeout, AutoproxyAccount };
-
-    public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable };
-
-    public static Command[] BlacklistCommands = { BlacklistAdd, BlacklistRemove, BlacklistShow };
-
     public Task ExecuteCommand(Context ctx)
     {
         if (ctx.Match("system", "s"))
@@ -411,13 +282,13 @@ public class CommandTree
             await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("group", "groups"))
             if (ctx.Match("add", "a"))
-                await ctx.Execute<MemberGroup>(MemberGroupAdd,
-                    m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Add));
+                await ctx.Execute<GroupMember>(MemberGroupAdd,
+                    m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
             else if (ctx.Match("remove", "rem"))
-                await ctx.Execute<MemberGroup>(MemberGroupRemove,
-                    m => m.AddRemove(ctx, target, Groups.AddRemoveOperation.Remove));
+                await ctx.Execute<GroupMember>(MemberGroupRemove,
+                    m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
             else
-                await ctx.Execute<MemberGroup>(MemberGroups, m => m.List(ctx, target));
+                await ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, target));
         else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
                      "guildavatar", "guildpic", "guildicon", "sicon"))
             await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
@@ -465,13 +336,13 @@ public class CommandTree
             else if (ctx.Match("description", "info", "bio", "text", "desc"))
                 await ctx.Execute<Groups>(GroupDesc, g => g.GroupDescription(ctx, target));
             else if (ctx.Match("add", "a"))
-                await ctx.Execute<Groups>(GroupAdd,
+                await ctx.Execute<GroupMember>(GroupAdd,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Add));
             else if (ctx.Match("remove", "rem", "r"))
-                await ctx.Execute<Groups>(GroupRemove,
+                await ctx.Execute<GroupMember>(GroupRemove,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
             else if (ctx.Match("members", "list", "ms", "l"))
-                await ctx.Execute<Groups>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
+                await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
             else if (ctx.Match("random"))
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
             else if (ctx.Match("privacy"))

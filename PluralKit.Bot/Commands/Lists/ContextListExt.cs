@@ -87,12 +87,12 @@ public static class ContextListExt
         return p;
     }
 
-    public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx, IDatabase db,
+    public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
                                 SystemId system, string embedTitle, string color, MemberListOptions opts)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
-        var members = (await db.Execute(conn => conn.QueryMemberList(system, opts.ToQueryOptions())))
+        var members = (await ctx.Database.Execute(conn => conn.QueryMemberList(system, opts.ToQueryOptions())))
             .SortByMemberListOptions(opts, lookupCtx)
             .ToList();
 
