@@ -14,12 +14,10 @@ namespace PluralKit.Bot;
 public class SystemEdit
 {
     private readonly HttpClient _client;
-    private readonly IDatabase _db;
     private readonly ModelRepository _repo;
 
-    public SystemEdit(IDatabase db, ModelRepository repo, HttpClient client)
+    public SystemEdit(ModelRepository repo, HttpClient client)
     {
-        _db = db;
         _repo = repo;
         _client = client;
     }

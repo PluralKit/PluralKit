@@ -13,12 +13,10 @@ namespace PluralKit.Bot;
 public class MemberEdit
 {
     private readonly HttpClient _client;
-    private readonly IDatabase _db;
     private readonly ModelRepository _repo;
 
-    public MemberEdit(IDatabase db, ModelRepository repo, HttpClient client)
+    public MemberEdit(ModelRepository repo, HttpClient client)
     {
-        _db = db;
         _repo = repo;
         _client = client;
     }

@@ -104,6 +104,7 @@ public partial class BulkImporter
 
         if (isNewMember)
         {
+            patch.MessageCount = member.Value<int>("message_count");
             var newMember = await _repo.CreateMember(_system.Id, patch.Name.Value, _conn);
             memberId = newMember.Id;
         }

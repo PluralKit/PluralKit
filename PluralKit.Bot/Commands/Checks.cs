@@ -13,7 +13,6 @@ namespace PluralKit.Bot;
 
 public class Checks
 {
-    private readonly Bot _bot;
     private readonly BotConfig _botConfig;
     private readonly IDiscordCache _cache;
     private readonly IDatabase _db;
@@ -29,11 +28,10 @@ public class Checks
         PermissionSet.ManageWebhooks
     };
 
-    public Checks(DiscordApiClient rest, Bot bot, IDiscordCache cache, IDatabase db, ModelRepository repo,
+    public Checks(DiscordApiClient rest, IDiscordCache cache, IDatabase db, ModelRepository repo,
                   BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher)
     {
         _rest = rest;
-        _bot = bot;
         _cache = cache;
         _db = db;
         _repo = repo;

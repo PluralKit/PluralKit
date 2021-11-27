@@ -4,14 +4,12 @@ namespace PluralKit.Bot;
 
 public class System
 {
-    private readonly IDatabase _db;
     private readonly EmbedService _embeds;
     private readonly ModelRepository _repo;
 
-    public System(EmbedService embeds, IDatabase db, ModelRepository repo)
+    public System(EmbedService embeds, ModelRepository repo)
     {
         _embeds = embeds;
-        _db = db;
         _repo = repo;
     }
 

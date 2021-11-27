@@ -471,67 +471,6 @@ public class Groups
         await ctx.Reply(embed: await _embeds.CreateGroupEmbed(ctx, system, target));
     }
 
-    // todo: move this to MemberGroup.cs
-    public async Task AddRemoveMembers(Context ctx, PKGroup target, AddRemoveOperation op)
-    {
-        ctx.CheckOwnGroup(target);
-
-        var members = (await ctx.ParseMemberList(ctx.System.Id))
-            .Select(m => m.Id)
-            .Distinct()
-            .ToList();
-
-        var existingMembersInGroup = (await _db.Execute(conn => conn.QueryMemberList(target.System,
-                new DatabaseViewsExt.MemberListQueryOptions { GroupFilter = target.Id })))
-            .Select(m => m.Id.Value)
-            .Distinct()
-            .ToHashSet();
-
-        List<MemberId> toAction;
-
-        if (op == AddRemoveOperation.Add)
-        {
-            toAction = members
-                .Where(m => !existingMembersInGroup.Contains(m.Value))
-                .ToList();
-            await _repo.AddMembersToGroup(target.Id, toAction);
-        }
-        else if (op == AddRemoveOperation.Remove)
-        {
-            toAction = members
-                .Where(m => existingMembersInGroup.Contains(m.Value))
-                .ToList();
-            await _repo.RemoveMembersFromGroup(target.Id, toAction);
-        }
-        else
-        {
-            return; // otherwise toAction "may be undefined"
-        }
-
-        await ctx.Reply(GroupMemberUtils.GenerateResponse(op, members.Count, 1, toAction.Count,
-            members.Count - toAction.Count));
-    }
-
-    public async Task ListGroupMembers(Context ctx, PKGroup target)
-    {
-        var targetSystem = await GetGroupSystem(ctx, target);
-        ctx.CheckSystemPrivacy(targetSystem, target.ListPrivacy);
-
-        var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target.System));
-        opts.GroupFilter = target.Id;
-
-        var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");
-        if (targetSystem.Name != null)
-            title.Append($"{targetSystem.Name} (`{targetSystem.Hid}`)");
-        else
-            title.Append($"`{targetSystem.Hid}`");
-        if (opts.Search != null)
-            title.Append($" matching **{opts.Search}**");
-
-        await ctx.RenderMemberList(ctx.LookupContextFor(target.System), _db, target.System, title.ToString(),
-            target.Color, opts);
-    }
-
     public async Task GroupPrivacy(Context ctx, PKGroup target, PrivacyLevel? newValueFromCommand)
     {
         ctx.CheckSystem().CheckOwnGroup(target);

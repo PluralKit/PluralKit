@@ -6,13 +6,6 @@ namespace PluralKit.Bot;
 
 public class SystemList
 {
-    private readonly IDatabase _db;
-
-    public SystemList(IDatabase db)
-    {
-        _db = db;
-    }
-
     public async Task MemberList(Context ctx, PKSystem target)
     {
         if (target == null) throw Errors.NoSystemError;
@@ -21,7 +14,6 @@ public class SystemList
         var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target));
         await ctx.RenderMemberList(
             ctx.LookupContextFor(target),
-            _db,
             target.Id,
             GetEmbedTitle(target, opts),
             target.Color,

@@ -7,13 +7,11 @@ namespace PluralKit.Bot;
 public class Admin
 {
     private readonly BotConfig _botConfig;
-    private readonly IDatabase _db;
     private readonly ModelRepository _repo;
 
-    public Admin(BotConfig botConfig, IDatabase db, ModelRepository repo)
+    public Admin(BotConfig botConfig, ModelRepository repo)
     {
         _botConfig = botConfig;
-        _db = db;
         _repo = repo;
     }
 

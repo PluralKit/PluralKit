@@ -71,7 +71,7 @@ public class ProxyService
             throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
 
         // Permission check after proxy match so we don't get spammed when not actually proxying
-        if (!await CheckBotPermissionsOrError(botPermissions, rootChannel.Id))
+        if (!CheckBotPermissionsOrError(botPermissions, rootChannel.Id))
             return false;
 
         // this method throws, so no need to wrap it in an if statement
@@ -345,7 +345,7 @@ public class ProxyService
         catch (UnauthorizedException) { }
     }
 
-    private async Task<bool> CheckBotPermissionsOrError(PermissionSet permissions, ulong responseChannel)
+    private bool CheckBotPermissionsOrError(PermissionSet permissions, ulong responseChannel)
     {
         // If we can't send messages at all, just bail immediately.
         // 2020-04-22: Manage Messages does *not* override a lack of Send Messages.
@@ -353,25 +353,12 @@ public class ProxyService
             return false;
 
         if (!permissions.HasFlag(PermissionSet.ManageWebhooks))
-        {
-            // todo: PKError-ify these
-            await _rest.CreateMessage(responseChannel, new MessageRequest
-            {
-                Content = $"{Emojis.Error} PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages."
-                         + " Please contact a server administrator to remedy this."
-            });
-            return false;
-        }
+            throw new PKError("PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages."
+                            + " Please contact a server administrator to remedy this.");
 
         if (!permissions.HasFlag(PermissionSet.ManageMessages))
-        {
-            await _rest.CreateMessage(responseChannel, new MessageRequest
-            {
-                Content = $"{Emojis.Error} PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the original trigger message."
-                         + " Please contact a server administrator to remedy this."
-            });
-            return false;
-        }
+            throw new PKError("PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the original trigger message."
+                            + " Please contact a server administrator to remedy this.");
 
         return true;
     }

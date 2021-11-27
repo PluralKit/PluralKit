@@ -95,8 +95,7 @@ public class SwitchControllerV2: PKControllerBase
         {
             var member = await ResolveMember(memberRef);
             if (member == null)
-                // todo: which member
-                throw Errors.MemberNotFound;
+                throw Errors.MemberNotFoundWithRef(memberRef);
             if (member.System != system.Id)
                 throw Errors.NotOwnMemberErrorWithRef(memberRef);
             members.Add(member);
@@ -214,8 +213,7 @@ public class SwitchControllerV2: PKControllerBase
 
             var member = await ResolveMember(memberRef);
             if (member == null)
-                // todo: which member
-                throw Errors.MemberNotFound;
+                throw Errors.MemberNotFoundWithRef(memberRef);
             if (member.System != system.Id)
                 throw Errors.NotOwnMemberErrorWithRef(memberRef);
 

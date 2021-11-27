@@ -11,20 +11,15 @@ namespace PluralKit.Bot;
 
 public class ServerConfig
 {
-    private readonly Bot _bot;
     private readonly IDiscordCache _cache;
     private readonly LoggerCleanService _cleanService;
-    private readonly IDatabase _db;
     private readonly ModelRepository _repo;
 
-    public ServerConfig(LoggerCleanService cleanService, IDatabase db, ModelRepository repo, IDiscordCache cache,
-                        Bot bot)
+    public ServerConfig(LoggerCleanService cleanService, ModelRepository repo, IDiscordCache cache)
     {
         _cleanService = cleanService;
-        _db = db;
         _repo = repo;
         _cache = cache;
-        _bot = bot;
     }
 
     public async Task SetLogChannel(Context ctx)

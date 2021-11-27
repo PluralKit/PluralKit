@@ -68,19 +68,17 @@ public class LoggerCleanService
         .Where(b => b.WebhookName != null)
         .ToDictionary(b => b.WebhookName);
 
-    private readonly Bot _bot; // todo: get rid of this nasty
     private readonly IDiscordCache _cache;
     private readonly DiscordApiClient _client;
 
     private readonly IDatabase _db;
     private readonly ILogger _logger;
 
-    public LoggerCleanService(IDatabase db, DiscordApiClient client, IDiscordCache cache, Bot bot, ILogger logger)
+    public LoggerCleanService(IDatabase db, DiscordApiClient client, IDiscordCache cache, ILogger logger)
     {
         _db = db;
         _client = client;
         _cache = cache;
-        _bot = bot;
         _logger = logger.ForContext<LoggerCleanService>();
     }
 

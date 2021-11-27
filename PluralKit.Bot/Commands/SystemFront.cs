@@ -35,10 +35,6 @@ public class SystemFront
         if (system == null) throw Errors.NoSystemError;
         ctx.CheckSystemPrivacy(system, system.FrontHistoryPrivacy);
 
-        // Gotta be careful here: if we dispose of the connection while the IAE is alive, boom 
-        // todo: this comment was here, but we're not getting a connection here anymore
-        // hopefully nothing breaks?
-
         var totalSwitches = await _repo.GetSwitchCount(system.Id);
         if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
 

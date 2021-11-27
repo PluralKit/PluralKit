@@ -122,11 +122,7 @@ public class Init
         var builder = new ContainerBuilder();
         builder.RegisterInstance(config);
         builder.RegisterModule(new ConfigModule<BotConfig>("Bot"));
-        builder.RegisterModule(new LoggingModule("bot", cfg =>
-        {
-            // TODO: do we need this?
-            // cfg.Destructure.With<EventDestructuring>();
-        }));
+        builder.RegisterModule(new LoggingModule("bot"));
         builder.RegisterModule(new MetricsModule());
         builder.RegisterModule<DataStoreModule>();
         builder.RegisterModule<BotModule>();

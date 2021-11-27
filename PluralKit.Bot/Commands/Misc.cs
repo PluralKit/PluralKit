@@ -17,37 +17,22 @@ namespace PluralKit.Bot;
 
 public class Misc
 {
-    private readonly Bot _bot;
     private readonly BotConfig _botConfig;
     private readonly IDiscordCache _cache;
-    private readonly Cluster _cluster;
     private readonly CpuStatService _cpu;
-    private readonly IDatabase _db;
-    private readonly EmbedService _embeds;
-    private readonly ProxyMatcher _matcher;
     private readonly IMetrics _metrics;
-    private readonly ProxyService _proxy;
     private readonly ModelRepository _repo;
-    private readonly DiscordApiClient _rest;
     private readonly ShardInfoService _shards;
 
     public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ShardInfoService shards,
-                EmbedService embeds, ModelRepository repo, IDatabase db, IDiscordCache cache,
-                DiscordApiClient rest, Bot bot, Cluster cluster, ProxyService proxy, ProxyMatcher matcher)
+                                                            ModelRepository repo, IDiscordCache cache)
     {
         _botConfig = botConfig;
         _metrics = metrics;
         _cpu = cpu;
         _shards = shards;
-        _embeds = embeds;
         _repo = repo;
-        _db = db;
         _cache = cache;
-        _rest = rest;
-        _bot = bot;
-        _cluster = cluster;
-        _proxy = proxy;
-        _matcher = matcher;
     }
 
     public async Task Invite(Context ctx)

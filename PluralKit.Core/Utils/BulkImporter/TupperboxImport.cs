@@ -47,6 +47,20 @@ public partial class BulkImporter
         var multipleTags = false;
 
         var name = tupper.Value<string>("name");
+
+        var isNewMember = false;
+        if (!_existingMemberNames.TryGetValue(name, out var memberId))
+        {
+            var newMember = await _repo.CreateMember(_system.Id, name, _conn);
+            memberId = newMember.Id;
+            isNewMember = true;
+            _result.Added++;
+        }
+        else
+        {
+            _result.Modified++;
+        }
+
         var patch = new MemberPatch();
 
         patch.Name = name;
@@ -63,8 +77,7 @@ public partial class BulkImporter
             patch.ProxyTags = tags.ToArray();
         }
 
-        // todo: && if is new member
-        if (tupper.ContainsKey("posts")) patch.MessageCount = tupper.Value<int>("posts");
+        if (tupper.ContainsKey("posts") && isNewMember) patch.MessageCount = tupper.Value<int>("posts");
         if (tupper.ContainsKey("show_brackets")) patch.KeepProxy = tupper.Value<bool>("show_brackets");
         if (tupper.ContainsKey("birthday") && tupper["birthday"].Type != JTokenType.Null)
         {
@@ -98,19 +111,6 @@ public partial class BulkImporter
             if (err.Text != null)
                 throw new ImportException($"tupper {name}: {err.Text}");
             throw new ImportException($"Field {err.Key} in tupper {name} is invalid.");
-        }
-
-        var isNewMember = false;
-        if (!_existingMemberNames.TryGetValue(name, out var memberId))
-        {
-            var newMember = await _repo.CreateMember(_system.Id, name, _conn);
-            memberId = newMember.Id;
-            isNewMember = true;
-            _result.Added++;
-        }
-        else
-        {
-            _result.Modified++;
         }
 
         _logger.Debug(

@@ -6,12 +6,10 @@ namespace PluralKit.Bot;
 
 public class SystemLink
 {
-    private readonly IDatabase _db;
     private readonly ModelRepository _repo;
 
-    public SystemLink(IDatabase db, ModelRepository repo)
+    public SystemLink(ModelRepository repo)
     {
-        _db = db;
         _repo = repo;
     }
 
