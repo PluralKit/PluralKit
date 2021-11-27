@@ -1,41 +1,30 @@
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-
 using Serilog;
 
-namespace Myriad.Gateway.Limit
+namespace Myriad.Gateway.Limit;
+
+public class TwilightGatewayRatelimiter: IGatewayRatelimiter
 {
-    public class TwilightGatewayRatelimiter: IGatewayRatelimiter
+    private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(60) };
+
+    private readonly ILogger _logger;
+    private readonly string _url;
+
+    public TwilightGatewayRatelimiter(ILogger logger, string url)
     {
-        private readonly string _url;
-        private readonly ILogger _logger;
-        private readonly HttpClient _httpClient = new()
-        {
-            Timeout = TimeSpan.FromSeconds(60)
-        };
+        _url = url;
+        _logger = logger.ForContext<TwilightGatewayRatelimiter>();
+    }
 
-        public TwilightGatewayRatelimiter(ILogger logger, string url)
-        {
-            _url = url;
-            _logger = logger.ForContext<TwilightGatewayRatelimiter>();
-        }
-
-        public async Task Identify(int shard)
-        {
-            while (true)
+    public async Task Identify(int shard)
+    {
+        while (true)
+            try
             {
-                try
-                {
-                    _logger.Information("Shard {ShardId}: Requesting identify at gateway queue {GatewayQueueUrl}",
-                        shard, _url);
-                    await _httpClient.GetAsync(_url);
-                    return;
-                }
-                catch (TimeoutException)
-                {
-                }
+                _logger.Information("Shard {ShardId}: Requesting identify at gateway queue {GatewayQueueUrl}",
+                    shard, _url);
+                await _httpClient.GetAsync(_url);
+                return;
             }
-        }
+            catch (TimeoutException) { }
     }
 }

@@ -2,18 +2,19 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <Nullable>annotations</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DebugSymbols>true</DebugSymbols>
-      <DebugType>full</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Myriad\Myriad.csproj" />
-      <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
+        <ProjectReference Include="..\Myriad\Myriad.csproj"/>
+        <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj"/>
     </ItemGroup>
 
     <PropertyGroup>
@@ -21,8 +22,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Humanizer.Core" Version="2.8.26" />
-      <PackageReference Include="Sentry" Version="3.11.1" />
-      <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2" />
+        <PackageReference Include="Humanizer.Core" Version="2.8.26"/>
+        <PackageReference Include="Sentry" Version="3.11.1"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2"/>
     </ItemGroup>
 </Project>

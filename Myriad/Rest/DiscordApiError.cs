@@ -1,9 +1,8 @@
 using System.Text.Json;
 
-namespace Myriad.Rest
+namespace Myriad.Rest;
+
+public record DiscordApiError(string Message, int Code)
 {
-    public record DiscordApiError(string Message, int Code)
-    {
-        public JsonElement? Errors { get; init; }
-    }
+    public JsonElement? Errors { get; init; }
 }

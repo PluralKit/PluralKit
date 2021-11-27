@@ -1,11 +1,10 @@
-namespace Myriad.Gateway.State
+namespace Myriad.Gateway.State;
+
+public enum ShardState
 {
-    public enum ShardState
-    {
-        Disconnected,
-        Handshaking,
-        Identifying,
-        Connected,
-        Reconnecting
-    }
+    Disconnected,
+    Handshaking,
+    Identifying,
+    Connected,
+    Reconnecting
 }

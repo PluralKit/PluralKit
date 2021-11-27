@@ -1,33 +1,30 @@
-using System.Threading.Tasks;
-
 using Autofac;
 
 using Myriad.Gateway;
 using Myriad.Types;
 
-namespace PluralKit.Bot
+namespace PluralKit.Bot;
+
+public class InteractionCreated: IEventHandler<InteractionCreateEvent>
 {
-    public class InteractionCreated: IEventHandler<InteractionCreateEvent>
+    private readonly InteractionDispatchService _interactionDispatch;
+    private readonly ILifetimeScope _services;
+
+    public InteractionCreated(InteractionDispatchService interactionDispatch, ILifetimeScope services)
     {
-        private readonly InteractionDispatchService _interactionDispatch;
-        private readonly ILifetimeScope _services;
+        _interactionDispatch = interactionDispatch;
+        _services = services;
+    }
 
-        public InteractionCreated(InteractionDispatchService interactionDispatch, ILifetimeScope services)
+    public async Task Handle(Shard shard, InteractionCreateEvent evt)
+    {
+        if (evt.Type == Interaction.InteractionType.MessageComponent)
         {
-            _interactionDispatch = interactionDispatch;
-            _services = services;
-        }
-
-        public async Task Handle(Shard shard, InteractionCreateEvent evt)
-        {
-            if (evt.Type == Interaction.InteractionType.MessageComponent)
+            var customId = evt.Data?.CustomId;
+            if (customId != null)
             {
-                var customId = evt.Data?.CustomId;
-                if (customId != null)
-                {
-                    var ctx = new InteractionContext(evt, _services);
-                    await _interactionDispatch.Dispatch(customId, ctx);
-                }
+                var ctx = new InteractionContext(evt, _services);
+                await _interactionDispatch.Dispatch(customId, ctx);
             }
         }
     }

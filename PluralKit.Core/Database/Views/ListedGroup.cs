@@ -1,7 +1,6 @@
-namespace PluralKit.Core
+namespace PluralKit.Core;
+
+public class ListedGroup: PKGroup
 {
-    public class ListedGroup: PKGroup
-    {
-        public int MemberCount { get; }
-    }
+    public int MemberCount { get; }
 }

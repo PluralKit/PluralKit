@@ -1,20 +1,17 @@
-using System.Threading;
+namespace PluralKit.Core;
 
-namespace PluralKit.Core
+public class DbConnectionCountHolder
 {
-    public class DbConnectionCountHolder
+    private int _connectionCount;
+    public int ConnectionCount => _connectionCount;
+
+    public void Increment()
     {
-        private int _connectionCount;
-        public int ConnectionCount => _connectionCount;
+        Interlocked.Increment(ref _connectionCount);
+    }
 
-        public void Increment()
-        {
-            Interlocked.Increment(ref _connectionCount);
-        }
-
-        public void Decrement()
-        {
-            Interlocked.Decrement(ref _connectionCount);
-        }
+    public void Decrement()
+    {
+        Interlocked.Decrement(ref _connectionCount);
     }
 }

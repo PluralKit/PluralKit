@@ -1,9 +1,8 @@
-namespace PluralKit.Core
+namespace PluralKit.Core;
+
+public enum LookupContext
 {
-    public enum LookupContext
-    {
-        ByOwner,
-        ByNonOwner,
-        API
-    }
+    ByOwner,
+    ByNonOwner,
+    API
 }

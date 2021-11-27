@@ -1,7 +1,6 @@
-namespace PluralKit.API
+namespace PluralKit.API;
+
+public class PKClaims
 {
-    public class PKClaims
-    {
-        public const string SystemId = "PluralKit:SystemId";
-    }
+    public const string SystemId = "PluralKit:SystemId";
 }

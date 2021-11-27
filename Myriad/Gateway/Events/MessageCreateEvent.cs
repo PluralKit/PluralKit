@@ -1,9 +1,8 @@
 using Myriad.Types;
 
-namespace Myriad.Gateway
+namespace Myriad.Gateway;
+
+public record MessageCreateEvent: Message, IGatewayEvent
 {
-    public record MessageCreateEvent: Message, IGatewayEvent
-    {
-        public GuildMemberPartial? Member { get; init; }
-    }
+    public GuildMemberPartial? Member { get; init; }
 }

@@ -1,4 +1,3 @@
-namespace Myriad.Gateway
-{
-    public record ShardInfo(int ShardId, int NumShards);
-}
+namespace Myriad.Gateway;
+
+public record ShardInfo(int ShardId, int NumShards);

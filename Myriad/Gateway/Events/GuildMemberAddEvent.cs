@@ -1,9 +1,8 @@
 using Myriad.Types;
 
-namespace Myriad.Gateway
+namespace Myriad.Gateway;
+
+public record GuildMemberAddEvent: GuildMember, IGatewayEvent
 {
-    public record GuildMemberAddEvent: GuildMember, IGatewayEvent
-    {
-        public ulong GuildId { get; init; }
-    }
+    public ulong GuildId { get; init; }
 }

@@ -1,24 +1,22 @@
-using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Myriad.Types;
 
-namespace Myriad.Serialization
+namespace Myriad.Serialization;
+
+public class PermissionSetJsonConverter: JsonConverter<PermissionSet>
 {
-    public class PermissionSetJsonConverter: JsonConverter<PermissionSet>
+    public override PermissionSet Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        public override PermissionSet Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            var str = reader.GetString();
-            if (str == null) return default;
+        var str = reader.GetString();
+        if (str == null) return default;
 
-            return (PermissionSet)ulong.Parse(str);
-        }
+        return (PermissionSet)ulong.Parse(str);
+    }
 
-        public override void Write(Utf8JsonWriter writer, PermissionSet value, JsonSerializerOptions options)
-        {
-            writer.WriteStringValue(((ulong)value).ToString());
-        }
+    public override void Write(Utf8JsonWriter writer, PermissionSet value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(((ulong)value).ToString());
     }
 }

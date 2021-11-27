@@ -1,281 +1,272 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Dapper;
-
 using Microsoft.AspNetCore.Mvc;
 
 using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
 
-namespace PluralKit.API
+namespace PluralKit.API;
+
+[ApiController]
+[ApiVersion("2.0")]
+[Route("v{version:apiVersion}")]
+public class GroupMemberControllerV2: PKControllerBase
 {
-    [ApiController]
-    [ApiVersion("2.0")]
-    [Route("v{version:apiVersion}")]
-    public class GroupMemberControllerV2: PKControllerBase
+    public GroupMemberControllerV2(IServiceProvider svc) : base(svc) { }
+
+    [HttpGet("groups/{groupRef}/members")]
+    public async Task<IActionResult> GetGroupMembers(string groupRef)
     {
-        public GroupMemberControllerV2(IServiceProvider svc) : base(svc) { }
+        var group = await ResolveGroup(groupRef);
+        if (group == null)
+            throw Errors.GroupNotFound;
 
-        [HttpGet("groups/{groupRef}/members")]
-        public async Task<IActionResult> GetGroupMembers(string groupRef)
+        var ctx = ContextFor(group);
+
+        if (!group.ListPrivacy.CanAccess(ctx))
+            throw Errors.UnauthorizedGroupMemberList;
+
+        var members = _repo.GetGroupMembers(group.Id).Where(m => m.MemberVisibility.CanAccess(ctx));
+
+        var o = new JArray();
+
+        await foreach (var member in members)
+            o.Add(member.ToJson(ctx, v: APIVersion.V2));
+
+        return Ok(o);
+    }
+
+    [HttpPost("groups/{groupRef}/members/add")]
+    public async Task<IActionResult> AddGroupMembers(string groupRef, [FromBody] JArray memberRefs)
+    {
+        if (memberRefs.Count == 0)
+            throw Errors.GenericBadRequest;
+
+        var system = await ResolveSystem("@me");
+
+        var group = await ResolveGroup(groupRef);
+        if (group == null)
+            throw Errors.GroupNotFound;
+        if (group.System != system.Id)
+            throw Errors.NotOwnGroupError;
+
+        var members = new List<MemberId>();
+
+        foreach (var JmemberRef in memberRefs)
         {
-            var group = await ResolveGroup(groupRef);
-            if (group == null)
-                throw Errors.GroupNotFound;
+            var memberRef = JmemberRef.Value<string>();
+            var member = await ResolveMember(memberRef);
 
-            var ctx = this.ContextFor(group);
+            // todo: have a list of these errors instead of immediately throwing
 
-            if (!group.ListPrivacy.CanAccess(ctx))
-                throw Errors.UnauthorizedGroupMemberList;
+            if (member == null)
+                throw Errors.MemberNotFoundWithRef(memberRef);
+            if (member.System != system.Id)
+                throw Errors.NotOwnMemberErrorWithRef(memberRef);
 
-            var members = _repo.GetGroupMembers(group.Id).Where(m => m.MemberVisibility.CanAccess(ctx));
-
-            var o = new JArray();
-
-            await foreach (var member in members)
-                o.Add(member.ToJson(ctx, v: APIVersion.V2));
-
-            return Ok(o);
+            members.Add(member.Id);
         }
 
-        [HttpPost("groups/{groupRef}/members/add")]
-        public async Task<IActionResult> AddGroupMembers(string groupRef, [FromBody] JArray memberRefs)
+        var existingMembers = await _repo.GetGroupMembers(group.Id).Select(x => x.Id).ToListAsync();
+        members = members.Where(x => !existingMembers.Contains(x)).ToList();
+
+        if (members.Count > 0)
+            await _repo.AddMembersToGroup(group.Id, members);
+
+        return NoContent();
+    }
+
+    [HttpPost("groups/{groupRef}/members/remove")]
+    public async Task<IActionResult> RemoveGroupMembers(string groupRef, [FromBody] JArray memberRefs)
+    {
+        if (memberRefs.Count == 0)
+            throw Errors.GenericBadRequest;
+
+        var system = await ResolveSystem("@me");
+
+        var group = await ResolveGroup(groupRef);
+        if (group == null)
+            throw Errors.GroupNotFound;
+        if (group.System != system.Id)
+            throw Errors.NotOwnGroupError;
+
+        var members = new List<MemberId>();
+
+        foreach (var JmemberRef in memberRefs)
         {
-            if (memberRefs.Count == 0)
-                throw Errors.GenericBadRequest;
+            var memberRef = JmemberRef.Value<string>();
+            var member = await ResolveMember(memberRef);
 
-            var system = await ResolveSystem("@me");
+            if (member == null)
+                throw Errors.MemberNotFoundWithRef(memberRef);
+            if (member.System != system.Id)
+                throw Errors.NotOwnMemberErrorWithRef(memberRef);
 
+            members.Add(member.Id);
+        }
+
+        await _repo.RemoveMembersFromGroup(group.Id, members);
+
+        return NoContent();
+    }
+
+    [HttpPost("groups/{groupRef}/members/overwrite")]
+    public async Task<IActionResult> OverwriteGroupMembers(string groupRef, [FromBody] JArray memberRefs)
+    {
+        var system = await ResolveSystem("@me");
+
+        var group = await ResolveGroup(groupRef);
+        if (group == null)
+            throw Errors.GroupNotFound;
+        if (group.System != system.Id)
+            throw Errors.NotOwnGroupError;
+
+        var members = new List<MemberId>();
+
+        foreach (var JmemberRef in memberRefs)
+        {
+            var memberRef = JmemberRef.Value<string>();
+            var member = await ResolveMember(memberRef);
+
+            if (member == null)
+                throw Errors.MemberNotFoundWithRef(memberRef);
+            if (member.System != system.Id)
+                throw Errors.NotOwnMemberErrorWithRef(memberRef);
+
+            members.Add(member.Id);
+        }
+
+        await _repo.ClearGroupMembers(group.Id);
+
+        if (members.Count > 0)
+            await _repo.AddMembersToGroup(group.Id, members);
+
+        return NoContent();
+    }
+
+
+    [HttpGet("members/{memberRef}/groups")]
+    public async Task<IActionResult> GetMemberGroups(string memberRef)
+    {
+        var member = await ResolveMember(memberRef);
+        var ctx = ContextFor(member);
+
+        var system = await _repo.GetSystem(member.System);
+        if (!system.GroupListPrivacy.CanAccess(ctx))
+            throw Errors.UnauthorizedGroupList;
+
+        var groups = _repo.GetMemberGroups(member.Id).Where(g => g.Visibility.CanAccess(ctx));
+
+        var o = new JArray();
+
+        await foreach (var group in groups)
+            o.Add(group.ToJson(ctx));
+
+        return Ok(o);
+    }
+
+    [HttpPost("members/{memberRef}/groups/add")]
+    public async Task<IActionResult> AddMemberGroups(string memberRef, [FromBody] JArray groupRefs)
+    {
+        if (groupRefs.Count == 0)
+            throw Errors.GenericBadRequest;
+
+        var system = await ResolveSystem("@me");
+
+        var member = await ResolveMember(memberRef);
+        if (member == null)
+            throw Errors.MemberNotFound;
+        if (member.System != system.Id)
+            throw Errors.NotOwnMemberError;
+
+        var groups = new List<GroupId>();
+
+        foreach (var JgroupRef in groupRefs)
+        {
+            var groupRef = JgroupRef.Value<string>();
             var group = await ResolveGroup(groupRef);
+
             if (group == null)
                 throw Errors.GroupNotFound;
             if (group.System != system.Id)
-                throw Errors.NotOwnGroupError;
+                throw Errors.NotOwnGroupErrorWithRef(groupRef);
 
-            var members = new List<MemberId>();
-
-            foreach (var JmemberRef in memberRefs)
-            {
-                var memberRef = JmemberRef.Value<string>();
-                var member = await ResolveMember(memberRef);
-
-                // todo: have a list of these errors instead of immediately throwing
-
-                if (member == null)
-                    throw Errors.MemberNotFoundWithRef(memberRef);
-                if (member.System != system.Id)
-                    throw Errors.NotOwnMemberErrorWithRef(memberRef);
-
-                members.Add(member.Id);
-            }
-
-            var existingMembers = await _repo.GetGroupMembers(group.Id).Select(x => x.Id).ToListAsync();
-            members = members.Where(x => !existingMembers.Contains(x)).ToList();
-
-            if (members.Count > 0)
-                await _repo.AddMembersToGroup(group.Id, members);
-
-            return NoContent();
+            groups.Add(group.Id);
         }
 
-        [HttpPost("groups/{groupRef}/members/remove")]
-        public async Task<IActionResult> RemoveGroupMembers(string groupRef, [FromBody] JArray memberRefs)
+        var existingGroups = await _repo.GetMemberGroups(member.Id).Select(x => x.Id).ToListAsync();
+        groups = groups.Where(x => !existingGroups.Contains(x)).ToList();
+
+        if (groups.Count > 0)
+            await _repo.AddGroupsToMember(member.Id, groups);
+
+        return NoContent();
+    }
+
+    [HttpPost("members/{memberRef}/groups/remove")]
+    public async Task<IActionResult> RemoveMemberGroups(string memberRef, [FromBody] JArray groupRefs)
+    {
+        if (groupRefs.Count == 0)
+            throw Errors.GenericBadRequest;
+
+        var system = await ResolveSystem("@me");
+
+        var member = await ResolveMember(memberRef);
+        if (member == null)
+            throw Errors.MemberNotFound;
+        if (member.System != system.Id)
+            throw Errors.NotOwnMemberError;
+
+        var groups = new List<GroupId>();
+
+        foreach (var JgroupRef in groupRefs)
         {
-            if (memberRefs.Count == 0)
-                throw Errors.GenericBadRequest;
-
-            var system = await ResolveSystem("@me");
-
+            var groupRef = JgroupRef.Value<string>();
             var group = await ResolveGroup(groupRef);
+
             if (group == null)
-                throw Errors.GroupNotFound;
+                throw Errors.GroupNotFoundWithRef(groupRef);
             if (group.System != system.Id)
-                throw Errors.NotOwnGroupError;
+                throw Errors.NotOwnGroupErrorWithRef(groupRef);
 
-            var members = new List<MemberId>();
-
-            foreach (var JmemberRef in memberRefs)
-            {
-                var memberRef = JmemberRef.Value<string>();
-                var member = await ResolveMember(memberRef);
-
-                if (member == null)
-                    throw Errors.MemberNotFoundWithRef(memberRef);
-                if (member.System != system.Id)
-                    throw Errors.NotOwnMemberErrorWithRef(memberRef);
-
-                members.Add(member.Id);
-            }
-
-            await _repo.RemoveMembersFromGroup(group.Id, members);
-
-            return NoContent();
+            groups.Add(group.Id);
         }
 
-        [HttpPost("groups/{groupRef}/members/overwrite")]
-        public async Task<IActionResult> OverwriteGroupMembers(string groupRef, [FromBody] JArray memberRefs)
-        {
-            var system = await ResolveSystem("@me");
+        await _repo.RemoveGroupsFromMember(member.Id, groups);
 
+        return NoContent();
+    }
+
+    [HttpPost("members/{memberRef}/groups/overwrite")]
+    public async Task<IActionResult> OverwriteMemberGroups(string memberRef, [FromBody] JArray groupRefs)
+    {
+        var system = await ResolveSystem("@me");
+
+        var member = await ResolveMember(memberRef);
+        if (member == null)
+            throw Errors.MemberNotFound;
+        if (member.System != system.Id)
+            throw Errors.NotOwnMemberError;
+
+        var groups = new List<GroupId>();
+
+        foreach (var JgroupRef in groupRefs)
+        {
+            var groupRef = JgroupRef.Value<string>();
             var group = await ResolveGroup(groupRef);
+
             if (group == null)
-                throw Errors.GroupNotFound;
+                throw Errors.GroupNotFoundWithRef(groupRef);
             if (group.System != system.Id)
-                throw Errors.NotOwnGroupError;
+                throw Errors.NotOwnGroupErrorWithRef(groupRef);
 
-            var members = new List<MemberId>();
-
-            foreach (var JmemberRef in memberRefs)
-            {
-                var memberRef = JmemberRef.Value<string>();
-                var member = await ResolveMember(memberRef);
-
-                if (member == null)
-                    throw Errors.MemberNotFoundWithRef(memberRef);
-                if (member.System != system.Id)
-                    throw Errors.NotOwnMemberErrorWithRef(memberRef);
-
-                members.Add(member.Id);
-            }
-
-            await _repo.ClearGroupMembers(group.Id);
-
-            if (members.Count > 0)
-                await _repo.AddMembersToGroup(group.Id, members);
-
-            return NoContent();
+            groups.Add(group.Id);
         }
 
+        await _repo.ClearMemberGroups(member.Id);
 
-        [HttpGet("members/{memberRef}/groups")]
-        public async Task<IActionResult> GetMemberGroups(string memberRef)
-        {
-            var member = await ResolveMember(memberRef);
-            var ctx = this.ContextFor(member);
+        if (groups.Count > 0)
+            await _repo.AddGroupsToMember(member.Id, groups);
 
-            var system = await _repo.GetSystem(member.System);
-            if (!system.GroupListPrivacy.CanAccess(ctx))
-                throw Errors.UnauthorizedGroupList;
-
-            var groups = _repo.GetMemberGroups(member.Id).Where(g => g.Visibility.CanAccess(ctx));
-
-            var o = new JArray();
-
-            await foreach (var group in groups)
-                o.Add(group.ToJson(ctx));
-
-            return Ok(o);
-        }
-
-        [HttpPost("members/{memberRef}/groups/add")]
-        public async Task<IActionResult> AddMemberGroups(string memberRef, [FromBody] JArray groupRefs)
-        {
-            if (groupRefs.Count == 0)
-                throw Errors.GenericBadRequest;
-
-            var system = await ResolveSystem("@me");
-
-            var member = await ResolveMember(memberRef);
-            if (member == null)
-                throw Errors.MemberNotFound;
-            if (member.System != system.Id)
-                throw Errors.NotOwnMemberError;
-
-            var groups = new List<GroupId>();
-
-            foreach (var JgroupRef in groupRefs)
-            {
-                var groupRef = JgroupRef.Value<string>();
-                var group = await ResolveGroup(groupRef);
-
-                if (group == null)
-                    throw Errors.GroupNotFound;
-                if (group.System != system.Id)
-                    throw Errors.NotOwnGroupErrorWithRef(groupRef);
-
-                groups.Add(group.Id);
-            }
-
-            var existingGroups = await _repo.GetMemberGroups(member.Id).Select(x => x.Id).ToListAsync();
-            groups = groups.Where(x => !existingGroups.Contains(x)).ToList();
-
-            if (groups.Count > 0)
-                await _repo.AddGroupsToMember(member.Id, groups);
-
-            return NoContent();
-        }
-
-        [HttpPost("members/{memberRef}/groups/remove")]
-        public async Task<IActionResult> RemoveMemberGroups(string memberRef, [FromBody] JArray groupRefs)
-        {
-            if (groupRefs.Count == 0)
-                throw Errors.GenericBadRequest;
-
-            var system = await ResolveSystem("@me");
-
-            var member = await ResolveMember(memberRef);
-            if (member == null)
-                throw Errors.MemberNotFound;
-            if (member.System != system.Id)
-                throw Errors.NotOwnMemberError;
-
-            var groups = new List<GroupId>();
-
-            foreach (var JgroupRef in groupRefs)
-            {
-                var groupRef = JgroupRef.Value<string>();
-                var group = await ResolveGroup(groupRef);
-
-                if (group == null)
-                    throw Errors.GroupNotFoundWithRef(groupRef);
-                if (group.System != system.Id)
-                    throw Errors.NotOwnGroupErrorWithRef(groupRef);
-
-                groups.Add(group.Id);
-            }
-
-            await _repo.RemoveGroupsFromMember(member.Id, groups);
-
-            return NoContent();
-        }
-
-        [HttpPost("members/{memberRef}/groups/overwrite")]
-        public async Task<IActionResult> OverwriteMemberGroups(string memberRef, [FromBody] JArray groupRefs)
-        {
-            var system = await ResolveSystem("@me");
-
-            var member = await ResolveMember(memberRef);
-            if (member == null)
-                throw Errors.MemberNotFound;
-            if (member.System != system.Id)
-                throw Errors.NotOwnMemberError;
-
-            var groups = new List<GroupId>();
-
-            foreach (var JgroupRef in groupRefs)
-            {
-                var groupRef = JgroupRef.Value<string>();
-                var group = await ResolveGroup(groupRef);
-
-                if (group == null)
-                    throw Errors.GroupNotFoundWithRef(groupRef);
-                if (group.System != system.Id)
-                    throw Errors.NotOwnGroupErrorWithRef(groupRef);
-
-                groups.Add(group.Id);
-            }
-
-            await _repo.ClearMemberGroups(member.Id);
-
-            if (groups.Count > 0)
-                await _repo.AddGroupsToMember(member.Id, groups);
-
-            return NoContent();
-        }
-
+        return NoContent();
     }
 }

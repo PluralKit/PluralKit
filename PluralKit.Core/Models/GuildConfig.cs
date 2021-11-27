@@ -1,11 +1,10 @@
-namespace PluralKit.Core
+namespace PluralKit.Core;
+
+public class GuildConfig
 {
-    public class GuildConfig
-    {
-        public ulong Id { get; }
-        public ulong? LogChannel { get; }
-        public ulong[] LogBlacklist { get; }
-        public ulong[] Blacklist { get; }
-        public bool LogCleanupEnabled { get; }
-    }
+    public ulong Id { get; }
+    public ulong? LogChannel { get; }
+    public ulong[] LogBlacklist { get; }
+    public ulong[] Blacklist { get; }
+    public bool LogCleanupEnabled { get; }
 }

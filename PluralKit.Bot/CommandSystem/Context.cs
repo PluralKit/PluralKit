@@ -15,138 +15,126 @@ using Myriad.Types;
 
 using PluralKit.Core;
 
-namespace PluralKit.Bot
+namespace PluralKit.Bot;
+
+public class Context
 {
-    public class Context
+    private readonly ILifetimeScope _provider;
+
+    private readonly Parameters _parameters;
+
+    private readonly IMetrics _metrics;
+    private readonly CommandMessageService _commandMessageService;
+
+    private Command? _currentCommand;
+
+    public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
+                    PKSystem senderSystem, MessageContext messageContext)
     {
-        private readonly ILifetimeScope _provider;
-
-        private readonly DiscordApiClient _rest;
-        private readonly Cluster _cluster;
-        private readonly Shard _shard;
-        private readonly Guild? _guild;
-        private readonly Channel _channel;
-        private readonly MessageCreateEvent _message;
-        private readonly Parameters _parameters;
-        private readonly MessageContext _messageContext;
-
-        private readonly IDatabase _db;
-        private readonly ModelRepository _repo;
-        private readonly PKSystem _senderSystem;
-        private readonly IMetrics _metrics;
-        private readonly CommandMessageService _commandMessageService;
-        private readonly IDiscordCache _cache;
-
-        private Command? _currentCommand;
-
-        public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
-                       PKSystem senderSystem, MessageContext messageContext)
-        {
-            _message = message;
-            _shard = shard;
-            _guild = guild;
-            _channel = channel;
-            _senderSystem = senderSystem;
-            _messageContext = messageContext;
-            _cache = provider.Resolve<IDiscordCache>();
-            _db = provider.Resolve<IDatabase>();
-            _repo = provider.Resolve<ModelRepository>();
-            _metrics = provider.Resolve<IMetrics>();
-            _provider = provider;
-            _commandMessageService = provider.Resolve<CommandMessageService>();
-            _parameters = new Parameters(message.Content?.Substring(commandParseOffset));
-            _rest = provider.Resolve<DiscordApiClient>();
-            _cluster = provider.Resolve<Cluster>();
-        }
-
-        public IDiscordCache Cache => _cache;
-
-        public Channel Channel => _channel;
-        public User Author => _message.Author;
-        public GuildMemberPartial Member => _message.Member;
-
-        public Message Message => _message;
-        public Guild Guild => _guild;
-        public Shard Shard => _shard;
-        public Cluster Cluster => _cluster;
-        public MessageContext MessageContext => _messageContext;
-
-        public Task<PermissionSet> BotPermissions => _provider.Resolve<IDiscordCache>().PermissionsIn(_channel.Id);
-        public Task<PermissionSet> UserPermissions => _cache.PermissionsFor(_message);
-
-        public DiscordApiClient Rest => _rest;
-
-        public PKSystem System => _senderSystem;
-
-        public Parameters Parameters => _parameters;
-
-        internal IDatabase Database => _db;
-        internal ModelRepository Repository => _repo;
-
-        public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
-        {
-            var botPerms = await BotPermissions;
-
-            if (!botPerms.HasFlag(PermissionSet.SendMessages))
-                // Will be "swallowed" during the error handler anyway, this message is never shown.
-                throw new PKError("PluralKit does not have permission to send messages in this channel.");
-
-            if (embed != null && !botPerms.HasFlag(PermissionSet.EmbedLinks))
-                throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
-
-            var msg = await _rest.CreateMessage(_channel.Id, new MessageRequest
-            {
-                Content = text,
-                Embed = embed,
-                // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
-                AllowedMentions = mentions ?? new AllowedMentions()
-            });
-
-            if (embed != null)
-            {
-                // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
-                // This may need to be changed at some point but works well enough for now
-                await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
-            }
-
-            return msg;
-        }
-
-        public async Task Execute<T>(Command? commandDef, Func<T, Task> handler)
-        {
-            _currentCommand = commandDef;
-
-            try
-            {
-                using (_metrics.Measure.Timer.Time(BotMetrics.CommandTime, new MetricTags("Command", commandDef?.Key ?? "null")))
-                    await handler(_provider.Resolve<T>());
-
-                _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
-            }
-            catch (PKSyntaxError e)
-            {
-                await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef?.Usage}");
-            }
-            catch (PKError e)
-            {
-                await Reply($"{Emojis.Error} {e.Message}");
-            }
-            catch (TimeoutException)
-            {
-                // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
-                await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
-            }
-        }
-
-        public LookupContext LookupContextFor(PKSystem target) =>
-            System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-
-        public LookupContext LookupContextFor(SystemId systemId) =>
-            System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-
-        public LookupContext LookupContextFor(PKMember target) =>
-            System?.Id == target.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
-
-        public IComponentContext Services => _provider;
+        Message = (Message)message;
+        Shard = shard;
+        Guild = guild;
+        Channel = channel;
+        System = senderSystem;
+        MessageContext = messageContext;
+        Cache = provider.Resolve<IDiscordCache>();
+        Database = provider.Resolve<IDatabase>();
+        Repository = provider.Resolve<ModelRepository>();
+        _metrics = provider.Resolve<IMetrics>();
+        _provider = provider;
+        _commandMessageService = provider.Resolve<CommandMessageService>();
+        _parameters = new Parameters(message.Content?.Substring(commandParseOffset));
+        Rest = provider.Resolve<DiscordApiClient>();
+        Cluster = provider.Resolve<Cluster>();
     }
+
+    public readonly IDiscordCache Cache;
+    public readonly DiscordApiClient Rest;
+
+    public readonly Channel Channel;
+    public User Author => Message.Author;
+    public GuildMemberPartial Member => ((MessageCreateEvent)Message).Member;
+
+    public readonly Message Message;
+    public readonly Guild Guild;
+    public readonly Shard Shard;
+    public readonly Cluster Cluster;
+    public readonly MessageContext MessageContext;
+
+    public Task<PermissionSet> BotPermissions => Cache.PermissionsIn(Channel.Id);
+    public Task<PermissionSet> UserPermissions => Cache.PermissionsFor((MessageCreateEvent)Message);
+
+
+    public readonly PKSystem System;
+
+    public readonly Parameters Parameters;
+
+    internal readonly IDatabase Database;
+    internal readonly ModelRepository Repository;
+
+    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
+    {
+        var botPerms = await BotPermissions;
+
+        if (!botPerms.HasFlag(PermissionSet.SendMessages))
+            // Will be "swallowed" during the error handler anyway, this message is never shown.
+            throw new PKError("PluralKit does not have permission to send messages in this channel.");
+
+        if (embed != null && !botPerms.HasFlag(PermissionSet.EmbedLinks))
+            throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
+
+        var msg = await Rest.CreateMessage(Channel.Id, new MessageRequest
+        {
+            Content = text,
+            Embed = embed,
+            // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
+            AllowedMentions = mentions ?? new AllowedMentions()
+        });
+
+        if (embed != null)
+        {
+            // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
+            // This may need to be changed at some point but works well enough for now
+            await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
+        }
+
+        return msg;
+    }
+
+    public async Task Execute<T>(Command? commandDef, Func<T, Task> handler)
+    {
+        _currentCommand = commandDef;
+
+        try
+        {
+            using (_metrics.Measure.Timer.Time(BotMetrics.CommandTime, new MetricTags("Command", commandDef?.Key ?? "null")))
+                await handler(_provider.Resolve<T>());
+
+            _metrics.Measure.Meter.Mark(BotMetrics.CommandsRun);
+        }
+        catch (PKSyntaxError e)
+        {
+            await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef?.Usage}");
+        }
+        catch (PKError e)
+        {
+            await Reply($"{Emojis.Error} {e.Message}");
+        }
+        catch (TimeoutException)
+        {
+            // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
+            await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
+        }
+    }
+
+    public LookupContext LookupContextFor(PKSystem target) =>
+        System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+
+    public LookupContext LookupContextFor(SystemId systemId) =>
+        System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+
+    public LookupContext LookupContextFor(PKMember target) =>
+        System?.Id == target.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+
+    public IComponentContext Services => _provider;
 }

@@ -1,8 +1,7 @@
-namespace Myriad.Types
+namespace Myriad.Types;
+
+public enum ComponentType
 {
-    public enum ComponentType
-    {
-        ActionRow = 1,
-        Button = 2
-    }
+    ActionRow = 1,
+    Button = 2
 }

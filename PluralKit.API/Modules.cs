@@ -1,11 +1,8 @@
 using Autofac;
 
-namespace PluralKit.API
+namespace PluralKit.API;
+
+public class APIModule: Module
 {
-    public class APIModule: Module
-    {
-        protected override void Load(ContainerBuilder builder)
-        {
-        }
-    }
+    protected override void Load(ContainerBuilder builder) { }
 }

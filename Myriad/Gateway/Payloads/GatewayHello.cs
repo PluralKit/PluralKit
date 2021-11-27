@@ -1,4 +1,3 @@
-namespace Myriad.Gateway
-{
-    public record GatewayHello(int HeartbeatInterval);
-}
+namespace Myriad.Gateway;
+
+public record GatewayHello(int HeartbeatInterval);

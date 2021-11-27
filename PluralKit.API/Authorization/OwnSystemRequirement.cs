@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace PluralKit.API
-{
-    public class OwnSystemRequirement: IAuthorizationRequirement { }
-}
+namespace PluralKit.API;
+
+public class OwnSystemRequirement: IAuthorizationRequirement { }

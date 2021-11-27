@@ -1,8 +1,3 @@
-namespace PluralKit.Core
-{
-    public enum APIVersion
-    {
-        V1,
-        V2,
-    }
-}
+namespace PluralKit.Core;
+
+public enum APIVersion { V1, V2 }
