@@ -18,7 +18,7 @@ public record GatewayStatusUpdate
     }
 
     public ulong? Since { get; init; }
-    public ActivityPartial[]? Activities { get; init; }
+    public Activity[]? Activities { get; init; }
     public UserStatus Status { get; init; }
     public bool Afk { get; init; }
 }

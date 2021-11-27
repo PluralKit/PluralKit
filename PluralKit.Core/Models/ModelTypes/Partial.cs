@@ -75,12 +75,4 @@ public static class PartialExt
 
     public static Partial<TOut> Map<TIn, TOut>(this Partial<TIn> pt, Func<TIn, TOut> fn) =>
         pt.IsPresent ? Partial<TOut>.Present(fn.Invoke(pt.Value)) : Partial<TOut>.Absent;
-
-    public static void Apply<T>(this Partial<T> pt, DynamicParameters bag, QueryBuilder qb, string fieldName)
-    {
-        if (!pt.IsPresent) return;
-
-        bag.Add(fieldName, pt.Value);
-        qb.Variable(fieldName, $"@{fieldName}");
-    }
 }

@@ -122,7 +122,7 @@ public class Bot
                 {
                     Activities = new[]
                     {
-                        new ActivityPartial {Name = "Restarting... (please wait)", Type = ActivityType.Game}
+                        new Activity {Name = "Restarting... (please wait)", Type = ActivityType.Game}
                     },
                     Status = GatewayStatusUpdate.UserStatus.Idle
                 })));
@@ -256,7 +256,7 @@ public class Bot
                 {
                     Activities = new[]
                     {
-                        new ActivityPartial
+                        new Activity
                         {
                             Name = $"pk;help | in {totalGuilds:N0} servers | shard #{shard.ShardId}",
                             Type = ActivityType.Game,
