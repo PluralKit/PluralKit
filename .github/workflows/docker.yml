@@ -27,4 +27,4 @@ jobs:
             ghcr.io/xske/pluralkit:latest
           cache-from: type=registry,ref=ghcr.io/xske/pluralkit:${{ env.BRANCH_NAME }}
           cache-to: type=inline
-      - run: curl https://api-beta.pluralkit.me/v1/update -H "Authorization: Bearer ${{ secrets.WATCHTOWER_TOKEN }}"
+      - run: "curl https://api-beta.pluralkit.me/v1/update -H 'Authorization: Bearer ${{ secrets.WATCHTOWER_TOKEN }}'"
