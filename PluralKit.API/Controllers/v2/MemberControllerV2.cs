@@ -43,7 +43,7 @@ public class MemberControllerV2: PKControllerBase
         if (memberCount >= memberLimit)
             throw Errors.MemberLimitReached;
 
-        var patch = MemberPatch.FromJSON(data);
+        var patch = MemberPatch.FromJSON(data, APIVersion.V2);
         patch.AssertIsValid();
         if (!patch.Name.IsPresent)
             patch.Errors.Add(new ValidationError("name", "Key 'name' is required when creating new member."));
