@@ -103,7 +103,7 @@ public class Startup
             .As<IConfiguration>();
         builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
         builder.RegisterModule(new LoggingModule("api",
-            cfg: new LoggerConfiguration().Filter.ByExcluding(exc => exc.Exception.IsUserError())));
+            cfg: new LoggerConfiguration().Filter.ByExcluding(exc => exc.Exception is PKError || exc.Exception.IsUserError())));
         builder.RegisterModule(new MetricsModule("API"));
         builder.RegisterModule<DataStoreModule>();
         builder.RegisterModule<APIModule>();
