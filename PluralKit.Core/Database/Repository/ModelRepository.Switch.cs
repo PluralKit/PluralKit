@@ -82,7 +82,7 @@ public partial class ModelRepository
 
         _ = _dispatch.Dispatch(switchId, new UpdateDispatchData
         {
-            Event = DispatchEvent.UPDATE_SWITCH_MEMBERS,
+            Event = DispatchEvent.UPDATE_SWITCH,
             EventData = JObject.FromObject(new
             {
                 members = await GetMemberGuids(members),
