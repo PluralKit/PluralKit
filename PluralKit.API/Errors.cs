@@ -72,6 +72,7 @@ public static class Errors
 {
     public static PKError GenericBadRequest = new(400, 0, "400: Bad Request");
     public static PKError GenericAuthError = new(401, 0, "401: Missing or invalid Authorization header");
+    public static PKError GenericMissingPermissions = new(403, 0, "403: Missing permissions to access this resource");
 
     public static PKError SystemNotFound = new(404, 20001, "System not found.");
     public static PKError MemberNotFound = new(404, 20002, "Member not found.");

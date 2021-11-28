@@ -14,10 +14,13 @@ public class DiscordControllerV2: PKControllerBase
     public DiscordControllerV2(IServiceProvider svc) : base(svc) { }
 
 
-    [HttpGet("systems/@me/guilds/{guild_id}")]
-    public async Task<IActionResult> SystemGuildGet(ulong guild_id)
+    [HttpGet("systems/{systemRef}/guilds/{guild_id}")]
+    public async Task<IActionResult> SystemGuildGet(string systemRef, ulong guild_id)
     {
-        var system = await ResolveSystem("@me");
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
+
         var settings = await _repo.GetSystemGuild(guild_id, system.Id, false);
         if (settings == null)
             throw Errors.SystemGuildNotFound;
@@ -29,10 +32,13 @@ public class DiscordControllerV2: PKControllerBase
         return Ok(settings.ToJson(member?.Hid));
     }
 
-    [HttpPatch("systems/@me/guilds/{guild_id}")]
-    public async Task<IActionResult> DoSystemGuildPatch(ulong guild_id, [FromBody] JObject data)
+    [HttpPatch("systems/{systemRef}/guilds/{guild_id}")]
+    public async Task<IActionResult> DoSystemGuildPatch(string systemRef, ulong guild_id, [FromBody] JObject data)
     {
-        var system = await ResolveSystem("@me");
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
+
         var settings = await _repo.GetSystemGuild(guild_id, system.Id, false);
         if (settings == null)
             throw Errors.SystemGuildNotFound;

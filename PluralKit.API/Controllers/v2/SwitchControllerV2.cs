@@ -77,13 +77,15 @@ public class SwitchControllerV2: PKControllerBase
     }
 
 
-    [HttpPost("systems/@me/switches")]
-    public async Task<IActionResult> SwitchCreate([FromBody] PostSwitchParams data)
+    [HttpPost("systems/{systemRef}/switches")]
+    public async Task<IActionResult> SwitchCreate(string systemRef, [FromBody] PostSwitchParams data)
     {
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
+
         if (data.Members.Distinct().Count() != data.Members.Count)
             throw Errors.DuplicateMembersInList;
-
-        var system = await ResolveSystem("@me");
 
         if (data.Timestamp != null && await _repo.GetSwitches(system.Id).Select(x => x.Timestamp)
                 .ContainsAsync(data.Timestamp.Value))
@@ -155,10 +157,14 @@ public class SwitchControllerV2: PKControllerBase
         });
     }
 
-    [HttpPatch("systems/@me/switches/{switchRef}")]
-    public async Task<IActionResult> SwitchPatch(string switchRef, [FromBody] JObject data)
+    [HttpPatch("systems/{systemRef}/switches/{switchRef}")]
+    public async Task<IActionResult> SwitchPatch(string systemRef, string switchRef, [FromBody] JObject data)
     {
         // for now, don't need to make a PatchObject for this, since it's only one param
+
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
 
         if (!Guid.TryParse(switchRef, out var switchId))
             throw Errors.InvalidSwitchId;
@@ -168,10 +174,6 @@ public class SwitchControllerV2: PKControllerBase
             throw new ModelParseError(new List<ValidationError> { new("timestamp", "Key 'timestamp' is required.") });
 
         var value = Instant.FromDateTimeOffset(DateTime.Parse(valueStr).ToUniversalTime());
-
-        var system = await ResolveSystem("@me");
-        if (system == null)
-            throw Errors.SystemNotFound;
 
         var sw = await _repo.GetSwitchByUuid(switchId);
         if (sw == null || system.Id != sw.System)
@@ -191,15 +193,18 @@ public class SwitchControllerV2: PKControllerBase
         });
     }
 
-    [HttpPatch("systems/@me/switches/{switchRef}/members")]
-    public async Task<IActionResult> SwitchMemberPatch(string switchRef, [FromBody] JArray data)
+    [HttpPatch("systems/{systemRef}/switches/{switchRef}/members")]
+    public async Task<IActionResult> SwitchMemberPatch(string systemRef, string switchRef, [FromBody] JArray data)
     {
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
+
         if (!Guid.TryParse(switchRef, out var switchId))
+            throw Errors.SwitchNotFound;
 
-            if (data.Distinct().Count() != data.Count)
-                throw Errors.DuplicateMembersInList;
-
-        var system = await ResolveSystem("@me");
+        if (data.Distinct().Count() != data.Count)
+            throw Errors.DuplicateMembersInList;
 
         var sw = await _repo.GetSwitchByUuid(switchId);
         if (sw == null)
@@ -235,13 +240,16 @@ public class SwitchControllerV2: PKControllerBase
         });
     }
 
-    [HttpDelete("systems/@me/switches/{switchRef}")]
-    public async Task<IActionResult> SwitchDelete(string switchRef)
+    [HttpDelete("systems/{systemRef}/switches/{switchRef}")]
+    public async Task<IActionResult> SwitchDelete(string systemRef, string switchRef)
     {
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
+
         if (!Guid.TryParse(switchRef, out var switchId))
             throw Errors.InvalidSwitchId;
 
-        var system = await ResolveSystem("@me");
         var sw = await _repo.GetSwitchByUuid(switchId);
         if (sw == null || system.Id != sw.System)
             throw Errors.SwitchNotFoundPublic;
