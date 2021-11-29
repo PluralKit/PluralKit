@@ -14,6 +14,8 @@ public partial class ModelRepository
             "insert into shards (id, status) values (@Id, @Status) on conflict (id) do update set status = @Status",
             new { Id = shard, Status = status });
 
+    public Task ClearShardStatus() => _db.Execute(conn => conn.ExecuteAsync("update shards set status = 0"));
+
     public Task RegisterShardHeartbeat(IPKConnection conn, int shard, Duration ping) =>
         conn.ExecuteAsync(
             "insert into shards (id, last_heartbeat, ping) values (@Id, now(), @Ping) on conflict (id) do update set last_heartbeat = now(), ping = @Ping",

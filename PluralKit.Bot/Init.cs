@@ -51,6 +51,12 @@ public class Init
             var bot = services.Resolve<Bot>();
             bot.Init();
 
+            // if we're running single-process, clear any existing shard status from the database
+            var config = services.Resolve<BotConfig>();
+            var repo = services.Resolve<ModelRepository>();
+            if (config.Cluster == null)
+                await repo.ClearShardStatus();
+
             // Start the Discord shards themselves (handlers already set up)
             logger.Information("Connecting to Discord");
             await StartCluster(services);
