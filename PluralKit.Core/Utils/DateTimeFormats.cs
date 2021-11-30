@@ -29,6 +29,5 @@ public static class DateTimeFormats
     public static string FormatExport(this LocalDate date) => DateExportFormat.Format(date);
     public static string FormatZoned(this ZonedDateTime zdt) => ZonedDateTimeFormat.Format(zdt);
     public static string FormatZoned(this Instant i, DateTimeZone zone) => i.InZone(zone).FormatZoned();
-    public static string FormatZoned(this Instant i, PKSystem sys) => i.FormatZoned(sys.Zone);
     public static string FormatDuration(this Duration d) => DurationFormat.Format(d);
 }

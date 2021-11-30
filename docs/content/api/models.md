@@ -28,7 +28,6 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |color|string|6-character hex code, no `#` at the beginning|
 |created|datetime||
-|timezone|string|defaults to `UTC`|
 |privacy|?system privacy object||
 
 * System privacy keys: `description_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
@@ -99,6 +98,16 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |guild|snowflake|The ID of the server the message was sent in. Encoded as string for precision reasons.|
 |system|full System object|The system that proxied the message.|
 |member|full Member object|The member that proxied the message.|
+
+### System settings model
+
+|key|type|notes|
+|---|---|---|
+|timezone|string|defaults to `UTC`|
+|pings_enabled|boolean|
+|latch_timeout|int?|
+|member_limit|int|read-only, defaults to 1000|
+|group_limit|int|read-only, defaults to 250|
 
 ### System guild settings model
 

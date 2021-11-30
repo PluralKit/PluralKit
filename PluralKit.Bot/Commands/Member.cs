@@ -50,7 +50,7 @@ public class Member
 
         // Enforce per-system member limit
         var memberCount = await _repo.GetSystemMemberCount(ctx.System.Id);
-        var memberLimit = ctx.System.MemberLimitOverride ?? Limits.MaxMemberCount;
+        var memberLimit = ctx.Config.MemberLimitOverride ?? Limits.MaxMemberCount;
         if (memberCount >= memberLimit)
             throw Errors.MemberLimitReachedError(memberLimit);
 
@@ -117,7 +117,7 @@ public class Member
     {
         var system = await _repo.GetSystem(target.System);
         await ctx.Reply(
-            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
+            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system), ctx.Zone));
     }
 
     public async Task Soulscream(Context ctx, PKMember target)

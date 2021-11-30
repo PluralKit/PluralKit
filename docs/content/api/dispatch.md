@@ -37,6 +37,7 @@ PluralKit will send invalid requests to your endpoint, with `PING` event type, o
 |---|---|---|---|
 |PING|PluralKit is checking if your webhook URL is working.|null|Reply with a 200 status code if the `signing_token` is correct, or a 401 status code if it is invalid.|
 |UPDATE_SYSTEM|your system was updated|[system object](/api/models#system-model) only containing modififed keys|
+|UPDATE_SETTINGS|your bot settings were updated|[system settings object](/api/models#system-settings-model) only containing modified keys|
 |CREATE_MEMBER|a new member was created|[member object](/api/models#member-model) only containing `name` key|new member ID can be found in the top-level `id` key`|
 |UPDATE_MEMBER|a member was updated|[member object](/api/models#member-model) only containing modified keys|member ID can be found in the top-level `id` key`|
 |DELETE_MEMBER|a member was deleted|null|old member ID can be found in the top-level `id` key`|

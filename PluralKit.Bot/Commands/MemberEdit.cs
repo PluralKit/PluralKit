@@ -314,7 +314,7 @@ public class MemberEdit
 
             LocalDate? birthday;
             if (birthdayStr == "today" || birthdayStr == "now")
-                birthday = SystemClock.Instance.InZone(ctx.System.Zone).GetCurrentDate();
+                birthday = SystemClock.Instance.InZone(ctx.Zone).GetCurrentDate();
             else
                 birthday = DateUtils.ParseDate(birthdayStr, true);
 

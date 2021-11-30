@@ -37,9 +37,10 @@ public class MemberControllerV2: PKControllerBase
     public async Task<IActionResult> MemberCreate([FromBody] JObject data)
     {
         var system = await ResolveSystem("@me");
+        var config = await _repo.GetSystemConfig(system.Id);
 
         var memberCount = await _repo.GetSystemMemberCount(system.Id);
-        var memberLimit = system.MemberLimitOverride ?? Limits.MaxMemberCount;
+        var memberLimit = config.MemberLimitOverride ?? Limits.MaxMemberCount;
         if (memberCount >= memberLimit)
             throw Errors.MemberLimitReached;
 

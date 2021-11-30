@@ -27,7 +27,7 @@ public class SystemFront
         var sw = await _repo.GetLatestSwitch(system.Id);
         if (sw == null) throw Errors.NoRegisteredSwitches;
 
-        await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, system.Zone, ctx.LookupContextFor(system)));
+        await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system)));
     }
 
     public async Task SystemFrontHistory(Context ctx, PKSystem system)
@@ -77,12 +77,12 @@ public class SystemFront
                         // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
                         var switchDuration = lastSw.Value - sw.Timestamp;
                         stringToAdd =
-                            $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago, for {switchDuration.FormatDuration()})\n";
+                            $"**{membersStr}** ({sw.Timestamp.FormatZoned(ctx.Zone)}, {switchSince.FormatDuration()} ago, for {switchDuration.FormatDuration()})\n";
                     }
                     else
                     {
                         stringToAdd =
-                            $"**{membersStr}** ({sw.Timestamp.FormatZoned(system.Zone)}, {switchSince.FormatDuration()} ago)\n";
+                            $"**{membersStr}** ({sw.Timestamp.FormatZoned(ctx.Zone)}, {switchSince.FormatDuration()} ago)\n";
                     }
 
                     if (sb.Length + stringToAdd.Length >= 4096)
@@ -113,7 +113,7 @@ public class SystemFront
 
         var now = SystemClock.Instance.GetCurrentInstant();
 
-        var rangeStart = DateUtils.ParseDateTime(durationStr, true, system.Zone);
+        var rangeStart = DateUtils.ParseDateTime(durationStr, true, ctx.Zone);
         if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
         if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
@@ -127,7 +127,7 @@ public class SystemFront
         var showFlat = ctx.MatchFlag("flat");
         var frontpercent = await _db.Execute(c =>
             _repo.GetFrontBreakdown(c, system.Id, null, rangeStart.Value.ToInstant(), now));
-        await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, system.Zone,
+        await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, ctx.Zone,
             ctx.LookupContextFor(system), title.ToString(), ignoreNoFronters, showFlat));
     }
 

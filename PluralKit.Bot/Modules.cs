@@ -72,6 +72,7 @@ public class BotModule: Module
         builder.RegisterType<Api>().AsSelf();
         builder.RegisterType<Autoproxy>().AsSelf();
         builder.RegisterType<Checks>().AsSelf();
+        builder.RegisterType<Config>().AsSelf();
         builder.RegisterType<Fun>().AsSelf();
         builder.RegisterType<Groups>().AsSelf();
         builder.RegisterType<GroupMember>().AsSelf();

@@ -12,18 +12,18 @@ public partial class CommandTree
     public static Command SystemAvatar = new Command("system icon", "system icon [url|@mention]", "Changes your system's icon");
     public static Command SystemBannerImage = new Command("system banner", "system banner [url]", "Set the system's banner image");
     public static Command SystemDelete = new Command("system delete", "system delete", "Deletes your system");
-    public static Command SystemTimezone = new Command("system timezone", "system timezone [timezone]", "Changes your system's time zone");
     public static Command SystemProxy = new Command("system proxy", "system proxy [server id] [on|off]", "Enables or disables message proxying in a specific server");
     public static Command SystemList = new Command("system list", "system [system] list [full]", "Lists a system's members");
     public static Command SystemFind = new Command("system find", "system [system] find [full] <search term>", "Searches a system's members given a search term");
     public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
     public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
     public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
-    public static Command SystemPing = new Command("system ping", "system ping <enable|disable>", "Changes your system's ping preferences");
     public static Command SystemPrivacy = new Command("system privacy", "system privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
+    public static Command ConfigTimezone = new Command("config timezone", "config timezone [timezone]", "Changes your system's time zone");
+    public static Command ConfigPing = new Command("config ping", "config ping <enable|disable>", "Changes your system's ping preferences");
+    public static Command ConfigAutoproxyAccount = new Command("config autoproxy account", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
+    public static Command ConfigAutoproxyTimeout = new Command("config autoproxy timeout", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
-    public static Command AutoproxyTimeout = new Command("autoproxy", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
-    public static Command AutoproxyAccount = new Command("autoproxy", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
     public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
     public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
     public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
@@ -95,8 +95,7 @@ public partial class CommandTree
     public static Command[] SystemCommands =
     {
         SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor,
-        SystemDelete, SystemTimezone, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent,
-        SystemPrivacy, SystemProxy
+        SystemDelete, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
     };
 
     public static Command[] MemberCommands =
@@ -124,7 +123,10 @@ public partial class CommandTree
         Switch, SwitchOut, SwitchMove, SwitchEdit, SwitchEditOut, SwitchDelete, SwitchDeleteAll
     };
 
-    public static Command[] AutoproxyCommands = { AutoproxySet, AutoproxyTimeout, AutoproxyAccount };
+    public static Command[] ConfigCommands =
+    {
+        ConfigTimezone, ConfigPing, ConfigAutoproxyAccount, ConfigAutoproxyTimeout
+    };
 
     public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable };
 

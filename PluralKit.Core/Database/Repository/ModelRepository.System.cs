@@ -1,4 +1,6 @@
 #nullable enable
+using Dapper;
+
 using SqlKata;
 
 namespace PluralKit.Core;
@@ -77,6 +79,8 @@ public partial class ModelRepository
         });
         var system = await _db.QueryFirst<PKSystem>(conn, query, "returning *");
         _logger.Information("Created {SystemId}", system.Id);
+
+        await _db.Execute(conn => conn.QueryAsync("insert into config (system) value (@system)", new { system = system.Id }));
 
         // no dispatch call here - system was just created, we don't have a webhook URL
         return system;

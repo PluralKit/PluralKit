@@ -126,7 +126,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         try
         {
             var system = ctx.SystemId != null ? await _repo.GetSystem(ctx.SystemId.Value) : null;
-            await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, ctx));
+            var config = ctx.SystemId != null ? await _repo.GetSystemConfig(ctx.SystemId.Value) : null;
+            await _tree.ExecuteCommand(new Context(_services, shard, guild, channel, evt, cmdStart, system, config, ctx));
         }
         catch (PKError)
         {

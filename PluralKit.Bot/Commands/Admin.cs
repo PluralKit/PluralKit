@@ -97,7 +97,9 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown system.");
 
-        var currentLimit = target.MemberLimitOverride ?? Limits.MaxMemberCount;
+        var config = await _repo.GetSystemConfig(target.Id);
+
+        var currentLimit = config.MemberLimitOverride ?? Limits.MaxMemberCount;
         if (!ctx.HasNext())
         {
             await ctx.Reply($"Current member limit is **{currentLimit}** members.");
@@ -111,7 +113,7 @@ public class Admin
         if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update"))
             throw new PKError("Member limit change cancelled.");
 
-        await _repo.UpdateSystem(target.Id, new SystemPatch { MemberLimitOverride = newLimit });
+        await _repo.UpdateSystemConfig(target.Id, new SystemConfigPatch { MemberLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Member limit updated.");
     }
 
@@ -123,7 +125,9 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown system.");
 
-        var currentLimit = target.GroupLimitOverride ?? Limits.MaxGroupCount;
+        var config = await _repo.GetSystemConfig(target.Id);
+
+        var currentLimit = config.GroupLimitOverride ?? Limits.MaxGroupCount;
         if (!ctx.HasNext())
         {
             await ctx.Reply($"Current group limit is **{currentLimit}** groups.");
@@ -137,7 +141,7 @@ public class Admin
         if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update"))
             throw new PKError("Group limit change cancelled.");
 
-        await _repo.UpdateSystem(target.Id, new SystemPatch { GroupLimitOverride = newLimit });
+        await _repo.UpdateSystemConfig(target.Id, new SystemConfigPatch { GroupLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Group limit updated.");
     }
 }

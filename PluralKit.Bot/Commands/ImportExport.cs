@@ -100,7 +100,7 @@ public class ImportExport
         var json = await ctx.BusyIndicator(async () =>
         {
             // Make the actual data file
-            var data = await _dataFiles.ExportSystem(ctx.System);
+            var data = await _dataFiles.ExportSystem(ctx.System, ctx.Config.UiTz);
             return JsonConvert.SerializeObject(data, Formatting.None);
         });
 

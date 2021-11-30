@@ -205,7 +205,6 @@ public static class ContextListExt
 
         void LongRenderer(EmbedBuilder eb, IEnumerable<ListedMember> page)
         {
-            var zone = ctx.System?.Zone ?? DateTimeZone.Utc;
             foreach (var m in page)
             {
                 var profile = new StringBuilder($"**ID**: {m.Hid}");
@@ -231,11 +230,11 @@ public static class ContextListExt
 
                 if ((opts.IncludeLastSwitch || opts.SortProperty == SortProperty.LastSwitch) &&
                     m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
-                    profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(zone)}");
+                    profile.Append($"\n**Last switched in:** {lastSw.Value.FormatZoned(ctx.Zone)}");
 
                 if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
                     m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
-                    profile.Append($"\n**Created on:** {created.FormatZoned(zone)}");
+                    profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
 
                 if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatar)
                     profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");

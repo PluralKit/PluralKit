@@ -43,7 +43,6 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;system privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system tag [tag]` - Changes the system tag of your system.
 - `pk;system servertag [tag|-enable|-disable]` - Changes your system's tag in the current server, or disables it for the current server.
-- `pk;system timezone [location]` - Changes the time zone of your system.
 - `pk;system proxy [server id] [on|off]` - Toggles message proxying for a specific server.
 - `pk;system delete` - Deletes your system.
 - `pk;system [system] fronter` - Shows the current fronter of a system.
@@ -107,8 +106,12 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Autoproxy commands
 - `pk;autoproxy [off|front|latch|<member>]` - Sets your system's autoproxy mode for the current server.
-- `pk;autoproxy timeout [<duration>|off|reset]` - Sets the latch timeout duration for your system.
-- `pk;autoproxy account [on|off]` - Toggles autoproxy globally for the current account.
+
+## Config commands
+- `pk;config timezone [location]` - Changes the time zone of your system.
+- `pk;config ping <enable|disable>` - Changes your system's ping preferences.
+- `pk;config autoproxy timeout [<duration>|off|reset]` - Sets the latch timeout duration for your system.
+- `pk;config autoproxy account [on|off]` - Toggles autoproxy globally for the current account.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*

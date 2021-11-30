@@ -21,7 +21,7 @@ public class DataFileService
         _dispatch = dispatch;
     }
 
-    public async Task<JObject> ExportSystem(PKSystem system)
+    public async Task<JObject> ExportSystem(PKSystem system, string timezone)
     {
         await using var conn = await _db.Obtain();
 
@@ -30,7 +30,7 @@ public class DataFileService
 
         o.Merge(system.ToJson(LookupContext.ByOwner));
 
-        o.Add("timezone", system.UiTz);
+        o.Add("timezone", timezone);
         o.Add("accounts", new JArray((await _repo.GetSystemAccounts(system.Id)).ToList()));
         o.Add("members",
             new JArray((await _repo.GetSystemMembers(system.Id).ToListAsync()).Select(m =>

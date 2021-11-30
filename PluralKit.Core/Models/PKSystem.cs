@@ -46,18 +46,11 @@ public class PKSystem
     public string WebhookUrl { get; }
     public string WebhookToken { get; }
     public Instant Created { get; }
-    public string UiTz { get; set; }
-    public bool PingsEnabled { get; }
-    public int? LatchTimeout { get; }
     public PrivacyLevel DescriptionPrivacy { get; }
     public PrivacyLevel MemberListPrivacy { get; }
     public PrivacyLevel FrontPrivacy { get; }
     public PrivacyLevel FrontHistoryPrivacy { get; }
     public PrivacyLevel GroupListPrivacy { get; }
-    public int? MemberLimitOverride { get; }
-    public int? GroupLimitOverride { get; }
-
-    [JsonIgnore] public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
 }
 
 public static class PKSystemExt
@@ -84,7 +77,7 @@ public static class PKSystemExt
         {
             case APIVersion.V1:
                 {
-                    o.Add("tz", system.UiTz);
+                    o.Add("tz", null);
 
                     o.Add("description_privacy",
                         ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
@@ -98,7 +91,8 @@ public static class PKSystemExt
                 }
             case APIVersion.V2:
                 {
-                    o.Add("timezone", system.UiTz);
+                    // todo: remove this
+                    o.Add("timezone", null);
 
                     if (ctx == LookupContext.ByOwner)
                     {

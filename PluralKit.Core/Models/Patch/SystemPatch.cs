@@ -19,16 +19,11 @@ public class SystemPatch: PatchObject
     public Partial<string?> Token { get; set; }
     public Partial<string?> WebhookUrl { get; set; }
     public Partial<string?> WebhookToken { get; set; }
-    public Partial<string> UiTz { get; set; }
     public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
     public Partial<PrivacyLevel> MemberListPrivacy { get; set; }
     public Partial<PrivacyLevel> GroupListPrivacy { get; set; }
     public Partial<PrivacyLevel> FrontPrivacy { get; set; }
     public Partial<PrivacyLevel> FrontHistoryPrivacy { get; set; }
-    public Partial<bool> PingsEnabled { get; set; }
-    public Partial<int?> LatchTimeout { get; set; }
-    public Partial<int?> MemberLimitOverride { get; set; }
-    public Partial<int?> GroupLimitOverride { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("name", Name)
@@ -41,16 +36,11 @@ public class SystemPatch: PatchObject
         .With("token", Token)
         .With("webhook_url", WebhookUrl)
         .With("webhook_token", WebhookToken)
-        .With("ui_tz", UiTz)
         .With("description_privacy", DescriptionPrivacy)
         .With("member_list_privacy", MemberListPrivacy)
         .With("group_list_privacy", GroupListPrivacy)
         .With("front_privacy", FrontPrivacy)
         .With("front_history_privacy", FrontHistoryPrivacy)
-        .With("pings_enabled", PingsEnabled)
-        .With("latch_timeout", LatchTimeout)
-        .With("member_limit_override", MemberLimitOverride)
-        .With("group_limit_override", GroupLimitOverride)
     );
 
     public new void AssertIsValid()
@@ -69,8 +59,6 @@ public class SystemPatch: PatchObject
                 s => MiscUtils.TryMatchUri(s, out var bannerUri));
         if (Color.Value != null)
             AssertValid(Color.Value, "color", "^[0-9a-fA-F]{6}$");
-        if (UiTz.IsPresent && DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz.Value) == null)
-            Errors.Add(new ValidationError("timezone"));
     }
 
 #nullable disable
@@ -84,14 +72,11 @@ public class SystemPatch: PatchObject
         if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
         if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
         if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty();
-        if (o.ContainsKey("timezone")) patch.UiTz = o.Value<string>("timezone") ?? "UTC";
 
         switch (v)
         {
             case APIVersion.V1:
                 {
-                    if (o.ContainsKey("tz")) patch.UiTz = o.Value<string>("tz") ?? "UTC";
-
                     if (o.ContainsKey("description_privacy"))
                         patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
                     if (o.ContainsKey("member_list_privacy"))
@@ -149,8 +134,6 @@ public class SystemPatch: PatchObject
             o.Add("banner", BannerImage.Value);
         if (Color.IsPresent)
             o.Add("color", Color.Value);
-        if (UiTz.IsPresent)
-            o.Add("timezone", UiTz.Value);
 
         if (
             DescriptionPrivacy.IsPresent

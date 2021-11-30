@@ -20,6 +20,8 @@ public partial class CommandTree
             return CommandHelpRoot(ctx);
         if (ctx.Match("ap", "autoproxy", "auto"))
             return HandleAutoproxyCommand(ctx);
+        if (ctx.Match("config", "cfg"))
+            return HandleConfigCommand(ctx);
         if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
         if (ctx.Match("link"))
@@ -167,7 +169,7 @@ public partial class CommandTree
         else if (ctx.Match("webhook", "hook"))
             await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
         else if (ctx.Match("timezone", "tz"))
-            await ctx.Execute<SystemEdit>(SystemTimezone, m => m.SystemTimezone(ctx));
+            await ctx.Execute<Config>(ConfigTimezone, m => m.SystemTimezone(ctx), true);
         else if (ctx.Match("proxy"))
             await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
         else if (ctx.Match("list", "l", "members"))
@@ -190,7 +192,7 @@ public partial class CommandTree
         else if (ctx.Match("privacy"))
             await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx));
         else if (ctx.Match("ping"))
-            await ctx.Execute<SystemEdit>(SystemPing, m => m.SystemPing(ctx));
+            await ctx.Execute<Config>(ConfigPing, m => m.SystemPing(ctx), true);
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "systems", SystemCommands);
         else if (ctx.Match("groups", "gs", "g"))
@@ -206,8 +208,7 @@ public partial class CommandTree
         if (target == null)
         {
             var list = CreatePotentialCommandList(SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc,
-                SystemAvatar, SystemDelete, SystemTimezone, SystemList, SystemFronter, SystemFrontHistory,
-                SystemFrontPercent);
+                SystemAvatar, SystemDelete, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent);
             await ctx.Reply(
                 $"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\nPerhaps you meant to use one of the following commands?\n{list}");
         }
@@ -435,9 +436,9 @@ public partial class CommandTree
             case "bl":
                 await PrintCommandList(ctx, "channel blacklisting", BlacklistCommands);
                 break;
-            case "autoproxy":
-            case "ap":
-                await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+            case "config":
+            case "cfg":
+                await PrintCommandList(ctx, "settings", ConfigCommands);
                 break;
             // todo: are there any commands that still need to be added?
             default:
@@ -448,20 +449,41 @@ public partial class CommandTree
 
     private Task HandleAutoproxyCommand(Context ctx)
     {
-        if (ctx.Match("commands"))
-            return PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
-
         // ctx.CheckSystem();
         // oops, that breaks stuff! PKErrors before ctx.Execute don't actually do anything.
         // so we just emulate checking and throwing an error.
         if (ctx.System == null)
             return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
 
+        // todo: move this whole block to Autoproxy.cs when these are removed
+
         if (ctx.Match("account", "ac"))
-            return ctx.Execute<Autoproxy>(AutoproxyAccount, m => m.AutoproxyAccount(ctx));
+            return ctx.Execute<Config>(ConfigAutoproxyAccount, m => m.AutoproxyAccount(ctx), true);
         if (ctx.Match("timeout", "tm"))
-            return ctx.Execute<Autoproxy>(AutoproxyTimeout, m => m.AutoproxyTimeout(ctx));
+            return ctx.Execute<Config>(ConfigAutoproxyTimeout, m => m.AutoproxyTimeout(ctx), true);
+
         return ctx.Execute<Autoproxy>(AutoproxySet, m => m.SetAutoproxyMode(ctx));
+    }
+
+    private Task HandleConfigCommand(Context ctx)
+    {
+        if (ctx.System == null)
+            return ctx.Reply($"{Emojis.Error} {Errors.NoSystemError.Message}");
+
+        if (!ctx.HasNext())
+            return ctx.Execute<Config>(null, m => m.ShowConfig(ctx));
+
+        if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "account", "ac" }))
+            return ctx.Execute<Config>(null, m => m.AutoproxyAccount(ctx));
+        if (ctx.MatchMultiple(new[] { "autoproxy", "ap" }, new[] { "timeout", "tm" }))
+            return ctx.Execute<Config>(null, m => m.AutoproxyTimeout(ctx));
+        if (ctx.Match("timezone", "zone", "tz"))
+            return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
+        if (ctx.Match("ping"))
+            return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
+
+        // todo: maybe add the list of configuration keys here?
+        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");
     }
 
     private async Task PrintCommandNotFoundError(Context ctx, params Command[] potentialCommands)

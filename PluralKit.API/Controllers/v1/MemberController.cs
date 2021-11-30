@@ -42,14 +42,14 @@ public class MemberController: ControllerBase
             return BadRequest("Member name must be specified.");
 
         var systemId = User.CurrentSystem();
-        var systemData = await _repo.GetSystem(systemId);
+        var config = await _repo.GetSystemConfig(systemId);
 
         await using var conn = await _db.Obtain();
 
         // Enforce per-system member limit
         var memberCount = await conn.QuerySingleAsync<int>("select count(*) from members where system = @System",
             new { System = systemId });
-        var memberLimit = systemData?.MemberLimitOverride ?? Limits.MaxMemberCount;
+        var memberLimit = config.MemberLimitOverride ?? Limits.MaxMemberCount;
         if (memberCount >= memberLimit)
             return BadRequest($"Member limit reached ({memberCount} / {memberLimit}).");
 

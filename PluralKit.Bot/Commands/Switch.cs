@@ -68,7 +68,7 @@ public class Switch
 
         var timeToMove = ctx.RemainderOrNull() ??
                          throw new PKSyntaxError("Must pass a date or time to move the switch to.");
-        var tz = TzdbDateTimeZoneSource.Default.ForId(ctx.System.UiTz ?? "UTC");
+        var tz = TzdbDateTimeZoneSource.Default.ForId(ctx.Config?.UiTz ?? "UTC");
 
         var result = DateUtils.ParseDateTime(timeToMove, true, tz);
         if (result == null) throw Errors.InvalidDateTime(timeToMove);

@@ -23,8 +23,9 @@
 as $$
     -- CTEs to query "static" (accessible only through args) data
     with
-        system as (select systems.*, system_guild.tag as guild_tag, system_guild.tag_enabled as tag_enabled, allow_autoproxy as account_autoproxy from accounts
+        system as (select systems.*, config.latch_timeout, system_guild.tag as guild_tag, system_guild.tag_enabled as tag_enabled, allow_autoproxy as account_autoproxy from accounts
             left join systems on systems.id = accounts.system
+            left join config on config.system = accounts.system
             left join system_guild on system_guild.system = accounts.system and system_guild.guild = guild_id
             where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id),
@@ -48,11 +49,12 @@ as $$
         coalesce(system.tag_enabled, true) as tag_enabled,
         system.avatar_url as system_avatar,
         system.account_autoproxy as allow_autoproxy,
-        system.latch_timeout as latch_timeout
+        config.latch_timeout as latch_timeout
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder
         left join system on true
+        left join config on true
         left join guild on true
         left join last_message on true
         left join system_last_switch on system_last_switch.system = system.id

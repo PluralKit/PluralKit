@@ -49,7 +49,7 @@ public class Groups
 
         // Check group cap
         var existingGroupCount = await _repo.GetSystemGroupCount(ctx.System.Id);
-        var groupLimit = ctx.System.GroupLimitOverride ?? Limits.MaxGroupCount;
+        var groupLimit = ctx.Config.GroupLimitOverride ?? Limits.MaxGroupCount;
         if (existingGroupCount >= groupLimit)
             throw new PKError(
                 $"System has reached the maximum number of groups ({groupLimit}). Please delete unused groups first in order to create new ones.");
@@ -574,7 +574,7 @@ public class Groups
 
         var now = SystemClock.Instance.GetCurrentInstant();
 
-        var rangeStart = DateUtils.ParseDateTime(durationStr, true, targetSystem.Zone);
+        var rangeStart = DateUtils.ParseDateTime(durationStr, true, ctx.Zone);
         if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
         if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
@@ -589,7 +589,7 @@ public class Groups
         var frontpercent = await _db.Execute(c =>
             _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
         await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target,
-            targetSystem.Zone, ctx.LookupContextFor(targetSystem), title.ToString(), ignoreNoFronters, showFlat));
+            ctx.Zone, ctx.LookupContextFor(targetSystem), title.ToString(), ignoreNoFronters, showFlat));
     }
 
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)

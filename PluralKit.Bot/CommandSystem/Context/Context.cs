@@ -5,6 +5,8 @@ using App.Metrics;
 
 using Autofac;
 
+using NodaTime;
+
 using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
@@ -27,13 +29,14 @@ public class Context
     private Command? _currentCommand;
 
     public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
-                    PKSystem senderSystem, MessageContext messageContext)
+                    PKSystem senderSystem, SystemConfig config, MessageContext messageContext)
     {
         Message = (Message)message;
         Shard = shard;
         Guild = guild;
         Channel = channel;
         System = senderSystem;
+        Config = config;
         MessageContext = messageContext;
         Cache = provider.Resolve<IDiscordCache>();
         Database = provider.Resolve<IDatabase>();
@@ -64,6 +67,8 @@ public class Context
 
 
     public readonly PKSystem System;
+    public readonly SystemConfig Config;
+    public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
 
     public readonly Parameters Parameters;
 
@@ -99,7 +104,7 @@ public class Context
         return msg;
     }
 
-    public async Task Execute<T>(Command? commandDef, Func<T, Task> handler)
+    public async Task Execute<T>(Command? commandDef, Func<T, Task> handler, bool deprecated = false)
     {
         _currentCommand = commandDef;
 
@@ -123,6 +128,9 @@ public class Context
             // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
             await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
         }
+
+        if (deprecated && commandDef != null)
+            await Reply($"{Emojis.Warn} This command is deprecated and will be removed soon. In the future, please use `pk;{commandDef.Key}`.");
     }
 
     public LookupContext LookupContextFor(PKSystem target) =>

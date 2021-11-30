@@ -9,6 +9,8 @@ using Myriad.Types;
 
 using PluralKit.Core;
 
+using NodaTime;
+
 using Serilog;
 
 namespace PluralKit.Bot;
@@ -174,7 +176,8 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                     msg.System,
                     msg.Member,
                     guild,
-                    LookupContext.ByNonOwner
+                    LookupContext.ByNonOwner,
+                    DateTimeZone.Utc
                 )
             });
 
@@ -199,7 +202,9 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
         if (member == null || !(await _cache.PermissionsFor(evt.ChannelId, member)).HasFlag(requiredPerms)) return;
 
-        if (msg.System.PingsEnabled)
+        var config = await _repo.GetSystemConfig(msg.System.Id);
+
+        if (config.PingsEnabled)
             // If the system has pings enabled, go ahead
             await _rest.CreateMessage(evt.ChannelId, new MessageRequest
             {

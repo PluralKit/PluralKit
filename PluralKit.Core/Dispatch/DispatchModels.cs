@@ -11,6 +11,7 @@ public enum DispatchEvent
 {
     PING,
     UPDATE_SYSTEM,
+    UPDATE_SETTINGS,
     CREATE_MEMBER,
     UPDATE_MEMBER,
     DELETE_MEMBER,

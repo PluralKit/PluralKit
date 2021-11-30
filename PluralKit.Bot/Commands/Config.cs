@@ -1,0 +1,301 @@
+using System.Text;
+
+using Humanizer;
+
+using NodaTime;
+using NodaTime.Text;
+using NodaTime.TimeZones;
+
+using PluralKit.Core;
+
+namespace PluralKit.Bot;
+public class Config
+{
+    private readonly ModelRepository _repo;
+
+    public Config(ModelRepository repo)
+    {
+        _repo = repo;
+    }
+
+    private record PaginatedConfigItem(string Key, string Description, string? CurrentValue, string DefaultValue);
+
+    public async Task ShowConfig(Context ctx)
+    {
+        var items = new List<PaginatedConfigItem>();
+
+        items.Add(new(
+            "autoproxy account",
+            "Whether autoproxy is enabled for the current account",
+            EnabledDisabled(ctx.MessageContext.AllowAutoproxy),
+            "enabled"
+        ));
+
+        items.Add(new(
+            "autoproxy timeout",
+            "If this is set, latch-mode autoproxy will not keep autoproxying after this amount of time has elapsed since the last message sent in the server",
+            ctx.Config.LatchTimeout.HasValue
+                ? (
+                    ctx.Config.LatchTimeout.Value != 0
+                    ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value).ToTimeSpan().Humanize(4)
+                    : "disabled"
+                )
+                : null,
+            ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)
+        ));
+
+        items.Add(new(
+            "timezone",
+            "The system's time zone - shows timestamps in your local time",
+            ctx.Config.UiTz,
+            "UTC"
+        ));
+
+        items.Add(new(
+            "ping",
+            $"Whether other users are able to mention you via a {Emojis.Bell} reaction",
+            EnabledDisabled(ctx.Config.PingsEnabled),
+            "enabled"
+        ));
+
+        items.Add(new(
+            "Member limit",
+            "The maximum number of registered members for your system",
+            ctx.Config.MemberLimitOverride?.ToString(),
+            Limits.MaxMemberCount.ToString()
+        ));
+
+        items.Add(new(
+            "Group limit",
+            "The maximum number of registered groups for your system",
+            ctx.Config.GroupLimitOverride?.ToString(),
+            Limits.MaxGroupCount.ToString()
+        ));
+
+        await ctx.Paginate<PaginatedConfigItem>(
+            items.ToAsyncEnumerable(),
+            items.Count,
+            10,
+            "Current settings for your system",
+            ctx.System.Color,
+            (eb, l) =>
+            {
+                var description = new StringBuilder();
+
+                foreach (var item in l)
+                {
+                    description.Append(item.Key.AsCode());
+                    description.Append($" **({item.CurrentValue ?? item.DefaultValue})**");
+                    if (item.CurrentValue != null && item.CurrentValue != item.DefaultValue)
+                        description.Append("\ud83d\udd39");
+
+                    description.AppendLine();
+                    description.Append(item.Description);
+                    description.AppendLine();
+                    description.AppendLine();
+                }
+
+                eb.Description(description.ToString());
+
+                return Task.CompletedTask;
+            }
+        );
+    }
+
+    public async Task AutoproxyAccount(Context ctx)
+    {
+        // todo: this might be useful elsewhere, consider moving it to ctx.MatchToggle
+        if (ctx.Match("enable", "on"))
+            await AutoproxyEnableDisable(ctx, true);
+        else if (ctx.Match("disable", "off"))
+            await AutoproxyEnableDisable(ctx, false);
+        else if (ctx.HasNext())
+            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+        else
+        {
+            var statusString = ctx.MessageContext.AllowAutoproxy ? "enabled" : "disabled";
+            await ctx.Reply($"Autoproxy is currently **{statusString}** for account <@{ctx.Author.Id}>.");
+        }
+    }
+
+    private string EnabledDisabled(bool value) => value ? "enabled" : "disabled";
+
+    private async Task AutoproxyEnableDisable(Context ctx, bool allow)
+    {
+        var statusString = EnabledDisabled(allow);
+        if (ctx.MessageContext.AllowAutoproxy == allow)
+        {
+            await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.");
+            return;
+        }
+        var patch = new AccountPatch { AllowAutoproxy = allow };
+        await _repo.UpdateAccount(ctx.Author.Id, patch);
+        await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
+    }
+
+
+    public async Task AutoproxyTimeout(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            var timeout = ctx.Config.LatchTimeout.HasValue
+                ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value)
+                : (Duration?)null;
+
+            if (timeout == null)
+                await ctx.Reply($"You do not have a custom autoproxy timeout duration set. The default latch timeout duration is {ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}.");
+            else if (timeout == Duration.Zero)
+                await ctx.Reply("Latch timeout is currently **disabled** for your system. Latch mode autoproxy will never time out.");
+            else
+                await ctx.Reply($"The current latch timeout duration for your system is {timeout.Value.ToTimeSpan().Humanize(4)}.");
+            return;
+        }
+
+        Duration? newTimeout;
+        Duration overflow = Duration.Zero;
+        if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = Duration.Zero;
+        else if (ctx.Match("reset", "default")) newTimeout = null;
+        else
+        {
+            var timeoutStr = ctx.RemainderOrNull();
+            var timeoutPeriod = DateUtils.ParsePeriod(timeoutStr);
+            if (timeoutPeriod == null) throw new PKError($"Could not parse '{timeoutStr}' as a valid duration. Try using a syntax such as \"3h5m\" (i.e. 3 hours and 5 minutes).");
+            if (timeoutPeriod.Value.TotalHours > 100000)
+            {
+                // sanity check to prevent seconds overflow if someone types in 999999999
+                overflow = timeoutPeriod.Value;
+                newTimeout = Duration.Zero;
+            }
+            else newTimeout = timeoutPeriod;
+        }
+
+        await _repo.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout?.TotalSeconds });
+
+        if (newTimeout == null)
+            await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
+        else if (newTimeout == Duration.Zero && overflow != Duration.Zero)
+            await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out. ({overflow.ToTimeSpan().Humanize(4)} is too long)");
+        else if (newTimeout == Duration.Zero)
+            await ctx.Reply($"{Emojis.Success} Latch timeout disabled. Latch mode autoproxy will never time out.");
+        else
+            await ctx.Reply($"{Emojis.Success} Latch timeout set to {newTimeout.Value!.ToTimeSpan().Humanize(4)}.");
+    }
+
+    public async Task SystemPing(Context ctx)
+    {
+        ctx.CheckSystem();
+
+        if (!ctx.HasNext())
+        {
+            if (ctx.Config.PingsEnabled) { await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;s ping disable`."); }
+            else { await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;s ping enable`."); }
+        }
+        else
+        {
+            if (ctx.Match("on", "enable"))
+            {
+                await _repo.UpdateSystemConfig(ctx.System.Id, new() { PingsEnabled = true });
+
+                await ctx.Reply("Reaction pings have now been enabled.");
+            }
+            if (ctx.Match("off", "disable"))
+            {
+                await _repo.UpdateSystemConfig(ctx.System.Id, new() { PingsEnabled = false });
+
+                await ctx.Reply("Reaction pings have now been disabled.");
+            }
+        }
+    }
+
+    public async Task SystemTimezone(Context ctx)
+    {
+        if (ctx.System == null) throw Errors.NoSystemError;
+
+        if (await ctx.MatchClear())
+        {
+            await _repo.UpdateSystemConfig(ctx.System.Id, new() { UiTz = "UTC" });
+
+            await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
+            return;
+        }
+
+        var zoneStr = ctx.RemainderOrNull();
+        if (zoneStr == null)
+        {
+            await ctx.Reply(
+                $"Your current system time zone is set to **{ctx.Config.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.Config.Zone)}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
+            return;
+        }
+
+        var zone = await FindTimeZone(ctx, zoneStr);
+        if (zone == null) throw Errors.InvalidTimeZone(zoneStr);
+
+        var currentTime = SystemClock.Instance.GetCurrentInstant().InZone(zone);
+        var msg = $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?";
+        if (!await ctx.PromptYesNo(msg, "Change Timezone")) throw Errors.TimezoneChangeCancelled;
+
+        await _repo.UpdateSystemConfig(ctx.System.Id, new() { UiTz = zone.Id });
+
+        await ctx.Reply($"System time zone changed to **{zone.Id}**.");
+    }
+
+
+    private async Task<DateTimeZone> FindTimeZone(Context ctx, string zoneStr)
+    {
+        // First, if we're given a flag emoji, we extract the flag emoji code from it.
+        zoneStr = Core.StringUtils.ExtractCountryFlag(zoneStr) ?? zoneStr;
+
+        // Then, we find all *locations* matching either the given country code or the country name.
+        var locations = TzdbDateTimeZoneSource.Default.Zone1970Locations;
+        var matchingLocations = locations.Where(l => l.Countries.Any(c =>
+            string.Equals(c.Code, zoneStr, StringComparison.InvariantCultureIgnoreCase) ||
+            string.Equals(c.Name, zoneStr, StringComparison.InvariantCultureIgnoreCase)));
+
+        // Then, we find all (unique) time zone IDs that match.
+        var matchingZones = matchingLocations.Select(l => DateTimeZoneProviders.Tzdb.GetZoneOrNull(l.ZoneId))
+            .Distinct().ToList();
+
+        // If the set of matching zones is empty (ie. we didn't find anything), we try a few other things.
+        if (matchingZones.Count == 0)
+        {
+            // First, we try to just find the time zone given directly and return that.
+            var givenZone = DateTimeZoneProviders.Tzdb.GetZoneOrNull(zoneStr);
+            if (givenZone != null) return givenZone;
+
+            // If we didn't find anything there either, we try parsing the string as an offset, then
+            // find all possible zones that match that offset. For an offset like UTC+2, this doesn't *quite*
+            // work, since there are 57(!) matching zones (as of 2019-06-13) - but for less populated time zones
+            // this could work nicely.
+            var inputWithoutUtc = zoneStr.Replace("UTC", "").Replace("GMT", "");
+
+            var res = OffsetPattern.CreateWithInvariantCulture("+H").Parse(inputWithoutUtc);
+            if (!res.Success) res = OffsetPattern.CreateWithInvariantCulture("+H:mm").Parse(inputWithoutUtc);
+
+            // If *this* didn't parse correctly, fuck it, bail.
+            if (!res.Success) return null;
+            var offset = res.Value;
+
+            // To try to reduce the count, we go by locations from the 1970+ database instead of just the full database
+            // This elides regions that have been identical since 1970, omitting small distinctions due to Ancient History(tm).
+            var allZones = TzdbDateTimeZoneSource.Default.Zone1970Locations.Select(l => l.ZoneId).Distinct();
+            matchingZones = allZones.Select(z => DateTimeZoneProviders.Tzdb.GetZoneOrNull(z))
+                .Where(z => z.GetUtcOffset(SystemClock.Instance.GetCurrentInstant()) == offset).ToList();
+        }
+
+        // If we have a list of viable time zones, we ask the user which is correct.
+
+        // If we only have one, return that one.
+        if (matchingZones.Count == 1)
+            return matchingZones.First();
+
+        // Otherwise, prompt and return!
+        return await ctx.Choose("There were multiple matches for your time zone query. Please select the region that matches you the closest:", matchingZones,
+            z =>
+            {
+                if (TzdbDateTimeZoneSource.Default.Aliases.Contains(z.Id))
+                    return $"**{z.Id}**, {string.Join(", ", TzdbDateTimeZoneSource.Default.Aliases[z.Id])}";
+
+                return $"**{z.Id}**";
+            });
+    }
+}

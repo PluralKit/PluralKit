@@ -28,6 +28,20 @@ Takes a partial [system object](/api/models#system-model).
 
 Returns a [system object](/api/models#system-model).
 
+### Get System Settings
+
+GET `/systems/{systemRef}/settings`
+
+Returns a [system settings object](/api/models#system-settings-model).
+
+### Update System Settings
+
+PATCH `/systems/{systemRef}/settings`
+
+Takes a partial [system settings object](/api/models#system-settings-model).
+
+Returns a [system settings object](/api/models#system-settings-model).
+
 ### Get System Guild Settings
 
 GET `/systems/@me/guilds/{guild_id}`

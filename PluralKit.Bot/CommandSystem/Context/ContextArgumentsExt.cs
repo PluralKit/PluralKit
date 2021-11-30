@@ -48,6 +48,23 @@ public static class ContextArgumentsExt
         return ctx.Match(ref used, potentialMatches);
     }
 
+    /// <summary>
+    /// Matches the next *n* parameters against each parameter consecutively.
+    /// <br />
+    /// Note that this is handled differently than single-parameter Match:
+    /// each method parameter is an array of potential matches for the *n*th command string parameter.
+    /// </summary>
+    public static bool MatchMultiple(this Context ctx, params string[][] potentialParametersMatches)
+    {
+        foreach (var param in potentialParametersMatches)
+            if (!ctx.Match(param)) return false;
+
+        for (var i = 0; i < potentialParametersMatches.Length; i++)
+            ctx.PopArgument();
+
+        return true;
+    }
+
     public static bool MatchFlag(this Context ctx, params string[] potentialMatches)
     {
         // Flags are *ALWAYS PARSED LOWERCASE*. This means we skip out on a "ToLower" call here.

@@ -34,7 +34,7 @@ public class Random
 
         var randInt = randGen.Next(members.Count);
         await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, members[randInt], ctx.Guild,
-            ctx.LookupContextFor(ctx.System)));
+            ctx.LookupContextFor(ctx.System), ctx.Zone));
     }
 
     public async Task Group(Context ctx)
@@ -72,6 +72,6 @@ public class Random
 
         var randInt = randGen.Next(ms.Count);
         await ctx.Reply(embed: await _embeds.CreateMemberEmbed(ctx.System, ms[randInt], ctx.Guild,
-            ctx.LookupContextFor(ctx.System)));
+            ctx.LookupContextFor(ctx.System), ctx.Zone));
     }
 }

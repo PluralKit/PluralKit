@@ -54,10 +54,11 @@ public class GroupControllerV2: PKControllerBase
     public async Task<IActionResult> GroupCreate([FromBody] JObject data)
     {
         var system = await ResolveSystem("@me");
+        var config = await _repo.GetSystemConfig(system.Id);
 
         // Check group cap
         var existingGroupCount = await _repo.GetSystemGroupCount(system.Id);
-        var groupLimit = system.GroupLimitOverride ?? Limits.MaxGroupCount;
+        var groupLimit = config.GroupLimitOverride ?? Limits.MaxGroupCount;
         if (existingGroupCount >= groupLimit)
             throw Errors.GroupLimitReached;
 

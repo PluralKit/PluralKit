@@ -21,6 +21,7 @@ public partial class BulkImporter: IAsyncDisposable
     private ModelRepository _repo { get; init; }
 
     private PKSystem _system { get; set; }
+    private SystemConfig _cfg { get; set; }
     private IPKConnection _conn { get; init; }
     private IPKTransaction _tx { get; init; }
 
@@ -59,6 +60,8 @@ public partial class BulkImporter: IAsyncDisposable
             importer._result.CreatedSystem = system.Hid;
             importer._system = system;
         }
+
+        importer._cfg = await repo.GetSystemConfig(system.Id);
 
         // Fetch all members in the system and log their names and hids
         var members = await conn.QueryAsync<PKMember>("select id, hid, name from members where system = @System",
@@ -120,7 +123,7 @@ public partial class BulkImporter: IAsyncDisposable
 
     private async Task AssertMemberLimitNotReached(int newMembers)
     {
-        var memberLimit = _system.MemberLimitOverride ?? Limits.MaxMemberCount;
+        var memberLimit = _cfg.MemberLimitOverride ?? Limits.MaxMemberCount;
         var existingMembers = await _repo.GetSystemMemberCount(_system.Id);
         if (existingMembers + newMembers > memberLimit)
             throw new ImportException($"Import would exceed the maximum number of members ({memberLimit}).");
@@ -128,7 +131,7 @@ public partial class BulkImporter: IAsyncDisposable
 
     private async Task AssertGroupLimitNotReached(int newGroups)
     {
-        var limit = _system.GroupLimitOverride ?? Limits.MaxGroupCount;
+        var limit = _cfg.GroupLimitOverride ?? Limits.MaxGroupCount;
         var existing = await _repo.GetSystemGroupCount(_system.Id);
         if (existing + newGroups > limit)
             throw new ImportException($"Import would exceed the maximum number of groups ({limit}).");

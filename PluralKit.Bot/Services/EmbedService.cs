@@ -64,7 +64,7 @@ public class EmbedService
             .Title(system.Name)
             .Thumbnail(new Embed.EmbedThumbnail(system.AvatarUrl.TryGetCleanCdnUrl()))
             .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Created on {system.Created.FormatZoned(system)}"))
+                $"System ID: {system.Hid} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
             .Color(color);
 
         if (system.DescriptionPrivacy.CanAccess(ctx))
@@ -139,7 +139,7 @@ public class EmbedService
         return embed.Build();
     }
 
-    public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx)
+    public async Task<Embed> CreateMemberEmbed(PKSystem system, PKMember member, Guild guild, LookupContext ctx, DateTimeZone zone)
     {
         // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
 
@@ -174,7 +174,7 @@ public class EmbedService
             // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
             .Color(color)
             .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(system)}" : "")}"));
+                $"System ID: {system.Hid} | Member ID: {member.Hid} {(member.MetadataPrivacy.CanAccess(ctx) ? $"| Created on {member.Created.FormatZoned(zone)}" : "")}"));
 
         if (member.DescriptionPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(member.BannerImage));
@@ -249,7 +249,7 @@ public class EmbedService
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx)))
             .Color(color)
             .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(system)}"));
+                $"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(ctx.Zone)}"));
 
         if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
             eb.Image(new Embed.EmbedImage(target.BannerImage));

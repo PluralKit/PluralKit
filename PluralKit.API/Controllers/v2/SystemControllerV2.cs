@@ -34,4 +34,32 @@ public class SystemControllerV2: PKControllerBase
         var newSystem = await _repo.UpdateSystem(system.Id, patch);
         return Ok(newSystem.ToJson(LookupContext.ByOwner, APIVersion.V2));
     }
+
+    [HttpGet("{systemRef}/settings")]
+    public async Task<IActionResult> GetSystemSettings(string systemRef)
+    {
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
+
+        var config = await _repo.GetSystemConfig(system.Id);
+        return Ok(config.ToJson());
+    }
+
+    [HttpPatch("{systemRef}/settings")]
+    public async Task<IActionResult> DoSystemSettingsPatch(string systemRef, [FromBody] JObject data)
+    {
+        var system = await ResolveSystem(systemRef);
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
+
+        var patch = SystemConfigPatch.FromJson(data);
+
+        patch.AssertIsValid();
+        if (patch.Errors.Count > 0)
+            throw new ModelParseError(patch.Errors);
+
+        var newConfig = await _repo.UpdateSystemConfig(system.Id, patch);
+        return Ok(newConfig.ToJson());
+    }
 }
