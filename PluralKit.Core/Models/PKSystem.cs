@@ -77,7 +77,9 @@ public static class PKSystemExt
         {
             case APIVersion.V1:
                 {
-                    o.Add("tz", null);
+                    // this property was moved to SystemConfig
+                    // see notice in /api/legacy docs
+                    o.Add("tz", "UTC");
 
                     o.Add("description_privacy",
                         ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
@@ -91,9 +93,6 @@ public static class PKSystemExt
                 }
             case APIVersion.V2:
                 {
-                    // todo: remove this
-                    o.Add("timezone", null);
-
                     if (ctx == LookupContext.ByOwner)
                     {
                         // todo: should this be moved to a different JSON model?

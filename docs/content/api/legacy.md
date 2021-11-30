@@ -6,6 +6,9 @@ permalink: /api/legacy
 # Legacy API documentation
 ::: warning
 This is the documentation for v1 of the PluralKit API. Please use v2 going forwards - v1 is deprecated and will be removed eventually.
+
+Some keys have been phased out of models and are therefore no longer functioning on v1:
+- 2021-12-07: `tz` in system model always returns `UTC` (the default value). the [get system settings](/api/models#get-system-settings) v2 endpoint can be used to get the correct timezone for a system (requires authentication).
 :::
 
 ## Models
