@@ -80,7 +80,12 @@ public partial class ModelRepository
         var system = await _db.QueryFirst<PKSystem>(conn, query, "returning *");
         _logger.Information("Created {SystemId}", system.Id);
 
-        await _db.Execute(conn => conn.QueryAsync("insert into config (system) values (@system)", new { system = system.Id }));
+        var (q, pms) = ("insert into config (system) values (@system)", new { system = system.Id });
+
+        if (conn == null)
+            await _db.Execute(conn => conn.QueryAsync(q, pms));
+        else
+            await conn.QueryAsync(q, pms);
 
         // no dispatch call here - system was just created, we don't have a webhook URL
         return system;

@@ -61,7 +61,7 @@ public partial class BulkImporter: IAsyncDisposable
             importer._system = system;
         }
 
-        importer._cfg = await repo.GetSystemConfig(system.Id);
+        importer._cfg = await repo.GetSystemConfig(system.Id, conn);
 
         // Fetch all members in the system and log their names and hids
         var members = await conn.QueryAsync<PKMember>("select id, hid, name from members where system = @System",
