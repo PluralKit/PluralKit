@@ -187,8 +187,8 @@ public class Config
 
         if (!ctx.HasNext())
         {
-            if (ctx.Config.PingsEnabled) { await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;s ping disable`."); }
-            else { await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;s ping enable`."); }
+            if (ctx.Config.PingsEnabled) { await ctx.Reply("Reaction pings are currently **enabled** for your system. To disable reaction pings, type `pk;config ping disable`."); }
+            else { await ctx.Reply("Reaction pings are currently **disabled** for your system. To enable reaction pings, type `pk;config ping enable`."); }
         }
         else
         {
@@ -223,7 +223,7 @@ public class Config
         if (zoneStr == null)
         {
             await ctx.Reply(
-                $"Your current system time zone is set to **{ctx.Config.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.Config.Zone)}** in that time zone. To change your system time zone, type `pk;s tz <zone>`.");
+                $"Your current system time zone is set to **{ctx.Config.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.Config.Zone)}** in that time zone. To change your system time zone, type `pk;config tz <zone>`.");
             return;
         }
 
