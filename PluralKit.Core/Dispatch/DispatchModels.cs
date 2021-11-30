@@ -79,11 +79,13 @@ public static class DispatchExt
         {
             if ((address.Address & 0x7f000000) == 0x7f000000) // 127.0/8
                 return false;
-            if ((address.Address & 0x0a000000) == 0x0a000000) // 10.0/8
+            if ((address.Address & 0xa000000) == 0xa000000) // 10.0/8
                 return false;
             if ((address.Address & 0xa9fe0000) == 0xa9fe0000) // 169.254/16
                 return false;
             if ((address.Address & 0xac100000) == 0xac100000) // 172.16/12
+                return false;
+            if ((address.Address & 0xc0a80000) == 0xc0a80000) // 192.168/16
                 return false;
         }
 
