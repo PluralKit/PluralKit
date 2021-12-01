@@ -29,7 +29,7 @@ public class DiscordControllerV2: PKControllerBase
         if (settings.AutoproxyMember != null)
             member = await _repo.GetMember(settings.AutoproxyMember.Value);
 
-        return Ok(settings.ToJson(member?.Hid));
+        return Ok(settings.ToJson(member?.Uuid.ToString()));
     }
 
     [HttpPatch("systems/{systemRef}/guilds/{guild_id}")]
