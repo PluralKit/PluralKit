@@ -55,6 +55,14 @@ public static class DispatchExt
         return new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
     }
 
+    private static List<IPNetwork> _privateNetworks = new()
+    {
+        IPNetwork.IANA_ABLK_RESERVED1, // 10/8
+        IPNetwork.IANA_CBLK_RESERVED1, // 192.168/16
+        IPNetwork.Parse("127.0.0.0/8"),
+        IPNetwork.Parse("169.254.0.0/16"),
+    };
+
     public static async Task<bool> ValidateUri(string url)
     {
         IPHostEntry host = null;
@@ -77,15 +85,7 @@ public static class DispatchExt
         foreach (var address in host.AddressList.Where(address =>
                      address.AddressFamily is AddressFamily.InterNetwork))
         {
-            if ((address.Address & 0x7f000000) == 0x7f000000) // 127.0/8
-                return false;
-            if ((address.Address & 0xa000000) == 0xa000000) // 10.0/8
-                return false;
-            if ((address.Address & 0xa9fe0000) == 0xa9fe0000) // 169.254/16
-                return false;
-            if ((address.Address & 0xac100000) == 0xac100000) // 172.16/12
-                return false;
-            if ((address.Address & 0xc0a80000) == 0xc0a80000) // 192.168/16
+            if (_privateNetworks.Any(net => net.Contains(address)))
                 return false;
         }
 
