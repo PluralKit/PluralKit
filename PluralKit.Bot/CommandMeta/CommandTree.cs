@@ -481,9 +481,16 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
         if (ctx.Match("ping"))
             return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
-        if (ctx.MatchMultiple(new[] { "private member" }) || ctx.Match("mp"))
+        if (ctx.Match("private"))
+        {
+            if (ctx.Match("member"))
+                return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
+            if (ctx.Match("group"))
+                return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
+        }
+        if (ctx.Match("mp"))
             return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
-        if (ctx.MatchMultiple(new[] { "private group" }) || ctx.Match("gp"))
+        if (ctx.Match("gp"))
             return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
 
         // todo: maybe add the list of configuration keys here?
