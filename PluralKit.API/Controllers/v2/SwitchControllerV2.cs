@@ -81,6 +81,7 @@ public class SwitchControllerV2: PKControllerBase
     public async Task<IActionResult> SwitchCreate(string systemRef, [FromBody] PostSwitchParams data)
     {
         var system = await ResolveSystem(systemRef);
+        if (system == null) throw Errors.SystemNotFound;
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 
@@ -163,6 +164,7 @@ public class SwitchControllerV2: PKControllerBase
         // for now, don't need to make a PatchObject for this, since it's only one param
 
         var system = await ResolveSystem(systemRef);
+        if (system == null) throw Errors.SystemNotFound;
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 
@@ -197,6 +199,7 @@ public class SwitchControllerV2: PKControllerBase
     public async Task<IActionResult> SwitchMemberPatch(string systemRef, string switchRef, [FromBody] JArray data)
     {
         var system = await ResolveSystem(systemRef);
+        if (system == null) throw Errors.SystemNotFound;
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 
@@ -244,6 +247,7 @@ public class SwitchControllerV2: PKControllerBase
     public async Task<IActionResult> SwitchDelete(string systemRef, string switchRef)
     {
         var system = await ResolveSystem(systemRef);
+        if (system == null) throw Errors.SystemNotFound;
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 

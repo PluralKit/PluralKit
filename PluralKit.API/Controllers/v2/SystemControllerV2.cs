@@ -21,10 +21,13 @@ public class SystemControllerV2: PKControllerBase
         return Ok(system.ToJson(ContextFor(system), APIVersion.V2));
     }
 
-    [HttpPatch("@me")]
-    public async Task<IActionResult> DoSystemPatch([FromBody] JObject data)
+    [HttpPatch("{systemRef}")]
+    public async Task<IActionResult> DoSystemPatch(string systemRef, [FromBody] JObject data)
     {
-        var system = await ResolveSystem("@me");
+        var system = await ResolveSystem(systemRef);
+        if (system == null) throw Errors.SystemNotFound;
+        if (ContextFor(system) != LookupContext.ByOwner)
+            throw Errors.GenericMissingPermissions;
         var patch = SystemPatch.FromJSON(data, APIVersion.V2);
 
         patch.AssertIsValid();
@@ -39,6 +42,7 @@ public class SystemControllerV2: PKControllerBase
     public async Task<IActionResult> GetSystemSettings(string systemRef)
     {
         var system = await ResolveSystem(systemRef);
+        if (system == null) throw Errors.SystemNotFound;
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 
@@ -50,6 +54,7 @@ public class SystemControllerV2: PKControllerBase
     public async Task<IActionResult> DoSystemSettingsPatch(string systemRef, [FromBody] JObject data)
     {
         var system = await ResolveSystem(systemRef);
+        if (system == null) throw Errors.SystemNotFound;
         if (ContextFor(system) != LookupContext.ByOwner)
             throw Errors.GenericMissingPermissions;
 
