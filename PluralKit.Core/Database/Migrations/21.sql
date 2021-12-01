@@ -1,7 +1,7 @@
 -- schema version 21
--- create `config` table
+-- create `system_config` table
 
-create table config (
+create table system_config (
     system int primary key references systems(id) on delete cascade,
     ui_tz text not null default 'UTC',
     pings_enabled bool not null default true,
@@ -10,7 +10,7 @@ create table config (
     group_limit_override int
 );
 
-insert into config select
+insert into system_config select
     id as system,
     ui_tz,
     pings_enabled,
