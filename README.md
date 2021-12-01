@@ -47,7 +47,7 @@ $ docker-compose up -d
 ```
 
 ## Manually
-* Install the .NET 5 SDK (see https://dotnet.microsoft.com/download)
+* Install the .NET 6 SDK (see https://dotnet.microsoft.com/download)
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
 * Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`
