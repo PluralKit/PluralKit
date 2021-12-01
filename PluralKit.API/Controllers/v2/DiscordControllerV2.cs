@@ -68,6 +68,7 @@ public class DiscordControllerV2: PKControllerBase
 
         // this is less than great, but at least it's legible
         if (patch.AutoproxyMember.Value == null)
+        {
             if (patch.AutoproxyMode.IsPresent)
             {
                 if (patch.AutoproxyMode.Value == AutoproxyMode.Member)
@@ -77,6 +78,19 @@ public class DiscordControllerV2: PKControllerBase
             {
                 throw Errors.MissingAutoproxyMember;
             }
+        }
+        else
+        {
+            if (patch.AutoproxyMode.IsPresent)
+            {
+                if (patch.AutoproxyMode.Value == AutoproxyMode.Latch)
+                    throw Errors.PatchLatchMemberError;
+            }
+            else if (settings.AutoproxyMode == AutoproxyMode.Latch)
+            {
+                throw Errors.PatchLatchMemberError;
+            }
+        }
 
         var newSettings = await _repo.UpdateSystemGuild(system.Id, guild_id, patch);
 
