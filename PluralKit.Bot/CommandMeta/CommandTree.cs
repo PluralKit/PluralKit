@@ -481,6 +481,10 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
         if (ctx.Match("ping"))
             return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
+        if (ctx.MatchMultiple(new[] { "private member" }) || ctx.Match("mp"))
+            return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
+        if (ctx.MatchMultiple(new[] { "private group" }) || ctx.Match("gp"))
+            return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");
@@ -492,7 +496,6 @@ public partial class CommandTree
         await ctx.Reply(
             $"{Emojis.Error} Unknown command `pk;{ctx.FullCommand().Truncate(100)}`. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
     }
-
     private async Task PrintCommandExpectedError(Context ctx, params Command[] potentialCommands)
     {
         var commandListStr = CreatePotentialCommandList(potentialCommands);

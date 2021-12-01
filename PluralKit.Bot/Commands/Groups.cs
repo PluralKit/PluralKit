@@ -64,14 +64,24 @@ public class Groups
                 throw new PKError("Group creation cancelled.");
         }
 
+        using var conn = await _db.Obtain();
         var newGroup = await _repo.CreateGroup(ctx.System.Id, groupName);
 
-        _ = _dispatch.Dispatch(newGroup.Id,
-            new UpdateDispatchData
-            {
-                Event = DispatchEvent.CREATE_GROUP,
-                EventData = JObject.FromObject(new { name = groupName })
-            });
+        var dispatchData = new JObject();
+        dispatchData.Add("name", groupName);
+
+        if (ctx.Config.GroupDefaultPrivate)
+        {
+            var patch = new GroupPatch().WithAllPrivacy(PrivacyLevel.Private);
+            await _repo.UpdateGroup(newGroup.Id, patch, conn);
+            dispatchData.Merge(patch.ToJson());
+        }
+
+        _ = _dispatch.Dispatch(newGroup.Id, new UpdateDispatchData
+        {
+            Event = DispatchEvent.CREATE_GROUP,
+            EventData = dispatchData
+        });
 
         var eb = new EmbedBuilder()
             .Description(

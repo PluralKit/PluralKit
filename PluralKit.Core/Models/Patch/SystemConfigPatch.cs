@@ -11,6 +11,8 @@ public class SystemConfigPatch: PatchObject
     public Partial<string> UiTz { get; set; }
     public Partial<bool> PingsEnabled { get; set; }
     public Partial<int?> LatchTimeout { get; set; }
+    public Partial<bool> MemberDefaultPrivate { get; set; }
+    public Partial<bool> GroupDefaultPrivate { get; set; }
     public Partial<int?> MemberLimitOverride { get; set; }
     public Partial<int?> GroupLimitOverride { get; set; }
 
@@ -18,6 +20,8 @@ public class SystemConfigPatch: PatchObject
         .With("ui_tz", UiTz)
         .With("pings_enabled", PingsEnabled)
         .With("latch_timeout", LatchTimeout)
+        .With("member_default_private", MemberDefaultPrivate)
+        .With("group_default_private", GroupDefaultPrivate)
         .With("member_limit_override", MemberLimitOverride)
         .With("group_limit_override", GroupLimitOverride)
     );
@@ -41,6 +45,12 @@ public class SystemConfigPatch: PatchObject
         if (LatchTimeout.IsPresent)
             o.Add("latch_timeout", LatchTimeout.Value);
 
+        if (MemberDefaultPrivate.IsPresent)
+            o.Add("member_default_private", MemberDefaultPrivate.Value);
+
+        if (GroupDefaultPrivate.IsPresent)
+            o.Add("group_default_private", GroupDefaultPrivate.Value);
+
         if (MemberLimitOverride.IsPresent)
             o.Add("member_limit", MemberLimitOverride.Value);
 
@@ -62,6 +72,12 @@ public class SystemConfigPatch: PatchObject
 
         if (o.ContainsKey("latch_timeout"))
             patch.LatchTimeout = o.Value<int>("latch_timeout");
+
+        if (o.ContainsKey("member_default_private"))
+            patch.MemberDefaultPrivate = o.Value<bool>("member_default_private");
+
+        if (o.ContainsKey("group_default_private"))
+            patch.GroupDefaultPrivate = o.Value<bool>("group_default_private");
 
         return patch;
     }

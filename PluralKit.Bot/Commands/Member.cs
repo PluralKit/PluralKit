@@ -55,13 +55,22 @@ public class Member
             throw Errors.MemberLimitReachedError(memberLimit);
 
         // Create the member
-        var member = await _repo.CreateMember(ctx.System.Id, memberName);
+        var member = await _repo.CreateMember(ctx.System.Id, memberName, conn);
         memberCount++;
+
+        JObject dispatchData = new JObject();
+        dispatchData.Add("name", memberName);
+
+        if (ctx.Config.MemberDefaultPrivate)
+        {
+            var patch = new MemberPatch().WithAllPrivacy(PrivacyLevel.Private);
+            await _repo.UpdateMember(member.Id, patch, conn);
+            dispatchData.Merge(patch.ToJson());
+        }
 
         // Try to match an image attached to the message
         var avatarArg = ctx.Message.Attachments.FirstOrDefault();
         Exception imageMatchError = null;
-        var sentDispatch = false;
         if (avatarArg != null)
             try
             {
@@ -69,31 +78,25 @@ public class Member
                 await _db.Execute(conn =>
                     _repo.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }, conn));
 
-                _ = _dispatch.Dispatch(member.Id, new UpdateDispatchData
-                {
-                    Event = DispatchEvent.CREATE_MEMBER,
-                    EventData = JObject.FromObject(new { name = memberName, avatar_url = avatarArg.Url }),
-                });
-                sentDispatch = true;
+                dispatchData.Add("avatar_url", avatarArg.Url);
             }
             catch (Exception e)
             {
                 imageMatchError = e;
             }
 
-        if (!sentDispatch)
-            _ = _dispatch.Dispatch(member.Id, new UpdateDispatchData
-            {
-                Event = DispatchEvent.CREATE_MEMBER,
-                EventData = JObject.FromObject(new { name = memberName }),
-            });
+        _ = _dispatch.Dispatch(member.Id, new UpdateDispatchData
+        {
+            Event = DispatchEvent.CREATE_MEMBER,
+            EventData = dispatchData,
+        });
 
         // Send confirmation and space hint
         await ctx.Reply(
             $"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
         // todo: move this to ModelRepository
         if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
-                new { System = ctx.System.Id }))) //if has private members
+                new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
             await ctx.Reply(
                 $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
         if (avatarArg != null)

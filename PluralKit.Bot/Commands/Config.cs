@@ -59,6 +59,20 @@ public class Config
         ));
 
         items.Add(new(
+            "private member",
+            "Whether member privacy is automatically set to private for new members",
+            EnabledDisabled(ctx.Config.MemberDefaultPrivate),
+            "disabled"
+        ));
+
+        items.Add(new(
+            "private group",
+            "Whether group privacy is automatically set to private for new groups",
+            EnabledDisabled(ctx.Config.GroupDefaultPrivate),
+            "disabled"
+        ));
+
+        items.Add(new(
             "Member limit",
             "The maximum number of registered members for your system",
             ctx.Config.MemberLimitOverride?.ToString(),
@@ -297,5 +311,57 @@ public class Config
 
                 return $"**{z.Id}**";
             });
+    }
+
+    public async Task MemberDefaultPrivacy(Context ctx)
+    {
+        ctx.CheckSystem();
+
+        if (!ctx.HasNext())
+        {
+            if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply("Newly created members will currently have their privacy settings set to private. To change this, type `pk;config private member off`"); }
+            else { await ctx.Reply("Newly created members will currently have their privacy settings set to public. To automatically set new members' privacy settings to private, type `pk;config private member on`"); }
+        }
+        else
+        {
+            if (ctx.Match("on", "enable"))
+            {
+                await _repo.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = true });
+
+                await ctx.Reply("Newly created members will now have their privacy settings set to private.");
+            }
+            if (ctx.Match("off", "disable"))
+            {
+                await _repo.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = false });
+
+                await ctx.Reply("Newly created members will now have their privacy settings set to public.");
+            }
+        }
+    }
+
+    public async Task GroupDefaultPrivacy(Context ctx)
+    {
+        ctx.CheckSystem();
+
+        if (!ctx.HasNext())
+        {
+            if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this, type `pk;config private group off`"); }
+            else { await ctx.Reply("Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `pk;config private group on`"); }
+        }
+        else
+        {
+            if (ctx.Match("on", "enable"))
+            {
+                await _repo.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = true });
+
+                await ctx.Reply("Newly created groups will now have their privacy settings set to private.");
+            }
+            if (ctx.Match("off", "disable"))
+            {
+                await _repo.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = false });
+
+                await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
+            }
+        }
     }
 }

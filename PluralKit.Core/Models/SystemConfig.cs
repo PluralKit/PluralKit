@@ -10,6 +10,8 @@ public class SystemConfig
     public string UiTz { get; set; }
     public bool PingsEnabled { get; }
     public int? LatchTimeout { get; }
+    public bool MemberDefaultPrivate { get; }
+    public bool GroupDefaultPrivate { get; }
     public int? MemberLimitOverride { get; }
     public int? GroupLimitOverride { get; }
 
@@ -25,6 +27,8 @@ public static class SystemConfigExt
         o.Add("timezone", cfg.UiTz);
         o.Add("pings_enabled", cfg.PingsEnabled);
         o.Add("latch_timeout", cfg.LatchTimeout);
+        o.Add("member_default_private", cfg.MemberDefaultPrivate);
+        o.Add("group_default_private", cfg.GroupDefaultPrivate);
         o.Add("member_limit", cfg.MemberLimitOverride ?? Limits.MaxMemberCount);
         o.Add("group_limit", cfg.GroupLimitOverride ?? Limits.MaxGroupCount);
 

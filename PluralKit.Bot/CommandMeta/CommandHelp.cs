@@ -23,6 +23,8 @@ public partial class CommandTree
     public static Command ConfigPing = new Command("config ping", "config ping <enable|disable>", "Changes your system's ping preferences");
     public static Command ConfigAutoproxyAccount = new Command("config autoproxy account", "autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
     public static Command ConfigAutoproxyTimeout = new Command("config autoproxy timeout", "autoproxy timeout [<duration>|off|reset]", "Sets the latch timeout duration for your system");
+    public static Command ConfigMemberDefaultPrivacy = new("config member private", "config member private [on|off]", "Sets whether member privacy is automatically set to private when creating a new member");
+    public static Command ConfigGroupDefaultPrivacy = new("config group private", "config group private [on|off]", "Sets whether group privacy is automatically set to private when creating a new group");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
     public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
     public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
@@ -125,7 +127,8 @@ public partial class CommandTree
 
     public static Command[] ConfigCommands =
     {
-        ConfigTimezone, ConfigPing, ConfigAutoproxyAccount, ConfigAutoproxyTimeout
+        ConfigTimezone, ConfigPing, ConfigAutoproxyAccount, ConfigAutoproxyTimeout,
+        ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy
     };
 
     public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable };
