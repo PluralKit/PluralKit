@@ -24,7 +24,7 @@ public static class ContextArgumentsExt
         ctx.Parameters.FullCommand;
 
     /// <summary>
-    ///     Checks if the next parameter is equal to one of the given keywords. Case-insensitive.
+    ///     Checks if the next parameter is equal to one of the given keywords and pops it from the stack. Case-insensitive.
     /// </summary>
     public static bool Match(this Context ctx, ref string used, params string[] potentialMatches)
     {
@@ -49,6 +49,19 @@ public static class ContextArgumentsExt
     }
 
     /// <summary>
+    ///     Checks if the next parameter (starting from `ptr`) is equal to one of the given keywords, and leaves it on the stack. Case-insensitive.
+    /// </summary>
+    public static bool PeekMatch(this Context ctx, ref int ptr, string[] potentialMatches)
+    {
+        var arg = ctx.Parameters.PeekWithPtr(ref ptr);
+        foreach (var match in potentialMatches)
+            if (arg.Equals(match, StringComparison.InvariantCultureIgnoreCase))
+                return true;
+
+        return false;
+    }
+
+    /// <summary>
     /// Matches the next *n* parameters against each parameter consecutively.
     /// <br />
     /// Note that this is handled differently than single-parameter Match:
@@ -56,11 +69,12 @@ public static class ContextArgumentsExt
     /// </summary>
     public static bool MatchMultiple(this Context ctx, params string[][] potentialParametersMatches)
     {
-        foreach (var param in potentialParametersMatches)
-            if (!ctx.Match(param)) return false;
+        int ptr = ctx.Parameters._ptr;
 
-        for (var i = 0; i < potentialParametersMatches.Length; i++)
-            ctx.PopArgument();
+        foreach (var param in potentialParametersMatches)
+            if (!ctx.PeekMatch(ref ptr, param)) return false;
+
+        ctx.Parameters._ptr = ptr;
 
         return true;
     }

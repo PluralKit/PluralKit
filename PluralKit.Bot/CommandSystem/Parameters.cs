@@ -27,7 +27,7 @@ public class Parameters
     };
 
     private ISet<string> _flags; // Only parsed when requested first time
-    private int _ptr;
+    public int _ptr;
 
     public string FullCommand { get; }
 
@@ -100,8 +100,15 @@ public class Parameters
 
     public string Peek()
     {
-        // Loop to ignore and skip past flags, temp ptr so we don't move the real ptr
-        var ptr = _ptr;
+        // temp ptr so we don't move the real ptr
+        int ptr = _ptr;
+
+        return PeekWithPtr(ref ptr);
+    }
+
+    public string PeekWithPtr(ref int ptr)
+    {
+        // Loop to ignore and skip past flags
         while (NextWordPosition(ptr) is { } pos)
         {
             ptr = pos.endPos + pos.advanceAfterWord;
