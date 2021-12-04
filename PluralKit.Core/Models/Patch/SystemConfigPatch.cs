@@ -71,7 +71,7 @@ public class SystemConfigPatch: PatchObject
             patch.PingsEnabled = o.Value<bool>("pings_enabled");
 
         if (o.ContainsKey("latch_timeout"))
-            patch.LatchTimeout = o.Value<int>("latch_timeout");
+            patch.LatchTimeout = o.Value<int?>("latch_timeout");
 
         if (o.ContainsKey("member_default_private"))
             patch.MemberDefaultPrivate = o.Value<bool>("member_default_private");
