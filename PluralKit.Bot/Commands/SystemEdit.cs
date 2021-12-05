@@ -22,16 +22,18 @@ public class SystemEdit
         _client = client;
     }
 
-    public async Task Name(Context ctx)
+    public async Task Name(Context ctx, PKSystem target)
     {
-        var noNameSetMessage = "Your system does not have a name set. Type `pk;system name <name>` to set one.";
+        var isOwnSystem = target.Id == ctx.System?.Id;
 
-        ctx.CheckSystem();
+        var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name set.";
+        if (isOwnSystem)
+            noNameSetMessage += " Type `pk;system name <name>` to set one.";
 
         if (ctx.MatchRaw())
         {
-            if (ctx.System.Name != null)
-                await ctx.Reply($"```\n{ctx.System.Name}\n```");
+            if (target.Name != null)
+                await ctx.Reply($"```\n{target.Name}\n```");
             else
                 await ctx.Reply(noNameSetMessage);
             return;
@@ -39,17 +41,20 @@ public class SystemEdit
 
         if (!ctx.HasNext(false))
         {
-            if (ctx.System.Name != null)
+            if (target.Name != null)
                 await ctx.Reply(
-                    $"Your system's name is currently **{ctx.System.Name}**. Type `pk;system name -clear` to clear it.");
+                    $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
+                    + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : ""));
             else
                 await ctx.Reply(noNameSetMessage);
             return;
         }
 
+        ctx.CheckSystem().CheckOwnSystem(target);
+
         if (await ctx.MatchClear("your system's name"))
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { Name = null });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { Name = null });
 
             await ctx.Reply($"{Emojis.Success} System name cleared.");
         }
@@ -60,22 +65,25 @@ public class SystemEdit
             if (newSystemName.Length > Limits.MaxSystemNameLength)
                 throw Errors.StringTooLongError("System name", newSystemName.Length, Limits.MaxSystemNameLength);
 
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { Name = newSystemName });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { Name = newSystemName });
 
             await ctx.Reply($"{Emojis.Success} System name changed.");
         }
     }
 
-    public async Task Description(Context ctx)
+    public async Task Description(Context ctx, PKSystem target)
     {
-        var noDescriptionSetMessage =
-            "Your system does not have a description set. To set one, type `pk;s description <description>`.";
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        var noDescriptionSetMessage = "This system does not have a description set.";
+        if (isOwnSystem)
+            noDescriptionSetMessage += " To set one, type `pk;s description <description>`.";
 
         ctx.CheckSystem();
 
         if (ctx.MatchRaw())
         {
-            if (ctx.System.Description == null)
+            if (target.Description == null)
                 await ctx.Reply(noDescriptionSetMessage);
             else
                 await ctx.Reply($"```\n{ctx.System.Description}\n```");
@@ -84,21 +92,24 @@ public class SystemEdit
 
         if (!ctx.HasNext(false))
         {
-            if (ctx.System.Description == null)
+            if (target.Description == null)
                 await ctx.Reply(noDescriptionSetMessage);
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("System description")
-                    .Description(ctx.System.Description)
+                    .Description(target.Description)
                     .Footer(new Embed.EmbedFooter(
-                        "To print the description with formatting, type `pk;s description -raw`. To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`."))
+                        "To print the description with formatting, type `pk;s description -raw`."
+                            + (isOwnSystem ? "To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")))
                     .Build());
             return;
         }
 
+        ctx.CheckSystem().CheckOwnSystem(target);
+
         if (await ctx.MatchClear("your system's description"))
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { Description = null });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { Description = null });
 
             await ctx.Reply($"{Emojis.Success} System description cleared.");
         }
@@ -108,35 +119,38 @@ public class SystemEdit
             if (newDescription.Length > Limits.MaxDescriptionLength)
                 throw Errors.StringTooLongError("Description", newDescription.Length, Limits.MaxDescriptionLength);
 
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { Description = newDescription });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { Description = newDescription });
 
             await ctx.Reply($"{Emojis.Success} System description changed.");
         }
     }
 
-    public async Task Color(Context ctx)
+    public async Task Color(Context ctx, PKSystem target)
     {
-        ctx.CheckSystem();
+        var isOwnSystem = ctx.System?.Id == target.Id;
 
-        if (await ctx.MatchClear())
+        if (!ctx.HasNext())
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { Color = Partial<string>.Null() });
-
-            await ctx.Reply($"{Emojis.Success} System color cleared.");
-        }
-        else if (!ctx.HasNext())
-        {
-            if (ctx.System.Color == null)
+            if (target.Color == null)
                 await ctx.Reply(
-                    "Your system does not have a color set. To set one, type `pk;system color <color>`.");
+                    "This system does not have a color set." + (isOwnSystem ? " To set one, type `pk;system color <color>`." : ""));
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("System color")
-                    .Color(ctx.System.Color.ToDiscordColor())
+                    .Color(target.Color.ToDiscordColor())
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{ctx.System.Color}/?text=%20"))
                     .Description(
-                        $"Your system's color is **#{ctx.System.Color}**. To clear it, type `pk;s color -clear`.")
+                        $"This system's color is **#{ctx.System.Color}**." + (isOwnSystem ? " To clear it, type `pk;s color -clear`." : ""))
                     .Build());
+        }
+
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        if (await ctx.MatchClear())
+        {
+            await _repo.UpdateSystem(target.Id, new SystemPatch { Color = Partial<string>.Null() });
+
+            await ctx.Reply($"{Emojis.Success} System color cleared.");
         }
         else
         {
@@ -145,7 +159,7 @@ public class SystemEdit
             if (color.StartsWith("#")) color = color.Substring(1);
             if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
 
-            await _repo.UpdateSystem(ctx.System.Id,
+            await _repo.UpdateSystem(target.Id,
                 new SystemPatch { Color = Partial<string>.Present(color.ToLowerInvariant()) });
 
             await ctx.Reply(embed: new EmbedBuilder()
@@ -156,34 +170,38 @@ public class SystemEdit
         }
     }
 
-    public async Task Tag(Context ctx)
+    public async Task Tag(Context ctx, PKSystem target)
     {
-        var noTagSetMessage = "You currently have no system tag. To set one, type `pk;s tag <tag>`.";
+        var isOwnSystem = ctx.System?.Id == target.Id;
 
-        ctx.CheckSystem();
+        var noTagSetMessage = isOwnSystem
+            ? "You currently have no system tag set. To set one, type `pk;s tag <tag>`."
+            : "This system currently has no system tag set.";
 
         if (ctx.MatchRaw())
         {
-            if (ctx.System.Tag == null)
+            if (target.Tag == null)
                 await ctx.Reply(noTagSetMessage);
             else
-                await ctx.Reply($"```\n{ctx.System.Tag}\n```");
+                await ctx.Reply($"```\n{target.Tag}\n```");
             return;
         }
 
         if (!ctx.HasNext(false))
         {
-            if (ctx.System.Tag == null)
+            if (target.Tag == null)
                 await ctx.Reply(noTagSetMessage);
             else
-                await ctx.Reply(
-                    $"Your current system tag is {ctx.System.Tag.AsCode()}. To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`.");
+                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {ctx.System.Tag.AsCode()}."
+                    + (isOwnSystem ? "To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`." : ""));
             return;
         }
 
+        ctx.CheckSystem().CheckOwnSystem(target);
+
         if (await ctx.MatchClear("your system's tag"))
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { Tag = null });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { Tag = null });
 
             await ctx.Reply($"{Emojis.Success} System tag cleared.");
         }
@@ -194,16 +212,16 @@ public class SystemEdit
                 if (newTag.Length > Limits.MaxSystemTagLength)
                     throw Errors.StringTooLongError("System tag", newTag.Length, Limits.MaxSystemTagLength);
 
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { Tag = newTag });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { Tag = newTag });
 
             await ctx.Reply(
                 $"{Emojis.Success} System tag changed. Member names will now end with {newTag.AsCode()} when proxied.");
         }
     }
 
-    public async Task ServerTag(Context ctx)
+    public async Task ServerTag(Context ctx, PKSystem target)
     {
-        ctx.CheckSystem().CheckGuildContext();
+        ctx.CheckSystem().CheckOwnSystem(target).CheckGuildContext();
 
         var setDisabledWarning =
             $"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `pk;s servertag -enable`.";
@@ -389,17 +407,40 @@ public class SystemEdit
             await ShowIcon();
     }
 
-    public async Task BannerImage(Context ctx)
+    public async Task BannerImage(Context ctx, PKSystem target)
     {
-        ctx.CheckSystem();
+        var isOwnSystem = target.Id == ctx.System?.Id;
 
-        async Task ClearImage()
+        if (!ctx.HasNext())
+        {
+            if ((target.BannerImage?.Trim() ?? "").Length > 0)
+            {
+                var eb = new EmbedBuilder()
+                    .Title("System banner image")
+                    .Image(new Embed.EmbedImage(target.BannerImage));
+
+                if (isOwnSystem)
+                    eb.Description("To clear, use `pk;system banner clear`.");
+
+                await ctx.Reply(embed: eb.Build());
+            }
+            else
+            {
+                throw new PKSyntaxError(
+                    "This system does not have a banner image set." + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+            }
+            return;
+        }
+
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        if (await ctx.MatchClear("your system's banner image"))
         {
             await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} System banner image cleared.");
         }
 
-        async Task SetImage(ParsedImage img)
+        else if (await ctx.MatchImage() is { } img)
         {
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
@@ -421,34 +462,11 @@ public class SystemEdit
                 : ctx.Reply(msg));
         }
 
-        async Task ShowImage()
-        {
-            if ((ctx.System.BannerImage?.Trim() ?? "").Length > 0)
-            {
-                var eb = new EmbedBuilder()
-                    .Title("System banner image")
-                    .Image(new Embed.EmbedImage(ctx.System.BannerImage))
-                    .Description("To clear, use `pk;system banner clear`.");
-                await ctx.Reply(embed: eb.Build());
-            }
-            else
-            {
-                throw new PKSyntaxError(
-                    "This system does not have a banner image set. Set one by attaching an image to this command, or by passing an image URL or @mention.");
-            }
-        }
-
-        if (await ctx.MatchClear("your system's banner image"))
-            await ClearImage();
-        else if (await ctx.MatchImage() is { } img)
-            await SetImage(img);
-        else
-            await ShowImage();
     }
 
-    public async Task Delete(Context ctx)
+    public async Task Delete(Context ctx, PKSystem target)
     {
-        ctx.CheckSystem();
+        ctx.CheckSystem().CheckOwnSystem(target);
 
         await ctx.Reply(
             $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{ctx.System.Hid}`).\n**Note: this action is permanent.**");
@@ -509,9 +527,9 @@ public class SystemEdit
             await ctx.Reply($"Message proxying in {serverText} is now **disabled** for your system.");
     }
 
-    public async Task SystemPrivacy(Context ctx)
+    public async Task SystemPrivacy(Context ctx, PKSystem target)
     {
-        ctx.CheckSystem();
+        ctx.CheckSystem().CheckOwnSystem(target);
 
         Task PrintEmbed()
         {

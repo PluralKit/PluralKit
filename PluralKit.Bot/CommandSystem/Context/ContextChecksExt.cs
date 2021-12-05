@@ -27,6 +27,13 @@ public static class ContextChecksExt
         throw new PKError("You do not have permission to access this information.");
     }
 
+    public static Context CheckOwnSystem(this Context ctx, PKSystem system)
+    {
+        if (system.Id != ctx.System?.Id)
+            throw Errors.NotOwnSystemError;
+        return ctx;
+    }
+
     public static Context CheckOwnMember(this Context ctx, PKMember member)
     {
         if (member.System != ctx.System?.Id)

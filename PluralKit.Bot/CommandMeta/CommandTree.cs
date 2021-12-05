@@ -143,75 +143,73 @@ public partial class CommandTree
 
     private async Task HandleSystemCommand(Context ctx)
     {
-        // If we have no parameters, default to self-target
+        // these commands never take a system target
         if (!ctx.HasNext())
             await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, ctx.System));
-
-        // First, we match own-system-only commands (ie. no target system parameter)
         else if (ctx.Match("new", "create", "make", "add", "register", "init", "n"))
             await ctx.Execute<System>(SystemNew, m => m.New(ctx));
-        else if (ctx.Match("name", "rename", "changename"))
-            await ctx.Execute<SystemEdit>(SystemRename, m => m.Name(ctx));
-        else if (ctx.Match("tag"))
-            await ctx.Execute<SystemEdit>(SystemTag, m => m.Tag(ctx));
-        else if (ctx.Match("servertag"))
-            await ctx.Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx));
-        else if (ctx.Match("description", "desc", "bio"))
-            await ctx.Execute<SystemEdit>(SystemDesc, m => m.Description(ctx));
-        else if (ctx.Match("color", "colour"))
-            await ctx.Execute<SystemEdit>(SystemColor, m => m.Color(ctx));
-        else if (ctx.Match("banner", "splash", "cover"))
-            await ctx.Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx));
-        else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
-            await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx));
-        else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
-            await ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx));
-        else if (ctx.Match("webhook", "hook"))
-            await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
-        else if (ctx.Match("timezone", "tz"))
-            await ctx.Execute<Config>(ConfigTimezone, m => m.SystemTimezone(ctx), true);
-        else if (ctx.Match("proxy"))
-            await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
-        else if (ctx.Match("list", "l", "members"))
-            await ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
-        else if (ctx.Match("find", "search", "query", "fd", "s"))
-            await ctx.Execute<SystemList>(SystemFind, m => m.MemberList(ctx, ctx.System));
-        else if (ctx.Match("f", "front", "fronter", "fronters"))
-        {
-            if (ctx.Match("h", "history"))
-                await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
-            else if (ctx.Match("p", "percent", "%"))
-                await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
-            else
-                await ctx.Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, ctx.System));
-        }
-        else if (ctx.Match("fh", "fronthistory", "history", "switches"))
-            await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, ctx.System));
-        else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-            await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, ctx.System));
-        else if (ctx.Match("privacy"))
-            await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx));
-        else if (ctx.Match("ping"))
-            await ctx.Execute<Config>(ConfigPing, m => m.SystemPing(ctx), true);
         else if (ctx.Match("commands", "help"))
             await PrintCommandList(ctx, "systems", SystemCommands);
-        else if (ctx.Match("groups", "gs", "g"))
-            await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, null));
+
+        // these are deprecated (and not accessible by other users anyway), let's leave them out of new parsing
+        else if (ctx.Match("timezone", "tz"))
+            await ctx.Execute<Config>(ConfigTimezone, m => m.SystemTimezone(ctx), true);
+        else if (ctx.Match("ping"))
+            await ctx.Execute<Config>(ConfigPing, m => m.SystemPing(ctx), true);
+
+        // todo: these aren't deprecated but also shouldn't be here
+        else if (ctx.Match("webhook", "hook"))
+            await ctx.Execute<Api>(null, m => m.SystemWebhook(ctx));
+        else if (ctx.Match("proxy"))
+            await ctx.Execute<SystemEdit>(SystemProxy, m => m.SystemProxy(ctx));
+
+        // finally, parse commands that *do* take a system target
         else
-            await HandleSystemCommandTargeted(ctx);
+        {
+            // try matching a system ID
+            var target = await ctx.MatchSystem();
+            var previousPtr = ctx.Parameters._ptr;
+
+            // if we have a parsed target and no more commands, don't bother with the command flow
+            // we skip the `target != null` check here since the argument isn't be popped if it's not a system
+            if (!ctx.HasNext())
+            {
+                await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
+                return;
+            }
+
+            await HandleSystemCommandTargeted(ctx, target ?? ctx.System);
+
+            // if we *still* haven't matched anything, the user entered an invalid command name or system reference
+            if (ctx.Parameters._ptr == previousPtr)
+            {
+                if (ctx.Parameters.Peek().Length != 5 && !ulong.TryParse(ctx.Parameters.Peek(), out _))
+                {
+                    await PrintCommandNotFoundError(ctx, SystemCommands);
+                    return;
+                }
+
+                var list = CreatePotentialCommandList(SystemCommands);
+                await ctx.Reply($"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\n"
+                        + $"Perhaps you meant to use one of the following commands?\n{list}");
+            }
+        }
     }
 
-    private async Task HandleSystemCommandTargeted(Context ctx)
+    private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        // Commands that have a system target (eg. pk;system <system> fronthistory)
-        var target = await ctx.MatchSystem();
-        if (target == null)
-        {
-            var list = CreatePotentialCommandList(SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc,
-                SystemAvatar, SystemDelete, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent);
-            await ctx.Reply(
-                $"{Emojis.Error} {await CreateSystemNotFoundError(ctx)}\n\nPerhaps you meant to use one of the following commands?\n{list}");
-        }
+        if (ctx.Match("name", "rename", "changename"))
+            await ctx.Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
+        else if (ctx.Match("tag"))
+            await ctx.Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
+        else if (ctx.Match("servertag"))
+            await ctx.Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
+        else if (ctx.Match("description", "desc", "bio"))
+            await ctx.Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
+        else if (ctx.Match("color", "colour"))
+            await ctx.Execute<SystemEdit>(SystemColor, m => m.Color(ctx, target));
+        else if (ctx.Match("banner", "splash", "cover"))
+            await ctx.Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
             await ctx.Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
         else if (ctx.Match("list", "l", "members"))
@@ -235,11 +233,10 @@ public partial class CommandTree
             await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
         else if (ctx.Match("groups", "gs"))
             await ctx.Execute<Groups>(GroupList, g => g.ListSystemGroups(ctx, target));
-        else if (!ctx.HasNext())
-            await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
-        else
-            await PrintCommandNotFoundError(ctx, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent,
-                SystemInfo);
+        else if (ctx.Match("privacy"))
+            await ctx.Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
+        else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
+            await ctx.Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
     }
 
     private async Task HandleMemberCommand(Context ctx)
