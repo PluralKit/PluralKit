@@ -49,8 +49,7 @@ There are a number of option flags that can be added to the `pk;system list` com
 |Flag|Aliases|Description|
 |---|---|---|
 |-all|-a|Show all members, including private members|
-|-public-only|-public, -pub|Only show public members (default)|
-|-private-only|-private, -priv|Only show private members|
+|-private-only|-po|Only show private members|
 
 ::: warning
 You cannot look up private members of another system.
@@ -80,4 +79,6 @@ These flags only work with the full member list (`pk;system list full`).
 |pk;group \<group> frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
 |Most commands|-all|-a|Show hidden/private information|
 |Most commands|-raw|-r|Show text with formatting, for easier copy-pasting|
+|All commands|-private|-priv|Show private information|
+|All commands|-public|-pub|Hide private information|
 |All commands, except `delete`|-y|-yes|Skip confirmation prompt|

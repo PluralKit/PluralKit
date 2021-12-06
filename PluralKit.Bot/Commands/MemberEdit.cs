@@ -69,7 +69,7 @@ public class MemberEdit
                 $" To set one, type `pk;member {target.Reference()} description <description>`.";
 
         if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-            throw Errors.LookupNotAllowed;
+            throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
 
         if (ctx.MatchRaw())
         {
@@ -125,7 +125,7 @@ public class MemberEdit
             noPronounsSetMessage += $"To set some, type `pk;member {target.Reference()} pronouns <pronouns>`.";
 
         if (!target.PronounPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-            throw Errors.LookupNotAllowed;
+            throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
 
         if (ctx.MatchRaw())
         {
@@ -293,7 +293,7 @@ public class MemberEdit
         else if (!ctx.HasNext())
         {
             if (!target.BirthdayPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                throw Errors.LookupNotAllowed;
+                throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
 
             if (target.Birthday == null)
                 await ctx.Reply("This member does not have a birthdate set."

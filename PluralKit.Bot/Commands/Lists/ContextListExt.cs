@@ -54,8 +54,7 @@ public static class ContextListExt
 
         // Privacy filter (default is public only)
         if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null;
-        if (ctx.MatchFlag("private-only", "private", "priv")) p.PrivacyFilter = PrivacyLevel.Private;
-        if (ctx.MatchFlag("public-only", "public", "pub")) p.PrivacyFilter = PrivacyLevel.Public;
+        if (ctx.MatchFlag("private-only", "po")) p.PrivacyFilter = PrivacyLevel.Private;
 
         // PERM CHECK: If we're trying to access non-public members of another system, error
         if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)

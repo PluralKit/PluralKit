@@ -73,6 +73,13 @@ public class Config
         ));
 
         items.Add(new(
+            "show private",
+            "Whether private information is shown to linked accounts by default",
+            ctx.Config.ShowPrivateInfo.ToString().ToLower(),
+            "true"
+        ));
+
+        items.Add(new(
             "Member limit",
             "The maximum number of registered members for your system",
             ctx.Config.MemberLimitOverride?.ToString(),
@@ -345,7 +352,7 @@ public class Config
 
         if (!ctx.HasNext())
         {
-            if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this, type `pk;config private group off`"); }
+            if (ctx.Config.GroupDefaultPrivate) { await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this, type `pk;config private group off`"); }
             else { await ctx.Reply("Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `pk;config private group on`"); }
         }
         else
@@ -363,5 +370,31 @@ public class Config
                 await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
             }
         }
+    }
+
+    public async Task ShowPrivateInfo(Context ctx)
+    {
+        ctx.CheckSystem();
+
+        if (!ctx.HasNext())
+        {
+            if (ctx.Config.ShowPrivateInfo) await ctx.Reply("Private information is currently **shown** when looking up your own info. Use the `-public` flag to hide it.");
+            else await ctx.Reply("Private information is currently **hidden** when looking up your own info. Use the `-private` flag to show it.");
+            return;
+        }
+
+        if (ctx.Match("true"))
+        {
+            await _repo.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = true });
+
+            await ctx.Reply("Private information will now be **shown** when looking up your own info. Use the `-public` flag to hide it.");
+        }
+        else if (ctx.Match("false"))
+        {
+            await _repo.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = false });
+
+            await ctx.Reply("Private information will now be **hidden** when looking up your own info. Use the `-private` flag to show it.");
+        }
+        else throw new PKError("You must pass 'true' or 'false' to this command.");
     }
 }

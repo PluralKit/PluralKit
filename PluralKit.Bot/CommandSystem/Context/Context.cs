@@ -141,7 +141,7 @@ public class Context
         if (hasPrivateOverride && hasPublicOverride)
             throw new PKError("Cannot match both public and private flags at the same time.");
 
-        if (System.Id != systemId)
+        if (System?.Id != systemId)
         {
             if (hasPrivateOverride)
                 throw Errors.NotOwnInfo;
@@ -153,8 +153,9 @@ public class Context
         if (hasPublicOverride)
             return LookupContext.ByNonOwner;
 
-        // todo: add config defaults
-        return LookupContext.ByOwner;
+        return Config.ShowPrivateInfo
+            ? LookupContext.ByOwner
+            : LookupContext.ByNonOwner;
     }
 
     public IComponentContext Services => _provider;

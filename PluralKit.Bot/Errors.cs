@@ -90,6 +90,8 @@ public static class Errors
         new("Cannot get the front percent between now and a time in the future.");
 
     public static PKError LookupNotAllowed => new("You do not have permission to access this information.");
+    public static PKError LookupHidden =>
+        new("This information is private and you have chosen to hide private information by default. Add the `-private` flag to this command to show it.");
 
     public static PKError StringTooLongError(string name, int length, int maxLength) =>
         new($"{name} too long ({length}/{maxLength} characters).");

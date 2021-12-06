@@ -190,7 +190,7 @@ public class Groups
     public async Task GroupDescription(Context ctx, PKGroup target)
     {
         if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-            throw Errors.LookupNotAllowed;
+            throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
 
         var noDescriptionSetMessage = "This group does not have a description set.";
         if (ctx.System?.Id == target.System)
@@ -282,7 +282,8 @@ public class Groups
         async Task ShowIcon()
         {
             if (!target.IconPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                throw Errors.LookupNotAllowed;
+                throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+
             if ((target.Icon?.Trim() ?? "").Length > 0)
             {
                 var eb = new EmbedBuilder()
@@ -346,7 +347,8 @@ public class Groups
         async Task ShowBannerImage()
         {
             if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                throw Errors.LookupNotAllowed;
+                throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
             {
                 var eb = new EmbedBuilder()
@@ -440,7 +442,7 @@ public class Groups
             if (system.Id == ctx.System.Id)
                 pctx = LookupContext.ByOwner;
             else
-                throw new PKError("You do not have permission to access this information.");
+                throw system.Id == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
         }
 
         var groups = (await _db.Execute(conn => conn.QueryGroupList(system.Id)))

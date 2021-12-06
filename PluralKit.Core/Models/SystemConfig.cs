@@ -12,6 +12,7 @@ public class SystemConfig
     public int? LatchTimeout { get; }
     public bool MemberDefaultPrivate { get; }
     public bool GroupDefaultPrivate { get; }
+    public bool ShowPrivateInfo { get; }
     public int? MemberLimitOverride { get; }
     public int? GroupLimitOverride { get; }
 
@@ -29,6 +30,7 @@ public static class SystemConfigExt
         o.Add("latch_timeout", cfg.LatchTimeout);
         o.Add("member_default_private", cfg.MemberDefaultPrivate);
         o.Add("group_default_private", cfg.GroupDefaultPrivate);
+        o.Add("show_private_info", cfg.ShowPrivateInfo);
         o.Add("member_limit", cfg.MemberLimitOverride ?? Limits.MaxMemberCount);
         o.Add("group_limit", cfg.GroupLimitOverride ?? Limits.MaxGroupCount);
 

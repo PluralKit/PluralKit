@@ -489,6 +489,8 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
         if (ctx.Match("gp"))
             return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
+        if (ctx.MatchMultiple(new[] { "show" }, new[] { "private" }) || ctx.Match("sp"))
+            return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");
