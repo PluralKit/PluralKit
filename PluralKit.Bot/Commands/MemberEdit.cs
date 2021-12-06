@@ -329,7 +329,7 @@ public class MemberEdit
 
     private async Task<EmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
     {
-        var lcx = ctx.LookupContextFor(target);
+        var lcx = ctx.LookupContextFor(target.System);
 
         MemberGuildSettings memberGuildConfig = null;
         if (ctx.Guild != null)

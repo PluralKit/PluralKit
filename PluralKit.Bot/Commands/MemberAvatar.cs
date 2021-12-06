@@ -43,7 +43,7 @@ public class MemberAvatar
     {
         var currentValue = location == AvatarLocation.Member ? target.AvatarUrl : guildData?.AvatarUrl;
         var canAccess = location != AvatarLocation.Member ||
-                        target.AvatarPrivacy.CanAccess(ctx.LookupContextFor(target));
+                        target.AvatarPrivacy.CanAccess(ctx.LookupContextFor(target.System));
         if (string.IsNullOrEmpty(currentValue) || !canAccess)
         {
             if (location == AvatarLocation.Member)

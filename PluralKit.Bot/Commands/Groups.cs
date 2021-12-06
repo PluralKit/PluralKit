@@ -599,7 +599,7 @@ public class Groups
         var frontpercent = await _db.Execute(c =>
             _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
         await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target,
-            ctx.Zone, ctx.LookupContextFor(targetSystem), title.ToString(), ignoreNoFronters, showFlat));
+            ctx.Zone, ctx.LookupContextFor(targetSystem.Id), title.ToString(), ignoreNoFronters, showFlat));
     }
 
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)

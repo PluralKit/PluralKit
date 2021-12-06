@@ -23,7 +23,7 @@ public static class ContextChecksExt
 
     public static Context CheckSystemPrivacy(this Context ctx, PKSystem target, PrivacyLevel level)
     {
-        if (level.CanAccess(ctx.LookupContextFor(target))) return ctx;
+        if (level.CanAccess(ctx.LookupContextFor(target.Id))) return ctx;
         throw new PKError("You do not have permission to access this information.");
     }
 

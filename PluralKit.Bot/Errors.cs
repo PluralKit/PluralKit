@@ -34,6 +34,8 @@ public static class Errors
     public static PKError NotOwnMemberError => new("You can only run this command on your own member.");
     public static PKError NotOwnGroupError => new("You can only run this command on your own group.");
 
+    public static PKError NotOwnInfo => new("You cannot look up private information of another system.");
+
     public static PKError NoSystemError =>
         new("You do not have a system registered with PluralKit. To create one, type `pk;system new`.");
 

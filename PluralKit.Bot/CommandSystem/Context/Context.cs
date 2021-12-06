@@ -133,14 +133,29 @@ public class Context
             await Reply($"{Emojis.Warn} This command is deprecated and will be removed soon. In the future, please use `pk;{commandDef.Key}`.");
     }
 
-    public LookupContext LookupContextFor(PKSystem target) =>
-        System?.Id == target.Id ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+    public LookupContext LookupContextFor(SystemId systemId)
+    {
+        var hasPrivateOverride = this.MatchFlag("private", "priv");
+        var hasPublicOverride = this.MatchFlag("public", "pub");
 
-    public LookupContext LookupContextFor(SystemId systemId) =>
-        System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        if (hasPrivateOverride && hasPublicOverride)
+            throw new PKError("Cannot match both public and private flags at the same time.");
 
-    public LookupContext LookupContextFor(PKMember target) =>
-        System?.Id == target.System ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+        if (System.Id != systemId)
+        {
+            if (hasPrivateOverride)
+                throw Errors.NotOwnInfo;
+            return LookupContext.ByNonOwner;
+        }
+
+        if (hasPrivateOverride)
+            return LookupContext.ByOwner;
+        if (hasPublicOverride)
+            return LookupContext.ByNonOwner;
+
+        // todo: add config defaults
+        return LookupContext.ByOwner;
+    }
 
     public IComponentContext Services => _provider;
 }

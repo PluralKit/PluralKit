@@ -27,7 +27,7 @@ public class SystemFront
         var sw = await _repo.GetLatestSwitch(system.Id);
         if (sw == null) throw Errors.NoRegisteredSwitches;
 
-        await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system)));
+        await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system.Id)));
     }
 
     public async Task SystemFrontHistory(Context ctx, PKSystem system)
@@ -128,7 +128,7 @@ public class SystemFront
         var frontpercent = await _db.Execute(c =>
             _repo.GetFrontBreakdown(c, system.Id, null, rangeStart.Value.ToInstant(), now));
         await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, ctx.Zone,
-            ctx.LookupContextFor(system), title.ToString(), ignoreNoFronters, showFlat));
+            ctx.LookupContextFor(system.Id), title.ToString(), ignoreNoFronters, showFlat));
     }
 
     private struct FrontHistoryEntry

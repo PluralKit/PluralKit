@@ -11,9 +11,9 @@ public class SystemList
         if (target == null) throw Errors.NoSystemError;
         ctx.CheckSystemPrivacy(target, target.MemberListPrivacy);
 
-        var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target));
+        var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target.Id));
         await ctx.RenderMemberList(
-            ctx.LookupContextFor(target),
+            ctx.LookupContextFor(target.Id),
             target.Id,
             GetEmbedTitle(target, opts),
             target.Color,

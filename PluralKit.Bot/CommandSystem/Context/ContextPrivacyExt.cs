@@ -48,13 +48,4 @@ public static class ContextPrivacyExt
         ctx.PopArgument();
         return subject;
     }
-
-    public static bool MatchPrivateFlag(this Context ctx, LookupContext pctx)
-    {
-        var privacy = true;
-        if (ctx.MatchFlag("a", "all")) privacy = false;
-        if (pctx == LookupContext.ByNonOwner && !privacy) throw Errors.LookupNotAllowed;
-
-        return privacy;
-    }
 }
