@@ -188,6 +188,8 @@ public class ServerConfig
 
         var botList = string.Join(", ", _cleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
 
+        var guild = await _repo.GetGuild(ctx.Guild.Id);
+
         bool newValue;
         if (ctx.Match("enable", "on", "yes"))
         {
