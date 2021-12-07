@@ -320,10 +320,10 @@ public class Config
             });
     }
 
+    // todo: this command parsing is really messy
+
     public async Task MemberDefaultPrivacy(Context ctx)
     {
-        ctx.CheckSystem();
-
         if (!ctx.HasNext())
         {
             if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply("Newly created members will currently have their privacy settings set to private. To change this, type `pk;config private member off`"); }
@@ -348,8 +348,6 @@ public class Config
 
     public async Task GroupDefaultPrivacy(Context ctx)
     {
-        ctx.CheckSystem();
-
         if (!ctx.HasNext())
         {
             if (ctx.Config.GroupDefaultPrivate) { await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this, type `pk;config private group off`"); }
@@ -374,8 +372,6 @@ public class Config
 
     public async Task ShowPrivateInfo(Context ctx)
     {
-        ctx.CheckSystem();
-
         if (!ctx.HasNext())
         {
             if (ctx.Config.ShowPrivateInfo) await ctx.Reply("Private information is currently **shown** when looking up your own info. Use the `-public` flag to hide it.");

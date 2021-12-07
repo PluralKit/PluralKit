@@ -476,16 +476,9 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
         if (ctx.Match("ping"))
             return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
-        if (ctx.Match("private"))
-        {
-            if (ctx.Match("member"))
-                return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
-            if (ctx.Match("group"))
-                return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
-        }
-        if (ctx.Match("mp"))
+        if (ctx.MatchMultiple(new[] { "private" }, new[] { "member" }) || ctx.Match("mp"))
             return ctx.Execute<Config>(null, m => m.MemberDefaultPrivacy(ctx));
-        if (ctx.Match("gp"))
+        if (ctx.MatchMultiple(new[] { "private" }, new[] { "group" }) || ctx.Match("gp"))
             return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
         if (ctx.MatchMultiple(new[] { "show" }, new[] { "private" }) || ctx.Match("sp"))
             return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
