@@ -135,7 +135,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;unlink [account]` - Unlinks an account from your system.
 
 ## API
-*(for using the [PluralKit API](./api-documentation.md), useful for developers)*
+*(for using the [PluralKit API](./api.md), useful for developers)*
 - `pk;token` - DMs you a token for using the PluralKit API.
 - `pk;token refresh` - Refreshes your API token and invalidates the old one.
 - `pk;s webhook [url]` - Shows or updates the [dispatch webhook](/api/dispatch) URL for your system.
