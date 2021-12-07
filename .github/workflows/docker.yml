@@ -27,9 +27,3 @@ jobs:
             ghcr.io/xske/pluralkit:latest
           cache-from: type=registry,ref=ghcr.io/xske/pluralkit:${{ env.BRANCH_NAME }}
           cache-to: type=inline
-      - name: "Update Beta Bot"
-        if: contains(github.ref, 'main')
-        uses: fjogeleit/http-request-action@master
-        with:
-          url: https://api-beta.pluralkit.me/v1/update
-          bearerToken: ${{ secrets.WATCHTOWER_TOKEN }}

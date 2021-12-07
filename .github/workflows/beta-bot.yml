@@ -1,0 +1,14 @@
+name: "Update Beta Bot"
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  update-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Update Beta Bot"
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: https://api-beta.pluralkit.me/v1/update
+          bearerToken: ${{ secrets.WATCHTOWER_TOKEN }}
