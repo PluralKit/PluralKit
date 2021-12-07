@@ -34,7 +34,7 @@ Some arguments indicate the use of specific Discord features. These include:
 ## System commands
 *Optionally replace `[system]` with a @mention, Discord account ID, or 5-character ID. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;system [system]` - Shows information about a system.
-- `pk;system [system] new [name]` - Creates a new system registered to your account.
+- `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system [system] rename [new name]` - Changes the name of your system.
 - `pk;system [system] description [description]` - Changes the description of your system.
 - `pk;system [system] avatar [avatar url|@mention|upload]` - Changes the avatar of your system.
