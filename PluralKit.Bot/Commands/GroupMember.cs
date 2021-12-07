@@ -129,10 +129,12 @@ public class GroupMember
 
     public async Task ListGroupMembers(Context ctx, PKGroup target)
     {
-        var targetSystem = await GetGroupSystem(ctx, target);
-        ctx.CheckSystemPrivacy(targetSystem, target.ListPrivacy);
+        // see global system list for explanation of how privacy settings are used here
 
-        var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(target.System));
+        var targetSystem = await GetGroupSystem(ctx, target);
+        ctx.CheckSystemPrivacy(targetSystem.Id, target.ListPrivacy);
+
+        var opts = ctx.ParseMemberListOptions(ctx.DirectLookupContextFor(target.System));
         opts.GroupFilter = target.Id;
 
         var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");

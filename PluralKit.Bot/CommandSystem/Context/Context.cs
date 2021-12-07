@@ -133,6 +133,12 @@ public class Context
             await Reply($"{Emojis.Warn} This command is deprecated and will be removed soon. In the future, please use `pk;{commandDef.Key}`.");
     }
 
+    /// <summary>
+    /// Same as LookupContextFor, but skips flags / config checks.
+    /// </summary>
+    public LookupContext DirectLookupContextFor(SystemId systemId)
+        => System?.Id == systemId ? LookupContext.ByOwner : LookupContext.ByNonOwner;
+
     public LookupContext LookupContextFor(SystemId systemId)
     {
         var hasPrivateOverride = this.MatchFlag("private", "priv");

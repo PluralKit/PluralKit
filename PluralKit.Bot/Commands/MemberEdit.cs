@@ -63,13 +63,12 @@ public class MemberEdit
 
     public async Task Description(Context ctx, PKMember target)
     {
+        ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
+
         var noDescriptionSetMessage = "This member does not have a description set.";
         if (ctx.System?.Id == target.System)
             noDescriptionSetMessage +=
                 $" To set one, type `pk;member {target.Reference()} description <description>`.";
-
-        if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-            throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
 
         if (ctx.MatchRaw())
         {
@@ -124,8 +123,7 @@ public class MemberEdit
         if (ctx.System?.Id == target.System)
             noPronounsSetMessage += $"To set some, type `pk;member {target.Reference()} pronouns <pronouns>`.";
 
-        if (!target.PronounPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-            throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+        ctx.CheckSystemPrivacy(target.System, target.PronounPrivacy);
 
         if (ctx.MatchRaw())
         {
@@ -292,8 +290,7 @@ public class MemberEdit
         }
         else if (!ctx.HasNext())
         {
-            if (!target.BirthdayPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+            ctx.CheckSystemPrivacy(target.System, target.BirthdayPrivacy);
 
             if (target.Birthday == null)
                 await ctx.Reply("This member does not have a birthdate set."

@@ -41,9 +41,12 @@ public class MemberAvatar
     private async Task AvatarShow(AvatarLocation location, Context ctx, PKMember target,
                                   MemberGuildSettings? guildData)
     {
+        // todo: this privacy code is really confusing
+        // for now, we skip privacy flag/config parsing for this, but it would be good to fix that at some point
+
         var currentValue = location == AvatarLocation.Member ? target.AvatarUrl : guildData?.AvatarUrl;
         var canAccess = location != AvatarLocation.Member ||
-                        target.AvatarPrivacy.CanAccess(ctx.LookupContextFor(target.System));
+                        target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.System));
         if (string.IsNullOrEmpty(currentValue) || !canAccess)
         {
             if (location == AvatarLocation.Member)

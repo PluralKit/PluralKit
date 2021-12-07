@@ -55,7 +55,7 @@ public class Random
 
     public async Task GroupMember(Context ctx, PKGroup group)
     {
-        var opts = ctx.ParseMemberListOptions(ctx.LookupContextFor(group.System));
+        var opts = ctx.ParseMemberListOptions(ctx.DirectLookupContextFor(group.System));
         opts.GroupFilter = group.Id;
 
         await using var conn = await _db.Obtain();

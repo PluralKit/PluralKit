@@ -21,10 +21,10 @@ public static class ContextChecksExt
         throw new PKError("This command must be run in a DM.");
     }
 
-    public static Context CheckSystemPrivacy(this Context ctx, PKSystem target, PrivacyLevel level)
+    public static Context CheckSystemPrivacy(this Context ctx, SystemId target, PrivacyLevel level)
     {
-        if (level.CanAccess(ctx.LookupContextFor(target.Id))) return ctx;
-        throw target.Id == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+        if (level.CanAccess(ctx.DirectLookupContextFor(target))) return ctx;
+        throw Errors.LookupNotAllowed;
     }
 
     public static Context CheckOwnSystem(this Context ctx, PKSystem system)

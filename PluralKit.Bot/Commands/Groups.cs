@@ -189,8 +189,7 @@ public class Groups
 
     public async Task GroupDescription(Context ctx, PKGroup target)
     {
-        if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-            throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+        ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
 
         var noDescriptionSetMessage = "This group does not have a description set.";
         if (ctx.System?.Id == target.System)
@@ -281,8 +280,7 @@ public class Groups
 
         async Task ShowIcon()
         {
-            if (!target.IconPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+            ctx.CheckSystemPrivacy(target.System, target.IconPrivacy);
 
             if ((target.Icon?.Trim() ?? "").Length > 0)
             {
@@ -346,8 +344,7 @@ public class Groups
 
         async Task ShowBannerImage()
         {
-            if (!target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-                throw target.System == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+            ctx.CheckSystemPrivacy(target.System, target.DescriptionPrivacy);
 
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
             {
@@ -432,7 +429,7 @@ public class Groups
             system = ctx.System;
         }
 
-        ctx.CheckSystemPrivacy(system, system.GroupListPrivacy);
+        ctx.CheckSystemPrivacy(system.Id, system.GroupListPrivacy);
 
         // TODO: integrate with the normal "search" system
 
@@ -442,7 +439,7 @@ public class Groups
             if (system.Id == ctx.System.Id)
                 pctx = LookupContext.ByOwner;
             else
-                throw system.Id == ctx.System?.Id ? Errors.LookupHidden : Errors.LookupNotAllowed;
+                throw Errors.LookupNotAllowed;
         }
 
         var groups = (await _db.Execute(conn => conn.QueryGroupList(system.Id)))
@@ -577,7 +574,7 @@ public class Groups
     public async Task GroupFrontPercent(Context ctx, PKGroup target)
     {
         var targetSystem = await GetGroupSystem(ctx, target);
-        ctx.CheckSystemPrivacy(targetSystem, targetSystem.FrontHistoryPrivacy);
+        ctx.CheckSystemPrivacy(targetSystem.Id, targetSystem.FrontHistoryPrivacy);
 
         var totalSwitches = await _repo.GetSwitchCount(targetSystem.Id);
         if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
