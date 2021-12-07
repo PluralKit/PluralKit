@@ -9,7 +9,7 @@ Some moderation bots have offical PluralKit support, and properly handle excludi
 - [**Catalogger**](https://catalogger.starshines.xyz/docs)
 - [**Crosslink**](https://crss.link) (Link detection / filtering)
 
-If your server uses an in-house bot for logging, you can use [the API](../api-documentation.md) to implement support yourself.
+If your server uses an in-house bot for logging, you can use [the API](/api) to implement support yourself.
 
 ## Log cleanup
 Another solution is for PluralKit to automatically delete log messages from other bots when they get posted.

@@ -118,7 +118,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;log channel -clear` - Clears the currently set log channel.
 - `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
 - `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
-- `pk;logclean <on|off>` - Enables or disables [log cleanup](./staff/compatibility.md#log-cleanup).
+- `pk;logclean <on|off>` - Enables or disables [log cleanup](/staff/compatibility/#log-cleanup).
 - `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
 
@@ -128,21 +128,21 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
-- `pk;debug permissions [server id]` - [Checks the given server's permission setup](./staff/permissions.md#permission-checker-command) to check if it's compatible with PluralKit.
+- `pk;debug permissions [server id]` - [Checks the given server's permission setup](/staff/permissions/#permission-checker-command) to check if it's compatible with PluralKit.
 - `pk;debug proxying <message link|reply>` - Checks why your message has not been proxied.
 - `pk;edit [message link|reply] <new content>` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
 - `pk;link <account>` - Links your system to a different account.
 - `pk;unlink [account]` - Unlinks an account from your system.
 
 ## API
-*(for using the [PluralKit API](./api-documentation.md), useful for developers)*
+*(for using the [PluralKit API](/api), useful for developers)*
 - `pk;token` - DMs you a token for using the PluralKit API.
 - `pk;token refresh` - Refreshes your API token and invalidates the old one.
 - `pk;s webhook [url]` - Shows or updates the [dispatch webhook](/api/dispatch) URL for your system.
 
 ## Help
 - `pk;help` - Displays a basic help message describing how to use the bot.
-- `pk;help proxy` - Directs you to [this page](./user-guide.md#proxying).
+- `pk;help proxy` - Directs you to [this page](/guide/#proxying).
 - `pk;system help` - Lists system-related commands.
 - `pk;member help` - Lists member-related commands.
 - `pk;switch help` - Lists switch-related commands.
