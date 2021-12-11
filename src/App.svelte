@@ -4,10 +4,11 @@
   import Navigation from "./lib/Navigation.svelte"; 
   
 
+  // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
   let dark = "https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-night.min.css";
 
-  let styleSrc = light;
+  let styleSrc = dark;
 
   onMount(() => {
     if (localStorage.getItem("pk-style")) setStyle(localStorage.getItem("pk-style").toLowerCase());
@@ -29,6 +30,8 @@
       break;
       default: styleSrc = light;
       localStorage.setItem("pk-style", "light");
+      default: styleSrc = dark;
+      localStorage.setItem("pk-style", "dark");
     };
   };
 </script>
