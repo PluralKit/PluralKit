@@ -3,6 +3,7 @@
   import Navigation from "./lib/Navigation.svelte";
   import Dash from "./pages/Dash.svelte";
   import Home from "./pages/Home.svelte";
+  import Settings from './pages/Settings.svelte';
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
@@ -43,6 +44,9 @@
     </Route>
     <Route path="/dash">
       <Dash />
+    </Route>
+    <Route path="/settings">
+      <Settings />
     </Route>
   </div>
 </Router>

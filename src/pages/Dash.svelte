@@ -30,6 +30,8 @@
         navigate("/");
     }
 
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
+
     async function login(token: string) {
         const api = new PKAPI();
         try {
@@ -53,7 +55,8 @@
     
 </script>
 
-{#if user && user.banner}
+<!-- display the banner if there's a banner set, and if the current settings allow for it-->
+{#if user && user.banner && settings && settings.appearance.banner_top}
 <div class="banner" style="background-image: url({user.banner})" />
 {/if}
 <Container>
