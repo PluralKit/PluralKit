@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Router, Link, Route } from "svelte-navigator";
   import Navigation from "./lib/Navigation.svelte";
+  import Dash from "./pages/Dash.svelte";
+  import Home from "./pages/Home.svelte";
   
 
   // theme cdns (I might make some myself too)
@@ -40,7 +42,10 @@
   <Navigation bind:style={style}/>
   <div>
     <Route path="/">
-        <h2>Ooga booga</h2>
+        <Home />
+    </Route>
+    <Route path="/dash">
+      <Dash />
     </Route>
   </div>
 </Router>
