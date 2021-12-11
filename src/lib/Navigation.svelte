@@ -31,8 +31,8 @@
                 <Dropdown nav inNavbar>
                     <DropdownToggle color="transparent">Dash</DropdownToggle>
                     <DropdownMenu end>
-                        <Link to="/dash" state={{tab: "system"}}><DropdownItem>System</DropdownItem></Link>
-                        <Link to="/dash" state={{tab: "members"}}><DropdownItem>Members</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash" state={{tab: "system"}}><DropdownItem>System</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash" state={{tab: "members"}}><DropdownItem>Members</DropdownItem></Link>
                     </DropdownMenu>
                 </Dropdown>
                 {/if}
