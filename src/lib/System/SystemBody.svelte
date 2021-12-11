@@ -12,6 +12,8 @@
 
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
+
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
 </script>
 
 <Row>
@@ -52,4 +54,7 @@
     <b>Description:</b><br />
     {@html htmlDescription}
 </div>
+{#if user.banner && settings && settings.appearance.banner_bottom}
+<img src={user.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 15em; object-fit: cover"/>
+{/if}
 <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
