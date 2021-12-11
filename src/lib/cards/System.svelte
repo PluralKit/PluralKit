@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { currentUser } from '../../stores';
     import { Modal, Card, CardHeader, CardBody, CardTitle, Image, ModalHeader, Col, Row, Button } from 'sveltestrap';
     import CardsHeader from '../CardsHeader.svelte';
     import { parseMarkdown } from '../../functions';

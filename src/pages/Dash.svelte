@@ -3,7 +3,7 @@
     import { navigate, useLocation } from "svelte-navigator";
     import { currentUser, loggedIn } from '../stores';
     
-    import PrivateSystem from '../lib/cards/PrivateSystem.svelte';
+    import PrivateSystem from '../lib/cards/System.svelte';
     import PKAPI from '../api';
     import type Sys from '../api/system';
 
