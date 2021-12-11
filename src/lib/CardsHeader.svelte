@@ -19,7 +19,7 @@
             <span style="vertical-align: middle;">{item.name} ({item.id})</span>
         </div>
         {#if item && item.avatar_url}
-        <img on:click={toggleAvatarModal} class="rounded-circle avatar" src={item.avatar_url} alt="Your system avatar" />
+        <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={item.avatar_url} alt="Your system avatar" />
         {:else}
         <img class="rounded-circle avatar" src={default_avatar} alt="your system avatar (default)" />
         {/if}
