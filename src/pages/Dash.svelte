@@ -70,14 +70,10 @@
         <Col class="mx-auto" xs={12} lg={10}>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
-                    <Card style="border-radius: 0; border: none;">
                         <System bind:user={user} bind:isPublic={isPublic} />
-                    </Card>
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                    <Card style="border-radius: 0; border: none;">
                         alo
-                    </Card>
                 </TabPane> 
             </TabContent>
         </Col>
