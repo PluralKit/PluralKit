@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { Router, Link, Route } from "svelte-navigator";
-  import Navigation from "./lib/Navigation.svelte"; 
+  import Navigation from "./lib/Navigation.svelte";
   
 
   // theme cdns (I might make some myself too)
@@ -10,17 +9,14 @@
 
   let styleSrc = dark;
 
-  onMount(() => {
-    if (localStorage.getItem("pk-style")) setStyle(localStorage.getItem("pk-style").toLowerCase());
-  });
+  // if there's a style already set, retrieve it
+  let style = localStorage.getItem("pk-style") && localStorage.getItem("pk-style");
 
-  function styleEventHandler(event) {
-    let style = event.detail;
-    setStyle(style);
-  }
+  // this automatically applies the style every time it is updated
+  $: setStyle(style);
 
+  // not sure if there's a better way to handle this
   function setStyle(style) {
-    
     switch (style) {
       case "light": styleSrc = light;
       localStorage.setItem("pk-style", "light");
@@ -41,7 +37,7 @@
 </svelte:head>
 
 <Router>
-  <Navigation on:styleChange={styleEventHandler}/>
+  <Navigation bind:style={style}/>
   <div>
     <Route path="/">
         <h2>Ooga booga</h2>
