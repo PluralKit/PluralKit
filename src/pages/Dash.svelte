@@ -65,7 +65,7 @@
 {/if}
 <Container>
     <Row>
-        <Col class="mx-auto" xs={12} lg={9}>
+        <Col class="mx-auto" xs={12} lg={10}>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                     <Card style="border-radius: 0; border: none;">
