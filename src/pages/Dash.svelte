@@ -3,9 +3,11 @@
     import { navigate, useLocation } from "svelte-navigator";
     import { currentUser, loggedIn } from '../stores';
     
-    import PrivateSystem from '../lib/system/System.svelte';
+    import System from '../lib/system/System.svelte';
     import PKAPI from '../api';
     import type Sys from '../api/system';
+
+    let isPublic = false;
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -69,7 +71,7 @@
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                     <Card style="border-radius: 0; border: none;">
-                        <PrivateSystem bind:user={user}/>
+                        <System bind:user={user} bind:isPublic={isPublic} />
                     </Card>
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
