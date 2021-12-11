@@ -33,7 +33,7 @@ blockquote {
     border-left: 4px solid rgba(128, 128, 128, 0.3);
 }
 
-.nav-link {
+.nav-tabs * .nav-link {
     background-color: var(--bs-body-bg) !important;
     border-color: rgba(128, 128, 128, 0.3) !important;
     border-bottom-color: transparent !important;
