@@ -6,7 +6,12 @@
     export let user;
     export let editMode: boolean;
 
-    $: htmlDescription = toHTML(user.description, {embed: true});
+    let htmlDescription: string;
+    if (user.description) { 
+        htmlDescription = toHTML(user.description, {embed: true});
+    } else {
+        htmlDescription = "(no description)";
+    }
 
     let created = moment(user.created).format("MMM D, YYYY");
 
