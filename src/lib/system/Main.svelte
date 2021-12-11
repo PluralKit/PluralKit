@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Card, CardBody } from 'sveltestrap';
     import CardsHeader from '../CardsHeader.svelte';
-    import SystemBody from './SystemBody.svelte';
-    import SystemPrivacy from './SystemPrivacy.svelte';
+    import SystemBody from './Body.svelte';
+    import SystemPrivacy from './Privacy.svelte';
 
     export let user;
     export let isPublic = true;
