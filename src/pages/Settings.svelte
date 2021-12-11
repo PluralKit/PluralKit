@@ -23,7 +23,7 @@
 <Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={10}>
-            <Card>
+            <Card class="mb-4">
                 <CardHeader>
                     <CardTitle style="margin-top: 8px; outline: none;">
                         <div class="icon d-inline-block">

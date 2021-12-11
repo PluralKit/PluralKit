@@ -101,7 +101,7 @@
                 </CardBody>
             </Card>
             {#if isLoggedIn}
-            <Card>
+            <Card class="mb-4">
                 <CardBody>
                     Some cool stuff will go here.
                 </CardBody>

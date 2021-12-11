@@ -14,8 +14,8 @@
 		loggedIn_value = value;
 	});
 </script>
-<div style="background-color: #292929">
-    <Navbar color="light" light expand="lg" class="mb-4">
+<div style="background-color: #292929" class="mb-4">
+    <Navbar color="light" light expand="lg">
         <NavbarBrand>pk-webs</NavbarBrand>
         <NavbarToggler on:click={toggle}></NavbarToggler>
         <Collapse {isOpen} navbar expand="lg">

@@ -1,3 +1,9 @@
+#app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
 .icon {
     height: 1.5em;
     width: 1.5em;
@@ -45,6 +51,10 @@ blockquote {
 
 .nav-tabs {
     border-bottom: none !important;
+}
+
+.container {
+    flex: 1 0 auto !important;
 }
 
 .d-spoiler {
