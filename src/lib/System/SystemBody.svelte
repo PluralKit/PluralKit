@@ -41,8 +41,9 @@
         </Modal>
     </Col>
     {/if}
-    <div class="mt-2">
-        <b>Description:</b><br />
-        {@html htmlDescription}
-    </div>
 </Row>
+<div class="my-2">
+    <b>Description:</b><br />
+    {@html htmlDescription}
+</div>
+<Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
