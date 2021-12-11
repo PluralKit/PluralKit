@@ -1,11 +1,14 @@
 <script lang="ts">
     import { Row, Col, Modal, Image, Button } from 'sveltestrap';
+    import moment from 'moment';
+    import { toHTML } from 'discord-markdown';
    
     export let user;
     export let editMode: boolean;
 
     $: htmlDescription = toHTML(user.description, {embed: true});
-    import { toHTML } from 'discord-markdown';
+
+    let created = moment(user.created).format("MMM D, YYYY");
 
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
@@ -21,6 +24,9 @@
     {#if user.tag}
     <Col xs={12} lg={4} class="mb-2">
         <b>Tag:</b> {user.tag}
+    </Col>
+    <Col xs={12} lg={4} class="mb-2">
+        <b>Created:</b> {created}
     </Col>
     {/if}
     <Col xs={12} lg={4} class="mb-2">
