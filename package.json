@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "axios": "^0.24.0",
+    "discord-markdown": "^2.5.1",
     "svelte-icons": "^2.1.0",
     "svelte-navigator": "^3.1.5",
     "sveltestrap": "^5.6.3"

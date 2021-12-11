@@ -48,6 +48,26 @@
     border-bottom: none !important;
 }
 
-/* .nav-tabs {
-    justify-content: center !important;
-} */
+.d-spoiler {
+    color: var(--bs-dark);
+    background-color: var(--bs-dark);
+    border-radius: 2px;
+    transition-delay: 6000s;
+}
+
+.d-spoiler::selection {
+    color: var(--bs-dark);
+    background-color: transparent;
+}
+
+.d-spoiler:active {
+    background-color: rgba(128, 128, 128, 0.3);
+    color: var(--bs-body-color);
+    transition-delay: 0s;
+}
+
+.d-emoji {
+    width: 1.25em;
+    height: auto;
+}
+

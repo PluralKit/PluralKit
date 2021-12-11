@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Modal, Card, CardHeader, CardBody, CardTitle, Image, ModalHeader, Col, Row, Button } from 'sveltestrap';
     import CardsHeader from '../CardsHeader.svelte';
-    import { parseMarkdown } from '../../functions';
+    import { toHTML } from 'discord-markdown';
 
     export let user;
-    $: htmlDescription = parseMarkdown(user.description);
+    $: htmlDescription = toHTML(user.description, {embed: true});
 
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
