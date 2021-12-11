@@ -7,31 +7,35 @@
     import PKAPI from '../api';
     import type Sys from '../api/system';
 
+    // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
-
     let tabPane = $location.state && $location.state.tab;
-
+    // if there is no state, default to system
     if (tabPane === undefined) {
         tabPane = "system";
     }
 
+    // subscribe to the cached user in the store
     let current;
     currentUser.subscribe(value => {
         current = value;
     });
-
+    
+    // if there is no cached user, get the user from localstorage
+    let user = current ? current : JSON.parse(localStorage.getItem("pk-user"));
+    // since the user in localstorage can be outdated, fetch the user from the api again
     if (!current) {
         login(localStorage.getItem("pk-token"));
     }
 
-    let user = current !== null ? current : JSON.parse(localStorage.getItem("pk-user"));
-
+    // if there's no user, and there's no token, assume the login failed and send us back to the homepage.
     if (!localStorage.getItem("pk-token") && !user) {
         navigate("/");
     }
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
+    // just the login function
     async function login(token: string) {
         const api = new PKAPI();
         try {
