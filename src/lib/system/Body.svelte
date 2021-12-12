@@ -39,12 +39,12 @@
         <b>Tag:</b> {user.tag}
     </Col>
     {/if}
-    {#if user.created}
+    {#if user.created && !isPublic}
     <Col xs={12} lg={4} class="mb-2">
         <b>Created:</b> {created}
     </Col>
     {/if}
-    {#if user.timezone}
+    {#if user.timezone && !isPublic}
     <Col xs={12} lg={4} class="mb-2">
         <b>Timezone:</b> {user.timezone}
     </Col>
