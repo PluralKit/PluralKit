@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Card, CardHeader, CardBody, CardTitle, Row, Col, Button } from 'sveltestrap';
-    import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte'
+    import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
     import type Sys from '../../api/system';
 
     export let user: Sys;
