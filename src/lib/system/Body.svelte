@@ -6,6 +6,7 @@
    
     export let user: Sys;
     export let editMode: boolean;
+    export let isPublic: boolean;
 
     let htmlDescription: string;
     if (user.description) { 
@@ -23,23 +24,31 @@
 </script>
 
 <Row>
+    {#if user.id}
     <Col xs={12} lg={4} class="mb-2">
         <b>ID:</b> {user.id}
     </Col>
+    {/if}
+    {#if user.name}
     <Col xs={12} lg={4} class="mb-2">
         <b>Name:</b> {user.name}
     </Col>
+    {/if}
     {#if user.tag}
     <Col xs={12} lg={4} class="mb-2">
         <b>Tag:</b> {user.tag}
     </Col>
+    {/if}
+    {#if user.created}
     <Col xs={12} lg={4} class="mb-2">
         <b>Created:</b> {created}
     </Col>
     {/if}
+    {#if user.timezone}
     <Col xs={12} lg={4} class="mb-2">
         <b>Timezone:</b> {user.timezone}
     </Col>
+    {/if}
     {#if user.color}
     <Col xs={12} lg={4} class="mb-2">
         <b>Color:</b> {user.color}
@@ -63,4 +72,6 @@
 {#if user.banner && settings && settings.appearance.banner_bottom}
 <img src={user.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
+{#if !isPublic}
 <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
+{/if}

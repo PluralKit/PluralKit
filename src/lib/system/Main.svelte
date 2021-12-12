@@ -8,7 +8,7 @@
 
     export let user: Sys;
     export let isPublic = true;
-    let loading: boolean;
+    let loading = false;
 
     let editMode = false;
 </script>
@@ -17,7 +17,7 @@
     <CardsHeader bind:item={user} bind:loading/>
     <CardBody style="border-left: 4px solid #{user.color}">
         {#if !editMode}
-        <Body bind:user bind:editMode/>
+        <Body bind:user bind:editMode bind:isPublic/>
         {:else}
         <Edit bind:user bind:editMode bind:loading />
         {/if}
