@@ -1,0 +1,29 @@
+<script lang="ts">
+    import { Card, CardBody } from 'sveltestrap';
+    import CardsHeader from '../CardsHeader.svelte';
+    import Body from './Body.svelte';
+    import Privacy from './Privacy.svelte';
+    import Edit from './Edit.svelte';
+    import type Sys from '../../api/system';
+
+    export let user: Sys;
+    export let isPublic = true;
+    let loading = false;
+
+    let editMode = false;
+</script>
+
+<Card class="mb-4">
+    <CardsHeader bind:item={user} bind:loading/>
+    <CardBody style="border-left: 4px solid #{user.color}">
+        {#if !editMode}
+        <Body bind:user bind:editMode bind:isPublic/>
+        {:else}
+        <Edit bind:user bind:editMode bind:loading />
+        {/if}
+    </CardBody>
+</Card>
+
+{#if !isPublic}
+    <Privacy bind:user />
+{/if}

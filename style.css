@@ -1,0 +1,87 @@
+#app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.icon {
+    height: 1.5em;
+    width: 1.5em;
+    margin-right: 0.5em;
+}
+
+.avatar {
+    height: 2.5em;
+    width: 2.5em;
+}
+
+.modal-content {
+    border: none !important;
+}
+
+.modal {
+    display: flex;
+}
+
+.banner {
+    z-index: -200;
+    width: 100%;
+    height: 40vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-size: cover;
+}
+
+blockquote {
+    padding-left: 0.5em;
+    margin: 0.25em 0 0.25em 0 !important;
+    border-left: 4px solid rgba(128, 128, 128, 0.3);
+}
+
+.nav-tabs * .nav-link {
+    background-color: var(--bs-body-bg) !important;
+    border-color: rgba(128, 128, 128, 0.3) !important;
+    border-bottom-color: transparent !important;
+}
+
+.nav-tabs {
+    gap: 0.25em;
+}
+
+.nav-tabs {
+    border-bottom: none !important;
+}
+
+.container {
+    flex: 1 0 auto !important;
+}
+
+.d-spoiler {
+    color: var(--bs-dark);
+    background-color: var(--bs-dark);
+    border-radius: 2px;
+    transition-delay: 6000s;
+}
+
+.d-spoiler::selection {
+    color: var(--bs-dark);
+    background-color: transparent;
+}
+
+.d-spoiler:active {
+    background-color: rgba(128, 128, 128, 0.3);
+    color: var(--bs-body-color);
+    transition-delay: 0s;
+}
+
+.d-emoji {
+    height: 1em;
+    width: auto;
+}
+
+@media (min-width: 768px) {
+    .banner {
+        height: 50vh;
+    }
+}
