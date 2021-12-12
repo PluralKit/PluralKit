@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Card, CardBody } from 'sveltestrap';
     import CardsHeader from '../CardsHeader.svelte';
-    import SystemBody from './Body.svelte';
-    import SystemPrivacy from './Privacy.svelte';
+    import Body from './Body.svelte';
+    import Privacy from './Privacy.svelte';
     import Edit from './Edit.svelte';
     import type Sys from '../../api/system';
 
@@ -25,5 +25,5 @@
 </Card>
 
 {#if !isPublic}
-    <SystemPrivacy bind:user={user} />
+    <Privacy bind:user />
 {/if}
