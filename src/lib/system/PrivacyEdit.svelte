@@ -31,11 +31,25 @@
             loading = false;
         }
     }
+
+    let allPrivacy: string;
+
+    $: { changePrivacy(allPrivacy)}
+
+    function changePrivacy(value: string) {
+        if (value) {
+        input.privacy.description_privacy = value;
+        input.privacy.member_list_privacy = value;
+        input.privacy.group_list_privacy = value;
+        input.privacy.front_privacy = value;
+        input.privacy.front_history_privacy = value;
+        }
+    }
 </script>
 
 <Label><b>Set all to:</b></Label>
-<Input type="select" bind:value={input.privacy.description_privacy}>
-    <option default>public</option>
+<Input type="select" bind:value={allPrivacy}>
+    <option>public</option>
     <option>private</option>
 </Input>
 <hr />
