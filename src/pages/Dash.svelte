@@ -62,7 +62,7 @@
 </script>
 
 <!-- display the banner if there's a banner set, and if the current settings allow for it-->
-{#if user && user.banner && settings && settings.appearance.banner_top}
+{#if user && user.banner && ((settings && settings.appearance.banner_top) || !settings)}
 <div class="banner" style="background-image: url({user.banner})" />
 {/if}
 <Container>
