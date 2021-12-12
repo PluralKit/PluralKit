@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, Col, Row, TabContent, TabPane, Card } from 'sveltestrap';
+    import { Container, Col, Row, TabContent, TabPane } from 'sveltestrap';
     import { navigate, useLocation } from "svelte-navigator";
     import { currentUser, loggedIn } from '../stores';
     
