@@ -50,3 +50,7 @@
         </Col>
     </Row>
 </Container>
+
+<svelte:head>
+    <title>pk-webs | settings</title>
+</svelte:head>
