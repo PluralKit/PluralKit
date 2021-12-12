@@ -25,7 +25,7 @@
                         </Col>
                         <Col xs={12} lg={3} class="my-2 d-flex">
                             {#if sysInput !== ""}
-                            <Link style="text-decoration: none; flex: 1 0 auto" to="/public/s/{sysInput.trim()}"><Button class="w-100" color="primary">View</Button></Link>
+                            <Link style="text-decoration: none; flex: 1 0 auto" to="/public/s/{sysInput.toLowerCase().trim()}"><Button class="w-100" color="primary">View</Button></Link>
                             {:else}
                                 <Button class="w-100" disabled color="primary">View</Button>
                             {/if}
