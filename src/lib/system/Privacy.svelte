@@ -1,10 +1,13 @@
 <script lang="ts">
-    import { Card, CardHeader, CardBody, CardTitle, Row, Col, Button } from 'sveltestrap';
+    import { Card, CardHeader, CardBody, CardTitle, Row, Col, Button, Spinner } from 'sveltestrap';
     import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
     import type Sys from '../../api/system';
+    import PrivacyEdit from './PrivacyEdit.svelte';
 
     export let user: Sys;
     let editMode = false;
+
+    let loading: boolean;
 </script>
 
 <Card class="mb-4">
@@ -13,11 +16,12 @@
             <div class="icon d-inline-block">
                 <FaUserLock />
             </div> System privacy
+            {#if loading}<div class="d-inline-block mr-5" style="float: right;"><Spinner color="primary" /></div>{/if}
         </CardTitle>
     </CardHeader>
-    <CardBody>
+    <CardBody style="border-left: 4px solid #{user.color}">
         {#if editMode}
-        stuff
+        <PrivacyEdit bind:loading bind:user={user} bind:editMode/>
         {:else}
         <Row>
             <Col xs={12} lg={4} class="mb-3">
