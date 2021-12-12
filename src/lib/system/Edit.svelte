@@ -10,12 +10,6 @@
     export let user: Sys;
     export let loading: boolean;
 
-    let current: Sys;
-
-    currentUser.subscribe((value) => {
-        current = value;
-    })
-
     let err: string[] = [];
 
     let input = new Sys(user);
