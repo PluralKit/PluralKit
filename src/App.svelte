@@ -43,33 +43,27 @@
 <Router>
   <Navigation bind:style={style}/>
     <Route path="/"><Home /></Route>
-    <Route path="/dash"><Dash /></Route>
-    <Route path="/settings"><Settings /></Route>
-    <Route path="/public/*">
+    <Route path="dash"><Dash /></Route>
+    <Route path="settings"><Settings /></Route>
+    <Route path="public/*">
       <Route path="/"><Public /></Route>
-      <Route path="/s/*">
-        <Route path = "/:id">
-          <System />
-        </Route>
-        <Route path = "/">
-          hey please provide a system
-        </Route>
+      <Route path = "s/:id">
+        <System />
       </Route>
-      <Route path="/m/*">
-        <Route path = "/:id">
-          member
-        </Route>
-        <Route path = "/">
-          hey please provide a member
-        </Route>
+      <Route path = "s">
+        hey please provide a system
       </Route>
-      <Route path="/g/*">
-        <Route path = "/:id">
-          group
-        </Route>
-        <Route path = "/">
-          hey please provide a group
-        </Route>
+      <Route path = "m/:id">
+        member
+      </Route>
+      <Route path = "m">
+        hey please provide a member
+      </Route>
+      <Route path = "g/:id">
+        group!
+      </Route>
+      <Route path = "g">
+        hey please provide a group
       </Route>
     </Route>
   <Footer />
