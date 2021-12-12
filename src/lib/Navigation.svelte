@@ -1,7 +1,8 @@
 <script lang="ts">
-    import {Navbar, NavbarBrand, Nav, NavItem, NavLink, Collapse, NavbarToggler, Dropdown, DropdownItem, DropdownMenu, DropdownToggle} from 'sveltestrap';
+    import {Navbar, NavbarBrand, Nav, NavItem, NavLink, Collapse, NavbarToggler, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Button} from 'sveltestrap';
     import { loggedIn } from '../stores';
-    import { Link } from 'svelte-navigator';
+    import { Link, navigate } from 'svelte-navigator';
+import { get } from 'svelte/store';
 
     export let style: string;
 
@@ -13,6 +14,14 @@
     loggedIn.subscribe(value => {
 		loggedIn_value = value;
 	});
+    
+    function logout() {
+        localStorage.removeItem("pk-token");
+        localStorage.removeItem("pk-user");
+        loggedIn.update(() => false);
+        navigate("/");
+    }
+
 </script>
 <div style="background-color: #292929" class="mb-4">
     <Navbar color="light" light expand="lg">
@@ -33,6 +42,8 @@
                     <DropdownMenu end>
                         <Link style="text-decoration: none;" to="/dash" state={{tab: "system"}}><DropdownItem>System</DropdownItem></Link>
                         <Link style="text-decoration: none;" to="/dash" state={{tab: "members"}}><DropdownItem>Members</DropdownItem></Link>
+                        <DropdownItem divider />
+                        <DropdownItem on:click={logout}>Log out</DropdownItem>
                     </DropdownMenu>
                 </Dropdown>
                 {/if}
