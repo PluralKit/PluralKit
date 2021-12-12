@@ -7,5 +7,8 @@ export default defineConfig({
   optimizeDeps: { exclude: ["svelte-navigator"] },
   build: {
     outDir: "docs"
+  },
+  server: {
+    https: true
   }
 })
