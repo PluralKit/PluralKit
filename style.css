@@ -80,6 +80,12 @@ blockquote {
     width: auto;
 }
 
+.description a {
+    text-decoration: none;
+    color: #457ead !important;
+    font-weight: bold;
+}
+
 @media (min-width: 768px) {
     .banner {
         height: 50vh;
