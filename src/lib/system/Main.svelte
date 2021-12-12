@@ -3,8 +3,9 @@
     import CardsHeader from '../CardsHeader.svelte';
     import SystemBody from './Body.svelte';
     import SystemPrivacy from './Privacy.svelte';
+    import type Sys from '../../api/system';
 
-    export let user;
+    export let user: Sys;
     export let isPublic = true;
 
     let editMode = false;

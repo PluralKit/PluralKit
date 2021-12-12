@@ -5,7 +5,7 @@
     
     import System from '../lib/system/Main.svelte';
     import PKAPI from '../api';
-    import type Sys from '../api/system';
+    import Sys from '../api/system';
 
     let isPublic = false;
 
@@ -24,7 +24,7 @@
     });
     
     // if there is no cached user, get the user from localstorage
-    let user = current ? current : JSON.parse(localStorage.getItem("pk-user"));
+    let user = new Sys(current ? current : JSON.parse(localStorage.getItem("pk-user")));
     // since the user in localstorage can be outdated, fetch the user from the api again
     if (!current) {
         login(localStorage.getItem("pk-token"));

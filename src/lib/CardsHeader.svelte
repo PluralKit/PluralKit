@@ -2,9 +2,8 @@
     import { Modal, CardHeader, CardTitle, Image } from 'sveltestrap';
     import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte'
     import default_avatar from '../assets/default_avatar.png';
-    import type Sys from '../api/system';
 
-    export let item: Sys;
+    export let item: any;
 
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);

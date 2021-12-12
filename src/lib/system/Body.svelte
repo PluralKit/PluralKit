@@ -2,8 +2,9 @@
     import { Row, Col, Modal, Image, Button } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
+    import type Sys from '../../api/system';
    
-    export let user;
+    export let user: Sys;
     export let editMode: boolean;
 
     let htmlDescription: string;
