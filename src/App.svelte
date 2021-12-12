@@ -45,7 +45,7 @@
     <Route path="/"><Home /></Route>
     <Route path="dash"><Dash /></Route>
     <Route path="settings"><Settings /></Route>
-    <Route path="public/*">
+    <Route path="profile/*">
       <Route path="/"><Public /></Route>
       <Route path = "s/:id">
         <System />
