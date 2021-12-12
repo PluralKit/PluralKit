@@ -65,11 +65,11 @@
     </Col>
     {/if}
 </Row>
-<div class="my-2">
+<div class="my-2 description">
     <b>Description:</b><br />
     {@html htmlDescription}
 </div>
-{#if (user.banner && settings && settings.appearance.banner_bottom) || !settings}
+{#if (user.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img src={user.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
 {#if !isPublic}
