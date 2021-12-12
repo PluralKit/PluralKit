@@ -76,8 +76,8 @@ blockquote {
 }
 
 .d-emoji {
-    width: 1.25em;
-    height: auto;
+    height: 1em;
+    width: auto;
 }
 
 @media (min-width: 768px) {
