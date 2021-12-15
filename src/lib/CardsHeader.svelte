@@ -29,7 +29,7 @@
         {/if}
         </div>
         <Modal isOpen={avatarOpen} toggle={toggleAvatarModal}>
-            <div slot="external" on:click={toggleAvatarModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
+            <div slot="external" on:click={toggleAvatarModal} style="height: 100%;  max-width: 640px; width: 100%; margin-left: auto; margin-right: auto; display: flex;">
                 <Image style="display: block; margin: auto;" src={item.avatar_url} thumbnail alt="Your system avatar" />
             </div>
         </Modal>
