@@ -6,14 +6,19 @@
     import System from '../lib/system/Main.svelte';
     import PKAPI from '../api';
     import Sys from '../api/system';
+    import List from '../lib/member/List.svelte';
 
     let isPublic = false;
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
-    let tabPane = $location.state && $location.state.tab;
-    // if there is no state, default to system
-    if (tabPane === undefined) {
+    let params = $location.search && new URLSearchParams($location.search);
+    let tabPane: string;
+    if (params) {
+        tabPane = params.get("tab");
+    }
+    
+    if (!tabPane) {
         tabPane = "system";
     }
 
@@ -70,10 +75,10 @@
         <Col class="mx-auto" xs={12} lg={10}>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
-                        <System bind:user={user} bind:isPublic={isPublic} />
+                        <System bind:user={user} bind:isPublic />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        alo
+                        <List bind:isPublic />
                 </TabPane> 
             </TabContent>
         </Col>

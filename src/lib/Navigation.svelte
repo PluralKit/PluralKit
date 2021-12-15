@@ -40,8 +40,8 @@ import { get } from 'svelte/store';
                 <Dropdown nav inNavbar>
                     <DropdownToggle color="transparent">Dash</DropdownToggle>
                     <DropdownMenu end>
-                        <Link style="text-decoration: none;" to="/dash" state={{tab: "system"}}><DropdownItem>System</DropdownItem></Link>
-                        <Link style="text-decoration: none;" to="/dash" state={{tab: "members"}}><DropdownItem>Members</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash?tab=system"><DropdownItem>System</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash?tab=members"><DropdownItem>Members</DropdownItem></Link>
                         <DropdownItem divider />
                         <DropdownItem on:click={logout}>Log out</DropdownItem>
                     </DropdownMenu>
