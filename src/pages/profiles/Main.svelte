@@ -6,6 +6,7 @@
     import System from '../../lib/system/Main.svelte';
     import PKAPI from '../../api';
     import Sys from '../../api/system';
+    import List from '../../lib/member/List.svelte';
 
     let isPublic = true;
 
@@ -55,10 +56,10 @@
             <Alert color="info">You are currently <b>viewing</b> a system.</Alert>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active>
-                        <System bind:user={user} bind:isPublic={isPublic} />
+                        <System bind:user bind:isPublic />
                 </TabPane>
                 <TabPane tabId="members" tab="Members">
-                        alo
+                        <List bind:isPublic/>
                 </TabPane> 
             </TabContent>
             {/if}

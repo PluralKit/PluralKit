@@ -6,7 +6,7 @@
   import Settings from './pages/Settings.svelte';
   import Footer from './lib/Footer.svelte';
   import Public from "./pages/Public.svelte";
-  import System from "./pages/profiles/System.svelte";
+  import Main from "./pages/profiles/Main.svelte";
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
