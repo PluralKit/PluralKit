@@ -21,7 +21,7 @@
                     Submit a <b>system ID</b> to view that system's profile.
                     <Row>
                         <Col xs={12} lg={9} class="my-2">
-                            <Input on:keyup={(event) => {if (event.key === "Enter" && sysInput !== "") navigate(`/public/s/${sysInput.toLowerCase().trim()}`)}} bind:value={sysInput} />
+                            <Input on:keyup={(event) => {if (event.key === "Enter" && sysInput !== "") navigate(`/profile/s/${sysInput.toLowerCase().trim()}`)}} bind:value={sysInput} />
                         </Col>
                         <Col xs={12} lg={3} class="my-2 d-flex">
                             {#if sysInput !== ""}
