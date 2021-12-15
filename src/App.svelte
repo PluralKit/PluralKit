@@ -45,26 +45,22 @@
     <Route path="/"><Home /></Route>
     <Route path="dash"><Dash /></Route>
     <Route path="settings"><Settings /></Route>
-    <Route path="profile/*">
-      <Route path="/"><Public /></Route>
-      <Route path = "s/:id">
-        <System />
-      </Route>
-      <Route path = "s">
-        hey please provide a system
-      </Route>
-      <Route path = "m/:id">
-        member
-      </Route>
-      <Route path = "m">
-        hey please provide a member
-      </Route>
-      <Route path = "g/:id">
-        group!
-      </Route>
-      <Route path = "g">
-        hey please provide a group
-      </Route>
+    <Route path="profile"><Public /></Route>
+    <Route path = "profile/s/:id"><Main /></Route>
+    <Route path = "s">
+      hey please provide a system
+    </Route>
+    <Route path = "profile/m/:id">
+      member
+    </Route>
+    <Route path = "profile/m">
+      hey please provide a member
+    </Route>
+    <Route path = "profile/g/:id">
+      group!
+    </Route>
+    <Route path = "profile/g">
+      hey please provide a group
     </Route>
   <Footer />
 </Router>
