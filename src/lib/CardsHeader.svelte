@@ -14,7 +14,7 @@
     <CardTitle style="margin-top: 0px; margin-bottom: 0px; outline: none; align-items: center;" class="d-flex justify-content-between align-middle w-100">
         <div>
             <div class="icon d-inline-block">
-                <FaUserCircle />
+                <slot name="icon" />
             </div>
             <span style="vertical-align: middle;">{item.name} ({item.id})</span>
         </div>
@@ -23,7 +23,7 @@
         <div class="d-inline-block mr-5" style="vertical-align: middle;"><Spinner color="primary" /></div>
         {/if}
         {#if item && item.avatar_url}
-        <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={item.avatar_url} alt="Your system avatar" />
+        <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={item.avatar_url} alt="Icon" />
         {:else}
         <img class="rounded-circle avatar" src={default_avatar} alt="your system avatar (default)" />
         {/if}
