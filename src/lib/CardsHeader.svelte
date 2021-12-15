@@ -11,8 +11,7 @@
     export let loading: boolean;
 </script>
 
-<CardHeader>
-    <CardTitle style="margin-top: 0px; margin-bottom: 0px; outline: none; align-items: center;" class="d-flex justify-content-between align-middle">
+    <CardTitle style="margin-top: 0px; margin-bottom: 0px; outline: none; align-items: center;" class="d-flex justify-content-between align-middle w-100">
         <div>
             <div class="icon d-inline-block">
                 <FaUserCircle />
@@ -35,4 +34,3 @@
             </div>
         </Modal>
     </CardTitle>
-</CardHeader>
