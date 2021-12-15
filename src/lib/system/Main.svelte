@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Card, CardBody } from 'sveltestrap';
+    import { Card, CardBody, CardHeader } from 'sveltestrap';
+    import FaAddressCard from 'svelte-icons/fa/FaAddressCard.svelte'
     import CardsHeader from '../CardsHeader.svelte';
     import Body from './Body.svelte';
     import Privacy from './Privacy.svelte';
@@ -14,7 +15,11 @@
 </script>
 
 <Card class="mb-4">
-    <CardsHeader bind:item={user} bind:loading/>
+    <CardHeader>
+        <CardsHeader bind:item={user} bind:loading>
+            <FaAddressCard slot="icon" />
+        </CardsHeader>
+    </CardHeader>
     <CardBody style="border-left: 4px solid #{user.color}">
         {#if !editMode}
         <Body bind:user bind:editMode bind:isPublic/>
