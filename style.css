@@ -57,6 +57,14 @@ blockquote {
     flex: 1 0 auto !important;
 }
 
+.accordion-button::after {
+    display: none;
+}
+
+.pagination {
+    justify-content: center !important;
+}
+
 .d-spoiler {
     color: var(--bs-dark);
     background-color: var(--bs-dark);
