@@ -1,18 +1,25 @@
 <script lang="ts">
-    import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button } from 'sveltestrap';
+    import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Label, Row, Col, Spinner, Button, Tooltip } from 'sveltestrap';
     import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte'
     import { onMount } from 'svelte';
     import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
     import { useParams } from 'svelte-navigator';
     import type Group from '../../api/group'
+    import type Member from '../../api/member'
     import PKAPI from '../../api';
     import CardsHeader from '../CardsHeader.svelte';
     import ListPagination from '../ListPagination.svelte';
+    import Body from './Body.svelte';
+    import Svelecte, { addFormatter } from 'svelecte';
 
     export let isPublic: boolean;
     let itemLoading = false;
 
-    export let list: Group[] = [];
+    export let list: Group[];
+    export let members: Member[];
+
+    $: memberlist = members.map(function(member) { return {name: member.name, shortid: member.id, id: member.uuid, display_name: member.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
+
     let token = localStorage.getItem("pk-token");
     let listLoading = true;
     let err: string;
@@ -24,6 +31,8 @@
     let sortBy = "name";
     let sortOrder = "ascending";
     let privacyFilter = "all";
+    let memberSearchMode = "include";
+    let selectedMembers = [];
 
     let currentPage = 1;
 
@@ -39,7 +48,7 @@
     async function fetchGroups() {
         listLoading = true;
         try {
-            const res: Group[] = await api.getGroupList({token: !isPublic && token, id: isPublic && id});
+            const res: Group[] = await api.getGroupList({token: !isPublic && token, id: isPublic && id, members: !isPublic ? true : false});
             list = res;
             listLoading = false;
         } catch (error) {
@@ -101,13 +110,41 @@
         }
     }
 
-    $: if (sortOrder === "descending") sortedList = sortedList.reverse();
+    let memberFilteredList = [];
+    $: memberFilteredList = sortedList.filter((item: Group) => {
+        if (selectedMembers.length < 1) return true;
+
+        switch (memberSearchMode) {
+            case "include": if (selectedMembers.some(value => item.members.includes(value))) return true;
+            break;
+            case "exclude": if (selectedMembers.every(value => !item.members.includes(value))) return true;
+            break;
+            case "match": if (selectedMembers.every(value => item.members.includes(value))) return true;
+            break;
+            default: return true;
+        }
+
+        return false;
+    });
+
+    let finalList = [];
+    $:{sortOrder; if (sortOrder === "descending") finalList = memberFilteredList.reverse(); else finalList = memberFilteredList;}
+
+    $: finalList = finalList;
 
     $: indexOfLastItem = currentPage * itemsPerPage;
     $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    $: pageAmount = Math.ceil(sortedList.length / itemsPerPage);
+    $: pageAmount = Math.ceil(finalList.length / itemsPerPage);
 
-    $: slicedList = sortedList.slice(indexOfFirstItem, indexOfLastItem);
+    $: slicedList = finalList.slice(indexOfFirstItem, indexOfLastItem);
+
+    function memberListRenderer(item: any) {
+    return `${item.name} (<code>${item.shortid}</code>)`;
+  }
+
+  addFormatter({
+    'member-list': memberListRenderer
+  });
 
 </script>
 
@@ -165,7 +202,7 @@
                 </InputGroup>
             </Col>
             {#if !isPublic}
-            <Col xs={12} lg={4} class="mb-2">
+            <Col xs={12} lg={3} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Only show</InputGroupText>
                     <Input bind:value={privacyFilter} type="select">
@@ -177,6 +214,18 @@
             </Col>
             {/if}
         </Row>
+        {#if !isPublic}
+        <hr/>
+        <Label>Filter groups by member</Label>
+        <Svelecte renderer="member-list" bind:value={selectedMembers} options={memberlist} multiple style="margin-bottom: 0.5rem">
+        </Svelecte>
+        <span style="cursor: pointer" id="include" on:click={() => memberSearchMode = "include"}>{@html memberSearchMode === "include" ? "<b>include</b>" : "include"}</span>
+         | <span style="cursor: pointer" id="exclude" on:click={() => memberSearchMode = "exclude"}>{@html memberSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
+         | <span style="cursor: pointer" id="match" on:click={() => memberSearchMode = "match"}>{@html memberSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
+        <Tooltip placement="bottom" target="include">Includes every group with any of the members.</Tooltip>
+        <Tooltip placement="bottom" target="exclude">Excludes every group with any of the members, opposite of include.</Tooltip>
+        <Tooltip placement="bottom" target="match">Only includes groups which have all the members selected.</Tooltip>
+        {/if}
     </CardBody>
 </Card>
 
@@ -204,6 +253,7 @@
             <CardsHeader bind:item={group} bind:loading={itemLoading} slot="header">
                 <FaUserCircle slot="icon"/>
             </CardsHeader>
+            <Body bind:group bind:isPublic={isPublic}/>
         </AccordionItem>
     {/each}
 </Accordion>

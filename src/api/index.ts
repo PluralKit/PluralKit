@@ -14,7 +14,7 @@ export default class PKAPI {
         GET_SYSTEM: (sid?: string) => sid ? `/systems/${sid}` : `/systems/@me`,
         GET_MEMBER_LIST: (sid?: string) => sid ? `/systems/${sid}/members` : `/systems/@me/members`,
         GET_MEMBER: (mid: string) => `/members/${mid}`,
-        GET_GROUP_LIST: (sid?: string) => sid ? `/systems/${sid}/groups` : `/systems/@me/groups`,
+        GET_GROUP_LIST: (sid?: string, members?: boolean) => `${sid ? `/systems/${sid}/groups` : `/systems/@me/groups`}` + `${members ? `?with_members=true` : ""}`,
 
         PATCH_SYSTEM: () => `/systems/@me`,
         
@@ -115,14 +115,16 @@ export default class PKAPI {
         return member;
     }
 
-    async getGroupList(options: {token?: string, id?: any}) {
+    async getGroupList(options: {token?: string, id?: any, members?: boolean}) {
         if (!options.token && !options.id) {
             throw new Error("Must pass a token or id.");
         }
+        if (!options.members) options.members = false;
+
         var groups: Group[] = [];
         var res: AxiosResponse;
         try {
-            res = await this.handle(this.ROUTES.GET_GROUP_LIST(options.id ? options.id : ""), 'GET', {token: !options.id ? options.token : ""});
+            res = await this.handle(this.ROUTES.GET_GROUP_LIST(options.id ? options.id : "", options.members), 'GET', {token: !options.id ? options.token : ""});
                 if (res.status === 200) {
                     let resObject: any = res.data;
                     resObject.forEach(g => {

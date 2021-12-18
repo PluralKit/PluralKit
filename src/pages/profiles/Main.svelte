@@ -7,6 +7,7 @@
     import PKAPI from '../../api';
     import Sys from '../../api/system';
     import MemberList from '../../lib/member/List.svelte';
+    import GroupList from '../../lib/group/List.svelte';
 
     let isPublic = true;
 
@@ -63,7 +64,10 @@
                 </TabPane>
                 <TabPane tabId="members" tab="Members">
                         <MemberList bind:list={members} bind:isPublic/>
-                </TabPane> 
+                </TabPane>
+                <TabPane tabId="groups" tab="Groups">
+                    <GroupList bind:members={members} bind:list={groups} bind:isPublic/>
+            </TabPane> 
             </TabContent>
             {/if}
         </Col>

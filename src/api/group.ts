@@ -16,6 +16,7 @@ export default class Group {
     color?: string;
     privacy?: GroupPrivacy;
     created?: string;
+    members?: string[];
 
     constructor(data: any) {
         this.id = data.id;
@@ -27,6 +28,7 @@ export default class Group {
         this.banner = data.banner;
         this.color = data.color;
         this.created = data.created;
+        this.members = data.members;
         if (data.privacy) {
             this.privacy = {}
             this.privacy.description_privacy = data.privacy.description_privacy;

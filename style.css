@@ -65,6 +65,23 @@ blockquote {
     justify-content: center !important;
 }
 
+.page-link {
+    z-index: initial !important;
+}
+
+.svelecte-control .sv-control, .sv-content, .sv-dropdown, .sv-item, .sv-item-content {
+    color: var(--bs-body-color) !important;
+    background-color: var(--bs-body-bg) !important;
+}
+
+.sv-item-btn {
+    background-color: var(--bs-light) !important;
+}
+
+.sv-item {
+    cursor: pointer !important;
+}
+
 .d-spoiler {
     color: var(--bs-dark);
     background-color: var(--bs-dark);
@@ -86,6 +103,10 @@ blockquote {
 .d-emoji {
     height: 1em;
     width: auto;
+}
+
+code {
+    color: var(--bs-body-color) !important;
 }
 
 .description a {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button } from 'sveltestrap';
+    import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button, Tooltip, Label } from 'sveltestrap';
     import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte'
     import { onMount } from 'svelte';
     import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
@@ -9,11 +9,16 @@
     import PKAPI from '../../api';
     import CardsHeader from '../CardsHeader.svelte';
     import ListPagination from '../ListPagination.svelte';
+    import Svelecte, { addFormatter } from 'svelecte';
 
     export let isPublic: boolean;
     let itemLoading = false;
 
     export let list: Member[] = [];
+    export let groups: Group[] = [];
+
+    $: grouplist = groups.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
+
     let token = localStorage.getItem("pk-token");
     let listLoading = true;
     let err: string;
@@ -25,6 +30,8 @@
     let sortBy = "name";
     let sortOrder = "ascending";
     let privacyFilter = "all";
+    let groupSearchMode = "include";
+    let selectedGroups = [];
 
     let currentPage = 1;
 
@@ -102,14 +109,41 @@
         }
     }
 
-    $:{sortOrder; if (sortOrder === "descending") sortedList = sortedList.reverse();}
+    let memberFilteredList = [];
+    $: memberFilteredList = sortedList.filter((item: Member) => {
+        if (selectedGroups.length < 1) return true;
+
+        switch (groupSearchMode) {
+            case "include": if (selectedGroups.some(group => group.members.includes(item.uuid))) return true;
+            break;
+            case "exclude": if (selectedGroups.every(group => !group.members.includes(item.uuid))) return true;
+            break;
+            case "match": if (selectedGroups.every(group => group.members.includes(item.uuid))) return true;
+            break;
+            default: return true;
+        }
+
+        return false;
+    })
+
+    let finalList = [];
+    $:{sortOrder; if (sortOrder === "descending") finalList = memberFilteredList.reverse(); else finalList = memberFilteredList;}
+
+    $: finalList = finalList;
 
     $: indexOfLastItem = currentPage * itemsPerPage;
     $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    $: pageAmount = Math.ceil(sortedList.length / itemsPerPage);
+    $: pageAmount = Math.ceil(finalList.length / itemsPerPage);
 
-    $: slicedList = sortedList.slice(indexOfFirstItem, indexOfLastItem);
+    $: slicedList = finalList.slice(indexOfFirstItem, indexOfLastItem);
 
+    function groupListRenderer(item: any) {
+    return `${item.name} (<code>${item.shortid}</code>)`;
+  }
+
+  addFormatter({
+    'member-list': groupListRenderer
+  });
 </script>
 
 <Card class="mb-3">
@@ -166,7 +200,7 @@
                 </InputGroup>
             </Col>
             {#if !isPublic}
-            <Col xs={12} lg={4} class="mb-2">
+            <Col xs={12} lg={3} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Only show</InputGroupText>
                     <Input bind:value={privacyFilter} type="select">
@@ -178,6 +212,18 @@
             </Col>
             {/if}
         </Row>
+        {#if !isPublic}
+        <hr/>
+        <Label>Filter members by group</Label>
+        <Svelecte renderer="member-list" valueAsObject bind:value={selectedGroups} options={grouplist} multiple style="margin-bottom: 0.5rem">
+        </Svelecte>
+        <span style="cursor: pointer" id="include" on:click={() => groupSearchMode = "include"}>{@html groupSearchMode === "include" ? "<b>include</b>" : "include"}</span>
+         | <span style="cursor: pointer" id="exclude" on:click={() => groupSearchMode = "exclude"}>{@html groupSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
+         | <span style="cursor: pointer" id="match" on:click={() => groupSearchMode = "match"}>{@html groupSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
+        <Tooltip placement="bottom" target="include">Includes every member who's a part of any of the groups.</Tooltip>
+        <Tooltip placement="bottom" target="exclude">Excludes every member who's a part of any of the groups, the opposite of include.</Tooltip>
+        <Tooltip placement="bottom" target="match">Only includes members who are a part of every group.</Tooltip>
+        {/if}
     </CardBody>
 </Card>
 

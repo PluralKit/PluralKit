@@ -25,6 +25,7 @@
     "gh-pages": "^3.2.3",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.34",
+    "svelecte": "^3.4.5",
     "svelte-autosize": "^1.0.1",
     "svelte-icons": "^2.1.0",
     "svelte-navigator": "^3.1.5",

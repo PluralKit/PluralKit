@@ -937,6 +937,13 @@ supports-color@^7.1.0:
   dependencies:
     has-flag "^4.0.0"
 
+svelecte@^3.4.5:
+  version "3.4.5"
+  resolved "https://registry.yarnpkg.com/svelecte/-/svelecte-3.4.5.tgz#31ee09194030693d16501cb0031ba50fe5d0dada"
+  integrity sha512-HVva//rlRWg5Ck2iOuHuIVYrMATxZ7D1Kr91HLpMRbPfnqqAPFto6twwJ3XvBE+O9GD/kMzcYDwQULZ0sx3w1w==
+  dependencies:
+    svelte-tiny-virtual-list "^1.1.7"
+
 svelte-autosize@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/svelte-autosize/-/svelte-autosize-1.0.1.tgz#2121b2373ab89191a58aaa9a3aec957ca475e812"
@@ -987,6 +994,11 @@ svelte-preprocess@^4.0.0, svelte-preprocess@^4.9.8:
     magic-string "^0.25.7"
     sorcery "^0.10.0"
     strip-indent "^3.0.0"
+
+svelte-tiny-virtual-list@^1.1.7:
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/svelte-tiny-virtual-list/-/svelte-tiny-virtual-list-1.1.7.tgz#7ba8ee1fc23372512de2aba50d9674972a35c6f7"
+  integrity sha512-8314cmLXOVqIQwSc3NFu8yGU7BdHEJeixrwFirmnMoWl6YNcCq5jVjCKjE3tDNJfUenz1LN5M5YshPt6GcPuww==
 
 svelte-toggle@^3.1.0:
   version "3.1.0"

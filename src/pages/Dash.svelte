@@ -86,10 +86,10 @@
                         <System bind:user={user} bind:isPublic />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <MemberList bind:list={members} bind:isPublic />
+                        <MemberList bind:groups={groups} bind:list={members} bind:isPublic />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <GroupList bind:list={groups} bind:isPublic />
+                    <GroupList bind:members={members} bind:list={groups} bind:isPublic />
             </TabPane> 
             </TabContent>
         </Col>
