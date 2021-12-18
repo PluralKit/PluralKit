@@ -42,6 +42,7 @@ import { get } from 'svelte/store';
                     <DropdownMenu end>
                         <Link style="text-decoration: none;" to="/dash?tab=system"><DropdownItem>System</DropdownItem></Link>
                         <Link style="text-decoration: none;" to="/dash?tab=members"><DropdownItem>Members</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash?tab=groups"><DropdownItem>Groups</DropdownItem></Link>
                         <DropdownItem divider />
                         <DropdownItem on:click={logout}>Log out</DropdownItem>
                     </DropdownMenu>
