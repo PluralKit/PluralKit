@@ -4,7 +4,6 @@
     import { onMount } from 'svelte';
     import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
     import { useParams } from 'svelte-navigator';
-    import type Member from '../../api/member';
     import type Group from '../../api/group'
     import PKAPI from '../../api';
     import CardsHeader from '../CardsHeader.svelte';
@@ -13,7 +12,7 @@
     export let isPublic: boolean;
     let itemLoading = false;
 
-    export let list: Member[] = [];
+    export let list: Group[] = [];
     let token = localStorage.getItem("pk-token");
     let listLoading = true;
     let err: string;
@@ -32,15 +31,15 @@
     $: id = $params.id;
 
     onMount(() => {
-        if (token || isPublic) fetchMembers();
+        if (token || isPublic) fetchGroups();
     });
 
     const api = new PKAPI();
 
-    async function fetchMembers() {
+    async function fetchGroups() {
         listLoading = true;
         try {
-            const res: Member[] = await api.getMemberList({token: !isPublic && token, id: isPublic && id});
+            const res: Group[] = await api.getGroupList({token: !isPublic && token, id: isPublic && id});
             list = res;
             listLoading = false;
         } catch (error) {
@@ -102,7 +101,7 @@
         }
     }
 
-    $:{sortOrder; if (sortOrder === "descending") sortedList = sortedList.reverse();}
+    $: if (sortOrder === "descending") sortedList = sortedList.reverse();
 
     $: indexOfLastItem = currentPage * itemsPerPage;
     $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -118,7 +117,7 @@
             <CardTitle style="margin-top: 8px; outline: none;">
                 <div class="icon d-inline-block">
                     <FaSearch />
-                </div> Search members
+                </div> Search groups
             </CardTitle>
         </CardTitle>
     </CardHeader>
@@ -191,18 +190,18 @@
 {:else}
 
 <Row>
-    <Col xs={12} lg={10}>
+    <Col xs={12} lg={10} class="mb-2 mb-lg-0">
         <Input class="mb-3" bind:value={searchValue} placeholder="search by {searchBy}..."/>
     </Col>
-    <Col xs={12} lg={2} class="mb-3 mb-lg-0">
-        <Button class="w-100" color="primary" on:click={fetchMembers}>Refresh</Button>
+    <Col xs={12} lg={2}>
+        <Button class="w-100" color="primary" on:click={fetchGroups}>Refresh</Button>
     </Col>
 </Row>
 <ListPagination bind:currentPage bind:pageAmount />
 <Accordion class="my-3" stayOpen>
-    {#each slicedList as member (member.id)}
+    {#each slicedList as group (group.id)}
         <AccordionItem>
-            <CardsHeader bind:item={member} bind:loading={itemLoading} slot="header">
+            <CardsHeader bind:item={group} bind:loading={itemLoading} slot="header">
                 <FaUserCircle slot="icon"/>
             </CardsHeader>
         </AccordionItem>

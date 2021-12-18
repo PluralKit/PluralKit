@@ -6,9 +6,13 @@
     import System from '../lib/system/Main.svelte';
     import PKAPI from '../api';
     import Sys from '../api/system';
-    import List from '../lib/member/List.svelte';
+    import MemberList from '../lib/member/List.svelte';
+    import GroupList from '../lib/group/List.svelte';
 
     let isPublic = false;
+
+    let group = true;
+    let member = false;
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -64,6 +68,10 @@
         }
     }
     
+    // some values that get passed from the member to the group components and vice versa
+    let members = [];
+    let groups = [];
+
 </script>
 
 <!-- display the banner if there's a banner set, and if the current settings allow for it-->
@@ -78,8 +86,11 @@
                         <System bind:user={user} bind:isPublic />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <List bind:isPublic />
-                </TabPane> 
+                        <MemberList bind:list={members} bind:isPublic />
+                </TabPane>
+                <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
+                    <GroupList bind:list={groups} bind:isPublic />
+            </TabPane> 
             </TabContent>
         </Col>
     </Row>

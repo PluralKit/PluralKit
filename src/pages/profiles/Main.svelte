@@ -6,12 +6,15 @@
     import System from '../../lib/system/Main.svelte';
     import PKAPI from '../../api';
     import Sys from '../../api/system';
-    import List from '../../lib/member/List.svelte';
+    import MemberList from '../../lib/member/List.svelte';
 
     let isPublic = true;
 
     let user = new Sys({});
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
+
+    let members = [];
+    let groups = [];
 
     let params = useParams();
     $: id = $params.id;
@@ -59,7 +62,7 @@
                         <System bind:user bind:isPublic />
                 </TabPane>
                 <TabPane tabId="members" tab="Members">
-                        <List bind:isPublic/>
+                        <MemberList bind:list={members} bind:isPublic/>
                 </TabPane> 
             </TabContent>
             {/if}
