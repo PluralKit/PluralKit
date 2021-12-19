@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Label, Row, Col, Spinner, Button, Tooltip } from 'sveltestrap';
-    import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte'
+    import FaUsers from 'svelte-icons/fa/FaUsers.svelte'
     import { onMount } from 'svelte';
     import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
     import { useParams } from 'svelte-navigator';
@@ -11,6 +11,7 @@
     import ListPagination from '../ListPagination.svelte';
     import Body from './Body.svelte';
     import Svelecte, { addFormatter } from 'svelecte';
+    import FaLock from 'svelte-icons/fa/FaLock.svelte';
 
     export let isPublic: boolean;
 
@@ -255,12 +256,21 @@
 <ListPagination bind:currentPage bind:pageAmount />
 <Accordion class="my-3" stayOpen>
     {#each slicedList as group, index (group.id)}
+        {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
         <AccordionItem>
-            <CardsHeader bind:item={group} bind:loading={itemLoading[index]} slot="header">
-                <FaUserCircle slot="icon"/>
+            <CardsHeader bind:item={group} loading={itemLoading[index]} slot="header">
+                <FaUsers slot="icon" />
             </CardsHeader>
             <Body on:update={updateList} bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
         </AccordionItem>
+        {:else}
+        <AccordionItem>
+            <CardsHeader bind:item={group} loading={itemLoading[index]} slot="header">
+                <FaLock slot="icon" />
+            </CardsHeader>
+            <Body on:update={updateList} bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
+        </AccordionItem>
+        {/if}
     {/each}
 </Accordion>
 <ListPagination bind:currentPage bind:pageAmount />

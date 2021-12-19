@@ -10,6 +10,7 @@
     import CardsHeader from '../CardsHeader.svelte';
     import ListPagination from '../ListPagination.svelte';
     import Svelecte, { addFormatter } from 'svelecte';
+    import FaLock from 'svelte-icons/fa/FaLock.svelte';
 
     export let isPublic: boolean;
     let itemLoading: boolean[] = [];
@@ -247,11 +248,19 @@
 <ListPagination bind:currentPage bind:pageAmount />
 <Accordion class="my-3" stayOpen>
     {#each slicedList as member, index (member.id)}
-        <AccordionItem>
-            <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
-                <FaUserCircle slot="icon"/>
-            </CardsHeader>
-        </AccordionItem>
+            {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
+            <AccordionItem>
+                <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
+                    <FaUserCircle slot="icon" />
+                </CardsHeader>
+            </AccordionItem>
+            {:else}
+            <AccordionItem>
+                <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
+                    <FaLock slot="icon" />
+                </CardsHeader>
+            </AccordionItem>
+            {/if}
     {/each}
 </Accordion>
 <ListPagination bind:currentPage bind:pageAmount />
