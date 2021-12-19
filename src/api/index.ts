@@ -17,6 +17,7 @@ export default class PKAPI {
         GET_GROUP_LIST: (sid?: string, members?: boolean) => `${sid ? `/systems/${sid}/groups` : `/systems/@me/groups`}` + `${members ? `?with_members=true` : ""}`,
 
         PATCH_SYSTEM: () => `/systems/@me`,
+        PATCH_GROUP: (gid: string) => `/groups/${gid}`,
         
         POST_MEMBER: () => `/members`
     }
@@ -137,6 +138,20 @@ export default class PKAPI {
             throw new Error(error.message);
         }
         return groups;
+    }
+
+    async patchGroup(options: {token: string, id: any, data: any}) {
+        var body = new Group(options.data);
+        var group: Group;
+        var res: AxiosResponse;
+        try {
+            res = await this.handle(this.ROUTES.PATCH_GROUP(options.id), 'PATCH', {token: options.token, body: body});
+            if (res.status === 200) group = new Group(res.data);
+            else this.handleErrors(res);
+        } catch (error) {
+            throw new Error(error.message);
+        }
+        return group;
     }
 
     handleErrors(res: any) {
