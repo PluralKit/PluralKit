@@ -10,7 +10,8 @@
             banner_top: true,
             banner_bottom: true,
             gradient_background: false,
-            no_background: false
+            no_background: false,
+            twemoji: false
         }
     };
 
@@ -43,6 +44,10 @@
                         <Col xs={12} lg={4}>
                             <span id="s-bannerbottom">Show banners at the bottom of cards?</span> <Toggle hideLabel style="display: inline" label="Remove banner from bottom" toggled={settings.appearance.banner_bottom} on:toggle={() => {settings.appearance.banner_bottom = !settings.appearance.banner_bottom; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-bannerbottom" placement="bottom">Toggles banners at the bottom of the system, member and group cards.</Tooltip>
+                        </Col>
+                        <Col xs={12} lg={4}>
+                            <span id="s-twemoji">Use twemoji?</span> <Toggle hideLabel style="display: inline" label="Convert to twemoji" toggled={settings.appearance.twemoji} on:toggle={() => {settings.appearance.twemoji = !settings.appearance.twemoji; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <Tooltip target="s-bannerbottom" placement="bottom">Converts all emojis to twemoji.</Tooltip>
                         </Col>
                     </Row>
                 </CardBody>
