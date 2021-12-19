@@ -1,15 +1,17 @@
 <script lang="ts">
-    import { Row, Col, Modal, Image, Button, CardBody } from 'sveltestrap';
+    import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody, ModalFooter, Spinner } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
     import type Group from '../../api/group';
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
+    import Privacy from './Privacy.svelte';
    
     export let group: Group;
     let editMode: boolean;
     export let isPublic: boolean;
     export let loading: boolean = false;
+    let privacyLoading = false;
 
     let htmlDescription: string;
     $: if (group.description) { 
@@ -33,6 +35,9 @@
 
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
+
+    let privacyOpen = false;
+    const togglePrivacyModal = () => (privacyOpen = !privacyOpen);
 
 </script>
 
@@ -71,6 +76,19 @@
             <div slot="external" on:click={toggleBannerModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
                 <Image style="display: block; margin: auto;" src={group.banner} thumbnail alt="Your system banner" />
             </div>
+        </Modal>
+    </Col>
+    {/if}
+    {#if group.privacy}
+    <Col xs={12} lg={4} class="mb-2">
+        <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal}>Edit</Button>
+        <Modal size="lg" isOpen={privacyOpen} toggle={togglePrivacyModal}>
+            <ModalHeader toggle={togglePrivacyModal}>
+                {#if privacyLoading}<div style="float: left; width: 3rem;"><Spinner color="primary" /></div>{/if} Edit privacy
+            </ModalHeader>
+                <ModalBody>
+                    <Privacy on:update bind:group bind:privacyOpen={privacyOpen} bind:loading={privacyLoading} />
+                </ModalBody>
         </Modal>
     </Col>
     {/if}
