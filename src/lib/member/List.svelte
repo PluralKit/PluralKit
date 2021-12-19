@@ -12,7 +12,7 @@
     import Svelecte, { addFormatter } from 'svelecte';
 
     export let isPublic: boolean;
-    let itemLoading = false;
+    let itemLoading: boolean[] = [];
 
     export let list: Member[] = [];
     export let groups: Group[] = [];
@@ -246,9 +246,9 @@
 </Row>
 <ListPagination bind:currentPage bind:pageAmount />
 <Accordion class="my-3" stayOpen>
-    {#each slicedList as member (member.id)}
+    {#each slicedList as member, index (member.id)}
         <AccordionItem>
-            <CardsHeader bind:item={member} bind:loading={itemLoading} slot="header">
+            <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
                 <FaUserCircle slot="icon"/>
             </CardsHeader>
         </AccordionItem>
