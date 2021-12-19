@@ -63,7 +63,7 @@
         currentUser.update(() => null);
     }
 
-    let settings = JSON.parse(localStorage.getItem("settings"));
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
     let welcomeElement: any;
     let htmlName: string;
     $: if (user && user.name) {
