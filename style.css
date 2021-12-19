@@ -101,8 +101,10 @@ blockquote {
 }
 
 .d-emoji {
-    height: 1em;
+    height: 1.125em;
     width: auto;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1125em;
 }
 
 code {
@@ -120,3 +122,10 @@ code {
         height: 50vh;
     }
 }
+
+img.emoji {
+    height: 1.125em;
+    width: auto;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1125em;
+ }
