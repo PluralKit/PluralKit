@@ -1,11 +1,21 @@
 <script lang="ts">
     import { Modal, CardHeader, CardTitle, Image, Spinner } from 'sveltestrap';
-    import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte'
     import default_avatar from '../assets/default_avatar.png';
+    import { toHTML } from 'discord-markdown';
+    import twemoji from 'twemoji';  
 
     export let item: any;
 
-    let icon_url = item.avatar_url ? item.avatar_url : item.icon ? item.icon : default_avatar;
+    let htmlName: string;
+    let nameElement: any; 
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
+
+    $: htmlName = toHTML(item.name);
+    $: if (settings && settings.appearance.twemoji) {
+        if (nameElement) twemoji.parse(nameElement);
+    }
+
+    $: icon_url = item.avatar_url ? item.avatar_url : item.icon ? item.icon : default_avatar;
 
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
@@ -18,7 +28,7 @@
             <div class="icon d-inline-block">
                 <slot name="icon" />
             </div>
-            <span style="vertical-align: middle;">{item.name} ({item.id})</span>
+            <span bind:this={nameElement} style="vertical-align: middle;">{@html htmlName} ({item.id})</span>
         </div>
         <div>
         {#if loading}

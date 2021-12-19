@@ -3,16 +3,22 @@
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
     import type Sys from '../../api/system';
+    import twemoji from 'twemoji';
    
     export let user: Sys;
     export let editMode: boolean;
     export let isPublic: boolean;
 
     let htmlDescription: string;
+    let htmlName: string;
     if (user.description) { 
         htmlDescription = toHTML(user.description, {embed: true});
     } else {
         htmlDescription = "(no description)";
+    }
+
+    if (user.name) {
+        htmlName = toHTML(user.name);
     }
 
     let created = moment(user.created).format("MMM D, YYYY");
@@ -21,6 +27,16 @@
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
+    let descriptionElement: any;
+    let nameElement: any;
+    let tagElement: any;
+
+    $: if (settings && settings.appearance.twemoji) {
+        if (descriptionElement) twemoji.parse(descriptionElement);
+        if (nameElement) twemoji.parse(nameElement);
+        if (tagElement) twemoji.parse(tagElement);
+    }
+
 </script>
 
 <Row>
@@ -31,12 +47,12 @@
     {/if}
     {#if user.name}
     <Col xs={12} lg={4} class="mb-2">
-        <b>Name:</b> {user.name}
+        <span  bind:this={nameElement}><b>Name:</b> {@html htmlName}</span>
     </Col>
     {/if}
     {#if user.tag}
     <Col xs={12} lg={4} class="mb-2">
-        <b>Tag:</b> {user.tag}
+        <span bind:this={tagElement}><b>Tag:</b> {user.tag}</span>
     </Col>
     {/if}
     {#if user.created && !isPublic}
@@ -65,7 +81,7 @@
     </Col>
     {/if}
 </Row>
-<div class="my-2 description">
+<div class="my-2 description" bind:this={descriptionElement}>
     <b>Description:</b><br />
     {@html htmlDescription}
 </div>

@@ -4,6 +4,8 @@
     import FaLockOpen from 'svelte-icons/fa/FaLockOpen.svelte';
     import { loggedIn, currentUser } from '../stores';
     import { Link } from 'svelte-navigator';
+    import twemoji from 'twemoji';
+    import { toHTML } from 'discord-markdown';
 
     import PKAPI from '../api/index';
     import type Sys from '../api/system';
@@ -61,6 +63,16 @@
         currentUser.update(() => null);
     }
 
+    let settings = JSON.parse(localStorage.getItem("settings"));
+    let welcomeElement: any;
+    let htmlName: string;
+    $: if (user && user.name) {
+        htmlName = toHTML(user.name);
+    }
+    $: if (settings && settings.appearance.twemoji) {
+        if (welcomeElement) twemoji.parse(welcomeElement);
+    }
+
 </script>
 
 <Container>
@@ -82,9 +94,9 @@
                         verifying login...
                     {:else if isLoggedIn}
                         {#if user && user.name}
-                            <p>Welcome back, <b>{user.name}</b>!</p>
+                            <p bind:this={welcomeElement}>Welcome, <b>{@html htmlName}</b>!</p>
                         {:else}
-                            <p>Welcome back!</p>
+                            <p>Welcome!</p>
                         {/if}
                         <Link to="/dash"><Button style="float: left;" color='primary'>Go to dash</Button></Link><Button style="float: right;" color='danger' on:click={logout}>Log out</Button>
                     {:else}
