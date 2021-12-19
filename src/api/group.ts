@@ -1,8 +1,8 @@
 interface GroupPrivacy {
-    description_privacy?: string | boolean | null;
-    icon_privacy?: string | boolean | null;
-    list_privacy?: string | boolean | null;
-    visibility?: string | boolean | null;
+    description_privacy?: string,
+    icon_privacy?: string,
+    list_privacy?: string,
+    visibility?: string
 }
 
 export default class Group {
