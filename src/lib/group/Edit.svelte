@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert } from 'sveltestrap';
+    import { createEventDispatcher } from 'svelte';
     import Group from '../../api/group';
     import PKAPI from '../../api';
     import autosize from 'svelte-autosize';
@@ -11,6 +12,12 @@
     let err: string[] = [];
 
     let input = new Group(group);
+
+    const dispatch = createEventDispatcher();
+
+    function update() {
+        dispatch('update', group);
+    }
 
     async function submit() {
         let data = input;
@@ -33,6 +40,7 @@
             let res = await api.patchGroup({token: localStorage.getItem("pk-token"), id: group.id, data: data});
             group = res;
             err = [];
+            update();
             editMode = false;
             loading = false;
         } catch (error) {

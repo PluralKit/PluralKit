@@ -6,8 +6,7 @@
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
    
-    export let item: Group;
-    let group = item; 
+    export let group: Group;
     let editMode: boolean;
     export let isPublic: boolean;
     export let loading: boolean = false;
@@ -87,6 +86,6 @@
 <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
 {/if}
 {:else}
-<Edit bind:loading bind:group bind:editMode />
+<Edit on:update bind:loading bind:group bind:editMode />
 {/if}
 </CardBody>

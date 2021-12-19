@@ -135,6 +135,7 @@
     $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
     $: pageAmount = Math.ceil(finalList.length / itemsPerPage);
 
+    let slicedList = [];
     $: slicedList = finalList.slice(indexOfFirstItem, indexOfLastItem);
 
     function memberListRenderer(item: any) {
@@ -147,6 +148,10 @@
 
   let itemLoading: boolean[] = [];
   $: itemLoading.length = slicedList.length;
+
+  function updateList(event: any) {
+      list = list.map(group => group.id !== event.detail.id ? group : event.detail)
+  }
 </script>
 
 <Card class="mb-3">
@@ -254,7 +259,7 @@
             <CardsHeader bind:item={group} bind:loading={itemLoading[index]} slot="header">
                 <FaUserCircle slot="icon"/>
             </CardsHeader>
-            <Body bind:item={group} bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
+            <Body on:update={updateList} bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
         </AccordionItem>
     {/each}
 </Accordion>
