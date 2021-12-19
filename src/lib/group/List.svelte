@@ -101,7 +101,9 @@
                 else return a.name.localeCompare(b.name);
             });
             break;
-            case "creation date": sortedList = filteredList.sort((a, b) => a.created.localeCompare(b.created));
+            case "creation date": sortedList = filteredList.sort((a, b) => {
+                if (a.created && b.created) return a.created.localeCompare(b.created);
+            });
             break;
             case "ID": sortedList = filteredList.sort((a, b) => a.id.localeCompare(b.id));
             break;
