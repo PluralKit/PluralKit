@@ -1,6 +1,6 @@
 <script lang="ts">
     import Sys from '../../api/system';
-    import { Input, Row, Col, Button, Label } from 'sveltestrap';
+    import { Input, Row, Col, Button, Label, Alert } from 'sveltestrap';
     import { currentUser } from '../../stores';
     import PKAPI from '../../api';
 
@@ -47,6 +47,9 @@
     }
 </script>
 
+{#if err}
+    <Alert color="danger">{err}</Alert>
+{/if}
 <Label><b>Set all to:</b></Label>
 <Input type="select" bind:value={allPrivacy}>
     <option>public</option>
