@@ -10,7 +10,7 @@
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
     
-    export let loading: boolean;
+    export let loading: boolean = false;
 </script>
 
     <CardTitle style="margin-top: 0px; margin-bottom: 0px; outline: none; align-items: center;" class="d-flex justify-content-between align-middle w-100">

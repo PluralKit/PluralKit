@@ -13,7 +13,6 @@
     import Svelecte, { addFormatter } from 'svelecte';
 
     export let isPublic: boolean;
-    let itemLoading = false;
 
     export let list: Group[];
     export let members: Member[];
@@ -146,6 +145,8 @@
     'member-list': memberListRenderer
   });
 
+  let itemLoading: boolean[] = [];
+  $: itemLoading.length = slicedList.length;
 </script>
 
 <Card class="mb-3">
@@ -248,12 +249,12 @@
 </Row>
 <ListPagination bind:currentPage bind:pageAmount />
 <Accordion class="my-3" stayOpen>
-    {#each slicedList as group (group.id)}
+    {#each slicedList as group, index (group.id)}
         <AccordionItem>
-            <CardsHeader bind:item={group} bind:loading={itemLoading} slot="header">
+            <CardsHeader bind:item={group} bind:loading={itemLoading[index]} slot="header">
                 <FaUserCircle slot="icon"/>
             </CardsHeader>
-            <Body bind:group bind:isPublic={isPublic}/>
+            <Body bind:item={group} bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
         </AccordionItem>
     {/each}
 </Accordion>

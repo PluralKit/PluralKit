@@ -3,24 +3,38 @@
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
     import type Group from '../../api/group';
+    import Edit from './Edit.svelte';
+    import twemoji from 'twemoji';
    
-    export let group: Group;
+    export let item: Group;
+    let group = item; 
     let editMode: boolean;
     export let isPublic: boolean;
+    export let loading: boolean = false;
 
     let htmlDescription: string;
-    if (group.description) { 
+    $: if (group.description) { 
         htmlDescription = toHTML(group.description, {embed: true});
     } else {
         htmlDescription = "(no description)";
     }
+    let htmlDisplayName: string;
+    if (group.display_name) htmlDisplayName = toHTML(group.display_name)
+
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
+    let descriptionElement: any;
+    let displayNameElement: any;
+
+    $: if (settings && settings.appearance.twemoji) {
+        if (descriptionElement) twemoji.parse(descriptionElement);
+        if (displayNameElement) twemoji.parse(displayNameElement);
+    };
 
     let created = moment(group.created).format("MMM D, YYYY");
 
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
 
-    let settings = JSON.parse(localStorage.getItem("pk-settings"));
 </script>
 
 <CardBody style="border-left: 4px solid #{group.color}; margin: -1rem -1.25rem">
@@ -38,7 +52,7 @@
     {/if}
     {#if group.display_name}
     <Col xs={12} lg={4} class="mb-2">
-        <b>Display Name:</b> {group.display_name}
+        <b>Display Name:</b> <span bind:this={displayNameElement}>{@html htmlDisplayName}</span>
     </Col>
     {/if}
     {#if group.created && !isPublic}
@@ -62,7 +76,7 @@
     </Col>
     {/if}
 </Row>
-<div class="my-2 description">
+<div class="my-2 description" bind:this={descriptionElement}>
     <b>Description:</b><br />
     {@html htmlDescription}
 </div>
@@ -73,6 +87,6 @@
 <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
 {/if}
 {:else}
-woohoo editing goes here
+<Edit bind:loading bind:group bind:editMode />
 {/if}
 </CardBody>
