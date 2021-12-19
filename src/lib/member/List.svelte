@@ -241,7 +241,7 @@
         <Input class="mb-3" bind:value={searchValue} placeholder="search by {searchBy}..."/>
     </Col>
     <Col xs={12} lg={2} class="mb-3 mb-lg-0">
-        <Button class="w-100" color="primary" on:click={fetchMembers}>Refresh</Button>
+        <Button class="w-100 mb-3" color="primary" on:click={fetchMembers}>Refresh</Button>
     </Col>
 </Row>
 <ListPagination bind:currentPage bind:pageAmount />
