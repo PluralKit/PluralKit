@@ -113,15 +113,19 @@
     }
 
     let memberFilteredList = [];
-    $: memberFilteredList = sortedList.filter((item: Member) => {
+    $: memberFilteredList = sortedList.filter((item: Member) => {      
+        if (groupSearchMode === "none") {
+            if (groups.some(group => group.members && group.members.includes(item.uuid))) return false;
+        }
+
         if (selectedGroups.length < 1) return true;
 
         switch (groupSearchMode) {
-            case "include": if (selectedGroups.some(group => group.members.includes(item.uuid))) return true;
+            case "include": if (selectedGroups.some(group => group.members && group.members.includes(item.uuid))) return true;
             break;
-            case "exclude": if (selectedGroups.every(group => !group.members.includes(item.uuid))) return true;
+            case "exclude": if (selectedGroups.every(group => group.members && !group.members.includes(item.uuid))) return true;
             break;
-            case "match": if (selectedGroups.every(group => group.members.includes(item.uuid))) return true;
+            case "match": if (selectedGroups.every(group => group.members && group.members.includes(item.uuid))) return true;
             break;
             default: return true;
         }
@@ -223,9 +227,11 @@
         <span style="cursor: pointer" id="include" on:click={() => groupSearchMode = "include"}>{@html groupSearchMode === "include" ? "<b>include</b>" : "include"}</span>
          | <span style="cursor: pointer" id="exclude" on:click={() => groupSearchMode = "exclude"}>{@html groupSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
          | <span style="cursor: pointer" id="match" on:click={() => groupSearchMode = "match"}>{@html groupSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
+         | <span style="cursor: pointer" id="none" on:click={() => groupSearchMode = "none"}>{@html groupSearchMode === "none" ? "<b>none</b>" : "none"}</span>
         <Tooltip placement="bottom" target="include">Includes every member who's a part of any of the groups.</Tooltip>
         <Tooltip placement="bottom" target="exclude">Excludes every member who's a part of any of the groups, the opposite of include.</Tooltip>
         <Tooltip placement="bottom" target="match">Only includes members who are a part of every group.</Tooltip>
+        <Tooltip placement="bottom" target="none">Only includes members that are in no groups.</Tooltip>
         {/if}
     </CardBody>
 </Card>

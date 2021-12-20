@@ -114,14 +114,18 @@
 
     let memberFilteredList = [];
     $: memberFilteredList = sortedList.filter((item: Group) => {
+        if (memberSearchMode === "none") {
+            if (item.members && item.members.length > 0) return false;
+        }
+
         if (selectedMembers.length < 1) return true;
 
         switch (memberSearchMode) {
-            case "include": if (selectedMembers.some(value => item.members.includes(value))) return true;
+            case "include": if (item.members && selectedMembers.some(value => item.members.includes(value))) return true;
             break;
-            case "exclude": if (selectedMembers.every(value => !item.members.includes(value))) return true;
+            case "exclude": if (item.members && selectedMembers.every(value => !item.members.includes(value))) return true;
             break;
-            case "match": if (selectedMembers.every(value => item.members.includes(value))) return true;
+            case "match": if (item.members && selectedMembers.every(value => item.members.includes(value))) return true;
             break;
             default: return true;
         }
@@ -231,9 +235,11 @@
         <span style="cursor: pointer" id="include" on:click={() => memberSearchMode = "include"}>{@html memberSearchMode === "include" ? "<b>include</b>" : "include"}</span>
          | <span style="cursor: pointer" id="exclude" on:click={() => memberSearchMode = "exclude"}>{@html memberSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
          | <span style="cursor: pointer" id="match" on:click={() => memberSearchMode = "match"}>{@html memberSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
+         | <span style="cursor: pointer" id="none" on:click={() => memberSearchMode = "none"}>{@html memberSearchMode === "none" ? "<b>none</b>" : "none"}</span>
         <Tooltip placement="bottom" target="include">Includes every group with any of the members.</Tooltip>
         <Tooltip placement="bottom" target="exclude">Excludes every group with any of the members, opposite of include.</Tooltip>
         <Tooltip placement="bottom" target="match">Only includes groups which have all the members selected.</Tooltip>
+        <Tooltip placement="bottom" target="none">Only includes groups that have no members.</Tooltip>
         {/if}
     </CardBody>
 </Card>
@@ -263,14 +269,14 @@
             <CardsHeader bind:item={group} loading={itemLoading[index]} slot="header">
                 <FaUsers slot="icon" />
             </CardsHeader>
-            <Body on:update={updateList} bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
+            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
         </AccordionItem>
         {:else}
         <AccordionItem>
             <CardsHeader bind:item={group} loading={itemLoading[index]} slot="header">
                 <FaLock slot="icon" />
             </CardsHeader>
-            <Body on:update={updateList} bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
+            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
         </AccordionItem>
         {/if}
     {/each}
