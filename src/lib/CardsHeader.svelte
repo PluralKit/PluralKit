@@ -10,7 +10,9 @@
     let nameElement: any; 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
-    $: htmlName = toHTML(item.name);
+    $: if (item.name) htmlName = toHTML(item.name);
+        else htmlName = "";
+
     $: if (settings && settings.appearance.twemoji) {
         if (nameElement) twemoji.parse(nameElement);
     }
