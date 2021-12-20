@@ -62,7 +62,7 @@
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Display name:</Label>
-        <Input bind:value={input.display_name} maxlength={100} type="text" placeholder={group.display_name} />
+        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} type="text" placeholder={group.display_name} />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Color:</Label>
