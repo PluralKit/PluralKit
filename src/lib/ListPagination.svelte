@@ -3,9 +3,11 @@ import { Pagination, PaginationItem, PaginationLink } from "sveltestrap";
 
 export let currentPage: number;
 export let pageAmount: number;
-</script>
+export let smallPages: boolean = false;
 
-<Pagination class="mx-auto" arialabel="member list page navigation">
+</script>
+{#if pageAmount > 1}
+<Pagination size={smallPages ? "sm" : ""} class="mx-auto" arialabel="member list page navigation">
     {#if currentPage !== 1}
     <PaginationItem>
         <PaginationLink href="#" previous on:click={(e) => {e.preventDefault(); currentPage -= 1}}></PaginationLink>
