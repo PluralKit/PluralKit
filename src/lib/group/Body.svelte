@@ -6,12 +6,16 @@
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
     import Privacy from './Privacy.svelte';
+    import type Member from 'src/api/member';
+    import MemberEdit from './MemberEdit.svelte';
    
     export let group: Group;
-    let editMode: boolean;
+    let editMode: boolean = false;
+    let memberMode: boolean = false;
     export let isPublic: boolean;
     export let loading: boolean = false;
     let privacyLoading = false;
+    export let members: Member[];
 
     let htmlDescription: string;
     $: if (group.description) { 
@@ -42,7 +46,7 @@
 </script>
 
 <CardBody style="border-left: 4px solid #{group.color}; margin: -1rem -1.25rem">
-{#if !editMode }
+{#if !editMode && !memberMode}
 <Row>
     {#if group.id}
     <Col xs={12} lg={4} class="mb-2">
@@ -101,9 +105,11 @@
 <img src={group.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
 {#if !isPublic}
-<Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
+<Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>
 {/if}
-{:else}
+{:else if editMode}
 <Edit on:update bind:loading bind:group bind:editMode />
+{:else if memberMode}
+    <MemberEdit on:update bind:loading bind:group bind:memberMode bind:members />
 {/if}
 </CardBody>
