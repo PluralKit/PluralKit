@@ -222,7 +222,7 @@
         {#if !isPublic}
         <hr/>
         <Label>Filter members by group</Label>
-        <Svelecte renderer="member-list" valueAsObject bind:value={selectedGroups} options={grouplist} multiple style="margin-bottom: 0.5rem">
+        <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={selectedGroups} options={grouplist} multiple style="margin-bottom: 0.5rem">
         </Svelecte>
         <span style="cursor: pointer" id="include" on:click={() => groupSearchMode = "include"}>{@html groupSearchMode === "include" ? "<b>include</b>" : "include"}</span>
          | <span style="cursor: pointer" id="exclude" on:click={() => groupSearchMode = "exclude"}>{@html groupSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
