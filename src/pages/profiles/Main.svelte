@@ -34,7 +34,7 @@
         try {
             let res: Sys = await api.getSystem({id: id})
             user = res;
-            title = user.name;
+            title = user.name ? user.name : "system";
         } catch (error) {
             console.log(error);
             err = error.message;
