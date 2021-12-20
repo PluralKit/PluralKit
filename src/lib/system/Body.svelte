@@ -72,7 +72,7 @@
     {/if}
     {#if user.banner}
     <Col xs={12} lg={3} class="mb-2">
-        <b>Banner:</b> <Button size="sm" color="light" on:click={toggleBannerModal}>View</Button>
+        <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal}>View</Button>
         <Modal isOpen={bannerOpen} toggle={toggleBannerModal}>
             <div slot="external" on:click={toggleBannerModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
                 <Image style="display: block; margin: auto;" src={user.banner} thumbnail alt="Your system banner" />
