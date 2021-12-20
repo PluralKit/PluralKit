@@ -69,6 +69,10 @@ blockquote {
     z-index: initial !important;
 }
 
+.svelecte-control .sv-control {
+    border-color: rgba(128, 128, 128, 0.3) !important;
+}
+
 .svelecte-control .sv-control, .sv-content, .sv-dropdown, .sv-item, .sv-item-content {
     color: var(--bs-body-color) !important;
     background-color: var(--bs-body-bg) !important;
