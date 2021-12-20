@@ -81,4 +81,4 @@
     <b>Description:</b><br />
     <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={group.description}/>
 </div>
-<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="light" on:click={() => editMode = false}>Back</Button>
+<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false}>Back</Button>
