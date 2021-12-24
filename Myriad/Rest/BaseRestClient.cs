@@ -20,7 +20,7 @@ namespace Myriad.Rest;
 public class BaseRestClient: IAsyncDisposable
 {
     private readonly string _baseUrl;
-    private readonly Version _httpVersion = new(2, 0);
+    private readonly Version _httpVersion = new(1, 1);
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly ILogger _logger;
     private readonly Ratelimiter _ratelimiter;
@@ -177,7 +177,7 @@ public class BaseRestClient: IAsyncDisposable
                     request.Method, CleanForLogging(request.RequestUri!));
 
                 request.Version = _httpVersion;
-                request.VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+                request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
 
                 HttpResponseMessage response;
 
