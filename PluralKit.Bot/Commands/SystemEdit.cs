@@ -73,6 +73,8 @@ public class SystemEdit
 
     public async Task Description(Context ctx, PKSystem target)
     {
+        ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
+
         var isOwnSystem = target.Id == ctx.System?.Id;
 
         var noDescriptionSetMessage = "This system does not have a description set.";
@@ -409,6 +411,8 @@ public class SystemEdit
 
     public async Task BannerImage(Context ctx, PKSystem target)
     {
+        ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
+
         var isOwnSystem = target.Id == ctx.System?.Id;
 
         if (!ctx.HasNext() && ctx.Message.Attachments.Length == 0)
