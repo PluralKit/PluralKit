@@ -144,6 +144,7 @@ public class SystemEdit
                     .Description(
                         $"This system's color is **#{target.Color}**." + (isOwnSystem ? " To clear it, type `pk;s color -clear`." : ""))
                     .Build());
+            return;
         }
 
         ctx.CheckSystem().CheckOwnSystem(target);
