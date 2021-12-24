@@ -224,7 +224,7 @@ public class EmbedService
     public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
     {
         var pctx = ctx.LookupContextFor(system.Id);
-        var memberCount = await _repo.GetSystemMemberCount(system.Id, pctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+        var memberCount = await _repo.GetGroupMemberCount(target.Id, pctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
         var nameField = target.Name;
         if (system.Name != null)
