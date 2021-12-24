@@ -411,7 +411,7 @@ public class SystemEdit
     {
         var isOwnSystem = target.Id == ctx.System?.Id;
 
-        if (!ctx.HasNext())
+        if (!ctx.HasNext() && ctx.Message.Attachments.Length == 0)
         {
             if ((target.BannerImage?.Trim() ?? "").Length > 0)
             {
