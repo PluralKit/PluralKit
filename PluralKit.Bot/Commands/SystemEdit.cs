@@ -88,7 +88,7 @@ public class SystemEdit
             if (target.Description == null)
                 await ctx.Reply(noDescriptionSetMessage);
             else
-                await ctx.Reply($"```\n{ctx.System.Description}\n```");
+                await ctx.Reply($"```\n{target.Description}\n```");
             return;
         }
 
@@ -140,9 +140,9 @@ public class SystemEdit
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("System color")
                     .Color(target.Color.ToDiscordColor())
-                    .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{ctx.System.Color}/?text=%20"))
+                    .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description(
-                        $"This system's color is **#{ctx.System.Color}**." + (isOwnSystem ? " To clear it, type `pk;s color -clear`." : ""))
+                        $"This system's color is **#{target.Color}**." + (isOwnSystem ? " To clear it, type `pk;s color -clear`." : ""))
                     .Build());
         }
 
@@ -194,7 +194,7 @@ public class SystemEdit
             if (target.Tag == null)
                 await ctx.Reply(noTagSetMessage);
             else
-                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {ctx.System.Tag.AsCode()}."
+                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current system tag is {target.Tag.AsCode()}."
                     + (isOwnSystem ? "To change it, type `pk;s tag <tag>`. To clear it, type `pk;s tag -clear`." : ""));
             return;
         }
@@ -228,7 +228,7 @@ public class SystemEdit
         var setDisabledWarning =
             $"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `pk;s servertag -enable`.";
 
-        var settings = await _repo.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
+        var settings = await _repo.GetSystemGuild(ctx.Guild.Id, target.Id);
 
         async Task Show(bool raw = false)
         {
@@ -253,7 +253,7 @@ public class SystemEdit
 
             if (!settings.TagEnabled)
                 await ctx.Reply(
-                    $"Your global system tag is {ctx.System.Tag}, but it is **disabled** in this server. To re-enable it, type `pk;s servertag -enable`");
+                    $"Your global system tag is {target.Tag}, but it is **disabled** in this server. To re-enable it, type `pk;s servertag -enable`");
             else
                 await ctx.Reply(
                     $"You currently have no system tag specific to the server '{ctx.Guild.Name}'. To set one, type `pk;s servertag <tag>`. To disable the system tag in the current server, type `pk;s servertag -disable`.");
@@ -265,7 +265,7 @@ public class SystemEdit
             if (newTag != null && newTag.Length > Limits.MaxSystemTagLength)
                 throw Errors.StringTooLongError("System server tag", newTag.Length, Limits.MaxSystemTagLength);
 
-            await _repo.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = newTag });
+            await _repo.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = newTag });
 
             await ctx.Reply(
                 $"{Emojis.Success} System server tag changed. Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
@@ -276,7 +276,7 @@ public class SystemEdit
 
         async Task Clear()
         {
-            await _repo.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = null });
+            await _repo.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = null });
 
             await ctx.Reply(
                 $"{Emojis.Success} System server tag cleared. Member names will now end with the global system tag, if there is one set.");
@@ -287,7 +287,7 @@ public class SystemEdit
 
         async Task EnableDisable(bool newValue)
         {
-            await _repo.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id,
+            await _repo.UpdateSystemGuild(target.Id, ctx.Guild.Id,
                 new SystemGuildPatch { TagEnabled = newValue });
 
             await ctx.Reply(PrintEnableDisableResult(newValue, newValue != ctx.MessageContext.TagEnabled));
@@ -342,14 +342,14 @@ public class SystemEdit
             await Set();
     }
 
-    public async Task Avatar(Context ctx, PKSystem target = null)
+    public async Task Avatar(Context ctx, PKSystem target)
     {
         if (target == null)
             ctx.CheckSystem();
 
         async Task ClearIcon()
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { AvatarUrl = null });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = null });
             await ctx.Reply($"{Emojis.Success} System icon cleared.");
         }
 
@@ -357,7 +357,7 @@ public class SystemEdit
         {
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { AvatarUrl = img.Url });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.Url });
 
             var msg = img.Source switch
             {
@@ -378,13 +378,12 @@ public class SystemEdit
 
         async Task ShowIcon()
         {
-            var system = target ?? ctx.System;
-            if ((system.AvatarUrl?.Trim() ?? "").Length > 0)
+            if ((target.AvatarUrl?.Trim() ?? "").Length > 0)
             {
                 var eb = new EmbedBuilder()
                     .Title("System icon")
-                    .Image(new Embed.EmbedImage(system.AvatarUrl.TryGetCleanCdnUrl()));
-                if (system.Id == ctx.System?.Id)
+                    .Image(new Embed.EmbedImage(target.AvatarUrl.TryGetCleanCdnUrl()));
+                if (target.Id == ctx.System?.Id)
                     eb.Description("To clear, use `pk;system icon clear`.");
                 await ctx.Reply(embed: eb.Build());
             }
@@ -440,7 +439,7 @@ public class SystemEdit
 
         if (await ctx.MatchClear("your system's banner image"))
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { BannerImage = null });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} System banner image cleared.");
         }
 
@@ -448,7 +447,7 @@ public class SystemEdit
         {
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { BannerImage = img.Url });
+            await _repo.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.Url });
 
             var msg = img.Source switch
             {
@@ -473,12 +472,12 @@ public class SystemEdit
         ctx.CheckSystem().CheckOwnSystem(target);
 
         await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{ctx.System.Hid}`).\n**Note: this action is permanent.**");
-        if (!await ctx.ConfirmWithReply(ctx.System.Hid))
+            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.Hid}`).\n**Note: this action is permanent.**");
+        if (!await ctx.ConfirmWithReply(target.Hid))
             throw new PKError(
-                $"System deletion cancelled. Note that you must reply with your system ID (`{ctx.System.Hid}`) *verbatim*.");
+                $"System deletion cancelled. Note that you must reply with your system ID (`{target.Hid}`) *verbatim*.");
 
-        await _repo.DeleteSystem(ctx.System.Id);
+        await _repo.DeleteSystem(target.Id);
 
         await ctx.Reply($"{Emojis.Success} System deleted.");
     }
@@ -539,11 +538,11 @@ public class SystemEdit
         {
             var eb = new EmbedBuilder()
                 .Title("Current privacy settings for your system")
-                .Field(new Embed.Field("Description", ctx.System.DescriptionPrivacy.Explanation()))
-                .Field(new Embed.Field("Member list", ctx.System.MemberListPrivacy.Explanation()))
-                .Field(new Embed.Field("Group list", ctx.System.GroupListPrivacy.Explanation()))
-                .Field(new Embed.Field("Current fronter(s)", ctx.System.FrontPrivacy.Explanation()))
-                .Field(new Embed.Field("Front/switch history", ctx.System.FrontHistoryPrivacy.Explanation()))
+                .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
+                .Field(new Embed.Field("Group list", target.GroupListPrivacy.Explanation()))
+                .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
+                .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
                     "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
@@ -551,7 +550,7 @@ public class SystemEdit
 
         async Task SetLevel(SystemPrivacySubject subject, PrivacyLevel level)
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch().WithPrivacy(subject, level));
+            await _repo.UpdateSystem(target.Id, new SystemPatch().WithPrivacy(subject, level));
 
             var levelExplanation = level switch
             {
@@ -577,7 +576,7 @@ public class SystemEdit
 
         async Task SetAll(PrivacyLevel level)
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch().WithAllPrivacy(level));
+            await _repo.UpdateSystem(target.Id, new SystemPatch().WithAllPrivacy(level));
 
             var msg = level switch
             {
