@@ -64,7 +64,7 @@ public class Shard
             HeartbeatReceived?.Invoke(latency);
         };
 
-        _conn = new ShardConnection(_jsonSerializerOptions, _logger);
+        _conn = new ShardConnection(_jsonSerializerOptions, _logger, info.ShardId);
     }
 
     private async Task ShardLoop()

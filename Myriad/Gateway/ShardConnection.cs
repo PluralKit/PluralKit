@@ -11,10 +11,13 @@ public class ShardConnection: IAsyncDisposable
     private readonly ShardPacketSerializer _serializer;
     private ClientWebSocket? _client;
 
-    public ShardConnection(JsonSerializerOptions jsonSerializerOptions, ILogger logger)
+    private int _id;
+
+    public ShardConnection(JsonSerializerOptions jsonSerializerOptions, ILogger logger, int id)
     {
         _logger = logger.ForContext<ShardConnection>();
         _serializer = new ShardPacketSerializer(jsonSerializerOptions);
+        _id = id;
     }
 
     public WebSocketState State => _client?.State ?? WebSocketState.Closed;
@@ -52,7 +55,7 @@ public class ShardConnection: IAsyncDisposable
         }
         catch (Exception e)
         {
-            _logger.Error(e, "Error sending WebSocket message");
+            _logger.Error(e, "Shard {ShardId}: Error sending WebSocket message");
         }
     }
 
@@ -69,7 +72,7 @@ public class ShardConnection: IAsyncDisposable
         }
         catch (Exception e)
         {
-            _logger.Error(e, "Error reading from WebSocket");
+            _logger.Error(e, "Shard {ShardId}: Error reading from WebSocket");
             // force close so we can "reset"
             await CloseInner(WebSocketCloseStatus.NormalClosure, null);
         }
@@ -98,7 +101,7 @@ public class ShardConnection: IAsyncDisposable
             }
             catch (Exception e)
             {
-                _logger.Error(e, "Error closing WebSocket connection");
+                _logger.Error(e, "Shard {ShardId}: Error closing WebSocket connection");
             }
         }
 
@@ -109,7 +112,7 @@ public class ShardConnection: IAsyncDisposable
         }
         catch (Exception e)
         {
-            _logger.Error(e, "Error disposing WebSocket connection");
+            _logger.Error(e, "Shard {ShardId}: Error disposing WebSocket connection");
         }
     }
 }
