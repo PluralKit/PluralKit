@@ -60,7 +60,7 @@ public class GroupMember
 
     public async Task ListMemberGroups(Context ctx, PKMember target)
     {
-        var pctx = ctx.LookupContextFor(target.System);
+        var pctx = ctx.DirectLookupContextFor(target.System);
 
         var groups = await _repo.GetMemberGroups(target.Id)
             .Where(g => g.Visibility.CanAccess(pctx))

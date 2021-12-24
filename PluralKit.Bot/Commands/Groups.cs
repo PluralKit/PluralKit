@@ -433,6 +433,8 @@ public class Groups
 
         // TODO: integrate with the normal "search" system
 
+        // TODO: integrate with privacy config settings
+
         var pctx = LookupContext.ByNonOwner;
         if (ctx.MatchFlag("a", "all"))
         {
