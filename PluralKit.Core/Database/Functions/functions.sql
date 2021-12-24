@@ -49,12 +49,11 @@ as $$
         coalesce(system.tag_enabled, true) as tag_enabled,
         system.avatar_url as system_avatar,
         system.account_autoproxy as allow_autoproxy,
-        system_config.latch_timeout as latch_timeout
+        system.latch_timeout as latch_timeout
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder
         left join system on true
-        left join system_config on true
         left join guild on true
         left join last_message on true
         left join system_last_switch on system_last_switch.system = system.id
