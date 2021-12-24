@@ -45,7 +45,16 @@ public class EmbedService
         var accounts = await _repo.GetSystemAccounts(system.Id);
         var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
-        var memberCount = await _repo.GetSystemMemberCount(system.Id, ctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+        var countctx = LookupContext.ByNonOwner;
+        if (cctx.MatchFlag("a", "all"))
+        {
+            if (system.Id == cctx.System.Id)
+                countctx = LookupContext.ByOwner;
+            else
+                throw Errors.LookupNotAllowed;
+        }
+
+        var memberCount = await _repo.GetSystemMemberCount(system.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
         uint color;
         try
@@ -224,7 +233,17 @@ public class EmbedService
     public async Task<Embed> CreateGroupEmbed(Context ctx, PKSystem system, PKGroup target)
     {
         var pctx = ctx.LookupContextFor(system.Id);
-        var memberCount = await _repo.GetGroupMemberCount(target.Id, pctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+
+        var countctx = LookupContext.ByNonOwner;
+        if (ctx.MatchFlag("a", "all"))
+        {
+            if (system.Id == ctx.System.Id)
+                countctx = LookupContext.ByOwner;
+            else
+                throw Errors.LookupNotAllowed;
+        }
+
+        var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
         var nameField = target.Name;
         if (system.Name != null)
