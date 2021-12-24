@@ -22,9 +22,12 @@ public class TwilightGatewayRatelimiter: IGatewayRatelimiter
             {
                 _logger.Information("Shard {ShardId}: Requesting identify at gateway queue {GatewayQueueUrl}",
                     shard, _url);
-                await _httpClient.GetAsync(_url);
+                await _httpClient.GetAsync(_url + "?shard=" + shard);
                 return;
             }
-            catch (TimeoutException) { }
+            catch (TaskCanceledException)
+            {
+                _logger.Warning("Shard {ShardId}: Gateway queue timed out, retrying", shard);
+            }
     }
 }
