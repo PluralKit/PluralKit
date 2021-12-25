@@ -81,8 +81,6 @@ public class SystemEdit
         if (isOwnSystem)
             noDescriptionSetMessage += " To set one, type `pk;s description <description>`.";
 
-        ctx.CheckSystem().CheckOwnSystem(target);
-
         if (ctx.MatchRaw())
         {
             if (target.Description == null)
@@ -345,9 +343,6 @@ public class SystemEdit
 
     public async Task Avatar(Context ctx, PKSystem target)
     {
-        if (target == null)
-            ctx.CheckSystem();
-
         async Task ClearIcon()
         {
             ctx.CheckOwnSystem(target);
@@ -358,6 +353,8 @@ public class SystemEdit
 
         async Task SetIcon(ParsedImage img)
         {
+            ctx.CheckOwnSystem(target);
+
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
             await _repo.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.Url });
