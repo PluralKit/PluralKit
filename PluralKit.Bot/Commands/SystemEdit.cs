@@ -81,7 +81,7 @@ public class SystemEdit
         if (isOwnSystem)
             noDescriptionSetMessage += " To set one, type `pk;s description <description>`.";
 
-        ctx.CheckSystem();
+        ctx.CheckSystem().CheckOwnSystem(target);
 
         if (ctx.MatchRaw())
         {
@@ -350,6 +350,8 @@ public class SystemEdit
 
         async Task ClearIcon()
         {
+            ctx.CheckOwnSystem(target);
+
             await _repo.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = null });
             await ctx.Reply($"{Emojis.Success} System icon cleared.");
         }
