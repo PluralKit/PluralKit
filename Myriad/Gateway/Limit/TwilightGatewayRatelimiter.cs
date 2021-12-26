@@ -4,7 +4,7 @@ namespace Myriad.Gateway.Limit;
 
 public class TwilightGatewayRatelimiter: IGatewayRatelimiter
 {
-    private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(60) };
+    private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     private readonly ILogger _logger;
     private readonly string _url;
