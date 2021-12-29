@@ -9,8 +9,8 @@
   import Main from "./pages/profiles/Main.svelte";
   
   // theme cdns (I might make some myself too)
-  let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
-  let dark = "https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-night.min.css";
+  let light = "/styles/light.scss";
+  let dark = "/styles/dark.scss";
 
   let styleSrc = dark;
 

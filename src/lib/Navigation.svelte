@@ -23,8 +23,7 @@ import { get } from 'svelte/store';
     }
 
 </script>
-<div style="background-color: #292929" class="mb-4">
-    <Navbar color="light" light expand="lg">
+    <Navbar color="light" light expand="lg" class="mb-4">
         <NavbarBrand>pk-webs</NavbarBrand>
         <NavbarToggler on:click={toggle}></NavbarToggler>
         <Collapse {isOpen} navbar expand="lg">
@@ -60,4 +59,3 @@ import { get } from 'svelte/store';
             </Nav>
         </Collapse>
     </Navbar>
-</div>

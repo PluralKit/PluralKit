@@ -1,0 +1,6 @@
+@use "./generic.scss";
+@import url("https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css");
+
+.footer.bg-light {
+    background-color: var(--bs-light) !important;
+}
