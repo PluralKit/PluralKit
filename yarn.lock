@@ -929,7 +929,7 @@ sorcery@^0.10.0:
     sander "^0.5.0"
     sourcemap-codec "^1.3.0"
 
-source-map-js@^1.0.1:
+"source-map-js@>=0.6.2 <2.0.0", source-map-js@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.0.1.tgz#a1741c131e3c77d048252adfa24e23b908670caf"
   integrity sha512-4+TN2b3tqOCd/kaGRJ/sTYA0tR0mdXx26ipdolxcwtJVqEnqNYvlCAt1q3ypy4QMlYus+Zh34RNtYLoq2oQ4IA==
@@ -966,9 +966,9 @@ supports-color@^7.1.0:
     has-flag "^4.0.0"
 
 svelecte@^3.4.5:
-  version "3.4.5"
-  resolved "https://registry.yarnpkg.com/svelecte/-/svelecte-3.4.5.tgz#31ee09194030693d16501cb0031ba50fe5d0dada"
-  integrity sha512-HVva//rlRWg5Ck2iOuHuIVYrMATxZ7D1Kr91HLpMRbPfnqqAPFto6twwJ3XvBE+O9GD/kMzcYDwQULZ0sx3w1w==
+  version "3.5.2"
+  resolved "https://registry.yarnpkg.com/svelecte/-/svelecte-3.5.2.tgz#b0148f076c2ad9cc3f58a5593e27b044f9fd7497"
+  integrity sha512-hOAiwDf5YER6xA2MuBPfeV7MHOgCWgQPNESCXI1Oxz9PiuLeOWxum4L/pQfyH1CF0LIAhCgJZmnQgaqyEWkqdQ==
   dependencies:
     svelte-tiny-virtual-list "^1.1.7"
 
