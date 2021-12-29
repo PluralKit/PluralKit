@@ -72,7 +72,7 @@ function memberListRenderer(item: any) {
         {#if finalMemberList.length > 0}
         <ListGroup>
             {#each finalMemberList as member, index (member.id)}
-            <ListGroupItem><span bind:this={listGroupElements[index]}><b>{member.name}</b> (<code>{member.id}</code>) {member.display_name ? `${member.display_name}` : ""}</span></ListGroupItem>
+            <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]} class="d-flex justify-content-between flex-grow-1"><span><b>{member.name}</b> (<code>{member.id}</code>)</span> <span>{member.display_name ? `${member.display_name}` : ""}</span></span></ListGroupItem>
             {/each}
         </ListGroup>
         {:else}
