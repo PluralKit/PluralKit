@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { Row, Col, Input, Button, Label, Alert } from 'sveltestrap';
+    import { Row, Col, Input, Button, Label, Alert, Spinner } from 'sveltestrap';
     import { createEventDispatcher } from 'svelte';
     import Group from '../../api/group';
     import PKAPI from '../../api';
     import autosize from 'svelte-autosize';
 
-    export let loading: boolean = false;
+    let loading: boolean = false;
     export let group: Group;
     export let editMode: boolean;
 
@@ -81,4 +81,5 @@
     <b>Description:</b><br />
     <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={group.description}/>
 </div>
-<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false}>Back</Button>
+{#if !loading}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false}>Back</Button>
+{:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>{/if}

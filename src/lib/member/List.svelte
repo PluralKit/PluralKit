@@ -14,7 +14,6 @@
     import Body from './Body.svelte';
 
     export let isPublic: boolean;
-    let itemLoading: boolean[] = [];
 
     export let list: Member[] = [];
     export let groups: Group[] = [];
@@ -275,17 +274,16 @@
     {#each slicedList as member, index (member.id)}
             {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
             <AccordionItem>
-                <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
                     <FaUserCircle slot="icon" />
                 </CardsHeader>
-                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member loading={itemLoading[index]} />
+                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
             </AccordionItem>
             {:else}
             <AccordionItem>
-                <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
+                <CardsHeader bind:item={member} slot="header">
                     <FaLock slot="icon" />
                 </CardsHeader>
-                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member loading={itemLoading[index]} />
+                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
             </AccordionItem>
             {/if}
     {/each}

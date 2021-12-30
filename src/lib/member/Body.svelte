@@ -10,12 +10,10 @@
 
     export let groups: Group[] = [];
     export let member: Member;
-    export let loading: boolean;
     export let isPublic: boolean = false;
 
     let editMode: boolean = false;
     let groupMode: boolean = false;
-    let privacyLoading = false;
 
     let htmlDescription: string;
     $: if (member.description) { 
@@ -105,7 +103,7 @@
             <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal}>Edit</Button>
             <Modal size="lg" isOpen={privacyOpen} toggle={togglePrivacyModal}>
                 <ModalHeader toggle={togglePrivacyModal}>
-                    {#if privacyLoading}<div style="float: left; width: 3rem;"><Spinner color="primary" /></div>{/if} Edit privacy
+                    Edit privacy
                 </ModalHeader>
                     <ModalBody>
                         whoops! this is yet to be added.
@@ -127,6 +125,6 @@
     {:else if editMode}
     editing tba o_o
     {:else if groupMode}
-        <GroupEdit bind:loading bind:member bind:groups bind:groupMode />
+        <GroupEdit on:update bind:member bind:groups bind:groupMode />
     {/if}
     </CardBody>

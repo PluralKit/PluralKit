@@ -15,7 +15,7 @@
 
     export let member: Member;
     export let groups: Group[] = [];
-    export let loading: boolean = false;
+    let loading: boolean = false;
     export let groupMode: boolean = true;
 
     let groupsWithMember: Group[];

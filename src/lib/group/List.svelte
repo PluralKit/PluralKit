@@ -161,9 +161,6 @@
     'member-list': memberListRenderer
   });
 
-  let itemLoading: boolean[] = [];
-  $: itemLoading.length = slicedList.length;
-
   function updateList(event: any) {
       list = list.map(group => group.id !== event.detail.id ? group : event.detail)
   }
@@ -274,17 +271,17 @@
     {#each slicedList as group, index (group.id)}
         {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
         <AccordionItem>
-            <CardsHeader bind:item={group} loading={itemLoading[index]} slot="header">
+            <CardsHeader bind:item={group} slot="header">
                 <FaUsers slot="icon" />
             </CardsHeader>
-            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
+            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
         </AccordionItem>
         {:else}
         <AccordionItem>
-            <CardsHeader bind:item={group} loading={itemLoading[index]} slot="header">
+            <CardsHeader bind:item={group} slot="header">
                 <FaLock slot="icon" />
             </CardsHeader>
-            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic} bind:loading={itemLoading[index]}/>
+            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
         </AccordionItem>
         {/if}
     {/each}

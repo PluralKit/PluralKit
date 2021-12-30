@@ -11,7 +11,7 @@
     import FaUserMinus from 'svelte-icons/fa/FaUserMinus.svelte'
     import Svelecte, { addFormatter } from 'svelecte';
 
-    export let loading: boolean;
+    let loading: boolean = false;
     export let group: Group;
     export let memberMode: boolean = true;
     export let members: Member[];

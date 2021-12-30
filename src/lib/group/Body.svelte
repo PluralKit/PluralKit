@@ -13,8 +13,6 @@
     let editMode: boolean = false;
     let memberMode: boolean = false;
     export let isPublic: boolean;
-    export let loading: boolean = false;
-    let privacyLoading = false;
     export let members: Member[];
 
     let htmlDescription: string;
@@ -88,10 +86,10 @@
         <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal}>Edit</Button>
         <Modal size="lg" isOpen={privacyOpen} toggle={togglePrivacyModal}>
             <ModalHeader toggle={togglePrivacyModal}>
-                {#if privacyLoading}<div style="float: left; width: 3rem;"><Spinner color="primary" /></div>{/if} Edit privacy
+               Edit privacy
             </ModalHeader>
                 <ModalBody>
-                    <Privacy on:update bind:group bind:privacyOpen={privacyOpen} bind:loading={privacyLoading} />
+                    <Privacy on:update bind:group bind:privacyOpen={privacyOpen}/>
                 </ModalBody>
         </Modal>
     </Col>
@@ -108,8 +106,8 @@
 <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>
 {/if}
 {:else if editMode}
-<Edit on:update bind:loading bind:group bind:editMode />
+<Edit on:update bind:group bind:editMode />
 {:else if memberMode}
-    <MemberEdit on:update bind:loading bind:group bind:memberMode bind:members />
+    <MemberEdit on:update bind:group bind:memberMode bind:members />
 {/if}
 </CardBody>
