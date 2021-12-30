@@ -77,7 +77,7 @@
 
 <Container>
     <Row>
-        <Col class="mx-auto" xs={12} lg={10}>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
             {#if err}
                 <Alert color="danger" >{err}</Alert>
             {/if}

@@ -80,7 +80,7 @@
 {/if}
 <Container>
     <Row>
-        <Col class="mx-auto" xs={12} lg={10}>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <System bind:user={user} bind:isPublic />

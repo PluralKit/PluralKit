@@ -49,7 +49,7 @@
 {/if}
 <Container>
     <Row>
-        <Col class="mx-auto" xs={12} lg={10}>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
             {#if !user.id && !err}
             <div class="mx-auto text-center">
                 <Spinner class="d-inline-block" />
