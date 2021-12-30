@@ -46,7 +46,7 @@ export default class Member {
                 description_privacy: data.privacy.description_privacy,
                 name_privacy: data.privacy.name_privacy,
                 birthday_privacy: data.privacy.birthday_privacy,
-                pronoun_privacy: data.privacy.pronouns_privacy,
+                pronoun_privacy: data.privacy.pronoun_privacy,
                 avatar_privacy: data.privacy.avatar_privacy,
                 metadata_privacy: data.privacy.metadata_privacy
             }
