@@ -65,8 +65,6 @@ code {
 
 .description a {
     text-decoration: none;
-    color: #457ead !important;
-    font-weight: bold;
 }
 
 // bootstrap elements
@@ -90,6 +88,10 @@ code {
 
 .accordion-button::after {
     display: none;
+}
+
+.accordion-collapse {
+    overflow: visible !important;
 }
 
 .pagination {
