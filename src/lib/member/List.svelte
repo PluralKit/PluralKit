@@ -274,6 +274,7 @@
     {#each slicedList as member, index (member.id)}
             {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
             <AccordionItem>
+                <CardsHeader bind:item={member} slot="header">
                     <FaUserCircle slot="icon" />
                 </CardsHeader>
                 <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
