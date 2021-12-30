@@ -18,6 +18,7 @@ export default class PKAPI {
 
         PATCH_SYSTEM: () => `/systems/@me`,
         PATCH_GROUP: (gid: string) => `/groups/${gid}`,
+        PATCH_MEMBER: (mid: string) => `/members/${mid}`,
         
         POST_MEMBER: () => `/members`
     }
@@ -93,6 +94,20 @@ export default class PKAPI {
         var res: AxiosResponse;
         try {
             res = await this.handle(this.ROUTES.GET_MEMBER(options.id), 'GET', {});
+            if (res.status === 200) member = new Member(res.data);
+            else this.handleErrors(res);
+        } catch (error) {
+            throw new Error(error.message);
+        }
+        return member;
+    }
+
+    async patchMember(options: {token: string, id: any, data: any}) {
+        var body = new Member(options.data);
+        var member: Member;
+        var res: AxiosResponse;
+        try {
+            res = await this.handle(this.ROUTES.PATCH_MEMBER(options.id), 'PATCH', {token: options.token, body: body});
             if (res.status === 200) member = new Member(res.data);
             else this.handleErrors(res);
         } catch (error) {
