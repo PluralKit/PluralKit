@@ -1,11 +1,11 @@
 interface MemberPrivacy {
-    visibility?: string | boolean | null,
-    description_privacy?: string | boolean | null,
-    name_privacy?: string | boolean | null,
-    birthday_privacy?: string | boolean | null,
-    pronoun_privacy?: string | boolean | null,
-    avatar_privacy?: string | boolean | null,
-    metadata_privacy?: string | boolean | null
+    visibility?: string,
+    description_privacy?: string,
+    name_privacy?: string,
+    birthday_privacy?: string,
+    pronoun_privacy?: string,
+    avatar_privacy?: string,
+    metadata_privacy?: string
 }
 
 export default class Member {
