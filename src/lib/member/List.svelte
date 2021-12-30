@@ -11,6 +11,7 @@
     import ListPagination from '../ListPagination.svelte';
     import Svelecte, { addFormatter } from 'svelecte';
     import FaLock from 'svelte-icons/fa/FaLock.svelte';
+    import Body from './Body.svelte';
 
     export let isPublic: boolean;
     let itemLoading: boolean[] = [];
@@ -261,12 +262,14 @@
                 <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
                     <FaUserCircle slot="icon" />
                 </CardsHeader>
+                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member loading={itemLoading[index]} />
             </AccordionItem>
             {:else}
             <AccordionItem>
                 <CardsHeader bind:item={member} loading={itemLoading[index]} slot="header">
                     <FaLock slot="icon" />
                 </CardsHeader>
+                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member loading={itemLoading[index]} />
             </AccordionItem>
             {/if}
     {/each}
