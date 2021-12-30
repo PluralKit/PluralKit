@@ -3,7 +3,7 @@
     import Sys from '../../api/system';
     import PKAPI from '../../api';
     import autosize from 'svelte-autosize';
-    import moment from 'moment-timezone';
+    // import moment from 'moment-timezone';
     import { currentUser } from '../../stores';
 
     export let editMode: boolean;
@@ -26,9 +26,9 @@
             }
         }
 
-        if (data.timezone && !moment.tz.zone(data.timezone)) {
+        /* if (data.timezone && !moment.tz.zone(data.timezone)) {
             err.push(`"${data.timezone}" is not a valid timezone, check out <a target="_blank" style="color: var(--bs-body-color);" href="https://xske.github.io/tz/">this site</a> to see your current timezone!`);
-        }
+        } */
 
         err = err;
         if (err.length > 0) return;
@@ -63,10 +63,10 @@
         <Label>Tag:</Label>
         <Input bind:value={input.tag} maxlength={100} type="text" placeholder={user.tag} />
     </Col>
-    <Col xs={12} lg={4} class="mb-2">
+    <!-- <Col xs={12} lg={4} class="mb-2">
         <Label>Timezone:</Label>
         <Input bind:value={input.timezone} type="text" placeholder={user.timezone} />
-    </Col>
+    </Col> -->
     <Col xs={12} lg={4} class="mb-2">
         <Label>Color:</Label>
         <Input bind:value={input.color} type="text" placeholder={user.color}/>
