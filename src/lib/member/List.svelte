@@ -64,14 +64,22 @@
     $: {searchValue; privacyFilter; currentPage = 1};
 
     $: searchedList = list.filter((item) => {
-        if (!searchValue) return true;
+        if (!searchValue && searchBy !== "description" && searchBy !== "display name") return true;
         
         switch (searchBy) {
             case "name": if (item.name.toLowerCase().includes(searchValue.toLowerCase())) return true;
             break;
-            case "display name": if (item.display_name && item.display_name.toLowerCase().includes(searchValue.toLowerCase())) return true;
+            case "display name": if (!searchValue) {
+                if (!item.display_name) return true;
+                else return false;
+            }
+            if (item.display_name && item.display_name.toLowerCase().includes(searchValue.toLowerCase())) return true;
             break;
-            case "description": if (item.description && item.description.toLowerCase().includes(searchValue.toLowerCase())) return true;
+            case "description": if (!searchValue) {
+                if (!item.description) return true;
+                else return false;
+            }
+            else if (item.description && item.description.toLowerCase().includes(searchValue.toLowerCase())) return true;
             break;
             case "ID": if (item.id.toLowerCase().includes(searchValue.toLowerCase())) return true;
             break;
@@ -152,6 +160,14 @@
   addFormatter({
     'member-list': groupListRenderer
   });
+
+  function updateList(event: any) {
+      list = list.map(member => member.id !== event.detail.id ? member : event.detail);
+  }
+  
+  function updateGroups(event: any) {
+      groups = list.map(group => group.id !== event.detail.id ? group : event.detail)
+  }
 </script>
 
 <Card class="mb-3">
