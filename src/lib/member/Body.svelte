@@ -46,8 +46,12 @@
 
     let created = moment(member.created).format("MMM D, YYYY");
     let birthday: string;
-    if (member.birthday) birthday = moment(member.birthday).format("MMM D, YYYY");
+    $: {member.birthday; 
+        if (member.birthday) birthday = moment(member.birthday, "YYYY-MM-DD").format("MMM D, YYYY");
+    }
 
+    $: trimmedBirthday = birthday && birthday.endsWith(', 0004') ? trimmedBirthday = birthday.replace(', 0004', '') : birthday; 
+    
 </script>
 
 <CardBody style="border-left: 4px solid #{member.color}; margin: -1rem -1.25rem">
@@ -75,7 +79,7 @@
         {/if}
         {#if member.birthday}
         <Col xs={12} lg={4} class="mb-2">
-            <b>Birthday:</b> {birthday}
+            <b>Birthday:</b> {trimmedBirthday}
         </Col>
         {/if}
         {#if member.created}
