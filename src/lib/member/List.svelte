@@ -18,7 +18,7 @@
     export let list: Member[] = [];
     export let groups: Group[] = [];
 
-    $: grouplist = groups.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
+    $: grouplist = groups && groups.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
 
     let token = localStorage.getItem("pk-token");
     let listLoading = true;
