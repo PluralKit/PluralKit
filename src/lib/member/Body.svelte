@@ -7,6 +7,8 @@
     import type Member from '../../api/member';
     import type Group from '../../api/group';
     import GroupEdit from './GroupEdit.svelte';
+    import Edit from './Edit.svelte';
+    import Privacy from './Privacy.svelte';
 
     export let groups: Group[] = [];
     export let member: Member;
@@ -110,7 +112,7 @@
                     Edit privacy
                 </ModalHeader>
                     <ModalBody>
-                        whoops! this is yet to be added.
+                        <Privacy bind:member bind:privacyOpen/>
                     </ModalBody>
             </Modal>
         </Col>
@@ -127,7 +129,7 @@
     <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => groupMode = true}>Groups</Button>
     {/if}
     {:else if editMode}
-    editing tba o_o
+        <Edit on:update bind:member bind:editMode />
     {:else if groupMode}
         <GroupEdit on:update bind:member bind:groups bind:groupMode />
     {/if}
