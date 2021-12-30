@@ -9,8 +9,8 @@
   import Main from "./pages/profiles/Main.svelte";
   
   // theme cdns (I might make some myself too)
-  let light = "/styles/light.scss";
-  let dark = "/styles/dark.scss";
+  let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
+  let dark = "https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-night.min.css";
 
   let styleSrc = dark;
 
@@ -23,17 +23,19 @@
   // not sure if there's a better way to handle this
   function setStyle(style) {
     switch (style) {
-      case "light": styleSrc = light;
+      case "light": document.getElementById("app").className = "light";
+      styleSrc = light;
       localStorage.setItem("pk-style", "light");
       break;
-      case "dark": styleSrc = dark;
+      case "dark": document.getElementById("app").className = "dark";
+      styleSrc = dark;
       localStorage.setItem("pk-style", "dark");
       break;
-      default: styleSrc = dark;
+      default: document.getElementById("app").className = "dark";
+      styleSrc = dark;
       localStorage.setItem("pk-style", "dark");
     };
   };
-
 </script>
 
 <svelte:head>
