@@ -31,10 +31,10 @@
     let smallPages = true;
 
     $: if (groups) {
-        groupsWithMember = groups.filter(group => group.members.includes(member.uuid));
+        groupsWithMember = groups.filter(group => group.members && group.members.includes(member.uuid));
         groupsWithMember.sort((a, b) => a.name.localeCompare(b.name));
 
-        groupsWithoutMember = groups.filter(group => !group.members.includes(member.uuid));
+        groupsWithoutMember = groups.filter(group => group.members && !group.members.includes(member.uuid));
         groupsWithoutMember.sort((a, b) => a.name.localeCompare(b.name));
 
         groupsWithMemberSelection = groupsWithMember.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
