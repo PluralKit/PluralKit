@@ -131,6 +131,6 @@
     {:else if editMode}
         <Edit on:update bind:member bind:editMode />
     {:else if groupMode}
-        <GroupEdit on:update bind:member bind:groups bind:groupMode />
+        <GroupEdit on:updateGroups bind:member bind:groups bind:groupMode />
     {/if}
     </CardBody>

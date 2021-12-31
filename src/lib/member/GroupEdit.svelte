@@ -1,7 +1,7 @@
 <script lang="ts">
     import type Group from "../../api/group";
     import type Member from "../../api/member";
-    import { Row, Col, Button, Alert, ListGroup, ListGroupItem } from 'sveltestrap';
+    import { Row, Col, Button, Alert, ListGroup, ListGroupItem, Spinner } from 'sveltestrap';
     import { createEventDispatcher } from 'svelte';
     import PKAPI from '../../api';
     import ListPagination from "../ListPagination.svelte";
@@ -16,6 +16,7 @@
     export let member: Member;
     export let groups: Group[] = [];
     let loading: boolean = false;
+    let err: string;
     export let groupMode: boolean = true;
 
     let groupsWithMember: Group[];
@@ -29,7 +30,7 @@
     let currentPage = 1;
     let smallPages = true;
 
-    if (groups) {
+    $: if (groups) {
         groupsWithMember = groups.filter(group => group.members.includes(member.uuid));
         groupsWithMember.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -62,8 +63,52 @@
         'member-list': groupListRenderer
     });
 
-</script>
+    const dispatch = createEventDispatcher();
 
+    function updateGroups() {
+        dispatch("updateGroups", groups);
+    }
+
+    const api = new PKAPI();
+
+    async function submitAdd() {
+        let data = groupsToBeAdded;
+        try {
+            loading = true;
+            await api.postMemberGroups({token: localStorage.getItem("pk-token"), id: member.id, data: data, removing: false});
+            groups.forEach(group =>  data.includes(group.uuid) && group.members.push(member.uuid));
+            updateGroups();
+            err = null;
+            groupsToBeAdded = [];
+            loading = false;
+        } catch (error) {
+            console.log(error);
+            err = error.message;
+            loading = false;
+        }
+    }
+
+    async function submitRemove() {
+        let data = groupsToBeRemoved;
+        try {
+            loading = true;
+            await api.postMemberGroups({token: localStorage.getItem("pk-token"), id: member.id, data: data, removing: true});
+            groups.forEach(group => {if (data.includes(group.uuid)) group.members = group.members.filter(m => m !== member.uuid)});
+            updateGroups();
+            err = null;
+            groupsToBeRemoved = [];
+            loading = false;
+        } catch (error) {
+            console.log(error);
+            err = error.message;
+            loading = false;
+        }
+    }
+
+</script>
+{#if err}
+    <Alert color="danger">{err}</Alert>
+{/if}
 <Row>
     <Col xs={12} lg={6} class="text-center mb-3">
         <h5><div class="icon d-inline-block">
@@ -86,13 +131,19 @@
             <FaFolderPlus />
         </div>Add to Groups</h5>
         <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeAdded} options={groupsWithoutMemberSelection} multiple/>
-        <p>(this is nonfunctional at the moment)</p>
+        {#if !loading && groupsToBeAdded && groupsToBeAdded.length > 0}
+        <Button class="w-100 mt-2" color="primary" on:click={submitAdd}>Add</Button>{:else}
+        <Button class="w-100 mt-2" color="primary" disabled>{#if loading}<Spinner size="sm" />{:else}Add{/if}</Button>
+        {/if}
         <hr/>
         <h5><div class="icon d-inline-block">
             <FaFolderMinus />
         </div>Remove from Groups</h5>
         <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeRemoved} options={groupsWithMemberSelection} multiple/>
-        <p>(this is ALSO nonfunctional)</p>
+        {#if !loading && groupsToBeRemoved && groupsToBeRemoved.length > 0}
+        <Button class="w-100 mt-2" color="primary" on:click={submitRemove}>Remove</Button>{:else}
+        <Button class="w-100 mt-2" color="primary" disabled>{#if loading}<Spinner size="sm" />{:else}Remove{/if}</Button>
+        {/if}
     </Col>
 </Row>
 <Button style="flex: 0" color="secondary" on:click={() => groupMode = false}>Back</Button>
