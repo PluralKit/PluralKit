@@ -11,9 +11,6 @@
 
     let isPublic = false;
 
-    let group = true;
-    let member = false;
-
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
     let params = $location.search && new URLSearchParams($location.search);
