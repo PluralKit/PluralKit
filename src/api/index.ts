@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, Method, AxiosResponse, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, Method, AxiosResponse, AxiosRequestConfig, Axios } from 'axios';
 import Sys from './system';
 import Member from './member';
 import Group from './group';
@@ -20,7 +20,9 @@ export default class PKAPI {
         PATCH_GROUP: (gid: string) => `/groups/${gid}`,
         PATCH_MEMBER: (mid: string) => `/members/${mid}`,
         
-        POST_MEMBER: () => `/members`
+        POST_MEMBER: () => `/members`,
+        POST_MEMBER_GROUP: (mid: string, removing: boolean) => !removing ? `/members/${mid}/groups/add` : `/members/${mid}/groups/remove`,
+        POST_GROUP_MEMBER: (gid: string, removing: boolean) => !removing ? `/groups/${gid}/members/add` : `/groups/${gid}/members/remove`,
     }
 
     baseUrl: string;
@@ -131,6 +133,16 @@ export default class PKAPI {
         return member;
     }
 
+    async postMemberGroups(options: {token: string, id: string, data: any, removing?: boolean}) {
+        var res: AxiosResponse;
+        try {
+            res = await this.handle(this.ROUTES.POST_MEMBER_GROUP(options.id, options.removing), 'POST', {token: options.token, body: options.data});
+            if (res.status !== 204) this.handleErrors(res);
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
+
     async getGroupList(options: {token?: string, id?: any, members?: boolean}) {
         if (!options.token && !options.id) {
             throw new Error("Must pass a token or id.");
@@ -167,6 +179,16 @@ export default class PKAPI {
             throw new Error(error.message);
         }
         return group;
+    }
+
+    async postGroupMembers(options: {token: string, id: string, data: any, removing?: boolean}) {
+        var res: AxiosResponse;
+        try {
+            res = await this.handle(this.ROUTES.POST_GROUP_MEMBER(options.id, options.removing), 'POST', {token: options.token, body: options.data});
+            if (res.status !== 204) this.handleErrors(res);
+        } catch (error) {
+            throw new Error(error.message);
+        }
     }
 
     handleErrors(res: any) {
