@@ -90,10 +90,6 @@ code {
     display: none;
 }
 
-.accordion-collapse {
-    overflow: visible !important;
-}
-
 .pagination {
     justify-content: center !important;
 }
@@ -110,6 +106,12 @@ code {
 .svelecte-control .sv-control, .sv-content, .sv-dropdown, .sv-item, .sv-item-content {
     color: var(--bs-body-color) !important; //this can also be optionally overwritten
     background-color: var(--bs-body-bg) !important;
+}
+
+.sv-dropdown {
+    position: static !important;
+    border: 1px solid rgba(128, 128, 128, 0.3) !important;
+    margin-bottom: 0.5rem;
 }
 
 .sv-item-btn {
