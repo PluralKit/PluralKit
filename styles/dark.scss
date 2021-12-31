@@ -1,4 +1,4 @@
-.dark > * {
+.dark {
     .navbar.bg-light {
         background-color: var(--bs-body-bg) !important;
     }
@@ -7,7 +7,9 @@
         background-color: var(--bs-dark) !important;
     }
     
-    .description a {
-        color: #159bd4 !important;
+    > * {
+        .description a {
+            color: #159bd4 !important;
+        }
     }
 }
