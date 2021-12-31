@@ -22,7 +22,7 @@
         htmlDescription = "(no description)";
     }
     let htmlDisplayName: string;
-    if (group.display_name) htmlDisplayName = toHTML(group.display_name)
+    $: if (group.display_name) htmlDisplayName = toHTML(group.display_name)
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
     let descriptionElement: any;
