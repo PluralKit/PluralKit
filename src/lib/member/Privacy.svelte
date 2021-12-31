@@ -75,7 +75,7 @@
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
-            <Label>Member list:</Label>
+            <Label>Name:</Label>
             <Input type="select" bind:value={input.privacy.name_privacy}>
                 <option default={member.privacy.name_privacy === "public"}>public</option>
                 <option default={member.privacy.name_privacy === "private"}>private</option>
