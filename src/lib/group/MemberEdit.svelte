@@ -42,9 +42,9 @@
 
     $: indexOfLastItem = currentPage * 10;
     $: indexOfFirstItem = indexOfLastItem - 10;
-    $: pageAmount = Math.ceil(membersInGroup.length / 10);
+    $: pageAmount = Math.ceil(membersInGroup && membersInGroup.length / 10);
 
-    $: finalMemberList = membersInGroup.slice(indexOfFirstItem, indexOfLastItem);
+    $: finalMemberList = membersInGroup && membersInGroup.slice(indexOfFirstItem, indexOfLastItem);
 
     let settings = JSON.parse(localStorage.getItem('pk-settings'));
     let listGroupElements: any[] = [];
@@ -114,7 +114,7 @@ function memberListRenderer(item: any) {
             <FaUserFriends />
         </div>Current Members</h5>
         <ListPagination bind:currentPage bind:pageAmount bind:smallPages/>
-        {#if finalMemberList.length > 0}
+        {#if finalMemberList && finalMemberList.length > 0}
         <ListGroup>
             {#each finalMemberList as member, index (member.id)}
             <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]} class="d-flex justify-content-between flex-grow-1"><span><b>{member.name}</b> (<code>{member.id}</code>)</span> <span>{member.display_name ? `${member.display_name}` : ""}</span></span></ListGroupItem>

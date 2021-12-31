@@ -43,9 +43,9 @@
 
     $: indexOfLastItem = currentPage * 10;
     $: indexOfFirstItem = indexOfLastItem - 10;
-    $: pageAmount = Math.ceil(groupsWithMember.length / 10);
+    $: pageAmount = Math.ceil(groupsWithMember && groupsWithMember.length / 10);
 
-    $: finalGroupsList = groupsWithMember.slice(indexOfFirstItem, indexOfLastItem);
+    $: finalGroupsList = groupsWithMember && groupsWithMember.slice(indexOfFirstItem, indexOfLastItem);
 
     let settings = JSON.parse(localStorage.getItem('pk-settings'));
     let listGroupElements: any[] = [];
@@ -115,7 +115,7 @@
             <FaFolderOpen />
         </div>Current Groups</h5>
         <ListPagination bind:currentPage bind:pageAmount bind:smallPages/>
-        {#if finalGroupsList.length > 0}
+        {#if finalGroupsList && finalGroupsList.length > 0}
         <ListGroup>
             {#each finalGroupsList as group, index (group.id)}
             <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]} class="d-flex justify-content-between flex-grow-1"><span><b>{group.name}</b> (<code>{group.id}</code>)</span> <span>{@html group.display_name ? `${toHTML(group.display_name)}` : ""}</span></span></ListGroupItem>
