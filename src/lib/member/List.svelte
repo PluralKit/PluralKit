@@ -165,7 +165,7 @@
   }
   
   function updateGroups(event: any) {
-      groups = list.map(group => group.id !== event.detail.id ? group : event.detail)
+      groups = event.detail;
   }
 </script>
 
