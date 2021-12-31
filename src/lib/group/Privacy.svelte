@@ -94,5 +94,5 @@
         </Col>
     </Row>
     {#if !loading}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={togglePrivacyModal}>Back</Button>
-    {:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/>></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>
+    {:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>
     {/if}
