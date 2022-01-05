@@ -248,4 +248,156 @@ public static class ContextListExt
             }
         }
     }
+    
+    public static GroupListOptions ParseGroupListOptions(this Context ctx, LookupContext lookupCtx)
+    {
+        var p = new GroupListOptions();
+
+        // Short or long list? (parse this first, as it can potentially take a positional argument)
+        var isFull = ctx.Match("f", "full", "big", "details", "long") || ctx.MatchFlag("f", "full");
+        p.Type = isFull ? ListType.Long : ListType.Short;
+
+        // Search query
+        if (ctx.HasNext())
+            p.Search = ctx.RemainderOrNull();
+
+        // Include description in search?
+        if (ctx.MatchFlag(
+            "search-description",
+            "filter-description",
+            "in-description",
+            "sd",
+            "description",
+            "desc"
+        ))
+            p.SearchDescription = true;
+
+        // Sort property (default is by name, but adding a flag anyway, 'cause why not)
+        if (ctx.MatchFlag("by-name", "bn")) p.SortProperty = SortProperty.Name;
+        if (ctx.MatchFlag("by-display-name", "bdn")) p.SortProperty = SortProperty.DisplayName;
+        if (ctx.MatchFlag("by-id", "bid")) p.SortProperty = SortProperty.Hid;
+        if (ctx.MatchFlag("by-created", "bc", "bcd")) p.SortProperty = SortProperty.CreationDate;
+        if (ctx.MatchFlag("random")) p.SortProperty = SortProperty.Random;
+
+        // Sort reverse?
+        if (ctx.MatchFlag("r", "rev", "reverse"))
+            p.Reverse = true;
+
+        // Privacy filter (default is public only)
+        if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null;
+        if (ctx.MatchFlag("private-only", "po")) p.PrivacyFilter = PrivacyLevel.Private;
+
+        // PERM CHECK: If we're trying to access non-public members of another system, error
+        if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)
+            // TODO: should this just return null instead of throwing or something? >.>
+            throw Errors.NotOwnInfo;
+
+        // Additional fields to include in the search results
+        if (ctx.MatchFlag("with-created", "wc"))
+            p.IncludeCreated = true;
+        if (ctx.MatchFlag("with-avatar", "with-image", "wa", "wi", "ia", "ii", "img"))
+            p.IncludeAvatar = true;
+
+        // Always show the sort property, too
+        if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
+
+        // Done!
+        return p;
+    }
+
+    public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
+                                SystemId system, string embedTitle, string color, GroupListOptions opts)
+    {
+        // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
+        // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
+        var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions())))
+            .SortByGroupListOptions(opts, lookupCtx)
+            .ToList();
+
+        var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
+        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, itemsPerPage, embedTitle, color, Renderer);
+
+        // Base renderer, dispatches based on type
+        Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
+        {
+            // Add a global footer with the filter/sort string + result count
+            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()}. {"result".ToQuantity(groups.Count)}."));
+
+            // Then call the specific renderers
+            if (opts.Type == ListType.Short)
+                ShortRenderer(eb, page);
+            else
+                LongRenderer(eb, page);
+
+            return Task.CompletedTask;
+        }
+
+        void ShortRenderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
+        {
+            // We may end up over the description character limit
+            // so run it through a helper that "makes it work" :)
+            eb.WithSimpleLineContent(page.Select(g =>
+            {
+                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}** ";
+
+                switch (opts.SortProperty)
+                {
+                    case SortProperty.DisplayName:
+                        {
+                            if (g.DisplayName != null)
+                                ret += $"({g.DisplayName})";
+                            break;
+                        }
+                    case SortProperty.CreationDate:
+                        {
+                            if (g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                            break;
+                        }
+                    default:
+                        {
+                            if (opts.IncludeCreated &&
+                                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                            {
+                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                            }
+                            else if (opts.IncludeAvatar && g.AvatarFor(lookupCtx) is { } avatarUrl)
+                            {
+                                ret += $"([avatar URL]({avatarUrl}))";
+                            }
+
+                            break;
+                        }
+                }
+
+                return ret;
+            }));
+        }
+
+        void LongRenderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
+        {
+            foreach (var g in page)
+            {
+                var profile = new StringBuilder($"**ID**: {g.Hid}");
+
+                if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                    profile.Append($"\n**Display name**: {g.DisplayName}");
+
+                if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
+                    g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                    profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
+
+                if (opts.IncludeAvatar && g.AvatarFor(lookupCtx) is { } avatar)
+                    profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
+
+                if (g.DescriptionFor(lookupCtx) is { } desc)
+                    profile.Append($"\n\n{desc}");
+
+                if (g.Visibility == PrivacyLevel.Private)
+                    profile.Append("\n*(this member is hidden)*");
+
+                eb.Field(new Embed.Field(g.NameFor(ctx), profile.ToString().Truncate(1024)));
+            }
+        }
+    }
 }

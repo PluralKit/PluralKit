@@ -8,9 +8,15 @@ public static class ModelUtils
 {
     public static string NameFor(this PKMember member, Context ctx) =>
         member.NameFor(ctx.LookupContextFor(member.System));
+    
+    public static string NameFor(this PKGroup group, Context ctx) =>
+        group.NameFor(ctx.LookupContextFor(group.System));
 
     public static string AvatarFor(this PKMember member, Context ctx) =>
         member.AvatarFor(ctx.LookupContextFor(member.System)).TryGetCleanCdnUrl();
+    
+    public static string AvatarFor(this PKGroup group, Context ctx) =>
+        group.AvatarFor(ctx.LookupContextFor(group.System)).TryGetCleanCdnUrl();
 
     public static string DisplayName(this PKMember member) =>
         member.DisplayName ?? member.Name;

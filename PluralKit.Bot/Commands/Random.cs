@@ -41,9 +41,9 @@ public class Random
     {
         ctx.CheckSystem();
 
-        var groups = await _db.Execute(c => c.QueryGroupList(ctx.System.Id));
+        var groups = await _repo.GetSystemGroups(ctx.System.Id).ToListAsync();
         if (!ctx.MatchFlag("all", "a"))
-            groups = groups.Where(g => g.Visibility == PrivacyLevel.Public);
+            groups = groups.Where(g => g.Visibility == PrivacyLevel.Public).ToList();
 
         if (groups == null || !groups.Any())
             throw new PKError(

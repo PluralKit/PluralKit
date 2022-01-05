@@ -43,9 +43,11 @@ public class PKGroup
     public string? BannerImage { get; private set; }
     public string? Color { get; private set; }
 
+    public PrivacyLevel NamePrivacy { get; private set; }
     public PrivacyLevel DescriptionPrivacy { get; private set; }
     public PrivacyLevel IconPrivacy { get; private set; }
     public PrivacyLevel ListPrivacy { get; private set; }
+    public PrivacyLevel MetadataPrivacy { get; private set; }
     public PrivacyLevel Visibility { get; private set; }
 
     public Instant Created { get; private set; }
@@ -53,11 +55,17 @@ public class PKGroup
 
 public static class PKGroupExt
 {
+    public static string? NameFor(this PKGroup group, LookupContext ctx) =>
+        group.NamePrivacy.Get(ctx, group.Name, group.DisplayName ?? group.Name);
+    
     public static string? DescriptionFor(this PKGroup group, LookupContext ctx) =>
         group.DescriptionPrivacy.Get(ctx, group.Description);
 
     public static string? IconFor(this PKGroup group, LookupContext ctx) =>
         group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
+    
+    public static string? AvatarFor(this PKGroup group, LookupContext ctx) =>
+        group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl()); //TODO MAKE GO AWAY
 
     public static JObject ToJson(this PKGroup group, LookupContext ctx, string? systemStr = null,
                                  bool needsMembersArray = false)

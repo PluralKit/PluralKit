@@ -64,7 +64,7 @@ public class GroupMember
 
         var groups = await _repo.GetMemberGroups(target.Id)
             .Where(g => g.Visibility.CanAccess(pctx))
-            .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
+            .OrderBy(g => (g.DisplayName ?? g.Name), StringComparer.InvariantCultureIgnoreCase)
             .ToListAsync();
 
         var description = "";

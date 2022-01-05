@@ -423,57 +423,42 @@ public class Groups
 
     public async Task ListSystemGroups(Context ctx, PKSystem system)
     {
+        
         if (system == null)
         {
             ctx.CheckSystem();
             system = ctx.System;
         }
-
+        
         ctx.CheckSystemPrivacy(system.Id, system.GroupListPrivacy);
 
-        // TODO: integrate with the normal "search" system
+        // explanation of privacy lookup here:
+        // - ParseMemberListOptions checks list access privacy and sets the privacy filter (which members show up in list)
+        // - RenderMemberList checks the indivual privacy for each member (NameFor, etc)
+        // the own system is always allowed to look up their list
+        var opts = ctx.ParseGroupListOptions(ctx.DirectLookupContextFor(system.Id));
+        await ctx.RenderGroupList(
+            ctx.LookupContextFor(system.Id),
+            system.Id,
+            GetEmbedTitle(system, opts),
+            system.Color,
+            opts
+        );
+    }
+    
+    private string GetEmbedTitle(PKSystem target, GroupListOptions opts)
+    {
+        var title = new StringBuilder("Groups of ");
 
-        // TODO: integrate with privacy config settings
+        if (target.Name != null)
+            title.Append($"{target.Name} (`{target.Hid}`)");
+        else
+            title.Append($"`{target.Hid}`");
 
-        var pctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
-        {
-            if (system.Id == ctx.System.Id)
-                pctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
+        if (opts.Search != null)
+            title.Append($" matching **{opts.Search}**");
 
-        var groups = (await _db.Execute(conn => conn.QueryGroupList(system.Id)))
-            .Where(g => g.Visibility.CanAccess(pctx))
-            .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
-            .ToList();
-
-        if (groups.Count == 0)
-        {
-            if (system.Id == ctx.System?.Id)
-                await ctx.Reply("This system has no groups. To create one, use the command `pk;group new <name>`.");
-            else
-                await ctx.Reply("This system has no groups.");
-
-            return;
-        }
-
-        var title = system.Name != null ? $"Groups of {system.Name} (`{system.Hid}`)" : $"Groups of `{system.Hid}`";
-        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, 25, title, ctx.System.Color, Renderer);
-
-        Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
-        {
-            eb.WithSimpleLineContent(page.Select(g =>
-            {
-                if (g.DisplayName != null)
-                    return
-                        $"[`{g.Hid}`] **{g.Name.EscapeMarkdown()}** ({g.DisplayName.EscapeMarkdown()}) ({"member".ToQuantity(g.MemberCount)})";
-                return $"[`{g.Hid}`] **{g.Name.EscapeMarkdown()}** ({"member".ToQuantity(g.MemberCount)})";
-            }));
-            eb.Footer(new Embed.EmbedFooter($"{groups.Count} total."));
-            return Task.CompletedTask;
-        }
+        return title.ToString();
     }
 
     public async Task ShowGroupCard(Context ctx, PKGroup target)
