@@ -34,11 +34,11 @@ There are a number of option flags that can be added to the `pk;system list` com
 ### Sorting options
 |Flag|Aliases|Description|
 |---|---|---|
-|-by-name|-bn|Sort by member name (default)|
+|-by-name|-bn|Sort by member/group name (default)|
 |-by-display-name|-bdn|Sort by display name|
-|-by-id|-bid|Sort by member ID|
+|-by-id|-bid|Sort by member/group ID|
 |-by-message-count|-bmc|Sort by message count (members with the most messages will appear near the top)|
-|-by-created|-bc|Sort by creation date (members least recently created will appear near the top)|
+|-by-created|-bc|Sort by creation date (members/groups least recently created will appear near the top)|
 |-by-last-fronted|-by-last-front, -by-last-switch, -blf, -bls|Sort by most recently fronted|
 |-by-last-message|-blm, -blp|Sort by last message time (members who most recently sent a proxied message will appear near the top)|
 |-by-birthday|-by-birthdate, -bbd|Sort by birthday (members whose birthday is in January will appear near the top)|
@@ -48,11 +48,11 @@ There are a number of option flags that can be added to the `pk;system list` com
 ### Filter options
 |Flag|Aliases|Description|
 |---|---|---|
-|-all|-a|Show all members, including private members|
-|-private-only|-po|Only show private members|
+|-all|-a|Show all members/groups, including private members/groups|
+|-private-only|-po|Only show private members/groups|
 
 ::: warning
-You cannot look up private members of another system.
+You cannot look up private members or groups of another system.
 :::
 
 ### Additional fields to include in the search results
@@ -61,18 +61,18 @@ You cannot look up private members of another system.
 |-with-last-switch|-with-last-fronted, -with-last-front, -wls, -wlf|Show each member's last switch date|
 |-with-last-message|-with-last-proxy, -wlm, -wlp|Show each member's last message date|
 |-with-message-count|-wmc|Show each member's message count|
-|-with-created|-wc|Show each member's creation date|
-|-with-avatar|-wa, -wi, -ia, -ii, -img|Show each member's avatar URL|
+|-with-created|-wc|Show each member's/group's creation date|
+|-with-avatar|-wa, -wi, -ia, -ii, -img|Show each member's/group's avatar URL|
 |-with-pronouns|-wp|Show each member's pronouns in the short list (shown by default in full list)|
 
 ::: warning
-These flags only work with the full member list (`pk;system list full`).
+These flags only work with the full member/group list (`pk;system list full` and `pk;system groups list full`).
 :::
 
 ## Miscellaneous flags
 |Command|Flag|Aliases|Description|
 |---|---|---|---|
-|pk;system list|-search-description|-sd|Search inside descriptions instead of member names|
+|List commands|-search-description|-sd|Search inside descriptions instead of member/group names|
 |pk;system frontpercent|-fronters-only|-fo|Show the system's frontpercent without the "no fronter" entry|
 |pk;system frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
 |pk;group \<group> frontpercent|-fronters-only|-fo|Show a group's frontpercent without the "no fronter" entry|

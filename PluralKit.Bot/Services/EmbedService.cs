@@ -246,6 +246,9 @@ public class EmbedService
         var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
         var nameField = target.Name;
+        if (pctx == LookupContext.ByNonOwner && target.NamePrivacy == PrivacyLevel.Private &&
+            target.DisplayName != null)
+            nameField = target.DisplayName;
         if (system.Name != null)
             nameField = $"{nameField} ({system.Name})";
 
@@ -269,7 +272,7 @@ public class EmbedService
         if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
 
-        if (target.DisplayName != null)
+        if (target.DisplayName != null && (pctx == LookupContext.ByOwner || target.NamePrivacy == PrivacyLevel.Public))
             eb.Field(new Embed.Field("Display Name", target.DisplayName, true));
 
         if (!target.Color.EmptyOrNull()) eb.Field(new Embed.Field("Color", $"#{target.Color}", true));

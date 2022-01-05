@@ -475,12 +475,13 @@ public class Groups
         {
             await ctx.Reply(embed: new EmbedBuilder()
                 .Title($"Current privacy settings for {target.Name}")
+                .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
                 .Field(new Embed.Field("Icon", target.IconPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.ListPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.Visibility.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -503,6 +504,7 @@ public class Groups
 
             var subjectName = subject switch
             {
+                GroupPrivacySubject.Name => "name privacy",
                 GroupPrivacySubject.Description => "description privacy",
                 GroupPrivacySubject.Icon => "icon privacy",
                 GroupPrivacySubject.List => "member list",
@@ -512,6 +514,8 @@ public class Groups
 
             var explanation = (subject, level) switch
             {
+                (GroupPrivacySubject.Name, PrivacyLevel.Private) =>
+                    "This group's name is now hidden from other systems, and will be replaced by the group's display name.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Private) =>
                     "This group's description is now hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Private) =>
@@ -521,6 +525,8 @@ public class Groups
                 (GroupPrivacySubject.List, PrivacyLevel.Private) =>
                     "This group's member list is now hidden from other systems.",
 
+                (GroupPrivacySubject.Name, PrivacyLevel.Public) =>
+                    "This group's name is no longer hidden from other systems.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Public) =>
                     "This group's description is no longer hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Public) =>

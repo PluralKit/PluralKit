@@ -64,8 +64,7 @@ public static class PKGroupExt
     public static string? IconFor(this PKGroup group, LookupContext ctx) =>
         group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl());
     
-    public static string? AvatarFor(this PKGroup group, LookupContext ctx) =>
-        group.IconPrivacy.Get(ctx, group.Icon?.TryGetCleanCdnUrl()); //TODO MAKE GO AWAY
+    
 
     public static JObject ToJson(this PKGroup group, LookupContext ctx, string? systemStr = null,
                                  bool needsMembersArray = false)

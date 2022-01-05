@@ -361,9 +361,13 @@ public static class ContextListExt
                             {
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
                             }
-                            else if (opts.IncludeAvatar && g.AvatarFor(lookupCtx) is { } avatarUrl)
+                            else if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatarUrl)
                             {
                                 ret += $"([avatar URL]({avatarUrl}))";
+                            }
+                            else
+                            {
+                                ret += $"({"member".ToQuantity(g.MemberCount)})";
                             }
 
                             break;
@@ -387,7 +391,7 @@ public static class ContextListExt
                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
                     profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
 
-                if (opts.IncludeAvatar && g.AvatarFor(lookupCtx) is { } avatar)
+                if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatar)
                     profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
 
                 if (g.DescriptionFor(lookupCtx) is { } desc)

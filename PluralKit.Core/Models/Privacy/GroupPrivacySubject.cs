@@ -2,6 +2,7 @@ namespace PluralKit.Core;
 
 public enum GroupPrivacySubject
 {
+    Name,
     Description,
     Icon,
     List,
@@ -15,6 +16,7 @@ public static class GroupPrivacyUtils
         // what do you mean switch expressions can't be statements >.>
         _ = subject switch
         {
+            GroupPrivacySubject.Name => group.NamePrivacy = level,
             GroupPrivacySubject.Description => group.DescriptionPrivacy = level,
             GroupPrivacySubject.Icon => group.IconPrivacy = level,
             GroupPrivacySubject.List => group.ListPrivacy = level,
@@ -36,6 +38,9 @@ public static class GroupPrivacyUtils
     {
         switch (input.ToLowerInvariant())
         {
+            case "name":
+                subject = GroupPrivacySubject.Name;
+                break;
             case "description":
             case "desc":
             case "text":
