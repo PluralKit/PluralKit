@@ -65,10 +65,6 @@ You cannot look up private members or groups of another system.
 |-with-avatar|-wa, -wi, -ia, -ii, -img|Show each member's/group's avatar URL|
 |-with-pronouns|-wp|Show each member's pronouns in the short list (shown by default in full list)|
 
-::: warning
-These flags only work with the full member/group list (`pk;system list full` and `pk;system groups list full`).
-:::
-
 ## Miscellaneous flags
 |Command|Flag|Aliases|Description|
 |---|---|---|---|
