@@ -367,7 +367,10 @@ public static class ContextListExt
                             }
                             else
                             {
-                                ret += $"({"member".ToQuantity(g.MemberCount)})";
+                                if(ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                                    ret += $"({"member".ToQuantity(g.TotalMemberCount)})";
+                                else
+                                    ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
                             }
 
                             break;
@@ -388,7 +391,12 @@ public static class ContextListExt
                     profile.Append($"\n**Display name**: {g.DisplayName}");
 
                 if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
-                    profile.Append($"\n**Member Count:** {g.MemberCount}");
+                {
+                    if(ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                        profile.Append($"\n**Member Count:** {g.TotalMemberCount}");
+                    else
+                        profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
+                }
 
                 if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))

@@ -64,5 +64,12 @@ select groups.*,
             inner join members on group_members.member_id = members.id 
         where 
             group_members.group_id = groups.id and members.member_visibility = 1
-    ) as member_count
+    ) as public_member_count,
+    -- Find private group member count
+    (
+        select count(*) from group_members 
+            inner join members on group_members.member_id = members.id 
+        where 
+            group_members.group_id = groups.id
+    ) as total_member_count
 from groups;
