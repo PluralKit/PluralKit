@@ -387,6 +387,9 @@ public static class ContextListExt
                 if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Display name**: {g.DisplayName}");
 
+                if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
+                    profile.Append($"\n**Member Count:** {g.MemberCount}");
+
                 if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
                     profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");

@@ -284,8 +284,12 @@ public class EmbedService
                 eb.Field(new Embed.Field("Members (0)",
                     $"Add one with `pk;group {target.Reference()} add <member>`!"));
             else
-                eb.Field(new Embed.Field($"Members ({memberCount})",
-                    $"(see `pk;group {target.Reference()} list`)"));
+            {
+                var name = (pctx == LookupContext.ByOwner || target.NamePrivacy == PrivacyLevel.Public)
+                    ? target.Reference()
+                    : target.Hid;
+                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
+            }
         }
 
         if (target.DescriptionFor(pctx) is { } desc)
