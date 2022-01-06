@@ -54,7 +54,7 @@
     </ItemGroup>
 
     <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
-        <Exec Command="git rev-parse HEAD > ../.version" IgnoreExitCode="False">
+        <Exec Command="git rev-parse HEAD &gt; ../.version" IgnoreExitCode="False">
         </Exec>
     </Target>
 
