@@ -42,20 +42,22 @@ public class Init
                 opts.DisableTaskUnobservedTaskExceptionCapture();
             });
 
-            // "Connect to the database" (ie. set off database migrations and ensure state)
-            logger.Information("Connecting to database");
-            await services.Resolve<IDatabase>().ApplyMigrations();
+            var config = services.Resolve<BotConfig>();
+            if (config.Cluster == null)
+            {
+                // "Connect to the database" (ie. set off database migrations and ensure state)
+                logger.Information("Connecting to database");
+                await services.Resolve<IDatabase>().ApplyMigrations();
+
+                // if we're running single-process, clear any existing shard status from the database
+                await services.Resolve<ModelRepository>().ClearShardStatus();
+            }
 
             // Init the bot instance itself, register handlers and such to the client before beginning to connect
             logger.Information("Initializing bot");
             var bot = services.Resolve<Bot>();
             bot.Init();
 
-            // if we're running single-process, clear any existing shard status from the database
-            var config = services.Resolve<BotConfig>();
-            var repo = services.Resolve<ModelRepository>();
-            if (config.Cluster == null)
-                await repo.ClearShardStatus();
 
             // Start the Discord shards themselves (handlers already set up)
             logger.Information("Connecting to Discord");
