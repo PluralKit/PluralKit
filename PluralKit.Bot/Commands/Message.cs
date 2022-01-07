@@ -46,9 +46,10 @@ public class ProxiedMessage
 
     public async Task EditMessage(Context ctx)
     {
-        var msg = await GetMessageToEdit(ctx);
         if (!ctx.HasNext())
             throw new PKSyntaxError("You need to include the message to edit in.");
+
+        var msg = await GetMessageToEdit(ctx);
 
         if (ctx.System.Id != msg.System.Id)
             throw new PKError("Can't edit a message sent by a different system.");
