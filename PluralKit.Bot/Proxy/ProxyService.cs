@@ -227,7 +227,7 @@ public class ProxyService
 
             content.Append($"**[Reply to:]({jumpLink})** ");
             content.Append(msg);
-            if (repliedTo.Attachments.Length > 0)
+            if (repliedTo.Attachments.Length > 0 || repliedTo.Embeds.Length > 0)
                 content.Append($" {Emojis.Paperclip}");
         }
         else
