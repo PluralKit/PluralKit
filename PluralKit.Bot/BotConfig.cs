@@ -32,5 +32,8 @@ public class BotConfig
         public string NodeName { get; set; }
         public int TotalShards { get; set; }
         public int TotalNodes { get; set; }
+
+        // Node name eg. "pluralkit-3", want to extract the 3. blame k8s :p
+        public int NodeIndex => int.Parse(NodeName.Split("-").Last());
     }
 }
