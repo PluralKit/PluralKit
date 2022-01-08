@@ -6,6 +6,7 @@ public enum GroupPrivacySubject
     Description,
     Icon,
     List,
+    Metadata,
     Visibility
 }
 
@@ -20,6 +21,7 @@ public static class GroupPrivacyUtils
             GroupPrivacySubject.Description => group.DescriptionPrivacy = level,
             GroupPrivacySubject.Icon => group.IconPrivacy = level,
             GroupPrivacySubject.List => group.ListPrivacy = level,
+            GroupPrivacySubject.Metadata => group.MetadataPrivacy = level,
             GroupPrivacySubject.Visibility => group.Visibility = level,
             _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
         };
@@ -58,6 +60,11 @@ public static class GroupPrivacyUtils
             case "shown":
             case "visible":
                 subject = GroupPrivacySubject.Visibility;
+                break;
+            case "meta":
+            case "metadata":
+            case "created":
+                subject = GroupPrivacySubject.Metadata;
                 break;
             case "list":
             case "listing":

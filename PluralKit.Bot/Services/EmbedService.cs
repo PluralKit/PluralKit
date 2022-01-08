@@ -245,10 +245,7 @@ public class EmbedService
 
         var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
-        var nameField = target.Name;
-        if (pctx == LookupContext.ByNonOwner && target.NamePrivacy == PrivacyLevel.Private &&
-            target.DisplayName != null)
-            nameField = target.DisplayName;
+        var nameField = target.NamePrivacy.Get(pctx, target.Name, target.DisplayName ?? target.Name);
         if (system.Name != null)
             nameField = $"{nameField} ({system.Name})";
 
@@ -265,14 +262,14 @@ public class EmbedService
 
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx)))
-            .Color(color)
-            .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(ctx.Zone)}"));
+            .Color(color);
+        
+        eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? " | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
         if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
 
-        if (target.DisplayName != null && (pctx == LookupContext.ByOwner || target.NamePrivacy == PrivacyLevel.Public))
+        if (target.NamePrivacy.Get(pctx, target.DisplayName, null) != null)
             eb.Field(new Embed.Field("Display Name", target.DisplayName, true));
 
         if (!target.Color.EmptyOrNull()) eb.Field(new Embed.Field("Color", $"#{target.Color}", true));

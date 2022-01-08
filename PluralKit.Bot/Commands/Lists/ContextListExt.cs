@@ -338,7 +338,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(g =>
             {
-                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}** ";
+                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}**";
 
                 switch (opts.SortProperty)
                 {
