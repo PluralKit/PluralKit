@@ -143,7 +143,7 @@ public class GroupPatch: PatchObject
                 p.Add("list_privacy", ListPrivacy.Value.ToJsonString());
 
             if (MetadataPrivacy.IsPresent)
-                p.Add("name_privacy", MetadataPrivacy.Value.ToJsonString());
+                p.Add("metadata_privacy", MetadataPrivacy.Value.ToJsonString());
 
             if (Visibility.IsPresent)
                 p.Add("visibility", Visibility.Value.ToJsonString());

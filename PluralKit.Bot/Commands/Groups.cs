@@ -509,6 +509,7 @@ public class Groups
                 GroupPrivacySubject.Description => "description privacy",
                 GroupPrivacySubject.Icon => "icon privacy",
                 GroupPrivacySubject.List => "member list",
+                GroupPrivacySubject.Metadata => "metadata",
                 GroupPrivacySubject.Visibility => "visibility",
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
             };
@@ -523,6 +524,8 @@ public class Groups
                     "This group's icon is now hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Private) =>
                     "This group is now hidden from group lists and member cards.",
+                (GroupPrivacySubject.Metadata, PrivacyLevel.Private) =>
+                    "This group's metadata (eg. creation date) is now hidden from other systems.",
                 (GroupPrivacySubject.List, PrivacyLevel.Private) =>
                     "This group's member list is now hidden from other systems.",
 
@@ -534,6 +537,8 @@ public class Groups
                     "This group's icon is no longer hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Public) =>
                     "This group is no longer hidden from group lists and member cards.",
+                (GroupPrivacySubject.Metadata, PrivacyLevel.Public) =>
+                    "This group's metadata (eg. creation date) is no longer hidden from other systems.",
                 (GroupPrivacySubject.List, PrivacyLevel.Public) =>
                     "This group's member list is no longer hidden from other systems.",
 

@@ -264,7 +264,7 @@ public class EmbedService
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx)))
             .Color(color);
         
-        eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? " | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
+        eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
         if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
