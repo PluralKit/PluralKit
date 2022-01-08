@@ -73,7 +73,7 @@ public static class PKGroupExt
 
         o.Add("display_name", group.DisplayName);
         o.Add("description", group.DescriptionPrivacy.Get(ctx, group.Description));
-        o.Add("icon", group.Icon);
+        o.Add("icon", group.IconFor(ctx));
         o.Add("banner", group.DescriptionPrivacy.Get(ctx, group.BannerImage));
         o.Add("color", group.Color);
 
