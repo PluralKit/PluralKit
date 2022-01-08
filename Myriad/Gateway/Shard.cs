@@ -129,6 +129,8 @@ public class Shard
     {
         while (true)
         {
+            await _ratelimiter.Identify(_info.ShardId);
+
             _logger.Information("Shard {ShardId}: Connecting to WebSocket", _info.ShardId);
             try
             {
@@ -147,14 +149,7 @@ public class Shard
         => _conn.Disconnect(closeStatus, null);
 
     private async Task SendIdentify()
-    {
-        _logger.Debug("Shard {ShardId}: Requesting identify from ratelimiter", _info.ShardId);
-
-        await _ratelimiter.Identify(_info.ShardId);
-
-        _logger.Debug("Shard {ShardId}: Ratelimiter said OK to identify now", _info.ShardId);
-
-        await _conn.Send(new GatewayPacket
+        => await _conn.Send(new GatewayPacket
         {
             Opcode = GatewayOpcode.Identify,
             Payload = new GatewayIdentify
@@ -172,7 +167,6 @@ public class Shard
                 LargeThreshold = 50
             }
         });
-    }
 
     private async Task SendResume((string SessionId, int? LastSeq) arg)
         => await _conn.Send(new GatewayPacket
