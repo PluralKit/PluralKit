@@ -23,6 +23,9 @@ export default class PKAPI {
         POST_MEMBER: () => `/members`,
         POST_MEMBER_GROUP: (mid: string, removing: boolean) => !removing ? `/members/${mid}/groups/add` : `/members/${mid}/groups/remove`,
         POST_GROUP_MEMBER: (gid: string, removing: boolean) => !removing ? `/groups/${gid}/members/add` : `/groups/${gid}/members/remove`,
+    
+        DELETE_MEMBER: (mid: string) => `/members/${mid}`,
+        DELETE_GROUP: (gid: string) => `/groups/${gid}`
     }
 
     baseUrl: string;
@@ -143,6 +146,16 @@ export default class PKAPI {
         }
     }
 
+    async deleteMember(options: {token: string, id: string}) {
+        var res: AxiosResponse;
+        try {
+            res = await this.handle(this.ROUTES.DELETE_MEMBER(options.id), 'DELETE', {token: options.token});
+            if (res.status !== 204 ) this.handleErrors(res);
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
+
     async getGroupList(options: {token?: string, id?: any, members?: boolean}) {
         if (!options.token && !options.id) {
             throw new Error("Must pass a token or id.");
@@ -186,6 +199,16 @@ export default class PKAPI {
         try {
             res = await this.handle(this.ROUTES.POST_GROUP_MEMBER(options.id, options.removing), 'POST', {token: options.token, body: options.data});
             if (res.status !== 204) this.handleErrors(res);
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
+
+    async deleteGroup(options: {token: string, id: string}) {
+        var res: AxiosResponse;
+        try {
+            res = await this.handle(this.ROUTES.DELETE_GROUP(options.id), 'DELETE', {token: options.token});
+            if (res.status !== 204 ) this.handleErrors(res);
         } catch (error) {
             throw new Error(error.message);
         }
