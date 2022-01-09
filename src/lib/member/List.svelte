@@ -167,6 +167,10 @@
   function updateGroups(event: any) {
       groups = event.detail;
   }
+
+  function updateDelete(event: any) {
+      list = list.filter(member => member.id !== event.detail);
+  }
 </script>
 
 <Card class="mb-3">
@@ -277,14 +281,14 @@
                 <CardsHeader bind:item={member} slot="header">
                     <FaUserCircle slot="icon" />
                 </CardsHeader>
-                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
+                <Body on:deletion={updateDelete} on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
             </AccordionItem>
             {:else}
             <AccordionItem>
                 <CardsHeader bind:item={member} slot="header">
                     <FaLock slot="icon" />
                 </CardsHeader>
-                <Body on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
+                <Body on:deletion={updateDelete} on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
             </AccordionItem>
             {/if}
     {/each}

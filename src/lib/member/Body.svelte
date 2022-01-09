@@ -112,7 +112,7 @@
                     Edit privacy
                 </ModalHeader>
                     <ModalBody>
-                        <Privacy bind:member bind:privacyOpen/>
+                        <Privacy on:update bind:member bind:privacyOpen/>
                     </ModalBody>
             </Modal>
         </Col>
@@ -129,7 +129,7 @@
     <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => groupMode = true}>Groups</Button>
     {/if}
     {:else if editMode}
-        <Edit on:update bind:member bind:editMode />
+        <Edit on:deletion on:update bind:member bind:editMode />
     {:else if groupMode}
         <GroupEdit on:updateGroups bind:member bind:groups bind:groupMode />
     {/if}
