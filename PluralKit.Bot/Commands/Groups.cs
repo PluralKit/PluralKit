@@ -175,6 +175,8 @@ public class Groups
             await _repo.UpdateGroup(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Group display name cleared.");
+            if (target.NamePrivacy == PrivacyLevel.Private)
+                await ctx.Reply($"{Emojis.Warn} Since this group no longer has a display name set, their name privacy **can no longer take effect**.");
         }
         else
         {
@@ -547,6 +549,10 @@ public class Groups
 
             await ctx.Reply(
                 $"{Emojis.Success} {target.Name}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}");
+            
+            if (subject == GroupPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
+                await ctx.Reply(
+                    $"{Emojis.Warn} This group does not have a display name set, and name privacy **will not take effect**.");
         }
 
         if (ctx.Match("all") || newValueFromCommand != null)

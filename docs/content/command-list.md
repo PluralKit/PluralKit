@@ -89,7 +89,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;group <group> description [description]` - Shows or changes a group's description.
 - `pk;group <group> add <member> [member 2] [member 3...]` - Adds one or more members to a group.
 - `pk;group <group> remove <member> [member 2] [member 3...]` - Removes one or more members from a group.
-- `pk;group <group> privacy <name|description|icon|visibility|all> <public|private>` - Changes a group's privacy settings.
+- `pk;group <group> privacy <name|description|icon|metadata|visibility|all> <public|private>` - Changes a group's privacy settings.
 - `pk;group <group> icon [icon url|@mention|upload]` - Shows or changes a group's icon.
 - `pk;group <group> banner [image url|upload]` - Shows or changes a group's banner image.
 - `pk;group <group> delete` - Deletes a group.

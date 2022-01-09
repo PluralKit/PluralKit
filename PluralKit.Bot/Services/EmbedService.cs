@@ -266,10 +266,10 @@ public class EmbedService
         
         eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
 
-        if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+        if (target.DescriptionPrivacy.CanAccess(pctx))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
 
-        if (target.NamePrivacy.Get(pctx, target.DisplayName, null) != null)
+        if (target.NamePrivacy.CanAccess(pctx) && target.DisplayName != null)
             eb.Field(new Embed.Field("Display Name", target.DisplayName, true));
 
         if (!target.Color.EmptyOrNull()) eb.Field(new Embed.Field("Color", $"#{target.Color}", true));

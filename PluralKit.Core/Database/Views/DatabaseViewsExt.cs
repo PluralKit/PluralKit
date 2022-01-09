@@ -37,7 +37,8 @@ public static class DatabaseViewsExt
             query.Append(")");
         }
 
-        return conn.QueryAsync<ListedGroup>(query.ToString(),
+        return conn.QueryAsync<ListedGroup>(
+            query.ToString(),
             new { system, filter = opts.Search });
     }
 
