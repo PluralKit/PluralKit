@@ -460,7 +460,7 @@ public class Groups
         }
 
         var title = system.Name != null ? $"Groups of {system.Name} (`{system.Hid}`)" : $"Groups of `{system.Hid}`";
-        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, 25, title, ctx.System.Color, Renderer);
+        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, 25, title, system.Color, Renderer);
 
         Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
         {
