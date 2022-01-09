@@ -1,48 +1,33 @@
-# Svelte + TS + Vite
+Currently viewable here! https://pk-webs-beta.spectralitree.com/
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+# pk-webs: beta
 
-## Recommended IDE Setup
+This repo is a complete rewrite of [pk-webs](https://github.com/Spectralitree/pk-webs). Written in svelte instead of react.
 
-[VSCode](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+pk-webs uses [PluralKit](https://pluralkit.me/)'s api to display, members and groups registered on PluralKit. You can also supply your system's token to edit your own data.
 
-## Need an official Svelte framework?
+This is a third-party application, and not officially supported by the PluralKit devs.
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+If you encounter a bug, please either open an issue, or bring it up in the PluralKit support server (which has a channel for community resources like this one)
 
-## Technical considerations
+## Technology
+This project is built using [Vite](https://vitejs.dev/), using the svelte-ts template.
 
-**Why use this over SvelteKit?**
+Some of the other stuff used to get this working:
+* sveltestrap (https://sveltestrap.js.org/)
+* svelte-navigator (https://github.com/mefechoel/svelte-navigator)
+* svelte-toggle (https://github.com/metonym/svelte-toggle)
+* svelecte (https://mskocik.github.io/svelecte/)
+* svelte-icons (https://github.com/Introvertuous/svelte-icons)
+* discord-markdown (https://github.com/brussell98/discord-markdown)
+* moment (https://momentjs.com/)
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-  `vite dev` and `vite build` wouldn't work in a SvelteKit environment, for example.
+The code used to make routing work on github pages can be found [here](https://github.com/rafgraph/spa-github-pages)
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+## Contributing
+Feel free to contribute! This repo does not have any format for issues or pull requests, so just go ahead and open one. I tend to not immediately notice whenever new issues/PRs are opened, so expect a couple days of delay (or poke me in PluralKit's official discord!)
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+## Privacy
+pk-webs is a static web-app. It only saves your token, settings and other small things it needs to keep track of in your localstorage. We do not have access to your token, and it does not use this token for anything other than what *you* tell it to do.
 
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
-```
+That being said, there might be bugs, and there's no guarantee everything will work correctly! Again, if you find a bug, do let us know.
