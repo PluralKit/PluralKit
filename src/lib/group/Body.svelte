@@ -97,7 +97,7 @@
 </Row>
 <div class="my-2 description" bind:this={descriptionElement}>
     <b>Description:</b><br />
-    {@html htmlDescription}
+    {@html htmlDescription && htmlDescription}
 </div>
 {#if (group.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img src={group.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
