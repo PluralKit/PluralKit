@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Row, Col, Input, Button, Label, Alert, Spinner } from 'sveltestrap';
+    import { Row, Col, Input, Button, Label, Alert, Spinner, Modal, ModalHeader, ModalBody } from 'sveltestrap';
     import { createEventDispatcher } from 'svelte';
     import Group from '../../api/group';
     import PKAPI from '../../api';
@@ -17,6 +17,10 @@
 
     function update() {
         dispatch('update', group);
+    }
+
+    function deletion() {
+        dispatch('deletion', group.id);
     }
 
     async function submit() {
@@ -47,6 +51,39 @@
             console.log(error);
             err.push(error.message);
             err = err;
+            loading = false;
+        }
+    }
+
+    let deleteOpen: boolean = false;
+    const toggleDeleteModal = () => deleteOpen = !deleteOpen;
+
+    let deleteInput: string;
+    let deleteErr: string;
+
+    async function submitDelete() {
+        deleteErr = null;
+
+        if (!deleteInput) {
+            deleteErr = "Please type out the group ID.";
+            return;
+        }
+
+        if (deleteInput.trim().toLowerCase() !== group.id) {
+            deleteErr = "This group's ID does not match the provided ID.";
+            return;
+        }
+        loading = true;
+        const api = new PKAPI();
+        try {
+            await api.deleteGroup({token: localStorage.getItem("pk-token"), id: group.id});
+            deleteErr = null;
+            toggleDeleteModal();
+            loading = false;
+            deletion();
+        } catch (error) {
+            console.log(error);
+            deleteErr = error.message;
             loading = false;
         }
     }
@@ -81,5 +118,18 @@
     <b>Description:</b><br />
     <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={group.description}/>
 </div>
-{#if !loading}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false}>Back</Button>
-{:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>{/if}
+{#if !loading}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false}>Back</Button><Button style="flex: 0; float: right;" color="danger" on:click={toggleDeleteModal}>Delete</Button>
+{:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button><Button style="flex: 0; float: right;" color="danger" disabled>Delete</Button>{/if}
+<Modal size="lg" isOpen={deleteOpen} toggle={toggleDeleteModal}>
+    <ModalHeader toggle={toggleDeleteModal}>
+        Delete member
+     </ModalHeader>
+         <ModalBody>
+             {#if deleteErr}<Alert color="danger">{deleteErr}</Alert>{/if}
+             <Label>If you're sure you want to delete this member, type out the member ID (<code>{group.id}</code>) below.</Label>
+             <Input class="mb-3" bind:value={deleteInput} maxlength={7} placeholder={group.id}></Input>
+            {#if !loading}<Button style="flex 0" color="danger" on:click={submitDelete}>Delete</Button> <Button style="flex: 0" color="secondary" on:click={toggleDeleteModal}>Back</Button>
+            {:else}<Button style="flex 0" color="danger" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>
+            {/if}
+        </ModalBody>
+</Modal>

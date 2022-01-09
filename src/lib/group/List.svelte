@@ -164,6 +164,10 @@
   function updateList(event: any) {
       list = list.map(group => group.id !== event.detail.id ? group : event.detail)
   }
+
+  function updateDelete(event: any) {
+      list = list.filter(group => group.id !== event.detail);
+  }
 </script>
 
 <Card class="mb-3">
@@ -274,14 +278,14 @@
             <CardsHeader bind:item={group} slot="header">
                 <FaUsers slot="icon" />
             </CardsHeader>
-            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
+            <Body on:deletion={updateDelete} on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
         </AccordionItem>
         {:else}
         <AccordionItem>
             <CardsHeader bind:item={group} slot="header">
                 <FaLock slot="icon" />
             </CardsHeader>
-            <Body on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
+            <Body on:deletion={updateDelete} on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
         </AccordionItem>
         {/if}
     {/each}

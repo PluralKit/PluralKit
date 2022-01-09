@@ -106,7 +106,7 @@
 <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>
 {/if}
 {:else if editMode}
-<Edit on:update bind:group bind:editMode />
+<Edit on:deletion on:update bind:group bind:editMode />
 {:else if memberMode}
     <MemberEdit on:update bind:group bind:memberMode bind:members />
 {/if}
