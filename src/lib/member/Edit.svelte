@@ -42,6 +42,9 @@
                     err.push(`${data.birthday} is not a valid date, please use the following format: YYYY-MM-DD. (example: 2019-07-21)`);
                 }
             }
+            if (data.birthday.includes('/')) {
+                data.birthday.replace('/', '-');
+            }
         }
 
         err = err;
