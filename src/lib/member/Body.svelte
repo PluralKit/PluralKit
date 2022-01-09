@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody, Spinner } from 'sveltestrap';
+    import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
     import twemoji from 'twemoji';
