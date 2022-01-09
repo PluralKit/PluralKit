@@ -8,6 +8,11 @@ interface MemberPrivacy {
     metadata_privacy?: string
 }
 
+type proxytag = {
+    prefix?: string,
+    suffix?: string
+}
+
 export default class Member {
     id?: string;
     uuid?: string;
@@ -22,7 +27,7 @@ export default class Member {
     created?: string;
     keep_proxy?: boolean
     system?: string;
-    proxy_tags?: Array<object>;
+    proxy_tags?: Array<proxytag>;
     privacy?: MemberPrivacy
 
     constructor(data: any) {
