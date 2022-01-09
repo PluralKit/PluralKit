@@ -9,6 +9,7 @@
     import GroupEdit from './GroupEdit.svelte';
     import Edit from './Edit.svelte';
     import Privacy from './Privacy.svelte';
+    import ProxyTags from './ProxyTags.svelte';
 
     export let groups: Group[] = [];
     export let member: Member;
@@ -45,6 +46,9 @@
 
     let privacyOpen = false;
     const togglePrivacyModal = () => (privacyOpen = !privacyOpen);
+
+    let proxyOpen = false;
+    const toggleProxyModal = () => (proxyOpen = !proxyOpen);
 
     let created = moment(member.created).format("MMM D, YYYY");
     let birthday: string;
@@ -113,6 +117,19 @@
                 </ModalHeader>
                     <ModalBody>
                         <Privacy on:update bind:member bind:privacyOpen/>
+                    </ModalBody>
+            </Modal>
+        </Col>
+        {/if}
+        {#if member.proxy_tags}
+        <Col xs={12} lg={4} class="mb-2">
+            <b>Proxy Tags:</b> <Button size="sm" color="secondary" on:click={toggleProxyModal}>Edit</Button>
+            <Modal size="lg" isOpen={proxyOpen} toggle={toggleProxyModal}>
+                <ModalHeader toggle={toggleProxyModal}>
+                    Edit proxy tags
+                </ModalHeader>
+                    <ModalBody>
+                        <ProxyTags on:update bind:member bind:proxyOpen/>
                     </ModalBody>
             </Modal>
         </Col>
