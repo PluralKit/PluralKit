@@ -79,17 +79,17 @@
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
-            <Label>Visibility:</Label>
-            <Input type="select" bind:value={input.privacy.visibility}>
-                <option default={group.privacy.visibility === "public"}>public</option>
-                <option default={group.privacy.visibility === "private"}>private</option>
-            </Input>
-        </Col>
-        <Col xs={12} lg={6} class="mb-3">
             <Label>Icon:</Label>
             <Input type="select" bind:value={input.privacy.icon_privacy}>
                 <option default={group.privacy.icon_privacy === "public"}>public</option>
                 <option default={group.privacy.icon_privacy === "private"}>private</option>
+            </Input>
+        </Col>
+        <Col xs={12} lg={6} class="mb-3">
+            <Label>Visibility:</Label>
+            <Input type="select" bind:value={input.privacy.visibility}>
+                <option default={group.privacy.visibility === "public"}>public</option>
+                <option default={group.privacy.visibility === "private"}>private</option>
             </Input>
         </Col>
     </Row>
