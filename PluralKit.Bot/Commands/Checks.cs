@@ -25,7 +25,7 @@ public class Checks
     {
         PermissionSet.ViewChannel, PermissionSet.SendMessages, PermissionSet.AddReactions,
         PermissionSet.AttachFiles, PermissionSet.EmbedLinks, PermissionSet.ManageMessages,
-        PermissionSet.ManageWebhooks
+        PermissionSet.ManageWebhooks, PermissionSet.ReadMessageHistory
     };
 
     public Checks(DiscordApiClient rest, IDiscordCache cache, IDatabase db, ModelRepository repo,

@@ -42,20 +42,22 @@ public class Init
                 opts.DisableTaskUnobservedTaskExceptionCapture();
             });
 
-            // "Connect to the database" (ie. set off database migrations and ensure state)
-            logger.Information("Connecting to database");
-            await services.Resolve<IDatabase>().ApplyMigrations();
+            var config = services.Resolve<BotConfig>();
+            if (config.Cluster == null)
+            {
+                // "Connect to the database" (ie. set off database migrations and ensure state)
+                logger.Information("Connecting to database");
+                await services.Resolve<IDatabase>().ApplyMigrations();
+
+                // if we're running single-process, clear any existing shard status from the database
+                await services.Resolve<ModelRepository>().ClearShardStatus();
+            }
 
             // Init the bot instance itself, register handlers and such to the client before beginning to connect
             logger.Information("Initializing bot");
             var bot = services.Resolve<Bot>();
             bot.Init();
 
-            // if we're running single-process, clear any existing shard status from the database
-            var config = services.Resolve<BotConfig>();
-            var repo = services.Resolve<ModelRepository>();
-            if (config.Cluster == null)
-                await repo.ClearShardStatus();
 
             // Start the Discord shards themselves (handlers already set up)
             logger.Information("Connecting to Discord");
@@ -147,7 +149,7 @@ public class Init
             // For multi-instance deployments, calculate the "span" of shards this node is responsible for
             var totalNodes = config.Cluster.TotalNodes;
             var totalShards = config.Cluster.TotalShards;
-            var nodeIndex = ExtractNodeIndex(config.Cluster.NodeName);
+            var nodeIndex = config.Cluster.NodeIndex;
 
             // Should evenly distribute shards even with an uneven amount of nodes
             var shardMin = (int)Math.Round(totalShards * (float)nodeIndex / totalNodes);
@@ -160,8 +162,4 @@ public class Init
             await cluster.Start(info);
         }
     }
-
-    private static int ExtractNodeIndex(string nodeName) =>
-        // Node name eg. "pluralkit-3", want to extract the 3. blame k8s :p
-        int.Parse(nodeName.Split("-").Last());
 }
