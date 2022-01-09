@@ -86,7 +86,7 @@
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
-            <Label>Icon :</Label>
+            <Label>Icon:</Label>
             <Input type="select" bind:value={input.privacy.icon_privacy}>
                 <option default={group.privacy.icon_privacy === "public"}>public</option>
                 <option default={group.privacy.icon_privacy === "private"}>private</option>
