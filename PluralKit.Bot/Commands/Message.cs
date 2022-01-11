@@ -51,7 +51,7 @@ public class ProxiedMessage
 
         var msg = await GetMessageToEdit(ctx);
 
-        if (ctx.System.Id != msg.System.Id)
+        if (ctx.System.Id != msg.System?.Id)
             throw new PKError("Can't edit a message sent by a different system.");
 
         var newContent = ctx.RemainderOrNull().NormalizeLineEndSpacing();
@@ -209,7 +209,7 @@ public class ProxiedMessage
             if (!showContent)
                 throw new PKError(noShowContentError);
 
-            if (message.System.Id != ctx.System.Id)
+            if (message.System?.Id != ctx.System.Id && message.Message.Sender != ctx.Author.Id)
                 throw new PKError("You can only delete your own messages.");
 
             await ctx.Rest.DeleteMessage(message.Message.Channel, message.Message.Mid);

@@ -29,9 +29,13 @@ public partial class ModelRepository
         FullMessage Mapper(PKMessage msg, PKMember member, PKSystem system) =>
             new() { Message = msg, System = system, Member = member };
 
+        var query = "select * from messages"
+            + " left join members on messages.member = members.id"
+            + " left join systems on members.system = systems.id"
+            + " where (mid = @Id or original_mid = @Id)";
+
         var result = await conn.QueryAsync<PKMessage, PKMember, PKSystem, FullMessage>(
-            "select messages.*, members.*, systems.* from messages, members, systems where (mid = @Id or original_mid = @Id) and messages.member = members.id and systems.id = members.system",
-            Mapper, new { Id = id });
+            query, Mapper, new { Id = id });
         return result.FirstOrDefault();
     }
 

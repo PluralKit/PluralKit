@@ -9,7 +9,7 @@ public class PKMessage
     public ulong Mid { get; set; }
     public ulong? Guild { get; set; } // null value means "no data" (ie. from before this field being added)
     public ulong Channel { get; set; }
-    public MemberId Member { get; set; }
+    public MemberId? Member { get; set; }
     public ulong Sender { get; set; }
     public ulong? OriginalMid { get; set; }
 }
@@ -17,8 +17,8 @@ public class PKMessage
 public class FullMessage
 {
     public PKMessage Message;
-    public PKMember Member;
-    public PKSystem System;
+    public PKMember? Member;
+    public PKSystem? System;
 
     public JObject ToJson(LookupContext ctx, APIVersion v)
     {
@@ -30,8 +30,8 @@ public class FullMessage
         o.Add("sender", Message.Sender.ToString());
         o.Add("channel", Message.Channel.ToString());
         o.Add("guild", Message.Guild?.ToString());
-        o.Add("system", System.ToJson(ctx, v));
-        o.Add("member", Member.ToJson(ctx, v: v));
+        o.Add("system", System?.ToJson(ctx, v));
+        o.Add("member", Member?.ToJson(ctx, v: v));
 
         return o;
     }

@@ -44,7 +44,7 @@ public class LogChannelService
         var triggerChannel = await _cache.GetChannel(proxiedMessage.Channel);
 
         var system = await _repo.GetSystem(ctx.SystemId.Value);
-        var member = await _repo.GetMember(proxiedMessage.Member);
+        var member = await _repo.GetMember(proxiedMessage.Member!.Value);
 
         // Send embed!
         var embed = _embed.CreateLoggedMessageEmbed(trigger, hookMessage, system.Hid, member, triggerChannel.Name,

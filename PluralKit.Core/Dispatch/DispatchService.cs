@@ -133,7 +133,7 @@ public class DispatchService
         if (system.WebhookUrl == null)
             return;
 
-        var member = await repo.GetMember(newMessage.Member);
+        var member = await repo.GetMember(newMessage.Member!.Value);
 
         var fullMessage = new FullMessage
         {

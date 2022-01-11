@@ -355,13 +355,20 @@ public class EmbedService
 
         // Put it all together
         var eb = new EmbedBuilder()
-            .Author(new Embed.EmbedAuthor(msg.Member.NameFor(ctx),
-                IconUrl: msg.Member.AvatarFor(ctx).TryGetCleanCdnUrl()))
+            .Author(new Embed.EmbedAuthor(msg.Member?.NameFor(ctx) ?? "(deleted member)",
+                IconUrl: msg.Member?.AvatarFor(ctx).TryGetCleanCdnUrl()))
             .Description(content)
             .Image(showContent ? new Embed.EmbedImage(serverMsg?.Attachments?.FirstOrDefault()?.Url) : null)
             .Field(new Embed.Field("System",
-                msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`", true))
-            .Field(new Embed.Field("Member", $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)", true))
+                msg.System == null
+                    ? "*(deleted or unknown system)*"
+                    : msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`"
+            , true))
+            .Field(new Embed.Field("Member",
+                msg.Member == null
+                    ? "*(deleted member)*"
+                    : $"{msg.Member.NameFor(ctx)} (`{msg.Member.Hid}`)"
+            , true))
             .Field(new Embed.Field("Sent by", userStr, true))
             .Timestamp(DiscordUtils.SnowflakeToInstant(msg.Message.Mid).ToDateTimeOffset().ToString("O"));
 

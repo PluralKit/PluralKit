@@ -128,7 +128,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         var system = await _repo.GetSystemByAccount(evt.UserId);
 
         // Can only delete your own message
-        if (msg.System.Id != system?.Id) return;
+        if (msg.System?.Id != system?.Id && msg.Message.Sender != evt.UserId) return;
 
         try
         {
@@ -170,16 +170,17 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         try
         {
             var dm = await _cache.GetOrCreateDmChannel(_rest, evt.UserId);
-            await _rest.CreateMessage(dm.Id, new MessageRequest
-            {
-                Embed = await _embeds.CreateMemberEmbed(
-                    msg.System,
-                    msg.Member,
-                    guild,
-                    LookupContext.ByNonOwner,
-                    DateTimeZone.Utc
-                )
-            });
+            if (msg.Member != null)
+                await _rest.CreateMessage(dm.Id, new MessageRequest
+                {
+                    Embed = await _embeds.CreateMemberEmbed(
+                        msg.System,
+                        msg.Member,
+                        guild,
+                        LookupContext.ByNonOwner,
+                        DateTimeZone.Utc
+                    )
+                });
 
             await _rest.CreateMessage(
                 dm.Id,
@@ -201,6 +202,8 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         var member = await _rest.GetGuildMember(evt.GuildId!.Value, evt.UserId);
         var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
         if (member == null || !(await _cache.PermissionsFor(evt.ChannelId, member)).HasFlag(requiredPerms)) return;
+
+        if (msg.Member == null) return;
 
         var config = await _repo.GetSystemConfig(msg.System.Id);
 
