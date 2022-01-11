@@ -5,6 +5,8 @@ permalink: /api/changelog
 
 # Version history
 
+* 2022-01-11
+  * Member / system keys in message object are now nullable.
 * 2021-11-07 (v2)
   * API v2 has been released. API v1 is now deprecated.
 * 2020-07-28
