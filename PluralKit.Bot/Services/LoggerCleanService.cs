@@ -37,10 +37,13 @@ public class LoggerCleanService
     private static readonly Regex _salRegex = new("\\(ID: (\\d{17,19})\\)");
     private static readonly Regex _GearBotRegex = new("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
     private static readonly Regex _GiselleRegex = new("\\*\\*Message ID\\*\\*: `(\\d{17,19})`");
+    private static readonly Regex _ProBotRegex = new("\\*\\*Message sent by <@(\\d{17,19})> deleted in <#\\d{17,19}>.\\*\\*");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
 
+
+    // todo: change webhooks from webhookName to use the application ID in webhook message object
     private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
     {
         new LoggerBot("Carl-bot", 23514896210395136, fuzzyExtractFunc: ExtractCarlBot,
@@ -61,7 +64,8 @@ public class LoggerCleanService
         new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL),
         new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot),
         new LoggerBot("GiselleBot", 356831787445387285, ExtractGiselleBot),
-        new LoggerBot("Vortex", 240254129333731328, fuzzyExtractFunc: ExtractVortex)
+        new LoggerBot("Vortex", 240254129333731328, fuzzyExtractFunc: ExtractVortex),
+        new LoggerBot("ProBot", 282859044593598464, webhookName: "ProBot ✨", fuzzyExtractFunc: ExtractProBot)
     }.ToDictionary(b => b.Id);
 
     private static readonly Dictionary<string, LoggerBot> _botsByWebhookName = _bots.Values
@@ -367,6 +371,22 @@ public class LoggerCleanService
             {
                 User = ulong.Parse(match.Groups[2].Value),
                 ApproxTimestamp = msg.Timestamp().ToInstant()
+            }
+            : null;
+    }
+
+    private static FuzzyExtractResult? ExtractProBot(Message msg)
+    {
+        // user ID and channel ID are in the embed description (we don't use channel ID)
+        // timestamp is in the embed footer
+        if (msg.Embeds.Length == 0 || msg.Embeds[0].Description == null) return null;
+        var match = _ProBotRegex.Match(msg.Embeds[0].Description);
+        return match.Success
+            ? new FuzzyExtractResult
+            {
+                User = ulong.Parse(match.Groups[1].Value),
+                ApproxTimestamp = OffsetDateTimePattern.Rfc3339
+                    .Parse(msg.Embeds[0].Timestamp).GetValueOrThrow().ToInstant()
             }
             : null;
     }
