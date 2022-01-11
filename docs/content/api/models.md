@@ -106,9 +106,9 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |timezone|string|defaults to `UTC`|
 |pings_enabled|boolean|
 |latch_timeout|int?|
-|member_default_private*|bool|whether members created through the bot have privacy settings set to private by default|
-|group_default_private*|bool|whether groups created through the bot have privacy settings set to private by default|
-|show_private_info|bool|whether the bot shows the system's own private information without a `-private` flag|
+|member_default_private*|boolean|whether members created through the bot have privacy settings set to private by default|
+|group_default_private*|boolean|whether groups created through the bot have privacy settings set to private by default|
+|show_private_info|boolean|whether the bot shows the system's own private information without a `-private` flag|
 |member_limit|int|read-only, defaults to 1000|
 |group_limit|int|read-only, defaults to 250|
 
