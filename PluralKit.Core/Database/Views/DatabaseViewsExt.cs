@@ -11,7 +11,7 @@ public static class DatabaseViewsExt
         conn.QueryAsync<SystemFronter>("select * from system_fronters where system = @system", new { system });
 
     public static Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system,
-                                                                  GroupListQueryOptions opts)
+                                                                  ListQueryOptions opts)
     {
         StringBuilder query = new StringBuilder("select * from group_list where system = @system");
 
@@ -43,7 +43,7 @@ public static class DatabaseViewsExt
     }
 
     public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system,
-                                                                  MemberListQueryOptions opts)
+                                                                  ListQueryOptions opts)
     {
         StringBuilder query;
         if (opts.GroupFilter == null)
@@ -78,20 +78,12 @@ public static class DatabaseViewsExt
             new { system, filter = opts.Search, groupFilter = opts.GroupFilter });
     }
 
-    public struct MemberListQueryOptions
+    public struct ListQueryOptions
     {
         public PrivacyLevel? PrivacyFilter;
         public string? Search;
         public bool SearchDescription;
         public LookupContext Context;
         public GroupId? GroupFilter;
-    }
-    
-    public struct GroupListQueryOptions
-    {
-        public PrivacyLevel? PrivacyFilter;
-        public string? Search;
-        public bool SearchDescription;
-        public LookupContext Context;
     }
 }

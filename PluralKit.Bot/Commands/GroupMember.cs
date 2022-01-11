@@ -97,7 +97,7 @@ public class GroupMember
             .ToList();
 
         var existingMembersInGroup = (await _db.Execute(conn => conn.QueryMemberList(target.System,
-                new DatabaseViewsExt.MemberListQueryOptions { GroupFilter = target.Id })))
+                new DatabaseViewsExt.ListQueryOptions { GroupFilter = target.Id })))
             .Select(m => m.Id.Value)
             .Distinct()
             .ToHashSet();
@@ -134,7 +134,7 @@ public class GroupMember
         var targetSystem = await GetGroupSystem(ctx, target);
         ctx.CheckSystemPrivacy(targetSystem.Id, target.ListPrivacy);
 
-        var opts = ctx.ParseMemberListOptions(ctx.DirectLookupContextFor(target.System));
+        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.System));
         opts.GroupFilter = target.Id;
 
         var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");

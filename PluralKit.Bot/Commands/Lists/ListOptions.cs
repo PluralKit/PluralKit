@@ -7,7 +7,7 @@ using PluralKit.Core;
 #nullable enable
 namespace PluralKit.Bot;
 
-public class MemberListOptions
+public class ListOptions
 {
     public SortProperty SortProperty { get; set; } = SortProperty.Name;
     public bool Reverse { get; set; }
@@ -32,8 +32,8 @@ public class MemberListOptions
         if (SortProperty != SortProperty.Random) str.Append("by ");
         str.Append(SortProperty switch
         {
-            SortProperty.Name => "member name",
-            SortProperty.Hid => "member ID",
+            SortProperty.Name => "name",
+            SortProperty.Hid => "ID",
             SortProperty.DisplayName => "display name",
             SortProperty.CreationDate => "creation date",
             SortProperty.LastMessage => "last message",
@@ -48,12 +48,12 @@ public class MemberListOptions
         {
             str.Append($", searching for \"{Search}\"");
             if (SearchDescription) str.Append(" (including description)");
-        }
+}
 
-        str.Append(PrivacyFilter switch
+str.Append(PrivacyFilter switch
         {
-            null => ", showing all members",
-            PrivacyLevel.Private => ", showing only private members",
+            null => ", showing all items",
+            PrivacyLevel.Private => ", showing only private items",
             PrivacyLevel.Public => "", // (default, no extra line needed)
             _ => new ArgumentOutOfRangeException(
                 $"Couldn't find readable string for privacy filter {PrivacyFilter}")
@@ -62,8 +62,8 @@ public class MemberListOptions
         return str.ToString();
     }
 
-    public DatabaseViewsExt.MemberListQueryOptions ToQueryOptions() =>
-        new()
+    public DatabaseViewsExt.ListQueryOptions ToQueryOptions() =>
+        new ()
         {
             PrivacyFilter = PrivacyFilter,
             GroupFilter = GroupFilter,
@@ -72,10 +72,10 @@ public class MemberListOptions
         };
 }
 
-public static class MemberListOptionsExt
+public static class ListOptionsExt
 {
     public static IEnumerable<ListedMember> SortByMemberListOptions(this IEnumerable<ListedMember> input,
-                                                                    MemberListOptions opts, LookupContext ctx)
+                                                                    ListOptions opts, LookupContext ctx)
     {
         IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
             opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
@@ -108,6 +108,33 @@ public static class MemberListOptionsExt
                 .ThenByDescending(m => m.LastSwitchTime, ReverseMaybe(Comparer<Instant?>.Default)),
             SortProperty.Random => input
                 .OrderBy(m => randGen.Next()),
+            _ => throw new ArgumentOutOfRangeException($"Unknown sort property {opts.SortProperty}")
+        })
+            // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
+            .ThenBy(m => m.NameFor(ctx), culture);
+}
+
+public static IEnumerable<ListedGroup> SortByGroupListOptions(this IEnumerable<ListedGroup> input,
+                                                                ListOptions opts, LookupContext ctx)
+{
+    IComparer<T> ReverseMaybe<T>(IComparer<T> c) =>
+        opts.Reverse ? Comparer<T>.Create((a, b) => c.Compare(b, a)) : c;
+
+    var randGen = new global::System.Random();
+
+    var culture = StringComparer.InvariantCultureIgnoreCase;
+    return (opts.SortProperty switch
+        {
+            // As for the OrderByDescending HasValue calls: https://www.jerriepelser.com/blog/orderby-with-null-values/
+            // We want nulls last no matter what, even if orders are reversed
+    SortProperty.Hid => input.OrderBy(g => g.Hid, ReverseMaybe(culture)),
+            SortProperty.Name => input.OrderBy(g => g.NameFor(ctx), ReverseMaybe(culture)),
+            SortProperty.CreationDate => input.OrderBy(g => g.Created, ReverseMaybe(Comparer<Instant>.Default)),
+            SortProperty.DisplayName => input
+                .OrderByDescending(g => g.DisplayName != null)
+                .ThenBy(g => g.DisplayName, ReverseMaybe(culture)),
+            SortProperty.Random => input
+                .OrderBy(g => randGen.Next()),
             _ => throw new ArgumentOutOfRangeException($"Unknown sort property {opts.SortProperty}")
         })
             // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
