@@ -30,7 +30,7 @@ export default class Member {
     proxy_tags?: Array<proxytag>;
     privacy?: MemberPrivacy
 
-    constructor(data: any) {
+    constructor(data: Member) {
         this.id = data.id;
         this.uuid = data.uuid;
         this.name = data.name;

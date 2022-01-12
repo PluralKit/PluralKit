@@ -18,7 +18,7 @@ export default class Group {
     created?: string;
     members?: string[];
 
-    constructor(data: any) {
+    constructor(data: Group) {
         this.id = data.id;
         this.uuid = data.uuid;
         this.name = data.name;

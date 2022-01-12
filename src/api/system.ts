@@ -19,7 +19,7 @@ export default class Sys {
     privacy?: SystemPrivacy;
     color?: string;
 
-    constructor(data: any) {
+    constructor(data: Sys) {
         this.id = data.id;
         this.uuid = data.uuid;
         this.name = data.name;
