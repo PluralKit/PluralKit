@@ -106,7 +106,7 @@
         <Input bind:value={input.color} type="text" placeholder={group.color}/>
     </Col>
     <Col xs={12} lg={4} class="mb-2">
-        <Label>Avatar url:</Label>
+        <Label>Icon url:</Label>
         <Input bind:value={input.icon} maxlength={256} type="url" placeholder={group.icon}/>
     </Col>
     <Col xs={12} lg={4} class="mb-2">
