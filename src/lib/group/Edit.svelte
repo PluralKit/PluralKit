@@ -11,7 +11,7 @@
 
     let err: string[] = [];
 
-    let input = new Group(group);
+    let input = new Group({name: group.name, display_name: group.display_name, banner: group.banner, color: group.color, icon: group.icon, description: group.description});
 
     const dispatch = createEventDispatcher();
 

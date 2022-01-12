@@ -33,7 +33,7 @@
         dispatch('update', member);
     }
 
-    let input = new Member(member);
+    let input = new Member({privacy: member.privacy});
 
     async function submit() {
         let data = input;

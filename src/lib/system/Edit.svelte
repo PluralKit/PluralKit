@@ -12,7 +12,7 @@
 
     let err: string[] = [];
 
-    let input = new Sys(user);
+    let input = new Sys({name: user.name, tag: user.tag, color: user.color, avatar_url: user.avatar_url, banner: user.banner, description: user.description});
     
     async function submit() {
         let data = input;

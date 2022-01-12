@@ -13,7 +13,7 @@
 
     let err: string[] = [];
 
-    let input = new Member(member);
+    let input = new Member({name: member.name, display_name: member.display_name, birthday: member.birthday, pronouns: member.pronouns, color: member.color, description: member.description, banner: member.banner, avatar_url: member.avatar_url});
 
     const dispatch = createEventDispatcher();
 

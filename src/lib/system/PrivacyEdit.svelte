@@ -10,7 +10,7 @@
 
     let err: string;
 
-    let input = new Sys(user);
+    let input = new Sys({privacy: user.privacy});
 
     async function submit() {
         let data = input;

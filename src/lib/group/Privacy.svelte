@@ -30,7 +30,7 @@
         dispatch('update', group);
     }
 
-    let input = new Group(group);
+    let input = new Group({privacy: group.privacy});
 
     async function submit() {
         let data = input;
