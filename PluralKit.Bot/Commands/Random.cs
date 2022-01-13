@@ -55,6 +55,8 @@ public class Random
 
     public async Task GroupMember(Context ctx, PKGroup group)
     {
+        ctx.CheckOwnGroup(group);
+
         var opts = ctx.ParseMemberListOptions(ctx.DirectLookupContextFor(group.System));
         opts.GroupFilter = group.Id;
 
