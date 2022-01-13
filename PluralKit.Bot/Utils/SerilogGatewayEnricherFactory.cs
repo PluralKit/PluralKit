@@ -11,16 +11,21 @@ public class SerilogGatewayEnricherFactory
 {
     private readonly Bot _bot;
     private readonly IDiscordCache _cache;
+    private readonly BotConfig _botConfig;
 
-    public SerilogGatewayEnricherFactory(Bot bot, IDiscordCache cache)
+    public SerilogGatewayEnricherFactory(Bot bot, IDiscordCache cache, BotConfig botConfig)
     {
         _bot = bot;
         _cache = cache;
+        _botConfig = botConfig;
     }
 
     public async Task<ILogEventEnricher> GetEnricher(Shard shard, IGatewayEvent evt)
     {
         var props = new List<LogEventProperty> { new("ShardId", new ScalarValue(shard.ShardId)) };
+
+        if (_botConfig.Cluster != null)
+            props.Add(new LogEventProperty("ClusterId", new ScalarValue(_botConfig.Cluster.NodeName)));
 
         var (guild, channel) = GetGuildChannelId(evt);
         var user = GetUserId(evt);
