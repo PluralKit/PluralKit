@@ -42,6 +42,11 @@ public class Init
                 opts.DisableTaskUnobservedTaskExceptionCapture();
             });
 
+            // initialize Redis
+            var coreConfig = services.Resolve<CoreConfig>();
+            var redis = services.Resolve<RedisService>();
+            await redis.InitAsync(coreConfig);
+
             var config = services.Resolve<BotConfig>();
             if (config.Cluster == null)
             {
@@ -141,6 +146,8 @@ public class Init
     {
         var info = await services.Resolve<DiscordApiClient>().GetGatewayBot();
 
+        var redis = services.Resolve<RedisService>();
+
         var cluster = services.Resolve<Cluster>();
         var config = services.Resolve<BotConfig>();
 
@@ -155,11 +162,11 @@ public class Init
             var shardMin = (int)Math.Round(totalShards * (float)nodeIndex / totalNodes);
             var shardMax = (int)Math.Round(totalShards * (float)(nodeIndex + 1) / totalNodes) - 1;
 
-            await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency);
+            await cluster.Start(info.Url, shardMin, shardMax, totalShards, info.SessionStartLimit.MaxConcurrency, redis.Connection);
         }
         else
         {
-            await cluster.Start(info);
+            await cluster.Start(info, redis.Connection);
         }
     }
 }

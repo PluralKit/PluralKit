@@ -46,6 +46,7 @@
         <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
         <PackageReference Include="SqlKata" Version="2.3.7" />
         <PackageReference Include="SqlKata.Execution" Version="2.3.7" />
+        <PackageReference Include="StackExchange.Redis" Version="2.2.88" />
         <PackageReference Include="System.Interactive.Async" Version="5.0.0" />
     </ItemGroup>
 
@@ -54,7 +55,7 @@
     </ItemGroup>
 
     <Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
-        <Exec Command="git rev-parse HEAD > ../.version" IgnoreExitCode="False">
+        <Exec Command="git rev-parse HEAD &gt; ../.version" IgnoreExitCode="False">
         </Exec>
     </Target>
 

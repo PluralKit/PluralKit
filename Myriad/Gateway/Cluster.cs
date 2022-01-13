@@ -5,6 +5,8 @@ using Myriad.Types;
 
 using Serilog;
 
+using StackExchange.Redis;
+
 namespace Myriad.Gateway;
 
 public class Cluster
@@ -25,14 +27,14 @@ public class Cluster
     public IReadOnlyDictionary<int, Shard> Shards => _shards;
     public event Action<Shard>? ShardCreated;
 
-    public async Task Start(GatewayInfo.Bot info)
+    public async Task Start(GatewayInfo.Bot info, ConnectionMultiplexer? conn = null)
     {
-        await Start(info.Url, 0, info.Shards - 1, info.Shards, info.SessionStartLimit.MaxConcurrency);
+        await Start(info.Url, 0, info.Shards - 1, info.Shards, info.SessionStartLimit.MaxConcurrency, conn);
     }
 
-    public async Task Start(string url, int shardMin, int shardMax, int shardTotal, int recommendedConcurrency)
+    public async Task Start(string url, int shardMin, int shardMax, int shardTotal, int recommendedConcurrency, ConnectionMultiplexer? conn = null)
     {
-        _ratelimiter = GetRateLimiter(recommendedConcurrency);
+        _ratelimiter = GetRateLimiter(recommendedConcurrency, conn);
 
         var shardCount = shardMax - shardMin + 1;
         _logger.Information("Starting {ShardCount} of {ShardTotal} shards (#{ShardMin}-#{ShardMax}) at {Url}",
@@ -73,12 +75,21 @@ public class Cluster
         return Math.Min(_gatewaySettings.MaxShardConcurrency.Value, recommendedConcurrency);
     }
 
-    private IGatewayRatelimiter GetRateLimiter(int recommendedConcurrency)
+    private IGatewayRatelimiter GetRateLimiter(int recommendedConcurrency, ConnectionMultiplexer? conn = null)
     {
+        var concurrency = GetActualShardConcurrency(recommendedConcurrency);
+
+        if (_gatewaySettings.UseRedisRatelimiter)
+        {
+            if (conn != null)
+                return new RedisRatelimiter(_logger, conn, concurrency);
+            else
+                _logger.Warning("Tried to get Redis ratelimiter but connection is null! Continuing with local ratelimiter.");
+        }
+
         if (_gatewaySettings.GatewayQueueUrl != null)
             return new TwilightGatewayRatelimiter(_logger, _gatewaySettings.GatewayQueueUrl);
 
-        var concurrency = GetActualShardConcurrency(recommendedConcurrency);
         return new LocalGatewayRatelimiter(_logger, concurrency);
     }
 }

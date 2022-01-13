@@ -19,6 +19,7 @@ public class BotConfig
     public ClusterSettings? Cluster { get; set; }
 
     public string? GatewayQueueUrl { get; set; }
+    public bool UseRedisRatelimiter { get; set; } = false;
 
     public string? DiscordBaseUrl { get; set; }
 

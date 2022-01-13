@@ -10,6 +10,7 @@ services:
     command: ["bin/PluralKit.Bot.dll"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
+      - "PluralKit:RedisAddr=redis"
       - "PluralKit:InfluxUrl=http://influx:8086"
       - "PluralKit:InfluxDb=pluralkit"
       - "PluralKit:LogDir=/var/log/pluralkit"
@@ -47,6 +48,10 @@ services:
               "-c", "shared_buffers=128MB"]
     environment:
       - "POSTGRES_PASSWORD=postgres"
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
     restart: unless-stopped
 
   influx:

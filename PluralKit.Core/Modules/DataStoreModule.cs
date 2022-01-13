@@ -14,6 +14,8 @@ public class DataStoreModule: Module
         builder.RegisterType<Database>().As<IDatabase>().SingleInstance();
         builder.RegisterType<ModelRepository>().AsSelf().SingleInstance();
 
+        builder.RegisterType<RedisService>().AsSelf().SingleInstance();
+
         builder.RegisterType<DispatchService>().AsSelf().SingleInstance();
 
         builder.Populate(new ServiceCollection().AddMemoryCache());

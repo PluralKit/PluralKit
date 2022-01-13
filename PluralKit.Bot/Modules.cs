@@ -31,6 +31,7 @@ public class BotModule: Module
                 Token = botConfig.Token,
                 MaxShardConcurrency = botConfig.MaxShardConcurrency,
                 GatewayQueueUrl = botConfig.GatewayQueueUrl,
+                UseRedisRatelimiter = botConfig.UseRedisRatelimiter,
                 Intents = GatewayIntent.Guilds |
                           GatewayIntent.DirectMessages |
                           GatewayIntent.DirectMessageReactions |
