@@ -57,6 +57,7 @@ public record Message
     public Reaction[] Reactions { get; init; }
     public bool Pinned { get; init; }
     public ulong? WebhookId { get; init; }
+    public ulong? ApplicationId { get; init; }
     public MessageType Type { get; init; }
     public Reference? MessageReference { get; set; }
     public MessageFlags Flags { get; init; }

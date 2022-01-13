@@ -18,6 +18,9 @@ public record GatewayIdentify
 
     public GatewayIntent Intents { get; init; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GatewayStatusUpdate? Presence { get; init; }
+
     public record ConnectionProperties
     {
         [JsonPropertyName("$os")] public string Os { get; init; }
