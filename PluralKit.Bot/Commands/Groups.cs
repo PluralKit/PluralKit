@@ -484,7 +484,7 @@ public class Groups
                 .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.Visibility.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }

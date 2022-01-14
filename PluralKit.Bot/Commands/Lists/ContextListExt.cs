@@ -132,7 +132,7 @@ public static class ContextListExt
                     }
                     case SortProperty.DisplayName:
                     {
-                        if (m.DisplayName != null)
+                        if (m.NamePrivacy.CanAccess(lookupCtx) && m.DisplayName != null)
                             ret += $"({m.DisplayName})";
                         break;
                     }
@@ -284,13 +284,13 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(g =>
             {
-                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}**";
+                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}** ";
 
                 switch (opts.SortProperty)
                 {
                     case SortProperty.DisplayName:
                     {
-                        if (g.DisplayName != null)
+                        if (g.NamePrivacy.CanAccess(lookupCtx) && g.DisplayName != null)
                             ret += $"({g.DisplayName})";
                         break;
                     }
