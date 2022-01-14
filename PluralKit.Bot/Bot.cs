@@ -220,7 +220,8 @@ public class Bot
                 return;
 
             // Once we've sent it to Sentry, report it to the user (if we have permission to)
-            var reportChannel = handler.ErrorChannelFor(evt);
+            var ourUserId = await _cache.GetOwnUser();
+            var reportChannel = handler.ErrorChannelFor(evt, ourUserId);
             if (reportChannel == null)
                 return;
 

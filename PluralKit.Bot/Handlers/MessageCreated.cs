@@ -51,11 +51,9 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
     }
 
     // for now, only return error messages for explicit commands
-    public ulong? ErrorChannelFor(MessageCreateEvent evt)
+    public ulong? ErrorChannelFor(MessageCreateEvent evt, ulong userId)
     {
-        // todo: fix @mention prefix
-        // it only breaks error reporting so I'm not *too* worried about it, but should be fixed eventually
-        if (!HasCommandPrefix(evt.Content, default, out var cmdStart) || cmdStart == evt.Content.Length)
+        if (!HasCommandPrefix(evt.Content, userId, out var cmdStart) || cmdStart == evt.Content.Length)
             return null;
 
         return evt.ChannelId;
