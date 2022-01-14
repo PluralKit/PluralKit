@@ -49,17 +49,14 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     private async ValueTask TryHandleProxyMessageReactions(MessageReactionAddEvent evt)
     {
-        // Sometimes we get events from users that aren't in the user cache
-        // We just ignore all of those for now, should be quite rare...
-        if (!(await _cache.TryGetUser(evt.UserId) is User user))
-            return;
-
         // ignore any reactions added by *us*
         if (evt.UserId == await _cache.GetOwnUser())
             return;
 
         // Ignore reactions from bots (we can't DM them anyway)
-        if (user.Bot) return;
+        // note: this used to get from cache since this event does not contain Member in DMs
+        // but we aren't able to get DMs from bots anyway, so it's not really needed
+        if (evt.GuildId != null && evt.Member.User.Bot) return;
 
         var channel = await _cache.GetChannel(evt.ChannelId);
 
@@ -146,9 +143,11 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
     {
         // Can only delete your own message
         // (except in DMs, where msg will be null)
-        // todo: don't try to delete the user's messages
         if (msg != null && msg.AuthorId != evt.UserId)
             return;
+
+        // todo: don't try to delete the user's own messages in DMs
+        // this is hard since we don't have the message author object, but it happens infrequently enough to not really care about the 403s, I guess?
 
         try
         {
