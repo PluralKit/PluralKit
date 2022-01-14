@@ -37,8 +37,8 @@ public class LogChannelService
     public async ValueTask LogMessage(MessageContext ctx, PKMessage proxiedMessage, Message trigger,
                                       Message hookMessage, string oldContent = null)
     {
-        var logChannel = await GetAndCheckLogChannel(ctx, trigger, proxiedMessage);
-        if (logChannel == null)
+        var logChannelId = await GetAndCheckLogChannel(ctx, trigger, proxiedMessage);
+        if (logChannelId == null)
             return;
 
         var triggerChannel = await _cache.GetChannel(proxiedMessage.Channel);
@@ -51,10 +51,10 @@ public class LogChannelService
             oldContent);
         var url =
             $"https://discord.com/channels/{proxiedMessage.Guild.Value}/{proxiedMessage.Channel}/{proxiedMessage.Mid}";
-        await _rest.CreateMessage(logChannel.Id, new MessageRequest { Content = url, Embed = embed });
+        await _rest.CreateMessage(logChannelId.Value, new MessageRequest { Content = url, Embed = embed });
     }
 
-    private async Task<Channel?> GetAndCheckLogChannel(MessageContext ctx, Message trigger,
+    private async Task<ulong?> GetAndCheckLogChannel(MessageContext ctx, Message trigger,
                                                        PKMessage proxiedMessage)
     {
         if (proxiedMessage.Guild == null && proxiedMessage.Channel != trigger.ChannelId)
@@ -90,7 +90,7 @@ public class LogChannelService
             return null;
         }
 
-        return logChannel;
+        return logChannel.Id;
     }
 
     private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)
