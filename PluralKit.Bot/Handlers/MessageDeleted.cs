@@ -24,7 +24,7 @@ public class MessageDeleted: IEventHandler<MessageDeleteEvent>, IEventHandler<Me
         _logger = logger.ForContext<MessageDeleted>();
     }
 
-    public Task Handle(Shard shard, MessageDeleteEvent evt)
+    public Task Handle(int shardId, MessageDeleteEvent evt)
     {
         // Delete deleted webhook messages from the data store
         // Most of the data in the given message is wrong/missing, so always delete just to be sure.
@@ -43,7 +43,7 @@ public class MessageDeleted: IEventHandler<MessageDeleteEvent>, IEventHandler<Me
         return Task.CompletedTask;
     }
 
-    public Task Handle(Shard shard, MessageDeleteBulkEvent evt)
+    public Task Handle(int shardId, MessageDeleteBulkEvent evt)
     {
         // Same as above, but bulk
         async Task Inner()

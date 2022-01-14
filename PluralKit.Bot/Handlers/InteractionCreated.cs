@@ -16,7 +16,7 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
         _services = services;
     }
 
-    public async Task Handle(Shard shard, InteractionCreateEvent evt)
+    public async Task Handle(int shardId, InteractionCreateEvent evt)
     {
         if (evt.Type == Interaction.InteractionType.MessageComponent)
         {

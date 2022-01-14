@@ -41,7 +41,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         _logger = logger.ForContext<MessageEdited>();
     }
 
-    public async Task Handle(Shard shard, MessageUpdateEvent evt)
+    public async Task Handle(int shardId, MessageUpdateEvent evt)
     {
         if (evt.Author.Value?.Id == await _cache.GetOwnUser()) return;
 
@@ -69,7 +69,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
 
         try
         {
-            await _proxy.HandleIncomingMessage(shard, equivalentEvt, ctx, allowAutoproxy: false, guild: guild,
+            await _proxy.HandleIncomingMessage(equivalentEvt, ctx, allowAutoproxy: false, guild: guild,
                 channel: channel, botPermissions: botPermissions);
         }
         // Catch any failed proxy checks so they get ignored in the global error handler

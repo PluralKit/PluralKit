@@ -28,11 +28,11 @@ public class Context
 
     private Command? _currentCommand;
 
-    public Context(ILifetimeScope provider, Shard shard, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
+    public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
                     PKSystem senderSystem, SystemConfig config, MessageContext messageContext)
     {
         Message = (Message)message;
-        Shard = shard;
+        ShardId = shardId;
         Guild = guild;
         Channel = channel;
         System = senderSystem;
@@ -58,7 +58,7 @@ public class Context
 
     public readonly Message Message;
     public readonly Guild Guild;
-    public readonly Shard Shard;
+    public readonly int ShardId;
     public readonly Cluster Cluster;
     public readonly MessageContext MessageContext;
 

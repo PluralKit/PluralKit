@@ -6,7 +6,7 @@ namespace PluralKit.Bot;
 
 public interface ISentryEnricher<T> where T : IGatewayEvent
 {
-    void Enrich(Scope scope, Shard shard, T evt);
+    void Enrich(Scope scope, int shardId, T evt);
 }
 
 public class SentryEnricher:
@@ -26,7 +26,7 @@ public class SentryEnricher:
     // TODO: should this class take the Scope by dependency injection instead?
     // Would allow us to create a centralized "chain of handlers" where this class could just be registered as an entry in
 
-    public void Enrich(Scope scope, Shard shard, MessageCreateEvent evt)
+    public void Enrich(Scope scope, int shardId, MessageCreateEvent evt)
     {
         scope.AddBreadcrumb(evt.Content, "event.message",
             data: new Dictionary<string, string>
@@ -36,7 +36,7 @@ public class SentryEnricher:
                 {"guild", evt.GuildId.ToString()},
                 {"message", evt.Id.ToString()}
             });
-        scope.SetTag("shard", shard.ShardId.ToString());
+        scope.SetTag("shard", shardId.ToString());
 
         // Also report information about the bot's permissions in the channel
         // We get a lot of permission errors so this'll be useful for determining problems
@@ -46,7 +46,7 @@ public class SentryEnricher:
         // scope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
     }
 
-    public void Enrich(Scope scope, Shard shard, MessageDeleteBulkEvent evt)
+    public void Enrich(Scope scope, int shardId, MessageDeleteBulkEvent evt)
     {
         scope.AddBreadcrumb("", "event.messageDelete",
             data: new Dictionary<string, string>
@@ -55,10 +55,10 @@ public class SentryEnricher:
                 {"guild", evt.GuildId.ToString()},
                 {"messages", string.Join(",", evt.Ids)}
             });
-        scope.SetTag("shard", shard.ShardId.ToString());
+        scope.SetTag("shard", shardId.ToString());
     }
 
-    public void Enrich(Scope scope, Shard shard, MessageUpdateEvent evt)
+    public void Enrich(Scope scope, int shardId, MessageUpdateEvent evt)
     {
         scope.AddBreadcrumb(evt.Content.Value ?? "<unknown>", "event.messageEdit",
             data: new Dictionary<string, string>
@@ -67,10 +67,10 @@ public class SentryEnricher:
                 {"guild", evt.GuildId.Value.ToString()},
                 {"message", evt.Id.ToString()}
             });
-        scope.SetTag("shard", shard.ShardId.ToString());
+        scope.SetTag("shard", shardId.ToString());
     }
 
-    public void Enrich(Scope scope, Shard shard, MessageDeleteEvent evt)
+    public void Enrich(Scope scope, int shardId, MessageDeleteEvent evt)
     {
         scope.AddBreadcrumb("", "event.messageDelete",
             data: new Dictionary<string, string>
@@ -79,10 +79,10 @@ public class SentryEnricher:
                 {"guild", evt.GuildId.ToString()},
                 {"message", evt.Id.ToString()}
             });
-        scope.SetTag("shard", shard.ShardId.ToString());
+        scope.SetTag("shard", shardId.ToString());
     }
 
-    public void Enrich(Scope scope, Shard shard, MessageReactionAddEvent evt)
+    public void Enrich(Scope scope, int shardId, MessageReactionAddEvent evt)
     {
         scope.AddBreadcrumb("", "event.reaction",
             data: new Dictionary<string, string>
@@ -93,6 +93,6 @@ public class SentryEnricher:
                 {"message", evt.MessageId.ToString()},
                 {"reaction", evt.Emoji.Name}
             });
-        scope.SetTag("shard", shard.ShardId.ToString());
+        scope.SetTag("shard", shardId.ToString());
     }
 }

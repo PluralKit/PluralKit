@@ -42,7 +42,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         _logger = logger.ForContext<ReactionAdded>();
     }
 
-    public async Task Handle(Shard shard, MessageReactionAddEvent evt)
+    public async Task Handle(int shardId, MessageReactionAddEvent evt)
     {
         await TryHandleProxyMessageReactions(evt);
     }

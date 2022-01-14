@@ -56,7 +56,7 @@ public class Bot
 
     public void Init()
     {
-        _cluster.EventReceived += OnEventReceived;
+        _cluster.EventReceived += (shard, evt) => OnEventReceived(shard.ShardId, evt);
 
         // Init the shard stuff
         _services.Resolve<ShardInfoService>().Init();
@@ -72,40 +72,43 @@ public class Bot
         }, null, timeTillNextWholeMinute, TimeSpan.FromMinutes(1));
     }
 
-    private async Task OnEventReceived(Shard shard, IGatewayEvent evt)
+    private async Task OnEventReceived(int shardId, IGatewayEvent evt)
     {
-        await _cache.TryUpdateSelfMember(shard, evt);
+        // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
         await _cache.HandleGatewayEvent(evt);
+
+        var userId = await _cache.GetOwnUser();
+        await _cache.TryUpdateSelfMember(userId, evt);
 
         // HandleEvent takes a type parameter, automatically inferred by the event type
         // It will then look up an IEventHandler<TypeOfEvent> in the DI container and call that object's handler method
         // For registering new ones, see Modules.cs
         if (evt is MessageCreateEvent mc)
-            await HandleEvent(shard, mc);
+            await HandleEvent(shardId, mc);
         if (evt is MessageUpdateEvent mu)
-            await HandleEvent(shard, mu);
+            await HandleEvent(shardId, mu);
         if (evt is MessageDeleteEvent md)
-            await HandleEvent(shard, md);
+            await HandleEvent(shardId, md);
         if (evt is MessageDeleteBulkEvent mdb)
-            await HandleEvent(shard, mdb);
+            await HandleEvent(shardId, mdb);
         if (evt is MessageReactionAddEvent mra)
-            await HandleEvent(shard, mra);
+            await HandleEvent(shardId, mra);
         if (evt is InteractionCreateEvent ic)
-            await HandleEvent(shard, ic);
+            await HandleEvent(shardId, ic);
 
         // Update shard status for shards immediately on connect
         if (evt is ReadyEvent re)
-            await HandleReady(shard, re);
+            await HandleReady(shardId, re);
         if (evt is ResumedEvent)
-            await HandleResumed(shard);
+            await HandleResumed(shardId);
     }
 
-    private Task HandleResumed(Shard shard) => UpdateBotStatus(shard);
+    private Task HandleResumed(int shardId) => UpdateBotStatus(shardId);
 
-    private Task HandleReady(Shard shard, ReadyEvent _)
+    private Task HandleReady(int shardId, ReadyEvent _)
     {
         _hasReceivedReady = true;
-        return UpdateBotStatus(shard);
+        return UpdateBotStatus(shardId);
     }
 
     public async Task Shutdown()
@@ -128,7 +131,7 @@ public class Bot
                 })));
     }
 
-    private Task HandleEvent<T>(Shard shard, T evt) where T : IGatewayEvent
+    private Task HandleEvent<T>(int shardId, T evt) where T : IGatewayEvent
     {
         // We don't want to stall the event pipeline, so we'll "fork" inside here
         var _ = HandleEventInner();
@@ -157,13 +160,12 @@ public class Bot
                 var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
 
                 using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
-                using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>()
-                    .GetEnricher(shard, evt));
+                using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shardId, evt));
                 _logger.Verbose("Received gateway event: {@Event}", evt);
 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
                 var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
-                sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), shard, evt);
+                sentryEnricher?.Enrich(serviceScope.Resolve<Scope>(), shardId, evt);
 
                 using var timer = _metrics.Measure.Timer.Time(BotMetrics.EventsHandled,
                     new MetricTags("event", typeof(T).Name.Replace("Event", "")));
@@ -172,26 +174,28 @@ public class Bot
                 // the TryHandle call returns true if it's handled the event
                 // Usually it won't, so just pass it on to the main handler
                 if (queue == null || !await queue.TryHandle(evt))
-                    await handler.Handle(shard, evt);
+                    await handler.Handle(shardId, evt);
             }
             catch (Exception exc)
             {
-                await HandleError(shard, handler, evt, serviceScope, exc);
+                await HandleError(handler, evt, serviceScope, exc);
             }
         }
     }
 
-    private async Task HandleError<T>(Shard shard, IEventHandler<T> handler, T evt, ILifetimeScope serviceScope,
+    private async Task HandleError<T>(IEventHandler<T> handler, T evt, ILifetimeScope serviceScope,
                                       Exception exc)
         where T : IGatewayEvent
     {
         _metrics.Measure.Meter.Mark(BotMetrics.BotErrors, exc.GetType().FullName);
 
+        var ourUserId = await _cache.GetOwnUser();
+
         // Make this beforehand so we can access the event ID for logging
         var sentryEvent = new SentryEvent(exc);
 
         // If the event is us responding to our own error messages, don't bother logging
-        if (evt is MessageCreateEvent mc && mc.Author.Id == shard.User?.Id)
+        if (evt is MessageCreateEvent mc && mc.Author.Id == ourUserId)
             return;
 
         var shouldReport = exc.IsOurProblem();
@@ -220,7 +224,6 @@ public class Bot
                 return;
 
             // Once we've sent it to Sentry, report it to the user (if we have permission to)
-            var ourUserId = await _cache.GetOwnUser();
             var reportChannel = handler.ErrorChannelFor(evt, ourUserId);
             if (reportChannel == null)
                 return;
@@ -243,7 +246,7 @@ public class Bot
         _logger.Debug("Submitted metrics to backend");
     }
 
-    private async Task UpdateBotStatus(Shard specificShard = null)
+    private async Task UpdateBotStatus(int? specificShardId = null)
     {
         // If we're not on any shards, don't bother (this happens if the periodic timer fires before the first Ready)
         if (!_hasReceivedReady) return;
@@ -266,8 +269,8 @@ public class Bot
                     }
                 });
 
-            if (specificShard != null)
-                await UpdateStatus(specificShard);
+            if (specificShardId != null)
+                await UpdateStatus(_cluster.Shards[specificShardId.Value]);
             else // Run shard updates concurrently
                 await Task.WhenAll(_cluster.Shards.Values.Select(UpdateStatus));
         }

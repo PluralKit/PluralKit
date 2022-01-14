@@ -138,7 +138,7 @@ public class ShardInfoService
         }
     }
 
-    public ShardInfo GetShardInfo(Shard shard) => _shardInfo[shard.ShardId];
+    public ShardInfo GetShardInfo(int shardId) => _shardInfo[shardId];
 
     public class ShardInfo
     {

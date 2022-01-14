@@ -20,9 +20,9 @@ public class SerilogGatewayEnricherFactory
         _botConfig = botConfig;
     }
 
-    public async Task<ILogEventEnricher> GetEnricher(Shard shard, IGatewayEvent evt)
+    public async Task<ILogEventEnricher> GetEnricher(int shardId, IGatewayEvent evt)
     {
-        var props = new List<LogEventProperty> { new("ShardId", new ScalarValue(shard.ShardId)) };
+        var props = new List<LogEventProperty> { new("ShardId", new ScalarValue(shardId)) };
 
         if (_botConfig.Cluster != null)
             props.Add(new LogEventProperty("ClusterId", new ScalarValue(_botConfig.Cluster.NodeName)));

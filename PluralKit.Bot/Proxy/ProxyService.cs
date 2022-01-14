@@ -50,7 +50,7 @@ public class ProxyService
         _logger = logger.ForContext<ProxyService>();
     }
 
-    public async Task<bool> HandleIncomingMessage(Shard shard, MessageCreateEvent message, MessageContext ctx,
+    public async Task<bool> HandleIncomingMessage(MessageCreateEvent message, MessageContext ctx,
                                 Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions)
     {
         if (!ShouldProxy(channel, message, ctx))
@@ -80,7 +80,7 @@ public class ProxyService
         var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
 
         // Everything's in order, we can execute the proxy!
-        await ExecuteProxy(shard, message, ctx, match, allowEveryone, allowEmbeds);
+        await ExecuteProxy(message, ctx, match, allowEveryone, allowEmbeds);
         return true;
     }
 
@@ -119,7 +119,7 @@ public class ProxyService
         return true;
     }
 
-    private async Task ExecuteProxy(Shard shard, Message trigger, MessageContext ctx,
+    private async Task ExecuteProxy(Message trigger, MessageContext ctx,
                                     ProxyMatch match, bool allowEveryone, bool allowEmbeds)
     {
         // Create reply embed
@@ -160,7 +160,7 @@ public class ProxyService
             Embeds = embeds.ToArray(),
             AllowEveryone = allowEveryone
         });
-        await HandleProxyExecutedActions(shard, ctx, trigger, proxyMessage, match);
+        await HandleProxyExecutedActions(ctx, trigger, proxyMessage, match);
     }
 
     private async Task<(string?, string?)> FetchReferencedMessageAuthorInfo(Message trigger, Message referenced)
@@ -279,8 +279,7 @@ public class ProxyService
     private string FixSameNameInner(string name)
         => $"{name}\u17b5";
 
-    private async Task HandleProxyExecutedActions(Shard shard, MessageContext ctx,
-                        Message triggerMessage, Message proxyMessage, ProxyMatch match)
+    private async Task HandleProxyExecutedActions(MessageContext ctx, Message triggerMessage, Message proxyMessage, ProxyMatch match)
     {
         var sentMessage = new PKMessage
         {

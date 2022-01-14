@@ -53,15 +53,15 @@ public static class DiscordCacheExtensions
         return default;
     }
 
-    public static ValueTask TryUpdateSelfMember(this IDiscordCache cache, Shard shard, IGatewayEvent evt)
+    public static ValueTask TryUpdateSelfMember(this IDiscordCache cache, ulong userId, IGatewayEvent evt)
     {
         if (evt is GuildCreateEvent gc)
-            return cache.SaveSelfMember(gc.Id, gc.Members.FirstOrDefault(m => m.User.Id == shard.User?.Id)!);
-        if (evt is MessageCreateEvent mc && mc.Member != null && mc.Author.Id == shard.User?.Id)
+            return cache.SaveSelfMember(gc.Id, gc.Members.FirstOrDefault(m => m.User.Id == userId)!);
+        if (evt is MessageCreateEvent mc && mc.Member != null && mc.Author.Id == userId)
             return cache.SaveSelfMember(mc.GuildId!.Value, mc.Member);
-        if (evt is GuildMemberAddEvent gma && gma.User.Id == shard.User?.Id)
+        if (evt is GuildMemberAddEvent gma && gma.User.Id == userId)
             return cache.SaveSelfMember(gma.GuildId, gma);
-        if (evt is GuildMemberUpdateEvent gmu && gmu.User.Id == shard.User?.Id)
+        if (evt is GuildMemberUpdateEvent gmu && gmu.User.Id == userId)
             return cache.SaveSelfMember(gmu.GuildId, gmu);
 
         return default;
