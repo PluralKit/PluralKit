@@ -71,7 +71,7 @@ public class LogChannelService
             // we're editing a message from a different server, get log channel info from the database
             var guild = await _repo.GetGuild(proxiedMessage.Guild.Value);
             logChannelId = guild.LogChannel;
-            isBlacklisted = guild.Blacklist.Any(x => x == logChannelId);
+            isBlacklisted = guild.LogBlacklist.Any(x => x == trigger.ChannelId);
         }
 
         if (ctx.SystemId == null || logChannelId == null || isBlacklisted) return null;
