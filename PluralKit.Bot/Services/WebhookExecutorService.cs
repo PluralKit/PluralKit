@@ -99,7 +99,7 @@ public class WebhookExecutorService
     private async Task<Message> ExecuteWebhookInner(Webhook webhook, ProxyRequest req, bool hasRetried = false)
     {
         var guild = await _cache.GetGuild(req.GuildId);
-        var content = req.Content.Truncate(2000);
+        var content = req.Content.Truncate(4000);
 
         var allowedMentions = content.ParseMentions();
         if (!req.AllowEveryone)
