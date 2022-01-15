@@ -71,10 +71,10 @@ public class Misc
 
         var counts = await _repo.GetStats();
 
-        var shardId = ctx.Shard.ShardId;
+        var shardId = ctx.ShardId;
         var shardTotal = ctx.Cluster.Shards.Count;
         var shardUpTotal = _shards.Shards.Where(x => x.Connected).Count();
-        var shardInfo = _shards.GetShardInfo(ctx.Shard);
+        var shardInfo = _shards.GetShardInfo(ctx.ShardId);
 
         var process = Process.GetCurrentProcess();
         var memoryUsage = process.WorkingSet64;
