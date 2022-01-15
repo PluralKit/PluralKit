@@ -15,9 +15,11 @@ public class GroupPatch: PatchObject
     public Partial<string?> BannerImage { get; set; }
     public Partial<string?> Color { get; set; }
 
+    public Partial<PrivacyLevel> NamePrivacy { get; set; }
     public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
     public Partial<PrivacyLevel> IconPrivacy { get; set; }
     public Partial<PrivacyLevel> ListPrivacy { get; set; }
+    public Partial<PrivacyLevel> MetadataPrivacy { get; set; }
     public Partial<PrivacyLevel> Visibility { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
@@ -28,9 +30,11 @@ public class GroupPatch: PatchObject
         .With("icon", Icon)
         .With("banner_image", BannerImage)
         .With("color", Color)
+        .With("name_privacy", NamePrivacy)
         .With("description_privacy", DescriptionPrivacy)
         .With("icon_privacy", IconPrivacy)
         .With("list_privacy", ListPrivacy)
+        .With("metadata_privacy", MetadataPrivacy)
         .With("visibility", Visibility)
     );
 
@@ -74,6 +78,9 @@ public class GroupPatch: PatchObject
         {
             var privacy = o.Value<JObject>("privacy");
 
+            if (privacy.ContainsKey("name_privacy"))
+                patch.NamePrivacy = patch.ParsePrivacy(privacy, "name_privacy");
+
             if (privacy.ContainsKey("description_privacy"))
                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
 
@@ -82,6 +89,9 @@ public class GroupPatch: PatchObject
 
             if (privacy.ContainsKey("list_privacy"))
                 patch.ListPrivacy = patch.ParsePrivacy(privacy, "list_privacy");
+
+            if (privacy.ContainsKey("metadata_privacy"))
+                patch.MetadataPrivacy = patch.ParsePrivacy(privacy, "metadata_privacy");
 
             if (privacy.ContainsKey("visibility"))
                 patch.Visibility = patch.ParsePrivacy(privacy, "visibility");
@@ -110,13 +120,18 @@ public class GroupPatch: PatchObject
             o.Add("color", Color.Value);
 
         if (
-            DescriptionPrivacy.IsPresent
+            NamePrivacy.IsPresent
+            || DescriptionPrivacy.IsPresent
             || IconPrivacy.IsPresent
             || ListPrivacy.IsPresent
+            || MetadataPrivacy.IsPresent
             || Visibility.IsPresent
         )
         {
             var p = new JObject();
+
+            if (NamePrivacy.IsPresent)
+                p.Add("name_privacy", NamePrivacy.Value.ToJsonString());
 
             if (DescriptionPrivacy.IsPresent)
                 p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());
@@ -126,6 +141,9 @@ public class GroupPatch: PatchObject
 
             if (ListPrivacy.IsPresent)
                 p.Add("list_privacy", ListPrivacy.Value.ToJsonString());
+
+            if (MetadataPrivacy.IsPresent)
+                p.Add("metadata_privacy", MetadataPrivacy.Value.ToJsonString());
 
             if (Visibility.IsPresent)
                 p.Add("visibility", Visibility.Value.ToJsonString());

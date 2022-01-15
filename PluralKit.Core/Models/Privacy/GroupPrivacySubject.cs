@@ -2,9 +2,11 @@ namespace PluralKit.Core;
 
 public enum GroupPrivacySubject
 {
+    Name,
     Description,
     Icon,
     List,
+    Metadata,
     Visibility
 }
 
@@ -15,9 +17,11 @@ public static class GroupPrivacyUtils
         // what do you mean switch expressions can't be statements >.>
         _ = subject switch
         {
+            GroupPrivacySubject.Name => group.NamePrivacy = level,
             GroupPrivacySubject.Description => group.DescriptionPrivacy = level,
             GroupPrivacySubject.Icon => group.IconPrivacy = level,
             GroupPrivacySubject.List => group.ListPrivacy = level,
+            GroupPrivacySubject.Metadata => group.MetadataPrivacy = level,
             GroupPrivacySubject.Visibility => group.Visibility = level,
             _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
         };
@@ -36,6 +40,9 @@ public static class GroupPrivacyUtils
     {
         switch (input.ToLowerInvariant())
         {
+            case "name":
+                subject = GroupPrivacySubject.Name;
+                break;
             case "description":
             case "desc":
             case "text":
@@ -53,6 +60,11 @@ public static class GroupPrivacyUtils
             case "shown":
             case "visible":
                 subject = GroupPrivacySubject.Visibility;
+                break;
+            case "meta":
+            case "metadata":
+            case "created":
+                subject = GroupPrivacySubject.Metadata;
                 break;
             case "list":
             case "listing":

@@ -41,9 +41,9 @@ public class Random
     {
         ctx.CheckSystem();
 
-        var groups = await _db.Execute(c => c.QueryGroupList(ctx.System.Id));
+        var groups = await _repo.GetSystemGroups(ctx.System.Id).ToListAsync();
         if (!ctx.MatchFlag("all", "a"))
-            groups = groups.Where(g => g.Visibility == PrivacyLevel.Public);
+            groups = groups.Where(g => g.Visibility == PrivacyLevel.Public).ToList();
 
         if (groups == null || !groups.Any())
             throw new PKError(
@@ -57,7 +57,7 @@ public class Random
     {
         ctx.CheckOwnGroup(group);
 
-        var opts = ctx.ParseMemberListOptions(ctx.DirectLookupContextFor(group.System));
+        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(group.System));
         opts.GroupFilter = group.Id;
 
         await using var conn = await _db.Obtain();

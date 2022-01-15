@@ -76,7 +76,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |color|string|6-character hex code, no `#` at the beginning|
 |privacy|?group privacy object||
 
-* Group privacy keys: `description_privacy`, `icon_privacy`, `list_privacy`, `visibility`
+* Group privacy keys: `name_privacy`, `description_privacy`, `icon_privacy`, `list_privacy`, `metadata_privacy`, `visibility`
 
 ### Switch model
 

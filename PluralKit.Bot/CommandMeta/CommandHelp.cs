@@ -57,7 +57,7 @@ public partial class CommandTree
     public static Command GroupColor = new Command("group color", "group <group> color [color]", "Changes a group's color");
     public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
     public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
-    public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <description|icon|visibility|all> <public|private>", "Changes a group's privacy settings");
+    public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <name|description|icon|metadata|visibility|all> <public|private>", "Changes a group's privacy settings");
     public static Command GroupBannerImage = new Command("group banner", "group <group> banner [url]", "Set the group's banner image");
     public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");
     public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");

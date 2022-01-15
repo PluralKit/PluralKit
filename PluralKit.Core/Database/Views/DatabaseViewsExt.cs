@@ -10,11 +10,39 @@ public static class DatabaseViewsExt
     public static Task<IEnumerable<SystemFronter>> QueryCurrentFronters(this IPKConnection conn, SystemId system) =>
         conn.QueryAsync<SystemFronter>("select * from system_fronters where system = @system", new { system });
 
-    public static Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system) =>
-        conn.QueryAsync<ListedGroup>("select * from group_list where system = @System", new { System = system });
+    public static Task<IEnumerable<ListedGroup>> QueryGroupList(this IPKConnection conn, SystemId system,
+                                                                  ListQueryOptions opts)
+    {
+        StringBuilder query = new StringBuilder("select * from group_list where system = @system");
 
+        if (opts.PrivacyFilter != null)
+            query.Append($" and visibility = {(int)opts.PrivacyFilter}");
+
+        if (opts.Search != null)
+        {
+            static string Filter(string column) =>
+                $"(position(lower(@filter) in lower(coalesce({column}, ''))) > 0)";
+
+            query.Append($" and ({Filter("name")} or {Filter("display_name")}");
+            if (opts.SearchDescription)
+            {
+                // We need to account for the possibility of description privacy when searching
+                // If we're looking up from the outside, only search "public_description" (defined in the view; null if desc is private)
+                // If we're the owner, just search the full description
+                var descriptionColumn =
+                    opts.Context == LookupContext.ByOwner ? "description" : "public_description";
+                query.Append($"or {Filter(descriptionColumn)}");
+            }
+
+            query.Append(")");
+        }
+
+        return conn.QueryAsync<ListedGroup>(
+            query.ToString(),
+            new { system, filter = opts.Search });
+    }
     public static Task<IEnumerable<ListedMember>> QueryMemberList(this IPKConnection conn, SystemId system,
-                                                                  MemberListQueryOptions opts)
+                                                                  ListQueryOptions opts)
     {
         StringBuilder query;
         if (opts.GroupFilter == null)
@@ -49,7 +77,7 @@ public static class DatabaseViewsExt
             new { system, filter = opts.Search, groupFilter = opts.GroupFilter });
     }
 
-    public struct MemberListQueryOptions
+    public struct ListQueryOptions
     {
         public PrivacyLevel? PrivacyFilter;
         public string? Search;

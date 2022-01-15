@@ -245,7 +245,7 @@ public class EmbedService
 
         var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
-        var nameField = target.Name;
+        var nameField = target.NamePrivacy.Get(pctx, target.Name, target.DisplayName ?? target.Name);
         if (system.Name != null)
             nameField = $"{nameField} ({system.Name})";
 
@@ -262,14 +262,14 @@ public class EmbedService
 
         var eb = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx)))
-            .Color(color)
-            .Footer(new Embed.EmbedFooter(
-                $"System ID: {system.Hid} | Group ID: {target.Hid} | Created on {target.Created.FormatZoned(ctx.Zone)}"));
+            .Color(color);
 
-        if (target.DescriptionPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
+        eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));
+
+        if (target.DescriptionPrivacy.CanAccess(pctx))
             eb.Image(new Embed.EmbedImage(target.BannerImage));
 
-        if (target.DisplayName != null)
+        if (target.NamePrivacy.CanAccess(pctx) && target.DisplayName != null)
             eb.Field(new Embed.Field("Display Name", target.DisplayName, true));
 
         if (!target.Color.EmptyOrNull()) eb.Field(new Embed.Field("Color", $"#{target.Color}", true));
@@ -281,8 +281,12 @@ public class EmbedService
                 eb.Field(new Embed.Field("Members (0)",
                     $"Add one with `pk;group {target.Reference()} add <member>`!"));
             else
-                eb.Field(new Embed.Field($"Members ({memberCount})",
-                    $"(see `pk;group {target.Reference()} list`)"));
+            {
+                var name = pctx == LookupContext.ByOwner
+                    ? target.Reference()
+                    : target.Hid;
+                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
+            }
         }
 
         if (target.DescriptionFor(pctx) is { } desc)

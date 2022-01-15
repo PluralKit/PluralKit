@@ -43,7 +43,7 @@ public static class ContextPrivacyExt
     {
         if (!GroupPrivacyUtils.TryParseGroupPrivacy(ctx.PeekArgument(), out var subject))
             throw new PKSyntaxError(
-                $"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `description`, `icon`, `visibility`, or `all`).");
+                $"Invalid privacy subject {ctx.PopArgument().AsCode()} (must be `name`, `description`, `icon`, `metadata`, `visibility`, or `all`).");
 
         ctx.PopArgument();
         return subject;

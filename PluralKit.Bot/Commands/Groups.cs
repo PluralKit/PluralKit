@@ -175,6 +175,8 @@ public class Groups
             await _repo.UpdateGroup(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Group display name cleared.");
+            if (target.NamePrivacy == PrivacyLevel.Private)
+                await ctx.Reply($"{Emojis.Warn} Since this group no longer has a display name set, their name privacy **can no longer take effect**.");
         }
         else
         {
@@ -431,49 +433,33 @@ public class Groups
 
         ctx.CheckSystemPrivacy(system.Id, system.GroupListPrivacy);
 
-        // TODO: integrate with the normal "search" system
+        // explanation of privacy lookup here:
+        // - ParseListOptions checks list access privacy and sets the privacy filter (which members show up in list)
+        // - RenderGroupList checks the indivual privacy for each member (NameFor, etc)
+        // the own system is always allowed to look up their list
+        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(system.Id));
+        await ctx.RenderGroupList(
+            ctx.LookupContextFor(system.Id),
+            system.Id,
+            GetEmbedTitle(system, opts),
+            system.Color,
+            opts
+        );
+    }
 
-        // TODO: integrate with privacy config settings
+    private string GetEmbedTitle(PKSystem target, ListOptions opts)
+    {
+        var title = new StringBuilder("Groups of ");
 
-        var pctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
-        {
-            if (system.Id == ctx.System.Id)
-                pctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
+        if (target.Name != null)
+            title.Append($"{target.Name} (`{target.Hid}`)");
+        else
+            title.Append($"`{target.Hid}`");
 
-        var groups = (await _db.Execute(conn => conn.QueryGroupList(system.Id)))
-            .Where(g => g.Visibility.CanAccess(pctx))
-            .OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase)
-            .ToList();
+        if (opts.Search != null)
+            title.Append($" matching **{opts.Search}**");
 
-        if (groups.Count == 0)
-        {
-            if (system.Id == ctx.System?.Id)
-                await ctx.Reply("This system has no groups. To create one, use the command `pk;group new <name>`.");
-            else
-                await ctx.Reply("This system has no groups.");
-
-            return;
-        }
-
-        var title = system.Name != null ? $"Groups of {system.Name} (`{system.Hid}`)" : $"Groups of `{system.Hid}`";
-        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, 25, title, system.Color, Renderer);
-
-        Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
-        {
-            eb.WithSimpleLineContent(page.Select(g =>
-            {
-                if (g.DisplayName != null)
-                    return
-                        $"[`{g.Hid}`] **{g.Name.EscapeMarkdown()}** ({g.DisplayName.EscapeMarkdown()}) ({"member".ToQuantity(g.MemberCount)})";
-                return $"[`{g.Hid}`] **{g.Name.EscapeMarkdown()}** ({"member".ToQuantity(g.MemberCount)})";
-            }));
-            eb.Footer(new Embed.EmbedFooter($"{groups.Count} total."));
-            return Task.CompletedTask;
-        }
+        return title.ToString();
     }
 
     public async Task ShowGroupCard(Context ctx, PKGroup target)
@@ -490,12 +476,14 @@ public class Groups
         {
             await ctx.Reply(embed: new EmbedBuilder()
                 .Title($"Current privacy settings for {target.Name}")
+                .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
                 .Field(new Embed.Field("Icon", target.IconPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.ListPrivacy.Explanation()))
+                .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.Visibility.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `description`, `icon`, `members`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference()}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -518,30 +506,40 @@ public class Groups
 
             var subjectName = subject switch
             {
+                GroupPrivacySubject.Name => "name privacy",
                 GroupPrivacySubject.Description => "description privacy",
                 GroupPrivacySubject.Icon => "icon privacy",
                 GroupPrivacySubject.List => "member list",
+                GroupPrivacySubject.Metadata => "metadata",
                 GroupPrivacySubject.Visibility => "visibility",
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
             };
 
             var explanation = (subject, level) switch
             {
+                (GroupPrivacySubject.Name, PrivacyLevel.Private) =>
+                    "This group's name is now hidden from other systems, and will be replaced by the group's display name.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Private) =>
                     "This group's description is now hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Private) =>
                     "This group's icon is now hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Private) =>
                     "This group is now hidden from group lists and member cards.",
+                (GroupPrivacySubject.Metadata, PrivacyLevel.Private) =>
+                    "This group's metadata (eg. creation date) is now hidden from other systems.",
                 (GroupPrivacySubject.List, PrivacyLevel.Private) =>
                     "This group's member list is now hidden from other systems.",
 
+                (GroupPrivacySubject.Name, PrivacyLevel.Public) =>
+                    "This group's name is no longer hidden from other systems.",
                 (GroupPrivacySubject.Description, PrivacyLevel.Public) =>
                     "This group's description is no longer hidden from other systems.",
                 (GroupPrivacySubject.Icon, PrivacyLevel.Public) =>
                     "This group's icon is no longer hidden from other systems.",
                 (GroupPrivacySubject.Visibility, PrivacyLevel.Public) =>
                     "This group is no longer hidden from group lists and member cards.",
+                (GroupPrivacySubject.Metadata, PrivacyLevel.Public) =>
+                    "This group's metadata (eg. creation date) is no longer hidden from other systems.",
                 (GroupPrivacySubject.List, PrivacyLevel.Public) =>
                     "This group's member list is no longer hidden from other systems.",
 
@@ -550,6 +548,10 @@ public class Groups
 
             await ctx.Reply(
                 $"{Emojis.Success} {target.Name}'s **{subjectName}** has been set to **{level.LevelName()}**. {explanation}");
+
+            if (subject == GroupPrivacySubject.Name && level == PrivacyLevel.Private && target.DisplayName == null)
+                await ctx.Reply(
+                    $"{Emojis.Warn} This group does not have a display name set, and name privacy **will not take effect**.");
         }
 
         if (ctx.Match("all") || newValueFromCommand != null)

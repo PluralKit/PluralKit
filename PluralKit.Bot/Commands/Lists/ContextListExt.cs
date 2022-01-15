@@ -13,9 +13,9 @@ namespace PluralKit.Bot;
 
 public static class ContextListExt
 {
-    public static MemberListOptions ParseMemberListOptions(this Context ctx, LookupContext lookupCtx)
+    public static ListOptions ParseListOptions(this Context ctx, LookupContext lookupCtx)
     {
-        var p = new MemberListOptions();
+        var p = new ListOptions();
 
         // Short or long list? (parse this first, as it can potentially take a positional argument)
         var isFull = ctx.Match("f", "full", "big", "details", "long") || ctx.MatchFlag("f", "full");
@@ -71,7 +71,7 @@ public static class ContextListExt
             p.IncludeMessageCount = true;
         if (ctx.MatchFlag("with-created", "wc"))
             p.IncludeCreated = true;
-        if (ctx.MatchFlag("with-avatar", "with-image", "wa", "wi", "ia", "ii", "img"))
+        if (ctx.MatchFlag("with-avatar", "with-image", "with-icon", "wa", "wi", "ia", "ii", "img"))
             p.IncludeAvatar = true;
         if (ctx.MatchFlag("with-pronouns", "wp"))
             p.IncludePronouns = true;
@@ -87,7 +87,7 @@ public static class ContextListExt
     }
 
     public static async Task RenderMemberList(this Context ctx, LookupContext lookupCtx,
-                                SystemId system, string embedTitle, string color, MemberListOptions opts)
+                                SystemId system, string embedTitle, string color, ListOptions opts)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
         // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
@@ -245,6 +245,136 @@ public static class ContextListExt
                     profile.Append("\n*(this member is hidden)*");
 
                 eb.Field(new Embed.Field(m.NameFor(ctx), profile.ToString().Truncate(1024)));
+            }
+        }
+    }
+
+    public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
+                                SystemId system, string embedTitle, string color, ListOptions opts)
+    {
+        // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
+        // We wanna release it as soon as the member list is actually *fetched*, instead of potentially minutes later (paginate timeout)
+        var groups = (await ctx.Database.Execute(conn => conn.QueryGroupList(system, opts.ToQueryOptions())))
+            .SortByGroupListOptions(opts, lookupCtx)
+            .ToList();
+
+        var itemsPerPage = opts.Type == ListType.Short ? 25 : 5;
+        await ctx.Paginate(groups.ToAsyncEnumerable(), groups.Count, itemsPerPage, embedTitle, color, Renderer);
+
+        // Base renderer, dispatches based on type
+        Task Renderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
+        {
+            // Add a global footer with the filter/sort string + result count
+            eb.Footer(new Embed.EmbedFooter($"{opts.CreateFilterString()}. {"result".ToQuantity(groups.Count)}."));
+
+            // Then call the specific renderers
+            if (opts.Type == ListType.Short)
+                ShortRenderer(eb, page);
+            else
+                LongRenderer(eb, page);
+
+            return Task.CompletedTask;
+        }
+
+        void ShortRenderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
+        {
+            // We may end up over the description character limit
+            // so run it through a helper that "makes it work" :)
+            eb.WithSimpleLineContent(page.Select(g =>
+            {
+                var ret = $"[`{g.Hid}`] **{g.NameFor(ctx)}** ";
+
+                switch (opts.SortProperty)
+                {
+                    case SortProperty.DisplayName:
+                        {
+                            if (g.NamePrivacy.CanAccess(lookupCtx) && g.DisplayName != null)
+                                ret += $"({g.DisplayName})";
+                            break;
+                        }
+                    case SortProperty.CreationDate:
+                        {
+                            if (g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                            break;
+                        }
+                    default:
+                        {
+                            if (opts.IncludeCreated &&
+                                     g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                            {
+                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                            }
+                            else if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatarUrl)
+                            {
+                                ret += $"([avatar URL]({avatarUrl}))";
+                            }
+                            else
+                            {
+                                // -priv/-pub and listprivacy affects whether count is shown
+                                // -all and visibility affects what the count is
+                                if (ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                                {
+                                    if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
+                                    {
+                                        if (ctx.MatchFlag("all", "a"))
+                                        {
+                                            ret += $"({"member".ToQuantity(g.TotalMemberCount)})";
+                                        }
+                                        else
+                                        {
+                                            ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (g.ListPrivacy == PrivacyLevel.Public)
+                                    {
+                                        ret += $"({"member".ToQuantity(g.PublicMemberCount)})";
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
+                }
+
+                return ret;
+            }));
+        }
+
+        void LongRenderer(EmbedBuilder eb, IEnumerable<ListedGroup> page)
+        {
+            foreach (var g in page)
+            {
+                var profile = new StringBuilder($"**ID**: {g.Hid}");
+
+                if (g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                    profile.Append($"\n**Display name**: {g.DisplayName}");
+
+                if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
+                {
+                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                        profile.Append($"\n**Member Count:** {g.TotalMemberCount}");
+                    else
+                        profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
+                }
+
+                if ((opts.IncludeCreated || opts.SortProperty == SortProperty.CreationDate) &&
+                    g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
+                    profile.Append($"\n**Created on:** {created.FormatZoned(ctx.Zone)}");
+
+                if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatar)
+                    profile.Append($"\n**Avatar URL:** {avatar.TryGetCleanCdnUrl()}");
+
+                if (g.DescriptionFor(lookupCtx) is { } desc)
+                    profile.Append($"\n\n{desc}");
+
+                if (g.Visibility == PrivacyLevel.Private)
+                    profile.Append("\n*(this member is hidden)*");
+
+                eb.Field(new Embed.Field(g.NameFor(ctx), profile.ToString().Truncate(1024)));
             }
         }
     }
