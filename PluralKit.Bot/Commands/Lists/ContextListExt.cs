@@ -132,7 +132,7 @@ public static class ContextListExt
                         }
                     case SortProperty.DisplayName:
                         {
-                            if (m.DisplayName != null)
+                            if (m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
                                 ret += $"({m.DisplayName})";
                             break;
                         }
