@@ -8,6 +8,7 @@ public record ExecuteWebhookRequest
     public string? Username { get; init; }
     public string? AvatarUrl { get; init; }
     public Embed[] Embeds { get; init; }
+    public Sticker[] Stickers { get; init; }
     public Message.Attachment[] Attachments { get; set; }
     public AllowedMentions? AllowedMentions { get; init; }
 }

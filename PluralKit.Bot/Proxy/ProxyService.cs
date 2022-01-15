@@ -115,6 +115,12 @@ public class ProxyService
         if (isMessageBlank && msg.Attachments.Length == 0)
             throw new ProxyChecksFailedException("Message cannot be blank.");
 
+        if (msg.Activity != null)
+            throw new ProxyChecksFailedException("Message contains an invite to an activity, which cannot be re-sent by PluralKit.");
+
+        if (msg.StickerItems != null) // && msg.StickerItems.Any(s => s.Type == Sticker.StickerType.GUILD && s.GuildId != msg.GuildId))
+            throw new ProxyChecksFailedException("Message contains stickers, which cannot be re-sent by PluralKit.");
+
         // All good!
         return true;
     }
@@ -158,6 +164,7 @@ public class ProxyService
             Attachments = trigger.Attachments,
             FileSizeLimit = guild.FileSizeLimit(),
             Embeds = embeds.ToArray(),
+            Stickers = trigger.StickerItems,
             AllowEveryone = allowEveryone
         });
         await HandleProxyExecutedActions(ctx, trigger, proxyMessage, match);

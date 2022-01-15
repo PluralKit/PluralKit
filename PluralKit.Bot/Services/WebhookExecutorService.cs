@@ -37,6 +37,7 @@ public record ProxyRequest
     public Message.Attachment[] Attachments { get; init; }
     public int FileSizeLimit { get; init; }
     public Embed[] Embeds { get; init; }
+    public Sticker[] Stickers { get; init; }
     public bool AllowEveryone { get; init; }
 }
 
@@ -115,7 +116,8 @@ public class WebhookExecutorService
             Content = content,
             AllowedMentions = allowedMentions,
             AvatarUrl = !string.IsNullOrWhiteSpace(req.AvatarUrl) ? req.AvatarUrl : null,
-            Embeds = req.Embeds
+            Embeds = req.Embeds,
+            Stickers = req.Stickers,
         };
 
         MultipartFile[] files = null;

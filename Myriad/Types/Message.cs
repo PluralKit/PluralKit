@@ -43,6 +43,7 @@ public record Message
     public ulong Id { get; init; }
     public ulong ChannelId { get; init; }
     public ulong? GuildId { get; init; }
+    public MessageActivity? Activity { get; init; }
     public User Author { get; init; }
     public string? Content { get; init; }
     public string? Timestamp { get; init; }
@@ -54,6 +55,8 @@ public record Message
 
     public Attachment[] Attachments { get; init; }
     public Embed[]? Embeds { get; init; }
+    public Sticker[]? StickerItems { get; init; }
+    public Sticker[]? Stickers { get; init; }
     public Reaction[] Reactions { get; init; }
     public bool Pinned { get; init; }
     public ulong? WebhookId { get; init; }
@@ -68,6 +71,8 @@ public record Message
     public MessageComponent[]? Components { get; init; }
 
     public record Reference(ulong? GuildId, ulong? ChannelId, ulong? MessageId);
+
+    public record MessageActivity(int Type, string PartyId);
 
     public record Attachment
     {
