@@ -26,6 +26,7 @@ public class MessageController: ControllerBase
         var msg = await _db.Execute(c => _repo.GetMessage(c, mid));
         if (msg == null) return NotFound("Message not found.");
 
-        return msg.ToJson(User.ContextFor(msg.System), APIVersion.V1);
+        var ctx = msg.System == null ? LookupContext.ByNonOwner : User.ContextFor(msg.System);
+        return msg.ToJson(ctx, APIVersion.V1);
     }
 }
