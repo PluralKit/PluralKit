@@ -89,23 +89,32 @@ public static class ListOptionsExt
             // We want nulls last no matter what, even if orders are reversed
             SortProperty.Hid => input.OrderBy(m => m.Hid, ReverseMaybe(culture)),
             SortProperty.Name => input.OrderBy(m => m.NameFor(ctx), ReverseMaybe(culture)),
-            SortProperty.CreationDate => input.OrderBy(m => m.Created, ReverseMaybe(Comparer<Instant>.Default)),
-            SortProperty.MessageCount => input.OrderByDescending(m => m.MessageCount,
-                ReverseMaybe(Comparer<int>.Default)),
+            SortProperty.CreationDate => input
+                .OrderByDescending(m => m.MetadataPrivacy.CanAccess(ctx))
+                .ThenBy(m => m.MetadataPrivacy.CanAccess(ctx) ? m.Created : (Instant)default, 
+                    ReverseMaybe(Comparer<Instant>.Default)),
+            SortProperty.MessageCount => input
+                .OrderByDescending(m => m.MessageCount != 0 && m.MetadataPrivacy.CanAccess(ctx))
+                .ThenByDescending(m => m.MetadataPrivacy.CanAccess(ctx) ? m.MessageCount : 0, 
+                    ReverseMaybe(Comparer<int>.Default)),
             SortProperty.DisplayName => input
-                .OrderByDescending(m => m.DisplayName != null)
-                .ThenBy(m => m.DisplayName, ReverseMaybe(culture)),
+                .OrderByDescending(m => m.DisplayName != null && m.NamePrivacy.CanAccess(ctx))
+                .ThenBy(m => m.NamePrivacy.CanAccess(ctx) ? m.DisplayName : null, 
+                    ReverseMaybe(culture)),
             SortProperty.Birthdate => input
-                .OrderByDescending(m => m.AnnualBirthday.HasValue)
-                .ThenBy(m => m.AnnualBirthday, ReverseMaybe(Comparer<AnnualDate?>.Default)),
+                .OrderByDescending(m => m.AnnualBirthday.HasValue && m.BirthdayPrivacy.CanAccess(ctx))
+                .ThenBy(m => m.BirthdayPrivacy.CanAccess(ctx) ? m.AnnualBirthday : null, 
+                    ReverseMaybe(Comparer<AnnualDate?>.Default)),
             SortProperty.LastMessage => throw new PKError(
                 "Sorting by last message is temporarily disabled due to database issues, sorry."),
             // SortProperty.LastMessage => input
-            //     .OrderByDescending(m => m.LastMessage.HasValue)
-            //     .ThenByDescending(m => m.LastMessage, ReverseMaybe(Comparer<ulong?>.Default)),
+            //     .OrderByDescending(m => m.LastMessage.HasValue && m.MetadataPrivacy.CanAccess(ctx))
+            //     .ThenByDescending(m => m.MetadataPrivacy.CanAccess(ctx) ? m.LastMessage : (typeof(m.LastMessage))default, 
+            //          ReverseMaybe(Comparer<ulong?>.Default)),
             SortProperty.LastSwitch => input
-                .OrderByDescending(m => m.LastSwitchTime.HasValue)
-                .ThenByDescending(m => m.LastSwitchTime, ReverseMaybe(Comparer<Instant?>.Default)),
+                .OrderByDescending(m => m.LastSwitchTime.HasValue && m.MetadataPrivacy.CanAccess(ctx))
+                .ThenByDescending(m => m.MetadataPrivacy.CanAccess(ctx) ? m.LastSwitchTime : null, 
+                    ReverseMaybe(Comparer<Instant?>.Default)),
             SortProperty.Random => input
                 .OrderBy(m => randGen.Next()),
             _ => throw new ArgumentOutOfRangeException($"Unknown sort property {opts.SortProperty}")
@@ -129,16 +138,20 @@ public static class ListOptionsExt
             // We want nulls last no matter what, even if orders are reversed
             SortProperty.Hid => input.OrderBy(g => g.Hid, ReverseMaybe(culture)),
             SortProperty.Name => input.OrderBy(g => g.NameFor(ctx), ReverseMaybe(culture)),
-            SortProperty.CreationDate => input.OrderBy(g => g.Created, ReverseMaybe(Comparer<Instant>.Default)),
+            SortProperty.CreationDate => input
+                .OrderByDescending(g => g.MetadataPrivacy.CanAccess(ctx))
+                .ThenBy(g => g.MetadataPrivacy.CanAccess(ctx) ? g.Created : (Instant)default, 
+                    ReverseMaybe(Comparer<Instant>.Default)),
             SortProperty.DisplayName => input
-                .OrderByDescending(g => g.DisplayName != null)
-                .ThenBy(g => g.DisplayName, ReverseMaybe(culture)),
+                .OrderByDescending(g => g.DisplayName != null && g.NamePrivacy.CanAccess(ctx))
+                .ThenBy(g => g.NamePrivacy.CanAccess(ctx) ? g.DisplayName : null, 
+                    ReverseMaybe(culture)),
             SortProperty.Random => input
                 .OrderBy(g => randGen.Next()),
             _ => throw new ArgumentOutOfRangeException($"Unknown sort property {opts.SortProperty}")
         })
                 // Lastly, add a by-name fallback order for collisions (generally hits w/ lots of null values)
-                .ThenBy(m => m.NameFor(ctx), culture);
+                .ThenBy(g => g.NameFor(ctx), culture);
     }
 }
 
