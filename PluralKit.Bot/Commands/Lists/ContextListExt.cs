@@ -372,7 +372,7 @@ public static class ContextListExt
                     profile.Append($"\n\n{desc}");
 
                 if (g.Visibility == PrivacyLevel.Private)
-                    profile.Append("\n*(this member is hidden)*");
+                    profile.Append("\n*(this group is hidden)*");
 
                 eb.Field(new Embed.Field(g.NameFor(ctx), profile.ToString().Truncate(1024)));
             }
