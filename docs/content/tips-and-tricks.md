@@ -64,6 +64,7 @@ You cannot look up private members or groups of another system.
 |-with-created|-wc|Member, Group|Show each item's creation date|
 |-with-avatar|-wa, -wi, -ia, -ii, -img|Member, Group|Show each item's avatar URL|
 |-with-pronouns|-wp|Member|Show each member's pronouns in the short list (shown by default in full list)|
+|-with-displayname|-wdn|Member, Group|Show each item's displayname|
 
 ## Miscellaneous flags
 |Command|Flag|Aliases|Description|
