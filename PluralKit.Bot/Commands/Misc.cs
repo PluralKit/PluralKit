@@ -62,12 +62,28 @@ public class Misc
         var timeAfter = SystemClock.Instance.GetCurrentInstant();
         var apiLatency = timeAfter - timeBefore;
 
+        var embed = new EmbedBuilder();
+
         var messagesReceived = _metrics.Snapshot.GetForContext("Bot").Meters
             .FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesReceived.Name)?.Value;
+        if (messagesReceived != null)
+            embed.Field(new Embed.Field("Messages processed",
+                $"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)",
+                true));
+
         var messagesProxied = _metrics.Snapshot.GetForContext("Bot").Meters
             .FirstOrDefault(m => m.MultidimensionalName == BotMetrics.MessagesProxied.Name)?.Value;
+        if (messagesProxied != null)
+            embed.Field(new Embed.Field("Messages proxied",
+                $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)",
+                true));
+
         var commandsRun = _metrics.Snapshot.GetForContext("Bot").Meters
             .FirstOrDefault(m => m.MultidimensionalName == BotMetrics.CommandsRun.Name)?.Value;
+        if (commandsRun != null)
+            embed.Field(new Embed.Field("Commands executed",
+                $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)",
+                true));
 
         var counts = await _repo.GetStats();
 
@@ -81,20 +97,6 @@ public class Misc
 
         var now = SystemClock.Instance.GetCurrentInstant();
         var shardUptime = now - shardInfo.LastConnectionTime;
-
-        var embed = new EmbedBuilder();
-        if (messagesReceived != null)
-            embed.Field(new Embed.Field("Messages processed",
-                $"{messagesReceived.OneMinuteRate * 60:F1}/m ({messagesReceived.FifteenMinuteRate * 60:F1}/m over 15m)",
-                true));
-        if (messagesProxied != null)
-            embed.Field(new Embed.Field("Messages proxied",
-                $"{messagesProxied.OneMinuteRate * 60:F1}/m ({messagesProxied.FifteenMinuteRate * 60:F1}/m over 15m)",
-                true));
-        if (commandsRun != null)
-            embed.Field(new Embed.Field("Commands executed",
-                $"{commandsRun.OneMinuteRate * 60:F1}/m ({commandsRun.FifteenMinuteRate * 60:F1}/m over 15m)",
-                true));
 
         embed
             .Field(new Embed.Field("Current shard",
