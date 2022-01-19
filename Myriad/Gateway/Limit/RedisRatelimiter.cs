@@ -12,8 +12,8 @@ public class RedisRatelimiter: IGatewayRatelimiter
     private int _concurrency { get; init; }
 
     // todo: these might need to be tweaked a little
-    private static TimeSpan expiry = TimeSpan.FromSeconds(5);
-    private static TimeSpan retryInterval = TimeSpan.FromSeconds(1);
+    private static TimeSpan expiry = TimeSpan.FromSeconds(6);
+    private static TimeSpan retryInterval = TimeSpan.FromMilliseconds(500);
 
     public RedisRatelimiter(ILogger logger, ConnectionMultiplexer redis, int concurrency)
     {
