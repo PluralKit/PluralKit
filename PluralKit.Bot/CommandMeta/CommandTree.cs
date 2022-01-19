@@ -285,7 +285,7 @@ public partial class CommandTree
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
             else
                 await ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, target));
-        else if (ctx.Match("serveravatar", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
+        else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
                      "guildavatar", "guildpic", "guildicon", "sicon"))
             await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
         else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))
