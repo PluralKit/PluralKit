@@ -219,14 +219,14 @@ public partial class CommandTree
             if (ctx.Match("h", "history"))
                 await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
             else if (ctx.Match("p", "percent", "%"))
-                await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, target));
+                await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
             else
                 await ctx.Execute<SystemFront>(SystemFronter, m => m.SystemFronter(ctx, target));
         }
         else if (ctx.Match("fh", "fronthistory", "history", "switches"))
             await ctx.Execute<SystemFront>(SystemFrontHistory, m => m.SystemFrontHistory(ctx, target));
         else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-            await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.SystemFrontPercent(ctx, target));
+            await ctx.Execute<SystemFront>(SystemFrontPercent, m => m.FrontPercent(ctx, system: target));
         else if (ctx.Match("info", "view", "show"))
             await ctx.Execute<System>(SystemInfo, m => m.Query(ctx, target));
         else if (ctx.Match("groups", "gs"))
@@ -354,7 +354,7 @@ public partial class CommandTree
             else if (ctx.Match("banner", "splash", "cover"))
                 await ctx.Execute<Groups>(GroupBannerImage, g => g.GroupBannerImage(ctx, target));
             else if (ctx.Match("fp", "frontpercent", "front%", "frontbreakdown"))
-                await ctx.Execute<Groups>(GroupFrontPercent, g => g.GroupFrontPercent(ctx, target));
+                await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
             else if (ctx.Match("color", "colour"))
                 await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
             else if (!ctx.HasNext())

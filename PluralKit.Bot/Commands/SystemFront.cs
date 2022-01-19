@@ -95,13 +95,18 @@ public class SystemFront
         );
     }
 
-    public async Task SystemFrontPercent(Context ctx, PKSystem system)
+    public async Task FrontPercent(Context ctx, PKSystem? system = null, PKGroup? group = null)
     {
-        if (system == null) throw Errors.NoSystemError;
+        if (system == null && group == null) throw Errors.NoSystemError;
+        if (system == null) system = await GetGroupSystem(ctx, group);
+
         ctx.CheckSystemPrivacy(system.Id, system.FrontHistoryPrivacy);
 
         var totalSwitches = await _repo.GetSwitchCount(system.Id);
         if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
+
+        var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
+        var showFlat = ctx.MatchFlag("flat");
 
         var durationStr = ctx.RemainderOrNull() ?? "30d";
 
@@ -118,17 +123,24 @@ public class SystemFront
         if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
         var title = new StringBuilder("Frontpercent of ");
-        if (system.Name != null)
+        if (group != null)
+            title.Append($"{group.NameFor(ctx)} (`{group.Hid}`)");
+        else if (system.Name != null)
             title.Append($"{system.Name} (`{system.Hid}`)");
         else
             title.Append($"`{system.Hid}`");
 
-        var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
-        var showFlat = ctx.MatchFlag("flat");
-        var frontpercent = await _db.Execute(c =>
-            _repo.GetFrontBreakdown(c, system.Id, null, rangeStart.Value.ToInstant(), now));
-        await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, null, ctx.Zone,
+        var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, group?.Id, rangeStart.Value.ToInstant(), now));
+        await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, group, ctx.Zone,
             ctx.LookupContextFor(system.Id), title.ToString(), ignoreNoFronters, showFlat));
+    }
+
+    private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)
+    {
+        var system = ctx.System;
+        if (system?.Id == target.System)
+            return system;
+        return await _repo.GetSystem(target.System)!;
     }
 
     private struct FrontHistoryEntry

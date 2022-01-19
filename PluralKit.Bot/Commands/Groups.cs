@@ -575,36 +575,6 @@ public class Groups
         await ctx.Reply($"{Emojis.Success} Group deleted.");
     }
 
-    public async Task GroupFrontPercent(Context ctx, PKGroup target)
-    {
-        var targetSystem = await GetGroupSystem(ctx, target);
-        ctx.CheckSystemPrivacy(targetSystem.Id, targetSystem.FrontHistoryPrivacy);
-
-        var totalSwitches = await _repo.GetSwitchCount(targetSystem.Id);
-        if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
-
-        var durationStr = ctx.RemainderOrNull() ?? "30d";
-
-        var now = SystemClock.Instance.GetCurrentInstant();
-
-        var rangeStart = DateUtils.ParseDateTime(durationStr, true, ctx.Zone);
-        if (rangeStart == null) throw Errors.InvalidDateTime(durationStr);
-        if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
-
-        var title = new StringBuilder($"Frontpercent of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");
-        if (targetSystem.Name != null)
-            title.Append($"{targetSystem.Name} (`{targetSystem.Hid}`)");
-        else
-            title.Append($"`{targetSystem.Hid}`");
-
-        var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
-        var showFlat = ctx.MatchFlag("flat");
-        var frontpercent = await _db.Execute(c =>
-            _repo.GetFrontBreakdown(c, targetSystem.Id, target.Id, rangeStart.Value.ToInstant(), now));
-        await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, targetSystem, target,
-            ctx.Zone, ctx.LookupContextFor(targetSystem.Id), title.ToString(), ignoreNoFronters, showFlat));
-    }
-
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)
     {
         var system = ctx.System;
