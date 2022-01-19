@@ -26,6 +26,10 @@ public partial class CommandTree
     public static Command ConfigMemberDefaultPrivacy = new("config private member", "config private member [on|off]", "Sets whether member privacy is automatically set to private when creating a new member");
     public static Command ConfigGroupDefaultPrivacy = new("config private group", "config private group [on|off]", "Sets whether group privacy is automatically set to private when creating a new group");
     public static Command AutoproxySet = new Command("autoproxy", "autoproxy [off|front|latch|member]", "Sets your system's autoproxy mode for the current server");
+    public static Command AutoproxyOff = new Command("autoproxy off", "autoproxy off", "Disables autoproxying for your system in the current server");
+    public static Command AutoproxyFront = new Command("autoproxy front", "autoproxy front", "Sets your system's autoproxy in this server to proxy the first member currently registered as front");
+    public static Command AutoproxyLatch = new Command("autoproxy latch", "autoproxy latch", "Sets your system's autoproxy in this server to proxy the last manually proxied member");
+    public static Command AutoproxyMember = new Command("autoproxy member", "autoproxy <member>", "Sets your system's autoproxy in this server to proxy a specific member");
     public static Command MemberInfo = new Command("member", "member <member>", "Looks up information about a member");
     public static Command MemberNew = new Command("member new", "member new <name>", "Creates a new member");
     public static Command MemberRename = new Command("member rename", "member <member> rename <new name>", "Renames a member");
@@ -129,6 +133,11 @@ public partial class CommandTree
     {
         ConfigTimezone, ConfigPing, ConfigAutoproxyAccount, ConfigAutoproxyTimeout,
         ConfigMemberDefaultPrivacy, ConfigGroupDefaultPrivacy
+    };
+
+    public static Command[] AutoproxyCommands =
+    {
+        AutoproxyOff, AutoproxyFront, AutoproxyLatch, AutoproxyMember
     };
 
     public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable };

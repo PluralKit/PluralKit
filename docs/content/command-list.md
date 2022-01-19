@@ -52,7 +52,6 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;system [system] list -full` - Shows a paginated list of a system's members, with increased detail.
 - `pk;find <search term>` - Searches members by name.
 - `pk;system [system] find <search term>` - (same as above, but for a specific system)
-- `pk;autoproxy [off|front|latch|member]` - Updates the system's autoproxy settings for a given server.
 
 ## Member commands
 *Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -103,7 +102,10 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;switch delete all` - Deletes all logged switches.
 
 ## Autoproxy commands
-- `pk;autoproxy [off|front|latch|<member>]` - Sets your system's autoproxy mode for the current server.
+- `pk;autoproxy off` - Disables autoproxying for your system in the current server.
+- `pk;autoproxy front` - Sets your system's autoproxy in this server to proxy the first member currently registered as front.
+- `pk;autoproxy latch` - Sets your system's autoproxy in this server to proxy the last manually proxied member.
+- `pk;autoproxy \<member>` - Sets your system's autoproxy in this server to proxy a specific member.
 
 ## Config commands
 - `pk;config timezone [location]` - Changes the time zone of your system.

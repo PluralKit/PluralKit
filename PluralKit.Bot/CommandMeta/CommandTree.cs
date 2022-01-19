@@ -395,7 +395,7 @@ public partial class CommandTree
         if (!ctx.HasNext())
         {
             await ctx.Reply(
-                "Available command help targets: `system`, `member`, `group`, `switch`, `autoproxy`, `log`, `blacklist`."
+                "Available command help targets: `system`, `member`, `group`, `switch`, `config`, `autoproxy`, `log`, `blacklist`."
                 + "\n- **pk;commands <target>** - *View commands related to a help target.*"
                 + "\n\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
             return;
@@ -435,7 +435,10 @@ public partial class CommandTree
             case "cfg":
                 await PrintCommandList(ctx, "settings", ConfigCommands);
                 break;
-            // todo: are there any commands that still need to be added?
+            case "autoproxy":
+            case "ap":
+                await PrintCommandList(ctx, "autoproxy", AutoproxyCommands);
+                break;
             default:
                 await ctx.Reply("For the full list of commands, see the website: <https://pluralkit.me/commands>");
                 break;
