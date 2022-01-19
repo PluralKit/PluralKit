@@ -24,6 +24,7 @@ public class ListOptions
     public bool IncludeCreated { get; set; }
     public bool IncludeAvatar { get; set; }
     public bool IncludePronouns { get; set; }
+    public bool IncludeDisplayName { get; set; }
 
     public string CreateFilterString()
     {

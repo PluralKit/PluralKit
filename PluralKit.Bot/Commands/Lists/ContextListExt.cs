@@ -75,6 +75,8 @@ public static class ContextListExt
             p.IncludeAvatar = true;
         if (ctx.MatchFlag("with-pronouns", "wp"))
             p.IncludePronouns = true;
+        if (ctx.MatchFlag("with-displayname", "wdn"))
+            p.IncludeDisplayName = true;
 
         // Always show the sort property, too
         if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
@@ -165,6 +167,10 @@ public static class ContextListExt
                             if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                             {
                                 ret += $"({count} messages)";
+                            }
+                            else if (opts.IncludeDisplayName && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                            {
+                                ret += $"({m.DisplayName})";
                             }
                             else if (opts.IncludeLastSwitch &&
                                      m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
@@ -304,6 +310,10 @@ public static class ContextListExt
                                      g.MetadataPrivacy.TryGet(lookupCtx, g.Created, out var created))
                             {
                                 ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                            }
+                            else if (opts.IncludeDisplayName && g.DisplayName != null && g.NamePrivacy.CanAccess(lookupCtx))
+                            {
+                                ret += $"({g.DisplayName})";
                             }
                             else if (opts.IncludeAvatar && g.IconFor(lookupCtx) is { } avatarUrl)
                             {
