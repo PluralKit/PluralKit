@@ -101,9 +101,9 @@ public static class ContextArgumentsExt
 
     public static bool MatchToggle(this Context ctx)
     {
-        if (ctx.Match("yes", "on", "enable"))
+        if (ctx.Match("yes", "on", "enable", "true"))
             return true;
-        else if (ctx.Match("no", "off", "disable"))
+        else if (ctx.Match("no", "off", "disable", "false"))
             return false;
         else
             throw new PKError("You must pass either \"on\" or \"off\" to this command.");
