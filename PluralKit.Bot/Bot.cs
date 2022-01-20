@@ -34,7 +34,6 @@ public class Bot
     private readonly DiscordApiClient _rest;
     private readonly ILifetimeScope _services;
 
-    private bool _hasReceivedReady;
     private Timer _periodicTask; // Never read, just kept here for GC reasons
 
     public Bot(ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics,
@@ -54,9 +53,23 @@ public class Bot
         _cache = cache;
     }
 
+    private string BotStatus => $"{(_config.Prefixes ?? BotConfig.DefaultPrefixes)[0]}help";
+
     public void Init()
     {
         _cluster.EventReceived += (shard, evt) => OnEventReceived(shard.ShardId, evt);
+        _cluster.DiscordPresence = new GatewayStatusUpdate
+        {
+            Status = GatewayStatusUpdate.UserStatus.Online,
+            Activities = new[]
+            {
+                new Activity
+                {
+                    Type = ActivityType.Game,
+                    Name = BotStatus
+                }
+            }
+        };
 
         // Init the shard stuff
         _services.Resolve<ShardInfoService>().Init();
@@ -95,20 +108,6 @@ public class Bot
             await HandleEvent(shardId, mra);
         if (evt is InteractionCreateEvent ic)
             await HandleEvent(shardId, ic);
-
-        // Update shard status for shards immediately on connect
-        if (evt is ReadyEvent re)
-            await HandleReady(shardId, re);
-        if (evt is ResumedEvent)
-            await HandleResumed(shardId);
-    }
-
-    private Task HandleResumed(int shardId) => UpdateBotStatus(shardId);
-
-    private Task HandleReady(int shardId, ReadyEvent _)
-    {
-        _hasReceivedReady = true;
-        return UpdateBotStatus(shardId);
     }
 
     public async Task Shutdown()
@@ -119,16 +118,15 @@ public class Bot
         // Send users a lil status message
         // We're not actually properly disconnecting from the gateway (lol)  so it'll linger for a few minutes
         // Should be plenty of time for the bot to connect again next startup and set the real status
-        if (_hasReceivedReady)
-            await Task.WhenAll(_cluster.Shards.Values.Select(shard =>
-                shard.UpdateStatus(new GatewayStatusUpdate
+        await Task.WhenAll(_cluster.Shards.Values.Select(shard =>
+            shard.UpdateStatus(new GatewayStatusUpdate
+            {
+                Activities = new[]
                 {
-                    Activities = new[]
-                    {
-                        new Activity {Name = "Restarting... (please wait)", Type = ActivityType.Game}
-                    },
-                    Status = GatewayStatusUpdate.UserStatus.Idle
-                })));
+                    new Activity {Name = "Restarting... (please wait)", Type = ActivityType.Game}
+                },
+                Status = GatewayStatusUpdate.UserStatus.Idle
+            })));
     }
 
     private Task HandleEvent<T>(int shardId, T evt) where T : IGatewayEvent
@@ -238,45 +236,9 @@ public class Bot
     {
         _logger.Debug("Running once-per-minute scheduled tasks");
 
-        await UpdateBotStatus();
-
         // Collect some stats, submit them to the metrics backend
         await _collector.CollectStats();
         await Task.WhenAll(((IMetricsRoot)_metrics).ReportRunner.RunAllAsync());
         _logger.Debug("Submitted metrics to backend");
-    }
-
-    private async Task UpdateBotStatus(int? specificShardId = null)
-    {
-        // If we're not on any shards, don't bother (this happens if the periodic timer fires before the first Ready)
-        if (!_hasReceivedReady) return;
-
-        var totalGuilds = await _cache.GetAllGuilds().CountAsync();
-
-        try // DiscordClient may throw an exception if the socket is closed (e.g just after OP 7 received)
-        {
-            Task UpdateStatus(Shard shard) =>
-                shard.UpdateStatus(new GatewayStatusUpdate
-                {
-                    Activities = new[]
-                    {
-                        new Activity
-                        {
-                            Name = $"{(_config.Prefixes ?? BotConfig.DefaultPrefixes)[0]}help | in {totalGuilds:N0} servers | shard #{shard.ShardId}",
-                            Type = ActivityType.Game,
-                            Url = "https://pluralkit.me/"
-                        }
-                    }
-                });
-
-            if (specificShardId != null)
-                await UpdateStatus(_cluster.Shards[specificShardId.Value]);
-            else // Run shard updates concurrently
-                await Task.WhenAll(_cluster.Shards.Values.Select(UpdateStatus));
-        }
-        catch (WebSocketException)
-        {
-            // TODO: this still thrown?
-        }
     }
 }

@@ -41,12 +41,15 @@ public class Shard
     private TimeSpan _reconnectDelay = TimeSpan.Zero;
     private Task? _worker;
 
-    public Shard(GatewaySettings settings, ShardInfo info, IGatewayRatelimiter ratelimiter, string url, ILogger logger)
+    private GatewayStatusUpdate? _presence { get; init; }
+
+    public Shard(GatewaySettings settings, ShardInfo info, IGatewayRatelimiter ratelimiter, string url, ILogger logger, GatewayStatusUpdate? presence = null)
     {
         _jsonSerializerOptions = new JsonSerializerOptions().ConfigureForMyriad();
 
         _settings = settings;
         _info = info;
+        _presence = presence;
         _ratelimiter = ratelimiter;
         _url = url;
         _logger = logger.ForContext<Shard>().ForContext("ShardId", info.ShardId);
@@ -164,7 +167,8 @@ public class Shard
                 },
                 Shard = _info,
                 Token = _settings.Token,
-                LargeThreshold = 50
+                LargeThreshold = 50,
+                Presence = _presence,
             }
         });
 

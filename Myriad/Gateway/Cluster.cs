@@ -16,6 +16,8 @@ public class Cluster
     private readonly ConcurrentDictionary<int, Shard> _shards = new();
     private IGatewayRatelimiter? _ratelimiter;
 
+    public GatewayStatusUpdate DiscordPresence { get; set; }
+
     public Cluster(GatewaySettings gatewaySettings, ILogger logger)
     {
         _gatewaySettings = gatewaySettings;
@@ -54,7 +56,7 @@ public class Cluster
 
     private void CreateAndAddShard(string url, ShardInfo shardInfo)
     {
-        var shard = new Shard(_gatewaySettings, shardInfo, _ratelimiter!, url, _logger);
+        var shard = new Shard(_gatewaySettings, shardInfo, _ratelimiter!, url, _logger, DiscordPresence);
         shard.OnEventReceived += evt => OnShardEventReceived(shard, evt);
         _shards[shardInfo.ShardId] = shard;
 
