@@ -5,8 +5,7 @@ using Newtonsoft.Json.Linq;
 namespace PluralKit.API;
 
 [ApiController]
-[ApiVersion("2.0")]
-[Route("v{version:apiVersion}")]
+[Route("v2")]
 public class PrivateControllerV2: PKControllerBase
 {
     public PrivateControllerV2(IServiceProvider svc) : base(svc) { }

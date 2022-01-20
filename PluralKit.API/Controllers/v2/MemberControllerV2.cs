@@ -7,8 +7,7 @@ using PluralKit.Core;
 namespace PluralKit.API;
 
 [ApiController]
-[ApiVersion("2.0")]
-[Route("v{version:apiVersion}")]
+[Route("v2")]
 public class MemberControllerV2: PKControllerBase
 {
     public MemberControllerV2(IServiceProvider svc) : base(svc) { }

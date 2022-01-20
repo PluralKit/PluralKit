@@ -31,8 +31,7 @@ public struct PostSwitchParams
 }
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("v{version:apiVersion}/s")]
+[Route("v1/s")]
 public class SystemController: ControllerBase
 {
     private readonly IDatabase _db;

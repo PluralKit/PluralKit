@@ -10,8 +10,7 @@ using PluralKit.Core;
 namespace PluralKit.API;
 
 [ApiController]
-[ApiVersion("1.0")]
-[Route("v{version:apiVersion}/m")]
+[Route("v1/m")]
 public class MemberController: ControllerBase
 {
     private readonly IDatabase _db;
