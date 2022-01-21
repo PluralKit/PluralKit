@@ -534,21 +534,7 @@ public class MemberEdit
         if (ctx.System == null) throw Errors.NoSystemError;
         if (target.System != ctx.System.Id) throw Errors.NotOwnMemberError;
 
-        bool newValue;
-        // todo: MatchToggle
-        if (ctx.Match("on", "enabled", "true", "yes") || ctx.MatchFlag("on", "enabled", "true", "yes"))
-        {
-            newValue = true;
-        }
-        else if (ctx.Match("off", "disabled", "false", "no") || ctx.MatchFlag("off", "disabled", "false", "no"))
-        {
-            newValue = false;
-        }
-        else if (ctx.HasNext())
-        {
-            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
-        }
-        else
+        if (!ctx.HasNext())
         {
             if (target.AllowAutoproxy)
                 await ctx.Reply(
@@ -559,7 +545,7 @@ public class MemberEdit
             return;
         }
 
-        ;
+        var newValue = ctx.MatchToggle();
 
         var patch = new MemberPatch { AllowAutoproxy = Partial<bool>.Present(newValue) };
         await _repo.UpdateMember(target.Id, patch);

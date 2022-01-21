@@ -497,21 +497,7 @@ public class SystemEdit
         else
             serverText = $"the server {guild.Name.EscapeMarkdown()}";
 
-        bool newValue;
-        // todo: MatchToggle
-        if (ctx.Match("on", "enabled", "true", "yes"))
-        {
-            newValue = true;
-        }
-        else if (ctx.Match("off", "disabled", "false", "no"))
-        {
-            newValue = false;
-        }
-        else if (ctx.HasNext())
-        {
-            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
-        }
-        else
+        if (!ctx.HasNext())
         {
             if (gs.ProxyEnabled)
                 await ctx.Reply(
@@ -521,6 +507,8 @@ public class SystemEdit
                     $"Proxying in {serverText} is currently **disabled** for your system. To enable it, type `pk;system proxy on`.");
             return;
         }
+
+        var newValue = ctx.MatchToggle();
 
         await _repo.UpdateSystemGuild(ctx.System.Id, guild.Id, new SystemGuildPatch { ProxyEnabled = newValue });
 
