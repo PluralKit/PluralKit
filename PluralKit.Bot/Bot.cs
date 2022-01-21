@@ -153,13 +153,13 @@ public class Bot
                 return;
             }
 
+            using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
+            using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shardId, evt));
+            _logger.Verbose("Received gateway event: {@Event}", evt);
+
             try
             {
                 var queue = serviceScope.ResolveOptional<HandlerQueue<T>>();
-
-                using var _ = LogContext.PushProperty("EventId", Guid.NewGuid());
-                using var __ = LogContext.Push(await serviceScope.Resolve<SerilogGatewayEnricherFactory>().GetEnricher(shardId, evt));
-                _logger.Verbose("Received gateway event: {@Event}", evt);
 
                 // Also, find a Sentry enricher for the event type (if one is present), and ask it to put some event data in the Sentry scope
                 var sentryEnricher = serviceScope.ResolveOptional<ISentryEnricher<T>>();
