@@ -42,35 +42,29 @@ public class LoggerCleanService
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
 
-
-    // todo: change webhooks from webhookName to use the application ID in webhook message object
     private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
     {
-        new LoggerBot("Carl-bot", 23514896210395136, fuzzyExtractFunc: ExtractCarlBot,
-            webhookName: "Carl-bot Logging"),
+        new LoggerBot("Carl-bot", 235148962103951360, fuzzyExtractFunc: ExtractCarlBot), // webhooks
         new LoggerBot("Circle", 497196352866877441, fuzzyExtractFunc: ExtractCircle),
         new LoggerBot("Pancake", 239631525350604801, fuzzyExtractFunc: ExtractPancake),
-
-        // There are two "Logger"s. They seem to be entirely unrelated. Don't ask.
-        new LoggerBot("Logger#6088", 298822483060981760, ExtractLoggerA, webhookName: "Logger"),
-        new LoggerBot("Logger#6278", 327424261180620801, ExtractLoggerB),
-        new LoggerBot("Dyno", 155149108183695360, ExtractDyno, webhookName: "Dyno"),
-        new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja, webhookName: "Auttaja"),
+        new LoggerBot("Logger", 298822483060981760, ExtractLogger), // webhook
+        new LoggerBot("Patron Logger", 579149474975449098, ExtractLogger), // webhook (?)
+        new LoggerBot("Dyno", 155149108183695360, ExtractDyno), // webhook
+        new LoggerBot("Dyno Premium", 168274283414421504, ExtractDyno), // webhook
+        new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja), // webhook
         new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot),
         new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot),
         new LoggerBot("Mantaro", 213466096718708737, ExtractMantaro),
-        new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat, webhookName: "UnbelievaBoat"),
+        new LoggerBot("UnbelievaBoat", 292953664492929025, ExtractUnbelievaBoat), // webhook
+        new LoggerBot("UnbelievaBoat Premium", 356950275044671499, ExtractUnbelievaBoat), // webhook (?)
         new LoggerBot("Vanessa", 310261055060443136, fuzzyExtractFunc: ExtractVanessa),
         new LoggerBot("SafetyAtLast", 401549924199694338, fuzzyExtractFunc: ExtractSAL),
         new LoggerBot("GearBot", 349977940198555660, fuzzyExtractFunc: ExtractGearBot),
         new LoggerBot("GiselleBot", 356831787445387285, ExtractGiselleBot),
         new LoggerBot("Vortex", 240254129333731328, fuzzyExtractFunc: ExtractVortex),
-        new LoggerBot("ProBot", 282859044593598464, webhookName: "ProBot ✨", fuzzyExtractFunc: ExtractProBot)
+        new LoggerBot("ProBot", 282859044593598464, fuzzyExtractFunc: ExtractProBot), // webhook
+        new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
     }.ToDictionary(b => b.Id);
-
-    private static readonly Dictionary<string, LoggerBot> _botsByWebhookName = _bots.Values
-        .Where(b => b.WebhookName != null)
-        .ToDictionary(b => b.WebhookName);
 
     private readonly IDiscordCache _cache;
     private readonly DiscordApiClient _client;
@@ -95,11 +89,10 @@ public class LoggerCleanService
         if (channel.Type != Channel.ChannelType.GuildText) return;
         if (!(await _cache.PermissionsIn(channel.Id)).HasFlag(PermissionSet.ManageMessages)) return;
 
-        // If this message is from a *webhook*, check if the name matches one of the bots we know
-        // TODO: do we need to do a deeper webhook origin check, or would that be too hard on the rate limit?
+        // If this message is from a *webhook*, check if the application ID matches one of the bots we know
         // If it's from a *bot*, check the bot ID to see if we know it.
         LoggerBot bot = null;
-        if (msg.WebhookId != null) _botsByWebhookName.TryGetValue(msg.Author.Username, out bot);
+        if (msg.WebhookId != null && msg.ApplicationId != null) _bots.TryGetValue(msg.ApplicationId.Value, out bot);
         else if (msg.Author.Bot) _bots.TryGetValue(msg.Author.Id, out bot);
 
         // If we didn't find anything before, or what we found is an unsupported bot, bail
@@ -185,9 +178,8 @@ public class LoggerCleanService
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
 
-    private static ulong? ExtractLoggerA(Message msg)
+    private static ulong? ExtractLogger(Message msg)
     {
-        // This is for Logger#6088 (298822483060981760), distinct from Logger#6278 (327424261180620801).
         // Embed contains title "Message deleted in [channel]", and an ID field containing both message and user ID (see regex).
         var embed = msg.Embeds?.FirstOrDefault();
         if (embed == null) return null;
@@ -196,16 +188,6 @@ public class LoggerCleanService
         var idField = embed.Fields.FirstOrDefault(f => f.Name == "ID");
         if (idField.Value == null) return null; // "OrDefault" = all-null object
         var match = _loggerARegex.Match(idField.Value);
-        return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
-    }
-
-    private static ulong? ExtractLoggerB(Message msg)
-    {
-        // This is for Logger#6278 (327424261180620801), distinct from Logger#6088 (298822483060981760).
-        // Embed title ends with "A Message Was Deleted!", footer contains message ID as per regex.
-        var embed = msg.Embeds?.FirstOrDefault();
-        if (embed?.Footer == null || !(embed.Title?.EndsWith("A Message Was Deleted!") ?? false)) return null;
-        var match = _loggerBRegex.Match(embed.Footer.Text ?? "");
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
 
@@ -395,19 +377,17 @@ public class LoggerCleanService
     {
         public ulong Id;
         public string Name;
-        public string WebhookName;
 
         public Func<Message, ulong?> ExtractFunc;
         public Func<Message, FuzzyExtractResult?> FuzzyExtractFunc;
 
         public LoggerBot(string name, ulong id, Func<Message, ulong?> extractFunc = null,
-                         Func<Message, FuzzyExtractResult?> fuzzyExtractFunc = null, string webhookName = null)
+                         Func<Message, FuzzyExtractResult?> fuzzyExtractFunc = null)
         {
             Name = name;
             Id = id;
             FuzzyExtractFunc = fuzzyExtractFunc;
             ExtractFunc = extractFunc;
-            WebhookName = webhookName;
         }
     }
 
