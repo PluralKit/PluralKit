@@ -46,13 +46,13 @@ public class ProxiedMessage
 
     public async Task EditMessage(Context ctx)
     {
-        if (!ctx.HasNext())
-            throw new PKSyntaxError("You need to include the message to edit in.");
-
         var msg = await GetMessageToEdit(ctx);
 
         if (ctx.System.Id != msg.System?.Id)
             throw new PKError("Can't edit a message sent by a different system.");
+
+        if (!ctx.HasNext())
+            throw new PKSyntaxError("You need to include the message to edit in.");
 
         var newContent = ctx.RemainderOrNull().NormalizeLineEndSpacing();
 
@@ -96,15 +96,15 @@ public class ProxiedMessage
         if (msg == null)
         {
             if (ctx.Guild == null)
-                throw new PKError("You must use a message link to edit messages in DMs.");
+                throw new PKSyntaxError("You must use a message link to edit messages in DMs.");
 
             var recent = await FindRecentMessage(ctx);
             if (recent == null)
-                throw new PKError("Could not find a recent message to edit.");
+                throw new PKSyntaxError("Could not find a recent message to edit.");
 
             msg = await _repo.GetMessage(conn, recent.Mid);
             if (msg == null)
-                throw new PKError("Could not find a recent message to edit.");
+                throw new PKSyntaxError("Could not find a recent message to edit.");
         }
 
         if (msg.Message.Channel != ctx.Channel.Id)
