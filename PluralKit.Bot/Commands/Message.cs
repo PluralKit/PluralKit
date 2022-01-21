@@ -56,6 +56,9 @@ public class ProxiedMessage
 
         var newContent = ctx.RemainderOrNull().NormalizeLineEndSpacing();
 
+        if (newContent.Length > 2000)
+            throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
+
         var originalMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
         if (originalMsg == null)
             throw new PKError("Could not edit message.");

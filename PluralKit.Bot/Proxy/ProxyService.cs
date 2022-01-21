@@ -66,6 +66,10 @@ public class ProxyService
         if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
 
+        // this is hopefully temporary, so not putting it into a separate method
+        if (message.Content != null && message.Content.Length > 2000)
+            throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
+
         // Permission check after proxy match so we don't get spammed when not actually proxying
         if (!CheckBotPermissionsOrError(botPermissions, rootChannel.Id))
             return false;
