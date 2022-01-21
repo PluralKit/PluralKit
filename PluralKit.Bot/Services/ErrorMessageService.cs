@@ -17,7 +17,7 @@ public class ErrorMessageService
 {
     // globally rate limit errors for now, don't want to spam users when something breaks
     private static readonly Duration MinErrorInterval = Duration.FromSeconds(10);
-    private static readonly Duration IntervalFromStartup = Duration.FromMinutes(5);
+    private static readonly Duration IntervalFromStartup = Duration.FromMinutes(2);
     private readonly ILogger _logger;
 
     private readonly BotConfig _botConfig;

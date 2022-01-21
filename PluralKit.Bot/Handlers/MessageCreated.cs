@@ -53,9 +53,6 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
     // for now, only return error messages for explicit commands
     public ulong? ErrorChannelFor(MessageCreateEvent evt, ulong userId)
     {
-        if (!HasCommandPrefix(evt.Content, userId, out var cmdStart) || cmdStart == evt.Content.Length)
-            return null;
-
         return evt.ChannelId;
     }
 
