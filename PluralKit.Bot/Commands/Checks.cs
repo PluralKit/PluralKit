@@ -233,7 +233,10 @@ public class Checks
             throw new PKError(failedToGetMessage);
 
         if ((_botConfig.Prefixes ?? BotConfig.DefaultPrefixes).Any(p => msg.Content.StartsWith(p)))
+        {
             await ctx.Reply("This message starts with the bot's prefix, and was parsed as a command.");
+            return;
+        }
         if (msg.Author.Bot)
             throw new PKError("You cannot check messages sent by a bot.");
         if (msg.WebhookId != null)
