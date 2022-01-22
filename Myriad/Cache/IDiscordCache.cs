@@ -20,7 +20,6 @@ public interface IDiscordCache
     public Task<ulong> GetOwnUser();
     public Task<Guild?> TryGetGuild(ulong guildId);
     public Task<Channel?> TryGetChannel(ulong channelId);
-    public Task<Channel?> TryGetDmChannel(ulong userId);
     public Task<User?> TryGetUser(ulong userId);
     public Task<GuildMemberPartial?> TryGetSelfMember(ulong guildId);
     public Task<Role?> TryGetRole(ulong roleId);

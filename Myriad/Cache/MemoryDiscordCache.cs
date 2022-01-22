@@ -7,7 +7,6 @@ namespace Myriad.Cache;
 public class MemoryDiscordCache: IDiscordCache
 {
     private readonly ConcurrentDictionary<ulong, Channel> _channels = new();
-    private readonly ConcurrentDictionary<ulong, ulong> _dmChannels = new();
     private readonly ConcurrentDictionary<ulong, GuildMemberPartial> _guildMembers = new();
     private readonly ConcurrentDictionary<ulong, CachedGuild> _guilds = new();
     private readonly ConcurrentDictionary<ulong, Role> _roles = new();
@@ -35,10 +34,7 @@ public class MemoryDiscordCache: IDiscordCache
 
         if (channel.Recipients != null)
             foreach (var recipient in channel.Recipients)
-            {
-                _dmChannels[recipient.Id] = channel.Id;
                 await SaveUser(recipient);
-            }
     }
 
     public ValueTask SaveOwnUser(ulong userId)
@@ -138,13 +134,6 @@ public class MemoryDiscordCache: IDiscordCache
     {
         _channels.TryGetValue(channelId, out var channel);
         return Task.FromResult(channel);
-    }
-
-    public Task<Channel?> TryGetDmChannel(ulong userId)
-    {
-        if (!_dmChannels.TryGetValue(userId, out var channelId))
-            return Task.FromResult((Channel?)null);
-        return TryGetChannel(channelId);
     }
 
     public Task<User?> TryGetUser(ulong userId)

@@ -58,17 +58,6 @@ public static class CacheExtensions
         return restChannel;
     }
 
-    public static async Task<Channel> GetOrCreateDmChannel(this IDiscordCache cache, DiscordApiClient rest,
-                                                           ulong recipientId)
-    {
-        if (await cache.TryGetDmChannel(recipientId) is { } cacheChannel)
-            return cacheChannel;
-
-        var restChannel = await rest.CreateDm(recipientId);
-        await cache.SaveChannel(restChannel);
-        return restChannel;
-    }
-
     public static async Task<Channel> GetRootChannel(this IDiscordCache cache, ulong channelOrThread)
     {
         var channel = await cache.GetChannel(channelOrThread);

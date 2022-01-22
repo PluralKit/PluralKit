@@ -17,6 +17,7 @@ public class ImportExport
 {
     private readonly HttpClient _client;
     private readonly DataFileService _dataFiles;
+    private readonly PrivateChannelService _dmCache;
 
     private readonly JsonSerializerSettings _settings = new()
     {
@@ -24,10 +25,11 @@ public class ImportExport
         DateParseHandling = DateParseHandling.None
     };
 
-    public ImportExport(DataFileService dataFiles, HttpClient client)
+    public ImportExport(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache)
     {
         _dataFiles = dataFiles;
         _client = client;
+        _dmCache = dmCache;
     }
 
     public async Task Import(Context ctx)
@@ -110,12 +112,12 @@ public class ImportExport
 
         try
         {
-            var dm = await ctx.Cache.GetOrCreateDmChannel(ctx.Rest, ctx.Author.Id);
+            var dm = await _dmCache.GetOrCreateDmChannel(ctx.Author.Id);
 
-            var msg = await ctx.Rest.CreateMessage(dm.Id,
+            var msg = await ctx.Rest.CreateMessage(dm,
                 new MessageRequest { Content = $"{Emojis.Success} Here you go!" },
                 new[] { new MultipartFile("system.json", stream, null) });
-            await ctx.Rest.CreateMessage(dm.Id, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
+            await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
 
             // If the original message wasn't posted in DMs, send a public reminder
             if (ctx.Channel.Type != Channel.ChannelType.Dm)

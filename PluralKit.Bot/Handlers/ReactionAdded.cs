@@ -26,10 +26,11 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
     private readonly ILogger _logger;
     private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
+    private readonly PrivateChannelService _dmCache;
 
     public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo,
                          CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, Cluster cluster,
-                         DiscordApiClient rest, EmbedService embeds)
+                         DiscordApiClient rest, EmbedService embeds, PrivateChannelService dmCache)
     {
         _db = db;
         _repo = repo;
@@ -40,6 +41,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         _rest = rest;
         _embeds = embeds;
         _logger = logger.ForContext<ReactionAdded>();
+        _dmCache = dmCache;
     }
 
     public async Task Handle(int shardId, MessageReactionAddEvent evt)
@@ -168,9 +170,9 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         // Try to DM the user info about the message
         try
         {
-            var dm = await _cache.GetOrCreateDmChannel(_rest, evt.UserId);
+            var dm = await _dmCache.GetOrCreateDmChannel(evt.UserId);
             if (msg.Member != null)
-                await _rest.CreateMessage(dm.Id, new MessageRequest
+                await _rest.CreateMessage(dm, new MessageRequest
                 {
                     Embed = await _embeds.CreateMemberEmbed(
                         msg.System,
@@ -182,7 +184,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                 });
 
             await _rest.CreateMessage(
-                dm.Id,
+                dm,
                 new MessageRequest { Embed = await _embeds.CreateMessageInfoEmbed(msg, true) }
             );
         }
@@ -234,15 +236,15 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             // If not, tell them in DMs (if we can)
             try
             {
-                var dm = await _cache.GetOrCreateDmChannel(_rest, evt.UserId);
-                await _rest.CreateMessage(dm.Id,
+                var dm = await _dmCache.GetOrCreateDmChannel(evt.UserId);
+                await _rest.CreateMessage(dm,
                     new MessageRequest
                     {
                         Content =
                             $"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:"
                     });
                 await _rest.CreateMessage(
-                    dm.Id,
+                    dm,
                     new MessageRequest { Content = $"<@{msg.Message.Sender}>".AsCode() }
                 );
             }

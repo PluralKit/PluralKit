@@ -28,12 +28,13 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
     private readonly DiscordApiClient _rest;
     private readonly ILifetimeScope _services;
     private readonly CommandTree _tree;
+    private readonly PrivateChannelService _dmCache;
 
     public MessageCreated(LastMessageCacheService lastMessageCache, LoggerCleanService loggerClean,
                           IMetrics metrics, ProxyService proxy,
                           CommandTree tree, ILifetimeScope services, IDatabase db, BotConfig config,
                           ModelRepository repo, IDiscordCache cache,
-                          Bot bot, Cluster cluster, DiscordApiClient rest)
+                          Bot bot, Cluster cluster, DiscordApiClient rest, PrivateChannelService dmCache)
     {
         _lastMessageCache = lastMessageCache;
         _loggerClean = loggerClean;
@@ -48,6 +49,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         _bot = bot;
         _cluster = cluster;
         _rest = rest;
+        _dmCache = dmCache;
     }
 
     // for now, only return error messages for explicit commands
@@ -65,6 +67,10 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (evt.Author.Id == await _cache.GetOwnUser()) return;
         if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
         if (IsDuplicateMessage(evt)) return;
+
+        // spawn off saving the private channel into another thread
+        // it is not a fatal error if this fails, and it shouldn't block message processing
+        _ = _dmCache.TrySavePrivateChannel(evt);
 
         var guild = evt.GuildId != null ? await _cache.GetGuild(evt.GuildId.Value) : null;
         var channel = await _cache.GetChannel(evt.ChannelId);

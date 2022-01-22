@@ -43,6 +43,7 @@ public class BotModule: Module
         }).AsSelf().SingleInstance();
         builder.RegisterType<Cluster>().AsSelf().SingleInstance();
         builder.Register(c => { return new MemoryDiscordCache(); }).AsSelf().As<IDiscordCache>().SingleInstance();
+        builder.RegisterType<PrivateChannelService>().AsSelf().SingleInstance();
 
         builder.Register(c =>
         {

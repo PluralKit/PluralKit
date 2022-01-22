@@ -24,7 +24,8 @@ public partial class ModelRepository
         var query = new Query("accounts")
             .Select("systems.*")
             .LeftJoin("systems", "systems.id", "accounts.system")
-            .Where("uid", accountId);
+            .Where("uid", accountId)
+            .WhereNotNull("system");
         return _db.QueryFirst<PKSystem?>(query);
     }
 
@@ -111,10 +112,13 @@ public partial class ModelRepository
         // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
         // This is used in import/export, although the pk;link command checks for this case beforehand
 
+        // update 2022-01: the accounts table is now independent of systems
+        // we MUST check for the presence of a system before inserting, or it will move the new account to the current system
+
         var query = new Query("accounts").AsInsert(new { system, uid = accountId });
+        await _db.ExecuteQuery(conn, query, "on conflict (uid) do update set system = @p0");
 
         _logger.Information("Linked account {UserId} to {SystemId}", accountId, system);
-        await _db.ExecuteQuery(conn, query, "on conflict do nothing");
 
         _ = _dispatch.Dispatch(system, new UpdateDispatchData
         {
@@ -125,7 +129,10 @@ public partial class ModelRepository
 
     public async Task RemoveAccount(SystemId system, ulong accountId)
     {
-        var query = new Query("accounts").AsDelete().Where("uid", accountId).Where("system", system);
+        var query = new Query("accounts").AsUpdate(new
+        {
+            system = (ulong?)null
+        }).Where("uid", accountId).Where("system", system);
         await _db.ExecuteQuery(query);
         _logger.Information("Unlinked account {UserId} from {SystemId}", accountId, system);
         _ = _dispatch.Dispatch(system, new UpdateDispatchData
