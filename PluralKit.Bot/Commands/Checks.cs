@@ -15,10 +15,8 @@ public class Checks
 {
     private readonly BotConfig _botConfig;
     private readonly IDiscordCache _cache;
-    private readonly IDatabase _db;
     private readonly ProxyMatcher _matcher;
     private readonly ProxyService _proxy;
-    private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
 
     private readonly PermissionSet[] requiredPermissions =
@@ -28,13 +26,10 @@ public class Checks
         PermissionSet.ManageWebhooks, PermissionSet.ReadMessageHistory
     };
 
-    public Checks(DiscordApiClient rest, IDiscordCache cache, IDatabase db, ModelRepository repo,
-                  BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher)
+    public Checks(DiscordApiClient rest, IDiscordCache cache, BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher)
     {
         _rest = rest;
         _cache = cache;
-        _db = db;
-        _repo = repo;
         _botConfig = botConfig;
         _proxy = proxy;
         _matcher = matcher;
@@ -216,7 +211,7 @@ public class Checks
         if (messageId == null || channelId == null)
             throw new PKError(failedToGetMessage);
 
-        var proxiedMsg = await _db.Execute(conn => _repo.GetMessage(conn, messageId.Value));
+        var proxiedMsg = await ctx.Database.Execute(conn => ctx.Repository.GetMessage(conn, messageId.Value));
         if (proxiedMsg != null)
         {
             await ctx.Reply($"{Emojis.Success} This message was proxied successfully.");
@@ -250,8 +245,8 @@ public class Checks
             throw new PKError("Unable to get the channel associated with this message.");
 
         // using channel.GuildId here since _rest.GetMessage() doesn't return the GuildId
-        var context = await _repo.GetMessageContext(msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
-        var members = (await _repo.GetProxyMembers(msg.Author.Id, channel.GuildId.Value)).ToList();
+        var context = await ctx.Repository.GetMessageContext(msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
+        var members = (await ctx.Repository.GetProxyMembers(msg.Author.Id, channel.GuildId.Value)).ToList();
 
         // Run everything through the checks, catch the ProxyCheckFailedException, and reply with the error message.
         try

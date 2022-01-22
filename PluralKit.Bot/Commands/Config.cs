@@ -11,13 +11,6 @@ using PluralKit.Core;
 namespace PluralKit.Bot;
 public class Config
 {
-    private readonly ModelRepository _repo;
-
-    public Config(ModelRepository repo)
-    {
-        _repo = repo;
-    }
-
     private record PaginatedConfigItem(string Key, string Description, string? CurrentValue, string DefaultValue);
 
     public async Task ShowConfig(Context ctx)
@@ -141,7 +134,7 @@ public class Config
             return;
         }
         var patch = new AccountPatch { AllowAutoproxy = allow };
-        await _repo.UpdateAccount(ctx.Author.Id, patch);
+        await ctx.Repository.UpdateAccount(ctx.Author.Id, patch);
         await ctx.Reply($"{Emojis.Success} Autoproxy {statusString} for account <@{ctx.Author.Id}>.");
     }
 
@@ -181,7 +174,7 @@ public class Config
             else newTimeout = timeoutPeriod;
         }
 
-        await _repo.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout?.TotalSeconds });
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { LatchTimeout = (int?)newTimeout?.TotalSeconds });
 
         if (newTimeout == null)
             await ctx.Reply($"{Emojis.Success} Latch timeout reset to default ({ProxyMatcher.DefaultLatchExpiryTime.ToTimeSpan().Humanize(4)}).");
@@ -199,7 +192,7 @@ public class Config
 
         if (await ctx.MatchClear())
         {
-            await _repo.UpdateSystemConfig(ctx.System.Id, new() { UiTz = "UTC" });
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { UiTz = "UTC" });
 
             await ctx.Reply($"{Emojis.Success} System time zone cleared (set to UTC).");
             return;
@@ -220,7 +213,7 @@ public class Config
         var msg = $"This will change the system time zone to **{zone.Id}**. The current time is **{currentTime.FormatZoned()}**. Is this correct?";
         if (!await ctx.PromptYesNo(msg, "Change Timezone")) throw Errors.TimezoneChangeCancelled;
 
-        await _repo.UpdateSystemConfig(ctx.System.Id, new() { UiTz = zone.Id });
+        await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { UiTz = zone.Id });
 
         await ctx.Reply($"System time zone changed to **{zone.Id}**.");
     }
@@ -308,7 +301,7 @@ public class Config
             await ctx.Reply(Response(true, ctx.Config.PingsEnabled));
         else
         {
-            await _repo.UpdateSystemConfig(ctx.System.Id, new() { PingsEnabled = value });
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { PingsEnabled = value });
             await ctx.Reply($"Reaction pings have now been {EnabledDisabled(value)}.");
         }
     }
@@ -324,13 +317,13 @@ public class Config
         {
             if (ctx.MatchToggle())
             {
-                await _repo.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = true });
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = true });
 
                 await ctx.Reply("Newly created members will now have their privacy settings set to private.");
             }
             else
             {
-                await _repo.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = false });
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = false });
 
                 await ctx.Reply("Newly created members will now have their privacy settings set to public.");
             }
@@ -348,13 +341,13 @@ public class Config
         {
             if (ctx.MatchToggle())
             {
-                await _repo.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = true });
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = true });
 
                 await ctx.Reply("Newly created groups will now have their privacy settings set to private.");
             }
             else
             {
-                await _repo.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = false });
+                await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = false });
 
                 await ctx.Reply("Newly created groups will now have their privacy settings set to public.");
             }
@@ -372,13 +365,13 @@ public class Config
 
         if (ctx.MatchToggle())
         {
-            await _repo.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = true });
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = true });
 
             await ctx.Reply("Private information will now be **shown** when looking up your own info. Use the `-public` flag to hide it.");
         }
         else
         {
-            await _repo.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = false });
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = false });
 
             await ctx.Reply("Private information will now be **hidden** when looking up your own info. Use the `-private` flag to show it.");
         }

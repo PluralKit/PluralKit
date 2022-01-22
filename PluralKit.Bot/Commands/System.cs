@@ -5,12 +5,10 @@ namespace PluralKit.Bot;
 public class System
 {
     private readonly EmbedService _embeds;
-    private readonly ModelRepository _repo;
 
     public System(EmbedService embeds, ModelRepository repo)
     {
         _embeds = embeds;
-        _repo = repo;
     }
 
     public async Task Query(Context ctx, PKSystem system)
@@ -28,8 +26,8 @@ public class System
         if (systemName != null && systemName.Length > Limits.MaxSystemNameLength)
             throw Errors.StringTooLongError("System name", systemName.Length, Limits.MaxSystemNameLength);
 
-        var system = await _repo.CreateSystem(systemName);
-        await _repo.AddAccount(system.Id, ctx.Author.Id);
+        var system = await ctx.Repository.CreateSystem(systemName);
+        await ctx.Repository.AddAccount(system.Id, ctx.Author.Id);
 
         // TODO: better message, perhaps embed like in groups?
         await ctx.Reply(

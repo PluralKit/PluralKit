@@ -11,15 +11,6 @@ namespace PluralKit.Bot;
 
 public class Autoproxy
 {
-    private readonly IDatabase _db;
-    private readonly ModelRepository _repo;
-
-    public Autoproxy(IDatabase db, ModelRepository repo)
-    {
-        _db = db;
-        _repo = repo;
-    }
-
     public async Task SetAutoproxyMode(Context ctx)
     {
         // no need to check account here, it's already done at CommandTree
@@ -99,8 +90,8 @@ public class Autoproxy
         var fronters = ctx.MessageContext.LastSwitchMembers;
         var relevantMember = ctx.MessageContext.AutoproxyMode switch
         {
-            AutoproxyMode.Front => fronters.Length > 0 ? await _repo.GetMember(fronters[0]) : null,
-            AutoproxyMode.Member => await _repo.GetMember(ctx.MessageContext.AutoproxyMember.Value),
+            AutoproxyMode.Front => fronters.Length > 0 ? await ctx.Repository.GetMember(fronters[0]) : null,
+            AutoproxyMode.Member => await ctx.Repository.GetMember(ctx.MessageContext.AutoproxyMember.Value),
             _ => null
         };
 
@@ -145,9 +136,9 @@ public class Autoproxy
 
     private async Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
     {
-        await _repo.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
+        await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
 
         var patch = new SystemGuildPatch { AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember };
-        await _repo.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, patch);
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, patch);
     }
 }

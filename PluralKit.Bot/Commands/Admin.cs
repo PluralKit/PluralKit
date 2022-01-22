@@ -7,12 +7,10 @@ namespace PluralKit.Bot;
 public class Admin
 {
     private readonly BotConfig _botConfig;
-    private readonly ModelRepository _repo;
 
-    public Admin(BotConfig botConfig, ModelRepository repo)
+    public Admin(BotConfig botConfig)
     {
         _botConfig = botConfig;
-        _repo = repo;
     }
 
     public async Task UpdateSystemId(Context ctx)
@@ -27,14 +25,14 @@ public class Admin
         if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
             throw new PKError($"Invalid new system ID `{newHid}`.");
 
-        var existingSystem = await _repo.GetSystemByHid(newHid);
+        var existingSystem = await ctx.Repository.GetSystemByHid(newHid);
         if (existingSystem != null)
             throw new PKError($"Another system already exists with ID `{newHid}`.");
 
         if (!await ctx.PromptYesNo($"Change system ID of `{target.Hid}` to `{newHid}`?", "Change"))
             throw new PKError("ID change cancelled.");
 
-        await _repo.UpdateSystem(target.Id, new SystemPatch { Hid = newHid });
+        await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Hid = newHid });
         await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
@@ -50,7 +48,7 @@ public class Admin
         if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
             throw new PKError($"Invalid new member ID `{newHid}`.");
 
-        var existingMember = await _repo.GetMemberByHid(newHid);
+        var existingMember = await ctx.Repository.GetMemberByHid(newHid);
         if (existingMember != null)
             throw new PKError($"Another member already exists with ID `{newHid}`.");
 
@@ -60,7 +58,7 @@ public class Admin
         ))
             throw new PKError("ID change cancelled.");
 
-        await _repo.UpdateMember(target.Id, new MemberPatch { Hid = newHid });
+        await ctx.Repository.UpdateMember(target.Id, new MemberPatch { Hid = newHid });
         await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
@@ -76,7 +74,7 @@ public class Admin
         if (!Regex.IsMatch(newHid, "^[a-z]{5}$"))
             throw new PKError($"Invalid new group ID `{newHid}`.");
 
-        var existingGroup = await _repo.GetGroupByHid(newHid);
+        var existingGroup = await ctx.Repository.GetGroupByHid(newHid);
         if (existingGroup != null)
             throw new PKError($"Another group already exists with ID `{newHid}`.");
 
@@ -85,7 +83,7 @@ public class Admin
         ))
             throw new PKError("ID change cancelled.");
 
-        await _repo.UpdateGroup(target.Id, new GroupPatch { Hid = newHid });
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Hid = newHid });
         await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
@@ -97,7 +95,7 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown system.");
 
-        var config = await _repo.GetSystemConfig(target.Id);
+        var config = await ctx.Repository.GetSystemConfig(target.Id);
 
         var currentLimit = config.MemberLimitOverride ?? Limits.MaxMemberCount;
         if (!ctx.HasNext())
@@ -113,7 +111,7 @@ public class Admin
         if (!await ctx.PromptYesNo($"Update member limit from **{currentLimit}** to **{newLimit}**?", "Update"))
             throw new PKError("Member limit change cancelled.");
 
-        await _repo.UpdateSystemConfig(target.Id, new SystemConfigPatch { MemberLimitOverride = newLimit });
+        await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch { MemberLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Member limit updated.");
     }
 
@@ -125,7 +123,7 @@ public class Admin
         if (target == null)
             throw new PKError("Unknown system.");
 
-        var config = await _repo.GetSystemConfig(target.Id);
+        var config = await ctx.Repository.GetSystemConfig(target.Id);
 
         var currentLimit = config.GroupLimitOverride ?? Limits.MaxGroupCount;
         if (!ctx.HasNext())
@@ -141,7 +139,7 @@ public class Admin
         if (!await ctx.PromptYesNo($"Update group limit from **{currentLimit}** to **{newLimit}**?", "Update"))
             throw new PKError("Group limit change cancelled.");
 
-        await _repo.UpdateSystemConfig(target.Id, new SystemConfigPatch { GroupLimitOverride = newLimit });
+        await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch { GroupLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Group limit updated.");
     }
 }

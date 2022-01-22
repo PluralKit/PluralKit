@@ -12,24 +12,20 @@ namespace PluralKit.Bot;
 public class ServerConfig
 {
     private readonly IDiscordCache _cache;
-    private readonly LoggerCleanService _cleanService;
-    private readonly ModelRepository _repo;
 
-    public ServerConfig(LoggerCleanService cleanService, ModelRepository repo, IDiscordCache cache)
+    public ServerConfig(IDiscordCache cache)
     {
-        _cleanService = cleanService;
-        _repo = repo;
         _cache = cache;
     }
 
     public async Task SetLogChannel(Context ctx)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-        var settings = await _repo.GetGuild(ctx.Guild.Id);
+        var settings = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         if (await ctx.MatchClear("the server log channel"))
         {
-            await _repo.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = null });
+            await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = null });
             await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");
             return;
         }
@@ -59,7 +55,7 @@ public class ServerConfig
         if (!perms.HasFlag(PermissionSet.EmbedLinks))
             throw new PKError("PluralKit is missing **Embed Links** permissions in the new log channel.");
 
-        await _repo.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = channel.Id });
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = channel.Id });
         await ctx.Reply($"{Emojis.Success} Proxy logging channel set to <#{channel.Id}>.");
     }
 
@@ -82,7 +78,7 @@ public class ServerConfig
             }
 
         ulong? logChannel = null;
-        var config = await _repo.GetGuild(ctx.Guild.Id);
+        var config = await ctx.Repository.GetGuild(ctx.Guild.Id);
         logChannel = config.LogChannel;
 
         var blacklist = config.LogBlacklist.ToHashSet();
@@ -91,7 +87,7 @@ public class ServerConfig
         else
             blacklist.UnionWith(affectedChannels.Select(c => c.Id));
 
-        await _repo.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogBlacklist = blacklist.ToArray() });
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogBlacklist = blacklist.ToArray() });
 
         await ctx.Reply(
             $"{Emojis.Success} Message logging for the given channels {(enable ? "enabled" : "disabled")}." +
@@ -104,7 +100,7 @@ public class ServerConfig
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        var blacklist = await _repo.GetGuild(ctx.Guild.Id);
+        var blacklist = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         // Resolve all channels from the cache and order by position
         var channels = (await Task.WhenAll(blacklist.Blacklist
@@ -168,7 +164,7 @@ public class ServerConfig
                 affectedChannels.Add(channel);
             }
 
-        var guild = await _repo.GetGuild(ctx.Guild.Id);
+        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         var blacklist = guild.Blacklist.ToHashSet();
         if (shouldAdd)
@@ -176,7 +172,7 @@ public class ServerConfig
         else
             blacklist.ExceptWith(affectedChannels.Select(c => c.Id));
 
-        await _repo.UpdateGuild(ctx.Guild.Id, new GuildPatch { Blacklist = blacklist.ToArray() });
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { Blacklist = blacklist.ToArray() });
 
         await ctx.Reply(
             $"{Emojis.Success} Channels {(shouldAdd ? "added to" : "removed from")} the proxy blacklist.");
@@ -186,9 +182,9 @@ public class ServerConfig
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
-        var botList = string.Join(", ", _cleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
+        var botList = string.Join(", ", LoggerCleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
 
-        var guild = await _repo.GetGuild(ctx.Guild.Id);
+        var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
         bool newValue;
         if (ctx.Match("enable", "on", "yes"))
@@ -205,7 +201,7 @@ public class ServerConfig
                 .Title("Log cleanup settings")
                 .Field(new Embed.Field("Supported bots", botList));
 
-            var guildCfg = await _repo.GetGuild(ctx.Guild.Id);
+            var guildCfg = await ctx.Repository.GetGuild(ctx.Guild.Id);
             if (guildCfg.LogCleanupEnabled)
                 eb.Description(
                     "Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`.");
@@ -216,7 +212,7 @@ public class ServerConfig
             return;
         }
 
-        await _repo.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogCleanupEnabled = newValue });
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogCleanupEnabled = newValue });
 
         if (newValue)
             await ctx.Reply(

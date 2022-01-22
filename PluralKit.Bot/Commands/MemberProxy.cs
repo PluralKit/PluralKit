@@ -6,15 +6,6 @@ namespace PluralKit.Bot;
 
 public class MemberProxy
 {
-    private readonly IDatabase _db;
-    private readonly ModelRepository _repo;
-
-    public MemberProxy(IDatabase db, ModelRepository repo)
-    {
-        _db = db;
-        _repo = repo;
-    }
-
     public async Task Proxy(Context ctx, PKMember target)
     {
         ctx.CheckSystem().CheckOwnMember(target);
@@ -32,7 +23,7 @@ public class MemberProxy
         async Task<bool> WarnOnConflict(ProxyTag newTag)
         {
             var query = "select * from (select *, (unnest(proxy_tags)).prefix as prefix, (unnest(proxy_tags)).suffix as suffix from members where system = @System) as _ where prefix is not distinct from @Prefix and suffix is not distinct from @Suffix and id != @Existing";
-            var conflicts = (await _db.Execute(conn => conn.QueryAsync<PKMember>(query,
+            var conflicts = (await ctx.Database.Execute(conn => conn.QueryAsync<PKMember>(query,
                 new { newTag.Prefix, newTag.Suffix, Existing = target.Id, system = target.System }))).ToList();
 
             if (conflicts.Count <= 0) return true;
@@ -54,7 +45,7 @@ public class MemberProxy
             }
 
             var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(new ProxyTag[0]) };
-            await _repo.UpdateMember(target.Id, patch);
+            await ctx.Repository.UpdateMember(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Proxy tags cleared.");
         }
@@ -86,7 +77,7 @@ public class MemberProxy
             var newTags = target.ProxyTags.ToList();
             newTags.Add(tagToAdd);
             var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray()) };
-            await _repo.UpdateMember(target.Id, patch);
+            await ctx.Repository.UpdateMember(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Added proxy tags {tagToAdd.ProxyString.AsCode()}.");
         }
@@ -104,7 +95,7 @@ public class MemberProxy
             var newTags = target.ProxyTags.ToList();
             newTags.Remove(tagToRemove);
             var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray()) };
-            await _repo.UpdateMember(target.Id, patch);
+            await ctx.Repository.UpdateMember(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Removed proxy tags {tagToRemove.ProxyString.AsCode()}.");
         }
@@ -128,7 +119,7 @@ public class MemberProxy
 
             var newTags = new[] { requestedTag };
             var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags) };
-            await _repo.UpdateMember(target.Id, patch);
+            await ctx.Repository.UpdateMember(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Member proxy tags set to {requestedTag.ProxyString.AsCode()}.");
         }

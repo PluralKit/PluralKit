@@ -23,16 +23,12 @@ public class Groups
     }
 
     private readonly HttpClient _client;
-    private readonly IDatabase _db;
     private readonly DispatchService _dispatch;
     private readonly EmbedService _embeds;
-    private readonly ModelRepository _repo;
 
-    public Groups(IDatabase db, ModelRepository repo, EmbedService embeds, HttpClient client,
+    public Groups(EmbedService embeds, HttpClient client,
                   DispatchService dispatch)
     {
-        _db = db;
-        _repo = repo;
         _embeds = embeds;
         _client = client;
         _dispatch = dispatch;
@@ -48,14 +44,14 @@ public class Groups
             throw new PKError($"Group name too long ({groupName.Length}/{Limits.MaxGroupNameLength} characters).");
 
         // Check group cap
-        var existingGroupCount = await _repo.GetSystemGroupCount(ctx.System.Id);
+        var existingGroupCount = await ctx.Repository.GetSystemGroupCount(ctx.System.Id);
         var groupLimit = ctx.Config.GroupLimitOverride ?? Limits.MaxGroupCount;
         if (existingGroupCount >= groupLimit)
             throw new PKError(
                 $"System has reached the maximum number of groups ({groupLimit}). Please delete unused groups first in order to create new ones.");
 
         // Warn if there's already a group by this name
-        var existingGroup = await _repo.GetGroupByName(ctx.System.Id, groupName);
+        var existingGroup = await ctx.Repository.GetGroupByName(ctx.System.Id, groupName);
         if (existingGroup != null)
         {
             var msg =
@@ -64,8 +60,10 @@ public class Groups
                 throw new PKError("Group creation cancelled.");
         }
 
-        using var conn = await _db.Obtain();
-        var newGroup = await _repo.CreateGroup(ctx.System.Id, groupName);
+        // todo: this is supposed to be a transaction, but it's not used in any useful way
+        // consider removing it?
+        using var conn = await ctx.Database.Obtain();
+        var newGroup = await ctx.Repository.CreateGroup(ctx.System.Id, groupName);
 
         var dispatchData = new JObject();
         dispatchData.Add("name", groupName);
@@ -73,7 +71,7 @@ public class Groups
         if (ctx.Config.GroupDefaultPrivate)
         {
             var patch = new GroupPatch().WithAllPrivacy(PrivacyLevel.Private);
-            await _repo.UpdateGroup(newGroup.Id, patch, conn);
+            await ctx.Repository.UpdateGroup(newGroup.Id, patch, conn);
             dispatchData.Merge(patch.ToJson());
         }
 
@@ -111,7 +109,7 @@ public class Groups
                 $"New group name too long ({newName.Length}/{Limits.MaxMemberNameLength} characters).");
 
         // Warn if there's already a group by this name
-        var existingGroup = await _repo.GetGroupByName(ctx.System.Id, newName);
+        var existingGroup = await ctx.Repository.GetGroupByName(ctx.System.Id, newName);
         if (existingGroup != null && existingGroup.Id != target.Id)
         {
             var msg =
@@ -120,7 +118,7 @@ public class Groups
                 throw new PKError("Group rename cancelled.");
         }
 
-        await _repo.UpdateGroup(target.Id, new GroupPatch { Name = newName });
+        await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Name = newName });
 
         await ctx.Reply($"{Emojis.Success} Group name changed from **{target.Name}** to **{newName}**.");
     }
@@ -172,7 +170,7 @@ public class Groups
         if (await ctx.MatchClear("this group's display name"))
         {
             var patch = new GroupPatch { DisplayName = Partial<string>.Null() };
-            await _repo.UpdateGroup(target.Id, patch);
+            await ctx.Repository.UpdateGroup(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Group display name cleared.");
             if (target.NamePrivacy == PrivacyLevel.Private)
@@ -183,7 +181,7 @@ public class Groups
             var newDisplayName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
 
             var patch = new GroupPatch { DisplayName = Partial<string>.Present(newDisplayName) };
-            await _repo.UpdateGroup(target.Id, patch);
+            await ctx.Repository.UpdateGroup(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Group display name changed.");
         }
@@ -229,7 +227,7 @@ public class Groups
         if (await ctx.MatchClear("this group's description"))
         {
             var patch = new GroupPatch { Description = Partial<string>.Null() };
-            await _repo.UpdateGroup(target.Id, patch);
+            await ctx.Repository.UpdateGroup(target.Id, patch);
             await ctx.Reply($"{Emojis.Success} Group description cleared.");
         }
         else
@@ -239,7 +237,7 @@ public class Groups
                 throw Errors.StringTooLongError("Description", description.Length, Limits.MaxDescriptionLength);
 
             var patch = new GroupPatch { Description = Partial<string>.Present(description) };
-            await _repo.UpdateGroup(target.Id, patch);
+            await ctx.Repository.UpdateGroup(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Group description changed.");
         }
@@ -251,7 +249,7 @@ public class Groups
         {
             ctx.CheckOwnGroup(target);
 
-            await _repo.UpdateGroup(target.Id, new GroupPatch { Icon = null });
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = null });
             await ctx.Reply($"{Emojis.Success} Group icon cleared.");
         }
 
@@ -261,7 +259,7 @@ public class Groups
 
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await _repo.UpdateGroup(target.Id, new GroupPatch { Icon = img.Url });
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Icon = img.Url });
 
             var msg = img.Source switch
             {
@@ -316,7 +314,7 @@ public class Groups
         {
             ctx.CheckOwnGroup(target);
 
-            await _repo.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} Group banner image cleared.");
         }
 
@@ -326,7 +324,7 @@ public class Groups
 
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await _repo.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.Url });
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { BannerImage = img.Url });
 
             var msg = img.Source switch
             {
@@ -382,7 +380,7 @@ public class Groups
             ctx.CheckOwnGroup(target);
 
             var patch = new GroupPatch { Color = Partial<string>.Null() };
-            await _repo.UpdateGroup(target.Id, patch);
+            await ctx.Repository.UpdateGroup(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Group color cleared.");
         }
@@ -413,7 +411,7 @@ public class Groups
             if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
 
             var patch = new GroupPatch { Color = Partial<string>.Present(color.ToLowerInvariant()) };
-            await _repo.UpdateGroup(target.Id, patch);
+            await ctx.Repository.UpdateGroup(target.Id, patch);
 
             await ctx.Reply(embed: new EmbedBuilder()
                 .Title($"{Emojis.Success} Group color changed.")
@@ -490,7 +488,7 @@ public class Groups
 
         async Task SetAll(PrivacyLevel level)
         {
-            await _repo.UpdateGroup(target.Id, new GroupPatch().WithAllPrivacy(level));
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch().WithAllPrivacy(level));
 
             if (level == PrivacyLevel.Private)
                 await ctx.Reply(
@@ -502,7 +500,7 @@ public class Groups
 
         async Task SetLevel(GroupPrivacySubject subject, PrivacyLevel level)
         {
-            await _repo.UpdateGroup(target.Id, new GroupPatch().WithPrivacy(subject, level));
+            await ctx.Repository.UpdateGroup(target.Id, new GroupPatch().WithPrivacy(subject, level));
 
             var subjectName = subject switch
             {
@@ -570,7 +568,7 @@ public class Groups
             throw new PKError(
                 $"Group deletion cancelled. Note that you must reply with your group ID (`{target.Hid}`) *verbatim*.");
 
-        await _repo.DeleteGroup(target.Id);
+        await ctx.Repository.DeleteGroup(target.Id);
 
         await ctx.Reply($"{Emojis.Success} Group deleted.");
     }
@@ -580,6 +578,6 @@ public class Groups
         var system = ctx.System;
         if (system?.Id == target.System)
             return system;
-        return await _repo.GetSystem(target.System)!;
+        return await ctx.Repository.GetSystem(target.System)!;
     }
 }

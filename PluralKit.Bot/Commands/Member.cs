@@ -14,17 +14,13 @@ namespace PluralKit.Bot;
 public class Member
 {
     private readonly HttpClient _client;
-    private readonly IDatabase _db;
     private readonly DispatchService _dispatch;
     private readonly EmbedService _embeds;
-    private readonly ModelRepository _repo;
 
-    public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client,
+    public Member(EmbedService embeds, HttpClient client,
                   DispatchService dispatch)
     {
         _embeds = embeds;
-        _db = db;
-        _repo = repo;
         _client = client;
         _dispatch = dispatch;
     }
@@ -39,23 +35,23 @@ public class Member
             throw Errors.StringTooLongError("Member name", memberName.Length, Limits.MaxMemberNameLength);
 
         // Warn if there's already a member by this name
-        var existingMember = await _repo.GetMemberByName(ctx.System.Id, memberName);
+        var existingMember = await ctx.Repository.GetMemberByName(ctx.System.Id, memberName);
         if (existingMember != null)
         {
             var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
             if (!await ctx.PromptYesNo(msg, "Create")) throw new PKError("Member creation cancelled.");
         }
 
-        await using var conn = await _db.Obtain();
+        await using var conn = await ctx.Database.Obtain();
 
         // Enforce per-system member limit
-        var memberCount = await _repo.GetSystemMemberCount(ctx.System.Id);
+        var memberCount = await ctx.Repository.GetSystemMemberCount(ctx.System.Id);
         var memberLimit = ctx.Config.MemberLimitOverride ?? Limits.MaxMemberCount;
         if (memberCount >= memberLimit)
             throw Errors.MemberLimitReachedError(memberLimit);
 
         // Create the member
-        var member = await _repo.CreateMember(ctx.System.Id, memberName, conn);
+        var member = await ctx.Repository.CreateMember(ctx.System.Id, memberName, conn);
         memberCount++;
 
         JObject dispatchData = new JObject();
@@ -64,7 +60,7 @@ public class Member
         if (ctx.Config.MemberDefaultPrivate)
         {
             var patch = new MemberPatch().WithAllPrivacy(PrivacyLevel.Private);
-            await _repo.UpdateMember(member.Id, patch, conn);
+            await ctx.Repository.UpdateMember(member.Id, patch, conn);
             dispatchData.Merge(patch.ToJson());
         }
 
@@ -75,8 +71,7 @@ public class Member
             try
             {
                 await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
-                await _db.Execute(conn =>
-                    _repo.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }, conn));
+                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }, conn);
 
                 dispatchData.Add("avatar_url", avatarArg.Url);
             }
@@ -95,7 +90,7 @@ public class Member
         await ctx.Reply(
             $"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
         // todo: move this to ModelRepository
-        if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
+        if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
             await ctx.Reply(
                 $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
@@ -118,7 +113,7 @@ public class Member
 
     public async Task ViewMember(Context ctx, PKMember target)
     {
-        var system = await _repo.GetSystem(target.System);
+        var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(
             embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system.Id), ctx.Zone));
     }

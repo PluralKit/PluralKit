@@ -14,11 +14,9 @@ namespace PluralKit.Bot;
 public class SystemEdit
 {
     private readonly HttpClient _client;
-    private readonly ModelRepository _repo;
 
-    public SystemEdit(ModelRepository repo, HttpClient client)
+    public SystemEdit(HttpClient client)
     {
-        _repo = repo;
         _client = client;
     }
 
@@ -54,7 +52,7 @@ public class SystemEdit
 
         if (await ctx.MatchClear("your system's name"))
         {
-            await _repo.UpdateSystem(target.Id, new SystemPatch { Name = null });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = null });
 
             await ctx.Reply($"{Emojis.Success} System name cleared.");
         }
@@ -65,7 +63,7 @@ public class SystemEdit
             if (newSystemName.Length > Limits.MaxSystemNameLength)
                 throw Errors.StringTooLongError("System name", newSystemName.Length, Limits.MaxSystemNameLength);
 
-            await _repo.UpdateSystem(target.Id, new SystemPatch { Name = newSystemName });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = newSystemName });
 
             await ctx.Reply($"{Emojis.Success} System name changed.");
         }
@@ -109,7 +107,7 @@ public class SystemEdit
 
         if (await ctx.MatchClear("your system's description"))
         {
-            await _repo.UpdateSystem(target.Id, new SystemPatch { Description = null });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Description = null });
 
             await ctx.Reply($"{Emojis.Success} System description cleared.");
         }
@@ -119,7 +117,7 @@ public class SystemEdit
             if (newDescription.Length > Limits.MaxDescriptionLength)
                 throw Errors.StringTooLongError("Description", newDescription.Length, Limits.MaxDescriptionLength);
 
-            await _repo.UpdateSystem(target.Id, new SystemPatch { Description = newDescription });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Description = newDescription });
 
             await ctx.Reply($"{Emojis.Success} System description changed.");
         }
@@ -149,7 +147,7 @@ public class SystemEdit
 
         if (await ctx.MatchClear())
         {
-            await _repo.UpdateSystem(target.Id, new SystemPatch { Color = Partial<string>.Null() });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Color = Partial<string>.Null() });
 
             await ctx.Reply($"{Emojis.Success} System color cleared.");
         }
@@ -160,7 +158,7 @@ public class SystemEdit
             if (color.StartsWith("#")) color = color.Substring(1);
             if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
 
-            await _repo.UpdateSystem(target.Id,
+            await ctx.Repository.UpdateSystem(target.Id,
                 new SystemPatch { Color = Partial<string>.Present(color.ToLowerInvariant()) });
 
             await ctx.Reply(embed: new EmbedBuilder()
@@ -202,7 +200,7 @@ public class SystemEdit
 
         if (await ctx.MatchClear("your system's tag"))
         {
-            await _repo.UpdateSystem(target.Id, new SystemPatch { Tag = null });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Tag = null });
 
             await ctx.Reply($"{Emojis.Success} System tag cleared.");
         }
@@ -213,7 +211,7 @@ public class SystemEdit
                 if (newTag.Length > Limits.MaxSystemTagLength)
                     throw Errors.StringTooLongError("System tag", newTag.Length, Limits.MaxSystemTagLength);
 
-            await _repo.UpdateSystem(target.Id, new SystemPatch { Tag = newTag });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Tag = newTag });
 
             await ctx.Reply(
                 $"{Emojis.Success} System tag changed. Member names will now end with {newTag.AsCode()} when proxied.");
@@ -227,7 +225,7 @@ public class SystemEdit
         var setDisabledWarning =
             $"{Emojis.Warn} Your system tag is currently **disabled** in this server. No tag will be applied when proxying.\nTo re-enable the system tag in the current server, type `pk;s servertag -enable`.";
 
-        var settings = await _repo.GetSystemGuild(ctx.Guild.Id, target.Id);
+        var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
         async Task Show(bool raw = false)
         {
@@ -264,7 +262,7 @@ public class SystemEdit
             if (newTag != null && newTag.Length > Limits.MaxSystemTagLength)
                 throw Errors.StringTooLongError("System server tag", newTag.Length, Limits.MaxSystemTagLength);
 
-            await _repo.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = newTag });
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = newTag });
 
             await ctx.Reply(
                 $"{Emojis.Success} System server tag changed. Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
@@ -275,7 +273,7 @@ public class SystemEdit
 
         async Task Clear()
         {
-            await _repo.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = null });
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = null });
 
             await ctx.Reply(
                 $"{Emojis.Success} System server tag cleared. Member names will now end with the global system tag, if there is one set.");
@@ -286,7 +284,7 @@ public class SystemEdit
 
         async Task EnableDisable(bool newValue)
         {
-            await _repo.UpdateSystemGuild(target.Id, ctx.Guild.Id,
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id,
                 new SystemGuildPatch { TagEnabled = newValue });
 
             await ctx.Reply(PrintEnableDisableResult(newValue, newValue != ctx.MessageContext.TagEnabled));
@@ -347,7 +345,7 @@ public class SystemEdit
         {
             ctx.CheckOwnSystem(target);
 
-            await _repo.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = null });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = null });
             await ctx.Reply($"{Emojis.Success} System icon cleared.");
         }
 
@@ -357,7 +355,7 @@ public class SystemEdit
 
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
 
-            await _repo.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.Url });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { AvatarUrl = img.Url });
 
             var msg = img.Source switch
             {
@@ -439,7 +437,7 @@ public class SystemEdit
 
         if (await ctx.MatchClear("your system's banner image"))
         {
-            await _repo.UpdateSystem(target.Id, new SystemPatch { BannerImage = null });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} System banner image cleared.");
         }
 
@@ -447,7 +445,7 @@ public class SystemEdit
         {
             await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url, true);
 
-            await _repo.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.Url });
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = img.Url });
 
             var msg = img.Source switch
             {
@@ -477,7 +475,7 @@ public class SystemEdit
             throw new PKError(
                 $"System deletion cancelled. Note that you must reply with your system ID (`{target.Hid}`) *verbatim*.");
 
-        await _repo.DeleteSystem(target.Id);
+        await ctx.Repository.DeleteSystem(target.Id);
 
         await ctx.Reply($"{Emojis.Success} System deleted.");
     }
@@ -489,7 +487,7 @@ public class SystemEdit
         var guild = await ctx.MatchGuild() ?? ctx.Guild ??
             throw new PKError("You must run this command in a server or pass a server ID.");
 
-        var gs = await _repo.GetSystemGuild(guild.Id, ctx.System.Id);
+        var gs = await ctx.Repository.GetSystemGuild(guild.Id, ctx.System.Id);
 
         string serverText;
         if (guild.Id == ctx.Guild?.Id)
@@ -510,7 +508,7 @@ public class SystemEdit
 
         var newValue = ctx.MatchToggle();
 
-        await _repo.UpdateSystemGuild(ctx.System.Id, guild.Id, new SystemGuildPatch { ProxyEnabled = newValue });
+        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, guild.Id, new SystemGuildPatch { ProxyEnabled = newValue });
 
         if (newValue)
             await ctx.Reply($"Message proxying in {serverText} is now **enabled** for your system.");
@@ -538,7 +536,7 @@ public class SystemEdit
 
         async Task SetLevel(SystemPrivacySubject subject, PrivacyLevel level)
         {
-            await _repo.UpdateSystem(target.Id, new SystemPatch().WithPrivacy(subject, level));
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch().WithPrivacy(subject, level));
 
             var levelExplanation = level switch
             {
@@ -564,7 +562,7 @@ public class SystemEdit
 
         async Task SetAll(PrivacyLevel level)
         {
-            await _repo.UpdateSystem(target.Id, new SystemPatch().WithAllPrivacy(level));
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch().WithAllPrivacy(level));
 
             var msg = level switch
             {

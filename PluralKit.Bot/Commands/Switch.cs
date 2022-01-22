@@ -7,15 +7,6 @@ namespace PluralKit.Bot;
 
 public class Switch
 {
-    private readonly IDatabase _db;
-    private readonly ModelRepository _repo;
-
-    public Switch(IDatabase db, ModelRepository repo)
-    {
-        _db = db;
-        _repo = repo;
-    }
-
     public async Task SwitchDo(Context ctx)
     {
         ctx.CheckSystem();
@@ -42,18 +33,18 @@ public class Switch
                 $"Switch contains too many members ({members.Count} > {Limits.MaxSwitchMemberCount} members).");
 
         // Find the last switch and its members if applicable
-        await using var conn = await _db.Obtain();
-        var lastSwitch = await _repo.GetLatestSwitch(ctx.System.Id);
+        await using var conn = await ctx.Database.Obtain();
+        var lastSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
         if (lastSwitch != null)
         {
-            var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastSwitch.Id);
+            var lastSwitchMembers = ctx.Repository.GetSwitchMembers(conn, lastSwitch.Id);
             // Make sure the requested switch isn't identical to the last one
             if (await lastSwitchMembers.Select(m => m.Id)
                     .SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
                 throw Errors.SameSwitch(members, ctx.LookupContextFor(ctx.System.Id));
         }
 
-        await _repo.AddSwitch(conn, ctx.System.Id, members.Select(m => m.Id).ToList());
+        await ctx.Repository.AddSwitch(conn, ctx.System.Id, members.Select(m => m.Id).ToList());
 
         if (members.Count == 0)
             await ctx.Reply($"{Emojis.Success} Switch-out registered.");
@@ -78,7 +69,7 @@ public class Switch
         if (time.ToInstant() > SystemClock.Instance.GetCurrentInstant()) throw Errors.SwitchTimeInFuture;
 
         // Fetch the last two switches for the system to do bounds checking on
-        var lastTwoSwitches = await _repo.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
+        var lastTwoSwitches = await ctx.Repository.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
 
         // If we don't have a switch to move, don't bother
         if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
@@ -90,7 +81,7 @@ public class Switch
 
         // Now we can actually do the move, yay!
         // But, we do a prompt to confirm.
-        var lastSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
+        var lastSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
         var lastSwitchMemberStr =
             string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
         var lastSwitchTime = lastTwoSwitches[0].Timestamp.ToUnixTimeSeconds(); // .FormatZoned(ctx.System)
@@ -105,7 +96,7 @@ public class Switch
         if (!await ctx.PromptYesNo(msg, "Move Switch")) throw Errors.SwitchMoveCancelled;
 
         // aaaand *now* we do the move
-        await _repo.MoveSwitch(lastTwoSwitches[0].Id, time.ToInstant());
+        await ctx.Repository.MoveSwitch(lastTwoSwitches[0].Id, time.ToInstant());
         await ctx.Reply($"{Emojis.Success} Switch moved to <t:{newSwitchTime}> ({newSwitchDeltaStr} ago).");
     }
 
@@ -130,11 +121,11 @@ public class Switch
         if (members.Select(m => m.Id).Distinct().Count() != members.Count) throw Errors.DuplicateSwitchMembers;
 
         // Find the switch to edit
-        await using var conn = await _db.Obtain();
-        var lastSwitch = await _repo.GetLatestSwitch(ctx.System.Id);
+        await using var conn = await ctx.Database.Obtain();
+        var lastSwitch = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
         // Make sure there's at least one switch
         if (lastSwitch == null) throw Errors.NoRegisteredSwitches;
-        var lastSwitchMembers = _repo.GetSwitchMembers(conn, lastSwitch.Id);
+        var lastSwitchMembers = ctx.Repository.GetSwitchMembers(conn, lastSwitch.Id);
         // Make sure switch isn't being edited to have the members it already does
         if (await lastSwitchMembers.Select(m => m.Id)
                 .SequenceEqualAsync(members.Select(m => m.Id).ToAsyncEnumerable()))
@@ -154,7 +145,7 @@ public class Switch
         if (!await ctx.PromptYesNo(msg, "Edit")) throw Errors.SwitchEditCancelled;
 
         // Actually edit the switch
-        await _repo.EditSwitch(conn, lastSwitch.Id, members.Select(m => m.Id).ToList());
+        await ctx.Repository.EditSwitch(conn, lastSwitch.Id, members.Select(m => m.Id).ToList());
 
         // Tell the user the edit suceeded
         if (members.Count == 0)
@@ -174,16 +165,16 @@ public class Switch
                 $"{Emojis.Warn} This will delete *all registered switches* in your system. Are you sure you want to proceed?";
             if (!await ctx.PromptYesNo(purgeMsg, "Clear Switches"))
                 throw Errors.GenericCancelled();
-            await _repo.DeleteAllSwitches(ctx.System.Id);
+            await ctx.Repository.DeleteAllSwitches(ctx.System.Id);
             await ctx.Reply($"{Emojis.Success} Cleared system switches!");
             return;
         }
 
         // Fetch the last two switches for the system to do bounds checking on
-        var lastTwoSwitches = await _repo.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
+        var lastTwoSwitches = await ctx.Repository.GetSwitches(ctx.System.Id).Take(2).ToListAsync();
         if (lastTwoSwitches.Count == 0) throw Errors.NoRegisteredSwitches;
 
-        var lastSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
+        var lastSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[0].Id));
         var lastSwitchMemberStr =
             string.Join(", ", await lastSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
         var lastSwitchDeltaStr =
@@ -196,7 +187,7 @@ public class Switch
         }
         else
         {
-            var secondSwitchMembers = _db.Execute(conn => _repo.GetSwitchMembers(conn, lastTwoSwitches[1].Id));
+            var secondSwitchMembers = ctx.Database.Execute(conn => ctx.Repository.GetSwitchMembers(conn, lastTwoSwitches[1].Id));
             var secondSwitchMemberStr =
                 string.Join(", ", await secondSwitchMembers.Select(m => m.NameFor(ctx)).ToListAsync());
             var secondSwitchDeltaStr = (SystemClock.Instance.GetCurrentInstant() - lastTwoSwitches[1].Timestamp)
@@ -205,7 +196,7 @@ public class Switch
         }
 
         if (!await ctx.PromptYesNo(msg, "Delete Switch")) throw Errors.SwitchDeleteCancelled;
-        await _repo.DeleteSwitch(lastTwoSwitches[0].Id);
+        await ctx.Repository.DeleteSwitch(lastTwoSwitches[0].Id);
 
         await ctx.Reply($"{Emojis.Success} Switch deleted.");
     }

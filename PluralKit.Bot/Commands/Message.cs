@@ -23,19 +23,15 @@ public class ProxiedMessage
     private readonly IDiscordCache _cache;
     private readonly IClock _clock;
 
-    private readonly IDatabase _db;
     private readonly EmbedService _embeds;
     private readonly LogChannelService _logChannel;
-    private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
     private readonly WebhookExecutorService _webhookExecutor;
 
-    public ProxiedMessage(IDatabase db, ModelRepository repo, EmbedService embeds, IClock clock,
+    public ProxiedMessage(EmbedService embeds, IClock clock,
                           DiscordApiClient rest,
                           WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
     {
-        _db = db;
-        _repo = repo;
         _embeds = embeds;
         _clock = clock;
         _rest = rest;
@@ -85,13 +81,14 @@ public class ProxiedMessage
 
     private async Task<FullMessage> GetMessageToEdit(Context ctx)
     {
-        await using var conn = await _db.Obtain();
+        // todo: is it correct to get a connection here?
+        await using var conn = await ctx.Database.Obtain();
         FullMessage? msg = null;
 
         var (referencedMessage, _) = ctx.MatchMessage(false);
         if (referencedMessage != null)
         {
-            msg = await _repo.GetMessage(conn, referencedMessage.Value);
+            msg = await ctx.Repository.GetMessage(conn, referencedMessage.Value);
             if (msg == null)
                 throw new PKError("This is not a message proxied by PluralKit.");
         }
@@ -105,7 +102,7 @@ public class ProxiedMessage
             if (recent == null)
                 throw new PKSyntaxError("Could not find a recent message to edit.");
 
-            msg = await _repo.GetMessage(conn, recent.Mid);
+            msg = await ctx.Repository.GetMessage(conn, recent.Mid);
             if (msg == null)
                 throw new PKSyntaxError("Could not find a recent message to edit.");
         }
@@ -130,7 +127,7 @@ public class ProxiedMessage
 
     private async Task<PKMessage?> FindRecentMessage(Context ctx)
     {
-        var lastMessage = await _repo.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
+        var lastMessage = await ctx.Repository.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
         if (lastMessage == null)
             return null;
 
@@ -153,7 +150,7 @@ public class ProxiedMessage
 
         var isDelete = ctx.Match("delete") || ctx.MatchFlag("delete");
 
-        var message = await _db.Execute(c => _repo.GetMessage(c, messageId.Value));
+        var message = await ctx.Database.Execute(c => ctx.Repository.GetMessage(c, messageId.Value));
         if (message == null)
         {
             if (isDelete)
@@ -245,7 +242,7 @@ public class ProxiedMessage
 
     private async Task DeleteCommandMessage(Context ctx, ulong messageId)
     {
-        var message = await _repo.GetCommandMessage(messageId);
+        var message = await ctx.Repository.GetCommandMessage(messageId);
         if (message == null)
             throw Errors.MessageNotFound(messageId);
 

@@ -8,15 +8,6 @@ namespace PluralKit.Bot;
 
 public class GroupMember
 {
-    private readonly IDatabase _db;
-    private readonly ModelRepository _repo;
-
-    public GroupMember(IDatabase db, ModelRepository repo)
-    {
-        _db = db;
-        _repo = repo;
-    }
-
     public async Task AddRemoveGroups(Context ctx, PKMember target, Groups.AddRemoveOperation op)
     {
         ctx.CheckSystem().CheckOwnMember(target);
@@ -26,7 +17,7 @@ public class GroupMember
             .Distinct()
             .ToList();
 
-        var existingGroups = (await _repo.GetMemberGroups(target.Id).ToListAsync())
+        var existingGroups = (await ctx.Repository.GetMemberGroups(target.Id).ToListAsync())
             .Select(g => g.Id)
             .Distinct()
             .ToList();
@@ -39,7 +30,7 @@ public class GroupMember
                 .Where(group => !existingGroups.Contains(group))
                 .ToList();
 
-            await _repo.AddGroupsToMember(target.Id, toAction);
+            await ctx.Repository.AddGroupsToMember(target.Id, toAction);
         }
         else if (op == Groups.AddRemoveOperation.Remove)
         {
@@ -47,7 +38,7 @@ public class GroupMember
                 .Where(group => existingGroups.Contains(group))
                 .ToList();
 
-            await _repo.RemoveGroupsFromMember(target.Id, toAction);
+            await ctx.Repository.RemoveGroupsFromMember(target.Id, toAction);
         }
         else
         {
@@ -62,7 +53,7 @@ public class GroupMember
     {
         var pctx = ctx.DirectLookupContextFor(target.System);
 
-        var groups = await _repo.GetMemberGroups(target.Id)
+        var groups = await ctx.Repository.GetMemberGroups(target.Id)
             .Where(g => g.Visibility.CanAccess(pctx))
             .OrderBy(g => (g.DisplayName ?? g.Name), StringComparer.InvariantCultureIgnoreCase)
             .ToListAsync();
@@ -96,7 +87,7 @@ public class GroupMember
             .Distinct()
             .ToList();
 
-        var existingMembersInGroup = (await _db.Execute(conn => conn.QueryMemberList(target.System,
+        var existingMembersInGroup = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.System,
                 new DatabaseViewsExt.ListQueryOptions { GroupFilter = target.Id })))
             .Select(m => m.Id.Value)
             .Distinct()
@@ -109,14 +100,14 @@ public class GroupMember
             toAction = members
                 .Where(m => !existingMembersInGroup.Contains(m.Value))
                 .ToList();
-            await _repo.AddMembersToGroup(target.Id, toAction);
+            await ctx.Repository.AddMembersToGroup(target.Id, toAction);
         }
         else if (op == Groups.AddRemoveOperation.Remove)
         {
             toAction = members
                 .Where(m => existingMembersInGroup.Contains(m.Value))
                 .ToList();
-            await _repo.RemoveMembersFromGroup(target.Id, toAction);
+            await ctx.Repository.RemoveMembersFromGroup(target.Id, toAction);
         }
         else
         {
@@ -154,6 +145,6 @@ public class GroupMember
         var system = ctx.System;
         if (system?.Id == target.System)
             return system;
-        return await _repo.GetSystem(target.System)!;
+        return await ctx.Repository.GetSystem(target.System)!;
     }
 }

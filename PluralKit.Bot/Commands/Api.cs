@@ -16,13 +16,11 @@ public class Api
 
     private readonly BotConfig _botConfig;
     private readonly DispatchService _dispatch;
-    private readonly ModelRepository _repo;
     private readonly PrivateChannelService _dmCache;
 
-    public Api(BotConfig botConfig, ModelRepository repo, DispatchService dispatch, PrivateChannelService dmCache)
+    public Api(BotConfig botConfig, DispatchService dispatch, PrivateChannelService dmCache)
     {
         _botConfig = botConfig;
-        _repo = repo;
         _dispatch = dispatch;
         _dmCache = dmCache;
     }
@@ -32,7 +30,7 @@ public class Api
         ctx.CheckSystem();
 
         // Get or make a token
-        var token = ctx.System.Token ?? await MakeAndSetNewToken(ctx.System);
+        var token = ctx.System.Token ?? await MakeAndSetNewToken(ctx, ctx.System);
 
         try
         {
@@ -65,9 +63,9 @@ public class Api
         }
     }
 
-    private async Task<string> MakeAndSetNewToken(PKSystem system)
+    private async Task<string> MakeAndSetNewToken(Context ctx, PKSystem system)
     {
-        system = await _repo.UpdateSystem(system.Id, new SystemPatch { Token = StringUtils.GenerateToken() });
+        system = await ctx.Repository.UpdateSystem(system.Id, new SystemPatch { Token = StringUtils.GenerateToken() });
         return system.Token;
     }
 
@@ -95,7 +93,7 @@ public class Api
 
             // Make the new token after sending the first DM; this ensures if we can't DM, we also don't end up
             // breaking their existing token as a side effect :)
-            var token = await MakeAndSetNewToken(ctx.System);
+            var token = await MakeAndSetNewToken(ctx, ctx.System);
             await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = token });
 
             if (_botConfig.IsBetaBot)
@@ -132,7 +130,7 @@ public class Api
 
         if (await ctx.MatchClear("your system's webhook URL"))
         {
-            await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = null, WebhookToken = null });
+            await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = null, WebhookToken = null });
 
             await ctx.Reply($"{Emojis.Success} System webhook URL removed.");
             return;
@@ -156,7 +154,7 @@ public class Api
 
         var newToken = StringUtils.GenerateToken();
 
-        await _repo.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = newUrl, WebhookToken = newToken });
+        await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = newUrl, WebhookToken = newToken });
 
         await ctx.Reply($"{Emojis.Success} Successfully the new webhook URL for your system."
                         + $"\n\n{Emojis.Warn} The following token is used to authenticate requests from PluralKit to you."

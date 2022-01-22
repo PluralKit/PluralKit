@@ -9,11 +9,9 @@ namespace PluralKit.Bot;
 public class MemberAvatar
 {
     private readonly HttpClient _client;
-    private readonly ModelRepository _repo;
 
-    public MemberAvatar(ModelRepository repo, HttpClient client)
+    public MemberAvatar(HttpClient client)
     {
-        _repo = repo;
         _client = client;
     }
 
@@ -76,14 +74,14 @@ public class MemberAvatar
     public async Task ServerAvatar(Context ctx, PKMember target)
     {
         ctx.CheckGuildContext();
-        var guildData = await _repo.GetMemberGuild(ctx.Guild.Id, target.Id);
+        var guildData = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
         await AvatarCommandTree(AvatarLocation.Server, ctx, target, guildData);
     }
 
     public async Task Avatar(Context ctx, PKMember target)
     {
         var guildData = ctx.Guild != null
-            ? await _repo.GetMemberGuild(ctx.Guild.Id, target.Id)
+            ? await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id)
             : null;
 
         await AvatarCommandTree(AvatarLocation.Member, ctx, target, guildData);
@@ -159,9 +157,9 @@ public class MemberAvatar
         switch (location)
         {
             case AvatarLocation.Server:
-                return _repo.UpdateMemberGuild(target.Id, ctx.Guild.Id, new MemberGuildPatch { AvatarUrl = url });
+                return ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, new MemberGuildPatch { AvatarUrl = url });
             case AvatarLocation.Member:
-                return _repo.UpdateMember(target.Id, new MemberPatch { AvatarUrl = url });
+                return ctx.Repository.UpdateMember(target.Id, new MemberPatch { AvatarUrl = url });
             default:
                 throw new ArgumentOutOfRangeException($"Unknown avatar location {location}");
         }

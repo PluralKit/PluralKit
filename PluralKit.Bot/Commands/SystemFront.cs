@@ -8,15 +8,11 @@ namespace PluralKit.Bot;
 
 public class SystemFront
 {
-    private readonly IDatabase _db;
     private readonly EmbedService _embeds;
-    private readonly ModelRepository _repo;
 
-    public SystemFront(EmbedService embeds, IDatabase db, ModelRepository repo)
+    public SystemFront(EmbedService embeds)
     {
         _embeds = embeds;
-        _db = db;
-        _repo = repo;
     }
 
     public async Task SystemFronter(Context ctx, PKSystem system)
@@ -24,7 +20,7 @@ public class SystemFront
         if (system == null) throw Errors.NoSystemError;
         ctx.CheckSystemPrivacy(system.Id, system.FrontPrivacy);
 
-        var sw = await _repo.GetLatestSwitch(system.Id);
+        var sw = await ctx.Repository.GetLatestSwitch(system.Id);
         if (sw == null) throw Errors.NoRegisteredSwitches;
 
         await ctx.Reply(embed: await _embeds.CreateFronterEmbed(sw, ctx.Zone, ctx.LookupContextFor(system.Id)));
@@ -35,10 +31,10 @@ public class SystemFront
         if (system == null) throw Errors.NoSystemError;
         ctx.CheckSystemPrivacy(system.Id, system.FrontHistoryPrivacy);
 
-        var totalSwitches = await _repo.GetSwitchCount(system.Id);
+        var totalSwitches = await ctx.Repository.GetSwitchCount(system.Id);
         if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
 
-        var sws = _repo.GetSwitches(system.Id)
+        var sws = ctx.Repository.GetSwitches(system.Id)
             .Scan(new FrontHistoryEntry(null, null),
                 (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
 
@@ -63,7 +59,7 @@ public class SystemFront
 
                     // Fetch member list and format
 
-                    var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id)).ToListAsync();
+                    var members = await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
                     var membersStr = members.Any()
                         ? string.Join(", ", members.Select(m => m.NameFor(ctx)))
                         : "no fronter";
@@ -102,7 +98,7 @@ public class SystemFront
 
         ctx.CheckSystemPrivacy(system.Id, system.FrontHistoryPrivacy);
 
-        var totalSwitches = await _repo.GetSwitchCount(system.Id);
+        var totalSwitches = await ctx.Repository.GetSwitchCount(system.Id);
         if (totalSwitches == 0) throw Errors.NoRegisteredSwitches;
 
         var ignoreNoFronters = ctx.MatchFlag("fo", "fronters-only");
@@ -130,7 +126,7 @@ public class SystemFront
         else
             title.Append($"`{system.Hid}`");
 
-        var frontpercent = await _db.Execute(c => _repo.GetFrontBreakdown(c, system.Id, group?.Id, rangeStart.Value.ToInstant(), now));
+        var frontpercent = await ctx.Database.Execute(c => ctx.Repository.GetFrontBreakdown(c, system.Id, group?.Id, rangeStart.Value.ToInstant(), now));
         await ctx.Reply(embed: await _embeds.CreateFrontPercentEmbed(frontpercent, system, group, ctx.Zone,
             ctx.LookupContextFor(system.Id), title.ToString(), ignoreNoFronters, showFlat));
     }
@@ -140,7 +136,7 @@ public class SystemFront
         var system = ctx.System;
         if (system?.Id == target.System)
             return system;
-        return await _repo.GetSystem(target.System)!;
+        return await ctx.Repository.GetSystem(target.System)!;
     }
 
     private struct FrontHistoryEntry

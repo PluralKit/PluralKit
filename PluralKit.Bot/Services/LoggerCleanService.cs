@@ -80,7 +80,7 @@ public class LoggerCleanService
         _logger = logger.ForContext<LoggerCleanService>();
     }
 
-    public ICollection<LoggerBot> Bots => _bots.Values;
+    public static ICollection<LoggerBot> Bots => _bots.Values;
 
     public async ValueTask HandleLoggerBotCleanup(Message msg)
     {
