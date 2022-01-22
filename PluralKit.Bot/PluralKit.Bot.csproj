@@ -22,8 +22,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Google.Protobuf" Version="3.13.0"/>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.32.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.37.0" PrivateAssets="All"/>
         <PackageReference Include="Humanizer.Core" Version="2.8.26"/>
         <PackageReference Include="Sentry" Version="3.11.1"/>
         <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf Include="../proto/discord.proto" GrpcServices="Client" Link="Protos/discord.proto"/>
     </ItemGroup>
 </Project>

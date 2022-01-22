@@ -54,8 +54,8 @@ public class Init
                 logger.Information("Connecting to database");
                 await services.Resolve<IDatabase>().ApplyMigrations();
 
-                // if we're running single-process, clear any existing shard status from the database
-                await services.Resolve<ModelRepository>().ClearShardStatus();
+                // Clear shard status from Redis
+                await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
             }
 
             // Init the bot instance itself, register handlers and such to the client before beginning to connect

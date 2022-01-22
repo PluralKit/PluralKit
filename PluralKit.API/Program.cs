@@ -12,7 +12,10 @@ public class Program
     {
         InitUtils.InitStatic();
         await BuildInfoService.LoadVersion();
-        await CreateHostBuilder(args).Build().RunAsync();
+        var host = CreateHostBuilder(args).Build();
+        var config = host.Services.GetRequiredService<CoreConfig>();
+        await host.Services.GetRequiredService<RedisService>().InitAsync(config);
+        await host.RunAsync();
     }
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>

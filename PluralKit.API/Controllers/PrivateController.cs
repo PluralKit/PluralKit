@@ -17,19 +17,53 @@ namespace PluralKit.API;
 [Route("private")]
 public class PrivateController: PKControllerBase
 {
-    public PrivateController(IServiceProvider svc) : base(svc) { }
+    private readonly RedisService _redis;
+    public PrivateController(IServiceProvider svc) : base(svc)
+    {
+        _redis = svc.GetRequiredService<RedisService>();
+    }
 
     [HttpGet("meta")]
     public async Task<ActionResult<JObject>> Meta()
     {
-        var shards = await _repo.GetShards();
+        var db = _redis.Connection.GetDatabase();
+        var redisInfo = await db.HashGetAllAsync("pluralkit:shardstatus");
+        var shards = redisInfo.Select(x => Proto.Unmarshal<ShardState>(x.Value));
+
         var stats = await _repo.GetStats();
 
         var o = new JObject();
-        o.Add("shards", shards.ToJSON());
+        o.Add("shards", shards.ToJson());
         o.Add("stats", stats.ToJson());
         o.Add("version", BuildInfoService.Version);
 
         return Ok(o);
+    }
+}
+
+public static class PrivateJsonExt
+{
+    public static JArray ToJson(this IEnumerable<ShardState> shards)
+    {
+        var o = new JArray();
+
+        foreach (var shard in shards)
+        {
+            var s = new JObject();
+            s.Add("id", shard.ShardId);
+
+            if (!shard.Up)
+                s.Add("status", "down");
+            else
+                s.Add("status", "up");
+
+            s.Add("ping", shard.Latency);
+            s.Add("last_heartbeat", shard.LastHeartbeat.ToString());
+            s.Add("last_connection", shard.LastConnection.ToString());
+
+            o.Add(s);
+        }
+
+        return o;
     }
 }

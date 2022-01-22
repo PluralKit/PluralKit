@@ -2,6 +2,22 @@
   "version": 1,
   "dependencies": {
     "net6.0": {
+      "Google.Protobuf": {
+        "type": "Direct",
+        "requested": "[3.13.0, )",
+        "resolved": "3.13.0",
+        "contentHash": "/6VgKCh0P59x/rYsBkCvkUanF0TeUYzwV9hzLIWgt23QRBaKHoxaaMkidEWhKibLR88c3PVCXyyrx9Xlb+Ne6w==",
+        "dependencies": {
+          "System.Memory": "4.5.2",
+          "System.Runtime.CompilerServices.Unsafe": "4.5.2"
+        }
+      },
+      "Grpc.Tools": {
+        "type": "Direct",
+        "requested": "[2.37.0, )",
+        "resolved": "2.37.0",
+        "contentHash": "cud/urkbw3QoQ8+kNeCy2YI0sHrh7td/1cZkVbH6hDLIXX7zzmJbV/KjYSiqiYtflQf+S5mJPLzDQWScN/QdDg=="
+      },
       "Microsoft.AspNetCore.Mvc.NewtonsoftJson": {
         "type": "Direct",
         "requested": "[3.1.0, )",
@@ -1167,6 +1183,11 @@
           "System.Threading": "4.3.0"
         }
       },
+      "System.Memory": {
+        "type": "Transitive",
+        "resolved": "4.5.2",
+        "contentHash": "fvq1GNmUFwbKv+aLVYYdgu/+gc8Nu9oFujOxIjPrsf+meis9JBzTPDL6aP/eeGOz9yPj6rRLUbOjKMpsMEWpNg=="
+      },
       "System.Net.Http": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -1685,6 +1706,7 @@
           "Autofac.Extensions.DependencyInjection": "7.1.0",
           "Dapper": "2.0.35",
           "Dapper.Contrib": "2.0.35",
+          "Google.Protobuf": "3.13.0",
           "Microsoft.Extensions.Caching.Memory": "3.1.10",
           "Microsoft.Extensions.Configuration": "3.1.10",
           "Microsoft.Extensions.Configuration.Binder": "3.1.10",
