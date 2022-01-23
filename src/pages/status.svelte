@@ -20,12 +20,13 @@
     let valid = false;
 
     const get = async () => {
-        const pkdata = await fetch("https://api.pluralkit.me/v1/meta").then(x => x.json());
+        const pkdata = await fetch("https://api.pluralkit.me/private/meta").then(x => x.json());
             shards = pkdata.shards.sort((x, y) => (x.id > y.id) ? 1 : -1);
             let pings = 0;
             shards = shards.map(shard => {
-                    shard.ping = Math.trunc(shard.ping * 1000);
                     pings += shard.ping;
+                    shard.last_connection = new Date(Number(shard.last_connection) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
+                    shard.last_heartbeat = new Date(Number(shard.last_heartbeat) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
                     return shard;
             });
     
@@ -102,8 +103,9 @@
             <br>
             <span>Status: <b>{ foundShard.status }</b></span><br>
             <span>Latency: { foundShard.ping }ms</span><br>
-            <span>Last connection: { new Date(foundShard.last_connection).toUTCString()?.match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift() }</span><br>
-            <span>Last heartbeat: { new Date(foundShard.last_heartbeat).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift() }</span><br>
+			<span>Disconnection count: { foundShard.disconnection_count }</span><br>
+            <span>Last connection: { foundShard.last_connection }</span><br>
+            <span>Last heartbeat: { foundShard.last_heartbeat }</span><br>
         {/if}
     </details>
     <br><br>

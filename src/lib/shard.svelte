@@ -34,8 +34,9 @@
 			<br>
 			<span>Status: <b>{ shard.status }</b></span><br>
 			<span>Latency: { shard.ping }ms</span><br>
-			<span>Last connection: { new Date(shard.last_connection).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift() }</span><br>
-			<span>Last heartbeat: { new Date(shard.last_heartbeat).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift() }</span><br>
+			<span>Disconnection count: { shard.disconnection_count }</span><br>
+			<span>Last connection: { shard.last_connection }</span><br>
+			<span>Last heartbeat: { shard.last_heartbeat }</span><br>
 			<br>
 		</div>
 	{/if}
