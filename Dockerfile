@@ -10,6 +10,7 @@ COPY PluralKit.Core/PluralKit.Core.csproj /app/PluralKit.Core/
 COPY PluralKit.ScheduledTasks/PluralKit.ScheduledTasks.csproj /app/PluralKit.ScheduledTasks/
 COPY PluralKit.Tests/PluralKit.Tests.csproj /app/PluralKit.Tests/
 COPY .git/ /app/.git
+COPY proto/ /app/proto
 RUN dotnet restore PluralKit.sln
 
 # Copy the rest of the code and build
