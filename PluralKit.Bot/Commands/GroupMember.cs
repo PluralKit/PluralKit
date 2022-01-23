@@ -1,5 +1,7 @@
 using System.Text;
 
+using Humanizer;
+
 using Myriad.Builders;
 
 using PluralKit.Core;
@@ -134,7 +136,7 @@ public class GroupMember
         else
             title.Append($"`{targetSystem.Hid}`");
         if (opts.Search != null)
-            title.Append($" matching **{opts.Search}**");
+            title.Append($" matching **{opts.Search.Truncate(100)}**");
 
         await ctx.RenderMemberList(ctx.LookupContextFor(target.System), target.System, title.ToString(),
             target.Color, opts);

@@ -1,5 +1,7 @@
 using System.Text;
 
+using Humanizer;
+
 using NodaTime;
 
 using PluralKit.Core;
@@ -47,7 +49,7 @@ public class ListOptions
 
         if (Search != null)
         {
-            str.Append($", searching for \"{Search}\"");
+            str.Append($", searching for \"{Search.Truncate(100)}\"");
             if (SearchDescription) str.Append(" (including description)");
         }
 

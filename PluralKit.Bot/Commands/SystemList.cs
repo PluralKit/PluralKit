@@ -1,5 +1,7 @@
 using System.Text;
 
+using Humanizer;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -35,7 +37,7 @@ public class SystemList
             title.Append($"`{target.Hid}`");
 
         if (opts.Search != null)
-            title.Append($" matching **{opts.Search}**");
+            title.Append($" matching **{opts.Search.Truncate(100)}**");
 
         return title.ToString();
     }
