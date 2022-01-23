@@ -58,6 +58,7 @@ public static class PrivateJsonExt
                 s.Add("status", "up");
 
             s.Add("ping", shard.Latency);
+            s.Add("disconnection_count", shard.DisconnectionCount);
             s.Add("last_heartbeat", shard.LastHeartbeat.ToString());
             s.Add("last_connection", shard.LastConnection.ToString());
 
