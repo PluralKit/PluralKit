@@ -31,6 +31,7 @@
 	>{ shard.id }</div>
 	{#if hover == shard.id}
 		<div class="more-info">
+			<br>
 			<h3>Shard { shard.id }</h3>
 			<br>
 			<span>Status: <b>{ shard.status }</b></span><br>
