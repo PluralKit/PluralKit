@@ -7,6 +7,7 @@
   import Footer from './lib/Footer.svelte';
   import Public from "./pages/Public.svelte";
   import Main from "./pages/profiles/Main.svelte";
+  import Status from './pages/status.svelte';
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
@@ -64,5 +65,6 @@
     <Route path = "profile/g">
       hey please provide a group
     </Route>
+    <Route path="status"><Status /></Route>
   <Footer />
 </Router>
