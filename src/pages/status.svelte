@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Container } from 'sveltestrap';
+    import { Container, Row, Col, Card, CardHeader, CardTitle, CardBody, Input, Button } from 'sveltestrap';
+    import FaInfoCircle from 'svelte-icons/fa/FaInfoCircle.svelte'
     import ShardItem from '../lib/shard.svelte';
 
     let hover = null;
@@ -82,41 +83,60 @@
     
 </script>
 
-<Container>
-    <h1>Bot status</h1>
-    <span>{@html currentCommitMsg}</span>
-    <br>
-    <noscript>Please enable JavaScript to view this page!</noscript>
+<Container fluid>
+    <Row>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
+            <Card class="mb-4">
+                <CardHeader>
+                    <CardTitle style="margin-top: 8px; outline: none;">
+                        <div class="icon d-inline-block">
+                            <FaInfoCircle />
+                        </div>
+                        Bot status
+                    </CardTitle>
+                </CardHeader>
+                <CardBody>
+                    <span>{@html currentCommitMsg}</span>
+                    <br>
+                    <noscript>Please enable JavaScript to view this page!</noscript>
 
-    { shards.length } shards ({ shards.filter(x => x.status == "up").length } up) <br>
-    Average latency: { pingAverage }ms
-    <br><br>
-    All times in UTC. More statistics available at <a href="https://stats.pluralkit.me">https://stats.pluralkit.me</a>
-    <br><br>
-    <details>
-        <summary><b>Find my shard</b></summary>
-        <br>
-        Enter a server ID or a message link to find the shard currently assigned to your server:
-        <br>
-        <input bind:value={findShardInput} on:input={shardInfoHandler} />
-        <br><br>
-        <span>{ shardInfoMsg }</span>
-        {#if valid}
-            <h3>Your shard is: Shard { foundShard.id }</h3>
-            <br>
-            <span>Status: <b>{ foundShard.status }</b></span><br>
-            <span>Latency: { foundShard.ping }ms</span><br>
-			<span>Disconnection count: { foundShard.disconnection_count }</span><br>
-            <span>Last connection: { foundShard.last_connection }</span><br>
-            <span>Last heartbeat: { foundShard.last_heartbeat }</span><br>
-        {/if}
-    </details>
-    <br><br>
-    <h2>Shard status</h2>
-
-    <span>{ message }</span>
-
-    {#each shards as shard}
-        <ShardItem shard={shard} bind:hover={hover} />
-    {/each}
+                    { shards.length } shards ({ shards.filter(x => x.status == "up").length } up) <br>
+                    Average latency: { pingAverage }ms
+                    <br><br>
+                    All times in UTC. More statistics available at <a href="https://stats.pluralkit.me">https://stats.pluralkit.me</a>
+                    <br><br>
+                    <details>
+                        <summary><b>Find my shard</b></summary>
+                        <br>
+                        Enter a server ID or a message link to find the shard currently assigned to your server:
+                        <br>
+                        <input bind:value={findShardInput} on:input={shardInfoHandler} />
+                        <br><br>
+                        <span>{ shardInfoMsg }</span>
+                        {#if valid}
+                            <h3>Your shard is: Shard { foundShard.id }</h3>
+                            <br>
+                            <span>Status: <b>{ foundShard.status }</b></span><br>
+                            <span>Latency: { foundShard.ping }ms</span><br>
+                            <span>Disconnection count: { foundShard.disconnection_count }</span><br>
+                            <span>Last connection: { foundShard.last_connection }</span><br>
+                            <span>Last heartbeat: { foundShard.last_heartbeat }</span><br>
+                        {/if}
+                    </details>
+                </CardBody>
+            </Card>
+        </Col>
+    </Row>
+    <Row>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
+            <Card class="mb-4">
+                <CardBody>
+                    <span>{ message }</span>
+                    {#each shards as shard}
+                        <ShardItem shard={shard} bind:hover={hover} />
+                    {/each}
+                </CardBody>
+            </Card>
+        </Col>
+    </Row>
 </Container>
