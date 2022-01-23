@@ -49,6 +49,9 @@
 		display: block;
 		float: left;
 	}
+	.shard:hover {
+		cursor: pointer;
+	}
 	.shard {
 		color: #fff;
 		display: block;
