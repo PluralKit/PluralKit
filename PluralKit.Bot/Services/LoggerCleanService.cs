@@ -49,7 +49,7 @@ public class LoggerCleanService
         new LoggerBot("Pancake", 239631525350604801, fuzzyExtractFunc: ExtractPancake),
         new LoggerBot("Logger", 298822483060981760, ExtractLogger), // webhook
         new LoggerBot("Patron Logger", 579149474975449098, ExtractLogger), // webhook (?)
-        new LoggerBot("Dyno", 155149108183695360, ExtractDyno), // webhook
+        new LoggerBot("Dyno", 155149108183695360, ExtractDyno, applicationId: 161660517914509312), // webhook
         new LoggerBot("Dyno Premium", 168274283414421504, ExtractDyno), // webhook
         new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja), // webhook
         new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot),
@@ -65,6 +65,9 @@ public class LoggerCleanService
         new LoggerBot("ProBot", 282859044593598464, fuzzyExtractFunc: ExtractProBot), // webhook
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
     }.ToDictionary(b => b.Id);
+
+    private static Dictionary<ulong, LoggerBot> _botsByApplicationId
+        => _bots.Values.ToDictionary(b => b.ApplicationId);
 
     private readonly IDiscordCache _cache;
     private readonly DiscordApiClient _client;
@@ -92,7 +95,7 @@ public class LoggerCleanService
         // If this message is from a *webhook*, check if the application ID matches one of the bots we know
         // If it's from a *bot*, check the bot ID to see if we know it.
         LoggerBot bot = null;
-        if (msg.WebhookId != null && msg.ApplicationId != null) _bots.TryGetValue(msg.ApplicationId.Value, out bot);
+        if (msg.WebhookId != null && msg.ApplicationId != null) _botsByApplicationId.TryGetValue(msg.ApplicationId.Value, out bot);
         else if (msg.Author.Bot) _bots.TryGetValue(msg.Author.Id, out bot);
 
         // If we didn't find anything before, or what we found is an unsupported bot, bail
@@ -376,18 +379,21 @@ public class LoggerCleanService
     public class LoggerBot
     {
         public ulong Id;
+        public ulong ApplicationId;
         public string Name;
 
         public Func<Message, ulong?> ExtractFunc;
         public Func<Message, FuzzyExtractResult?> FuzzyExtractFunc;
 
         public LoggerBot(string name, ulong id, Func<Message, ulong?> extractFunc = null,
-                         Func<Message, FuzzyExtractResult?> fuzzyExtractFunc = null)
+                         Func<Message, FuzzyExtractResult?> fuzzyExtractFunc = null,
+                         ulong? applicationId = null)
         {
             Name = name;
             Id = id;
             FuzzyExtractFunc = fuzzyExtractFunc;
             ExtractFunc = extractFunc;
+            ApplicationId = applicationId ?? id;
         }
     }
 
