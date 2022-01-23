@@ -11,6 +11,7 @@
         id: 1,
         status: 1,
         ping:"",
+        disconnection_count:0,
         last_connection:0,
         last_heartbeat:0.
     };

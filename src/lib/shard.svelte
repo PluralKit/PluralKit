@@ -5,6 +5,7 @@
 		id: 1,
 		status: "",
 		ping:0,
+		disconnection_count:0,
 		last_connection:0,
 		last_heartbeat:0.
 	};
