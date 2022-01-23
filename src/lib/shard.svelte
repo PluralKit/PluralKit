@@ -1,5 +1,5 @@
 <script lang="ts">
-	let isHovering = false;
+	export let hover;
 
 	export let shard = {
 		id: 1,
@@ -25,11 +25,11 @@
 
 <div class="wrapper">
 	<div
-		on:click={() => isHovering = !isHovering}
+		on:click={() => hover = (hover != shard.id) ? shard.id : null}
 		class="shard" id={shard.id.toString()}
 		style={color}
 	>{ shard.id }</div>
-	{#if isHovering}
+	{#if hover == shard.id}
 		<div class="more-info">
 			<h3>Shard { shard.id }</h3>
 			<br>

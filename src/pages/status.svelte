@@ -2,6 +2,8 @@
     import { Container } from 'sveltestrap';
     import ShardItem from '../lib/shard.svelte';
 
+    let hover = null;
+
     let message = "Loading...";
     let shards = [];
     let pingAverage = "";
@@ -115,6 +117,6 @@
     <span>{ message }</span>
 
     {#each shards as shard}
-        <ShardItem shard={shard} />
+        <ShardItem shard={shard} bind:hover={hover} />
     {/each}
 </Container>
