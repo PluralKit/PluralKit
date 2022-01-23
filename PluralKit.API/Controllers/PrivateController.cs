@@ -28,7 +28,7 @@ public class PrivateController: PKControllerBase
     {
         var db = _redis.Connection.GetDatabase();
         var redisInfo = await db.HashGetAllAsync("pluralkit:shardstatus");
-        var shards = redisInfo.Select(x => Proto.Unmarshal<ShardState>(x.Value));
+        var shards = redisInfo.Select(x => Proto.Unmarshal<ShardState>(x.Value)).OrderBy(x => x.ShardId);
 
         var stats = await _repo.GetStats();
 
