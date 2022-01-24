@@ -16,6 +16,8 @@ internal class Startup
         var config = InitUtils.BuildConfiguration(args).Build();
         InitUtils.InitStatic();
 
+        await BuildInfoService.LoadVersion();
+
         var services = BuildContainer(config);
         services.Resolve<TaskHandler>().Run();
 

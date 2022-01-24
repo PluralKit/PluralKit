@@ -52,6 +52,7 @@ public class LoggingModule: Module
 
         var logCfg = _cfg
             .Enrich.FromLogContext()
+            .Enrich.WithProperty("GitCommitHash", BuildInfoService.FullVersion)
             .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
             .Enrich.WithProperty("Component", _component)
             .MinimumLevel.Is(config.ConsoleLogLevel)

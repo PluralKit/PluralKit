@@ -16,20 +16,20 @@ namespace PluralKit.Bot;
 
 public class Init
 {
-    private static Task Main(string[] args)
+    private static async Task Main(string[] args)
     {
         // Load configuration and run global init stuff
         var config = InitUtils.BuildConfiguration(args).Build();
         InitUtils.InitStatic();
 
+        // init version service
+        await BuildInfoService.LoadVersion();
+
         // Set up DI container and modules
         var services = BuildContainer(config);
 
-        return RunWrapper(services, async ct =>
+        await RunWrapper(services, async ct =>
         {
-            // init version service
-            await BuildInfoService.LoadVersion();
-
             var logger = services.Resolve<ILogger>().ForContext<Init>();
 
             // Initialize Sentry SDK, and make sure it gets dropped at the end
