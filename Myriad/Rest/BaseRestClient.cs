@@ -231,8 +231,11 @@ public class BaseRestClient: IAsyncDisposable
         var body = await response.Content.ReadAsStringAsync();
         var apiError = TryParseApiError(body);
         if (apiError != null)
+        {
+            using var _ = LogContext.PushProperty("DiscordErrorBody", body);
             _logger.Warning("Discord API error: {DiscordErrorCode} {DiscordErrorMessage}", apiError.Code,
                 apiError.Message);
+        }
 
         throw CreateDiscordException(response, body, apiError);
     }
