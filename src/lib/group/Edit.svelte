@@ -42,7 +42,7 @@
         const api = new PKAPI();
         try {
             let res = await api.patchGroup({token: localStorage.getItem("pk-token"), id: group.id, data: data});
-            group = res;
+            group = {...group, ...res};
             err = [];
             update();
             editMode = false;
