@@ -55,6 +55,13 @@ public static class ContextChecksExt
         return ctx;
     }
 
+    public static Context CheckSystem(this Context ctx, PKSystem system)
+    {
+        if (system == null)
+            throw Errors.NoSystemError;
+        return ctx;
+    }
+
     public static Context CheckNoSystem(this Context ctx)
     {
         if (ctx.System != null)
