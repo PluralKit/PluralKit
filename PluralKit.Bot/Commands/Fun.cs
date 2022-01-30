@@ -28,6 +28,9 @@ public class Fun
         ctx.Reply(
             "*A ball of green light appears above your head and flies towards your enemy, exploding on contact.*");
 
+    public Task Rool(Context ctx) => 
+        ctx.Reply("*\"What the fuck is a Pokémon?\"*");
+
     public Task Error(Context ctx)
     {
         if (ctx.Match("message"))
