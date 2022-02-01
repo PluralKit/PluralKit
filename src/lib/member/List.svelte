@@ -4,14 +4,14 @@
     import { onMount } from 'svelte';
     import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
     import { useParams } from 'svelte-navigator';
-    import type Member from '../../api/member';
-    import type Group from '../../api/group'
-    import PKAPI from '../../api';
     import CardsHeader from '../CardsHeader.svelte';
     import ListPagination from '../ListPagination.svelte';
     import Svelecte, { addFormatter } from 'svelecte';
     import FaLock from 'svelte-icons/fa/FaLock.svelte';
     import Body from './Body.svelte';
+
+    import { Member, Group } from '../../api/types';
+    import api from '../../api';
 
     export let isPublic: boolean;
 
@@ -43,12 +43,10 @@
         if (token || isPublic) fetchMembers();
     });
 
-    const api = new PKAPI();
-
     async function fetchMembers() {
         listLoading = true;
         try {
-            const res: Member[] = await api.getMemberList({token: !isPublic && token, id: isPublic && id});
+            const res: Member[] = await api().systems(isPublic ? id : "@me").members.get({ auth: !isPublic });
             list = res;
             listLoading = false;
         } catch (error) {

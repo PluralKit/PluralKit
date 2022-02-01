@@ -4,8 +4,8 @@
     import autosize from 'svelte-autosize';
     import moment from 'moment';
 
-    import Member from '../../api/member';
-    import PKAPI from '../../api';
+    import { Member } from '../../api/types'
+    import api from '../../api';
 
     let loading: boolean = false;
     export let member: Member;
@@ -13,7 +13,7 @@
 
     let err: string[] = [];
 
-    let input = new Member({name: member.name, display_name: member.display_name, birthday: member.birthday, pronouns: member.pronouns, color: member.color, description: member.description, banner: member.banner, avatar_url: member.avatar_url});
+    let input: Member = {...member};
 
     const dispatch = createEventDispatcher();
 
@@ -54,9 +54,8 @@
         if (err.length > 0) return;
 
         loading = true;
-        const api = new PKAPI();
         try {
-            let res = await api.patchMember({token: localStorage.getItem("pk-token"), id: member.id, data: data});
+            let res = await api().members(member.id).patch({data});
             member = res;
             err = [];
             update();
@@ -89,9 +88,8 @@
             return;
         }
         loading = true;
-        const api = new PKAPI();
         try {
-            await api.deleteMember({token: localStorage.getItem("pk-token"), id: member.id});
+            await api().members(member.id).delete();
             deleteErr = null;
             toggleDeleteModal();
             loading = false;

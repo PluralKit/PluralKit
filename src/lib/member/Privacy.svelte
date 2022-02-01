@@ -1,8 +1,9 @@
 <script lang="ts">
-    import Member from "../../api/member";
-    import PKAPI from "../../api";
     import { createEventDispatcher } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner } from "sveltestrap";
+
+    import { Member } from '../../api/types';
+    import api from '../../api';
 
     let loading: boolean;
     export let privacyOpen: boolean;
@@ -33,16 +34,15 @@
         dispatch('update', member);
     }
 
-    let input = new Member({privacy: member.privacy});
+    let input: Member = {privacy: member.privacy};
 
     async function submit() {
         let data = input;
         err = null;
 
         loading = true;
-        const api = new PKAPI();
         try {
-            let res = await api.patchMember({token: localStorage.getItem("pk-token"), id: member.id, data: data});
+            let res = await api().members(member.id).patch({data});
             member = res;
             update();
             loading = false;

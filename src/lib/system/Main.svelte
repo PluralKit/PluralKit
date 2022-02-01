@@ -5,9 +5,10 @@
     import Body from './Body.svelte';
     import Privacy from './Privacy.svelte';
     import Edit from './Edit.svelte';
-    import type Sys from '../../api/system';
 
-    export let user: Sys;
+    import { System } from '../../api/types';
+
+    export let user: System;
     export let isPublic = true;
     let loading = false;
 

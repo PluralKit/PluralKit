@@ -1,8 +1,9 @@
 <script lang="ts">
-    import Member from "../../api/member";
-    import PKAPI from "../../api";
     import { createEventDispatcher } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner, InputGroup } from "sveltestrap";
+
+    import { Member } from '../../api/types';
+    import api from '../../api';
 
     let loading: boolean;
     export let proxyOpen: boolean;
@@ -26,12 +27,11 @@
             return;
         }
 
-        let data = new Member({proxy_tags: input});
-        const api = new PKAPI();
+        let data: Member = {proxy_tags: input};
         loading = true;
 
         try {
-            let res = await api.patchMember({token: localStorage.getItem("pk-token"), data: data, id: member.id});
+            let res = await api().members(member.id).patch({data});
             member = res;
             err = null;
             update();

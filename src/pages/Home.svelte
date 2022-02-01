@@ -7,8 +7,8 @@
     import twemoji from 'twemoji';
     import { toHTML } from 'discord-markdown';
 
-    import PKAPI from '../api/index';
-    import type Sys from '../api/system';
+    import { System } from '../api/types';
+    import api from '../api';
 
     let loading = false;
     let err: string;
@@ -33,12 +33,11 @@
 
     async function login(token: string) {
         loading = true;
-        const api = new PKAPI();
         try {
             if (!token) {
                 throw new Error("Token cannot be empty.")
             }
-            const res: Sys = await api.getSystem({token: token});
+            const res: System = await api().systems("@me").get({ token });
             localStorage.setItem("pk-token", token);
             localStorage.setItem("pk-user", JSON.stringify(res));
             err = null;

@@ -1,15 +1,15 @@
 <script lang="ts">
-    import type Group from "../../api/group";
-    import type Member from "../../api/member";
     import { Row, Col, Button, Alert, ListGroup, ListGroupItem, Spinner } from 'sveltestrap';
     import { createEventDispatcher } from 'svelte';
-    import PKAPI from '../../api';
     import ListPagination from "../ListPagination.svelte";
     import twemoji from "twemoji";
     import FaUserPlus from 'svelte-icons/fa/FaUserPlus.svelte'
     import FaUserFriends from 'svelte-icons/fa/FaUserFriends.svelte'
     import FaUserMinus from 'svelte-icons/fa/FaUserMinus.svelte'
     import Svelecte, { addFormatter } from 'svelecte';
+
+    import { Group, Member } from '../../api/types';
+    import api from '../../api';
 
     let loading: boolean = false;
     let err: string;
@@ -67,14 +67,12 @@ function memberListRenderer(item: any) {
   function update() {
       dispatch("update", group)
   }
-
-    const api = new PKAPI();
     
     async function submitAdd() {
         let data = membersToBeAdded;
         try {
             loading = true;
-            await api.postGroupMembers({token: localStorage.getItem("pk-token"), id: group.id, data: data, removing: false});
+            await api().groups(group.id).members.add.post({data});
             data.forEach(member => group.members.push(member));
             update();
             err = null;
@@ -91,7 +89,7 @@ function memberListRenderer(item: any) {
         let data = membersToBeRemoved;
         try {
             loading = true;
-            await api.postGroupMembers({token: localStorage.getItem("pk-token"), id: group.id, data: data, removing: true});
+            await api().groups(group.id).members.remove.post({data});
             group.members = group.members.filter(m => !data.includes(m));
             update();
             err = null;

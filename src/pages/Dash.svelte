@@ -3,11 +3,12 @@
     import { navigate, useLocation } from "svelte-navigator";
     import { currentUser, loggedIn } from '../stores';
     
-    import System from '../lib/system/Main.svelte';
-    import PKAPI from '../api';
-    import Sys from '../api/system';
+    import SystemMain from '../lib/system/Main.svelte';
     import MemberList from '../lib/member/List.svelte';
     import GroupList from '../lib/group/List.svelte';
+
+    import { System } from '../api/types';
+    import api from '../api';
 
     let isPublic = false;
 
@@ -30,7 +31,7 @@
     });
     
     // if there is no cached user, get the user from localstorage
-    let user = new Sys(current ? current : JSON.parse(localStorage.getItem("pk-user")));
+    let user: System = current ?? JSON.parse(localStorage.getItem("pk-user"));
     // since the user in localstorage can be outdated, fetch the user from the api again
     if (!current) {
         login(localStorage.getItem("pk-token"));
@@ -45,12 +46,11 @@
 
     // just the login function
     async function login(token: string) {
-        const api = new PKAPI();
         try {
             if (!token) {
                 throw new Error("Token cannot be empty.")
             }
-            const res: Sys = await api.getSystem({token: token});
+            const res: System = await api().systems("@me").get({ token });
             localStorage.setItem("pk-token", token);
             localStorage.setItem("pk-user", JSON.stringify(res));
             loggedIn.update(() => true);
@@ -80,7 +80,7 @@
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
-                        <System bind:user={user} bind:isPublic />
+                        <SystemMain bind:user={user} bind:isPublic />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
                         <MemberList bind:groups={groups} bind:list={members} bind:isPublic />

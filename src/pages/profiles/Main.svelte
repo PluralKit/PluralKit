@@ -3,15 +3,16 @@
     import { useParams } from "svelte-navigator";
     import { onMount } from 'svelte';
     
-    import System from '../../lib/system/Main.svelte';
-    import PKAPI from '../../api';
-    import Sys from '../../api/system';
+    import SystemMain from '../../lib/system/Main.svelte';
     import MemberList from '../../lib/member/List.svelte';
     import GroupList from '../../lib/group/List.svelte';
 
+    import { System } from '../../api/types';
+    import api from '../../api';
+
     let isPublic = true;
 
-    let user = new Sys({});
+    let user: System = {};
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
     let members = [];
@@ -22,8 +23,6 @@
     
     let err: string;
     
-    const api = new PKAPI();
-
     let title = "system"
 
     onMount(() => {
@@ -32,7 +31,7 @@
 
     async function getSystem() {
         try {
-            let res: Sys = await api.getSystem({id: id})
+            let res: System = await api().systems(id);
             user = res;
             title = user.name ? user.name : "system";
         } catch (error) {
@@ -60,7 +59,7 @@
             <Alert color="info">You are currently <b>viewing</b> a system.</Alert>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active>
-                        <System bind:user bind:isPublic />
+                        <SystemMain bind:user bind:isPublic />
                 </TabPane>
                 <TabPane tabId="members" tab="Members">
                         <MemberList bind:list={members} bind:isPublic/>

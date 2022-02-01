@@ -3,6 +3,8 @@
     import FaInfoCircle from 'svelte-icons/fa/FaInfoCircle.svelte'
     import ShardItem from '../lib/shard.svelte';
 
+    import api from '../api';
+
     let hover = null;
 
     let message = "Loading...";
@@ -24,7 +26,7 @@
     let valid = false;
 
     const get = async () => {
-        const pkdata = await fetch("https://api.pluralkit.me/private/meta").then(x => x.json());
+        const pkdata = await api().private.meta.get();
             shards = pkdata.shards.sort((x, y) => (x.id > y.id) ? 1 : -1);
             let pings = 0;
             shards = shards.map(shard => {
@@ -36,7 +38,7 @@
     
             pingAverage = Math.trunc(pings / shards.length).toString();
     
-            currentCommitMsg = `Current Git commit: <a href="https://github.com/xSke/PluralKit/commit/${pkdata.version}">${pkdata.version}</a>`;
+            currentCommitMsg = `Current Git commit: <a href="https://github.com/xSke/PluralKit/commit/${pkdata.version}">${pkdata.version.slice(0,7)}</a>`;
     
             message = "";
     };

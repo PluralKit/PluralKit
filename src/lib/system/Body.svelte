@@ -2,10 +2,11 @@
     import { Row, Col, Modal, Image, Button } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
-    import type Sys from '../../api/system';
     import twemoji from 'twemoji';
+
+    import { System } from '../../api/types';
    
-    export let user: Sys;
+    export let user: System;
     export let editMode: boolean;
     export let isPublic: boolean;
 

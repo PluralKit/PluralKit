@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert, Spinner, Modal, ModalHeader, ModalBody } from 'sveltestrap';
     import { createEventDispatcher } from 'svelte';
-    import Group from '../../api/group';
-    import PKAPI from '../../api';
+    import { Group } from '../../api/types';
+    import api from '../../api';
     import autosize from 'svelte-autosize';
 
     let loading: boolean = false;
@@ -11,7 +11,7 @@
 
     let err: string[] = [];
 
-    let input = new Group({name: group.name, display_name: group.display_name, banner: group.banner, color: group.color, icon: group.icon, description: group.description});
+    let input: Group = {...group};
 
     const dispatch = createEventDispatcher();
 
@@ -39,9 +39,8 @@
         if (err.length > 0) return;
 
         loading = true;
-        const api = new PKAPI();
         try {
-            let res = await api.patchGroup({token: localStorage.getItem("pk-token"), id: group.id, data: data});
+            let res = await api().groups(group.id).patch({data});
             group = {...group, ...res};
             err = [];
             update();
@@ -74,9 +73,8 @@
             return;
         }
         loading = true;
-        const api = new PKAPI();
         try {
-            await api.deleteGroup({token: localStorage.getItem("pk-token"), id: group.id});
+            await api().groups(group.id).delete();
             deleteErr = null;
             toggleDeleteModal();
             loading = false;

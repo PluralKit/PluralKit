@@ -1,10 +1,11 @@
 <script lang="ts">
     import { Card, CardHeader, CardBody, CardTitle, Row, Col, Button, Spinner } from 'sveltestrap';
     import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
-    import type Sys from '../../api/system';
     import PrivacyEdit from './PrivacyEdit.svelte';
 
-    export let user: Sys;
+    import { System } from '../../api/types';
+
+    export let user: System;
     let editMode = false;
 
     let loading: boolean;
