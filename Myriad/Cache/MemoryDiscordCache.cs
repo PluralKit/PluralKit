@@ -15,7 +15,18 @@ public class MemoryDiscordCache: IDiscordCache
 
     public ValueTask SaveGuild(Guild guild)
     {
-        SaveGuildRaw(guild);
+        if (!_guilds.ContainsKey(guild.Id))
+        {
+            _guilds[guild.Id] = new CachedGuild(guild);
+        }
+        else
+        {
+            var channels = _guilds[guild.Id].Channels;
+            _guilds[guild.Id] = new CachedGuild(guild)
+            {
+                Channels = channels,
+            };
+        }
 
         foreach (var role in guild.Roles)
             // Don't call SaveRole because that updates guild state
@@ -169,11 +180,8 @@ public class MemoryDiscordCache: IDiscordCache
         return Task.FromResult(guild.Channels.Keys.Select(c => _channels[c]));
     }
 
-    private CachedGuild SaveGuildRaw(Guild guild) =>
-        _guilds.GetOrAdd(guild.Id, (_, g) => new CachedGuild(g), guild);
-
     private record CachedGuild(Guild Guild)
     {
-        public readonly ConcurrentDictionary<ulong, bool> Channels = new();
+        public ConcurrentDictionary<ulong, bool> Channels { get; init; } = new();
     }
 }
