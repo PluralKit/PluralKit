@@ -30,6 +30,9 @@ public class Fun
 
     public Task Rool(Context ctx) => 
         ctx.Reply("*\"What the fuck is a Pokémon?\"*");
+    
+    public Task Sus(Context ctx) => 
+        ctx.Reply("\U0001F4EE");
 
     public Task Error(Context ctx)
     {
