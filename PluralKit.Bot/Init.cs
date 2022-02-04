@@ -42,12 +42,14 @@ public class Init
                 opts.DisableTaskUnobservedTaskExceptionCapture();
             });
 
-            // initialize Redis
-            var coreConfig = services.Resolve<CoreConfig>();
-            var redis = services.Resolve<RedisService>();
-            await redis.InitAsync(coreConfig);
-
             var config = services.Resolve<BotConfig>();
+            var coreConfig = services.Resolve<CoreConfig>();
+
+            // initialize Redis
+            var redis = services.Resolve<RedisService>();
+            if (config.UseRedisRatelimiter)
+                await redis.InitAsync(coreConfig);
+
             if (config.Cluster == null)
             {
                 // "Connect to the database" (ie. set off database migrations and ensure state)
@@ -55,7 +57,8 @@ public class Init
                 await services.Resolve<IDatabase>().ApplyMigrations();
 
                 // Clear shard status from Redis
-                await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
+                if (redis.Connection != null)
+                    await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
             }
 
             // Init the bot instance itself, register handlers and such to the client before beginning to connect

@@ -4,7 +4,7 @@ namespace PluralKit.Core;
 
 public class RedisService
 {
-    public ConnectionMultiplexer Connection { get; set; }
+    public ConnectionMultiplexer? Connection { get; set; }
 
     public async Task InitAsync(CoreConfig config)
     {

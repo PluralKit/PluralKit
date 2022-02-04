@@ -91,14 +91,14 @@ public class Misc
         var counts = await _repo.GetStats();
         var shards = await _shards.GetShards();
 
-        var shardInfo = shards.Where(s => s.ShardId == ctx.ShardId).First();
+        var shardInfo = shards.Where(s => s.ShardId == ctx.ShardId).FirstOrDefault();
 
         // todo: if we're running multiple processes, it is not useful to get the CPU/RAM usage of just the current one
         var process = Process.GetCurrentProcess();
         var memoryUsage = process.WorkingSet64;
 
         var now = SystemClock.Instance.GetCurrentInstant().ToUnixTimeSeconds();
-        var shardUptime = Duration.FromSeconds(now - shardInfo.LastConnection);
+        var shardUptime = Duration.FromSeconds(now - shardInfo?.LastConnection ?? 0);
 
         var shardTotal = shards.Count();
         int shardClusterTotal = ctx.Cluster.Shards.Count;
@@ -110,11 +110,11 @@ public class Misc
                     + (isCluster ? $" {shardClusterTotal} in this cluster," : "") + $" {shardUpTotal} are up)"
                 , true))
             .Field(new Embed.Field("Shard uptime",
-                $"{shardUptime.FormatDuration()} ({shardInfo.DisconnectionCount} disconnections)", true))
+                $"{shardUptime.FormatDuration()} ({shardInfo?.DisconnectionCount} disconnections)", true))
             .Field(new Embed.Field("CPU usage", $"{_cpu.LastCpuMeasure:P1}", true))
             .Field(new Embed.Field("Memory usage", $"{memoryUsage / 1024 / 1024} MiB", true))
             .Field(new Embed.Field("Latency",
-                $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo.Latency} ms",
+                $"API: {apiLatency.TotalMilliseconds:F0} ms, shard: {shardInfo?.Latency} ms",
                 true));
 
         embed.Field(new("Total numbers", $" {counts.SystemCount:N0} systems,"
