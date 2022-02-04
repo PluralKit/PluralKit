@@ -28,10 +28,10 @@ public class Fun
         ctx.Reply(
             "*A ball of green light appears above your head and flies towards your enemy, exploding on contact.*");
 
-    public Task Rool(Context ctx) => 
+    public Task Rool(Context ctx) =>
         ctx.Reply("*\"What the fuck is a Pokémon?\"*");
-    
-    public Task Sus(Context ctx) => 
+
+    public Task Sus(Context ctx) =>
         ctx.Reply("\U0001F4EE");
 
     public Task Error(Context ctx)
