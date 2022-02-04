@@ -102,7 +102,7 @@ public class Misc
 
         var shardTotal = shards.Count();
         int shardClusterTotal = ctx.Cluster.Shards.Count;
-        var shardUpTotal = shards.Where(x => x.Up && now - x.LastConnection > 60).Count();
+        var shardUpTotal = shards.Where(x => x.Up).Count();
 
         embed
             .Field(new Embed.Field("Current shard",
