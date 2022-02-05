@@ -279,11 +279,11 @@ public class EmbedService
             if (memberCount == 0 && pctx == LookupContext.ByOwner)
                 // Only suggest the add command if this is actually the owner lol
                 eb.Field(new Embed.Field("Members (0)",
-                    $"Add one with `pk;group {target.Reference()} add <member>`!"));
+                    $"Add one with `pk;group {target.Reference(ctx)} add <member>`!"));
             else
             {
                 var name = pctx == LookupContext.ByOwner
-                    ? target.Reference()
+                    ? target.Reference(ctx)
                     : target.Hid;
                 eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
             }

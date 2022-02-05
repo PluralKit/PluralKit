@@ -21,8 +21,8 @@ public static class ModelUtils
     public static string DisplayName(this PKMember member) =>
         member.DisplayName ?? member.Name;
 
-    public static string Reference(this PKMember member) => EntityReference(member.Hid, member.Name);
-    public static string Reference(this PKGroup group) => EntityReference(group.Hid, group.Name);
+    public static string Reference(this PKMember member, Context ctx) => EntityReference(member.Hid, member.NameFor(ctx));
+    public static string Reference(this PKGroup group, Context ctx) => EntityReference(group.Hid, group.NameFor(ctx));
 
     private static string EntityReference(string hid, string name)
     {
