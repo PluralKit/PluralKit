@@ -84,7 +84,7 @@ public class MemberController: ControllerBase
         if (member == null) return NotFound("Member not found.");
 
         var res = await _auth.AuthorizeAsync(User, member, "EditMember");
-        if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
+        if (!res.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, $"Member '{hid}' is not part of your system.");
 
         var patch = MemberPatch.FromJSON(changes);
 
@@ -112,7 +112,7 @@ public class MemberController: ControllerBase
         if (member == null) return NotFound("Member not found.");
 
         var res = await _auth.AuthorizeAsync(User, member, "EditMember");
-        if (!res.Succeeded) return Unauthorized($"Member '{hid}' is not part of your system.");
+        if (!res.Succeeded) return StatusCode(StatusCodes.Status403Forbidden, $"Member '{hid}' is not part of your system.");
 
         await _repo.DeleteMember(member.Id);
         return Ok();
