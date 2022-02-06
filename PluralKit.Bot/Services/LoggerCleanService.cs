@@ -41,7 +41,9 @@ public class LoggerCleanService
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
-
+    
+    private static readonly Regex _robotopRegex = new("ID: (\\d{17,19})");
+    
     private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
     {
         new LoggerBot("Carl-bot", 235148962103951360, fuzzyExtractFunc: ExtractCarlBot), // webhooks
@@ -64,6 +66,8 @@ public class LoggerCleanService
         new LoggerBot("Vortex", 240254129333731328, fuzzyExtractFunc: ExtractVortex),
         new LoggerBot("ProBot", 282859044593598464, fuzzyExtractFunc: ExtractProBot), // webhook
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
+        // new LoggerBot("RoboTop (compact only)", 323630372531470346, fuzzyExtractFunc: ExtractRoboTopCompact),
+        new LoggerBot("RoboTop (embeds only)", 323630372531470346, ExtractRoboTopEmbed),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -143,7 +147,7 @@ public class LoggerCleanService
 
                 _logger.Debug("Pure logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
                     bot.Name, msg.Id, extractedId);
-
+                
                 var mid = await _db.Execute(conn => conn.QuerySingleOrDefaultAsync<ulong?>(
                     "select mid from messages where original_mid = @Mid", new { Mid = extractedId.Value }));
                 if (mid == null) return;
@@ -344,6 +348,26 @@ public class LoggerCleanService
         if (embed?.Title == null || embed.Title != "🗑 Message Deleted") return null;
         var match = _GiselleRegex.Match(embed?.Description);
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+    }
+
+    private static ulong? ExtractRoboTopEmbed(Message msg)
+    {
+        var robotopFooter = msg.Embeds?.FirstOrDefault()?.Footer.Text;
+        if (robotopFooter == null) return null;
+        var match = _robotopRegex.Match(robotopFooter);
+        return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
+    }
+
+    private static FuzzyExtractResult? ExtractRoboTopCompact(Message msg)
+    {
+        var match = _robotopRegex.Match(msg.Content);
+        return match.Success
+            ? new FuzzyExtractResult
+            {
+                User = ulong.Parse(match.Groups[1].Value),
+                ApproxTimestamp = msg.Timestamp().ToInstant()
+            }
+            : null;
     }
 
     private static FuzzyExtractResult? ExtractVortex(Message msg)
