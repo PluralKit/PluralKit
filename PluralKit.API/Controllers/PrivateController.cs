@@ -61,6 +61,8 @@ public static class PrivateJsonExt
             s.Add("disconnection_count", shard.DisconnectionCount);
             s.Add("last_heartbeat", shard.LastHeartbeat.ToString());
             s.Add("last_connection", shard.LastConnection.ToString());
+            if (shard.HasClusterId)
+                s.Add("cluster_id", shard.ClusterId);
 
             o.Add(s);
         }

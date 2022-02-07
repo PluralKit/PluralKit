@@ -11,6 +11,8 @@ message ShardState {
     // unix timestamp
     int32 last_heartbeat = 5;
     int32 last_connection = 6;
+
+    optional int32 cluster_id = 7;
 }
 
 message GatewayEvent {

@@ -16,16 +16,18 @@ namespace PluralKit.Bot;
 
 public class ShardInfoService
 {
+    private readonly int? _clusterId;
     private readonly ILogger _logger;
     private readonly Cluster _client;
     private readonly RedisService _redis;
     private readonly Dictionary<int, ShardInfo> _shardInfo = new();
 
-    public ShardInfoService(ILogger logger, Cluster client, RedisService redis)
+    public ShardInfoService(ILogger logger, Cluster client, RedisService redis, BotConfig config)
     {
         _logger = logger.ForContext<ShardInfoService>();
         _client = client;
         _redis = redis;
+        _clusterId = config.Cluster?.NodeIndex;
     }
 
     public void Init()
@@ -65,6 +67,8 @@ public class ShardInfoService
 
             // latency = 0 because otherwise shard 0 would serialize to an empty array, thanks protobuf
             var state = new ShardState() { ShardId = shard.ShardId, Up = false, Latency = 1 };
+            if (_clusterId != null)
+                state.ClusterId = _clusterId.Value;
 
             // Register listeners for new shard
             shard.Resumed += () => ReadyOrResumed(shard);
