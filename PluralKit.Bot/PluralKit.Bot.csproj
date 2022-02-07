@@ -31,6 +31,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="../proto/discord.proto" GrpcServices="Client" Link="Protos/discord.proto"/>
+        <Protobuf Include="../proto/state.proto" GrpcServices="Client" Link="Protos/state.proto"/>
     </ItemGroup>
 </Project>
