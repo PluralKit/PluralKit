@@ -90,17 +90,23 @@ public static class ContextArgumentsExt
 
     public static async Task<bool> MatchClear(this Context ctx, string toClear = null)
     {
-        var matched = ctx.Match("clear", "reset") || ctx.MatchFlag("c", "clear");
+        var matched = ctx.MatchClearInner();
         if (matched && toClear != null)
             return await ctx.ConfirmClear(toClear);
         return matched;
     }
 
+    private static bool MatchClearInner(this Context ctx)
+        => ctx.Match("clear", "reset", "default") || ctx.MatchFlag("c", "clear");
+
     public static bool MatchRaw(this Context ctx) =>
         ctx.Match("r", "raw") || ctx.MatchFlag("r", "raw");
 
-    public static bool MatchToggle(this Context ctx)
+    public static bool MatchToggle(this Context ctx, bool? defaultValue = null)
     {
+        if (defaultValue != null && ctx.MatchClearInner())
+            return defaultValue.Value;
+
         var yesToggles = new[] { "yes", "on", "enable", "enabled", "true" };
         var noToggles = new[] { "no", "off", "disable", "disabled", "false" };
 

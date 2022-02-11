@@ -111,6 +111,9 @@ public class Config
 
                 eb.Description(description.ToString());
 
+                // using *large* blue diamond here since it's easier to see in the small footer
+                eb.Footer(new("\U0001f537 means this setting was changed. Type `pk;config <setting name> clear` to reset it to the default."));
+
                 return Task.CompletedTask;
             }
         );
@@ -125,7 +128,7 @@ public class Config
             return;
         }
 
-        var allow = ctx.MatchToggle();
+        var allow = ctx.MatchToggle(true);
 
         var statusString = EnabledDisabled(allow);
         if (ctx.MessageContext.AllowAutoproxy == allow)
@@ -159,7 +162,7 @@ public class Config
         Duration? newTimeout;
         Duration overflow = Duration.Zero;
         if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = Duration.Zero;
-        else if (ctx.Match("reset", "default")) newTimeout = null;
+        else if (await ctx.MatchClear()) newTimeout = null;
         else
         {
             var timeoutStr = ctx.RemainderOrNull();
@@ -295,7 +298,7 @@ public class Config
             return;
         }
 
-        var value = ctx.MatchToggle();
+        var value = ctx.MatchToggle(true);
 
         if (ctx.Config.PingsEnabled == value)
             await ctx.Reply(Response(true, ctx.Config.PingsEnabled));
@@ -315,7 +318,7 @@ public class Config
         }
         else
         {
-            if (ctx.MatchToggle())
+            if (ctx.MatchToggle(false))
             {
                 await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { MemberDefaultPrivate = true });
 
@@ -339,7 +342,7 @@ public class Config
         }
         else
         {
-            if (ctx.MatchToggle())
+            if (ctx.MatchToggle(false))
             {
                 await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { GroupDefaultPrivate = true });
 
@@ -363,7 +366,7 @@ public class Config
             return;
         }
 
-        if (ctx.MatchToggle())
+        if (ctx.MatchToggle(true))
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = true });
 
