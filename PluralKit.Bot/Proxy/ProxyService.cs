@@ -275,12 +275,12 @@ public class ProxyService
                 return FixSameNameInner(proxyName);
 
             // last message was proxied by a different member
-            if (pkMessage.Member.Id != member.Id)
+            if (pkMessage.Member?.Id != member.Id)
                 return FixSameNameInner(proxyName);
         }
 
         // if we fixed the name last message and it's the same member proxying, we want to fix it again
-        if (lastMessage.AuthorUsername == FixSameNameInner(proxyName) && pkMessage?.Member.Id == member.Id)
+        if (lastMessage.AuthorUsername == FixSameNameInner(proxyName) && pkMessage?.Member?.Id == member.Id)
             return FixSameNameInner(proxyName);
 
         // No issues found, current proxy name is fine.
