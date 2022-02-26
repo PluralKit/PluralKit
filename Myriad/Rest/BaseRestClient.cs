@@ -191,7 +191,7 @@ public class BaseRestClient: IAsyncDisposable
                 catch (Exception exc)
                 {
                     _logger.Error(exc, "HTTP error: {RequestMethod} {RequestUrl}", request.Method,
-                        request.RequestUri);
+                        CleanForLogging(request.RequestUri!));
 
                     // kill the running thread
                     // in PluralKit.Bot, this error is ignored in "IsOurProblem" (PluralKit.Bot/Utils/MiscUtils.cs)
@@ -232,6 +232,18 @@ public class BaseRestClient: IAsyncDisposable
         var apiError = TryParseApiError(body);
         if (apiError != null)
         {
+            string? xRateLimitScope = "";
+
+            try
+            {
+                var ratelimitHeader = response.Headers.FirstOrDefault(x => x.Key == "x-ratelimit-scope");
+                xRateLimitScope = ratelimitHeader.Value.FirstOrDefault();
+                if (xRateLimitScope == "global")
+                    _logger.Error("We are globally ratelimited!");
+            }
+            catch (Exception) { }
+
+            using var __ = LogContext.PushProperty("RatelimitScope", xRateLimitScope);
             using var _ = LogContext.PushProperty("DiscordErrorBody", body);
             _logger.Warning("Discord API error: {DiscordErrorCode} {DiscordErrorMessage}", apiError.Code,
                 apiError.Message);
