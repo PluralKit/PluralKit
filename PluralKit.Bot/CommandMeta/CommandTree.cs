@@ -271,7 +271,7 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
         else if (ctx.Match("description", "info", "bio", "text", "desc"))
             await ctx.Execute<MemberEdit>(MemberDesc, m => m.Description(ctx, target));
-        else if (ctx.Match("pronouns", "pronoun"))
+        else if (ctx.Match("pronouns", "pronoun", "prns", "pn"))
             await ctx.Execute<MemberEdit>(MemberPronouns, m => m.Pronouns(ctx, target));
         else if (ctx.Match("color", "colour"))
             await ctx.Execute<MemberEdit>(MemberColor, m => m.Color(ctx, target));
