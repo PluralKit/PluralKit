@@ -89,7 +89,7 @@ public class Context
         var msg = await Rest.CreateMessage(Channel.Id, new MessageRequest
         {
             Content = text,
-            Embed = embed,
+            Embeds = embed != null ? new[] { embed } : null,
             // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
             AllowedMentions = mentions ?? new AllowedMentions()
         });

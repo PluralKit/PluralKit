@@ -11,7 +11,7 @@ public record MessageEditRequest
     public Optional<string?> Content { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public Optional<Embed?> Embed { get; init; }
+    public Optional<Embed[]?> Embeds { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public Optional<Message.MessageFlags> Flags { get; init; }

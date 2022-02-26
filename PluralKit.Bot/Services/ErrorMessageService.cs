@@ -62,7 +62,7 @@ public class ErrorMessageService
         try
         {
             await _rest.CreateMessage(channelId,
-                new MessageRequest { Content = $"> **Error code:** `{errorId}`", Embed = embed.Build() });
+                new MessageRequest { Content = $"> **Error code:** `{errorId}`", Embeds = new[] { embed.Build() } });
 
             _logger.Information("Sent error message to {ChannelId} with error code {ErrorId}", channelId, errorId);
             _metrics.Measure.Meter.Mark(BotMetrics.ErrorMessagesSent, "sent");

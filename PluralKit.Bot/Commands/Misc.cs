@@ -133,6 +133,6 @@ public class Misc
             .Timestamp(process.StartTime.ToString("O"));
 
         await ctx.Rest.EditMessage(msg.ChannelId, msg.Id,
-            new MessageEditRequest { Content = "", Embed = embed.Build() });
+            new MessageEditRequest { Content = "", Embeds = new[] { embed.Build() } });
     }
 }

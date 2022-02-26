@@ -38,7 +38,8 @@ public class BotModule: Module
                           GatewayIntent.GuildEmojis |
                           GatewayIntent.GuildMessages |
                           GatewayIntent.GuildWebhooks |
-                          GatewayIntent.GuildMessageReactions
+                          GatewayIntent.GuildMessageReactions |
+                          GatewayIntent.MessageContent
             };
         }).AsSelf().SingleInstance();
         builder.RegisterType<Cluster>().AsSelf().SingleInstance();

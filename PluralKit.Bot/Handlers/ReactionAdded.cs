@@ -171,22 +171,21 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         try
         {
             var dm = await _dmCache.GetOrCreateDmChannel(evt.UserId);
-            if (msg.Member != null)
-                await _rest.CreateMessage(dm, new MessageRequest
-                {
-                    Embed = await _embeds.CreateMemberEmbed(
-                        msg.System,
-                        msg.Member,
-                        guild,
-                        LookupContext.ByNonOwner,
-                        DateTimeZone.Utc
-                    )
-                });
 
-            await _rest.CreateMessage(
-                dm,
-                new MessageRequest { Embed = await _embeds.CreateMessageInfoEmbed(msg, true) }
-            );
+            var embeds = new List<Embed>();
+
+            if (msg.Member != null)
+                embeds.Add(await _embeds.CreateMemberEmbed(
+                    msg.System,
+                    msg.Member,
+                    guild,
+                    LookupContext.ByNonOwner,
+                    DateTimeZone.Utc
+                ));
+
+            embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, true));
+
+            await _rest.CreateMessage(dm, new MessageRequest { Embeds = embeds.ToArray() });
         }
         catch (ForbiddenException) { } // No permissions to DM, can't check for this :(
 

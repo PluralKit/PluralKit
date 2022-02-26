@@ -67,7 +67,7 @@ public abstract class BaseInteractive
             new MessageRequest
             {
                 Content = content,
-                Embed = embed,
+                Embeds = embed != null ? new[] { embed } : null,
                 AllowedMentions = mentions,
                 Components = GetComponents()
             });

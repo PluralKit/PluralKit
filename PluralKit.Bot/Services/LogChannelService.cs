@@ -51,7 +51,7 @@ public class LogChannelService
             oldContent);
         var url =
             $"https://discord.com/channels/{proxiedMessage.Guild.Value}/{proxiedMessage.Channel}/{proxiedMessage.Mid}";
-        await _rest.CreateMessage(logChannelId.Value, new MessageRequest { Content = url, Embed = embed });
+        await _rest.CreateMessage(logChannelId.Value, new MessageRequest { Content = url, Embeds = new[] { embed } });
     }
 
     private async Task<ulong?> GetAndCheckLogChannel(MessageContext ctx, Message trigger,

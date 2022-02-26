@@ -80,7 +80,7 @@ public class ShardConnection: IAsyncDisposable
         return null;
     }
 
-    private Uri GetConnectionUri(string baseUri) => new UriBuilder(baseUri) { Query = "v=9&encoding=json" }.Uri;
+    private Uri GetConnectionUri(string baseUri) => new UriBuilder(baseUri) { Query = "v=10&encoding=json" }.Uri;
 
     private async Task CloseInner(WebSocketCloseStatus closeStatus, string? description)
     {

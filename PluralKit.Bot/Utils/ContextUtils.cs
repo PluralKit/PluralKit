@@ -174,7 +174,7 @@ public static class ContextUtils
 
                     // Edit the embed with the new page
                     var embed = await MakeEmbedForPage(currentPage);
-                    await ctx.Rest.EditMessage(msg.ChannelId, msg.Id, new MessageEditRequest { Embed = embed });
+                    await ctx.Rest.EditMessage(msg.ChannelId, msg.Id, new MessageEditRequest { Embeds = new[] { embed } });
                 }
             }
             catch (TimeoutException)
