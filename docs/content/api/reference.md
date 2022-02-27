@@ -35,6 +35,24 @@ system's token (as described above) will override these privacy settings and sho
 
 By default, there is a per-IP limit of 2 requests per second across the API. If you exceed this limit, you will get a 429 response code and will have to try again later.
 
+The following rate limit headers are present on HTTP responses:
+
+|name|description|
+|---|---|
+|X-RateLimit-Limit|The amount of total requests you have available per second.|
+|X-RateLimit-Remaining|The amount of requests you have remaining until the next reset time.|
+|X-RateLimit-Reset|The UNIX time (in milliseconds) when the ratelimit info will reset.|
+
+If you make more requests than you have available, the server will respond with a 429 status code and a JSON error body.
+
+```json
+{
+  "message": "429: too many requests",
+  "retry_after": 19, // the amount of milliseconds remaining until you can make more requests
+  "code": 0
+}
+```
+
 ## Community API Libraries
 
 The following API libraries have been created by members of our community. Please contact the developer of each library if you need support.
