@@ -8,6 +8,7 @@ Some moderation bots have offical PluralKit support, and properly handle excludi
 - [**Gabby Gums**](https://github.com/amadea-system/GabbyGums)
 - [**Catalogger**](https://catalogger.starshines.xyz/docs)
 - [**Crosslink**](https://crss.link) (Link detection / filtering)
+- [**Aero**](https://aero.bot/) 
 
 If your server uses an in-house bot for logging, you can use [the API](/api) to implement support yourself.
 
