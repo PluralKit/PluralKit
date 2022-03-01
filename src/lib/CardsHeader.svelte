@@ -39,7 +39,7 @@
         {#if item && (item.avatar_url || item.icon)}
         <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt="Icon" />
         {:else}
-        <img class="rounded-circle avatar" src={default_avatar} alt="your system avatar (default)" />
+        <img class="rounded-circle avatar" src={default_avatar} alt="avatar (default)" />
         {/if}
         </div>
         <Modal isOpen={avatarOpen} toggle={toggleAvatarModal}>
