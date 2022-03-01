@@ -4,12 +4,12 @@
     import { toHTML } from 'discord-markdown';
     import twemoji from 'twemoji';
 
-    import type Member from '../../api/member';
-    import type Group from '../../api/group';
     import GroupEdit from './GroupEdit.svelte';
     import Edit from './Edit.svelte';
     import Privacy from './Privacy.svelte';
     import ProxyTags from './ProxyTags.svelte';
+
+    import { Member, Group } from '../../api/types';
 
     export let groups: Group[] = [];
     export let member: Member;

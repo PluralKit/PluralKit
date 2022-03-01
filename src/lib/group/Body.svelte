@@ -2,12 +2,12 @@
     import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody, ModalFooter, Spinner } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
-    import type Group from '../../api/group';
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
     import Privacy from './Privacy.svelte';
-    import type Member from 'src/api/member';
     import MemberEdit from './MemberEdit.svelte';
+
+    import { Member, Group } from '../../api/types';
    
     export let group: Group;
     let editMode: boolean = false;

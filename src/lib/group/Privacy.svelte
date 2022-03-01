@@ -1,8 +1,9 @@
 <script lang="ts">
-    import Group from "../../api/group";
-    import PKAPI from "../../api";
     import { createEventDispatcher } from "svelte";
     import { ModalBody, ModalHeader, Col, Row, Input, Label, ModalFooter, Button, Spinner, Alert } from "sveltestrap";
+
+    import { Group } from '../../api/types';
+    import api from '../../api';
 
     export let privacyOpen: boolean;
     export let group: Group;
@@ -30,16 +31,15 @@
         dispatch('update', group);
     }
 
-    let input = new Group({privacy: group.privacy});
+    let input: Group = {privacy: group.privacy};
 
     async function submit() {
         let data = input;
         err = null;
 
         loading = true;
-        const api = new PKAPI();
         try {
-            let res = await api.patchGroup({token: localStorage.getItem("pk-token"), id: group.id, data: data});
+            let res = await api().groups(group.id).patch({data});
             group = res;
             update();
             loading = false;

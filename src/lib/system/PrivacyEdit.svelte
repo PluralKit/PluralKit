@@ -1,25 +1,25 @@
 <script lang="ts">
-    import Sys from '../../api/system';
     import { Input, Row, Col, Button, Label, Alert } from 'sveltestrap';
     import { currentUser } from '../../stores';
-    import PKAPI from '../../api';
+
+    import { System } from '../../api/types';
+    import api from '../../api';
 
     export let loading = false;
-    export let user: Sys;
+    export let user: System;
     export let editMode: boolean;
 
     let err: string;
 
-    let input = new Sys({privacy: user.privacy});
+    let input: System = {privacy: user.privacy};
 
     async function submit() {
         let data = input;
         err = null;
 
         loading = true;
-        const api = new PKAPI();
         try {
-            let res = await api.patchSystem({token: localStorage.getItem("pk-token"), data: data});
+            let res = await api().systems("@me").patch({data});
             user = res;
             currentUser.update(() => res);
             editMode = false;

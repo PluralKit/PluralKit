@@ -1,18 +1,19 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert } from 'sveltestrap';
-    import Sys from '../../api/system';
-    import PKAPI from '../../api';
     import autosize from 'svelte-autosize';
     // import moment from 'moment-timezone';
     import { currentUser } from '../../stores';
 
+    import { System } from '../../api/types';
+    import api from '../../api';
+
     export let editMode: boolean;
-    export let user: Sys;
+    export let user: System;
     export let loading: boolean;
 
     let err: string[] = [];
 
-    let input = new Sys({name: user.name, tag: user.tag, color: user.color, avatar_url: user.avatar_url, banner: user.banner, description: user.description});
+    let input: System = {...user};
     
     async function submit() {
         let data = input;
@@ -34,9 +35,8 @@
         if (err.length > 0) return;
 
         loading = true;
-        const api = new PKAPI();
         try {
-            let res = await api.patchSystem({token: localStorage.getItem("pk-token"), data: data});
+            let res = await api().systems("@me").patch({data});
             user = res;
             currentUser.update(() => res);
             err = [];
