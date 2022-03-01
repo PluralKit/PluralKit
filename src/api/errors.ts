@@ -12,14 +12,14 @@ interface ApiError {
     data?: any,
 }
 
-export function parse(code: number, data?: string): ApiError {
+export function parse(code: number, data?: any): ApiError {
     var type = ErrorType[ErrorType[code]] ?? ErrorType.Unknown;
     if (code >= 500) type = ErrorType.InternalServerError;
 
     var err: ApiError = { code, type };
 
     if (data) {
-        var d = JSON.parse(data);
+        var d = data;
         err.message = d.message;
         err.data = d;
     }
