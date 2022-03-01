@@ -9,6 +9,7 @@
     import Svelecte, { addFormatter } from 'svelecte';
     import FaLock from 'svelte-icons/fa/FaLock.svelte';
     import Body from './Body.svelte';
+    import NewMember from './NewMember.svelte';
 
     import { Member, Group } from '../../api/types';
     import api from '../../api';
@@ -170,6 +171,11 @@
   function updateDelete(event: any) {
       list = list.filter(member => member.id !== event.detail);
   }
+
+  function addMemberToList(event: any) {
+      list.push(event.detail);
+      list = list;
+  }
 </script>
 
 <Card class="mb-3">
@@ -280,6 +286,7 @@
     </Col>
 </Row>
 <ListPagination bind:currentPage bind:pageAmount />
+<NewMember on:create={addMemberToList} />
 <Accordion class="my-3" stayOpen>
     {#each slicedList as member, index (member.id)}
             {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
