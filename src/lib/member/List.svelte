@@ -44,6 +44,7 @@
     });
 
     async function fetchMembers() {
+        err = "";
         listLoading = true;
         try {
             const res: Member[] = await api().systems(isPublic ? id : "@me").members.get({ auth: !isPublic });
@@ -260,7 +261,14 @@
         <Spinner class="d-inline-block" />
     </div>
 {:else if err}
-<Alert color="danger">{err}</Alert>
+<Row>
+    <Col xs={12} lg={10}>
+        <Alert color="danger">{err}</Alert>
+    </Col>
+    <Col xs={12} lg={2}>
+        <Button class="w-100 mb-3" color="primary" on:click={fetchMembers}>Refresh</Button>
+    </Col>
+</Row>
 {:else}
 
 <Row>

@@ -45,6 +45,7 @@
 
 
     async function fetchGroups() {
+        err = "";
         listLoading = true;
         try {
             const res: Group[] = await api().systems(isPublic ? id : "@me").groups.get({ auth: !isPublic, query: { with_members: !isPublic } });
@@ -258,7 +259,14 @@
         <Spinner class="d-inline-block" />
     </div>
 {:else if err}
-<Alert color="danger">{err}</Alert>
+<Row>
+    <Col xs={12} lg={10}>
+        <Alert color="danger">{err}</Alert>
+    </Col>
+    <Col xs={12} lg={2}>
+        <Button class="w-100 mb-3" color="primary" on:click={fetchGroups}>Refresh</Button>
+    </Col>
+</Row>
 {:else}
 
 <Row>
