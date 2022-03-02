@@ -57,7 +57,9 @@ export interface GroupPrivacy {
     description_privacy?: string,
     icon_privacy?: string,
     list_privacy?: string,
-    visibility?: string
+    visibility?: string,
+    name_privacy?: string,
+    metadata_privacy?: string
 }
 
 export interface Group {
