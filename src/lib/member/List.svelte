@@ -286,7 +286,9 @@
     </Col>
 </Row>
 <ListPagination bind:currentPage bind:pageAmount />
+{#if !isPublic}
 <NewMember on:create={addMemberToList} />
+{/if}
 <Accordion class="my-3" stayOpen>
     {#each slicedList as member, index (member.id)}
             {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
