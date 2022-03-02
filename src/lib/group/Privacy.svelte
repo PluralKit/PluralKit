@@ -22,6 +22,8 @@
         input.privacy.list_privacy = value;
         input.privacy.visibility = value;
         input.privacy.icon_privacy = value;
+        input.privacy.name_privacy = value;
+        input.privacy.metadata_privacy = value;
         }
     }
 
@@ -72,6 +74,13 @@
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
+            <Label>Name:</Label>
+            <Input type="select" bind:value={input.privacy.name_privacy}>
+                <option default={group.privacy.name_privacy === "public"}>public</option>
+                <option default={group.privacy.name_privacy === "private"}>private</option>
+            </Input>
+        </Col>
+        <Col xs={12} lg={6} class="mb-3">
             <Label>Member list:</Label>
             <Input type="select" bind:value={input.privacy.list_privacy}>
                 <option default={group.privacy.list_privacy === "public"}>public</option>
@@ -90,6 +99,13 @@
             <Input type="select" bind:value={input.privacy.visibility}>
                 <option default={group.privacy.visibility === "public"}>public</option>
                 <option default={group.privacy.visibility === "private"}>private</option>
+            </Input>
+        </Col>
+        <Col xs={12} lg={6} class="mb-3">
+            <Label>Metadata:</Label>
+            <Input type="select" bind:value={input.privacy.metadata_privacy}>
+                <option default={group.privacy.metadata_privacy === "public"}>public</option>
+                <option default={group.privacy.metadata_privacy === "private"}>private</option>
             </Input>
         </Col>
     </Row>
