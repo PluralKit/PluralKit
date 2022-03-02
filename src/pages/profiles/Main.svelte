@@ -31,7 +31,7 @@
 
     async function getSystem() {
         try {
-            let res: System = await api().systems(id);
+            let res: System = await api().systems(id).get();
             user = res;
             title = user.name ? user.name : "system";
         } catch (error) {
