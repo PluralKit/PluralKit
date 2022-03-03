@@ -49,8 +49,15 @@ public class LoggerCleanService
         new LoggerBot("Pancake", 239631525350604801, fuzzyExtractFunc: ExtractPancake),
         new LoggerBot("Logger", 298822483060981760, ExtractLogger), // webhook
         new LoggerBot("Patron Logger", 579149474975449098, ExtractLogger), // webhook (?)
-        new LoggerBot("Dyno", 155149108183695360, ExtractDyno, applicationId: 161660517914509312), // webhook
-        new LoggerBot("Dyno Premium", 168274283414421504, ExtractDyno), // webhook
+        new LoggerBot("Dyno#3861", 155149108183695360, ExtractDyno, applicationId: 161660517914509312), // webhook
+        new LoggerBot("Dyno#7532", 168274214858653696, ExtractDyno), // webhook
+        new LoggerBot("Dyno#1390", 470722245824610306, ExtractDyno), // webhook
+        new LoggerBot("Dyno#8506", 470722416427925514, ExtractDyno), // webhook
+        new LoggerBot("Dyno#0811", 470722753218084866, ExtractDyno), // webhook
+        new LoggerBot("Dyno#9026", 470723667303727125, ExtractDyno), // webhook
+        new LoggerBot("Dyno#8389", 470724017205149701, ExtractDyno), // webhook
+        new LoggerBot("Dyno#5714", 470723870270160917, ExtractDyno), // webhook
+        new LoggerBot("Dyno#1961", 347378323418251264, ExtractDyno), // webhook
         new LoggerBot("Auttaja", 242730576195354624, ExtractAuttaja), // webhook
         new LoggerBot("GenericBot", 295329346590343168, ExtractGenericBot),
         new LoggerBot("blargbot", 134133271750639616, ExtractBlargBot),
