@@ -250,15 +250,13 @@ public class LoggerCleanService
     {
         // Like Auttaja, Circle has both embed and compact modes, but the regex works for both.
         // Compact: "Message from [user] ([id]) deleted in [channel]", no timestamp (use message time)
-        // Embed: Message Author field: "[user] ([id])", then an embed timestamp
+        // Embed *description* contains "Message from [mention] deleted in [channel]"
         var stringWithId = msg.Content;
         if (msg.Embeds?.Length > 0)
         {
             var embed = msg.Embeds?.First();
-            if (embed.Author?.Name == null || !embed.Author.Name.StartsWith("Message Deleted in")) return null;
-            var field = embed.Fields.FirstOrDefault(f => f.Name == "Message Author");
-            if (field.Value == null) return null;
-            stringWithId = field.Value;
+            if (embed.Description == null || !embed.Description.Contains("deleted in")) return null;
+            stringWithId = embed.Description;
         }
 
         if (stringWithId == null) return null;
