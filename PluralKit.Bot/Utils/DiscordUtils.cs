@@ -49,6 +49,32 @@ public static class DiscordUtils
             await rest.CreateReaction(msg.ChannelId, msg.Id, new Emoji { Name = reaction });
     }
 
+    public static async Task<Guild?> GetGuildOrNull(this DiscordApiClient rest, ulong guildId)
+    {
+        try
+        {
+            return await rest.GetGuild(guildId);
+        }
+        catch (ForbiddenException)
+        {
+            // no permission, couldn't fetch, oh well
+            return null;
+        }
+    }
+
+    public static async Task<Channel?> GetChannelOrNull(this DiscordApiClient rest, ulong channelId)
+    {
+        try
+        {
+            return await rest.GetChannel(channelId);
+        }
+        catch (ForbiddenException)
+        {
+            // no permission, couldn't fetch, oh well
+            return null;
+        }
+    }
+
     public static async Task<Message?> GetMessageOrNull(this DiscordApiClient rest, ulong channelId,
                                                         ulong messageId)
     {

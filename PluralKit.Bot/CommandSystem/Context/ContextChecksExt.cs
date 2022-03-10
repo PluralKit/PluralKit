@@ -81,7 +81,10 @@ public static class ContextChecksExt
     public static async Task<bool> CheckPermissionsInGuildChannel(this Context ctx, Channel channel,
                                                                   PermissionSet neededPerms)
     {
-        var guild = await ctx.Cache.GetGuild(channel.GuildId.Value);
+        // this is a quick hack, should probably do it properly eventually
+        var guild = await ctx.Cache.TryGetGuild(channel.GuildId.Value);
+        if (guild == null)
+            await ctx.Rest.GetGuild(channel.GuildId.Value);
         if (guild == null)
             return false;
 

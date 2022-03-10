@@ -59,14 +59,14 @@ public static class PermissionExtensions
     }
 
     public static PermissionSet EveryonePermissions(this Guild guild) =>
-        guild.Roles.FirstOrDefault(r => r.Id == guild.Id)?.Permissions ?? PermissionSet.Dm;
+        guild.Roles.FirstOrDefault(r => r.Id == guild.Id)!.Permissions;
 
-    public static async Task<PermissionSet> EveryonePermissions(this IDiscordCache cache, Channel channel)
+    public static PermissionSet EveryonePermissions(Guild guild, Channel channel)
     {
         if (channel.Type == Channel.ChannelType.Dm)
             return PermissionSet.Dm;
 
-        var defaultPermissions = (await cache.GetGuild(channel.GuildId!.Value)).EveryonePermissions();
+        var defaultPermissions = guild.EveryonePermissions();
         var overwrite = channel.PermissionOverwrites?.FirstOrDefault(r => r.Id == channel.GuildId);
         if (overwrite == null)
             return defaultPermissions;

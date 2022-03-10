@@ -81,16 +81,31 @@ public class LogChannelService
         if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return null;
 
         // Check bot permissions
-        var perms = await _cache.PermissionsIn(logChannel.Id);
+        var perms = await GetPermissionsInLogChannel(logChannel);
         if (!perms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
         {
             _logger.Information(
                 "Does not have permission to log proxy, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})",
-                ctx.LogChannel.Value, trigger.GuildId!.Value, perms);
+                logChannel.Id, trigger.GuildId!.Value, perms);
             return null;
         }
 
         return logChannel.Id;
+    }
+
+    // todo: move this somewhere else
+    private async Task<PermissionSet> GetPermissionsInLogChannel(Channel channel)
+    {
+        var guild = await _cache.TryGetGuild(channel.GuildId.Value);
+        if (guild == null)
+            guild = await _rest.GetGuild(channel.GuildId.Value);
+
+        var guildMember = await _cache.TryGetSelfMember(channel.GuildId.Value);
+        if (guildMember == null)
+            guildMember = await _rest.GetGuildMember(channel.GuildId.Value, await _cache.GetOwnUser());
+
+        var perms = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
+        return perms;
     }
 
     private async Task<Channel?> FindLogChannel(ulong guildId, ulong channelId)
@@ -98,6 +113,9 @@ public class LogChannelService
         // TODO: fetch it directly on cache miss?
         if (await _cache.TryGetChannel(channelId) is Channel channel)
             return channel;
+
+        if (await _rest.GetChannelOrNull(channelId) is Channel restChannel)
+            return restChannel;
 
         // Channel doesn't exist or we don't have permission to access it, let's remove it from the database too
         _logger.Warning(

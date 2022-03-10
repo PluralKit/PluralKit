@@ -14,6 +14,7 @@ namespace PluralKit.Bot;
 public class Checks
 {
     private readonly BotConfig _botConfig;
+    // this must ONLY be used to get the bot's user ID
     private readonly IDiscordCache _cache;
     private readonly ProxyMatcher _matcher;
     private readonly ProxyService _proxy;
@@ -26,6 +27,7 @@ public class Checks
         PermissionSet.ManageWebhooks, PermissionSet.ReadMessageHistory
     };
 
+    // todo: make sure everything uses the minimum amount of REST calls necessary
     public Checks(DiscordApiClient rest, IDiscordCache cache, BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher)
     {
         _rest = rest;
@@ -67,16 +69,17 @@ public class Checks
                 throw Errors.GuildNotFound(guildId);
         }
 
+        var guildMember = await _rest.GetGuildMember(guild.Id, await _cache.GetOwnUser());
+
         // Loop through every channel and group them by sets of permissions missing
         var permissionsMissing = new Dictionary<ulong, List<Channel>>();
         var hiddenChannels = false;
         var missingEmojiPermissions = false;
         foreach (var channel in await _rest.GetGuildChannels(guild.Id))
         {
-            var botPermissions = await _cache.PermissionsIn(channel.Id);
-            var webhookPermissions = await _cache.EveryonePermissions(channel);
-            var userPermissions =
-                PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
+            var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
+            var webhookPermissions = PermissionExtensions.EveryonePermissions(guild, channel);
+            var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
 
             if ((userPermissions & PermissionSet.ViewChannel) == 0)
             {
@@ -153,15 +156,23 @@ public class Checks
             throw new PKSyntaxError("You need to specify a channel.");
 
         var error = "Channel not found or you do not have permissions to access it.";
+        
+        // todo: this breaks if channel is not in cache and bot does not have View Channel permissions
         var channel = await ctx.MatchChannel();
         if (channel == null || channel.GuildId == null)
             throw new PKError(error);
 
+        var guild = await _rest.GetGuildOrNull(channel.GuildId.Value);
+        if (guild == null)
+            throw new PKError(error);
+
+        var guildMember = await _rest.GetGuildMember(channel.GuildId.Value, await _cache.GetOwnUser());
+
         if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             throw new PKError(error);
 
-        var botPermissions = await _cache.PermissionsIn(channel.Id);
-        var webhookPermissions = await _cache.EveryonePermissions(channel);
+        var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
+        var webhookPermissions = PermissionExtensions.EveryonePermissions(guild, channel);
 
         // We use a bitfield so we can set individual permission bits
         ulong missingPermissions = 0;
@@ -240,7 +251,7 @@ public class Checks
             throw new PKError("You can only check your own messages.");
 
         // get the channel info
-        var channel = await _cache.GetChannel(channelId.Value);
+        var channel = await _rest.GetChannelOrNull(channelId.Value);
         if (channel == null)
             throw new PKError("Unable to get the channel associated with this message.");
 

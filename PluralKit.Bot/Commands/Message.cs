@@ -20,7 +20,7 @@ namespace PluralKit.Bot;
 public class ProxiedMessage
 {
     private static readonly Duration EditTimeout = Duration.FromMinutes(10);
-    private readonly IDiscordCache _cache;
+    // private readonly IDiscordCache _cache;
     private readonly IClock _clock;
 
     private readonly EmbedService _embeds;
@@ -37,7 +37,7 @@ public class ProxiedMessage
         _rest = rest;
         _webhookExecutor = webhookExecutor;
         _logChannel = logChannel;
-        _cache = cache;
+        // _cache = cache;
     }
 
     public async Task EditMessage(Context ctx)
@@ -112,7 +112,7 @@ public class ProxiedMessage
             var error =
                 "The channel where the message was sent does not exist anymore, or you are missing permissions to access it.";
 
-            var channel = await _cache.GetChannel(msg.Message.Channel);
+            var channel = await _rest.GetChannelOrNull(msg.Message.Channel);
             if (channel == null)
                 throw new PKError(error);
 
@@ -165,7 +165,7 @@ public class ProxiedMessage
         var showContent = true;
         var noShowContentError = "Message deleted or inaccessible.";
 
-        var channel = await _cache.GetChannel(message.Message.Channel);
+        var channel = await _rest.GetChannelOrNull(message.Message.Channel);
         if (channel == null)
             showContent = false;
         else if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
@@ -222,7 +222,7 @@ public class ProxiedMessage
 
         if (ctx.Match("author") || ctx.MatchFlag("author"))
         {
-            var user = await _cache.GetOrFetchUser(_rest, message.Message.Sender);
+            var user = await _rest.GetUser(message.Message.Sender);
             var eb = new EmbedBuilder()
                 .Author(new Embed.EmbedAuthor(
                     user != null

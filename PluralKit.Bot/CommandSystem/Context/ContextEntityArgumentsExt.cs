@@ -151,7 +151,10 @@ public static class ContextEntityArgumentsExt
         if (!MentionUtils.TryParseChannel(ctx.PeekArgument(), out var id))
             return null;
 
-        if (!(await ctx.Cache.TryGetChannel(id) is Channel channel))
+        var channel = await ctx.Cache.TryGetChannel(id);
+        if (channel == null)
+            channel = await ctx.Rest.GetChannelOrNull(id);
+        if (channel == null)
             return null;
 
         if (!DiscordUtils.IsValidGuildChannel(channel))
