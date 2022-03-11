@@ -30,6 +30,7 @@ public class BotConfig
 
     public record ClusterSettings
     {
+        // this is zero-indexed
         public string NodeName { get; set; }
         public int TotalShards { get; set; }
         public int TotalNodes { get; set; }

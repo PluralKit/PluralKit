@@ -100,7 +100,7 @@ public class Misc
         var now = SystemClock.Instance.GetCurrentInstant().ToUnixTimeSeconds();
         var shardUptime = Duration.FromSeconds(now - shardInfo?.LastConnection ?? 0);
 
-        var shardTotal = shards.Count();
+        var shardTotal = _botConfig.Cluster?.TotalShards ?? shards.Count();
         int shardClusterTotal = ctx.Cluster.Shards.Count;
         var shardUpTotal = shards.Where(x => x.Up).Count();
 
