@@ -9,6 +9,7 @@
 
     let message = "Loading...";
     let shards = [];
+    let clusters = {};
     let pingAverage = "";
     let currentCommitMsg = "";
 
@@ -27,20 +28,32 @@
 
     const get = async () => {
         const pkdata = await api().private.meta.get();
-            shards = pkdata.shards.sort((x, y) => (x.id > y.id) ? 1 : -1);
-            let pings = 0;
-            shards = shards.map(shard => {
-                    pings += shard.ping;
-                    shard.last_connection = new Date(Number(shard.last_connection) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
-                    shard.last_heartbeat = new Date(Number(shard.last_heartbeat) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
-                    return shard;
+        let data = pkdata.shards.sort((x, y) => (x.id > y.id) ? 1 : -1);
+        let pings = 0;
+        data = data.map(shard => {
+            pings += shard.ping;
+            shard.last_connection = new Date(Number(shard.last_connection) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
+            shard.last_heartbeat = new Date(Number(shard.last_heartbeat) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
+            return shard;
+        });
+        console.log(data[0].cluster_id);
+
+        pingAverage = Math.trunc(pings / shards.length).toString();
+
+        currentCommitMsg = `Current Git commit: <a href="https://github.com/xSke/PluralKit/commit/${pkdata.version}">${pkdata.version.slice(0,7)}</a>`;
+
+        if (data[0].cluster_id === 0) {
+            let clusterData = {};
+            data.forEach(shard => {
+                if (clusterData[shard.cluster_id] === undefined) clusterData[shard.cluster_id] = [];
+                clusterData[shard.cluster_id].push(shard);
             });
-    
-            pingAverage = Math.trunc(pings / shards.length).toString();
-    
-            currentCommitMsg = `Current Git commit: <a href="https://github.com/xSke/PluralKit/commit/${pkdata.version}">${pkdata.version.slice(0,7)}</a>`;
-    
-            message = "";
+            clusters = clusterData;
+        } else {
+            shards = data;
+        }
+
+        message = "";
     };
 
     get();
@@ -129,16 +142,35 @@
             </Card>
         </Col>
     </Row>
-    <Row>
-        <Col class="mx-auto" xs={12} lg={11} xl={10}>
-            <Card class="mb-4">
-                <CardBody>
-                    <span>{ message }</span>
-                    {#each shards as shard}
-                        <ShardItem shard={shard} bind:hover={hover} />
-                    {/each}
-                </CardBody>
-            </Card>
-        </Col>
-    </Row>
+    {#if shards.length > 0}
+        <Row>
+            <Col class="mx-auto" xs={12} lg={11} xl={10}>
+                <Card class="mb-4">
+                    <CardBody>
+                        <span>{ message }</span>
+                        {#each shards as shard}
+                            <ShardItem shard={shard} bind:hover={hover} />
+                        {/each}
+                    </CardBody>
+                </Card>
+            </Col>
+        </Row>
+    {/if}
+    {#each Object.keys(clusters) as key}
+        <Row>
+            <Col class="mx-auto" xs={12} lg={11} xl={10}>
+                <Card class="mb-4">
+                    <CardBody>
+                        <CardTitle style="margin-top: 8px; outline: none;">
+                            Cluster {key}
+                        </CardTitle>
+                        <br>
+                        {#each clusters[key] as shard}
+                            <ShardItem shard={shard} bind:hover={hover} />
+                        {/each}
+                    </CardBody>
+                </Card>
+            </Col>
+        </Row>
+    {/each}
 </Container>
