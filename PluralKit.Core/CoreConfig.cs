@@ -6,6 +6,7 @@ public class CoreConfig
 {
     public string Database { get; set; }
     public string RedisAddr { get; set; }
+    public bool UseRedisMetrics { get; set; } = false;
     public string SentryUrl { get; set; }
     public string InfluxUrl { get; set; }
     public string InfluxDb { get; set; }

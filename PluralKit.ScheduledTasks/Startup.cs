@@ -19,6 +19,11 @@ internal class Startup
         await BuildInfoService.LoadVersion();
 
         var services = BuildContainer(config);
+
+        var cfg = services.Resolve<CoreConfig>();
+        if (cfg.UseRedisMetrics)
+            await services.Resolve<RedisService>().InitAsync(cfg);
+
         services.Resolve<TaskHandler>().Run();
 
         await Task.Delay(-1);

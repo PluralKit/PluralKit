@@ -4,6 +4,8 @@ using App.Metrics;
 
 using Myriad.Cache;
 
+using Newtonsoft.Json;
+
 using NodaTime.Extensions;
 
 using PluralKit.Core;
@@ -20,17 +22,20 @@ public class PeriodicStatCollector
 
     private readonly DbConnectionCountHolder _countHolder;
     private readonly CpuStatService _cpu;
+    private readonly BotConfig _botConfig;
+    private readonly CoreConfig _config;
 
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
 
     private readonly ModelRepository _repo;
+    private readonly RedisService _redis;
 
     private readonly WebhookCacheService _webhookCache;
 
     public PeriodicStatCollector(IMetrics metrics, ILogger logger, WebhookCacheService webhookCache,
                                  DbConnectionCountHolder countHolder, CpuStatService cpu, ModelRepository repo,
-                                 IDiscordCache cache)
+                                 BotConfig botConfig, CoreConfig config, RedisService redis, IDiscordCache cache)
     {
         _metrics = metrics;
         _webhookCache = webhookCache;
@@ -38,6 +43,9 @@ public class PeriodicStatCollector
         _cpu = cpu;
         _repo = repo;
         _cache = cache;
+        _botConfig = botConfig;
+        _config = config;
+        _redis = redis;
         _logger = logger.ForContext<PeriodicStatCollector>();
     }
 
@@ -59,19 +67,19 @@ public class PeriodicStatCollector
                     channelCount++;
         }
 
-        _metrics.Measure.Gauge.SetValue(BotMetrics.Guilds, guildCount);
-        _metrics.Measure.Gauge.SetValue(BotMetrics.Channels, channelCount);
-
-        // Aggregate DB stats
-        // just fetching from database here - actual updating of the data is done in PluralKit.ScheduledTasks
-        // if you're not running ScheduledTasks and want up-to-date counts, uncomment the following line:
-        // await _repo.UpdateStats();
-        var counts = await _repo.GetStats();
-        _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, counts.SystemCount);
-        _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, counts.MemberCount);
-        _metrics.Measure.Gauge.SetValue(CoreMetrics.GroupCount, counts.GroupCount);
-        _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, counts.SwitchCount);
-        _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, counts.MessageCount);
+        if (_config.UseRedisMetrics)
+        {
+            var db = _redis.Connection.GetDatabase();
+            await db.HashSetAsync("pluralkit:cluster_stats", new StackExchange.Redis.HashEntry[] {
+                new(_botConfig.Cluster.NodeIndex, JsonConvert.SerializeObject(new ClusterMetricInfo
+                {
+                    GuildCount = guildCount,
+                    ChannelCount = channelCount,
+                    DatabaseConnectionCount = _countHolder.ConnectionCount,
+                    WebhookCacheSize = _webhookCache.CacheSize,
+                })),
+            });
+        }
 
         // Process info
         var process = Process.GetCurrentProcess();
@@ -81,12 +89,6 @@ public class PeriodicStatCollector
         _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessThreads, process.Threads.Count);
         _metrics.Measure.Gauge.SetValue(CoreMetrics.ProcessHandles, process.HandleCount);
         _metrics.Measure.Gauge.SetValue(CoreMetrics.CpuUsage, await _cpu.EstimateCpuUsage());
-
-        // Database info
-        _metrics.Measure.Gauge.SetValue(CoreMetrics.DatabaseConnections, _countHolder.ConnectionCount);
-
-        // Other shiz
-        _metrics.Measure.Gauge.SetValue(BotMetrics.WebhookCacheSize, _webhookCache.CacheSize);
 
         stopwatch.Stop();
         _logger.Debug("Updated metrics in {Time}", stopwatch.ElapsedDuration());

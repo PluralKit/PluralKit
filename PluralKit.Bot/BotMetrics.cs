@@ -40,58 +40,11 @@ public static class BotMetrics
         Context = "Bot"
     };
 
-    public static GaugeOptions MembersTotal => new()
-    {
-        Name = "Members total",
-        MeasurementUnit = Unit.None,
-        Context = "Bot"
-    };
-
-    public static GaugeOptions MembersOnline => new()
-    {
-        Name = "Members online",
-        MeasurementUnit = Unit.None,
-        Context = "Bot"
-    };
-
-    public static GaugeOptions Guilds => new()
-    {
-        Name = "Guilds",
-        MeasurementUnit = Unit.None,
-        Context = "Bot"
-    };
-    public static GaugeOptions Channels => new()
-    {
-        Name = "Channels",
-        MeasurementUnit = Unit.None,
-        Context = "Bot"
-    };
-
-    public static GaugeOptions ShardLatency => new()
-    {
-        Name = "Shard Latency",
-        Context = "Bot"
-    };
-
-    public static GaugeOptions ShardsConnected => new()
-    {
-        Name = "Shards Connected",
-        Context = "Bot",
-        MeasurementUnit = Unit.Connections
-    };
-
     public static MeterOptions WebhookCacheMisses => new()
     {
         Name = "Webhook cache misses",
         Context = "Bot",
         MeasurementUnit = Unit.Calls
-    };
-
-    public static GaugeOptions WebhookCacheSize => new()
-    {
-        Name = "Webhook Cache Size",
-        Context = "Bot",
-        MeasurementUnit = Unit.Items
     };
 
     public static TimerOptions WebhookResponseTime => new()

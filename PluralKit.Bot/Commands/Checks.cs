@@ -156,7 +156,7 @@ public class Checks
             throw new PKSyntaxError("You need to specify a channel.");
 
         var error = "Channel not found or you do not have permissions to access it.";
-        
+
         // todo: this breaks if channel is not in cache and bot does not have View Channel permissions
         var channel = await ctx.MatchChannel();
         if (channel == null || channel.GuildId == null)

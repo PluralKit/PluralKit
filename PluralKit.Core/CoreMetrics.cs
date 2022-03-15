@@ -103,3 +103,11 @@ public static class CoreMetrics
         Context = "Database"
     };
 }
+
+public record ClusterMetricInfo
+{
+    public int GuildCount;
+    public int ChannelCount;
+    public int DatabaseConnectionCount;
+    public int WebhookCacheSize;
+}

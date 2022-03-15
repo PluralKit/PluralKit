@@ -1,10 +1,15 @@
 using System;
+using System.Linq;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
+using App.Metrics;
+
 using NodaTime;
 using NodaTime.Extensions;
+
+using Newtonsoft.Json;
 
 using PluralKit.Core;
 
@@ -16,16 +21,23 @@ public class TaskHandler
 {
     private static readonly Duration CommandMessageRetention = Duration.FromHours(24);
     private readonly IDatabase _db;
+    private readonly RedisService _redis;
+    private readonly bool _useRedisMetrics;
 
     private readonly ILogger _logger;
+    private readonly IMetrics _metrics;
     private readonly ModelRepository _repo;
     private Timer _periodicTask;
 
-    public TaskHandler(ILogger logger, IDatabase db, ModelRepository repo)
+    public TaskHandler(ILogger logger, IMetrics metrics, CoreConfig config, IDatabase db, RedisService redis, ModelRepository repo)
     {
         _logger = logger;
+        _metrics = metrics;
         _db = db;
+        _redis = redis;
         _repo = repo;
+
+        _useRedisMetrics = config.UseRedisMetrics;
     }
 
     public void Run()
@@ -49,11 +61,41 @@ public class TaskHandler
         _logger.Information("Updating database stats...");
         await _repo.UpdateStats();
 
+        // Collect bot cluster statistics from Redis (if it's enabled)
+        if (_useRedisMetrics)
+            await CollectBotStats();
+
         // Clean up message cache in postgres
         await CleanupOldMessages();
 
         stopwatch.Stop();
         _logger.Information("Ran scheduled tasks in {Time}", stopwatch.ElapsedDuration());
+    }
+
+    private async Task CollectBotStats()
+    {
+        var redisStats = await _redis.Connection.GetDatabase().HashGetAllAsync("pluralkit:cluster_stats");
+
+        var stats = redisStats.Select(v => JsonConvert.DeserializeObject<ClusterMetricInfo>(v.Value));
+
+        _metrics.Measure.Gauge.SetValue(Metrics.Guilds, stats.Sum(x => x.GuildCount));
+        _metrics.Measure.Gauge.SetValue(Metrics.Channels, stats.Sum(x => x.ChannelCount));
+
+        // Aggregate DB stats
+        // just fetching from database here - actual updating of the data is done elsewiere
+        var counts = await _repo.GetStats();
+        _metrics.Measure.Gauge.SetValue(CoreMetrics.SystemCount, counts.SystemCount);
+        _metrics.Measure.Gauge.SetValue(CoreMetrics.MemberCount, counts.MemberCount);
+        _metrics.Measure.Gauge.SetValue(CoreMetrics.GroupCount, counts.GroupCount);
+        _metrics.Measure.Gauge.SetValue(CoreMetrics.SwitchCount, counts.SwitchCount);
+        _metrics.Measure.Gauge.SetValue(CoreMetrics.MessageCount, counts.MessageCount);
+
+        // Database info
+        // this is pretty much always inaccurate but oh well
+        _metrics.Measure.Gauge.SetValue(CoreMetrics.DatabaseConnections, stats.Sum(x => x.DatabaseConnectionCount));
+
+        // Other shiz
+        _metrics.Measure.Gauge.SetValue(Metrics.WebhookCacheSize, stats.Sum(x => x.WebhookCacheSize));
     }
 
     private async Task CleanupOldMessages()
