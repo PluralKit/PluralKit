@@ -9,7 +9,7 @@ namespace PluralKit.API;
 
 public static class APIJsonExt
 {
-    public static JObject ToJson(this ModelRepository.Counts counts)
+    public static JObject ToJson(this ModelRepository.Counts counts, int guildCount, int channelCount)
     {
         var o = new JObject();
 
@@ -18,6 +18,10 @@ public static class APIJsonExt
         o.Add("group_count", counts.GroupCount);
         o.Add("switch_count", counts.SwitchCount);
         o.Add("message_count", counts.MessageCount);
+
+        // Discord statistics
+        o.Add("guild_count", guildCount);
+        o.Add("channel_count", channelCount);
 
         return o;
     }

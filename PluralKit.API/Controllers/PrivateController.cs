@@ -30,11 +30,17 @@ public class PrivateController: PKControllerBase
         var redisInfo = await db.HashGetAllAsync("pluralkit:shardstatus");
         var shards = redisInfo.Select(x => Proto.Unmarshal<ShardState>(x.Value)).OrderBy(x => x.ShardId);
 
+        var redisClusterInfo = await db.HashGetAllAsync("pluralkit:cluster_stats");
+        var clusterInfo = redisClusterInfo.Select(x => JsonConvert.DeserializeObject<ClusterMetricInfo>(x.Value));
+
+        var guildCount = clusterInfo.Sum(x => x.GuildCount);
+        var channelCount = clusterInfo.Sum(x => x.ChannelCount);
+
         var stats = await _repo.GetStats();
 
         var o = new JObject();
         o.Add("shards", shards.ToJson());
-        o.Add("stats", stats.ToJson());
+        o.Add("stats", stats.ToJson(guildCount, channelCount));
         o.Add("version", BuildInfoService.FullVersion);
 
         return Ok(o);
