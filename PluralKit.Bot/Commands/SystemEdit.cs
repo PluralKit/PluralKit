@@ -138,7 +138,7 @@ public class SystemEdit
                     .Color(target.Color.ToDiscordColor())
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description(
-                        $"This system's color is **#{target.Color}**." + (isOwnSystem ? " To clear it, type `pk;s color -clear`." : ""))
+                        $"This system's color is **#{target.Color}**." + (isOwnSystem ? " To clear it, type `pk;s color clear`." : ""))
                     .Build());
             return;
         }
