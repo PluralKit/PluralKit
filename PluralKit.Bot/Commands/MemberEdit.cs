@@ -253,7 +253,7 @@ public class MemberEdit
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description($"This member's color is **#{target.Color}**."
                                  + (ctx.System?.Id == target.System
-                                     ? $" To clear it, type `pk;member {target.Reference(ctx)} color clear`."
+                                     ? $" To clear it, type `pk;member {target.Reference(ctx)} color -clear`."
                                      : ""))
                     .Build());
         }
