@@ -66,6 +66,9 @@
 {#if settings && settings.appearance.color_background}
     <div class="background" style="background-color: {member && `#${member.color}`}"></div>
 {/if}
+{#if member && member.banner && ((settings && settings.appearance.banner_top) || !settings)}
+<div class="banner" style="background-image: url({member.banner})" />
+{/if}
 <Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
@@ -74,7 +77,7 @@
             {:else if loading}
                 <Spinner/>
             {:else if member && member.id}
-                <Card>
+                <Card class="mb-3">
                     <CardHeader>
                         <CardsHeader bind:item={member}>
                             <FaAddressCard slot="icon" />
@@ -100,9 +103,12 @@
 
 <style>
     .background {
-        position: absolute;
-        width: 100vw;
-        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        flex: 1;
+        min-height: 100%;
         z-index: -30;
     }
 </style>
