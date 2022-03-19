@@ -35,7 +35,8 @@
     $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
     $: pageAmount = Math.ceil(groups.length / itemsPerPage);
 
-    $: slicedGroups = groups.slice(indexOfFirstItem, indexOfLastItem);
+    $: orderedGroups = groups.sort((a, b) => a.name.localeCompare(b.name));
+    $: slicedGroups = orderedGroups.slice(indexOfFirstItem, indexOfLastItem);
 
     onMount(() => {
         fetchMember();
