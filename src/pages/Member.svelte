@@ -24,6 +24,7 @@
     let systemMembers: Member[] = [];
     let isMainDash = false;
     let isDeleted = false;
+    let notOwnSystem = false;
 
     const isPage = true;
     export let isPublic = true;
@@ -46,7 +47,10 @@
     async function fetchMember() {
         try {
             member = await api().members($params.id).get({auth: !isPublic});
-            if (!isPublic && !member.privacy) throw new Error("This member does not belong to your system, did you mean to look up their public page?")
+            if (!isPublic && !member.privacy) {
+                notOwnSystem = true;
+                throw new Error("Member is not from own system.");
+            }
             err = "";
             loading = false;
             groupLoading = true;
@@ -102,10 +106,10 @@
   }
 </script>
 
-{#if settings && settings.appearance.color_background}
+{#if settings && settings.appearance.color_background && !notOwnSystem}
     <div class="background" style="background-color: {member && `#${member.color}`}"></div>
 {/if}
-{#if member && member.banner && ((settings && settings.appearance.banner_top))}
+{#if member && member.banner && settings && settings.appearance.banner_top && !notOwnSystem}
 <div class="banner" style="background-image: url({member.banner})" />
 {/if}
 <Container>
@@ -117,8 +121,10 @@
             {#if isPublic}
                 <Alert color="info">You are currently <b>viewing</b> a member.</Alert>
             {/if}
-            {#if err}
-                <Alert color="danger">{err}</Alert>
+            {#if notOwnSystem}
+                <Alert color="danger">This member does not belong to your system, did you mean to look up <Link to={`/profile/m/${member.id}`}>their public page</Link>?</Alert>
+            {:else if err}
+                <Alert color="danger">{@html err}</Alert>
             {:else if loading}
                 <Spinner/>
             {:else if member && member.id}

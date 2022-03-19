@@ -23,6 +23,7 @@
     let systemMembers: Group[] = [];
     let isMainDash = false;
     let isDeleted = false;
+    let notOwnSystem = false;
 
     const isPage = true;
     export let isPublic = true;
@@ -45,7 +46,10 @@
     async function fetchGroup() {
         try {
             group = await api().groups($params.id).get({auth: !isPublic});
-            if (!isPublic && !group.privacy) throw new Error("This group does not belong to your system, did you mean to look up their public page?")
+            if (!isPublic && !group.privacy) {
+                notOwnSystem = true;
+                throw new Error("Group is not from own system.");
+            }
             err = "";
             loading = false;
             memberLoading = true;
@@ -101,10 +105,10 @@
   }
 </script>
 
-{#if settings && settings.appearance.color_background}
+{#if settings && settings.appearance.color_background && !notOwnSystem}
     <div class="background" style="background-color: {group && `#${group.color}`}"></div>
 {/if}
-{#if group && group.banner && ((settings && settings.appearance.banner_top))}
+{#if group && group.banner && settings && settings.appearance.banner_top && !notOwnSystem}
 <div class="banner" style="background-image: url({group.banner})" />
 {/if}
 <Container>
@@ -116,8 +120,10 @@
             {#if isPublic}
                 <Alert color="info">You are currently <b>viewing</b> a group.</Alert>
             {/if}
-            {#if err}
-                <Alert color="danger">{err}</Alert>
+            {#if notOwnSystem}
+                <Alert color="danger">This group does not belong to your system, did you mean to look up <Link to={`/profile/g/${group.id}`}>it's public page</Link>?</Alert>
+            {:else if err}
+                <Alert color="danger">{@html err}</Alert>
             {:else if loading}
                 <Spinner/>
             {:else if group && group.id}
