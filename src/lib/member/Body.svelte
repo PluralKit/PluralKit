@@ -109,7 +109,7 @@
             </Modal>
         </Col>
         {/if}
-        {#if member.privacy}
+        {#if member.privacy && !isPublic}
         <Col xs={12} lg={4} class="mb-2">
             <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal}>Edit</Button>
             <Modal size="lg" isOpen={privacyOpen} toggle={togglePrivacyModal}>
@@ -122,7 +122,7 @@
             </Modal>
         </Col>
         {/if}
-        {#if member.proxy_tags}
+        {#if member.proxy_tags && !isPublic}
         <Col xs={12} lg={4} class="mb-2">
             <b>Proxy Tags:</b> <Button size="sm" color="secondary" on:click={toggleProxyModal}>Edit</Button>
             <Modal size="lg" isOpen={proxyOpen} toggle={toggleProxyModal}>
