@@ -148,7 +148,7 @@
                     <CardTitle style="margin-top: 8px; outline: none;">
                         <div class="icon d-inline-block">
                             <FaList />
-                        </div> Member groups
+                        </div> Group list
                     </CardTitle>
                 </CardHeader>
             </Card>
