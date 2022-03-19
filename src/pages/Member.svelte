@@ -105,7 +105,7 @@
 {#if settings && settings.appearance.color_background}
     <div class="background" style="background-color: {member && `#${member.color}`}"></div>
 {/if}
-{#if member && member.banner && ((settings && settings.appearance.banner_top) || !settings)}
+{#if member && member.banner && ((settings && settings.appearance.banner_top))}
 <div class="banner" style="background-image: url({member.banner})" />
 {/if}
 <Container>
