@@ -7,7 +7,7 @@
 
     let settings = {
         appearance: {
-            banner_top: true,
+            banner_top: false,
             banner_bottom: true,
             gradient_background: false,
             color_background: false,
