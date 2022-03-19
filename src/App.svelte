@@ -8,6 +8,7 @@
   import Public from "./pages/Public.svelte";
   import Main from "./pages/profiles/Main.svelte";
   import Status from './pages/status.svelte';
+  import Member from './pages/Member.svelte';
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
@@ -37,6 +38,8 @@
       localStorage.setItem("pk-style", "dark");
     };
   };
+
+  let falseBool = false;
 </script>
 
 <svelte:head>
@@ -47,15 +50,14 @@
   <Navigation bind:style={style}/>
     <Route path="/"><Home /></Route>
     <Route path="dash"><Dash /></Route>
+    <Route path="dash/m/:id"><Member isPublic={falseBool}/></Route>
     <Route path="settings"><Settings /></Route>
     <Route path="profile"><Public /></Route>
     <Route path = "profile/s/:id"><Main /></Route>
     <Route path = "s">
       hey please provide a system
     </Route>
-    <Route path = "profile/m/:id">
-      member
-    </Route>
+    <Route path = "profile/m/:id"><Member/></Route>
     <Route path = "profile/m">
       hey please provide a member
     </Route>

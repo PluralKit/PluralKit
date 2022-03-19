@@ -14,6 +14,7 @@
     export let groups: Group[] = [];
     export let member: Member;
     export let isPublic: boolean = false;
+    export let isPage: boolean = false;
 
     let editMode: boolean = false;
     let groupMode: boolean = false;
@@ -144,6 +145,11 @@
     {/if}
     {#if !isPublic}
     <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => groupMode = true}>Groups</Button>
+    {/if}
+    {#if !isPage}
+    <Button style="flex: 0; float: right;" color="primary">View page</Button>
+    {:else}
+    <Button style="flex: 0; float: right;" color="primary">View system</Button>
     {/if}
     {:else if editMode}
         <Edit on:deletion on:update bind:member bind:editMode />
