@@ -46,7 +46,7 @@
 
 </script>
 
-<CardBody style="border-left: 4px solid #{group.color}; margin: -1rem -1.25rem">
+<CardBody style="border-left: 4px solid #{settings && settings.appearance.color_background ? isPage ? "" : group.color : group.color }; margin: -1rem -1.25rem">
 {#if !editMode && !memberMode}
 <Row>
     {#if group.id}
