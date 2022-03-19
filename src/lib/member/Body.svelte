@@ -10,7 +10,7 @@
     import ProxyTags from './ProxyTags.svelte';
 
     import { Member, Group } from '../../api/types';
-    import { navigate } from 'svelte-navigator';
+    import { Link } from 'svelte-navigator';
 
     export let groups: Group[] = [];
     export let member: Member;
@@ -150,9 +150,9 @@
     {#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => groupMode = true}>Groups</Button>{/if}
     {/if}
     {#if !isPage}
-    <Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" on:click={() => navigate(isPublic ? `/profile/m/${member.id}` : `/dash/m/${member.id}`)}>View page</Button>
+    <Link to={isPublic ? `/profile/m/${member.id}` : `/dash/m/${member.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View page</Button></Link>
     {:else}
-    <Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" on:click={() => navigate(isPublic ? `/profile/s/${member.system}?tab=members` : "/dash?tab=members")}>View system</Button>
+    <Link to={isPublic ? `/profile/s/${member.system}?tab=members` : "/dash?tab=members"}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View system</Button></Link>
     {/if}
     {:else if editMode}
         <Edit on:deletion on:update bind:member bind:editMode />

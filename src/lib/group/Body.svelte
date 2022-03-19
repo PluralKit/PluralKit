@@ -6,7 +6,7 @@
     import twemoji from 'twemoji';
     import Privacy from './Privacy.svelte';
     import MemberEdit from './MemberEdit.svelte';
-    import { navigate } from 'svelte-navigator';
+    import { Link } from 'svelte-navigator';
 
     import { Member, Group } from '../../api/types';
    
@@ -110,9 +110,9 @@
 {#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>{/if}
 {/if}
 {#if !isPage}
-    <Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" on:click={() => navigate(isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`)}>View page</Button>
+    <Link to={isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View page</Button></Link>
     {:else if !isPublic}
-    <Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" on:click={() => navigate("/dash?tab=groups")}>View system</Button>
+    <Link to="/dash?tab=groups"><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View system</Button></Link>
     {/if}
 {:else if editMode}
 <Edit on:deletion on:update bind:group bind:editMode />
