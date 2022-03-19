@@ -13,7 +13,8 @@
     let editMode: boolean = false;
     let memberMode: boolean = false;
     export let isPublic: boolean;
-    export let members: Member[];
+    export let members: Member[] = [];
+    export let isMainDash = true;
 
     let htmlDescription: string;
     $: if (group.description) { 
@@ -102,7 +103,7 @@
 {#if (group.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img src={group.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
-{#if !isPublic}
+{#if !isPublic && isMainDash}
 <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>
 {/if}
 {:else if editMode}
