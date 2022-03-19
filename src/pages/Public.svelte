@@ -3,9 +3,11 @@
     import { Link, navigate } from 'svelte-navigator';
     import FaRocket from 'svelte-icons/fa/FaRocket.svelte';
     import FaStar from 'svelte-icons/fa/FaStar.svelte'
+    import FaMoon from 'svelte-icons/fa/FaMoon.svelte'
 
     let sysInput: string = "";
     let memberInput: string = "";
+    let groupInput: string = "";
 </script>
 
 <Container>
@@ -53,6 +55,31 @@
                         <Col xs={12} lg={3} class="my-2 d-flex">
                             {#if memberInput !== ""}
                             <Link style="text-decoration: none; flex: 1 0 auto" to="/profile/m/{memberInput.toLowerCase().trim()}"><Button class="w-100" color="primary">View</Button></Link>
+                            {:else}
+                                <Button class="w-100" disabled color="primary">View</Button>
+                            {/if}
+                        </Col>
+                    </Row>
+                </CardBody>
+            </Card>
+
+            <Card class="mb-4">
+                <CardHeader>
+                    <CardTitle style="margin-top: 8px; outline: none;">
+                        <div class="icon d-inline-block">
+                            <FaMoon />
+                        </div>Group Card
+                    </CardTitle>
+                </CardHeader>
+                <CardBody>
+                    Submit a <b>group ID</b> to view that group's profile.
+                    <Row>
+                        <Col xs={12} lg={9} class="my-2">
+                            <Input on:keyup={(event) => {if (event.key === "Enter" && groupInput !== "") navigate(`/profile/g/${groupInput.toLowerCase().trim()}`)}} bind:value={groupInput} />
+                        </Col>
+                        <Col xs={12} lg={3} class="my-2 d-flex">
+                            {#if groupInput !== ""}
+                            <Link style="text-decoration: none; flex: 1 0 auto" to="/profile/g/{groupInput.toLowerCase().trim()}"><Button class="w-100" color="primary">View</Button></Link>
                             {:else}
                                 <Button class="w-100" disabled color="primary">View</Button>
                             {/if}
