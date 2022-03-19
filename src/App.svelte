@@ -9,6 +9,8 @@
   import Main from "./pages/profiles/Main.svelte";
   import Status from './pages/status.svelte';
   import Member from './pages/Member.svelte';
+  import Group from './pages/Group.svelte';
+  import { Alert } from 'sveltestrap';
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
@@ -51,21 +53,20 @@
     <Route path="/"><Home /></Route>
     <Route path="dash"><Dash /></Route>
     <Route path="dash/m/:id"><Member isPublic={falseBool}/></Route>
+    <Route path = "dash/g/:id"><Group isPublic={falseBool}/></Route>
     <Route path="settings"><Settings /></Route>
     <Route path="profile"><Public /></Route>
     <Route path = "profile/s/:id"><Main /></Route>
     <Route path = "s">
-      hey please provide a system
+      <Alert color="danger">Please provide a system ID in the URL.</Alert>
     </Route>
     <Route path = "profile/m/:id"><Member/></Route>
     <Route path = "profile/m">
-      hey please provide a member
+      <Alert color="danger">Please provide a member ID in the URL.</Alert>
     </Route>
-    <Route path = "profile/g/:id">
-      group!
-    </Route>
+    <Route path = "profile/g/:id"><Group/></Route>
     <Route path = "profile/g">
-      hey please provide a group
+      <Alert color="danger">Please provide a group ID in the URL.</Alert>
     </Route>
     <Route path="status"><Status /></Route>
   <Footer />

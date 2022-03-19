@@ -16,6 +16,7 @@
     export let member: Member;
     export let isPublic: boolean = false;
     export let isPage: boolean = false;
+    export let isMainDash = true;
 
     let editMode: boolean = false;
     let groupMode: boolean = false;
@@ -145,7 +146,8 @@
     <img src={member.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 17em; object-fit: cover"/>
     {/if}
     {#if !isPublic}
-    <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => groupMode = true}>Groups</Button>
+    <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
+    {#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => groupMode = true}>Groups</Button>{/if}
     {/if}
     {#if !isPage}
     <Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" on:click={() => navigate(isPublic ? `/profile/m/${member.id}` : `/dash/m/${member.id}`)}>View page</Button>
