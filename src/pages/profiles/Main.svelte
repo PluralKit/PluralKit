@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container, Col, Row, TabContent, TabPane, Alert, Spinner } from 'sveltestrap';
-    import { useParams } from "svelte-navigator";
+    import { useParams, useLocation } from "svelte-navigator";
     import { onMount } from 'svelte';
     
     import SystemMain from '../../lib/system/Main.svelte';
@@ -20,6 +20,17 @@
 
     let params = useParams();
     $: id = $params.id;
+    
+    let location = useLocation();
+    let urlParams = $location.search && new URLSearchParams($location.search);
+    let tabPane: string;
+    if (urlParams) {
+        tabPane = urlParams.get("tab");
+    }
+    
+    if (!tabPane) {
+        tabPane = "system";
+    }
     
     let err: string;
     
@@ -58,13 +69,13 @@
             {:else}
             <Alert color="info">You are currently <b>viewing</b> a system.</Alert>
             <TabContent class="mt-3">
-                <TabPane tabId="system" tab="System" active>
+                <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <SystemMain bind:user bind:isPublic />
                 </TabPane>
-                <TabPane tabId="members" tab="Members">
+                <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
                         <MemberList bind:list={members} bind:isPublic/>
                 </TabPane>
-                <TabPane tabId="groups" tab="Groups">
+                <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
                     <GroupList bind:members={members} bind:list={groups} bind:isPublic/>
             </TabPane> 
             </TabContent>
