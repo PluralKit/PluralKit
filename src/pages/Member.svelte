@@ -21,6 +21,7 @@
     let member: Member;
     let groups: Group[] = [];
     let systemGroups: Group[] = [];
+    let systemMembers: Member[] = [];
     let isMainDash = false;
     let isDeleted = false;
 
@@ -60,13 +61,19 @@
 
     async function fetchGroups() {
         try {
-            groups = await api().members($params.id).groups().get({auth: !isPublic});
+            groups = await api().members($params.id).groups().get({auth: !isPublic, query: { with_members: !isPublic } });
             if (!isPublic) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 systemGroups = await api().systems("@me").groups.get({ auth: true, query: { with_members: true } });
             }
             groupErr = "";
             groupLoading = false;
+            // we can't use with_members from a group list from a member endpoint yet, but I'm leaving this in in case we do
+            // (this is needed for editing a group member list from the member page)
+            /* if (!isPublic) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                systemMembers = await api().systems("@me").members.get({auth: true});
+            } */
         } catch (error) {
             console.log(error);
             groupErr = error.message;
@@ -83,7 +90,16 @@
     function updateDelete() {
         isDeleted = true;
     }
+    
+    function updateGroupList(event: any) {
+        groups = groups.map(group => group.id !== event.detail.id ? group : event.detail);
+        systemGroups = systemGroups.map(group => group.id !== event.detail.id ? group : event.detail);
+    }
 
+    function deleteGroupFromList(event: any) {
+        groups = groups.filter(group => group.id !== event.detail);
+        systemGroups = systemGroups.filter(group => group.id !== event.detail);
+  }
 </script>
 
 {#if settings && settings.appearance.color_background}
@@ -139,14 +155,14 @@
                     <CardsHeader bind:item={group} slot="header">
                         <FaUsers slot="icon" />
                     </CardsHeader>
-                    <GroupBody isMainDash={isMainDash} bind:group bind:isPublic={isPublic}/>
+                    <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
                 </AccordionItem>
                 {:else}
                 <AccordionItem>
                     <CardsHeader bind:item={group} slot="header">
                         <FaLock slot="icon" />
                     </CardsHeader>
-                    <GroupBody isMainDash={isMainDash} bind:group bind:isPublic={isPublic}/>
+                    <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
                 </AccordionItem>
                 {/if}
             {/each}

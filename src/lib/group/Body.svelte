@@ -103,8 +103,9 @@
 {#if (group.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img src={group.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
-{#if !isPublic && isMainDash}
-<Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> <Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>
+{#if !isPublic}
+<Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> 
+{#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>{/if}
 {/if}
 {:else if editMode}
 <Edit on:deletion on:update bind:group bind:editMode />
