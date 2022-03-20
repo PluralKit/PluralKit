@@ -59,6 +59,9 @@ public static class MiscUtils
         // Ignore "Database is shutting down" error
         if (e is PostgresException pe && pe.SqlState == "57P03") return false;
 
+        // Ignore *other* "database is shutting down" error (57P01)
+        if (e is PostgresException pe2 && pe2.SqlState == "57P01") return false;
+
         // Ignore database timing out as well.
         if (e is NpgsqlException tpe && tpe.InnerException is TimeoutException)
             return false;
