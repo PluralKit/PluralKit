@@ -72,12 +72,6 @@
             }
             memberErr = "";
             memberLoading = false;
-            // we can't use with_members from a group list from a member endpoint yet, but I'm leaving this in in case we do
-            // (this is needed for editing a group member list from the member page)
-            /* if (!isPublic) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                systemMembers = await api().systems("@me").members.get({auth: true});
-            } */
         } catch (error) {
             console.log(error);
             memberErr = error.message;
