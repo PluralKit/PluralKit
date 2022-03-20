@@ -65,6 +65,7 @@
     async function fetchMembers() {
         try {
             members = await api().groups($params.id).members().get({auth: !isPublic});
+            group.members = members.map(function(member) {return member.uuid});
             if (!isPublic) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 systemMembers = await api().systems("@me").members.get({ auth: true });
@@ -134,7 +135,7 @@
                         </CardsHeader>
                     </CardHeader>
                     <CardBody>
-                        <Body on:deletion={updateDelete} on:updateGroups={updateMembers} bind:members={systemMembers} bind:group={group} isPage={isPage} isPublic={isPublic}/>
+                        <Body on:deletion={updateDelete} on:updateMembers={updateMembers} bind:members={systemMembers} bind:group={group} isPage={isPage} isPublic={isPublic}/>
                     </CardBody>
                 </Card>
             {/if}

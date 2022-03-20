@@ -294,14 +294,14 @@
             <CardsHeader bind:item={group} slot="header">
                 <FaUsers slot="icon" />
             </CardsHeader>
-            <Body on:deletion={updateDelete} on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
+            <Body on:deletion={updateDelete} on:update={updateList} on:updateMembers={updateList} bind:members bind:group bind:isPublic={isPublic}/>
         </AccordionItem>
         {:else}
         <AccordionItem>
             <CardsHeader bind:item={group} slot="header">
                 <FaLock slot="icon" />
             </CardsHeader>
-            <Body on:deletion={updateDelete} on:update={updateList} bind:members bind:group bind:isPublic={isPublic}/>
+            <Body on:deletion={updateDelete} on:update={updateList} on:updateMembers={updateList} bind:members bind:group bind:isPublic={isPublic}/>
         </AccordionItem>
         {/if}
     {/each}

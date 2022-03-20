@@ -65,7 +65,7 @@ function memberListRenderer(item: any) {
   const dispatch = createEventDispatcher();
 
   function update() {
-      dispatch("update", group)
+      dispatch("updateMembers", group)
   }
     
     async function submitAdd() {
