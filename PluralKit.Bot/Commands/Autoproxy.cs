@@ -91,7 +91,7 @@ public class Autoproxy
         var relevantMember = ctx.MessageContext.AutoproxyMode switch
         {
             AutoproxyMode.Front => fronters.Length > 0 ? await ctx.Repository.GetMember(fronters[0]) : null,
-            AutoproxyMode.Member => await ctx.Repository.GetMember(ctx.MessageContext.AutoproxyMember.Value),
+            AutoproxyMode.Member when ctx.MessageContext.AutoproxyMember.HasValue => await ctx.Repository.GetMember(ctx.MessageContext.AutoproxyMember.Value),
             _ => null
         };
 
