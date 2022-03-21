@@ -14,8 +14,8 @@ public partial class ModelRepository
             conn.ExecuteAsync("update info set group_count = (select count(*) from groups)"));
         await _db.Execute(conn =>
             conn.ExecuteAsync("update info set switch_count = (select count(*) from switches)"));
-        await _db.Execute(conn =>
-            conn.ExecuteAsync("update info set message_count = (select count(*) from messages)"));
+        // await _db.Execute(conn =>
+        //     conn.ExecuteAsync("update info set message_count = (select count(*) from messages)"));
     }
 
     public Task<Counts> GetStats()
