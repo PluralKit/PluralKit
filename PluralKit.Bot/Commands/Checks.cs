@@ -259,11 +259,16 @@ public class Checks
         var context = await ctx.Repository.GetMessageContext(msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
         var members = (await ctx.Repository.GetProxyMembers(msg.Author.Id, channel.GuildId.Value)).ToList();
 
+        // for now this is just server
+        var autoproxySettings = await ctx.Repository.GetAutoproxySettings(ctx.System.Id, channel.GuildId.Value, null);
+
+        // todo: match unlatch
+
         // Run everything through the checks, catch the ProxyCheckFailedException, and reply with the error message.
         try
         {
             _proxy.ShouldProxy(channel, msg, context);
-            _matcher.TryMatch(context, members, out var match, msg.Content, msg.Attachments.Length > 0,
+            _matcher.TryMatch(context, autoproxySettings, members, out var match, msg.Content, msg.Attachments.Length > 0,
                 context.AllowAutoproxy);
 
             await ctx.Reply("I'm not sure why this message was not proxied, sorry.");

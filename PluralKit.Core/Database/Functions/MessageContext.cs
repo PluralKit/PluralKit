@@ -15,10 +15,6 @@ public class MessageContext
     public bool InLogBlacklist { get; }
     public bool LogCleanupEnabled { get; }
     public bool ProxyEnabled { get; }
-    public AutoproxyMode AutoproxyMode { get; }
-    public MemberId? AutoproxyMember { get; }
-    public ulong? LastMessage { get; }
-    public MemberId? LastMessageMember { get; }
     public SwitchId? LastSwitch { get; }
     public MemberId[] LastSwitchMembers { get; } = new MemberId[0];
     public Instant? LastSwitchTimestamp { get; }

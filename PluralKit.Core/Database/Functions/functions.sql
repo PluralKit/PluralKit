@@ -6,10 +6,6 @@
         in_log_blacklist bool,
         log_cleanup_enabled bool,
         proxy_enabled bool,
-        autoproxy_mode int,
-        autoproxy_member int,
-        last_message bigint,
-        last_message_member int,
         last_switch int,
         last_switch_members int[],
         last_switch_timestamp timestamp,
@@ -28,8 +24,7 @@ as $$
             left join system_config on system_config.system = accounts.system
             left join system_guild on system_guild.system = accounts.system and system_guild.guild = guild_id
             where accounts.uid = account_id),
-        guild as (select * from servers where id = guild_id),
-        last_message as (select * from messages where messages.guild = guild_id and messages.sender = account_id order by mid desc limit 1)
+        guild as (select * from servers where id = guild_id)
     select
         system.id as system_id,
         guild.log_channel,
@@ -37,10 +32,6 @@ as $$
         (channel_id = any(guild.log_blacklist)) as in_log_blacklist,
         coalesce(guild.log_cleanup_enabled, false),
         coalesce(system_guild.proxy_enabled, true) as proxy_enabled,
-        coalesce(system_guild.autoproxy_mode, 1) as autoproxy_mode,
-        system_guild.autoproxy_member,
-        last_message.mid as last_message,
-        last_message.member as last_message_member,
         system_last_switch.switch as last_switch,
         system_last_switch.members as last_switch_members,
         system_last_switch.timestamp as last_switch_timestamp,
@@ -55,7 +46,6 @@ as $$
     from (select 1) as _placeholder
         left join system on true
         left join guild on true
-        left join last_message on true
         left join system_last_switch on system_last_switch.system = system.id
         left join system_guild on system_guild.system = system.id and system_guild.guild = guild_id
 $$ language sql stable rows 1;

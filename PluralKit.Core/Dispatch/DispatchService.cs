@@ -38,6 +38,12 @@ public class DispatchService
         }
     }
 
+    public Task Dispatch(SystemId systemId, ulong? guildId, ulong? channelId, AutoproxyPatch patch)
+    {
+        // todo
+        return Task.CompletedTask;
+    }
+
     public async Task Dispatch(SystemId systemId, UpdateDispatchData data)
     {
         if (data.EventData != null && data.EventData.Count == 0)
@@ -159,18 +165,11 @@ public class DispatchService
         if (system.WebhookUrl == null)
             return;
 
-        string memberRef = null;
-        if (patch.AutoproxyMember.Value != null)
-        {
-            var member = await repo.GetMember(patch.AutoproxyMember.Value.Value);
-            memberRef = member.Uuid.ToString();
-        }
-
         var data = new UpdateDispatchData();
         data.Event = DispatchEvent.UPDATE_SYSTEM_GUILD;
         data.SigningToken = system.WebhookToken;
         data.SystemId = system.Uuid.ToString();
-        data.EventData = patch.ToJson(memberRef, guild_id);
+        data.EventData = patch.ToJson(guild_id);
 
         _logger.Debug("Dispatching webhook for system {SystemId} in guild {GuildId}", system.Id, guild_id);
         await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());
