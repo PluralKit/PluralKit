@@ -32,10 +32,11 @@ public class ProxyService
     private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
     private readonly WebhookExecutorService _webhookExecutor;
+    private readonly NodaTime.IClock _clock;
 
     public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor,
             DispatchService dispatch, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo,
-                                    IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
+                      NodaTime.IClock clock, IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
     {
         _logChannel = logChannel;
         _webhookExecutor = webhookExecutor;
@@ -47,6 +48,7 @@ public class ProxyService
         _cache = cache;
         _lastMessage = lastMessage;
         _rest = rest;
+        _clock = clock;
         _logger = logger.ForContext<ProxyService>();
     }
 
@@ -56,6 +58,17 @@ public class ProxyService
         if (!ShouldProxy(channel, message, ctx))
             return false;
 
+        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, guild.Id, null);
+
+        if (autoproxySettings.AutoproxyMode == AutoproxyMode.Latch && IsUnlatch(message))
+        {
+            // "unlatch"
+            await _repo.UpdateAutoproxy(ctx.SystemId.Value, guild.Id, null, new() {
+                AutoproxyMember = null
+            });
+            return false;
+        }
+
         var rootChannel = await _cache.GetRootChannel(message.ChannelId);
 
         List<ProxyMember> members;
@@ -63,7 +76,7 @@ public class ProxyService
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
             members = (await _repo.GetProxyMembers(message.Author.Id, message.GuildId!.Value)).ToList();
 
-        if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Length > 0,
+        if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
 
         // this is hopefully temporary, so not putting it into a separate method
@@ -84,7 +97,7 @@ public class ProxyService
         var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
 
         // Everything's in order, we can execute the proxy!
-        await ExecuteProxy(message, ctx, match, allowEveryone, allowEmbeds);
+        await ExecuteProxy(message, ctx, autoproxySettings, match, allowEveryone, allowEmbeds);
         return true;
     }
 
@@ -129,7 +142,7 @@ public class ProxyService
         return true;
     }
 
-    private async Task ExecuteProxy(Message trigger, MessageContext ctx,
+    private async Task ExecuteProxy(Message trigger, MessageContext ctx, AutoproxySettings autoproxySettings,
                                     ProxyMatch match, bool allowEveryone, bool allowEmbeds)
     {
         // Create reply embed
@@ -171,7 +184,7 @@ public class ProxyService
             Stickers = trigger.StickerItems,
             AllowEveryone = allowEveryone
         });
-        await HandleProxyExecutedActions(ctx, trigger, proxyMessage, match);
+        await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
 
     private async Task<(string?, string?)> FetchReferencedMessageAuthorInfo(Message trigger, Message referenced)
@@ -290,7 +303,11 @@ public class ProxyService
     private string FixSameNameInner(string name)
         => $"{name}\u17b5";
 
-    private async Task HandleProxyExecutedActions(MessageContext ctx, Message triggerMessage, Message proxyMessage, ProxyMatch match)
+    public static bool IsUnlatch(Message message)
+        => message.Content.StartsWith(@"\\") || message.Content.StartsWith("\\\u200b\\");
+
+    private async Task HandleProxyExecutedActions(MessageContext ctx, AutoproxySettings autoproxySettings,
+                                                Message triggerMessage, Message proxyMessage, ProxyMatch match)
     {
         var sentMessage = new PKMessage
         {
@@ -307,6 +324,14 @@ public class ProxyService
 
         Task LogMessageToChannel() =>
             _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
+
+        Task SaveLatchAutoproxy() => autoproxySettings.AutoproxyMode == AutoproxyMode.Latch
+            ? _repo.UpdateAutoproxy(ctx.SystemId.Value, triggerMessage.GuildId, null, new()
+            {
+                AutoproxyMember = match.Member.Id,
+                LastLatchTimestamp = _clock.GetCurrentInstant(),
+            })
+            : Task.CompletedTask;
 
         Task DispatchWebhook() => _dispatch.Dispatch(ctx.SystemId.Value, sentMessage);
 
@@ -333,6 +358,7 @@ public class ProxyService
             DeleteProxyTriggerMessage(),
             SaveMessageInDatabase(),
             LogMessageToChannel(),
+            SaveLatchAutoproxy(),
             DispatchWebhook()
         );
     }

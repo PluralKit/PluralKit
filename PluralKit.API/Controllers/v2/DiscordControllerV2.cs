@@ -24,11 +24,7 @@ public class DiscordControllerV2: PKControllerBase
         if (settings == null)
             throw Errors.SystemGuildNotFound;
 
-        PKMember member = null;
-        if (settings.AutoproxyMember != null)
-            member = await _repo.GetMember(settings.AutoproxyMember.Value);
-
-        return Ok(settings.ToJson(member?.Uuid.ToString()));
+        return Ok(settings.ToJson());
     }
 
     [HttpPatch("systems/{systemRef}/guilds/{guild_id}")]
@@ -42,61 +38,14 @@ public class DiscordControllerV2: PKControllerBase
         if (settings == null)
             throw Errors.SystemGuildNotFound;
 
-        MemberId? memberId = null;
-        if (data.ContainsKey("autoproxy_member"))
-        {
-            if (data["autoproxy_member"].Type != JTokenType.Null)
-            {
-                var member = await ResolveMember(data.Value<string>("autoproxy_member"));
-                if (member == null)
-                    throw Errors.MemberNotFound;
-
-                memberId = member.Id;
-            }
-        }
-        else
-        {
-            memberId = settings.AutoproxyMember;
-        }
-
-        var patch = SystemGuildPatch.FromJson(data, memberId);
+        var patch = SystemGuildPatch.FromJson(data);
 
         patch.AssertIsValid();
         if (patch.Errors.Count > 0)
             throw new ModelParseError(patch.Errors);
 
-        // this is less than great, but at least it's legible
-        if (patch.AutoproxyMember.Value == null)
-        {
-            if (patch.AutoproxyMode.IsPresent)
-            {
-                if (patch.AutoproxyMode.Value == AutoproxyMode.Member)
-                    throw Errors.MissingAutoproxyMember;
-            }
-            else if (settings.AutoproxyMode == AutoproxyMode.Member)
-            {
-                throw Errors.MissingAutoproxyMember;
-            }
-        }
-        else
-        {
-            if (patch.AutoproxyMode.IsPresent)
-            {
-                if (patch.AutoproxyMode.Value == AutoproxyMode.Latch)
-                    throw Errors.PatchLatchMemberError;
-            }
-            else if (settings.AutoproxyMode == AutoproxyMode.Latch)
-            {
-                throw Errors.PatchLatchMemberError;
-            }
-        }
-
         var newSettings = await _repo.UpdateSystemGuild(system.Id, guild_id, patch);
-
-        PKMember? newMember = null;
-        if (newSettings.AutoproxyMember != null)
-            newMember = await _repo.GetMember(newSettings.AutoproxyMember.Value);
-        return Ok(newSettings.ToJson(newMember?.Hid));
+        return Ok(newSettings.ToJson());
     }
 
     [HttpGet("members/{memberRef}/guilds/{guild_id}")]

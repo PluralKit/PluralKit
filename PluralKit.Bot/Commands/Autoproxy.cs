@@ -16,25 +16,29 @@ public class Autoproxy
         // no need to check account here, it's already done at CommandTree
         ctx.CheckGuildContext();
 
+        // for now, just for guild
+        // this also creates settings if there are none present
+        var settings = await ctx.Repository.GetAutoproxySettings(ctx.System.Id, ctx.Guild.Id, null);
+
         if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
-            await AutoproxyOff(ctx);
+            await AutoproxyOff(ctx, settings);
         else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
-            await AutoproxyLatch(ctx);
+            await AutoproxyLatch(ctx, settings);
         else if (ctx.Match("front", "fronter", "switch"))
-            await AutoproxyFront(ctx);
+            await AutoproxyFront(ctx, settings);
         else if (ctx.Match("member"))
             throw new PKSyntaxError("Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
         else if (await ctx.MatchMember() is PKMember member)
             await AutoproxyMember(ctx, member);
         else if (!ctx.HasNext())
-            await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx));
+            await ctx.Reply(embed: await CreateAutoproxyStatusEmbed(ctx, settings));
         else
             throw new PKSyntaxError($"Invalid autoproxy mode {ctx.PopArgument().AsCode()}.");
     }
 
-    private async Task AutoproxyOff(Context ctx)
+    private async Task AutoproxyOff(Context ctx, AutoproxySettings settings)
     {
-        if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Off)
+        if (settings.AutoproxyMode == AutoproxyMode.Off)
         {
             await ctx.Reply($"{Emojis.Note} Autoproxy is already off in this server.");
         }
@@ -45,9 +49,9 @@ public class Autoproxy
         }
     }
 
-    private async Task AutoproxyLatch(Context ctx)
+    private async Task AutoproxyLatch(Context ctx, AutoproxySettings settings)
     {
-        if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Latch)
+        if (settings.AutoproxyMode == AutoproxyMode.Latch)
         {
             await ctx.Reply($"{Emojis.Note} Autoproxy is already set to latch mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
         }
@@ -58,9 +62,9 @@ public class Autoproxy
         }
     }
 
-    private async Task AutoproxyFront(Context ctx)
+    private async Task AutoproxyFront(Context ctx, AutoproxySettings settings)
     {
-        if (ctx.MessageContext.AutoproxyMode == AutoproxyMode.Front)
+        if (settings.AutoproxyMode == AutoproxyMode.Front)
         {
             await ctx.Reply($"{Emojis.Note} Autoproxy is already set to front mode in this server. If you want to disable autoproxying, use `pk;autoproxy off`.");
         }
@@ -75,11 +79,13 @@ public class Autoproxy
     {
         ctx.CheckOwnMember(member);
 
+        // todo: why does this not throw an error if the member is already set
+
         await UpdateAutoproxy(ctx, AutoproxyMode.Member, member.Id);
         await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** in this server.");
     }
 
-    private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx)
+    private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx, AutoproxySettings settings)
     {
         var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member"
                         + "\n**pk;autoproxy front** - Autoproxies as current (first) fronter"
@@ -88,14 +94,16 @@ public class Autoproxy
             .Title($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
 
         var fronters = ctx.MessageContext.LastSwitchMembers;
-        var relevantMember = ctx.MessageContext.AutoproxyMode switch
+        var relevantMember = settings.AutoproxyMode switch
         {
             AutoproxyMode.Front => fronters.Length > 0 ? await ctx.Repository.GetMember(fronters[0]) : null,
-            AutoproxyMode.Member when ctx.MessageContext.AutoproxyMember.HasValue => await ctx.Repository.GetMember(ctx.MessageContext.AutoproxyMember.Value),
+            AutoproxyMode.Member when settings.AutoproxyMember.HasValue => await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
             _ => null
         };
 
-        switch (ctx.MessageContext.AutoproxyMode)
+        Console.WriteLine(settings.AutoproxyMode);
+
+        switch (settings.AutoproxyMode)
         {
             case AutoproxyMode.Off:
                 eb.Description($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");
@@ -136,9 +144,7 @@ public class Autoproxy
 
     private async Task UpdateAutoproxy(Context ctx, AutoproxyMode autoproxyMode, MemberId? autoproxyMember)
     {
-        await ctx.Repository.GetSystemGuild(ctx.Guild.Id, ctx.System.Id);
-
-        var patch = new SystemGuildPatch { AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember };
-        await ctx.Repository.UpdateSystemGuild(ctx.System.Id, ctx.Guild.Id, patch);
+        var patch = new AutoproxyPatch { AutoproxyMode = autoproxyMode, AutoproxyMember = autoproxyMember };
+        await ctx.Repository.UpdateAutoproxy(ctx.System.Id, ctx.Guild.Id, null, patch);
     }
 }
