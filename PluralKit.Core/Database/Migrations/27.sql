@@ -11,7 +11,7 @@ create table autoproxy (
     system int references systems(id) on delete cascade,
     channel_id bigint,
     guild_id bigint,
-    autoproxy_mode int check (mode in (1, 2, 3, 4)) not null default 1,
+    autoproxy_mode int check (autoproxy_mode in (1, 2, 3, 4)) not null default 1,
     autoproxy_member int references members(id) on delete set null,
     last_latch_timestamp timestamp,
     check (
