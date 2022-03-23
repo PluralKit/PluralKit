@@ -105,6 +105,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;autoproxy off` - Disables autoproxying for your system in the current server.
 - `pk;autoproxy front` - Sets your system's autoproxy in this server to proxy the first member currently registered as front.
 - `pk;autoproxy latch` - Sets your system's autoproxy in this server to proxy the last manually proxied member.
+- `pk;autoproxy delatch` - Forgets your last manually proxied member so that new messages will not be autoproxied until you manually proxy as another member.
 - `pk;autoproxy \<member>` - Sets your system's autoproxy in this server to proxy a specific member.
 
 ## Config commands

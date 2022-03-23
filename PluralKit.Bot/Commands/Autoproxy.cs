@@ -24,6 +24,8 @@ public class Autoproxy
             await AutoproxyOff(ctx, settings);
         else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
             await AutoproxyLatch(ctx, settings);
+        else if (ctx.Match("delatch", "unlatch", "relatch"))
+            await AutoproxyDeLatch(ctx, settings);
         else if (ctx.Match("front", "fronter", "switch"))
             await AutoproxyFront(ctx, settings);
         else if (ctx.Match("member"))
@@ -62,6 +64,19 @@ public class Autoproxy
         }
     }
 
+    private async Task AutoproxyDeLatch(Context ctx, AutoproxySettings settings)
+    {
+        if (settings.AutoproxyMode == AutoproxyMode.Latch)
+        {
+            await UpdateAutoproxy(ctx, AutoproxyMode.Latch, null); // Reset the latch member
+            await ctx.Reply($"{Emojis.Success} The last proxied member has been cleared. Messages will no longer be autoproxied until you manually proxy as another member.");
+        }
+        else
+        {
+            await ctx.Reply($"{Emojis.Note} Autoproxy is not set to latch mode in this server.");
+        }
+    }
+
     private async Task AutoproxyFront(Context ctx, AutoproxySettings settings)
     {
         if (settings.AutoproxyMode == AutoproxyMode.Front)
@@ -88,6 +103,7 @@ public class Autoproxy
     private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx, AutoproxySettings settings)
     {
         var commandList = "**pk;autoproxy latch** - Autoproxies as last-proxied member"
+                        + "\n**pk;autoproxy delatch** - Clears your last proxied member."
                         + "\n**pk;autoproxy front** - Autoproxies as current (first) fronter"
                         + "\n**pk;autoproxy <member>** - Autoproxies as a specific member";
         var eb = new EmbedBuilder()
