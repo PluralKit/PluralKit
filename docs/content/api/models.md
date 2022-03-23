@@ -30,7 +30,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |created|datetime||
 |privacy|?system privacy object||
 
-* System privacy keys: `description_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
+* System privacy keys: `description_privacy`, `pronoun_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
 
 ### Member model
 
