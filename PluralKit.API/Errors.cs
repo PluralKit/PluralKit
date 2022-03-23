@@ -127,6 +127,10 @@ public static class APIErrorHandlerExt
         if (exc is FormatException && exc.Message.Contains("was not recognized as a valid DateTime"))
             return true;
 
+        // this happens if a user sends an empty JSON object for PATCH (or a JSON object with no valid keys)
+        if (exc is InvalidPatchException)
+            return true;
+
         // This may expanded at some point.
         return false;
     }

@@ -7,7 +7,8 @@ permalink: /api/models
 
 A question mark (`?`) next to the *key name* means the key is optional - it may be omitted in API responses. A question mark next to the *key type* means the key is nullable - API responses may return `null` for that key, instead of the specified type.
 
-In PATCH endpoints, all keys are optional. However, providing an object with no keys (or no valid keys) will result in 500 internal server error.
+In PATCH endpoints, all keys are optional. However, you must provide at least one valid key to update; please use a GET request if you want to query the existing information.
+<br>Sending a PATCH request with an empty JSON object, or with a JSON object that contains no valid keys for the target entity, will result in a 400 bad request error.
 
 Privacy objects (`privacy` key in models) contain values "private" or "public". Patching a privacy value to `null` will set to public. If you do not have access to view the privacy object of the member, the value of the `privacy` key will be null, rather than the values of individual privacy keys.
 
@@ -93,8 +94,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |timestamp|datetime||
 |id|snowflake|The ID of the message sent by the webhook. Encoded as string for precision reasons.|
-|original| snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.|
-|sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
+|original| snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.||sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
 |channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
 |guild|snowflake|The ID of the server the message was sent in. Encoded as string for precision reasons.|
 |system?|full System object|The system that proxied the message. Null if the member associated with this message was deleted.|
