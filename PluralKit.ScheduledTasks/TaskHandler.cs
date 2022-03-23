@@ -97,6 +97,7 @@ public class TaskHandler
         // Other shiz
         _metrics.Measure.Gauge.SetValue(Metrics.WebhookCacheSize, stats.Sum(x => x.WebhookCacheSize));
 
+        await Task.WhenAll(((IMetricsRoot)_metrics).ReportRunner.RunAllAsync());
         _logger.Debug("Submitted metrics to backend");
     }
 

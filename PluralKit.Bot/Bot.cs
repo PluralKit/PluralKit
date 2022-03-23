@@ -238,5 +238,7 @@ public class Bot
 
         // Collect some stats, submit them to the metrics backend
         await _collector.CollectStats();
+        await Task.WhenAll(((IMetricsRoot)_metrics).ReportRunner.RunAllAsync());
+        _logger.Debug("Submitted metrics to backend");
     }
 }
