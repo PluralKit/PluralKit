@@ -43,6 +43,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;system [system] privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system [system] tag [tag]` - Changes the system tag of your system.
 - `pk;system [system] servertag [tag|-enable|-disable]` - Changes your system's tag in the current server, or disables it for the current server.
+- `pk;system [system] pronouns [pronouns]` - Changes the pronouns of your system.
 - `pk;system proxy [server id] [on|off]` - Toggles message proxying for a specific server.
 - `pk;system [system] delete` - Deletes your system.
 - `pk;system [system] fronter` - Shows the current fronter of a system.

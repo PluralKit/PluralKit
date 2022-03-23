@@ -3,6 +3,7 @@ namespace PluralKit.Core;
 public enum SystemPrivacySubject
 {
     Description,
+    Pronouns,
     MemberList,
     GroupList,
     Front,
@@ -17,6 +18,7 @@ public static class SystemPrivacyUtils
         _ = subject switch
         {
             SystemPrivacySubject.Description => system.DescriptionPrivacy = level,
+            SystemPrivacySubject.Pronouns => system.PronounPrivacy = level,
             SystemPrivacySubject.Front => system.FrontPrivacy = level,
             SystemPrivacySubject.FrontHistory => system.FrontHistoryPrivacy = level,
             SystemPrivacySubject.MemberList => system.MemberListPrivacy = level,
@@ -43,6 +45,10 @@ public static class SystemPrivacyUtils
             case "text":
             case "info":
                 subject = SystemPrivacySubject.Description;
+                break;
+            case "pronouns":
+            case "prns":
+                subject = SystemPrivacySubject.Pronouns;
                 break;
             case "members":
             case "memberlist":

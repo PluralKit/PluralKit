@@ -24,13 +24,14 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |name|string|100-character limit|
 |description|?string|1000-character limit|
 |tag|string||
+|pronouns|?string|100-character limit|
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |color|string|6-character hex code, no `#` at the beginning|
 |created|datetime||
 |privacy|?system privacy object||
 
-* System privacy keys: `description_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
+* System privacy keys: `description_privacy`, `pronoun_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
 
 ### Member model
 

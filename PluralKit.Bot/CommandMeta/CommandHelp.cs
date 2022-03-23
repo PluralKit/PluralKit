@@ -8,6 +8,7 @@ public partial class CommandTree
     public static Command SystemDesc = new Command("system description", "system [system] description [description]", "Changes your system's description");
     public static Command SystemColor = new Command("system color", "system [system] color [color]", "Changes your system's color");
     public static Command SystemTag = new Command("system tag", "system [system] tag [tag]", "Changes your system's tag");
+    public static Command SystemPronouns = new Command("system pronouns", "system [system] pronouns [pronouns]", "Changes your system's pronouns");
     public static Command SystemServerTag = new Command("system servertag", "system [system] servertag [tag|enable|disable]", "Changes your system's tag in the current server");
     public static Command SystemAvatar = new Command("system icon", "system [system] icon [url|@mention]", "Changes your system's icon");
     public static Command SystemBannerImage = new Command("system banner", "system [system] banner [url]", "Set the system's banner image");
