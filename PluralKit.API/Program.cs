@@ -1,3 +1,5 @@
+using App.Metrics.AspNetCore;
+
 using Autofac.Extensions.DependencyInjection;
 
 using PluralKit.Core;
@@ -20,6 +22,7 @@ public class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
+            .UseMetrics()
             .UseServiceProviderFactory(new AutofacServiceProviderFactory())
             .UseSerilog()
             .ConfigureWebHostDefaults(whb => whb
