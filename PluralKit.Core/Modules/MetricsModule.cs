@@ -23,7 +23,7 @@ public class MetricsModule: Module
     {
         var builder = AppMetrics.CreateDefaultBuilder();
         if (config.InfluxUrl != null && config.InfluxDb != null)
-            builder.Report.ToInfluxDb(config.InfluxUrl, config.InfluxDb);
+            builder.Report.ToInfluxDb(config.InfluxUrl, config.InfluxDb, TimeSpan.FromMinutes(1));
         if (_onlyContext != null)
             builder.Filter.ByIncludingOnlyContext(_onlyContext);
         return builder.Build();
