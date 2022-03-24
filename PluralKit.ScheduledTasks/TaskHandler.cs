@@ -94,6 +94,13 @@ public class TaskHandler
         // this is pretty much always inaccurate but oh well
         _metrics.Measure.Gauge.SetValue(CoreMetrics.DatabaseConnections, stats.Sum(x => x.DatabaseConnectionCount));
 
+        foreach (var stat in redisStats)
+            _metrics.Measure.Gauge.SetValue(
+                CoreMetrics.DatabaseConnectionsByCluster,
+                new MetricTags("cluster_id", stat.Name),
+                JsonConvert.DeserializeObject<ClusterMetricInfo>(stat.Value).DatabaseConnectionCount
+            );
+
         // Other shiz
         _metrics.Measure.Gauge.SetValue(Metrics.WebhookCacheSize, stats.Sum(x => x.WebhookCacheSize));
 
