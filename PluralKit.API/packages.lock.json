@@ -2,15 +2,43 @@
   "version": 1,
   "dependencies": {
     "net6.0": {
-      "App.Metrics.AspNetCore.Mvc": {
+      "App.Metrics.AspNetCore.All": {
         "type": "Direct",
         "requested": "[4.3.0, )",
         "resolved": "4.3.0",
-        "contentHash": "CvsIUrUFS6sWimxKRl9RChDtOAGY36yW3HSTNXSaUrbFpmF76qL2HKiXu+4vSpO0Xau+fk7TdJvGRiG5RWGj0A==",
+        "contentHash": "ZCc2GSoDdmwxvacu9Rc/2TFtMW33KPWXfRbLF9yemEKalO5CQvDtZbCs9E1dDCEofeeI2Eho0ky86Brm3lXm4g==",
         "dependencies": {
           "App.Metrics.AspNetCore": "4.3.0",
-          "App.Metrics.AspNetCore.Mvc.Core": "4.3.0",
-          "App.Metrics.AspNetCore.Routing": "4.3.0"
+          "App.Metrics.AspNetCore.Endpoints": "4.3.0",
+          "App.Metrics.AspNetCore.Hosting": "4.3.0",
+          "App.Metrics.AspNetCore.Mvc": "4.3.0",
+          "App.Metrics.AspNetCore.Routing": "4.3.0",
+          "App.Metrics.AspNetCore.Tracking": "4.3.0",
+          "App.Metrics.Extensions.Collectors": "4.3.0",
+          "App.Metrics.Extensions.Configuration": "4.3.0",
+          "App.Metrics.Extensions.DependencyInjection": "4.3.0",
+          "App.Metrics.Extensions.HealthChecks": "4.3.0",
+          "App.Metrics.Extensions.Hosting": "4.3.0",
+          "App.Metrics.Formatters.Json": "4.3.0"
+        }
+      },
+      "App.Metrics.Prometheus": {
+        "type": "Direct",
+        "requested": "[4.3.0, )",
+        "resolved": "4.3.0",
+        "contentHash": "QhEL8zqnmOuaaSEUfQmWrqBEYt3MI3hb5Qhmlln72wUjyWzFkadA6QgzrQmG7K0lYqsj269BYcg42cL9T7wg6g==",
+        "dependencies": {
+          "App.Metrics.Formatters.Prometheus": "4.3.0"
+        }
+      },
+      "App.Metrics.Reporting.Console": {
+        "type": "Direct",
+        "requested": "[4.3.0, )",
+        "resolved": "4.3.0",
+        "contentHash": "LhQQd+CTwQ6YXpg53Bnt9seGh/zKDMWF/hWPIYVUUv5163PpexIFgvH85U7J1+Yjxrka95OEv5O/uUGxPQcyHg==",
+        "dependencies": {
+          "App.Metrics.Core": "4.3.0",
+          "App.Metrics.Formatters.Ascii": "4.3.0"
         }
       },
       "Google.Protobuf": {
@@ -194,6 +222,16 @@
           "App.Metrics.AspNetCore.Core": "4.3.0"
         }
       },
+      "App.Metrics.AspNetCore.Mvc": {
+        "type": "Transitive",
+        "resolved": "4.3.0",
+        "contentHash": "CvsIUrUFS6sWimxKRl9RChDtOAGY36yW3HSTNXSaUrbFpmF76qL2HKiXu+4vSpO0Xau+fk7TdJvGRiG5RWGj0A==",
+        "dependencies": {
+          "App.Metrics.AspNetCore": "4.3.0",
+          "App.Metrics.AspNetCore.Mvc.Core": "4.3.0",
+          "App.Metrics.AspNetCore.Routing": "4.3.0"
+        }
+      },
       "App.Metrics.AspNetCore.Mvc.Core": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -235,6 +273,16 @@
           "Microsoft.CSharp": "4.4.0"
         }
       },
+      "App.Metrics.Extensions.Collectors": {
+        "type": "Transitive",
+        "resolved": "4.3.0",
+        "contentHash": "vpWzbLJ2uUnaR6s/bp4F1mZNf5vxMvFA0re+bUbQ8gkop7AEJZ1g3uFdQs7mSeL56josQBGnwbMediVst5zywA==",
+        "dependencies": {
+          "App.Metrics": "4.3.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.0",
+          "Microsoft.Extensions.Hosting.Abstractions": "3.1.0"
+        }
+      },
       "App.Metrics.Extensions.Configuration": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -251,6 +299,16 @@
         "dependencies": {
           "App.Metrics": "4.3.0",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.0"
+        }
+      },
+      "App.Metrics.Extensions.HealthChecks": {
+        "type": "Transitive",
+        "resolved": "4.3.0",
+        "contentHash": "uLpWgl9flmsDTYuYvIOjjo3tEsn3H951OS3ItS2tqi/wgGGpwAXwRW+HB/meB8W6PBRmISPQCUwNJudRerH5zA==",
+        "dependencies": {
+          "App.Metrics.Core": "4.3.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.0",
+          "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "3.1.5"
         }
       },
       "App.Metrics.Extensions.Hosting": {
@@ -284,6 +342,15 @@
         "dependencies": {
           "App.Metrics.Abstractions": "4.3.0",
           "System.Text.Json": "4.7.2"
+        }
+      },
+      "App.Metrics.Formatters.Prometheus": {
+        "type": "Transitive",
+        "resolved": "4.3.0",
+        "contentHash": "cVJZX5jiMxt+YytjpbMw52reN47LGL3XsCljzNH9Pb+Op9iSTazc4pa+/fX+FdpbhH/Zt+5hjdYiqOLFol0wGg==",
+        "dependencies": {
+          "App.Metrics.Core": "4.3.0",
+          "protobuf-net": "2.4.0"
         }
       },
       "App.Metrics.Reporting.InfluxDB": {
@@ -491,6 +558,11 @@
           "System.Linq": "4.1.0"
         }
       },
+      "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": {
+        "type": "Transitive",
+        "resolved": "3.1.5",
+        "contentHash": "6oo7BLy4cdYGegZJ2d3YXUFT9Pb1Pp2kq8QuTSG7oZOQ6nF0QgHMwJPX/zQqTeWVDbA+UsFaZ4QNyUGHdG5VEg=="
+      },
       "Microsoft.Extensions.FileProviders.Abstractions": {
         "type": "Transitive",
         "resolved": "3.1.10",
@@ -515,13 +587,13 @@
       },
       "Microsoft.Extensions.Hosting.Abstractions": {
         "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "BpMaoBxdXr5VD0yk7rYN6R8lAU9X9JbvsPveNdKT+llIn3J5s4sxpWqaSG/NnzTzTLU5eJE5nrecTl7clg/7dQ==",
+        "resolved": "3.1.0",
+        "contentHash": "LiOP1ceFaPBxaE28SOjtORzOVCJk33TT5VQ/Cg5EoatZh1dxpPAgAV/0ruzWKQE7WAHU3F1H9Z6rFgsQwIb9uQ==",
         "dependencies": {
-          "Microsoft.Extensions.Configuration.Abstractions": "2.1.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "2.1.0",
-          "Microsoft.Extensions.FileProviders.Abstractions": "2.1.0",
-          "Microsoft.Extensions.Logging.Abstractions": "2.1.0"
+          "Microsoft.Extensions.Configuration.Abstractions": "3.1.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.1.0",
+          "Microsoft.Extensions.FileProviders.Abstractions": "3.1.0",
+          "Microsoft.Extensions.Logging.Abstractions": "3.1.0"
         }
       },
       "Microsoft.Extensions.Logging": {
@@ -650,6 +722,14 @@
         "contentHash": "7hzHplEIVOGBl5zOQZGX/DiJDHjq+RVRVrYgDiqXb6RriqWAdacXxp+XO9WSrATCEXyNOUOQg9aqQArsjase/A==",
         "dependencies": {
           "System.IO.Pipelines": "5.0.0"
+        }
+      },
+      "protobuf-net": {
+        "type": "Transitive",
+        "resolved": "2.4.0",
+        "contentHash": "j37MD1p1s9NdX8P5+IaY2J9p2382xiL1VP3mxYu0g+G/kf2YM2grFa1jJPO+0WDJNl1XhNPO0Q5yBEcbX77hBQ==",
+        "dependencies": {
+          "System.ServiceModel.Primitives": "4.5.3"
         }
       },
       "runtime.native.System": {
@@ -1076,6 +1156,16 @@
           "System.Threading": "4.0.11"
         }
       },
+      "System.Private.ServiceModel": {
+        "type": "Transitive",
+        "resolved": "4.5.3",
+        "contentHash": "ancrQgJagx+yC4SZbuE+eShiEAUIF0E1d21TRSoy1C/rTwafAVcBr/fKibkq5TQzyy9uNil2tx2/iaUxsy0S9g==",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.1.0",
+          "System.Reflection.DispatchProxy": "4.5.0",
+          "System.Security.Principal.Windows": "4.5.0"
+        }
+      },
       "System.Reflection": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -1087,6 +1177,11 @@
           "System.Reflection.Primitives": "4.3.0",
           "System.Runtime": "4.3.0"
         }
+      },
+      "System.Reflection.DispatchProxy": {
+        "type": "Transitive",
+        "resolved": "4.5.0",
+        "contentHash": "+UW1hq11TNSeb+16rIk8hRQ02o339NFyzMc4ma/FqmxBzM30l1c2IherBB4ld1MNcenS48fz8tbt50OW4rVULA=="
       },
       "System.Reflection.Emit": {
         "type": "Transitive",
@@ -1238,6 +1333,14 @@
         "type": "Transitive",
         "resolved": "5.0.0",
         "contentHash": "t0MGLukB5WAVU9bO3MGzvlGnyJPgUlcwerXn1kzBRjwLKixT96XV0Uza41W49gVd8zEMFu9vQEFlv0IOrytICA=="
+      },
+      "System.ServiceModel.Primitives": {
+        "type": "Transitive",
+        "resolved": "4.5.3",
+        "contentHash": "Wc9Hgg4Cmqi416zvEgq2sW1YYCGuhwWzspDclJWlFZqY6EGhFUPZU+kVpl5z9kAgrSOQP7/Uiik+PtSQtmq+5A==",
+        "dependencies": {
+          "System.Private.ServiceModel": "4.5.3"
+        }
       },
       "System.Text.Encoding": {
         "type": "Transitive",
