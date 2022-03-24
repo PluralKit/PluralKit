@@ -20,7 +20,7 @@ public partial class CommandTree
             return HandleAutoproxyCommand(ctx);
         if (ctx.Match("config", "cfg"))
             return HandleConfigCommand(ctx);
-        if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd"))
+        if (ctx.Match("list", "find", "members", "search", "query", "l", "f", "fd", "ls"))
             return ctx.Execute<SystemList>(SystemList, m => m.MemberList(ctx, ctx.System));
         if (ctx.Match("link"))
             return ctx.Execute<SystemLink>(Link, m => m.LinkSystem(ctx));
@@ -221,7 +221,7 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
-        else if (ctx.Match("list", "l", "members"))
+        else if (ctx.Match("list", "l", "members", "ls"))
             await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
         else if (ctx.Match("find", "search", "query", "fd", "s"))
             await ctx.CheckSystem(target).Execute<SystemList>(SystemFind, m => m.MemberList(ctx, target));
@@ -348,7 +348,7 @@ public partial class CommandTree
             else if (ctx.Match("remove", "rem", "r"))
                 await ctx.Execute<GroupMember>(GroupRemove,
                     g => g.AddRemoveMembers(ctx, target, Groups.AddRemoveOperation.Remove));
-            else if (ctx.Match("members", "list", "ms", "l"))
+            else if (ctx.Match("members", "list", "ms", "l", "ls"))
                 await ctx.Execute<GroupMember>(GroupMemberList, g => g.ListGroupMembers(ctx, target));
             else if (ctx.Match("random"))
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
