@@ -102,6 +102,12 @@ public static class CoreMetrics
         MeasurementUnit = Unit.Connections,
         Context = "Database"
     };
+    public static GaugeOptions DatabaseConnectionsByCluster => new()
+    {
+        Name = "Database Connections by Cluster",
+        MeasurementUnit = Unit.Connections,
+        Context = "Database"
+    };
 }
 
 public record ClusterMetricInfo
