@@ -10,6 +10,11 @@ namespace PluralKit.Core;
 public class MessageContext
 {
     public SystemId? SystemId { get; }
+
+    /// <summary>
+    /// Whether a system is being deleted (no actions should be taken, or commands ran)
+    /// </summary>
+    public bool IsDeleting { get; }
     public ulong? LogChannel { get; }
     public bool InBlacklist { get; }
     public bool InLogBlacklist { get; }

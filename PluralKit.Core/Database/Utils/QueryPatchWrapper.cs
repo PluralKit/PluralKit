@@ -14,7 +14,17 @@ internal class QueryPatchWrapper
         return this;
     }
 
-    public Query ToQuery(Query q) => q.AsUpdate(_dict);
+    public Query ToQuery(Query q)
+    {
+        try
+        {
+            return q.AsUpdate(_dict);
+        }
+        catch (InvalidOperationException)
+        {
+            throw new InvalidPatchException();
+        }
+    }
 }
 
 internal static class SqlKataExtensions
@@ -22,3 +32,5 @@ internal static class SqlKataExtensions
     internal static Query ApplyPatch(this Query query, Func<QueryPatchWrapper, QueryPatchWrapper> func)
         => func(new QueryPatchWrapper()).ToQuery(query);
 }
+
+public class InvalidPatchException : Exception {}

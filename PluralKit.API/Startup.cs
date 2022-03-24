@@ -2,6 +2,8 @@ using System.Reflection;
 
 using Autofac;
 
+using App.Metrics.AspNetCore;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
@@ -86,6 +88,10 @@ public class Startup
             c.IncludeXmlComments(xmlPath);
         });
         services.AddSwaggerGenNewtonsoftSupport();
+
+        // metrics
+        services.AddMetricsTrackingMiddleware();
+        services.AddAppMetricsCollectors();
     }
 
     public void ConfigureContainer(ContainerBuilder builder)
@@ -95,7 +101,7 @@ public class Startup
         builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
         builder.RegisterModule(new LoggingModule("api",
             cfg: new LoggerConfiguration().Filter.ByExcluding(exc => exc.Exception is PKError || exc.Exception.IsUserError())));
-        builder.RegisterModule(new MetricsModule("API"));
+        // builder.RegisterModule(new MetricsModule("API"));
         builder.RegisterModule<DataStoreModule>();
         builder.RegisterModule<APIModule>();
     }
@@ -164,5 +170,8 @@ public class Startup
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseEndpoints(endpoints => endpoints.MapControllers());
+
+        // metrics
+        app.UseMetricsAllMiddleware();
     }
 }
