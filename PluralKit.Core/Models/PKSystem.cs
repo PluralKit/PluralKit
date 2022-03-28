@@ -39,6 +39,7 @@ public class PKSystem
     public string Name { get; }
     public string Description { get; }
     public string Tag { get; }
+    public string Pronouns { get; }
     public string AvatarUrl { get; }
     public string BannerImage { get; }
     public string Color { get; }
@@ -51,6 +52,7 @@ public class PKSystem
     public PrivacyLevel FrontPrivacy { get; }
     public PrivacyLevel FrontHistoryPrivacy { get; }
     public PrivacyLevel GroupListPrivacy { get; }
+    public PrivacyLevel PronounPrivacy { get; }
 }
 
 public static class PKSystemExt
@@ -68,6 +70,9 @@ public static class PKSystemExt
         o.Add("name", system.Name);
         o.Add("description", system.DescriptionFor(ctx));
         o.Add("tag", system.Tag);
+        if (v == APIVersion.V2)
+            o.Add("pronouns", system.PronounPrivacy.Get(ctx, system.Pronouns));
+
         o.Add("avatar_url", system.AvatarUrl.TryGetCleanCdnUrl());
         o.Add("banner", system.DescriptionPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
         o.Add("color", system.Color);
@@ -103,6 +108,7 @@ public static class PKSystemExt
                         var p = new JObject();
 
                         p.Add("description_privacy", system.DescriptionPrivacy.ToJsonString());
+                        p.Add("pronoun_privacy", system.PronounPrivacy.ToJsonString());
                         p.Add("member_list_privacy", system.MemberListPrivacy.ToJsonString());
                         p.Add("group_list_privacy", system.GroupListPrivacy.ToJsonString());
                         p.Add("front_privacy", system.FrontPrivacy.ToJsonString());

@@ -142,10 +142,11 @@ public partial class ModelRepository
         });
     }
 
-    public Task DeleteSystem(SystemId id)
+    public async Task DeleteSystem(SystemId id)
     {
+        await _db.Execute(c => c.QueryAsync("update systems set is_deleting = true where id = @id", new { id = id }));
         var query = new Query("systems").AsDelete().Where("id", id);
+        await _db.ExecuteQuery(query);
         _logger.Information("Deleted {SystemId}", id);
-        return _db.ExecuteQuery(query);
     }
 }

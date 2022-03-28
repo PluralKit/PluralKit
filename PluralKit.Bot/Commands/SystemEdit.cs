@@ -339,6 +339,58 @@ public class SystemEdit
             await Set();
     }
 
+    public async Task Pronouns(Context ctx, PKSystem target)
+    {
+        ctx.CheckSystemPrivacy(target.Id, target.PronounPrivacy);
+
+        var isOwnSystem = ctx.System.Id == target.Id;
+
+        var noPronounsSetMessage = "This system does not have pronouns set.";
+        if (isOwnSystem) 
+            noPronounsSetMessage += " To set some, type `pk;system pronouns <pronouns>`";
+
+        if (ctx.MatchRaw())
+        {
+            if (target.Pronouns == null)
+                await ctx.Reply(noPronounsSetMessage);
+            else
+                await ctx.Reply($"```\n{target.Pronouns}\n```");
+            return;
+        }
+
+        if (!ctx.HasNext(false))
+        {
+            if (target.Pronouns == null)
+                await ctx.Reply(noPronounsSetMessage);
+            else
+                await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
+                + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`." 
+                : "" ));
+            return;
+        }
+
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        if (await ctx.MatchClear("your system's pronouns"))
+        {
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = null });
+
+            await ctx.Reply($"{Emojis.Success} System pronouns cleared.");
+        }
+        else
+        {
+            var newPronouns = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
+            if (newPronouns != null)
+                if (newPronouns.Length > Limits.MaxPronounsLength)
+                    throw Errors.StringTooLongError("Pronouns", newPronouns.Length, Limits.MaxPronounsLength);
+
+            await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = newPronouns });
+
+            await ctx.Reply(
+                $"{Emojis.Success} System pronouns changed.");
+        }
+    }
+
     public async Task Avatar(Context ctx, PKSystem target)
     {
         async Task ClearIcon()
@@ -525,6 +577,7 @@ public class SystemEdit
             var eb = new EmbedBuilder()
                 .Title("Current privacy settings for your system")
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
+                .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
                 .Field(new Embed.Field("Group list", target.GroupListPrivacy.Explanation()))
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
@@ -548,6 +601,7 @@ public class SystemEdit
             var subjectStr = subject switch
             {
                 SystemPrivacySubject.Description => "description",
+                SystemPrivacySubject.Pronouns => "pronouns",
                 SystemPrivacySubject.Front => "front",
                 SystemPrivacySubject.FrontHistory => "front history",
                 SystemPrivacySubject.MemberList => "member list",

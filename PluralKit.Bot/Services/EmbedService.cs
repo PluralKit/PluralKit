@@ -103,6 +103,9 @@ public class EmbedService
                     "*(tag is disabled in this server)*"));
         }
 
+        if (system.PronounPrivacy.CanAccess(ctx) && system.Pronouns != null)
+            eb.Field(new Embed.Field("Pronouns", system.Pronouns, true));
+
         if (!system.Color.EmptyOrNull()) eb.Field(new Embed.Field("Color", $"#{system.Color}", true));
 
         eb.Field(new Embed.Field("Linked accounts", string.Join("\n", users).Truncate(1000), true));
