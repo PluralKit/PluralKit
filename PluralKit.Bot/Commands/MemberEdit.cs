@@ -344,11 +344,10 @@ public class MemberEdit
             (!showDisplayName || target.DisplayName == null) && memberGuildConfig?.DisplayName == null
         )));
 
-        if (showDisplayName)
-            eb.Field(new Embed.Field("Display name", target.DisplayName != null
-                ? boldIf(target.DisplayName, memberGuildConfig?.DisplayName == null)
-                : "*(none)*"
-            ));
+        eb.Field(new Embed.Field("Display name", (target.DisplayName != null && showDisplayName)
+            ? boldIf(target.DisplayName, memberGuildConfig?.DisplayName == null)
+            : "*(none)*"
+        ));
 
         if (ctx.Guild != null)
             eb.Field(new Embed.Field($"Server Name (in {ctx.Guild.Name})",
