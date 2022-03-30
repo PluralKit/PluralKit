@@ -84,7 +84,7 @@ public static class ContextChecksExt
         // this is a quick hack, should probably do it properly eventually
         var guild = await ctx.Cache.TryGetGuild(channel.GuildId.Value);
         if (guild == null)
-            await ctx.Rest.GetGuild(channel.GuildId.Value);
+            guild = await ctx.Rest.GetGuild(channel.GuildId.Value);
         if (guild == null)
             return false;
 
