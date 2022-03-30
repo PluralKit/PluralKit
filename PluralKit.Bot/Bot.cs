@@ -1,5 +1,3 @@
-using System.Net.WebSockets;
-
 using App.Metrics;
 
 using Autofac;
@@ -123,7 +121,11 @@ public class Bot
             {
                 Activities = new[]
                 {
-                    new Activity {Name = "Restarting... (please wait)", Type = ActivityType.Game}
+                    new Activity
+                    {
+                        Name = "Restarting... (please wait)",
+                        Type = ActivityType.Game
+                    }
                 },
                 Status = GatewayStatusUpdate.UserStatus.Idle
             })));

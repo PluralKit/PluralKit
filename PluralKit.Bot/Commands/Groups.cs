@@ -1,14 +1,10 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Humanizer;
-
 using Myriad.Builders;
 using Myriad.Types;
 
 using Newtonsoft.Json.Linq;
-
-using NodaTime;
 
 using PluralKit.Core;
 

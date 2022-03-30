@@ -1,8 +1,6 @@
 #nullable enable
 using Newtonsoft.Json.Linq;
 
-using NodaTime;
-
 using SqlKata;
 
 namespace PluralKit.Core;

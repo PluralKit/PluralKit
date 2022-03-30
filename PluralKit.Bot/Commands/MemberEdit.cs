@@ -323,6 +323,7 @@ public class MemberEdit
     }
 
     private string boldIf(string str, bool condition) => condition ? $"**{str}**" : str;
+
     private async Task<EmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
     {
         var lcx = ctx.LookupContextFor(target.System);

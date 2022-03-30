@@ -52,12 +52,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         _dmCache = dmCache;
     }
 
-    // for now, only return error messages for explicit commands
-    public ulong? ErrorChannelFor(MessageCreateEvent evt, ulong userId)
-    {
-        return evt.ChannelId;
-    }
-
+    public ulong? ErrorChannelFor(MessageCreateEvent evt, ulong userId) => evt.ChannelId;
     private bool IsDuplicateMessage(Message msg) =>
         // We consider a message duplicate if it has the same ID as the previous message that hit the gateway
         _lastMessageCache.GetLastMessage(msg.ChannelId)?.Current.Id == msg.Id;

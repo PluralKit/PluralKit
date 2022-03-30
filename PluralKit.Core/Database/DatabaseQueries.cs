@@ -5,8 +5,6 @@ using App.Metrics;
 
 using Dapper;
 
-using Npgsql;
-
 using SqlKata;
 
 namespace PluralKit.Core;
@@ -82,8 +80,10 @@ internal partial class Database: IDatabase
         var query = _compiler.Compile(q);
         using var conn = await Obtain();
         using (_metrics.Measure.Timer.Time(CoreMetrics.DatabaseQuery, new MetricTags("Query", queryName)))
+        {
             await foreach (var val in conn.QueryStreamAsync<T>(query.Sql, query.NamedBindings))
                 yield return val;
+        }
     }
 
     // the procedures (message_context and proxy_members, as of writing) have their own metrics tracking elsewhere

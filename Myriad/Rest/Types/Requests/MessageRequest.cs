@@ -11,5 +11,4 @@ public record MessageRequest
     public Embed[]? Embeds { get; set; }
     public MessageComponent[]? Components { get; set; }
     public Message.Reference? MessageReference { get; set; }
-
 }

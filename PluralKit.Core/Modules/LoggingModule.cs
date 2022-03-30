@@ -24,6 +24,7 @@ public class LoggingModule: Module
     public LoggingModule(string component, Action<LoggerConfiguration> fn = null, LoggerConfiguration cfg = null)
     {
         _component = component;
+        // todo: this is messy and not really used anywhere...?
         _fn = fn ?? (_ => { });
         _cfg = cfg ?? new LoggerConfiguration();
     }

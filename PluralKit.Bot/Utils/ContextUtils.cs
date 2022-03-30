@@ -169,7 +169,8 @@ public static class ContextUtils
                     if (currentPage < 0) currentPage += pageCount;
 
                     // If we can, remove the user's reaction (so they can press again quickly)
-                    if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages)) try
+                    if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
+                        try
                         {
                             await ctx.Rest.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, reaction.UserId);
                         }

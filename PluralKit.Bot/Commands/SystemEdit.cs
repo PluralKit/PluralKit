@@ -3,10 +3,6 @@ using System.Text.RegularExpressions;
 using Myriad.Builders;
 using Myriad.Types;
 
-using NodaTime;
-using NodaTime.Text;
-using NodaTime.TimeZones;
-
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -479,9 +475,10 @@ public class SystemEdit
             }
             else
             {
-                throw new PKSyntaxError(
-                    "This system does not have a banner image set." + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+                throw new PKSyntaxError("This system does not have a banner image set."
+                    + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
             }
+
             return;
         }
 
@@ -514,7 +511,6 @@ public class SystemEdit
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
         }
-
     }
 
     public async Task Delete(Context ctx, PKSystem target)

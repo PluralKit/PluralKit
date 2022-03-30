@@ -12,6 +12,7 @@ public partial class CommandTree
         await ctx.Reply(
             $"{Emojis.Error} Unknown command `pk;{ctx.FullCommand().Truncate(100)}`. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
     }
+
     private async Task PrintCommandExpectedError(Context ctx, params Command[] potentialCommands)
     {
         var commandListStr = CreatePotentialCommandList(potentialCommands);
