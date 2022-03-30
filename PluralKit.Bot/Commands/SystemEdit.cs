@@ -346,7 +346,7 @@ public class SystemEdit
         var isOwnSystem = ctx.System.Id == target.Id;
 
         var noPronounsSetMessage = "This system does not have pronouns set.";
-        if (isOwnSystem) 
+        if (isOwnSystem)
             noPronounsSetMessage += " To set some, type `pk;system pronouns <pronouns>`";
 
         if (ctx.MatchRaw())
@@ -364,8 +364,8 @@ public class SystemEdit
                 await ctx.Reply(noPronounsSetMessage);
             else
                 await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
-                + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`." 
-                : "" ));
+                + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
+                : ""));
             return;
         }
 

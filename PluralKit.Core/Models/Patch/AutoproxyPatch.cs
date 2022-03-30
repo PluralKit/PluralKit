@@ -6,7 +6,7 @@ using SqlKata;
 
 namespace PluralKit.Core;
 
-public class AutoproxyPatch : PatchObject
+public class AutoproxyPatch: PatchObject
 {
     public Partial<AutoproxyMode> AutoproxyMode { get; set; }
     public Partial<MemberId?> AutoproxyMember { get; set; }
