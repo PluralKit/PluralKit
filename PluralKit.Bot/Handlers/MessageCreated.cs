@@ -63,6 +63,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
         if (IsDuplicateMessage(evt)) return;
 
+        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.SendMessages)) return;
+
         // spawn off saving the private channel into another thread
         // it is not a fatal error if this fails, and it shouldn't block message processing
         _ = _dmCache.TrySavePrivateChannel(evt);
