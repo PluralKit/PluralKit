@@ -1,6 +1,5 @@
 using Dapper.Contrib.Extensions;
 
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using NodaTime;
@@ -90,7 +89,8 @@ public static class PKSystemExt
                         ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
                     o.Add("member_list_privacy",
                         ctx == LookupContext.ByOwner ? system.MemberListPrivacy.ToJsonString() : null);
-                    o.Add("group_list_privacy", ctx == LookupContext.ByOwner ? system.GroupListPrivacy.ToJsonString() : null);
+                    o.Add("group_list_privacy",
+                        ctx == LookupContext.ByOwner ? system.GroupListPrivacy.ToJsonString() : null);
                     o.Add("front_privacy", ctx == LookupContext.ByOwner ? system.FrontPrivacy.ToJsonString() : null);
                     o.Add("front_history_privacy",
                         ctx == LookupContext.ByOwner ? system.FrontHistoryPrivacy.ToJsonString() : null);

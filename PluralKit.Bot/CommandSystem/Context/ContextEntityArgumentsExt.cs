@@ -166,18 +166,13 @@ public static class ContextEntityArgumentsExt
 
     public static async Task<Guild> MatchGuild(this Context ctx)
     {
-        try
-        {
-            var id = ulong.Parse(ctx.PeekArgument());
-            var guild = await ctx.Cache.TryGetGuild(id);
-            if (guild != null)
-                ctx.PopArgument();
-
-            return guild;
-        }
-        catch (FormatException)
-        {
+        if (!ulong.TryParse(ctx.PeekArgument(), out var id))
             return null;
-        }
+
+        var guild = await ctx.Rest.GetGuildOrNull(id);
+        if (guild != null)
+            ctx.PopArgument();
+
+        return guild;
     }
 }

@@ -3,10 +3,6 @@ using System.Text.RegularExpressions;
 using Myriad.Builders;
 using Myriad.Types;
 
-using NodaTime;
-using NodaTime.Text;
-using NodaTime.TimeZones;
-
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -346,7 +342,7 @@ public class SystemEdit
         var isOwnSystem = ctx.System.Id == target.Id;
 
         var noPronounsSetMessage = "This system does not have pronouns set.";
-        if (isOwnSystem) 
+        if (isOwnSystem)
             noPronounsSetMessage += " To set some, type `pk;system pronouns <pronouns>`";
 
         if (ctx.MatchRaw())
@@ -364,8 +360,8 @@ public class SystemEdit
                 await ctx.Reply(noPronounsSetMessage);
             else
                 await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
-                + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`." 
-                : "" ));
+                + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
+                : ""));
             return;
         }
 
@@ -479,9 +475,10 @@ public class SystemEdit
             }
             else
             {
-                throw new PKSyntaxError(
-                    "This system does not have a banner image set." + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
+                throw new PKSyntaxError("This system does not have a banner image set."
+                    + (isOwnSystem ? "Set one by attaching an image to this command, or by passing an image URL or @mention." : ""));
             }
+
             return;
         }
 
@@ -514,7 +511,6 @@ public class SystemEdit
                 ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
                 : ctx.Reply(msg));
         }
-
     }
 
     public async Task Delete(Context ctx, PKSystem target)

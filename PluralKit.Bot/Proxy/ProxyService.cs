@@ -63,7 +63,8 @@ public class ProxyService
         if (autoproxySettings.AutoproxyMode == AutoproxyMode.Latch && IsUnlatch(message))
         {
             // "unlatch"
-            await _repo.UpdateAutoproxy(ctx.SystemId.Value, guild.Id, null, new() {
+            await _repo.UpdateAutoproxy(ctx.SystemId.Value, guild.Id, null, new()
+            {
                 AutoproxyMember = null
             });
             return false;

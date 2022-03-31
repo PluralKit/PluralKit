@@ -1,8 +1,6 @@
 #nullable enable
 using System.Collections;
 
-using Dapper;
-
 using Newtonsoft.Json;
 
 namespace PluralKit.Core;

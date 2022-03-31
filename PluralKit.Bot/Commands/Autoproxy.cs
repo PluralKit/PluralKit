@@ -1,9 +1,5 @@
-using Humanizer;
-
 using Myriad.Builders;
 using Myriad.Types;
-
-using NodaTime;
 
 using PluralKit.Core;
 
@@ -101,8 +97,6 @@ public class Autoproxy
             _ => null
         };
 
-        Console.WriteLine(settings.AutoproxyMode);
-
         switch (settings.AutoproxyMode)
         {
             case AutoproxyMode.Off:
@@ -123,10 +117,15 @@ public class Autoproxy
 
                     break;
                 }
-            // AutoproxyMember is never null if Mode is Member, this is just to make the compiler shut up
-            case AutoproxyMode.Member when relevantMember != null:
+            case AutoproxyMode.Member:
                 {
-                    eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
+                    if (relevantMember == null)
+                        // just pretend autoproxy is off if the member was deleted
+                        // ideally we would set it to off in the database though...
+                        eb.Description($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");
+                    else
+                        eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
+
                     break;
                 }
             case AutoproxyMode.Latch:

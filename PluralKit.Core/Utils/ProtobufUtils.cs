@@ -4,7 +4,7 @@ namespace PluralKit.Core;
 
 public static class Proto
 {
-    private static Dictionary<string, MessageParser> _parser = new();
+    private static readonly Dictionary<string, MessageParser> _parser = new();
 
     public static byte[] Marshal(this IMessage message) => message.ToByteArray();
 
@@ -12,11 +12,11 @@ public static class Proto
     {
         var type = typeof(T).ToString();
         if (_parser.ContainsKey(type))
-            return (T)_parser[type].ParseFrom(message);
-        else
         {
-            _parser.Add(type, new MessageParser<T>(() => new T()));
-            return Unmarshal<T>(message);
+            return (T)_parser[type].ParseFrom(message);
         }
+
+        _parser.Add(type, new MessageParser<T>(() => new T()));
+        return Unmarshal<T>(message);
     }
 }

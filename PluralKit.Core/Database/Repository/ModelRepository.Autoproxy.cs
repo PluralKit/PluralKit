@@ -22,7 +22,8 @@ public partial class ModelRepository
 
     // todo: this might break with differently scoped autoproxy
     public async Task<AutoproxySettings> GetAutoproxySettings(SystemId system, ulong? guildId, ulong? channelId)
-        => await _db.QueryFirst<AutoproxySettings>(new Query("autoproxy").AsInsert(new {
+        => await _db.QueryFirst<AutoproxySettings>(new Query("autoproxy").AsInsert(new
+        {
             system = system,
             guild_id = guildId ?? 0,
             channel_id = channelId ?? 0,

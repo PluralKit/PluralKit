@@ -33,4 +33,4 @@ internal static class SqlKataExtensions
         => func(new QueryPatchWrapper()).ToQuery(query);
 }
 
-public class InvalidPatchException : Exception {}
+public class InvalidPatchException: Exception { }

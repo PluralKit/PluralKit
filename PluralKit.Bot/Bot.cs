@@ -1,5 +1,3 @@
-using System.Net.WebSockets;
-
 using App.Metrics;
 
 using Autofac;
@@ -32,12 +30,13 @@ public class Bot
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
     private readonly DiscordApiClient _rest;
+    private readonly RedisService _redis;
     private readonly ILifetimeScope _services;
 
     private Timer _periodicTask; // Never read, just kept here for GC reasons
 
     public Bot(ILifetimeScope services, ILogger logger, PeriodicStatCollector collector, IMetrics metrics,
-               BotConfig config,
+               BotConfig config, RedisService redis,
                ErrorMessageService errorMessageService, CommandMessageService commandMessageService,
                Cluster cluster, DiscordApiClient rest, IDiscordCache cache)
     {
@@ -50,10 +49,13 @@ public class Bot
         _commandMessageService = commandMessageService;
         _cluster = cluster;
         _rest = rest;
+        _redis = redis;
         _cache = cache;
     }
 
-    private string BotStatus => $"{(_config.Prefixes ?? BotConfig.DefaultPrefixes)[0]}help";
+    private string BotStatus => $"{(_config.Prefixes ?? BotConfig.DefaultPrefixes)[0]}help"
+        + (CustomStatusMessage != null ? $" | {CustomStatusMessage}" : "");
+    public string CustomStatusMessage = null;
 
     public void Init()
     {
@@ -123,7 +125,11 @@ public class Bot
             {
                 Activities = new[]
                 {
-                    new Activity {Name = "Restarting... (please wait)", Type = ActivityType.Game}
+                    new Activity
+                    {
+                        Name = "Restarting... (please wait)",
+                        Type = ActivityType.Game
+                    }
                 },
                 Status = GatewayStatusUpdate.UserStatus.Idle
             })));
@@ -235,6 +241,31 @@ public class Bot
     private async Task UpdatePeriodic()
     {
         _logger.Debug("Running once-per-minute scheduled tasks");
+
+        // Check from a new custom status from Redis and update Discord accordingly
+        if (_redis.Connection != null)
+        {
+            var newStatus = await _redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
+            if (newStatus != CustomStatusMessage)
+            {
+                CustomStatusMessage = newStatus;
+
+                _logger.Information("Pushing new bot status message to Discord");
+                await Task.WhenAll(_cluster.Shards.Values.Select(shard =>
+                    shard.UpdateStatus(new GatewayStatusUpdate
+                    {
+                        Activities = new[]
+                        {
+                            new Activity
+                            {
+                                Name = BotStatus,
+                                Type = ActivityType.Game
+                            }
+                        },
+                        Status = GatewayStatusUpdate.UserStatus.Online
+                    })));
+            }
+        }
 
         // Collect some stats, submit them to the metrics backend
         await _collector.CollectStats();

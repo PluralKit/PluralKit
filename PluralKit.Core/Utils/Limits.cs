@@ -9,6 +9,7 @@ public static class Limits
     public static readonly int MaxMemberCount = 1000;
     public static readonly int MaxGroupCount = 250;
     public static int WarnThreshold(int limit) => limit - 50;
+
     public static readonly int MaxDescriptionLength = 1000;
     public static readonly int MaxProxyTagLength = 100;
     public static readonly int MaxSwitchMemberCount = 150;

@@ -19,6 +19,7 @@ namespace PluralKit.API;
 public class PrivateController: PKControllerBase
 {
     private readonly RedisService _redis;
+
     public PrivateController(IServiceProvider svc) : base(svc)
     {
         _redis = svc.GetRequiredService<RedisService>();

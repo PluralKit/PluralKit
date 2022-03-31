@@ -27,22 +27,22 @@ as $$
             where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id)
     select
-        system.id as system_id,
+        system.id                                  as system_id,
         system.is_deleting,
         guild.log_channel,
-        (channel_id = any(guild.blacklist)) as in_blacklist,
-        (channel_id = any(guild.log_blacklist)) as in_log_blacklist,
+        (channel_id = any (guild.blacklist))       as in_blacklist,
+        (channel_id = any (guild.log_blacklist))   as in_log_blacklist,
         coalesce(guild.log_cleanup_enabled, false),
         coalesce(system_guild.proxy_enabled, true) as proxy_enabled,
-        system_last_switch.switch as last_switch,
-        system_last_switch.members as last_switch_members,
-        system_last_switch.timestamp as last_switch_timestamp,
-        system.tag as system_tag,
-        system.guild_tag as system_guild_tag,
-        coalesce(system.tag_enabled, true) as tag_enabled,
-        system.avatar_url as system_avatar,
-        system.account_autoproxy as allow_autoproxy,
-        system.latch_timeout as latch_timeout
+        system_last_switch.switch                  as last_switch,
+        system_last_switch.members                 as last_switch_members,
+        system_last_switch.timestamp               as last_switch_timestamp,
+        system.tag                                 as system_tag,
+        system.guild_tag                           as system_guild_tag,
+        coalesce(system.tag_enabled, true)         as tag_enabled,
+        system.avatar_url                          as system_avatar,
+        system.account_autoproxy                   as allow_autoproxy,
+        system.latch_timeout                       as latch_timeout
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder
@@ -60,7 +60,7 @@ create function proxy_members(account_id bigint, guild_id bigint)
         id int,
         proxy_tags proxy_tag[],
         keep_proxy bool,
-        
+
         server_name text,
         display_name text,
         name text,
@@ -75,22 +75,22 @@ create function proxy_members(account_id bigint, guild_id bigint)
 as $$
     select
         -- Basic data
-        members.id as id,
-        members.proxy_tags as proxy_tags,
-        members.keep_proxy as keep_proxy,
-    
+        members.id                as id,
+        members.proxy_tags        as proxy_tags,
+        members.keep_proxy        as keep_proxy,
+
         -- Name info
         member_guild.display_name as server_name,
-        members.display_name as display_name,
-        members.name as name,
-        
+        members.display_name      as display_name,
+        members.name              as name,
+
         -- Avatar info
-        member_guild.avatar_url as server_avatar,
-        members.avatar_url as avatar,
+        member_guild.avatar_url   as server_avatar,
+        members.avatar_url        as avatar,
 
-        members.color as color,
+        members.color             as color,
 
-        members.allow_autoproxy as allow_autoproxy
+        members.allow_autoproxy   as allow_autoproxy
     from accounts
         inner join systems on systems.id = accounts.system
         inner join members on members.system = systems.id

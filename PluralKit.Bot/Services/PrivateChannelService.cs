@@ -1,6 +1,5 @@
 using Serilog;
 
-using Myriad.Cache;
 using Myriad.Gateway;
 using Myriad.Rest;
 
@@ -10,11 +9,11 @@ namespace PluralKit.Bot;
 
 public class PrivateChannelService
 {
+    private static readonly Dictionary<ulong, ulong> _channelsCache = new();
+
     private readonly ILogger _logger;
     private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
-
-    private static Dictionary<ulong, ulong> _channelsCache = new();
     public PrivateChannelService(ILogger logger, ModelRepository repo, DiscordApiClient rest)
     {
         _logger = logger;

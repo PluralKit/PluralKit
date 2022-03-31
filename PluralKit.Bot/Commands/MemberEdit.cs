@@ -323,6 +323,7 @@ public class MemberEdit
     }
 
     private string boldIf(string str, bool condition) => condition ? $"**{str}**" : str;
+
     private async Task<EmbedBuilder> CreateMemberNameInfoEmbed(Context ctx, PKMember target)
     {
         var lcx = ctx.LookupContextFor(target.System);
@@ -343,11 +344,10 @@ public class MemberEdit
             (!showDisplayName || target.DisplayName == null) && memberGuildConfig?.DisplayName == null
         )));
 
-        if (showDisplayName)
-            eb.Field(new Embed.Field("Display name", target.DisplayName != null
-                ? boldIf(target.DisplayName, memberGuildConfig?.DisplayName == null)
-                : "*(none)*"
-            ));
+        eb.Field(new Embed.Field("Display name", (target.DisplayName != null && showDisplayName)
+            ? boldIf(target.DisplayName, memberGuildConfig?.DisplayName == null)
+            : "*(none)*"
+        ));
 
         if (ctx.Guild != null)
             eb.Field(new Embed.Field($"Server Name (in {ctx.Guild.Name})",

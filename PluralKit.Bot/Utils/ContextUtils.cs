@@ -170,7 +170,14 @@ public static class ContextUtils
 
                     // If we can, remove the user's reaction (so they can press again quickly)
                     if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
-                        await ctx.Rest.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, reaction.UserId);
+                        try
+                        {
+                            await ctx.Rest.DeleteUserReaction(msg.ChannelId, msg.Id, reaction.Emoji, reaction.UserId);
+                        }
+                        catch (TooManyRequestsException)
+                        {
+                            continue;
+                        }
 
                     // Edit the embed with the new page
                     var embed = await MakeEmbedForPage(currentPage);

@@ -5,8 +5,6 @@ using Humanizer;
 using Myriad.Builders;
 using Myriad.Types;
 
-using NodaTime;
-
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -73,7 +71,7 @@ public static class ContextListExt
             p.IncludeCreated = true;
         if (ctx.MatchFlag("with-avatar", "with-image", "with-icon", "wa", "wi", "ia", "ii", "img"))
             p.IncludeAvatar = true;
-        if (ctx.MatchFlag("with-pronouns", "wp"))
+        if (ctx.MatchFlag("with-pronouns", "wp", "wprns"))
             p.IncludePronouns = true;
         if (ctx.MatchFlag("with-displayname", "wdn"))
             p.IncludeDisplayName = true;

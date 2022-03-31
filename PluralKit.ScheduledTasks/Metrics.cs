@@ -22,5 +22,4 @@ public static class Metrics
         Context = "Bot",
         MeasurementUnit = Unit.Items
     };
-
 }

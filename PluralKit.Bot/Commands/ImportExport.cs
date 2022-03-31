@@ -1,6 +1,5 @@
 using System.Text;
 
-using Myriad.Extensions;
 using Myriad.Rest.Exceptions;
 using Myriad.Rest.Types;
 using Myriad.Rest.Types.Requests;

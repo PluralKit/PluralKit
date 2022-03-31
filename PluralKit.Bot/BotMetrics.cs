@@ -1,5 +1,4 @@
 using App.Metrics;
-using App.Metrics.Gauge;
 using App.Metrics.Meter;
 using App.Metrics.Timer;
 

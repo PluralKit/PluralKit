@@ -2,12 +2,9 @@ using System.Reflection;
 
 using Autofac;
 
-using App.Metrics.AspNetCore;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.OpenApi.Models;
 
 using Newtonsoft.Json;
@@ -100,7 +97,9 @@ public class Startup
             .As<IConfiguration>();
         builder.RegisterModule(new ConfigModule<ApiConfig>("API"));
         builder.RegisterModule(new LoggingModule("api",
-            cfg: new LoggerConfiguration().Filter.ByExcluding(exc => exc.Exception is PKError || exc.Exception.IsUserError())));
+            cfg: new LoggerConfiguration().Filter.ByExcluding(
+                exc => exc.Exception is PKError || exc.Exception.IsUserError()
+        )));
         // builder.RegisterModule(new MetricsModule("API"));
         builder.RegisterModule<DataStoreModule>();
         builder.RegisterModule<APIModule>();

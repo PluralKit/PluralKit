@@ -86,11 +86,14 @@ public class WebhookExecutorService
         };
 
         ulong? threadId = null;
-        var root = await _cache.GetRootChannel(channelId);
-        if (root.Id != channelId)
+        var channel = await _cache.GetOrFetchChannel(_rest, channelId);
+        if (channel.IsThread())
+        {
             threadId = channelId;
+            channelId = channel.ParentId.Value;
+        }
 
-        var webhook = await _webhookCache.GetWebhook(root.Id);
+        var webhook = await _webhookCache.GetWebhook(channelId);
 
         return await _rest.EditWebhookMessage(webhook.Id, webhook.Token, messageId,
             new WebhookMessageEditRequest { Content = newContent, AllowedMentions = allowedMentions },

@@ -20,6 +20,7 @@ namespace PluralKit.Bot;
 public class ProxiedMessage
 {
     private static readonly Duration EditTimeout = Duration.FromMinutes(10);
+
     // private readonly IDiscordCache _cache;
     private readonly IClock _clock;
 
