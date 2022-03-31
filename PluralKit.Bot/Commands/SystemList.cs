@@ -18,6 +18,23 @@ public class SystemList
         // - RenderMemberList checks the indivual privacy for each member (NameFor, etc)
         // the own system is always allowed to look up their list
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.Id));
+        if (ctx.MatchFlag("raw")) {
+            var members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.Id, opts.ToQueryOptions())))
+                .ToList();
+            
+            var showId = ctx.MatchFlag("by-id") || ctx.MatchFlag("bid") || ctx.MatchFlag("id");
+            var showDispName = ctx.MatchFlag("by-display-name") || ctx.MatchFlag("bdn");
+            var fullText = new StringBuilder();
+            foreach (var m in members) {
+                var canGetDisplayName = m.DisplayName != null && showDispName;
+                var name = m.Name;
+                name = canGetDisplayName ? $"`{m.DisplayName} ({name})`" : $"`{name}`";
+                name = showId ? $"[`{m.Hid}`] {name}" : $"{name}";
+                fullText.Append($"\n{name}");
+            }
+            await ctx.Reply($"{fullText.ToString()}");
+            return;
+        }
         await ctx.RenderMemberList(
             ctx.LookupContextFor(target.Id),
             target.Id,
