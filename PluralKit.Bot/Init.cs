@@ -61,11 +61,15 @@ public class Init
                     await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
             }
 
-            // Init the bot instance itself, register handlers and such to the client before beginning to connect
             logger.Information("Initializing bot");
             var bot = services.Resolve<Bot>();
-            bot.Init();
 
+            // Get bot status message from Redis
+            if (redis.Connection != null)
+                bot.CustomStatusMessage = await redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
+
+            // Init the bot instance itself, register handlers and such to the client before beginning to connect
+            bot.Init();
 
             // Start the Discord shards themselves (handlers already set up)
             logger.Information("Connecting to Discord");
