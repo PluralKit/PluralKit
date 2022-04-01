@@ -53,7 +53,7 @@ public class SystemList
         return title.ToString();
     }
 
-    private string GenerateRawList(Context ctx, List members) {
+    private string GenerateRawList(Context ctx, List<ListedMember> members) {
         // Get flags
         var showId = ctx.MatchFlag("show-id", "id");
         var showDispName = ctx.MatchFlag("show-display-name", "show-dn", "dn");
@@ -64,9 +64,10 @@ public class SystemList
         // Generate the list
         foreach (var m in members) {
             var canGetDisplayName = m.DisplayName != null && showDispName;
-            name = canGetDisplayName ? $"`{m.DisplayName} ({m.Name})`" : $"`{m.Name}`";
-            name = showId ? $"[`{m.Hid}`] {m.Name}" : $"{m.Name}";
-            fullText.Append($"\n{m.Name}");
+            var name = m.Name;
+            name = canGetDisplayName ? $"`{m.DisplayName} ({name})`" : $"`{name}`";
+            name = showId ? $"[`{m.Hid}`] {name}" : $"{name}";
+            fullText.Append($"\n{name}");
         }
 
         // Return stringified list
