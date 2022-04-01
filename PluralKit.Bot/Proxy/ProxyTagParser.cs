@@ -66,11 +66,14 @@ public class ProxyTagParser
 
         // Convert Input to all-lowercase
         //var input = CapInput.ToLower();
-        input = input.ToLower();
+        //input = input.ToLower();
+        /* var trimmedInput = input.Substring(prefix.Length, input.Length - prefix.Length);
+        input = $"{input.Substring(0, prefix.Length).ToLower()}{trimmedInput}"; */
+        var lowerInput = input.ToLower();
 
         // Check if our input starts/ends with the tags
         var isMatch = input.Length >= prefix.Length + suffix.Length
-                      && input.StartsWith(prefix.ToLower()) && input.EndsWith(suffix.ToLower());
+                      && lowerInput.StartsWith(prefix.ToLower()) && lowerInput.EndsWith(suffix.ToLower());
 
         // Special case: image-only proxies + proxy tags with spaces
         // Trim everything, then see if we have a "contentless tag pair" (normally disallowed, but OK if we have an attachment)
