@@ -488,6 +488,8 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.AutoproxyTimeout(ctx));
         if (ctx.Match("timezone", "zone", "tz"))
             return ctx.Execute<Config>(null, m => m.SystemTimezone(ctx));
+        if (ctx.Match("caseinsensitive", "nocase", "insensitivetags"))
+            return ctx.Execute<Config>(null, m => m.CaseInsensitiveProxy(ctx));
         if (ctx.Match("ping"))
             return ctx.Execute<Config>(null, m => m.SystemPing(ctx));
         if (ctx.MatchMultiple(new[] { "private" }, new[] { "member" }) || ctx.Match("mp"))

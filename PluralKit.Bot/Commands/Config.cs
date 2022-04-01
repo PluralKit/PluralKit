@@ -38,6 +38,13 @@ public class Config
         ));
 
         items.Add(new(
+            "proxy caseinsensitive",
+            "If t",
+            EnabledDisabled(ctx.Config.CaseInsensitiveProxy),
+            "disabled"
+        ));
+
+        items.Add(new(
             "timezone",
             "The system's time zone - shows timestamps in your local time",
             ctx.Config.UiTz,
@@ -306,6 +313,34 @@ public class Config
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { PingsEnabled = value });
             await ctx.Reply($"Reaction pings have now been {EnabledDisabled(value)}.");
+        }
+    }
+
+    public async Task CaseInsensitiveProxy(Context ctx)
+    {
+        // note: this is here because this is also used in `pk;system ping`, which does not CheckSystem
+        ctx.CheckSystem();
+
+        // TODO: fix this to have the right message
+
+        String Response(bool isError, bool val)
+            => $"Case-Insensitive proxy tags are {(isError ? "already" : "currently")} **{EnabledDisabled(val)}** for your system. "
+             + $"To {EnabledDisabled(!val)[..^1]} case-insensitive proxy tags, type `pk;config nocase {EnabledDisabled(!val)[..^1]}`.";
+
+        if (!ctx.HasNext())
+        {
+            await ctx.Reply(Response(false, ctx.Config.CaseInsensitiveProxy));
+            return;
+        }
+
+        var value = ctx.MatchToggle(true);
+
+        if (ctx.Config.CaseInsensitiveProxy == value)
+            await ctx.Reply(Response(true, ctx.Config.CaseInsensitiveProxy));
+        else
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseInsensitiveProxy = value });
+            await ctx.Reply($"Case-insensitive proxy tags have now been {EnabledDisabled(value)}.");
         }
     }
 
