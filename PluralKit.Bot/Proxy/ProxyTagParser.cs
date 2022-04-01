@@ -64,12 +64,23 @@ public class ProxyTagParser
         var prefix = tag.Prefix ?? "";
         var suffix = tag.Suffix ?? "";
 
-        // Convert Input to all-lowercase
-        var lowerInput = input.ToLower();
+        // Get configuration value
+        // TODO: Remove placeholder
+        var doInsensitiveTags = true;
+
+        // Convert Input to all-lowercase, but only if config value is enabled
+        // This is a seperate variable so that the message itself still keeps its capitilization when sent/proxied
+        string capsInput = doInsensitiveTags ? input.ToLower() : input;
+
+        // Make prefix and suffix also lowercase if config value is enabled
+        if (doInsensitiveTags) {
+            prefix = prefix.ToLower();
+            suffix = suffix.ToLower();
+        }
 
         // Check if our input starts/ends with the tags
         var isMatch = input.Length >= prefix.Length + suffix.Length
-                      && lowerInput.StartsWith(prefix.ToLower()) && lowerInput.EndsWith(suffix.ToLower());
+                      && capsInput.StartsWith(prefix) && capsInput.EndsWith(suffix);
 
         // Special case: image-only proxies + proxy tags with spaces
         // Trim everything, then see if we have a "contentless tag pair" (normally disallowed, but OK if we have an attachment)
