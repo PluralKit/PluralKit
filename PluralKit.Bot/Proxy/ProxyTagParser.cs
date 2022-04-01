@@ -65,10 +65,6 @@ public class ProxyTagParser
         var suffix = tag.Suffix ?? "";
 
         // Convert Input to all-lowercase
-        //var input = CapInput.ToLower();
-        //input = input.ToLower();
-        /* var trimmedInput = input.Substring(prefix.Length, input.Length - prefix.Length);
-        input = $"{input.Substring(0, prefix.Length).ToLower()}{trimmedInput}"; */
         var lowerInput = input.ToLower();
 
         // Check if our input starts/ends with the tags
