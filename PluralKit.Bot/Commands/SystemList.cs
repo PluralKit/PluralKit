@@ -19,21 +19,15 @@ public class SystemList
         // the own system is always allowed to look up their list
         var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.Id));
         if (ctx.MatchFlag("raw")) {
+            // Check privacy settings
+            ctx.CheckSystemPrivacy(target.Id, target.MemberListPrivacy);
+
+            // Get members
             var members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.Id, opts.ToQueryOptions())))
                 .ToList();
             
-            var showId = ctx.MatchFlag("by-id") || ctx.MatchFlag("bid") || ctx.MatchFlag("id");
-            var showDispName = ctx.MatchFlag("by-display-name") || ctx.MatchFlag("bdn");
-            var fullText = new StringBuilder();
-            foreach (var m in members) {
-                var canGetDisplayName = m.DisplayName != null && showDispName;
-                var name = m.Name;
-                name = canGetDisplayName ? $"`{m.DisplayName} ({name})`" : $"`{name}`";
-                name = showId ? $"[`{m.Hid}`] {name}" : $"{name}";
-                fullText.Append($"\n{name}");
-            }
-            await ctx.Reply($"{fullText.ToString()}");
-            return;
+            await ctx.Reply(GenerateRawList(members));
+            return; // This fixes a bug where the normal (embed-based) user list would still be shown
         }
         await ctx.RenderMemberList(
             ctx.LookupContextFor(target.Id),
@@ -57,5 +51,25 @@ public class SystemList
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 
         return title.ToString();
+    }
+
+    private string GenerateRawList(Context ctx, PKSystem target, List members) {
+        // Get flags
+        var showId = ctx.MatchFlag("show-id", "id");
+        var showDispName = ctx.MatchFlag("show-display-name", "show-dn", "dn");
+        
+        // Define variable to store the list
+        var fullText = new StringBuilder();
+
+        // Generate the list
+        foreach (var m in members) {
+            var canGetDisplayName = m.DisplayName != null && showDispName;
+            name = canGetDisplayName ? $"`{m.DisplayName} ({m.Name})`" : $"`{m.Name}`";
+            name = showId ? $"[`{m.Hid}`] {m.Name}" : $"{m.Name}";
+            fullText.Append($"\n{m.Name}");
+        }
+
+        // Return stringified list
+        return fullText.ToString();
     }
 }
