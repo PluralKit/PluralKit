@@ -12,6 +12,7 @@ public class SystemConfig
     public int? LatchTimeout { get; }
     public bool MemberDefaultPrivate { get; }
     public bool GroupDefaultPrivate { get; }
+    public bool CaseInsensitiveProxy { get; }
     public bool ShowPrivateInfo { get; }
     public int? MemberLimitOverride { get; }
     public int? GroupLimitOverride { get; }
