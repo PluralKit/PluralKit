@@ -79,3 +79,5 @@ You cannot look up private members or groups of another system.
 |All commands|-private|-priv|Show private information|
 |All commands|-public|-pub|Hide private information|
 |All commands, except `delete`|-y|-yes|Skip confirmation prompt|
+|edit|-append||Append the new content to the old message instead of overwriting it|
+|edit|-prepend||Prepend the new content to the old message instead of overwriting it|
