@@ -26,7 +26,7 @@ public class SystemList
             var members = (await ctx.Database.Execute(conn => conn.QueryMemberList(target.Id, opts.ToQueryOptions())))
                 .ToList();
             
-            await ctx.Reply(GenerateRawList(members));
+            await ctx.Reply(GenerateRawList(ctx, members));
             return; // This fixes a bug where the normal (embed-based) user list would still be shown
         }
         await ctx.RenderMemberList(
@@ -53,7 +53,7 @@ public class SystemList
         return title.ToString();
     }
 
-    private string GenerateRawList(Context ctx, PKSystem target, List members) {
+    private string GenerateRawList(Context ctx, List members) {
         // Get flags
         var showId = ctx.MatchFlag("show-id", "id");
         var showDispName = ctx.MatchFlag("show-display-name", "show-dn", "dn");
