@@ -92,7 +92,7 @@ public static class ContextEntityArgumentsExt
         // otherwise we try the querier's system and if that doesn't work we do global
         else
         {
-            if (await ctx.Repository.GetMemberByHid(input, ctx.System) is PKMember memberByHid)
+            if (await ctx.Repository.GetMemberByHid(input, ctx.System.Id) is PKMember memberByHid)
                 return memberByHid;
                 
             // If ctx.System was null then this would be a duplicate of above and we don't want to run it again
