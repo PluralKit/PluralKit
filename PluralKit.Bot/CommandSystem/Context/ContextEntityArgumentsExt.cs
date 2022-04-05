@@ -84,7 +84,7 @@ public static class ContextEntityArgumentsExt
             // There was a bug that made `SELECT * FROM MEMBERS WHERE HID = $1` hang forever BUT 
             // `SELECT * FROM MEMBERS WHERE HID = $1 AND SYSTEM = $2` *doesn't* hang! So this is a bandaid for that
         // If we are supposed to restrict it to a system anyway we can just do that
-        var memberByHid = null;
+        PKMember memberByHid = null;
         if(restrictToSystem != null)
         {
             memberByHid = await ctx.Repository.GetMemberByHid(input, restrictToSystem);
