@@ -80,8 +80,26 @@ public static class ContextEntityArgumentsExt
         }
 
         // Finally (or if by-HID lookup is specified), try member HID parsing:
-        if (await ctx.Repository.GetMemberByHid(input, restrictToSystem) is PKMember memberByHid)
-            return memberByHid;
+            // OKAY SO for posterity:
+            // There was a bug that made `SELECT * FROM MEMBERS WHERE HID = $1` hang forever BUT 
+            // `SELECT * FROM MEMBERS WHERE HID = $1 AND SYSTEM = $2` *doesn't* hang! So this is a bandaid for that
+        // If we are supposed to restrict it to a system anyway we can just do that
+        if(restrictToSystem != null)
+        {
+            if (await ctx.Repository.GetMemberByHid(input, restrictToSystem) is PKMember memberByHid)
+                return memberByHid;
+        }
+        // otherwise we try the querier's system and if that doesn't work we do global
+        else
+        {
+            if (await ctx.Repository.GetMemberByHid(input, ctx.System) is PKMember memberByHid)
+                return memberByHid;
+                
+            // If ctx.System was null then this would be a duplicate of above and we don't want to run it again
+            if(ctx.System != null)
+                if (await ctx.Repository.GetMemberByHid(input, null) is PKMember memberByHid)
+                    return memberByHid;
+        }
 
         // We didn't find anything, so we return null.
         return null;
