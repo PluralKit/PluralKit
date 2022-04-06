@@ -80,29 +80,31 @@ public static class ContextEntityArgumentsExt
         }
 
         // Finally (or if by-HID lookup is specified), try member HID parsing:
-            // OKAY SO for posterity:
-            // There was a bug that made `SELECT * FROM MEMBERS WHERE HID = $1` hang forever BUT 
-            // `SELECT * FROM MEMBERS WHERE HID = $1 AND SYSTEM = $2` *doesn't* hang! So this is a bandaid for that
+
+        // For posterity:
+        // There was a bug that made `SELECT * FROM MEMBERS WHERE HID = $1` hang forever BUT 
+        // `SELECT * FROM MEMBERS WHERE HID = $1 AND SYSTEM = $2` *doesn't* hang! So this is a bandaid for that
+
         // If we are supposed to restrict it to a system anyway we can just do that
         PKMember memberByHid = null;
-        if(restrictToSystem != null)
+        if (restrictToSystem != null)
         {
             memberByHid = await ctx.Repository.GetMemberByHid(input, restrictToSystem);
-            if (memberByHid is PKMember)
+            if (memberByHid != null)
                 return memberByHid;
         }
         // otherwise we try the querier's system and if that doesn't work we do global
         else
         {
-            memberByHid = await ctx.Repository.GetMemberByHid(input, ctx.System.Id);
-            if (memberByHid is PKMember)
+            memberByHid = await ctx.Repository.GetMemberByHid(input, ctx.System?.Id);
+            if (memberByHid != null)
                 return memberByHid;
-                
-            // If ctx.System was null then this would be a duplicate of above and we don't want to run it again
-            if(ctx.System != null)
+
+            // ff ctx.System was null then this would be a duplicate of above and we don't want to run it again
+            if (ctx.System != null)
             {
-                memberByHid = await ctx.Repository.GetMemberByHid(input, null);
-                if (memberByHid is PKMember)
+                memberByHid = await ctx.Repository.GetMemberByHid(input);
+                if (memberByHid != null)
                     return memberByHid;
             }
         }
