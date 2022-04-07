@@ -5,7 +5,7 @@ Sentry.init({
   dsn: "https://58109fec589f4c2bbfa190329acf679a@sentry.pluralkit.me/4",
   integrations: [new Integrations.BrowserTracing()],
 
-  enabled: true,
+  enabled: !window.location.origin.includes("localhost"),
   debug: false,
   release: "dev",
   // Set tracesSampleRate to 1.0 to capture 100%
