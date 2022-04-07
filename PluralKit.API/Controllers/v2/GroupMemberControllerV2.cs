@@ -53,7 +53,7 @@ public class GroupMemberControllerV2: PKControllerBase
         foreach (var JmemberRef in memberRefs)
         {
             var memberRef = JmemberRef.Value<string>();
-            var member = await ResolveMember(memberRef);
+            var member = await ResolveMember(memberRef, cache: true);
 
             // todo: have a list of these errors instead of immediately throwing
 
@@ -93,7 +93,7 @@ public class GroupMemberControllerV2: PKControllerBase
         foreach (var JmemberRef in memberRefs)
         {
             var memberRef = JmemberRef.Value<string>();
-            var member = await ResolveMember(memberRef);
+            var member = await ResolveMember(memberRef, cache: true);
 
             if (member == null)
                 throw Errors.MemberNotFoundWithRef(memberRef);
@@ -124,7 +124,7 @@ public class GroupMemberControllerV2: PKControllerBase
         foreach (var JmemberRef in memberRefs)
         {
             var memberRef = JmemberRef.Value<string>();
-            var member = await ResolveMember(memberRef);
+            var member = await ResolveMember(memberRef, cache: true);
 
             if (member == null)
                 throw Errors.MemberNotFoundWithRef(memberRef);
@@ -182,7 +182,7 @@ public class GroupMemberControllerV2: PKControllerBase
         foreach (var JgroupRef in groupRefs)
         {
             var groupRef = JgroupRef.Value<string>();
-            var group = await ResolveGroup(groupRef);
+            var group = await ResolveGroup(groupRef, cache: true);
 
             if (group == null)
                 throw Errors.GroupNotFound;
@@ -220,7 +220,7 @@ public class GroupMemberControllerV2: PKControllerBase
         foreach (var JgroupRef in groupRefs)
         {
             var groupRef = JgroupRef.Value<string>();
-            var group = await ResolveGroup(groupRef);
+            var group = await ResolveGroup(groupRef, cache: true);
 
             if (group == null)
                 throw Errors.GroupNotFoundWithRef(groupRef);
@@ -251,7 +251,7 @@ public class GroupMemberControllerV2: PKControllerBase
         foreach (var JgroupRef in groupRefs)
         {
             var groupRef = JgroupRef.Value<string>();
-            var group = await ResolveGroup(groupRef);
+            var group = await ResolveGroup(groupRef, cache: true);
 
             if (group == null)
                 throw Errors.GroupNotFoundWithRef(groupRef);
