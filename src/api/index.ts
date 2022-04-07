@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as Sentry from '@sentry/browser';
 
 const baseUrl = () => localStorage.isBeta ? "https://api.beta.pluralkit.me" : "https://api.pluralkit.me";
 
@@ -9,7 +10,12 @@ const scheduled = [];
 const runAPI = () => {
     if (scheduled.length == 0) return;
     const {axiosData, res, rej} = scheduled.shift();
-    axios(axiosData).then((resp) => res(parseData(resp.status, resp.data))).catch(rej);
+    axios(axiosData)
+        .then((resp) => res(parseData(resp.status, resp.data)))
+        .catch((err) => {
+            Sentry.captureException("Fetch error", err);
+            rej(err);
+        });
 }
 
 setInterval(runAPI, 500);
