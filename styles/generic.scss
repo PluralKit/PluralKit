@@ -3,6 +3,7 @@ This stylesheet should be used globally regardless of theming
 
 some specific rules are meant to be overwritten by the individual themes
 */
+@import url('http://fonts.cdnfonts.com/css/open-dyslexic');
 
 // some variables
 $breakpoint-xs: 0px;
@@ -29,6 +30,10 @@ blockquote {
 
 code {
     color: var(--bs-body-color) !important; // overwrite
+}
+
+.dyslexic {
+    font-family: 'Open-Dyslexic', sans-serif;
 }
 
 // pk-webs specific elements

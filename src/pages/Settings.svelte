@@ -12,12 +12,20 @@
             gradient_background: false,
             color_background: false,
             twemoji: false
+        },
+        accessibility: {
+            opendyslexic: false
         }
     };
 
     if (savedSettings) {
         settings = {...settings, ...savedSettings}
     };
+
+    function toggleOpenDyslexic() {
+        if (settings.accessibility.opendyslexic) document.getElementById("app").classList.add("dyslexic");
+        else document.getElementById("app").classList.remove("dyslexic");
+    }
 
 </script>
 
@@ -52,6 +60,14 @@
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-colorbackground">Colored background?</span> <Toggle hideLabel style="display: inline" label="Member color as background" toggled={settings.appearance.color_background} on:toggle={() => {settings.appearance.color_background = !settings.appearance.color_background; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                                 <Tooltip target="s-colorbackground" placement="bottom">If enabled, turns the background on member pages into the member's color.</Tooltip>
+                        </Col>
+                    </Row>
+                    <h4>Accessibility</h4>
+                    <hr/>
+                    <Row>
+                        <Col xs={12} lg={4} class="mb-2">
+                            <span id="s-opendyslexic">Use the opendyslexic font?</span> <Toggle hideLabel style="display: inline" label="Use the opendyslexic font" toggled={settings.accessibility.opendyslexic} on:toggle={() => {settings.accessibility.opendyslexic = !settings.accessibility.opendyslexic; localStorage.setItem("pk-settings", JSON.stringify(settings)); toggleOpenDyslexic();}}/>
+                            <Tooltip target="s-bannertop" placement="bottom">If enabled, shows banners from the top of the system, member and group pages.</Tooltip>
                         </Col>
                     </Row>
                 </CardBody>

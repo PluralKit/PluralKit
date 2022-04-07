@@ -12,6 +12,7 @@
   import Group from './pages/Group.svelte';
   import { Alert } from 'sveltestrap';
 import DiscordLogin from "./pages/DiscordLogin.svelte";
+  import { onMount } from 'svelte';
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
@@ -43,6 +44,15 @@ import DiscordLogin from "./pages/DiscordLogin.svelte";
   };
 
   let falseBool = false;
+
+  onMount(() => {
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
+
+    if (settings && settings.accessibility.opendyslexic === true) {
+      document.getElementById("app").classList.add("dyslexic");
+    }
+  });
+
 </script>
 
 <svelte:head>
