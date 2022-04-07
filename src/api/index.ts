@@ -5,6 +5,15 @@ const baseUrl = () => localStorage.isBeta ? "https://api.beta.pluralkit.me" : "h
 const methods = ['get', 'post', 'delete', 'patch', 'put'];
 const noop = () => {};
 
+const scheduled = [];
+const runAPI = () => {
+    if (scheduled.length == 0) return;
+    const {axiosData, res, rej} = scheduled.shift();
+    axios(axiosData).then((resp) => res(parseData(resp.status, resp.data))).catch(rej);
+}
+
+setInterval(runAPI, 500);
+
 export default function() {
     const route = [];
     const handler = {
@@ -12,7 +21,7 @@ export default function() {
             if (route.length == 0 && name != "private")
                 route.push("v2");
             if (methods.includes(name)) {
-                return ({ data = undefined, auth = true, token = null, query = null } = {}) => new Promise((res, rej) => axios({
+                return ({ data = undefined, auth = true, token = null, query = null } = {}) => new Promise((res, rej) => scheduled.push({ res, rej, axiosData: {
                     url: baseUrl() + "/" + route.join("/") + (query ? `?${Object.keys(query).map(x => `${x}=${query[x]}`).join("&")}` : ""),
                     method: name,
                     headers: {
@@ -21,7 +30,7 @@ export default function() {
                     },
                     data: !!data ? JSON.stringify(data) : undefined,
                     validateStatus: () => true,
-                }).then((resp) => res(parseData(resp.status, resp.data))).catch(rej));
+                }}));
             }
             route.push(name);
             return new Proxy(noop, handler);
