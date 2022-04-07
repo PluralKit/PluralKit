@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
+using SqlKata;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -46,6 +48,48 @@ public class PrivateController: PKControllerBase
         o.Add("version", BuildInfoService.FullVersion);
 
         return Ok(o);
+    }
+
+    [HttpPost("bulk_privacy/member")]
+    public async Task<IActionResult> BulkMemberPrivacy([FromBody] JObject inner)
+    {
+        HttpContext.Items.TryGetValue("SystemId", out var systemId);
+        if (systemId == null)
+            throw Errors.GenericAuthError;
+
+        var data = new JObject();
+        data.Add("privacy", inner);
+
+        var patch = MemberPatch.FromJSON(data, APIVersion.V2);
+
+        patch.AssertIsValid();
+        if (patch.Errors.Count > 0)
+            throw new ModelParseError(patch.Errors);
+
+        await _db.ExecuteQuery(patch.Apply(new Query("members").Where("system", systemId)));
+
+        return NoContent();
+    }
+
+    [HttpPost("bulk_privacy/group")]
+    public async Task<IActionResult> BulkGroupPrivacy([FromBody] JObject inner)
+    {
+        HttpContext.Items.TryGetValue("SystemId", out var systemId);
+        if (systemId == null)
+            throw Errors.GenericAuthError;
+
+        var data = new JObject();
+        data.Add("privacy", inner);
+
+        var patch = GroupPatch.FromJson(data);
+
+        patch.AssertIsValid();
+        if (patch.Errors.Count > 0)
+            throw new ModelParseError(patch.Errors);
+
+        await _db.ExecuteQuery(patch.Apply(new Query("groups").Where("system", systemId)));
+
+        return NoContent();
     }
 }
 
