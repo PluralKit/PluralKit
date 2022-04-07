@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as Sentry from '@sentry/browser';
 
-const baseUrl = () => window.location.origin.includes("localhost") ? "http://localhost:5000" : localStorage.isBeta ? "https://api.beta.pluralkit.me" : "https://api.pluralkit.me";
+const baseUrl = () => localStorage.isBeta ? "https://api.beta.pluralkit.me" : "https://api.pluralkit.me";
 
 const methods = ['get', 'post', 'delete', 'patch', 'put'];
 const noop = () => {};
