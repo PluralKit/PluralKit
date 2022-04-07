@@ -163,7 +163,7 @@ public class Startup
         app.UseMiddleware<AuthorizationTokenHandlerMiddleware>();
 
         //app.UseHttpsRedirection();
-        app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization"));
+        app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization", "sentry-trace"));
 
         app.UseRouting();
         app.UseAuthentication();
