@@ -20,6 +20,8 @@
     "vite": "^2.7.0"
   },
   "dependencies": {
+    "@sentry/browser": "^6.19.5",
+    "@sentry/tracing": "^6.19.5",
     "@types/twemoji": "^12.1.2",
     "axios": "^0.24.0",
     "discord-markdown": "^2.5.1",

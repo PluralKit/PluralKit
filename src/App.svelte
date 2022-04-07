@@ -11,6 +11,7 @@
   import Member from './pages/Member.svelte';
   import Group from './pages/Group.svelte';
   import { Alert } from 'sveltestrap';
+import DiscordLogin from "./pages/DiscordLogin.svelte";
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
@@ -51,6 +52,7 @@
 <Router>
   <Navigation bind:style={style}/>
     <Route path="/"><Home /></Route>
+    <Route path="/login/discord"><DiscordLogin /></Route>
     <Route path="dash"><Dash /></Route>
     <Route path="dash/m/:id"><Member isPublic={falseBool}/></Route>
     <Route path = "dash/g/:id"><Group isPublic={falseBool}/></Route>

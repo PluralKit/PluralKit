@@ -36,9 +36,6 @@
             shard.last_heartbeat = new Date(Number(shard.last_heartbeat) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
             return shard;
         });
-        console.log(data[0].cluster_id);
-
-        pingAverage = Math.trunc(pings / shards.length).toString();
 
         currentCommitMsg = `Current Git commit: <a href="https://github.com/xSke/PluralKit/commit/${pkdata.version}">${pkdata.version.slice(0,7)}</a>`;
 
@@ -49,9 +46,10 @@
                 clusterData[shard.cluster_id].push(shard);
             });
             clusters = clusterData;
-        } else {
-            shards = data;
         }
+
+        shards = data;
+        pingAverage = Math.trunc(pings / shards.length).toString();
 
         message = "";
     };
@@ -142,7 +140,7 @@
             </Card>
         </Col>
     </Row>
-    {#if shards.length > 0}
+    {#if Object.keys(clusters).length == 0 && shards.length > 0}
         <Row>
             <Col class="mx-auto" xs={12} lg={11} xl={10}>
                 <Card class="mb-4">
