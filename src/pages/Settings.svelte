@@ -67,7 +67,7 @@
                     <Row>
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-opendyslexic">Use the opendyslexic font?</span> <Toggle hideLabel style="display: inline" label="Use the opendyslexic font" toggled={settings.accessibility.opendyslexic} on:toggle={() => {settings.accessibility.opendyslexic = !settings.accessibility.opendyslexic; localStorage.setItem("pk-settings", JSON.stringify(settings)); toggleOpenDyslexic();}}/>
-                            <Tooltip target="s-bannertop" placement="bottom">If enabled, shows banners from the top of the system, member and group pages.</Tooltip>
+                            <Tooltip target="s-bannertop" placement="bottom">If enabled, uses the opendyslexic font as it's main font.</Tooltip>
                         </Col>
                     </Row>
                 </CardBody>
