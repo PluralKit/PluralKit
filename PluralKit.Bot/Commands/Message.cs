@@ -66,8 +66,9 @@ public class ProxiedMessage
         // Append or prepend the new content to the original message content if needed.
         // If no flag is supplied, the new contents will completly overwrite the old contents
         // If both flags are specified. the message will be prepended AND appended
-        if (append) newContent = originalContent +" "+ newContent;
-        if (prepend) newContent = newContent +" "+ originalContent;
+        if (append && prepend) newContent = $"{newContent} {originalContent} {newContent}";
+        else if (append) newContent = originalContent +" "+ newContent;
+        else if (prepend) newContent = newContent +" "+ originalContent;
 
         if (newContent.Length > 2000)
             throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
