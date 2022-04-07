@@ -91,10 +91,74 @@ public class PrivateController: PKControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("discord/callback")]
+    public async Task<IActionResult> DiscordLogin([FromBody] JObject data)
+    {
+        if (_config.ClientId == null) return NotFound();
+
+        using var client = new HttpClient();
+
+        var res = await client.PostAsync("https://discord.com/api/v10/oauth2/token", new FormUrlEncodedContent(
+            new Dictionary<string, string>{
+            { "client_id", _config.ClientId },
+            { "client_secret", _config.ClientSecret },
+            { "grant_type", "authorization_code" },
+            { "redirect_uri", data.Value<string>("redirect_domain") + "/login/discord" },
+            { "code", data.Value<string>("code") },
+        }));
+
+        var h = await res.Content.ReadAsStringAsync();
+        var c = JsonConvert.DeserializeObject<OAuth2TokenResponse>(h);
+
+        if (c.access_token == null)
+            return BadRequest(PrivateJsonExt.ObjectWithError(c.error_description));
+
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {c.access_token}");
+
+        var resp = await client.GetAsync("https://discord.com/api/v10/users/@me");
+        var user = JsonConvert.DeserializeObject<JObject>(await resp.Content.ReadAsStringAsync());
+        var userId = user.Value<String>("id");
+
+        var system = await ResolveSystem(userId);
+        if (system == null)
+            return BadRequest(PrivateJsonExt.ObjectWithError("User does not have a system registered!"));
+
+        // TODO
+
+        // resp = await client.GetAsync("https://discord.com/api/v10/users/@me/guilds");
+        // var guilds = JsonConvert.DeserializeObject<JArray>(await resp.Content.ReadAsStringAsync());
+        // await _redis.Connection.GetDatabase().HashSetAsync(
+        //     $"user_guilds::{userId}",
+        //     guilds.Select(g => new HashEntry(g.Value<string>("id"), true)).ToArray()
+        // );
+
+        var o = new JObject();
+
+        o.Add("system", system.ToJson(LookupContext.ByOwner, APIVersion.V2));
+        o.Add("user", user);
+        o.Add("token", system.Token);
+
+        return Ok(o);
+    }
+}
+
+public record OAuth2TokenResponse
+{
+    public string access_token;
+    public string? error;
+    public string? error_description;
 }
 
 public static class PrivateJsonExt
 {
+    public static JObject ObjectWithError(string error)
+    {
+        var o = new JObject();
+        o.Add("error", error);
+        return o;
+    }
+
     public static JArray ToJson(this IEnumerable<ShardState> shards)
     {
         var o = new JArray();
