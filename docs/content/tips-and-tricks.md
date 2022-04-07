@@ -74,6 +74,8 @@ You cannot look up private members or groups of another system.
 |pk;system frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
 |pk;group \<group> frontpercent|-fronters-only|-fo|Show a group's frontpercent without the "no fronter" entry|
 |pk;group \<group> frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
+|pk;edit|-append||Append the new content to the old message instead of overwriting it|
+|pk;edit|-prepend||Prepend the new content to the old message instead of overwriting it|
 |Most commands|-all|-a|Show hidden/private information|
 |Most commands|-raw|-r|Show text with formatting, for easier copy-pasting|
 |All commands|-private|-priv|Show private information|
