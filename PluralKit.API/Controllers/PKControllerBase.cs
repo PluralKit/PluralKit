@@ -75,7 +75,7 @@ public class PKControllerBase: ControllerBase
         return null;
     }
 
-    protected async Task<PKGroup?> ResolveGroup(string groupRef, bool cache = true)
+    protected async Task<PKGroup?> ResolveGroup(string groupRef, bool cache = false)
     {
         if (cache)
         {
