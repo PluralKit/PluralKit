@@ -3,6 +3,7 @@ using Autofac;
 using Microsoft.Extensions.Configuration;
 
 using Myriad.Gateway;
+using Myriad.Types;
 using Myriad.Rest;
 
 using PluralKit.Core;
@@ -151,8 +152,6 @@ public class Init
 
     private static async Task StartCluster(IComponentContext services)
     {
-        var info = await services.Resolve<DiscordApiClient>().GetGatewayBot();
-
         var redis = services.Resolve<RedisService>();
 
         var cluster = services.Resolve<Cluster>();
@@ -160,6 +159,16 @@ public class Init
 
         if (config.Cluster != null)
         {
+            var info = new GatewayInfo.Bot()
+            {
+                SessionStartLimit = new()
+                {
+                    MaxConcurrency = config.MaxShardConcurrency ?? 1,
+                },
+                Shards = config.Cluster.TotalShards,
+                Url = "wss://gateway.discord.gg",
+            };
+
             // For multi-instance deployments, calculate the "span" of shards this node is responsible for
             var totalNodes = config.Cluster.TotalNodes;
             var totalShards = config.Cluster.TotalShards;
@@ -173,6 +182,7 @@ public class Init
         }
         else
         {
+            var info = await services.Resolve<DiscordApiClient>().GetGatewayBot();
             await cluster.Start(info, redis.Connection);
         }
     }
