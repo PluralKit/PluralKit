@@ -8,6 +8,7 @@
 !nuget.config
 !.git
 !proto
+!scripts/run-clustered.sh
 
 # Re-exclude host build artifact directories
 **/bin

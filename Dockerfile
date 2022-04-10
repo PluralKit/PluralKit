@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+
 WORKDIR /app
 
 # Restore/fetch dependencies excluding app code to make use of caching
@@ -23,6 +24,10 @@ LABEL org.opencontainers.image.source = "https://github.com/xSke/PluralKit"
 
 WORKDIR /app
 COPY --from=build /app ./
+
+# Runtime dependency in prod
+RUN apt update && apt install -y curl
+ADD scripts/run-clustered.sh /
 
 # Allow overriding CMD from eg. docker-compose to run API layer too
 ENTRYPOINT ["dotnet"]
