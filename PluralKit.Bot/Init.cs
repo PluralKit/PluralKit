@@ -74,7 +74,12 @@ public class Init
 
             // Start the Discord shards themselves (handlers already set up)
             logger.Information("Connecting to Discord");
-            await StartCluster(services);
+
+            if (config.RedisGatewayUrl != null)
+                await services.Resolve<RedisGatewayService>().Start();
+            else
+                await StartCluster(services);
+
             logger.Information("Connected! All is good (probably).");
 
             // Lastly, we just... wait. Everything else is handled in the DiscordClient event loop
@@ -98,6 +103,7 @@ public class Init
         // - Wraps the given function in an exception handler that properly logs errors
         // - Adds a SIGINT (Ctrl-C) listener through Console.CancelKeyPress to gracefully shut down
         // - Adds a SIGTERM (kill, systemctl stop, docker stop) listener through AppDomain.ProcessExit (same as above)
+        // todo: move run-clustered.sh to here
         var logger = services.Resolve<ILogger>().ForContext<Init>();
 
         var shutdown = new TaskCompletionSource<object>();

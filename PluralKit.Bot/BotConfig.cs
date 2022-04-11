@@ -21,6 +21,8 @@ public class BotConfig
     public string? GatewayQueueUrl { get; set; }
     public bool UseRedisRatelimiter { get; set; } = false;
 
+    public string? RedisGatewayUrl { get; set; }
+
     public string? DiscordBaseUrl { get; set; }
 
     public bool DisableErrorReporting { get; set; } = false;
