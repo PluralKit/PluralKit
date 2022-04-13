@@ -20,6 +20,7 @@ public class BotConfig
 
     public string? GatewayQueueUrl { get; set; }
     public bool UseRedisRatelimiter { get; set; } = false;
+    public bool UseRedisCache { get; set; } = false;
 
     public string? RedisGatewayUrl { get; set; }
 

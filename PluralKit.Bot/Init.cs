@@ -2,6 +2,7 @@ using Autofac;
 
 using Microsoft.Extensions.Configuration;
 
+using Myriad.Cache;
 using Myriad.Gateway;
 using Myriad.Types;
 using Myriad.Rest;
@@ -50,6 +51,10 @@ public class Init
             var redis = services.Resolve<RedisService>();
             if (config.UseRedisRatelimiter)
                 await redis.InitAsync(coreConfig);
+
+            var cache = services.Resolve<IDiscordCache>();
+            if (cache is RedisDiscordCache)
+                await (cache as RedisDiscordCache).InitAsync(coreConfig.RedisAddr, config.ClientId!.Value);
 
             if (config.Cluster == null)
             {

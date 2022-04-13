@@ -1520,6 +1520,8 @@
       "myriad": {
         "type": "Project",
         "dependencies": {
+          "Google.Protobuf": "3.13.0",
+          "Grpc.Net.ClientFactory": "2.32.0",
           "Polly": "7.2.1",
           "Polly.Contrib.WaitAndRetry": "1.1.1",
           "Serilog": "2.10.0",

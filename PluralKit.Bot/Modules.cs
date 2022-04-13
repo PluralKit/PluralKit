@@ -44,7 +44,13 @@ public class BotModule: Module
         }).AsSelf().SingleInstance();
         builder.RegisterType<Cluster>().AsSelf().SingleInstance();
         builder.RegisterType<RedisGatewayService>().AsSelf().SingleInstance();
-        builder.Register(c => { return new MemoryDiscordCache(); }).AsSelf().As<IDiscordCache>().SingleInstance();
+        builder.Register<IDiscordCache>(c => {
+            var botConfig = c.Resolve<BotConfig>();
+
+            if (botConfig.UseRedisCache)
+                return new RedisDiscordCache(c.Resolve<ILogger>());
+            return new MemoryDiscordCache();
+        }).AsSelf().SingleInstance();
         builder.RegisterType<PrivateChannelService>().AsSelf().SingleInstance();
 
         builder.Register(c =>
