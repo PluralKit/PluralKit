@@ -73,7 +73,7 @@ public class Bot
             }
         };
 
-        _services.Resolve<RedisGatewayService>().OnEventReceived += (evt) => OnEventReceived(0, evt);
+        _services.Resolve<RedisGatewayService>().OnEventReceived += (evt) => OnEventReceivedInner(0, evt);
 
         // Init the shard stuff
         _services.Resolve<ShardInfoService>().Init();
@@ -97,6 +97,11 @@ public class Bot
         var userId = await _cache.GetOwnUser();
         await _cache.TryUpdateSelfMember(userId, evt);
 
+        await OnEventReceivedInner(shardId, evt);
+    }
+
+    private async Task OnEventReceivedInner(int shardId, IGatewayEvent evt)
+    {
         // HandleEvent takes a type parameter, automatically inferred by the event type
         // It will then look up an IEventHandler<TypeOfEvent> in the DI container and call that object's handler method
         // For registering new ones, see Modules.cs
@@ -245,7 +250,7 @@ public class Bot
         _logger.Debug("Running once-per-minute scheduled tasks");
 
         // Check from a new custom status from Redis and update Discord accordingly
-        if (_redis.Connection != null)
+        if (_redis.Connection != null && _config.RedisGatewayUrl == null)
         {
             var newStatus = await _redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
             if (newStatus != CustomStatusMessage)
