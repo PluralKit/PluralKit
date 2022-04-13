@@ -236,17 +236,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dashmap"
-version = "5.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c8858831f7781322e539ea39e72449c46b059638250c14344fec8d0aa6e539c"
-dependencies = [
- "cfg-if",
- "num_cpus",
- "parking_lot 0.12.0",
-]
-
-[[package]]
 name = "deadpool"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -819,17 +808,7 @@ checksum = "7d17b78036a60663b797adeaee46f5c9dfebb86948d1255007a1d6be0271ff99"
 dependencies = [
  "instant",
  "lock_api",
- "parking_lot_core 0.8.5",
-]
-
-[[package]]
-name = "parking_lot"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87f5ec2493a61ac0506c0f4199f99070cbe83857b0337006a30f3e6719b8ef58"
-dependencies = [
- "lock_api",
- "parking_lot_core 0.9.2",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -844,19 +823,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "winapi",
-]
-
-[[package]]
-name = "parking_lot_core"
-version = "0.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "995f667a6c822200b0433ac218e05582f0e2efa1b922a3fd2fbaadc5f87bab37"
-dependencies = [
- "cfg-if",
- "libc",
- "redox_syscall",
- "smallvec",
- "windows-sys",
 ]
 
 [[package]]
@@ -910,6 +876,7 @@ dependencies = [
  "deadpool",
  "deadpool-postgres",
  "futures",
+ "lazy_static",
  "libc",
  "postgres-types",
  "procfs",
@@ -920,7 +887,6 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "tracing-subscriber",
- "twilight-cache-inmemory",
  "twilight-gateway",
  "twilight-gateway-queue",
  "twilight-http",
@@ -1434,7 +1400,7 @@ dependencies = [
  "mio",
  "num_cpus",
  "once_cell",
- "parking_lot 0.11.2",
+ "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "tokio-macros",
@@ -1464,7 +1430,7 @@ dependencies = [
  "fallible-iterator",
  "futures",
  "log",
- "parking_lot 0.11.2",
+ "parking_lot",
  "percent-encoding",
  "phf",
  "pin-project-lite",
@@ -1616,18 +1582,6 @@ dependencies = [
  "url",
  "utf-8",
  "webpki",
-]
-
-[[package]]
-name = "twilight-cache-inmemory"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644c73ca822657936e6da14b96c11808d6ec848798d1ea6ecc15aef1fc12a383"
-dependencies = [
- "bitflags",
- "dashmap",
- "serde",
- "twilight-model",
 ]
 
 [[package]]
@@ -1898,46 +1852,3 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
-
-[[package]]
-name = "windows-sys"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5acdd78cb4ba54c0045ac14f62d8f94a03d10047904ae2a40afa1e99d8f70825"
-dependencies = [
- "windows_aarch64_msvc",
- "windows_i686_gnu",
- "windows_i686_msvc",
- "windows_x86_64_gnu",
- "windows_x86_64_msvc",
-]
-
-[[package]]
-name = "windows_aarch64_msvc"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17cffbe740121affb56fad0fc0e421804adf0ae00891205213b5cecd30db881d"
-
-[[package]]
-name = "windows_i686_gnu"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2564fde759adb79129d9b4f54be42b32c89970c18ebf93124ca8870a498688ed"
-
-[[package]]
-name = "windows_i686_msvc"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cd9d32ba70453522332c14d38814bceeb747d80b3958676007acadd7e166956"
-
-[[package]]
-name = "windows_x86_64_gnu"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfce6deae227ee8d356d19effc141a509cc503dfd1f850622ec4b0f84428e1f4"
-
-[[package]]
-name = "windows_x86_64_msvc"
-version = "0.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d19538ccc21819d01deaf88d6a17eae6596a12e9aafdbb97916fb49896d89de9"
