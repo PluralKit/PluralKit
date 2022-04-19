@@ -3,6 +3,7 @@
 
 # Include project code and build files
 !PluralKit.*/
+!gateway/
 !Myriad/
 !PluralKit.sln
 !nuget.config
@@ -13,3 +14,4 @@
 # Re-exclude host build artifact directories
 **/bin
 **/obj
+**/target
