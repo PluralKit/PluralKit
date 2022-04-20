@@ -67,7 +67,7 @@ public class SystemPatch: PatchObject
 
 #nullable disable
 
-    public static SystemPatch FromJSON(JObject o, APIVersion v = APIVersion.V1)
+    public static SystemPatch FromJSON(JObject o, bool isImport = false)
     {
         var patch = new SystemPatch();
         if (o.ContainsKey("name")) patch.Name = o.Value<string>("name").NullIfEmpty();
@@ -78,47 +78,38 @@ public class SystemPatch: PatchObject
         if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
         if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty();
 
-        switch (v)
+        if (isImport)
         {
-            case APIVersion.V1:
-                {
-                    if (o.ContainsKey("description_privacy"))
-                        patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
-                    if (o.ContainsKey("member_list_privacy"))
-                        patch.MemberListPrivacy = patch.ParsePrivacy(o, "member_list_privacy");
-                    if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = patch.ParsePrivacy(o, "front_privacy");
-                    if (o.ContainsKey("front_history_privacy"))
-                        patch.FrontHistoryPrivacy = patch.ParsePrivacy(o, "front_history_privacy");
+            if (o.ContainsKey("description_privacy"))
+                patch.DescriptionPrivacy = patch.ParsePrivacy(o, "description_privacy");
+            if (o.ContainsKey("member_list_privacy"))
+                patch.MemberListPrivacy = patch.ParsePrivacy(o, "member_list_privacy");
+            if (o.ContainsKey("front_privacy")) patch.FrontPrivacy = patch.ParsePrivacy(o, "front_privacy");
+            if (o.ContainsKey("front_history_privacy"))
+                patch.FrontHistoryPrivacy = patch.ParsePrivacy(o, "front_history_privacy");
+        }
 
-                    break;
-                }
-            case APIVersion.V2:
-                {
-                    if (o.ContainsKey("privacy") && o["privacy"].Type != JTokenType.Null)
-                    {
-                        var privacy = o.Value<JObject>("privacy");
+        if (o.ContainsKey("privacy") && o["privacy"].Type != JTokenType.Null)
+        {
+            var privacy = o.Value<JObject>("privacy");
 
-                        if (privacy.ContainsKey("description_privacy"))
-                            patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
+            if (privacy.ContainsKey("description_privacy"))
+                patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
 
-                        if (privacy.ContainsKey("pronoun_privacy"))
-                            patch.PronounPrivacy = patch.ParsePrivacy(privacy, "pronoun_privacy");
+            if (privacy.ContainsKey("pronoun_privacy"))
+                patch.PronounPrivacy = patch.ParsePrivacy(privacy, "pronoun_privacy");
 
-                        if (privacy.ContainsKey("member_list_privacy"))
-                            patch.MemberListPrivacy = patch.ParsePrivacy(privacy, "member_list_privacy");
+            if (privacy.ContainsKey("member_list_privacy"))
+                patch.MemberListPrivacy = patch.ParsePrivacy(privacy, "member_list_privacy");
 
-                        if (privacy.ContainsKey("group_list_privacy"))
-                            patch.GroupListPrivacy = patch.ParsePrivacy(privacy, "group_list_privacy");
+            if (privacy.ContainsKey("group_list_privacy"))
+                patch.GroupListPrivacy = patch.ParsePrivacy(privacy, "group_list_privacy");
 
-                        if (privacy.ContainsKey("front_privacy"))
-                            patch.FrontPrivacy = patch.ParsePrivacy(privacy, "front_privacy");
+            if (privacy.ContainsKey("front_privacy"))
+                patch.FrontPrivacy = patch.ParsePrivacy(privacy, "front_privacy");
 
-                        if (privacy.ContainsKey("front_history_privacy"))
-                            patch.FrontHistoryPrivacy = patch.ParsePrivacy(privacy, "front_history_privacy");
-                    }
-
-                    break;
-                }
+            if (privacy.ContainsKey("front_history_privacy"))
+                patch.FrontHistoryPrivacy = patch.ParsePrivacy(privacy, "front_history_privacy");
         }
 
         return patch;

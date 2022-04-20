@@ -14,7 +14,7 @@ public partial class BulkImporter
 {
     private async Task<ImportResultNew> ImportPluralKit(JObject importFile)
     {
-        var patch = SystemPatch.FromJSON(importFile);
+        var patch = SystemPatch.FromJSON(importFile, isImport: true);
 
         patch.AssertIsValid();
         if (patch.Errors.Count > 0)
@@ -100,7 +100,7 @@ public partial class BulkImporter
             referenceName, _system.Id, isNewMember
         );
 
-        var patch = MemberPatch.FromJSON(member);
+        var patch = MemberPatch.FromJSON(member, isImport: true);
 
         patch.AssertIsValid();
         if (patch.Errors.Count > 0)

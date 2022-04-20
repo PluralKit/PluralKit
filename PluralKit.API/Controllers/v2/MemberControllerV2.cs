@@ -28,7 +28,7 @@ public class MemberControllerV2: PKControllerBase
         var members = _repo.GetSystemMembers(system.Id);
         return Ok(await members
             .Where(m => m.MemberVisibility.CanAccess(ctx))
-            .Select(m => m.ToJson(ctx, v: APIVersion.V2))
+            .Select(m => m.ToJson(ctx))
             .ToListAsync());
     }
 
@@ -43,7 +43,7 @@ public class MemberControllerV2: PKControllerBase
         if (memberCount >= memberLimit)
             throw Errors.MemberLimitReached;
 
-        var patch = MemberPatch.FromJSON(data, APIVersion.V2);
+        var patch = MemberPatch.FromJSON(data);
         patch.AssertIsValid();
         if (!patch.Name.IsPresent)
             patch.Errors.Add(new ValidationError("name", "Key 'name' is required when creating new member."));
@@ -64,7 +64,7 @@ public class MemberControllerV2: PKControllerBase
 
         await tx.CommitAsync();
 
-        return Ok(newMember.ToJson(LookupContext.ByOwner, v: APIVersion.V2));
+        return Ok(newMember.ToJson(LookupContext.ByOwner));
     }
 
     [HttpGet("members/{memberRef}")]
@@ -76,7 +76,7 @@ public class MemberControllerV2: PKControllerBase
 
         var system = await _repo.GetSystem(member.System);
 
-        return Ok(member.ToJson(ContextFor(member), systemStr: system.Hid, v: APIVersion.V2));
+        return Ok(member.ToJson(ContextFor(member), systemStr: system.Hid));
     }
 
     [HttpPatch("members/{memberRef}")]
@@ -89,14 +89,14 @@ public class MemberControllerV2: PKControllerBase
         if (member.System != system.Id)
             throw Errors.NotOwnMemberError;
 
-        var patch = MemberPatch.FromJSON(data, APIVersion.V2);
+        var patch = MemberPatch.FromJSON(data);
 
         patch.AssertIsValid();
         if (patch.Errors.Count > 0)
             throw new ModelParseError(patch.Errors);
 
         var newMember = await _repo.UpdateMember(member.Id, patch);
-        return Ok(newMember.ToJson(LookupContext.ByOwner, v: APIVersion.V2));
+        return Ok(newMember.ToJson(LookupContext.ByOwner));
     }
 
     [HttpDelete("members/{memberRef}")]

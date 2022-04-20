@@ -60,7 +60,7 @@ public class PrivateController: PKControllerBase
         var data = new JObject();
         data.Add("privacy", inner);
 
-        var patch = MemberPatch.FromJSON(data, APIVersion.V2);
+        var patch = MemberPatch.FromJSON(data);
 
         patch.AssertIsValid();
         if (patch.Errors.Count > 0)
@@ -135,7 +135,7 @@ public class PrivateController: PKControllerBase
 
         var o = new JObject();
 
-        o.Add("system", system.ToJson(LookupContext.ByOwner, APIVersion.V2));
+        o.Add("system", system.ToJson(LookupContext.ByOwner));
         o.Add("user", user);
         o.Add("token", system.Token);
 

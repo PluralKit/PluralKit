@@ -105,24 +105,21 @@ public static class PKMemberExt
         member.MetadataPrivacy.Get(ctx, member.MessageCount);
 
     public static JObject ToJson(this PKMember member, LookupContext ctx, bool needsLegacyProxyTags = false,
-                                 string systemStr = null, APIVersion v = APIVersion.V1)
+                                 string systemStr = null)
     {
         var includePrivacy = ctx == LookupContext.ByOwner;
 
         var o = new JObject();
         o.Add("id", member.Hid);
 
-        if (v == APIVersion.V2)
-        {
-            o.Add("uuid", member.Uuid.ToString());
-            if (systemStr != null)
-                o.Add("system", systemStr);
-        }
+        o.Add("uuid", member.Uuid.ToString());
+        if (systemStr != null)
+            o.Add("system", systemStr);
 
         o.Add("name", member.NameFor(ctx));
 
-        // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
         o.Add("display_name", member.NamePrivacy.CanAccess(ctx) ? member.DisplayName : null);
+        // o.Add("color", member.ColorPrivacy.CanAccess(ctx) ? member.Color : null);
         o.Add("color", member.Color);
         o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
         o.Add("pronouns", member.PronounsFor(ctx));
@@ -137,53 +134,23 @@ public static class PKMemberExt
             tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
         o.Add("proxy_tags", tagArray);
 
-        switch (v)
+        if (includePrivacy)
         {
-            case APIVersion.V1:
-                {
-                    o.Add("privacy", includePrivacy ? member.MemberVisibility.LevelName() : null);
+            var p = new JObject();
 
-                    o.Add("visibility", includePrivacy ? member.MemberVisibility.LevelName() : null);
-                    o.Add("name_privacy", includePrivacy ? member.NamePrivacy.LevelName() : null);
-                    o.Add("description_privacy", includePrivacy ? member.DescriptionPrivacy.LevelName() : null);
-                    o.Add("birthday_privacy", includePrivacy ? member.BirthdayPrivacy.LevelName() : null);
-                    o.Add("pronoun_privacy", includePrivacy ? member.PronounPrivacy.LevelName() : null);
-                    o.Add("avatar_privacy", includePrivacy ? member.AvatarPrivacy.LevelName() : null);
-                    // o.Add("color_privacy", ctx == LookupContext.ByOwner ? (member.ColorPrivacy.LevelName()) : null);
-                    o.Add("metadata_privacy", includePrivacy ? member.MetadataPrivacy.LevelName() : null);
+            p.Add("visibility", member.MemberVisibility.ToJsonString());
+            p.Add("name_privacy", member.NamePrivacy.ToJsonString());
+            p.Add("description_privacy", member.DescriptionPrivacy.ToJsonString());
+            p.Add("birthday_privacy", member.BirthdayPrivacy.ToJsonString());
+            p.Add("pronoun_privacy", member.PronounPrivacy.ToJsonString());
+            p.Add("avatar_privacy", member.AvatarPrivacy.ToJsonString());
+            p.Add("metadata_privacy", member.MetadataPrivacy.ToJsonString());
 
-                    if (member.ProxyTags.Count > 0 && needsLegacyProxyTags)
-                    {
-                        // Legacy compatibility only, TODO: remove at some point
-                        o.Add("prefix", member.ProxyTags?.FirstOrDefault().Prefix);
-                        o.Add("suffix", member.ProxyTags?.FirstOrDefault().Suffix);
-                    }
-
-                    break;
-                }
-            case APIVersion.V2:
-                {
-                    if (includePrivacy)
-                    {
-                        var p = new JObject();
-
-                        p.Add("visibility", member.MemberVisibility.ToJsonString());
-                        p.Add("name_privacy", member.NamePrivacy.ToJsonString());
-                        p.Add("description_privacy", member.DescriptionPrivacy.ToJsonString());
-                        p.Add("birthday_privacy", member.BirthdayPrivacy.ToJsonString());
-                        p.Add("pronoun_privacy", member.PronounPrivacy.ToJsonString());
-                        p.Add("avatar_privacy", member.AvatarPrivacy.ToJsonString());
-                        p.Add("metadata_privacy", member.MetadataPrivacy.ToJsonString());
-
-                        o.Add("privacy", p);
-                    }
-                    else
-                    {
-                        o.Add("privacy", null);
-                    }
-
-                    break;
-                }
+            o.Add("privacy", p);
+        }
+        else
+        {
+            o.Add("privacy", null);
         }
 
         return o;

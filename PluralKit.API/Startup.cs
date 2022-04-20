@@ -28,29 +28,6 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddCors();
-        services.AddAuthentication("SystemToken")
-            .AddScheme<SystemTokenAuthenticationHandler.Opts,
-                SystemTokenAuthenticationHandler>("SystemToken", null);
-
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy("EditSystem",
-                p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
-            options.AddPolicy("EditMember",
-                p => p.RequireAuthenticatedUser().AddRequirements(new OwnSystemRequirement()));
-
-            options.AddPolicy("ViewMembers",
-                p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.MemberListPrivacy)));
-            options.AddPolicy("ViewFront",
-                p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontPrivacy)));
-            options.AddPolicy("ViewFrontHistory",
-                p => p.AddRequirements(new PrivacyRequirement<PKSystem>(s => s.FrontHistoryPrivacy)));
-        });
-        services.AddSingleton<IAuthenticationHandler, SystemTokenAuthenticationHandler>();
-        services.AddSingleton<IAuthorizationHandler, MemberOwnerHandler>();
-        services.AddSingleton<IAuthorizationHandler, SystemOwnerHandler>();
-        services.AddSingleton<IAuthorizationHandler, SystemPrivacyHandler>();
-
         services.AddControllers()
             // sorry MS, this just does *more*
             .AddNewtonsoftJson(opts =>

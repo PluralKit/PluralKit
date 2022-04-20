@@ -59,70 +59,42 @@ public static class PKSystemExt
     public static string DescriptionFor(this PKSystem system, LookupContext ctx) =>
         system.DescriptionPrivacy.Get(ctx, system.Description);
 
-    public static JObject ToJson(this PKSystem system, LookupContext ctx, APIVersion v = APIVersion.V1)
+    public static JObject ToJson(this PKSystem system, LookupContext ctx)
     {
         var o = new JObject();
         o.Add("id", system.Hid);
-        if (v == APIVersion.V2)
-            o.Add("uuid", system.Uuid.ToString());
+        o.Add("uuid", system.Uuid.ToString());
 
         o.Add("name", system.Name);
         o.Add("description", system.DescriptionFor(ctx));
         o.Add("tag", system.Tag);
-        if (v == APIVersion.V2)
-            o.Add("pronouns", system.PronounPrivacy.Get(ctx, system.Pronouns));
+        o.Add("pronouns", system.PronounPrivacy.Get(ctx, system.Pronouns));
 
         o.Add("avatar_url", system.AvatarUrl.TryGetCleanCdnUrl());
         o.Add("banner", system.DescriptionPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
         o.Add("color", system.Color);
         o.Add("created", system.Created.FormatExport());
 
-        switch (v)
+        if (ctx == LookupContext.ByOwner)
         {
-            case APIVersion.V1:
-                {
-                    // this property was moved to SystemConfig
-                    // see notice in /api/legacy docs
-                    o.Add("tz", "UTC");
+            // todo: should this be moved to a different JSON model?
+            o.Add("webhook_url", system.WebhookUrl);
+            // o.Add("webhook_token", system.WebhookToken);
 
-                    o.Add("description_privacy",
-                        ctx == LookupContext.ByOwner ? system.DescriptionPrivacy.ToJsonString() : null);
-                    o.Add("member_list_privacy",
-                        ctx == LookupContext.ByOwner ? system.MemberListPrivacy.ToJsonString() : null);
-                    o.Add("group_list_privacy",
-                        ctx == LookupContext.ByOwner ? system.GroupListPrivacy.ToJsonString() : null);
-                    o.Add("front_privacy", ctx == LookupContext.ByOwner ? system.FrontPrivacy.ToJsonString() : null);
-                    o.Add("front_history_privacy",
-                        ctx == LookupContext.ByOwner ? system.FrontHistoryPrivacy.ToJsonString() : null);
+            var p = new JObject();
 
-                    break;
-                }
-            case APIVersion.V2:
-                {
-                    if (ctx == LookupContext.ByOwner)
-                    {
-                        // todo: should this be moved to a different JSON model?
-                        o.Add("webhook_url", system.WebhookUrl);
-                        // o.Add("webhook_token", system.WebhookToken);
+            p.Add("description_privacy", system.DescriptionPrivacy.ToJsonString());
+            p.Add("pronoun_privacy", system.PronounPrivacy.ToJsonString());
+            p.Add("member_list_privacy", system.MemberListPrivacy.ToJsonString());
+            p.Add("group_list_privacy", system.GroupListPrivacy.ToJsonString());
+            p.Add("front_privacy", system.FrontPrivacy.ToJsonString());
+            p.Add("front_history_privacy", system.FrontHistoryPrivacy.ToJsonString());
 
-                        var p = new JObject();
-
-                        p.Add("description_privacy", system.DescriptionPrivacy.ToJsonString());
-                        p.Add("pronoun_privacy", system.PronounPrivacy.ToJsonString());
-                        p.Add("member_list_privacy", system.MemberListPrivacy.ToJsonString());
-                        p.Add("group_list_privacy", system.GroupListPrivacy.ToJsonString());
-                        p.Add("front_privacy", system.FrontPrivacy.ToJsonString());
-                        p.Add("front_history_privacy", system.FrontHistoryPrivacy.ToJsonString());
-
-                        o.Add("privacy", p);
-                    }
-                    else
-                    {
-                        o.Add("privacy", null);
-                    }
-
-                    break;
-                }
+            o.Add("privacy", p);
+        }
+        else
+        {
+            o.Add("privacy", null);
         }
 
         return o;

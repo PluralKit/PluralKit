@@ -24,7 +24,7 @@ public class GroupControllerV2: PKControllerBase
         if (with_members && !system.MemberListPrivacy.CanAccess(ctx))
             throw Errors.UnauthorizedMemberList;
 
-        if (!system.GroupListPrivacy.CanAccess(User.ContextFor(system)))
+        if (!system.GroupListPrivacy.CanAccess(ContextFor(system)))
             throw Errors.UnauthorizedGroupList;
 
         var groups = _repo.GetSystemGroups(system.Id);

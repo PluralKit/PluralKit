@@ -29,7 +29,7 @@ public class GroupMemberControllerV2: PKControllerBase
         var o = new JArray();
 
         await foreach (var member in members)
-            o.Add(member.ToJson(ctx, v: APIVersion.V2));
+            o.Add(member.ToJson(ctx));
 
         return Ok(o);
     }

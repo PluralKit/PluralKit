@@ -97,6 +97,6 @@ public class DiscordControllerV2: PKControllerBase
             throw Errors.MessageNotFound;
 
         var ctx = msg.System == null ? LookupContext.ByNonOwner : ContextFor(msg.System);
-        return msg.ToJson(ctx, APIVersion.V2);
+        return msg.ToJson(ctx);
     }
 }

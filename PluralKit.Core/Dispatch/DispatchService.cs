@@ -152,7 +152,7 @@ public class DispatchService
         data.Event = DispatchEvent.CREATE_MESSAGE;
         data.SigningToken = system.WebhookToken;
         data.SystemId = system.Uuid.ToString();
-        data.EventData = fullMessage.ToJson(LookupContext.ByOwner, APIVersion.V2);
+        data.EventData = fullMessage.ToJson(LookupContext.ByOwner);
 
         _logger.Debug("Dispatching webhook for message create (system {SystemId})", system.Id);
         await DoPostRequest(system.Id, system.WebhookUrl, data.GetPayloadBody());

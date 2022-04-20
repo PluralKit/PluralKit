@@ -20,7 +20,7 @@ public class FullMessage
     public PKMember? Member;
     public PKSystem? System;
 
-    public JObject ToJson(LookupContext ctx, APIVersion v)
+    public JObject ToJson(LookupContext ctx)
     {
         var o = new JObject();
 
@@ -30,8 +30,8 @@ public class FullMessage
         o.Add("sender", Message.Sender.ToString());
         o.Add("channel", Message.Channel.ToString());
         o.Add("guild", Message.Guild?.ToString());
-        o.Add("system", System?.ToJson(ctx, v));
-        o.Add("member", Member?.ToJson(ctx, v: v));
+        o.Add("system", System?.ToJson(ctx));
+        o.Add("member", Member?.ToJson(ctx));
 
         return o;
     }
