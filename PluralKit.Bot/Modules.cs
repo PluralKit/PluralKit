@@ -44,7 +44,8 @@ public class BotModule: Module
         }).AsSelf().SingleInstance();
         builder.RegisterType<Cluster>().AsSelf().SingleInstance();
         builder.RegisterType<RedisGatewayService>().AsSelf().SingleInstance();
-        builder.Register<IDiscordCache>(c => {
+        builder.Register<IDiscordCache>(c =>
+        {
             var botConfig = c.Resolve<BotConfig>();
 
             if (botConfig.UseRedisCache)

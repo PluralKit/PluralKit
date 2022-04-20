@@ -10,7 +10,7 @@ using Myriad.Types;
 namespace Myriad.Cache;
 
 #pragma warning disable 4014
-public class RedisDiscordCache : IDiscordCache
+public class RedisDiscordCache: IDiscordCache
 {
     private readonly ILogger _logger;
     public RedisDiscordCache(ILogger logger)
@@ -37,7 +37,7 @@ public class RedisDiscordCache : IDiscordCache
         g.Id = guild.Id;
         g.Name = guild.Name;
         g.OwnerId = guild.OwnerId;
-        g.PremiumTier = (int) guild.PremiumTier;
+        g.PremiumTier = (int)guild.PremiumTier;
 
         var tr = db.CreateTransaction();
 
@@ -53,7 +53,7 @@ public class RedisDiscordCache : IDiscordCache
                 Id = role.Id,
                 Name = role.Name,
                 Position = role.Position,
-                Permissions = (ulong) role.Permissions,
+                Permissions = (ulong)role.Permissions,
                 Mentionable = role.Mentionable,
             }));
 
@@ -122,7 +122,7 @@ public class RedisDiscordCache : IDiscordCache
             Id = role.Id,
             Mentionable = role.Mentionable,
             Name = role.Name,
-            Permissions = (ulong) role.Permissions,
+            Permissions = (ulong)role.Permissions,
             Position = role.Position,
         }));
 
@@ -138,7 +138,7 @@ public class RedisDiscordCache : IDiscordCache
             await db.HashSetAsync("channels", channelId.HashWrapper(new CachedChannel()
             {
                 Id = channelId,
-                Type = (int) Channel.ChannelType.Dm,
+                Type = (int)Channel.ChannelType.Dm,
             }));
     }
 
@@ -184,7 +184,7 @@ public class RedisDiscordCache : IDiscordCache
         var roles = await Task.WhenAll(redisRoles.Select(r => TryGetRole((ulong)r.Name)));
 
 #pragma warning disable 8619
-        return guild.FromProtobuf() with { Roles = roles } ;
+        return guild.FromProtobuf() with { Roles = roles };
 #pragma warning restore 8619
     }
 
@@ -193,7 +193,7 @@ public class RedisDiscordCache : IDiscordCache
         var redisChannel = await db.HashGetAsync("channels", channelId);
         if (redisChannel.IsNullOrEmpty)
             return null;
-        
+
         return ((byte[])redisChannel).Unmarshal<CachedChannel>().FromProtobuf();
     }
 
@@ -231,7 +231,7 @@ public class RedisDiscordCache : IDiscordCache
             Id = role.Id,
             Name = role.Name,
             Position = role.Position,
-            Permissions = (PermissionSet) role.Permissions,
+            Permissions = (PermissionSet)role.Permissions,
             Mentionable = role.Mentionable,
         };
     }
@@ -241,7 +241,7 @@ public class RedisDiscordCache : IDiscordCache
         // return _guilds.Values
         //     .Select(g => g.Guild)
         //     .ToAsyncEnumerable();
-        return new Guild[] {}.ToAsyncEnumerable();
+        return new Guild[] { }.ToAsyncEnumerable();
     }
 
     public async Task<IEnumerable<Channel>> GetGuildChannels(ulong guildId)
@@ -251,7 +251,7 @@ public class RedisDiscordCache : IDiscordCache
             throw new ArgumentException("Guild not found", nameof(guildId));
 
 #pragma warning disable 8619
-        return await Task.WhenAll(redisChannels.Select(c => TryGetChannel((ulong) c.Name)));
+        return await Task.WhenAll(redisChannels.Select(c => TryGetChannel((ulong)c.Name)));
 #pragma warning restore 8619
     }
 }
@@ -264,24 +264,25 @@ internal static class CacheProtoExt
             Id = guild.Id,
             Name = guild.Name,
             OwnerId = guild.OwnerId,
-            PremiumTier = (PremiumTier) guild.PremiumTier,
+            PremiumTier = (PremiumTier)guild.PremiumTier,
         };
 
     public static CachedChannel ToProtobuf(this Channel channel)
     {
         var c = new CachedChannel();
         c.Id = channel.Id;
-        c.Type = (int) channel.Type;
+        c.Type = (int)channel.Type;
         if (channel.Position != null)
             c.Position = channel.Position.Value;
         c.Name = channel.Name;
         if (channel.PermissionOverwrites != null)
-            foreach (var overwrite in channel.PermissionOverwrites)      
-                c.PermissionOverwrites.Add(new Overwrite() {
+            foreach (var overwrite in channel.PermissionOverwrites)
+                c.PermissionOverwrites.Add(new Overwrite()
+                {
                     Id = overwrite.Id,
-                    Type = (int) overwrite.Type,
-                    Allow = (ulong) overwrite.Allow,
-                    Deny = (ulong) overwrite.Deny,
+                    Type = (int)overwrite.Type,
+                    Allow = (ulong)overwrite.Allow,
+                    Deny = (ulong)overwrite.Deny,
                 });
         if (channel.GuildId != null)
             c.GuildId = channel.GuildId.Value;
@@ -293,16 +294,16 @@ internal static class CacheProtoExt
         => new Channel()
         {
             Id = channel.Id,
-            Type = (Channel.ChannelType) channel.Type,
+            Type = (Channel.ChannelType)channel.Type,
             Position = channel.Position,
             Name = channel.Name,
             PermissionOverwrites = channel.PermissionOverwrites
                 .Select(x => new Channel.Overwrite()
                 {
                     Id = x.Id,
-                    Type = (Channel.OverwriteType) x.Type,
-                    Allow = (PermissionSet) x.Allow,
-                    Deny = (PermissionSet) x.Deny,
+                    Type = (Channel.OverwriteType)x.Type,
+                    Allow = (PermissionSet)x.Allow,
+                    Deny = (PermissionSet)x.Deny,
                 }).ToArray(),
             GuildId = channel.HasGuildId ? channel.GuildId : null,
             ParentId = channel.HasParentId ? channel.ParentId : null,
