@@ -52,6 +52,7 @@ public static class MiscUtils
 
         // Sometimes Discord just times everything out.
         if (e is TimeoutException) return false;
+        if (e is UnknownDiscordRequestException tde && tde.Message == "Request Timeout") return false;
 
         // HTTP/2 streams are complicated and break sometimes.
         if (e is HttpRequestException) return false;
