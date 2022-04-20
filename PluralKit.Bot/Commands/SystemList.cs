@@ -63,8 +63,8 @@ public class SystemList
 
         // Generate the list
         foreach (var m in members) {
-            var canGetDisplayName = m.DisplayName != null && showDispName;
-            var name = m.Name;
+            var canGetDisplayName = m.DisplayName != null && showDispName && m.NamePrivacy.CanAccess(ctx.LookupContextFor(m.System));
+            var name = m.NameFor(ctx);
             name = canGetDisplayName ? $"`{m.DisplayName} ({name})`" : $"`{name}`";
             name = showId ? $"[`{m.Hid}`] {name}" : $"{name}";
             fullText.Append($"\n{name}");
