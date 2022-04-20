@@ -1,10 +1,10 @@
 #!/bin/sh
 
 notify () {
-    curl http://172.17.0.1:8081/notify -d "$1"
+    curl $MGMT/notify -d "$1"
 }
 
-curl http://172.17.0.1:8081/config > pluralkit.conf
+curl $MGMT/config > pluralkit.conf
 
 notify "Cluster $NOMAD_ALLOC_INDEX starting"
 
