@@ -4,6 +4,8 @@ using Myriad.Types;
 using PluralKit.Bot.Utils;
 using PluralKit.Core;
 
+using System.Text.RegularExpressions;
+
 namespace PluralKit.Bot;
 
 public static class ContextEntityArgumentsExt
@@ -79,7 +81,10 @@ public static class ContextEntityArgumentsExt
                 return memberByDisplayName;
         }
 
-        // Finally (or if by-HID lookup is specified), try member HID parsing:
+        // Finally (or if by-HID lookup is specified), check if input is a valid HID and then try member HID parsing:
+
+        if (input.Length != 5 || !Regex.IsMatch(input, @"^[a-zA-Z]+$"))
+            return null;
 
         // For posterity:
         // There was a bug that made `SELECT * FROM MEMBERS WHERE HID = $1` hang forever BUT 
