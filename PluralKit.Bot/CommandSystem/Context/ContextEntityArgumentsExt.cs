@@ -83,8 +83,8 @@ public static class ContextEntityArgumentsExt
 
         // Finally (or if by-HID lookup is specified), check if input is a valid HID and then try member HID parsing:
 
-        if (input.Length != 5 || !Regex.IsMatch(input, @"^[a-zA-Z]+$"))
-            return null;
+        if (!Regex.IsMatch(input, @"^[a-zA-Z]{5}$"))
+            ctx.Reply("no<3");
 
         // For posterity:
         // There was a bug that made `SELECT * FROM MEMBERS WHERE HID = $1` hang forever BUT 
