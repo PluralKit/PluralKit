@@ -111,7 +111,7 @@ public class MemberPatch: PatchObject
 
         if (isImport)
         {
-            // legacy: used in old export files and APIv1
+            // legacy: used in old export files
             if (o.ContainsKey("prefix") || o.ContainsKey("suffix") && !o.ContainsKey("proxy_tags"))
                 patch.ProxyTags = new[] { new ProxyTag(o.Value<string>("prefix"), o.Value<string>("suffix")) };
 
@@ -125,7 +125,6 @@ public class MemberPatch: PatchObject
                 patch.BirthdayPrivacy = patch.ParsePrivacy(o, "birthday_privacy");
             if (o.ContainsKey("pronoun_privacy"))
                 patch.PronounPrivacy = patch.ParsePrivacy(o, "pronoun_privacy");
-            // if (o.ContainsKey("color_privacy")) member.ColorPrivacy = o.ParsePrivacy("member");
             if (o.ContainsKey("metadata_privacy"))
                 patch.MetadataPrivacy = patch.ParsePrivacy(o, "metadata_privacy");
         }
@@ -137,7 +136,7 @@ public class MemberPatch: PatchObject
                 .Where(p => p.Valid)
                 .ToArray();
 
-        if (o.ContainsKey("privacy") && o["privacy"].Type != JTokenType.Null)
+        if (o.ContainsKey("privacy") && o["privacy"].Type == JTokenType.Object)
         {
             var privacy = o.Value<JObject>("privacy");
 
