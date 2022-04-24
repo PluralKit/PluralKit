@@ -26,7 +26,7 @@ public class DataFileService
         await using var conn = await _db.Obtain();
 
         var o = new JObject();
-        o.Add("version", 1);
+        o.Add("version", 2);
 
         o.Merge(system.ToJson(LookupContext.ByOwner));
 
