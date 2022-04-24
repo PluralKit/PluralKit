@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 using Myriad.Extensions;
 using Myriad.Types;
 
@@ -79,7 +81,10 @@ public static class ContextEntityArgumentsExt
                 return memberByDisplayName;
         }
 
-        // Finally (or if by-HID lookup is specified), try member HID parsing:
+        // Finally (or if by-HID lookup is specified), check if input is a valid HID and then try member HID parsing:
+
+        if (!Regex.IsMatch(input, @"^[a-zA-Z]{5}$"))
+            return null;
 
         // For posterity:
         // There was a bug that made `SELECT * FROM MEMBERS WHERE HID = $1` hang forever BUT 
