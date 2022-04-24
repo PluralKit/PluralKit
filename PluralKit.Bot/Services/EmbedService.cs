@@ -351,7 +351,7 @@ public class EmbedService
 
         // Calculate string displayed under "Sent by"
         string userStr;
-        if (memberInfo != null && memberInfo.Nick != null)
+        if (showContent && memberInfo != null && memberInfo.Nick != null)
             userStr = $"**Username:** {userInfo.NameAndMention()}\n**Nickname:** {memberInfo.Nick}";
         else if (userInfo != null) userStr = userInfo.NameAndMention();
         else userStr = $"*(deleted user {msg.Message.Sender})*";
