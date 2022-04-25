@@ -316,7 +316,7 @@
 {:else if settings.accessibility.expandedcards}
     {#each slicedList as member, index (member.id)}
     {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
-    <Card>
+    <Card class="mb-3">
         <CardHeader>
             <CardsHeader bind:item={member}>
                 <FaUserCircle slot="icon" />
@@ -327,7 +327,7 @@
         </CardBody>
     </Card>
     {:else}
-    <Card>
+    <Card class="mb-3">
         <CardHeader>
             <CardsHeader bind:item={member}>
                 <FaLock slot="icon" />
@@ -340,6 +340,7 @@
     {/if}
     {/each}
 {:else}
+    <div class="my-3">
     {#each slicedList as member, index (member.id)}
     {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
     <Card>
@@ -359,6 +360,7 @@
     </Card>
     {/if}
     {/each}
+    </div>
 {/if}
 <ListPagination bind:currentPage bind:pageAmount />
 {/if}
