@@ -48,7 +48,7 @@ import DiscordLogin from "./pages/DiscordLogin.svelte";
   onMount(() => {
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
-    if (settings && settings.accessibility.opendyslexic === true) {
+    if (settings && settings.accessibility && settings.accessibility.opendyslexic === true) {
       document.getElementById("app").classList.add("dyslexic");
     }
   });
