@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Link } from 'svelte-navigator';
     import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button, Tooltip, Label } from 'sveltestrap';
     import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte'
     import { onMount } from 'svelte';
@@ -18,6 +19,7 @@
 
     export let list: Member[] = [];
     export let groups: Group[] = [];
+    export let isMainDash = true;
 
     $: grouplist = groups && groups.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -25,7 +27,9 @@
     let listLoading = true;
     let err: string;
 
-    let itemsPerPageValue = "25";
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
+
+    let itemsPerPageValue = settings && settings.accessibility && settings.accessibility.expandedcards ? "10" : "25";
     $: itemsPerPage = parseInt(itemsPerPageValue);
 
     let searchBy = "name";
@@ -289,6 +293,7 @@
 {#if !isPublic}
 <NewMember on:create={addMemberToList} />
 {/if}
+{#if settings && settings.accessibility && !(settings.accessibility.pagelinks || settings.accessibility.expandedcards)}
 <Accordion class="my-3" stayOpen>
     {#each slicedList as member, index (member.id)}
             {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
@@ -308,5 +313,52 @@
             {/if}
     {/each}
 </Accordion>
+{:else if settings.accessibility.expandedcards}
+    {#each slicedList as member, index (member.id)}
+    {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
+    <Card>
+        <CardHeader>
+            <CardsHeader bind:item={member}>
+                <FaUserCircle slot="icon" />
+            </CardsHeader>
+        </CardHeader>
+        <CardBody>
+            <Body on:deletion={updateDelete} on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
+        </CardBody>
+    </Card>
+    {:else}
+    <Card>
+        <CardHeader>
+            <CardsHeader bind:item={member}>
+                <FaLock slot="icon" />
+            </CardsHeader>
+        </CardHeader>
+        <CardBody>
+            <Body on:deletion={updateDelete} on:update={updateList} on:updateGroups={updateGroups} bind:isPublic bind:groups bind:member />
+        </CardBody>
+    </Card>
+    {/if}
+    {/each}
+{:else}
+    {#each slicedList as member, index (member.id)}
+    {#if (!isPublic && member.privacy.visibility === "public") || isPublic}
+    <Card>
+        <Link class="accordion-button collapsed" style="text-decoration: none;" to={isMainDash ? `/dash/m/${member.id}` : `/profile/m/${member.id}`}>
+            <CardsHeader bind:item={member}>
+                <FaUserCircle slot="icon" />
+            </CardsHeader>
+        </Link>
+    </Card>
+    {:else}
+    <Card>
+        <Link class="accordion-button collapsed" style="text-decoration: none;" to={isMainDash ? `/dash/m/${member.id}` : `/profile/m/${member.id}`}>
+            <CardsHeader bind:item={member}>
+                <FaLock slot="icon" />
+            </CardsHeader>
+        </Link>
+    </Card>
+    {/if}
+    {/each}
+{/if}
 <ListPagination bind:currentPage bind:pageAmount />
 {/if}
