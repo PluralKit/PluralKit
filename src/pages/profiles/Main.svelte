@@ -71,10 +71,10 @@
                         <SystemMain bind:user isPublic={true} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <MemberList bind:list={members} isPublic={true} isMainDash={false} />
+                        <MemberList bind:list={members} isPublic={true} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <GroupList bind:members={members} bind:list={groups} isPublic={true} isMainDash={false}/>
+                    <GroupList bind:members={members} bind:list={groups} isPublic={true}/>
             </TabPane> 
             </TabContent>
             {/if}
