@@ -293,7 +293,7 @@
 {#if !isPublic}
 <NewMember on:create={addMemberToList} />
 {/if}
-{#if settings && settings.accessibility && !(settings.accessibility.pagelinks || settings.accessibility.expandedcards)}
+{#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
 <Accordion class="my-3" stayOpen>
     {#each slicedList as member, index (member.id)}
             {#if (!isPublic && member.privacy.visibility === "public") || isPublic}

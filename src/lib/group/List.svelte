@@ -290,7 +290,7 @@
 {#if !isPublic}
 <NewGroup on:create={addGroupToList} />
 {/if}
-{#if settings && settings.accessibility && !(settings.accessibility.pagelinks || settings.accessibility.expandedcards)}
+{#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
 <Accordion class="my-3" stayOpen>
     {#each slicedList as group, index (group.id)}
         {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
