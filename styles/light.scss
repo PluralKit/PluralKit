@@ -6,4 +6,12 @@
     .description a {
         color: var(--bs-primary) !important;
     }
+
+    > * {
+        .nav-item {
+            .btn.btn-transparent {
+                color: rgba(0,0,0,.55);
+            }
+        }
+    }
 }

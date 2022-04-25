@@ -12,4 +12,12 @@
             color: #159bd4 !important;
         }
     }
+
+    > * {
+        .nav-item {
+            .btn.btn-transparent {
+                color: rgba(250,250,250,.55);
+            }
+        }
+    }
 }
