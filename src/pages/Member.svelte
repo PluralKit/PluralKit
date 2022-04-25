@@ -31,7 +31,7 @@
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
     let currentPage = 1;
-    let itemsPerPage = 10;
+    let itemsPerPage = settings && settings.accessibility && settings.accessibility.expandedcards ? 5 : 10;
 
     $: indexOfLastItem = currentPage * itemsPerPage;
     $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -154,6 +154,7 @@
                 </CardHeader>
             </Card>
             <ListPagination bind:currentPage bind:pageAmount />
+            {#if settings && settings.accessibility && !(settings.accessibility.pagelinks || settings.accessibility.expandedcards)}
             <Accordion class="mb-3" stayOpen>
             {#each slicedGroups as group, index (group.id)}
             {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
@@ -173,6 +174,55 @@
                 {/if}
             {/each}
             </Accordion>
+            {:else if settings.accessibility.expandedcards}
+            {#each slicedGroups as group, index (group.id)}
+                {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
+                <Card class="mb-3">
+                    <CardHeader>
+                        <CardsHeader bind:item={group} >
+                            <FaUsers slot="icon" />
+                        </CardsHeader>
+                    </CardHeader>
+                    <CardBody>
+                        <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
+                    </CardBody>
+                </Card>
+                {:else}
+                <Card class="mb-3">
+                    <CardHeader>
+                        <CardsHeader bind:item={group} >
+                            <FaLock slot="icon" />
+                        </CardsHeader>
+                    </CardHeader>
+                    <CardBody>
+                        <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
+                    </CardBody>
+                </Card>
+                {/if}
+            {/each}
+            {:else}
+            <div class="my-3">
+            {#each slicedGroups as group, index (group.id)}
+                {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
+                <Card>
+                    <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/g/${group.id}` : `/profile/g/${group.id}`}>
+                        <CardsHeader bind:item={group}>
+                            <FaUsers slot="icon" />
+                        </CardsHeader>
+                    </Link>
+                </Card>
+                {:else}
+                <Card>
+                    <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/g/${group.id}` : `/profile/g/${group.id}`}>
+                        <CardsHeader bind:item={group}>
+                            <FaUsers slot="icon" />
+                        </CardsHeader>
+                    </Link>
+                </Card>
+                {/if}
+            {/each}
+            </div>
+            {/if}
             <ListPagination bind:currentPage bind:pageAmount />
             {/if}
             {/if}
