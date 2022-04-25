@@ -14,7 +14,9 @@
             twemoji: false
         },
         accessibility: {
-            opendyslexic: false
+            opendyslexic: false,
+            pagelinks: false,
+            expandedcards: false
         }
     };
 
@@ -44,7 +46,7 @@
                     <p>These settings are saved in your localstorage. This means that you have to reapply these every time you visit in a different browser, or clear your browser's cookies.</p>
                     <h4>Appearance</h4>
                     <hr/>
-                    <Row>
+                    <Row class="mb-3">
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-bannertop">Show banners in the background?</span> <Toggle hideLabel style="display: inline" label="Remove banner from background" toggled={settings.appearance.banner_top} on:toggle={() => {settings.appearance.banner_top = !settings.appearance.banner_top; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-bannertop" placement="bottom">If enabled, shows banners from the top of the system, member and group pages.</Tooltip>
@@ -68,6 +70,14 @@
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-opendyslexic">Use the opendyslexic font?</span> <Toggle hideLabel style="display: inline" label="Use the opendyslexic font" toggled={settings.accessibility.opendyslexic} on:toggle={() => {settings.accessibility.opendyslexic = !settings.accessibility.opendyslexic; localStorage.setItem("pk-settings", JSON.stringify(settings)); toggleOpenDyslexic();}}/>
                             <Tooltip target="s-opendyslexic" placement="bottom">If enabled, uses the opendyslexic font as it's main font.</Tooltip>
+                        </Col>
+                        <Col xs={12} lg={4} class="mb-2">
+                            <span id="s-expandedcards">Expand cards by default?</span> <Toggle hideLabel style="display: inline" label="Expand cards by default" toggled={settings.accessibility.expandedcards} on:toggle={() => {settings.accessibility.expandedcards = !settings.accessibility.expandedcards; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <Tooltip target="s-expandedcards" placement="bottom">If enabled, lists will be expanded by default (overrides page links).</Tooltip>
+                        </Col>
+                        <Col xs={12} lg={4} class="mb-2">
+                            <span id="s-pagelinks">Use page links instead of cards?</span> <Toggle hideLabel style="display: inline" label="Use page links" toggled={settings.accessibility.pagelinks} on:toggle={() => {settings.accessibility.pagelinks= !settings.accessibility.pagelinks; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <Tooltip target="s-pagelinks" placement="bottom">If enabled, the list items will not expand, but instead link to the corresponding page.</Tooltip>
                         </Col>
                     </Row>
                 </CardBody>
