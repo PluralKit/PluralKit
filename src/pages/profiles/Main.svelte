@@ -10,8 +10,6 @@
     import { System } from '../../api/types';
     import api from '../../api';
 
-    let isPublic = true;
-
     let user: System = {};
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
@@ -70,13 +68,13 @@
             <Alert color="info">You are currently <b>viewing</b> a system.</Alert>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
-                        <SystemMain bind:user bind:isPublic />
+                        <SystemMain bind:user isPublic={true} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <MemberList bind:list={members} bind:isPublic isMainDash={!isPublic} />
+                        <MemberList bind:list={members} isPublic={true} isMainDash={false} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <GroupList bind:members={members} bind:list={groups} bind:isPublic/>
+                    <GroupList bind:members={members} bind:list={groups} isPublic={true} isMainDash={false}/>
             </TabPane> 
             </TabContent>
             {/if}
