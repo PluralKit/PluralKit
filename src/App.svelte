@@ -10,6 +10,7 @@
   import Status from './pages/status.svelte';
   import Member from './pages/Member.svelte';
   import Group from './pages/Group.svelte';
+  import PageNotFound from './pages/PageNotFound.svelte';
   import { Alert } from 'sveltestrap';
 import DiscordLogin from "./pages/DiscordLogin.svelte";
   import { onMount } from 'svelte';
@@ -81,5 +82,6 @@ import DiscordLogin from "./pages/DiscordLogin.svelte";
       <Alert color="danger">Please provide a group ID in the URL.</Alert>
     </Route>
     <Route path="status"><Status /></Route>
+    <Route component={PageNotFound}/>
   <Footer />
 </Router>
