@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Link } from 'svelte-navigator';
     import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Label, Row, Col, Spinner, Button, Tooltip } from 'sveltestrap';
     import FaUsers from 'svelte-icons/fa/FaUsers.svelte'
     import { onMount } from 'svelte';
@@ -25,7 +26,9 @@
     let listLoading = true;
     let err: string;
 
-    let itemsPerPageValue = "25";
+    let settings = JSON.parse(localStorage.getItem("pk-settings"));
+
+    let itemsPerPageValue = settings && settings.accessibility && settings.accessibility.expandedcards ? "10" : "25";
     $: itemsPerPage = parseInt(itemsPerPageValue);
 
     let searchBy = "name";
@@ -287,6 +290,7 @@
 {#if !isPublic}
 <NewGroup on:create={addGroupToList} />
 {/if}
+{#if settings && settings.accessibility && !(settings.accessibility.pagelinks || settings.accessibility.expandedcards)}
 <Accordion class="my-3" stayOpen>
     {#each slicedList as group, index (group.id)}
         {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
@@ -306,5 +310,52 @@
         {/if}
     {/each}
 </Accordion>
+{:else if settings.accessibility.expandedcards}
+    {#each slicedList as group, index (group.id)}
+    {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
+    <Card>
+        <CardHeader>
+            <CardsHeader item={group}>
+                <FaUsers slot="icon" />
+            </CardsHeader>
+        </CardHeader>
+        <CardBody>
+            <Body on:deletion={updateDelete} on:update={updateList} on:updateMembers={updateList} isPublic={isPublic} bind:members bind:group />
+        </CardBody>
+    </Card>
+    {:else}
+    <Card>
+        <CardHeader>
+            <CardsHeader item={group}>
+                <FaLock slot="icon" />
+            </CardsHeader>
+        </CardHeader>
+        <CardBody>
+            <Body on:deletion={updateDelete} on:update={updateList} on:updateMembers={updateList} isPublic={isPublic} bind:group bind:members />
+        </CardBody>
+    </Card>
+    {/if}
+    {/each}
+{:else}
+    {#each slicedList as group, index (group.id)}
+    {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
+    <Card>
+        <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/g/${group.id}` : `/profile/g/${group.id}`}>
+            <CardsHeader bind:item={group}>
+                <FaUsers slot="icon" />
+            </CardsHeader>
+        </Link>
+    </Card>
+    {:else}
+    <Card>
+        <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/g/${group.id}` : `/profile/g/${group.id}`}>
+            <CardsHeader bind:item={group}>
+                <FaLock slot="icon" />
+            </CardsHeader>
+        </Link>
+    </Card>
+    {/if}
+    {/each}
+{/if}
 <ListPagination bind:currentPage bind:pageAmount />
 {/if}
