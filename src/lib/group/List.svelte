@@ -175,7 +175,7 @@
 
   function addGroupToList(event: any) {
       let group = event.detail;
-      group.members = members;
+      group.members = [];
       list.push(group);
       list = list;
   }
