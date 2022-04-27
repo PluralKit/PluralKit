@@ -42,7 +42,7 @@
         loading = true;
         try {
             let res = await api().groups(group.id).patch({data});
-            group = res;
+            group = {...group, ...res};
             update();
             loading = false;
             togglePrivacyModal();
