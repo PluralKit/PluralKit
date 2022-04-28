@@ -174,7 +174,9 @@
   }
 
   function addGroupToList(event: any) {
-      let group = event.detail;
+      // reference types my beloathed
+      // the stringify/parse sequence is here so that a previous added group doesn't get overwritten
+      let group = JSON.parse(JSON.stringify(event.detail));
       group.members = [];
       list.push(group);
       list = list;
