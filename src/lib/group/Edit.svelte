@@ -124,7 +124,7 @@
      </ModalHeader>
          <ModalBody>
              {#if deleteErr}<Alert color="danger">{deleteErr}</Alert>{/if}
-             <Label>If you're sure you want to delete this member, type out the member ID (<code>{group.id}</code>) below.</Label>
+             <Label>If you're sure you want to delete this group, type out the group ID (<code>{group.id}</code>) below.</Label>
              <Input class="mb-3" bind:value={deleteInput} maxlength={7} placeholder={group.id}></Input>
             {#if !loading}<Button style="flex 0" color="danger" on:click={submitDelete}>Delete</Button> <Button style="flex: 0" color="secondary" on:click={toggleDeleteModal}>Back</Button>
             {:else}<Button style="flex 0" color="danger" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>
