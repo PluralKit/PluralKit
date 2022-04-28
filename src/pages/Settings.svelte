@@ -57,7 +57,7 @@
                         </Col>
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-twemoji">Use twemoji?</span> <Toggle hideLabel style="display: inline" label="Convert to twemoji" toggled={settings.appearance.twemoji} on:toggle={() => {settings.appearance.twemoji = !settings.appearance.twemoji; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
-                            <Tooltip target="s-bannerbottom" placement="bottom">If enabled, converts all emojis into twemoji.</Tooltip>
+                            <Tooltip target="s-twemoji" placement="bottom">If enabled, converts all emojis into twemoji.</Tooltip>
                         </Col>
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-colorbackground">Colored background?</span> <Toggle hideLabel style="display: inline" label="Member color as background" toggled={settings.appearance.color_background} on:toggle={() => {settings.appearance.color_background = !settings.appearance.color_background; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
