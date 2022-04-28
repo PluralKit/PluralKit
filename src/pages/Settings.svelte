@@ -67,10 +67,10 @@
                     <h4>Accessibility</h4>
                     <hr/>
                     <Row>
-                        <Col xs={12} lg={4} class="mb-2">
+                        <!-- <Col xs={12} lg={4} class="mb-2">
                             <span id="s-opendyslexic">Use the opendyslexic font?</span> <Toggle hideLabel style="display: inline" label="Use the opendyslexic font" toggled={settings.accessibility.opendyslexic} on:toggle={() => {settings.accessibility.opendyslexic = !settings.accessibility.opendyslexic; localStorage.setItem("pk-settings", JSON.stringify(settings)); toggleOpenDyslexic();}}/>
                             <Tooltip target="s-opendyslexic" placement="bottom">If enabled, uses the opendyslexic font as it's main font.</Tooltip>
-                        </Col>
+                        </Col> -->
                         <Col xs={12} lg={4} class="mb-2">
                             <span id="s-expandedcards">Expand cards by default?</span> <Toggle hideLabel style="display: inline" label="Expand cards by default" toggled={settings.accessibility.expandedcards} on:toggle={() => {settings.accessibility.expandedcards = !settings.accessibility.expandedcards; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-expandedcards" placement="bottom">If enabled, lists will be expanded by default (overrides page links).</Tooltip>
