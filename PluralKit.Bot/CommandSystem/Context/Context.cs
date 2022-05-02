@@ -44,6 +44,7 @@ public class Context
         _metrics = provider.Resolve<IMetrics>();
         _provider = provider;
         _commandMessageService = provider.Resolve<CommandMessageService>();
+        CommandPrefix = message.Content?.Substring(0, commandParseOffset);
         Parameters = new Parameters(message.Content?.Substring(commandParseOffset));
         Rest = provider.Resolve<DiscordApiClient>();
         Cluster = provider.Resolve<Cluster>();
@@ -70,6 +71,7 @@ public class Context
     public readonly SystemConfig Config;
     public DateTimeZone Zone => Config?.Zone ?? DateTimeZone.Utc;
 
+    public readonly string CommandPrefix;
     public readonly Parameters Parameters;
 
     internal readonly IDatabase Database;
