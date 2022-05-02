@@ -123,7 +123,7 @@ public class SystemEdit
     {
         var isOwnSystem = ctx.System?.Id == target.Id;
 
-        if (!ctx.HasNext())
+        if (!isOwnSystem || !ctx.HasNext(false))
         {
             if (target.Color == null)
                 await ctx.Reply(
