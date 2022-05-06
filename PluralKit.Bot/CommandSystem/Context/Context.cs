@@ -77,7 +77,7 @@ public class Context
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;
 
-    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
+    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, bool referenceCommand = false)
     {
         var botPerms = await BotPermissions;
 
@@ -92,6 +92,7 @@ public class Context
         {
             Content = text,
             Embeds = embed != null ? new[] { embed } : null,
+            MessageReference = referenceCommand ? new Message.Reference(Message.GuildId, Message.ChannelId, Message.Id) : null,
             // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
             AllowedMentions = mentions ?? new AllowedMentions()
         });
@@ -121,6 +122,10 @@ public class Context
         {
             await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef?.Usage}");
         }
+        catch (PKCancelError e)
+        {
+            await Reply($"{Emojis.Error} {e.Message}", null, null, true);
+        }
         catch (PKError e)
         {
             await Reply($"{Emojis.Error} {e.Message}");
@@ -128,7 +133,7 @@ public class Context
         catch (TimeoutException)
         {
             // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
-            await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
+            await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?", null, null, true);
         }
 
         if (deprecated && commandDef != null)

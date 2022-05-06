@@ -161,7 +161,7 @@ public static class ContextUtils
                         }
                         catch (TimeoutException)
                         {
-                            await ctx.Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
+                            await ctx.Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?", null, null, true);
                             continue;
                         }
 

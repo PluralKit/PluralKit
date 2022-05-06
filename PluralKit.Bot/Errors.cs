@@ -25,6 +25,11 @@ public class PKSyntaxError: PKError
     public PKSyntaxError(string message) : base(message) { }
 }
 
+public class PKCancelError : PKError
+{
+    public PKCancelError(string message) : base(message) { }
+}
+
 public static class Errors
 {
     // TODO: is returning constructed errors and throwing them at call site a good idea, or should these be methods that insta-throw instead?
@@ -51,7 +56,7 @@ public static class Errors
     public static PKError ProxyMultipleText =>
         new PKSyntaxError("Example proxy message must contain the string 'text' exactly once.");
 
-    public static PKError MemberDeleteCancelled => new($"Member deletion cancelled. Stay safe! {Emojis.ThumbsUp}");
+    public static PKCancelError MemberDeleteCancelled => new($"Member deletion cancelled. Stay safe! {Emojis.ThumbsUp}");
 
     public static PKError AvatarInvalid =>
         new("Could not read image file - perhaps it's corrupted or the wrong format. Try a different image.");
@@ -64,17 +69,17 @@ public static class Errors
     public static PKError UnlinkingLastAccount => new(
         "Since this is the only account linked to this system, you cannot unlink it (as that would leave your system account-less). If you would like to delete your system, use `pk;system delete`.");
 
-    public static PKError MemberLinkCancelled => new("Member link cancelled.");
-    public static PKError MemberUnlinkCancelled => new("Member unlink cancelled.");
+    public static PKCancelError MemberLinkCancelled => new("Member link cancelled.");
+    public static PKCancelError MemberUnlinkCancelled => new("Member unlink cancelled.");
 
     public static PKError DuplicateSwitchMembers => new("Duplicate members in member list.");
     public static PKError SwitchMemberNotInSystem => new("One or more switch members aren't in your own system.");
     public static PKError SwitchTimeInFuture => new("Can't move switch to a time in the future.");
     public static PKError NoRegisteredSwitches => new("There are no registered switches for this system.");
-    public static PKError SwitchMoveCancelled => new("Switch move cancelled.");
-    public static PKError SwitchEditCancelled => new("Switch edit cancelled.");
-    public static PKError SwitchDeleteCancelled => new("Switch deletion cancelled.");
-    public static PKError TimezoneChangeCancelled => new("Time zone change cancelled.");
+    public static PKCancelError SwitchMoveCancelled => new("Switch move cancelled.");
+    public static PKCancelError SwitchEditCancelled => new("Switch edit cancelled.");
+    public static PKCancelError SwitchDeleteCancelled => new("Switch deletion cancelled.");
+    public static PKCancelError TimezoneChangeCancelled => new("Time zone change cancelled.");
 
     public static PKError NoImportFilePassed =>
         new(
@@ -84,7 +89,7 @@ public static class Errors
         new(
             "Imported data file invalid. Make sure this is a .json file directly exported from PluralKit or Tupperbox.");
 
-    public static PKError ImportCancelled => new("Import cancelled.");
+    public static PKCancelError ImportCancelled => new("Import cancelled.");
 
     public static PKError FrontPercentTimeInFuture =>
         new("Cannot get the front percent between now and a time in the future.");
@@ -176,7 +181,7 @@ public static class Errors
     public static PKError EmptyProxyTags(PKMember member, Context ctx) => new(
         $"The example proxy `text` is equivalent to having no proxy tags at all, since there are no symbols or brackets on either end. If you'd like to clear your proxy tags, use `pk;member {member.Reference(ctx)} proxy clear`.");
 
-    public static PKError GenericCancelled() => new("Operation cancelled.");
+    public static PKCancelError GenericCancelled() => new("Operation cancelled.");
 
     public static PKError AttachmentTooLarge(int mb) => new(
         $"PluralKit cannot proxy attachments over {mb} megabytes in this server (as webhooks aren't considered as having Discord Nitro) :(");
