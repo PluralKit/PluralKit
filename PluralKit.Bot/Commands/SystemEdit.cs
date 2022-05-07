@@ -528,7 +528,9 @@ public class SystemEdit
         ctx.CheckSystem().CheckOwnSystem(target);
 
         await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.Hid}`).\n**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs - if you don't want this to happen, use `pk;s delete -no-export` instead.");
+            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.Hid}`).\n"
+                +$"**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs."
+                +" If you don't want this to happen, use `pk;s delete -no-export` instead.");
         if (!await ctx.ConfirmWithReply(target.Hid))
             throw new PKError(
                 $"System deletion cancelled. Note that you must reply with your system ID (`{target.Hid}`) *verbatim*.");
@@ -566,7 +568,8 @@ public class SystemEdit
                 throw new PKError(
                     $"I couldn't send you a DM with your system's data before deleting your system. Either make sure your DMs are open, or use `pk;s delete -no-export` to delete your system without exporting first.");
             }
-        } else
+        }
+        else
         {
             await ctx.Reply($"{Emojis.Success} System deleted.");
         }
