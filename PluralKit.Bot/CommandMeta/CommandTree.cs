@@ -207,9 +207,9 @@ public partial class CommandTree
     {
         if (ctx.Match("name", "rename", "changename"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
-        else if (ctx.Match("tag"))
+        else if (ctx.Match("tag", "t"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
-        else if (ctx.Match("servertag"))
+        else if (ctx.Match("servertag", "st"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerTag, m => m.ServerTag(ctx, target));
         else if (ctx.Match("description", "desc", "bio"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDesc, m => m.Description(ctx, target));
