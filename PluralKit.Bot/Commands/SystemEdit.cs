@@ -1,7 +1,13 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 using Myriad.Builders;
+using Myriad.Rest.Exceptions;
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
 using Myriad.Types;
+
+using Newtonsoft.Json;
 
 using PluralKit.Core;
 
@@ -10,10 +16,14 @@ namespace PluralKit.Bot;
 public class SystemEdit
 {
     private readonly HttpClient _client;
+    private readonly DataFileService _dataFiles;
+    private readonly PrivateChannelService _dmCache;
 
-    public SystemEdit(HttpClient client)
+    public SystemEdit(DataFileService dataFiles, HttpClient client, PrivateChannelService dmCache)
     {
+        _dataFiles = dataFiles;
         _client = client;
+        _dmCache = dmCache;
     }
 
     public async Task Name(Context ctx, PKSystem target)
@@ -518,14 +528,52 @@ public class SystemEdit
         ctx.CheckSystem().CheckOwnSystem(target);
 
         await ctx.Reply(
-            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.Hid}`).\n**Note: this action is permanent.**");
+            $"{Emojis.Warn} Are you sure you want to delete your system? If so, reply to this message with your system's ID (`{target.Hid}`).\n**Note: this action is permanent,** but you will get a copy of your system's data that can be re-imported into PluralKit at a later date sent to you in DMs - if you don't want this to happen, use `pk;s delete -no-export` instead.");
         if (!await ctx.ConfirmWithReply(target.Hid))
             throw new PKError(
                 $"System deletion cancelled. Note that you must reply with your system ID (`{target.Hid}`) *verbatim*.");
 
-        await ctx.Repository.DeleteSystem(target.Id);
+        // If the user confirms the deletion, export their system and send them the export file before actually
+        // deleting their system, unless they specifically tell us not to do an export.
 
-        await ctx.Reply($"{Emojis.Success} System deleted.");
+        var noExport = ctx.MatchFlag("ne", "no-export");
+        if (!noExport)
+        {
+            var json = await ctx.BusyIndicator(async () =>
+            {
+                // Make the actual data file
+                var data = await _dataFiles.ExportSystem(ctx.System);
+                return JsonConvert.SerializeObject(data, Formatting.None);
+            });
+
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+
+            try
+            {
+                var dm = await _dmCache.GetOrCreateDmChannel(ctx.Author.Id);
+                var msg = await ctx.Rest.CreateMessage(dm,
+                    new MessageRequest { Content = $"{Emojis.Success} System deleted. If you want to set up your PluralKit system again, you can import the file below with `pk;import`." },
+                    new[] { new MultipartFile("system.json", stream, null) });
+                await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
+
+                // If the original message wasn't posted in DMs, send a public reminder
+                if (ctx.Channel.Type != Channel.ChannelType.Dm)
+                    await ctx.Reply($"{Emojis.Success} System deleted. Check your DMs for a copy of your system's data!");
+            }
+            catch (ForbiddenException)
+            {
+                // If user has DMs closed, tell 'em to open them
+                throw new PKError(
+                    $"I couldn't send you a DM with your system's data before deleting your system. Either make sure your DMs are open, or use `pk;s delete -no-export` to delete your system without exporting first.");
+            }
+        } else
+        {
+            await ctx.Reply($"{Emojis.Success} System deleted.");
+        }
+
+        // Now that we've sent the export data (or been told not to), we can safely delete the system
+
+        await ctx.Repository.DeleteSystem(target.Id);
     }
 
     public async Task SystemProxy(Context ctx)
