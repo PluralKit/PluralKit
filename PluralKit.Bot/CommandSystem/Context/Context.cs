@@ -77,7 +77,7 @@ public class Context
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;
 
-    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, bool referenceCommand = false)
+    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null, Message.Reference replyTo = null)
     {
         var botPerms = await BotPermissions;
 
@@ -92,7 +92,7 @@ public class Context
         {
             Content = text,
             Embeds = embed != null ? new[] { embed } : null,
-            MessageReference = referenceCommand ? new Message.Reference(Message.GuildId, Message.ChannelId, Message.Id) : null,
+            MessageReference = replyTo != null ? replyTo : null,
             // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
             AllowedMentions = mentions ?? new AllowedMentions()
         });
@@ -124,7 +124,7 @@ public class Context
         }
         catch (PKCancelError e)
         {
-            await Reply($"{Emojis.Error} {e.Message}", null, null, true);
+            await Reply($"{Emojis.Error} {e.Message}", replyTo: new Message.Reference(Message.GuildId, Message.ChannelId, Message.Id));
         }
         catch (PKError e)
         {
@@ -133,7 +133,7 @@ public class Context
         catch (TimeoutException)
         {
             // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
-            await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?", null, null, true);
+            await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?", replyTo: new Message.Reference(Message.GuildId, Message.ChannelId, Message.Id));
         }
 
         if (deprecated && commandDef != null)

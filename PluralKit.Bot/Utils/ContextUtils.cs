@@ -120,7 +120,8 @@ public static class ContextUtils
                 while (true)
                 {
                     var reaction = await ctx.AwaitReaction(msg, ctx.Author, timeout: Duration.FromMinutes(5));
-
+                    Message? promptMessage = null;
+                    
                     // Increment/decrement page counter based on which reaction was clicked
                     if (reaction.Emoji.Name == "\u23EA") currentPage = 0; // <<
                     else if (reaction.Emoji.Name == "\u2B05") currentPage = (currentPage - 1) % pageCount; // <
@@ -138,11 +139,10 @@ public static class ContextUtils
                     else if (reaction.Emoji.Name == "\u0038\uFE0F\u20E3" && pageCount >= 7) currentPage = 7;
                     else if (reaction.Emoji.Name == "\u0039\uFE0F\u20E3" && pageCount >= 8) currentPage = 8;
                     else if (reaction.Emoji.Name == "\U0001f51f" && pageCount >= 9) currentPage = 9;
-
                     else if (reaction.Emoji.Name == "\uD83D\uDD22")
                         try
                         {
-                            await ctx.Reply("What page would you like to go to?");
+                            promptMessage = await ctx.Reply("What page would you like to go to?");
                             var repliedNum = await PromptPageNumber();
                             if (repliedNum < 1)
                             {
@@ -161,7 +161,14 @@ public static class ContextUtils
                         }
                         catch (TimeoutException)
                         {
-                            await ctx.Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?", null, null, true);
+                            if (promptMessage != null) 
+                            {
+                                await ctx.Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?", replyTo: new Message.Reference(promptMessage.GuildId, promptMessage.ChannelId, promptMessage.Id));
+                            }
+                            else
+                            {
+                                await ctx.Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
+                            }
                             continue;
                         }
 
