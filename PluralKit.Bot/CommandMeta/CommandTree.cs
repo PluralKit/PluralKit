@@ -205,7 +205,7 @@ public partial class CommandTree
 
     private async Task HandleSystemCommandTargeted(Context ctx, PKSystem target)
     {
-        if (ctx.Match("name", "rename", "changename"))
+        if (ctx.Match("name", "rename", "changename", "rn"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
         else if (ctx.Match("tag", "t"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
@@ -269,7 +269,7 @@ public partial class CommandTree
     private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
     {
         // Commands that have a member target (eg. pk;member <member> delete)
-        if (ctx.Match("rename", "name", "changename", "setname"))
+        if (ctx.Match("rename", "name", "changename", "setname", "rn"))
             await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
         else if (ctx.Match("description", "info", "bio", "text", "desc"))
             await ctx.Execute<MemberEdit>(MemberDesc, m => m.Description(ctx, target));
@@ -336,7 +336,7 @@ public partial class CommandTree
         else if (await ctx.MatchGroup() is { } target)
         {
             // Commands with group argument
-            if (ctx.Match("rename", "name", "changename", "setname"))
+            if (ctx.Match("rename", "name", "changename", "setname", "rn"))
                 await ctx.Execute<Groups>(GroupRename, g => g.RenameGroup(ctx, target));
             else if (ctx.Match("nick", "dn", "displayname", "nickname"))
                 await ctx.Execute<Groups>(GroupDisplayName, g => g.GroupDisplayName(ctx, target));
