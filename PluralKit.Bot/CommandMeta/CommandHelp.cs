@@ -86,6 +86,7 @@ public partial class CommandTree
     public static Command Explain = new Command("explain", "explain", "Explains the basics of systems and proxying");
     public static Command Message = new Command("message", "message <id|link> [delete|author]", "Looks up a proxied message");
     public static Command MessageEdit = new Command("edit", "edit [link] <text>", "Edit a previously proxied message");
+    public static Command MessageReproxy = new Command("reproxy", "reproxy [link] <member>", "Reproxy a previously proxied message using a different member");
     public static Command ProxyCheck = new Command("debug proxy", "debug proxy [link|reply]", "Checks why your message has not been proxied");
     public static Command LogChannel = new Command("log channel", "log channel <channel>", "Designates a channel to post proxied messages to");
     public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
