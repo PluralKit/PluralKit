@@ -35,7 +35,7 @@ public partial class CommandTree
             return ctx.Execute<ImportExport>(Import, m => m.Import(ctx));
         if (ctx.Match("export"))
             return ctx.Execute<ImportExport>(Export, m => m.Export(ctx));
-        if (ctx.Match("help"))
+        if (ctx.Match("help", "h"))
             if (ctx.Match("commands"))
                 return ctx.Reply("For the list of commands, see the website: <https://pluralkit.me/commands>");
             else if (ctx.Match("proxy"))
@@ -306,7 +306,7 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberServerName, m => m.ServerName(ctx, target));
         else if (ctx.Match("autoproxy", "ap"))
             await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
-        else if (ctx.Match("keepproxy", "keeptags", "showtags"))
+        else if (ctx.Match("keepproxy", "keeptags", "showtags", "kp"))
             await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
         else if (ctx.Match("privacy"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
