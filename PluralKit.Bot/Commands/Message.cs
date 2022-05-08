@@ -56,6 +56,11 @@ public class ProxiedMessage
         if (ctx.System.Id != msg.System?.Id)
             throw new PKError("Can't reproxy a message sent by a different system.");
 
+        // Bail if the message is more than 2 minutes old
+        var msgTimestamp = Instant.FromUnixTimeMilliseconds((long)(msg.Message.Mid >> 22) + 1420070400000);
+        if (msgTimestamp.Plus(Duration.FromSeconds(60 * 2)) < SystemClock.Instance.GetCurrentInstant())
+            throw new PKError("The message is too old to be reproxied.");
+
         // Get target member ID
         var target = await ctx.MatchMember();
         var previousPtr = ctx.Parameters._ptr;
