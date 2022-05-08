@@ -18,9 +18,9 @@ public class Autoproxy
 
         if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove"))
             await AutoproxyOff(ctx, settings);
-        else if (ctx.Match("latch", "last", "proxy", "stick", "sticky"))
+        else if (ctx.Match("latch", "last", "proxy", "stick", "sticky", "l"))
             await AutoproxyLatch(ctx, settings);
-        else if (ctx.Match("front", "fronter", "switch"))
+        else if (ctx.Match("front", "fronter", "switch", "f"))
             await AutoproxyFront(ctx, settings);
         else if (ctx.Match("member"))
             throw new PKSyntaxError("Member-mode autoproxy must target a specific member. Use the `pk;autoproxy <member>` command, where `member` is the name or ID of a member in your system.");
