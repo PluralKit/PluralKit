@@ -13,7 +13,7 @@ using Myriad.Types;
 
 using NodaTime;
 
-using IMetrics = App.Metrics.IMetrics;
+using App.Metrics;
 
 using PluralKit.Core;
 
@@ -25,7 +25,6 @@ public class ProxiedMessage
 
     // private readonly IDiscordCache _cache;
     private readonly ModelRepository _repo;
-    private readonly IClock _clock;
     private readonly IMetrics _metrics;
 
     private readonly EmbedService _embeds;
@@ -34,12 +33,11 @@ public class ProxiedMessage
     private readonly WebhookExecutorService _webhookExecutor;
     private readonly ProxyService _proxy;
 
-    public ProxiedMessage(EmbedService embeds, IClock clock,
+    public ProxiedMessage(EmbedService embeds,
                           DiscordApiClient rest, IMetrics metrics, ModelRepository repo, ProxyService proxy,
                           WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
     {
         _embeds = embeds;
-        _clock = clock;
         _rest = rest;
         _webhookExecutor = webhookExecutor;
         _repo = repo;
@@ -194,7 +192,7 @@ public class ProxiedMessage
             return null;
 
         var timestamp = DiscordUtils.SnowflakeToInstant(lastMessage.Mid);
-        if (_clock.GetCurrentInstant() - timestamp > EditTimeout)
+        if (SystemClock.Instance.GetCurrentInstant() - timestamp > EditTimeout)
             return null;
 
         return lastMessage;
