@@ -198,7 +198,11 @@ public class ProxyService
         MessageContext ctx =
             await _repo.GetMessageContext(msg.Sender, msg.Guild!.Value, msg.Channel);
 
-        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+        // Make sure proxying is enabled here
+        if (ctx.InBlacklist)
+            throw new ProxyChecksFailedException(
+                "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
+
         var match = new ProxyMatch
         {
             Member = member,
@@ -233,6 +237,7 @@ public class ProxyService
             AllowEveryone = allowEveryone
         });
 
+        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
         var sentMessage = await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
         await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
         await _logChannel.LogMessage(ctx, sentMessage, trigger, proxyMessage, originalMsg.Content!);
