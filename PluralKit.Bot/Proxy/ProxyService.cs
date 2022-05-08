@@ -238,7 +238,7 @@ public class ProxyService
         });
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
-        var sentMessage = await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
+        await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
         await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
     }
 
@@ -361,9 +361,9 @@ public class ProxyService
     public static bool IsUnlatch(Message message)
         => message.Content.StartsWith(@"\\") || message.Content.StartsWith("\\\u200b\\");
 
-    private async Task<PKMessage> HandleProxyExecutedActions(MessageContext ctx, AutoproxySettings autoproxySettings,
-                                                             Message triggerMessage, Message proxyMessage, ProxyMatch match,
-                                                             bool deletePrevious = true)
+    private async Task HandleProxyExecutedActions(MessageContext ctx, AutoproxySettings autoproxySettings,
+                                                  Message triggerMessage, Message proxyMessage, ProxyMatch match,
+                                                  bool deletePrevious = true)
     {
         var sentMessage = new PKMessage
         {
@@ -420,8 +420,6 @@ public class ProxyService
             SaveLatchAutoproxy(),
             DispatchWebhook()
         );
-
-        return sentMessage;
     }
 
     private async Task HandleTriggerAlreadyDeleted(Message proxyMessage)
