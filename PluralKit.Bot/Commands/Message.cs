@@ -22,6 +22,7 @@ namespace PluralKit.Bot;
 public class ProxiedMessage
 {
     private static readonly Duration EditTimeout = Duration.FromMinutes(10);
+    private static readonly Duration ReproxyTimeout = Duration.FromMinutes(1);
 
     // private readonly IDiscordCache _cache;
     private readonly ModelRepository _repo;
@@ -49,15 +50,10 @@ public class ProxiedMessage
 
     public async Task ReproxyMessage(Context ctx)
     {
-        var msg = await GetMessageToEdit(ctx);
+        var msg = await GetMessageToEdit(ctx, ReproxyTimeout);
 
         if (ctx.System.Id != msg.System?.Id)
             throw new PKError("Can't reproxy a message sent by a different system.");
-
-        // Bail if the message is more than 2 minutes old
-        var msgTimestamp = Instant.FromUnixTimeMilliseconds((long)(msg.Message.Mid >> 22) + 1420070400000);
-        if (msgTimestamp.Plus(Duration.FromSeconds(60 * 2)) < SystemClock.Instance.GetCurrentInstant())
-            throw new PKError("The message is too old to be reproxied.");
 
         // Get target member ID
         var target = await ctx.MatchMember(restrictToSystem: ctx.System.Id);
@@ -89,7 +85,7 @@ public class ProxiedMessage
 
     public async Task EditMessage(Context ctx)
     {
-        var msg = await GetMessageToEdit(ctx);
+        var msg = await GetMessageToEdit(ctx, EditTimeout);
 
         if (ctx.System.Id != msg.System?.Id)
             throw new PKError("Can't edit a message sent by a different system.");
@@ -139,7 +135,7 @@ public class ProxiedMessage
         }
     }
 
-    private async Task<FullMessage> GetMessageToEdit(Context ctx)
+    private async Task<FullMessage> GetMessageToEdit(Context ctx, Duration timeout)
     {
         // todo: is it correct to get a connection here?
         await using var conn = await ctx.Database.Obtain();
@@ -158,7 +154,7 @@ public class ProxiedMessage
             if (ctx.Guild == null)
                 throw new PKSyntaxError("You must use a message link to edit messages in DMs.");
 
-            var recent = await FindRecentMessage(ctx);
+            var recent = await FindRecentMessage(ctx, timeout);
             if (recent == null)
                 throw new PKSyntaxError("Could not find a recent message to edit.");
 
@@ -182,17 +178,21 @@ public class ProxiedMessage
                 throw new PKError(error);
         }
 
+        var msgTimestamp = DiscordUtils.SnowflakeToInstant(msg.Message.Mid);
+        if (_clock.GetCurrentInstant() - msgTimestamp > timeout)
+            throw new PKError("The message is too old to be edited.");
+
         return msg;
     }
 
-    private async Task<PKMessage?> FindRecentMessage(Context ctx)
+    private async Task<PKMessage?> FindRecentMessage(Context ctx, Duration timeout)
     {
         var lastMessage = await ctx.Repository.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
         if (lastMessage == null)
             return null;
 
         var timestamp = DiscordUtils.SnowflakeToInstant(lastMessage.Mid);
-        if (SystemClock.Instance.GetCurrentInstant() - timestamp > EditTimeout)
+        if (SystemClock.Instance.GetCurrentInstant() - timestamp > timeout)
             return null;
 
         return lastMessage;
