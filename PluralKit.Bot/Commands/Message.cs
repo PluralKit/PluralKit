@@ -62,8 +62,7 @@ public class ProxiedMessage
             throw new PKError("The message is too old to be reproxied.");
 
         // Get target member ID
-        var target = await ctx.MatchMember();
-        var previousPtr = ctx.Parameters._ptr;
+        var target = await ctx.MatchMember(restrictToSystem: ctx.System.Id);
         if (target == null)
             throw new PKError("Could not find a member to reproxy the message with.");
 
