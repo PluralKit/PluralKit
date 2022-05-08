@@ -233,7 +233,7 @@ public class ProxyService
             AllowEveryone = allowEveryone
         });
 
-        var sentMessage = await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
+        var sentMessage = await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
         await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
         await _logChannel.LogMessage(ctx, sentMessage, trigger, proxyMessage, originalMsg.Content!);
     }
@@ -358,7 +358,8 @@ public class ProxyService
         => message.Content.StartsWith(@"\\") || message.Content.StartsWith("\\\u200b\\");
 
     private async Task<PKMessage> HandleProxyExecutedActions(MessageContext ctx, AutoproxySettings autoproxySettings,
-                                                             Message triggerMessage, Message proxyMessage, ProxyMatch match)
+                                                             Message triggerMessage, Message proxyMessage, ProxyMatch match,
+                                                             bool deletePrevious = true)
     {
         var sentMessage = new PKMessage
         {
@@ -388,6 +389,9 @@ public class ProxyService
 
         async Task DeleteProxyTriggerMessage()
         {
+            if (!deletePrevious)
+                return;
+
             // Wait a second or so before deleting the original message
             await Task.Delay(MessageDeletionDelay);
             try
