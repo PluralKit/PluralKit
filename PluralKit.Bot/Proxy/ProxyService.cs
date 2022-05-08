@@ -240,7 +240,6 @@ public class ProxyService
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
         var sentMessage = await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
         await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
-        await _logChannel.LogMessage(ctx, sentMessage, trigger, proxyMessage, originalMsg.Content!);
     }
 
     private async Task<(string?, string?)> FetchReferencedMessageAuthorInfo(Message trigger, Message referenced)
