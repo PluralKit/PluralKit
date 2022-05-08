@@ -179,7 +179,7 @@ public class ProxiedMessage
         }
 
         var msgTimestamp = DiscordUtils.SnowflakeToInstant(msg.Message.Mid);
-        if (_clock.GetCurrentInstant() - msgTimestamp > timeout)
+        if (SystemClock.Instance.GetCurrentInstant() - msgTimestamp > timeout)
             throw new PKError("The message is too old to be edited.");
 
         return msg;
