@@ -134,6 +134,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;debug permissions [server id]` - [Checks the given server's permission setup](/staff/permissions/#permission-checker-command) to check if it's compatible with PluralKit.
 - `pk;debug proxying <message link|reply>` - Checks why your message has not been proxied.
 - `pk;edit [message link|reply] <new content>` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
+- `pk;reproxy [message link|reply] <member name|ID>` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel.
 - `pk;link <account>` - Links your system to a different account.
 - `pk;unlink [account]` - Unlinks an account from your system.
 

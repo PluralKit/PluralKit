@@ -188,6 +188,60 @@ public class ProxyService
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
 
+    public async Task ExecuteReproxy(Message trigger, PKMessage msg, ProxyMember member)
+    {
+        var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
+        if (originalMsg == null)
+            throw new PKError("Could not reproxy message.");
+
+        // Get a MessageContext for the original message
+        MessageContext ctx =
+            await _repo.GetMessageContext(msg.Sender, msg.Guild!.Value, msg.Channel);
+
+        // Make sure proxying is enabled here
+        if (ctx.InBlacklist)
+            throw new ProxyChecksFailedException(
+                "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
+
+        var match = new ProxyMatch
+        {
+            Member = member,
+        };
+
+        var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
+        var rootChannel = await _rest.GetChannelOrNull(messageChannel.IsThread() ? messageChannel.ParentId!.Value : messageChannel.Id);
+        var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
+        var guild = await _rest.GetGuildOrNull(msg.Guild!.Value);
+
+        // Grab user permissions
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, null);
+        var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
+
+        // Make sure user has permissions to send messages
+        if (!senderPermissions.HasFlag(PermissionSet.SendMessages))
+            throw new PKError("You don't have permission to send messages in the channel that message is in.");
+
+        // Send the reproxied webhook
+        var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
+        {
+            GuildId = guild.Id,
+            ChannelId = rootChannel.Id,
+            ThreadId = threadId,
+            Name = match.Member.ProxyName(ctx),
+            AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
+            Content = originalMsg.Content!,
+            Attachments = originalMsg.Attachments!,
+            FileSizeLimit = guild.FileSizeLimit(),
+            Embeds = originalMsg.Embeds!.ToArray(),
+            Stickers = originalMsg.StickerItems!,
+            AllowEveryone = allowEveryone
+        });
+
+        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+        await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
+        await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
+    }
+
     private async Task<(string?, string?)> FetchReferencedMessageAuthorInfo(Message trigger, Message referenced)
     {
         if (referenced.WebhookId != null)
@@ -308,7 +362,8 @@ public class ProxyService
         => message.Content.StartsWith(@"\\") || message.Content.StartsWith("\\\u200b\\");
 
     private async Task HandleProxyExecutedActions(MessageContext ctx, AutoproxySettings autoproxySettings,
-                                                Message triggerMessage, Message proxyMessage, ProxyMatch match)
+                                                  Message triggerMessage, Message proxyMessage, ProxyMatch match,
+                                                  bool deletePrevious = true)
     {
         var sentMessage = new PKMessage
         {
@@ -338,6 +393,9 @@ public class ProxyService
 
         async Task DeleteProxyTriggerMessage()
         {
+            if (!deletePrevious)
+                return;
+
             // Wait a second or so before deleting the original message
             await Task.Delay(MessageDeletionDelay);
             try

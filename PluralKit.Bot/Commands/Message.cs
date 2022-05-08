@@ -13,6 +13,8 @@ using Myriad.Types;
 
 using NodaTime;
 
+using App.Metrics;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -20,30 +22,70 @@ namespace PluralKit.Bot;
 public class ProxiedMessage
 {
     private static readonly Duration EditTimeout = Duration.FromMinutes(10);
+    private static readonly Duration ReproxyTimeout = Duration.FromMinutes(1);
 
     // private readonly IDiscordCache _cache;
-    private readonly IClock _clock;
+    private readonly ModelRepository _repo;
+    private readonly IMetrics _metrics;
 
     private readonly EmbedService _embeds;
     private readonly LogChannelService _logChannel;
     private readonly DiscordApiClient _rest;
     private readonly WebhookExecutorService _webhookExecutor;
+    private readonly ProxyService _proxy;
 
-    public ProxiedMessage(EmbedService embeds, IClock clock,
-                          DiscordApiClient rest,
+    public ProxiedMessage(EmbedService embeds,
+                          DiscordApiClient rest, IMetrics metrics, ModelRepository repo, ProxyService proxy,
                           WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
     {
         _embeds = embeds;
-        _clock = clock;
         _rest = rest;
         _webhookExecutor = webhookExecutor;
+        _repo = repo;
         _logChannel = logChannel;
         // _cache = cache;
+        _metrics = metrics;
+        _proxy =  proxy;
+    }
+
+    public async Task ReproxyMessage(Context ctx)
+    {
+        var msg = await GetMessageToEdit(ctx, ReproxyTimeout, true);
+
+        if (ctx.System.Id != msg.System?.Id)
+            throw new PKError("Can't reproxy a message sent by a different system.");
+
+        // Get target member ID
+        var target = await ctx.MatchMember(restrictToSystem: ctx.System.Id);
+        if (target == null)
+            throw new PKError("Could not find a member to reproxy the message with.");
+
+        // Fetch members and get the ProxyMember for `target`
+        List <ProxyMember> members;
+        using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
+            members = (await _repo.GetProxyMembers(ctx.Author.Id, msg.Message.Guild!.Value)).ToList();
+        var match = members.Find(x => x.Id == target.Id);
+        if (match == null)
+            throw new PKError("Could not find a member to reproxy the message with.");
+
+        try
+        {
+            await _proxy.ExecuteReproxy(ctx.Message, msg.Message, match);
+
+            if (ctx.Guild == null)
+                await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
+            if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
+                await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
+        }
+        catch (NotFoundException)
+        {
+            throw new PKError("Could not reproxy message.");
+        }
     }
 
     public async Task EditMessage(Context ctx)
     {
-        var msg = await GetMessageToEdit(ctx);
+        var msg = await GetMessageToEdit(ctx, EditTimeout, false);
 
         if (ctx.System.Id != msg.System?.Id)
             throw new PKError("Can't edit a message sent by a different system.");
@@ -93,8 +135,11 @@ public class ProxiedMessage
         }
     }
 
-    private async Task<FullMessage> GetMessageToEdit(Context ctx)
+    private async Task<FullMessage> GetMessageToEdit(Context ctx, Duration timeout, bool isReproxy)
     {
+        var editType = isReproxy ? "reproxy" : "edit";
+        var editTypeAction = isReproxy ? "reproxied" : "edited";
+
         // todo: is it correct to get a connection here?
         await using var conn = await ctx.Database.Obtain();
         FullMessage? msg = null;
@@ -110,15 +155,15 @@ public class ProxiedMessage
         if (msg == null)
         {
             if (ctx.Guild == null)
-                throw new PKSyntaxError("You must use a message link to edit messages in DMs.");
+                throw new PKSyntaxError($"You must use a message link to {editType} messages in DMs.");
 
-            var recent = await FindRecentMessage(ctx);
+            var recent = await FindRecentMessage(ctx, timeout);
             if (recent == null)
-                throw new PKSyntaxError("Could not find a recent message to edit.");
+                throw new PKSyntaxError($"Could not find a recent message to {editType}.");
 
             msg = await ctx.Repository.GetMessage(conn, recent.Mid);
             if (msg == null)
-                throw new PKSyntaxError("Could not find a recent message to edit.");
+                throw new PKSyntaxError($"Could not find a recent message to {editType}.");
         }
 
         if (msg.Message.Channel != ctx.Channel.Id)
@@ -136,17 +181,21 @@ public class ProxiedMessage
                 throw new PKError(error);
         }
 
+        var msgTimestamp = DiscordUtils.SnowflakeToInstant(msg.Message.Mid);
+        if (isReproxy && SystemClock.Instance.GetCurrentInstant() - msgTimestamp > timeout)
+            throw new PKError($"The message is too old to be {editTypeAction}.");
+
         return msg;
     }
 
-    private async Task<PKMessage?> FindRecentMessage(Context ctx)
+    private async Task<PKMessage?> FindRecentMessage(Context ctx, Duration timeout)
     {
         var lastMessage = await ctx.Repository.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
         if (lastMessage == null)
             return null;
 
         var timestamp = DiscordUtils.SnowflakeToInstant(lastMessage.Mid);
-        if (_clock.GetCurrentInstant() - timestamp > EditTimeout)
+        if (SystemClock.Instance.GetCurrentInstant() - timestamp > timeout)
             return null;
 
         return lastMessage;

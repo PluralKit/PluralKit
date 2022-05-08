@@ -48,6 +48,8 @@ public partial class CommandTree
             return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
         if (ctx.Match("edit", "e"))
             return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx));
+        if (ctx.Match("reproxy", "rp"))
+            return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
                 return ctx.Execute<ServerConfig>(LogChannel, m => m.SetLogChannel(ctx));
