@@ -23,7 +23,7 @@ public class ProxiedMessage
 {
     private static readonly Duration EditTimeout = Duration.FromMinutes(10);
 
-    private readonly IDiscordCache _cache;
+    // private readonly IDiscordCache _cache;
     private readonly ModelRepository _repo;
     private readonly IClock _clock;
     private readonly IMetrics _metrics;
@@ -32,9 +32,10 @@ public class ProxiedMessage
     private readonly LogChannelService _logChannel;
     private readonly DiscordApiClient _rest;
     private readonly WebhookExecutorService _webhookExecutor;
+    private readonly ProxyService _proxy;
 
     public ProxiedMessage(EmbedService embeds, IClock clock,
-                          DiscordApiClient rest, IMetrics metrics, ModelRepository repo,
+                          DiscordApiClient rest, IMetrics metrics, ModelRepository repo, ProxyService proxy,
                           WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
     {
         _embeds = embeds;
@@ -43,8 +44,9 @@ public class ProxiedMessage
         _webhookExecutor = webhookExecutor;
         _repo = repo;
         _logChannel = logChannel;
-        _cache = cache;
+        // _cache = cache;
         _metrics = metrics;
+        _proxy =  proxy;
     }
 
     public async Task ReproxyMessage(Context ctx)
@@ -54,13 +56,11 @@ public class ProxiedMessage
         if (ctx.System.Id != msg.System?.Id)
             throw new PKError("Can't reproxy a message sent by a different system.");
 
-        var originalMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
-        if (originalMsg == null)
-            throw new PKError("Could not reproxy message.");
-
         // Get target member ID
         var target = await ctx.MatchMember();
         var previousPtr = ctx.Parameters._ptr;
+        if (target == null)
+            throw new PKError("Could not find a member to reproxy the message with.");
 
         // Fetch members and get the ProxyMember for `target`
         List <ProxyMember> members;
@@ -68,48 +68,16 @@ public class ProxiedMessage
             members = (await _repo.GetProxyMembers(ctx.Author.Id, msg.Message.Guild!.Value)).ToList();
         var match = members.Find(x => x.Id == target.Id);
         if (match == null)
-            throw new PKError("Could not reproxy message.");
-
-        // Get a MessageContext for the original message
-        MessageContext? msgCtx =
-               await _repo.GetMessageContext(msg.Message.Sender, msg.Message.Guild!.Value, originalMsg.ChannelId);
+            throw new PKError("Could not find a member to reproxy the message with.");
 
         try
         {
-            var messageChannel = await _cache.GetChannel(originalMsg.ChannelId);
-            var rootChannel = await _cache.GetRootChannel(originalMsg.ChannelId);
-            var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
-            var guild = await _cache.GetGuild(msg.Message.Guild!.Value);
-
-            var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, msg.Message.Sender, null);
-            var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
-            var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
-
-            var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
-            {
-                GuildId = msg.Message.Guild!.Value,
-                ChannelId = rootChannel.Id,
-                ThreadId = threadId,
-                Name = match.ProxyName(msgCtx),
-                AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.ProxyAvatar(msgCtx)),
-                Content = originalMsg.Content!,
-                Attachments = originalMsg.Attachments!,
-                FileSizeLimit = guild.FileSizeLimit(),
-                Embeds = originalMsg.Embeds!.ToArray(),
-                Stickers = originalMsg.StickerItems!,
-                AllowEveryone = allowEveryone
-            });
+            await _proxy.ExecuteReproxy(ctx.Message, msg.Message, match);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
-
             if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
-
-            await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
-
-            await _logChannel.LogMessage(ctx.MessageContext, msg.Message, ctx.Message, proxyMessage,
-                originalMsg!.Content!);
         }
         catch (NotFoundException)
         {
