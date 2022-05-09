@@ -124,6 +124,8 @@ public class PrivateController: PKControllerBase
         if (system == null)
             return BadRequest(PrivateJsonExt.ObjectWithError("User does not have a system registered!"));
 
+        var config = await _repo.GetSystemConfig(system.Id);
+
         // TODO
 
         // resp = await client.GetAsync("https://discord.com/api/v10/users/@me/guilds");
@@ -136,6 +138,7 @@ public class PrivateController: PKControllerBase
         var o = new JObject();
 
         o.Add("system", system.ToJson(LookupContext.ByOwner));
+        o.Add("config", config.ToJson());
         o.Add("user", user);
         o.Add("token", system.Token);
 
