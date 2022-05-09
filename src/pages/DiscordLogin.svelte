@@ -15,6 +15,7 @@
             const res = await api().private.discord.callback.post({ data: { code: params.get("code"), redirect_domain: window.location.origin } });
             localStorage.setItem("pk-token", res.token);
             localStorage.setItem("pk-user", JSON.stringify(res.system));
+            localStorage.setItem("pk-config", JSON.stringify(res.config));
             window.location.href = window.location.origin;
         }
         else

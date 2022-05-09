@@ -40,6 +40,8 @@
             const res: System = await api().systems("@me").get({ token });
             localStorage.setItem("pk-token", token);
             localStorage.setItem("pk-user", JSON.stringify(res));
+            const settings = await api().systems("@me").settings.get({ token });
+            localStorage.setItem("pk-config", JSON.stringify(settings));
             err = null;
             loggedIn.update(() => true);
             currentUser.update(() => res);

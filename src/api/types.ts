@@ -20,6 +20,17 @@ export interface System {
     color?: string;
 }
 
+export interface Config {
+    timezone: string;
+    pings_enabled: boolean;
+    member_default_private?: boolean;
+    group_default_private?: boolean;
+    show_private_info?: boolean;
+    member_limit: number;
+    group_limit: number;
+    description_templates: string[];
+}
+
 interface MemberPrivacy {
     visibility?: string,
     description_privacy?: string,

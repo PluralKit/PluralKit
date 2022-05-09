@@ -7,6 +7,8 @@
     import { Member } from '../../api/types';
     import api from '../../api';
 
+    const descriptions: string[] = JSON.parse(localStorage.getItem("pk-config"))?.description_templates;
+
     let err: string[] = [];
     let message: string;
     let loading: boolean = false;
@@ -219,6 +221,16 @@
         <hr/>
         <div class="my-2">
             <b>Description:</b><br />
+            {#if descriptions.length > 0 && descriptions[0].trim() != ""}
+            <Button size="sm" color="primary" on:click={() => input.description = descriptions[0]}>Template 1</Button>
+            {/if}
+            {#if descriptions.length > 1 && descriptions[1].trim() != ""}
+            <Button size="sm" color="primary" on:click={() => input.description = descriptions[1]}>Template 2</Button>
+            {/if}
+            {#if descriptions.length > 2 && descriptions[2].trim() != ""}
+            <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]}>Template 3</Button>
+            {/if}
+            <br>
             <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={input.description}/>
         </div>
         {#if !loading && input.name}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button>

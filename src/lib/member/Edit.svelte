@@ -7,6 +7,8 @@
     import { Member } from '../../api/types'
     import api from '../../api';
 
+    const descriptions: string[] = JSON.parse(localStorage.getItem("pk-config"))?.description_templates;
+
     let loading: boolean = false;
     export let member: Member;
     export let editMode: boolean;
@@ -137,6 +139,16 @@
 </Row>
 <div class="my-2">
     <b>Description:</b><br />
+    {#if descriptions.length > 0 && descriptions[0].trim() != ""}
+    <Button size="sm" color="primary" on:click={() => input.description = descriptions[0]}>Template 1</Button>
+    {/if}
+    {#if descriptions.length > 1 && descriptions[1].trim() != ""}
+    <Button size="sm" color="primary" on:click={() => input.description = descriptions[1]}>Template 2</Button>
+    {/if}
+    {#if descriptions.length > 2 && descriptions[2].trim() != ""}
+    <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]}>Template 3</Button>
+    {/if}
+    <br>
     <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={member.description}/>
 </div>
 {#if !loading}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false}>Back</Button><Button style="flex: 0; float: right;" color="danger" on:click={toggleDeleteModal}>Delete</Button>

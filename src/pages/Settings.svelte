@@ -1,9 +1,13 @@
 <script lang="ts">
-    import { Card, CardHeader, CardBody, Container, Row, Col, CardTitle, Tooltip } from 'sveltestrap';
+    import { Card, CardHeader, CardBody, Container, Row, Col, CardTitle, Tooltip, Button } from 'sveltestrap';
     import Toggle from 'svelte-toggle';
+    import autosize from 'svelte-autosize';
     import FaCogs from 'svelte-icons/fa/FaCogs.svelte'
+    import { Config } from '../api/types';
+    import api from '../api';
 
     let savedSettings = JSON.parse(localStorage.getItem("pk-settings"));
+    let apiConfig: Config = JSON.parse(localStorage.getItem("pk-config"));
 
     let settings = {
         appearance: {
@@ -23,6 +27,13 @@
     if (savedSettings) {
         settings = {...settings, ...savedSettings}
     };
+
+    let descriptions = apiConfig.description_templates;
+
+    async function saveDescriptionTemplates() {
+        const res = await api().systems("@me").settings.patch({ data: { description_templates: descriptions } });
+        localStorage.setItem("pk-config", JSON.stringify(res));
+    }
 
     function toggleOpenDyslexic() {
         if (settings.accessibility.opendyslexic) document.getElementById("app").classList.add("dyslexic");
@@ -80,6 +91,32 @@
                             <Tooltip target="s-pagelinks" placement="bottom">If enabled, the list items will not expand, but instead link to the corresponding page.</Tooltip>
                         </Col>
                     </Row>
+                </CardBody>
+            </Card>
+        </Col>
+    </Row>
+    <Row>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
+            <Card class="mb-4">
+                <CardHeader>
+                    <CardTitle style="margin-top: 8px; outline: none;">
+                        <div class="icon d-inline-block">
+                            <FaCogs />
+                        </div>Templates
+                    </CardTitle>
+                </CardHeader>
+                <CardBody>
+                    <p>Templates allow you to quickly set up a member description with a specific layout. Put in the template in one of the below fields, and access it whenever you create or edit a member. You can set up to 3 templates.</p>
+                    <b>Template 1</b>
+                    <textarea class="form-control" bind:value={descriptions[0]} maxlength={1000} use:autosize placeholder={descriptions[0]}/>
+                    <br>
+                    <b>Template 2</b>
+                    <textarea class="form-control" bind:value={descriptions[1]} maxlength={1000} use:autosize placeholder={descriptions[1]}/>
+                    <br>
+                    <b>Template 3</b>
+                    <textarea class="form-control" bind:value={descriptions[2]} maxlength={1000} use:autosize placeholder={descriptions[2]}/>
+                    <br>
+                    <Button on:click={saveDescriptionTemplates}>Save</Button>
                 </CardBody>
             </Card>
         </Col>
