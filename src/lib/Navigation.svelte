@@ -29,7 +29,7 @@ import { get } from 'svelte/store';
         <Collapse {isOpen} navbar expand="lg">
             <Nav class="ms-auto" navbar>
                 <Dropdown nav inNavbar>
-                    <DropdownToggle color="transparent">Styles</DropdownToggle>
+                    <DropdownToggle color="transparent" tag="span" class="nav-link">Styles</DropdownToggle>
                     <DropdownMenu end>
                         <DropdownItem on:click={() => style = "light"}>Light</DropdownItem>
                         <DropdownItem on:click={() => style = "dark"}>Dark</DropdownItem>
@@ -37,7 +37,7 @@ import { get } from 'svelte/store';
                 </Dropdown>
                 {#if loggedIn_value || localStorage.getItem("pk-token")}
                 <Dropdown nav inNavbar>
-                    <DropdownToggle color="transparent">Dash</DropdownToggle>
+                    <DropdownToggle color="transparent" tag="span" class="nav-link">Dash</DropdownToggle>
                     <DropdownMenu end>
                         <Link style="text-decoration: none;" to="/dash?tab=system"><DropdownItem>System</DropdownItem></Link>
                         <Link style="text-decoration: none;" to="/dash?tab=members"><DropdownItem>Members</DropdownItem></Link>
