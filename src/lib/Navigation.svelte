@@ -51,9 +51,6 @@ import { get } from 'svelte/store';
                     <NavLink href="/settings">Settings</NavLink>
                 </NavItem>
                 <NavItem>
-                    <NavLink href="/templates">Templates</NavLink>
-                </NavItem>
-                <NavItem>
                     <NavLink href="/profile">Public</NavLink>
                 </NavItem>
             </Nav>
