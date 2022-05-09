@@ -31,7 +31,7 @@ export interface Config {
     description_templates: string[];
 }
 
-interface MemberPrivacy {
+export interface MemberPrivacy {
     visibility?: string,
     description_privacy?: string,
     name_privacy?: string,

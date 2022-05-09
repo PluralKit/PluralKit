@@ -14,6 +14,8 @@
   import { Alert } from 'sveltestrap';
 import DiscordLogin from "./pages/DiscordLogin.svelte";
   import { onMount } from 'svelte';
+import BulkGroupPrivacy from "./pages/BulkGroupPrivacy.svelte";
+import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
   
   // theme cdns (I might make some myself too)
   let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
@@ -67,6 +69,8 @@ import DiscordLogin from "./pages/DiscordLogin.svelte";
     <Route path="dash"><Dash /></Route>
     <Route path="dash/m/:id"><Member isPublic={falseBool}/></Route>
     <Route path = "dash/g/:id"><Group isPublic={falseBool}/></Route>
+    <Route path="dash/bulk-member-privacy"><BulkMemberPrivacy/></Route>
+    <Route path="dash/bulk-group-privacy"><BulkGroupPrivacy/></Route>
     <Route path="settings"><Settings /></Route>
     <Route path="profile"><Public /></Route>
     <Route path = "profile/s/:id"><Main /></Route>

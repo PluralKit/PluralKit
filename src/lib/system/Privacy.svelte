@@ -42,6 +42,8 @@
             </Col>
         </Row>
         <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
+        <Button style="flex: 0" color="secondary" on:click={() => window.location.href = window.location.origin+"/dash/bulk-member-privacy"}>Bulk member privacy</Button>
+        <Button style="flex: 0" color="secondary" on:click={() => window.location.href = window.location.origin+"/dash/bulk-group-privacy"}>Bulk group privacy</Button>
         {/if}
     </CardBody>
 </Card>
