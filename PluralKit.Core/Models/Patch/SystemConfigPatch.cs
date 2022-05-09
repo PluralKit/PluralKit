@@ -16,6 +16,8 @@ public class SystemConfigPatch: PatchObject
     public Partial<bool> ShowPrivateInfo { get; set; }
     public Partial<int?> MemberLimitOverride { get; set; }
     public Partial<int?> GroupLimitOverride { get; set; }
+    public Partial<string[]> DescriptionTemplates { get; set; }
+
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("ui_tz", UiTz)
@@ -26,12 +28,23 @@ public class SystemConfigPatch: PatchObject
         .With("show_private_info", ShowPrivateInfo)
         .With("member_limit_override", MemberLimitOverride)
         .With("group_limit_override", GroupLimitOverride)
+        .With("description_templates", DescriptionTemplates)
     );
 
     public new void AssertIsValid()
     {
         if (UiTz.IsPresent && DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz.Value) == null)
             Errors.Add(new ValidationError("timezone"));
+
+        if (DescriptionTemplates.IsPresent)
+        {
+            if (DescriptionTemplates.Value.Length > 3)
+                Errors.Add(new FieldTooLongError("description_templates", 3, DescriptionTemplates.Value.Length));
+
+            foreach (var template in DescriptionTemplates.Value)
+                if (template.Length > Limits.MaxDescriptionLength)
+                    Errors.Add(new FieldTooLongError($"description_templates[{Array.IndexOf(DescriptionTemplates.Value, template)}]", template.Length, Limits.MaxDescriptionLength));
+        }
     }
 
     public JObject ToJson()
@@ -62,6 +75,9 @@ public class SystemConfigPatch: PatchObject
         if (GroupLimitOverride.IsPresent)
             o.Add("group_limit", GroupLimitOverride.Value);
 
+        if (DescriptionTemplates.IsPresent)
+            o.Add("description_templates", JArray.FromObject(DescriptionTemplates.Value));
+
         return o;
     }
 
@@ -83,6 +99,9 @@ public class SystemConfigPatch: PatchObject
 
         if (o.ContainsKey("group_default_private"))
             patch.GroupDefaultPrivate = o.Value<bool>("group_default_private");
+
+        if (o.ContainsKey("description_templates"))
+            patch.DescriptionTemplates = o.Value<JArray>("description_templates").Select(x => x.Value<string>()).ToArray();
 
         return patch;
     }

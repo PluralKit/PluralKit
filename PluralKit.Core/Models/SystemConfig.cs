@@ -15,6 +15,7 @@ public class SystemConfig
     public bool ShowPrivateInfo { get; }
     public int? MemberLimitOverride { get; }
     public int? GroupLimitOverride { get; }
+    public ICollection<string> DescriptionTemplates { get; }
 
     public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
 }
@@ -33,6 +34,8 @@ public static class SystemConfigExt
         o.Add("show_private_info", cfg.ShowPrivateInfo);
         o.Add("member_limit", cfg.MemberLimitOverride ?? Limits.MaxMemberCount);
         o.Add("group_limit", cfg.GroupLimitOverride ?? Limits.MaxGroupCount);
+
+        o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 
         return o;
     }
