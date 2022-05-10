@@ -9,6 +9,7 @@ use twilight_gateway::{
 };
 use twilight_http::Client as HttpClient;
 
+mod cache;
 mod config;
 mod evt;
 mod db;
@@ -81,7 +82,7 @@ async fn init_gateway(
     if shard_count < 16 {
         scheme = ShardScheme::Auto;
     } else {
-        let cluster_id = env::var("NOMAD_ALLOC_INDEX").or("0").parse::<u64>().unwrap();
+        let cluster_id = env::var("NOMAD_ALLOC_INDEX").or::<String>(Result::Ok("0".to_string())).unwrap().parse::<u64>().unwrap();
         let first_shard_id = 16 * cluster_id;
 
         scheme = ShardScheme::try_from((first_shard_id..first_shard_id+16, shard_count)).unwrap();
