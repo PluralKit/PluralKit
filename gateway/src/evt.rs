@@ -41,7 +41,7 @@ pub async fn handle_event<'a>(
             let deserializer = GatewayEventDeserializer::from_json(std::str::from_utf8(&payload.bytes)?).unwrap();
             if deserializer.op() == 0 && ALLOWED_EVENTS.contains(&deserializer.event_type_ref().unwrap()) {
                 let mut conn = rconn.get_async_connection().await?;
-                conn.publish::<&str, Vec<u8>, i32>("evt", payload.bytes).await?;
+                conn.publish::<&str, Vec<u8>, i32>(&format!("evt-{shard_id}"), payload.bytes).await?;
             }
         }
         Event::MessageCreate(msg) => {

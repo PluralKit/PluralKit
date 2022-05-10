@@ -73,7 +73,7 @@ public class Bot
             }
         };
 
-        _services.Resolve<RedisGatewayService>().OnEventReceived += (evt) => OnEventReceivedInner(0, evt);
+        _services.Resolve<RedisGatewayService>().OnEventReceived += (e) => OnEventReceivedInner(e.Item1, e.Item2);
 
         // Init the shard stuff
         _services.Resolve<ShardInfoService>().Init();

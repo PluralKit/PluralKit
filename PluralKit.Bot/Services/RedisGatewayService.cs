@@ -23,22 +23,26 @@ public class RedisGatewayService
         _logger = logger.ForContext<RedisGatewayService>();
     }
 
-    public event Func<IGatewayEvent, Task>? OnEventReceived;
+    public event Func<(int, IGatewayEvent), Task>? OnEventReceived;
 
-    public async Task Start()
+    public async Task Start(int shardId)
     {
-        _redis = await ConnectionMultiplexer.ConnectAsync(_config.RedisGatewayUrl);
-        var channel = await _redis.GetSubscriber().SubscribeAsync("evt");
-        channel.OnMessage(Handle);
+        if (_redis == null)
+            _redis = await ConnectionMultiplexer.ConnectAsync(_config.RedisGatewayUrl);
+
+        _logger.Debug("Subscribing to shard {ShardId} on redis", shardId);
+        
+        var channel = await _redis.GetSubscriber().SubscribeAsync($"evt-{shardId}");
+        channel.OnMessage((evt) => Handle(shardId, evt));
     }
 
-    public async Task Handle(ChannelMessage message)
+    public async Task Handle(int shardId, ChannelMessage message)
     {
         var packet = JsonSerializer.Deserialize<GatewayPacket>(message.Message, _jsonSerializerOptions);
         if (packet.Opcode != GatewayOpcode.Dispatch) return;
         var evt = DeserializeEvent(packet.EventType, (JsonElement)packet.Payload);
         if (evt == null) return;
-        await OnEventReceived(evt);
+        await OnEventReceived((shardId, evt));
     }
 
     private IGatewayEvent? DeserializeEvent(string eventType, JsonElement payload)
