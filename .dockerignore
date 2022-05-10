@@ -4,6 +4,7 @@
 # Include project code and build files
 !PluralKit.*/
 !gateway/
+!myriad_rs/
 !Myriad/
 !PluralKit.sln
 !nuget.config

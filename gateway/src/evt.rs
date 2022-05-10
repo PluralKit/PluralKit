@@ -7,8 +7,6 @@ use tracing::info;
 use twilight_gateway::Event;
 use twilight_http::Client as HttpClient;
 
-use crate::cache;
-
 lazy_static::lazy_static! {
     static ref ALLOWED_EVENTS: Vec<&'static str> = [
         "INTERACTION_CREATE",
@@ -27,7 +25,7 @@ pub async fn handle_event<'a>(
     _db: Pool,
     rconn: redis::Client
 ) -> anyhow::Result<()> {
-    cache::handle_event(event.clone(), rconn.clone()).await?;
+    myriad::cache::handle_event(event.clone(), rconn.clone()).await?;
 
     match event {
         Event::GatewayInvalidateSession(resumable) => {

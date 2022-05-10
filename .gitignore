@@ -2,6 +2,9 @@
 bin/
 obj/
 
+# rust build files
+target/
+
 # IDE files
 .idea/
 .run/

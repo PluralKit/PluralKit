@@ -9,7 +9,6 @@ use twilight_gateway::{
 };
 use twilight_http::Client as HttpClient;
 
-mod cache;
 mod config;
 mod evt;
 mod db;

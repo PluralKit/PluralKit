@@ -1,11 +1,13 @@
 use twilight_gateway::Event;
 
+include!(concat!(env!("OUT_DIR"), "/myriad.cache.rs"));
+
 pub async fn handle_event<'a>(
     event: Event,
     rconn: redis::Client
 ) -> anyhow::Result<()> {
     match event {
-        // todo: SaveDMChannelStub (?)
+        // todo: save private channels (see SaveDMChannelStub / PrivateChannelService)
         // todo: save user profiles for some reason (from message create, etc)
         // todo(dotnet): remove relying on cache.OwnUserId
 
@@ -65,6 +67,9 @@ pub async fn handle_event<'a>(
         }
         Event::ThreadListSync(tls) => {
             // save channels
+        }
+        Event::MessageCreate(message) => {
+            // save last message of channel
         }
         _ => {}
     }
