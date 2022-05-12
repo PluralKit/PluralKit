@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1"
 
 prost = "0.10.3"
-twilight-gateway = "0.10.0"
+twilight-gateway = "0.10.1"
 redis = { version = "0.21.5", features = ["aio", "tokio-comp"] }
 
 [build-dependencies]
