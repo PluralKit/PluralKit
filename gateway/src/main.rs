@@ -104,16 +104,7 @@ async fn init_gateway(
         | Intents::MESSAGE_CONTENT
     )
         .shard_scheme(scheme)
-        .event_types(
-            // EventTypeFlags::all()
-                EventTypeFlags::READY
-              | EventTypeFlags::GATEWAY_INVALIDATE_SESSION
-              | EventTypeFlags::GATEWAY_RECONNECT
-              | EventTypeFlags::SHARD_PAYLOAD
-              | EventTypeFlags::SHARD_CONNECTED
-              | EventTypeFlags::SHARD_DISCONNECTED
-              | EventTypeFlags::MESSAGE_CREATE
-        )
+        .event_types(EventTypeFlags::all())
         .queue(Arc::new(queue))
         .build()
         .await?;
