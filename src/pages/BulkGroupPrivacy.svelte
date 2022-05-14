@@ -13,16 +13,16 @@
 	let success = false;
 
 	// kinda hacked together from typescript's Required<T> type
-	const privacy: GroupPrivacy = {
-		name_privacy: "public",
-		description_privacy:  "public",
-		icon_privacy: "public",
-		list_privacy: "public",
-		metadata_privacy: "public",
-		visibility: "public",
+	const privacy: { [P in keyof GroupPrivacy]-?: string; } = {
+		description_privacy:  "no change",
+		name_privacy: "no change",
+		list_privacy: "no change",
+		icon_privacy: "no change",
+		visibility: "no change",
+		metadata_privacy: "no change",
 	};
 
-	const privacyNames: GroupPrivacy = {
+	const privacyNames: { [P in keyof GroupPrivacy]-?: string; } = {
 		name_privacy: "Name",
 		description_privacy:  "Description",
 		icon_privacy: "Icon",
@@ -31,12 +31,11 @@
 		visibility: "Visbility",
 	};
 
-	let setPrivate = true;
-
 	async function submit() {
 		success = false;
 		loading = true;
-		const data = privacy;
+		const dataArray = Object.entries(privacy).filter(([, value]) => value === "no change" ? false : true);
+		const data = Object.fromEntries(dataArray);
 		try {
 			await api().private.bulk_privacy.group.post({ data });
 			success = true;
@@ -69,10 +68,11 @@
 					<Alert color="danger">{err}</Alert>
 					{/if}
 					{#if success}
-					<Alert color="success">Member privacy updated!</Alert>
+					<Alert color="success">Group privacy updated!</Alert>
 					{/if}
 					<Label><b>Set all to:</b></Label>
 					<Input type="select" on:change={(e) => changeAll(e)}>
+						<option>no change</option>
 						<option>public</option>
 						<option>private</option>
 					</Input>
@@ -82,8 +82,9 @@
 						<Col xs={12} lg={6} class="mb-3">
 							<Label>{privacyNames[x]}:</Label>
 							<Input type="select" bind:value={privacy[x]}>
-								<option default={privacy[x] === "public"}>public</option>
-								<option default={privacy[x] === "private"}>private</option>
+								<option default>no change</option>
+								<option>public</option>
+								<option>private</option>
 							</Input>
 						</Col>
 						{/each}

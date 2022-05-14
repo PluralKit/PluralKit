@@ -13,17 +13,17 @@ import Member from './Member.svelte';
 	let err = "";
 	let success = false;
 
-	const privacy: MemberPrivacy = {
-		description_privacy: "public",
-		name_privacy: "public",
-		avatar_privacy: "public",
-		birthday_privacy: "public",
-		pronoun_privacy: "public",
-		visibility: "public",
-		metadata_privacy: "public",
+	const privacy: { [P in keyof MemberPrivacy]-?: string; } = {
+		description_privacy: "no change",
+		name_privacy: "no change",
+		avatar_privacy: "no change",
+		birthday_privacy: "no change",
+		pronoun_privacy: "no change",
+		visibility: "no change",
+		metadata_privacy: "no change",
 	};
 
-	const privacyNames: MemberPrivacy = {
+	const privacyNames: { [P in keyof MemberPrivacy]-?: string; } = {
 		avatar_privacy: "Avatar",
 		birthday_privacy: "Birthday",
 		description_privacy: "Description",
@@ -36,7 +36,8 @@ import Member from './Member.svelte';
 	async function submit() {
 		success = false;
 		loading = true;
-		const data = privacy;
+		const dataArray = Object.entries(privacy).filter(([, value]) => value === "no change" ? false : true);
+		const data = Object.fromEntries(dataArray);
 		try {
 			await api().private.bulk_privacy.member.post({ data });
 			success = true;
@@ -73,6 +74,7 @@ import Member from './Member.svelte';
 					{/if}
 					<Label><b>Set all to:</b></Label>
 					<Input type="select" on:change={(e) => changeAll(e)}>
+						<option>no change</option>
 						<option>public</option>
 						<option>private</option>
 					</Input>
@@ -82,7 +84,8 @@ import Member from './Member.svelte';
 						<Col xs={12} lg={6} class="mb-3">
 							<Label>{privacyNames[x]}:</Label>
 							<Input type="select" bind:value={privacy[x]}>
-								<option default>public</option>
+								<option default>no change</option>
+								<option>public</option>
 								<option>private</option>
 							</Input>
 						</Col>
