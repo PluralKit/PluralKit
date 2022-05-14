@@ -126,3 +126,9 @@
 <svelte:head>
     <title>pk-webs | settings</title>
 </svelte:head>
+
+<style>
+    textarea {
+        resize: none;
+    }
+</style>
