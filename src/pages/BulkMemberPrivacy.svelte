@@ -1,34 +1,56 @@
 <script lang="ts">
-    import { Container, Row, Col, Card, CardHeader, CardBody, CardTitle, FormCheck, Button, Spinner } from 'sveltestrap';
+    import { Container, Row, Col, Card, CardHeader, CardBody, CardTitle, Label, Input, Button, Spinner, Alert } from 'sveltestrap';
     import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
 
 	import api from '../api';
     import { MemberPrivacy, System } from '../api/types';
+import Member from './Member.svelte';
 	const user: System = JSON.parse(localStorage.getItem("pk-user"));
 
-	const capitalize = (str: string) => str[0].toUpperCase() + str.substr(1);
+	// const capitalize = (str: string) => str[0].toUpperCase() + str.substr(1);
 
 	let loading = false;
+	let err = "";
+	let success = false;
 
-	// kinda hacked together from typescript's Required<T> type
-	const privacy: { [P in keyof MemberPrivacy]-?: boolean; } = {
-		avatar_privacy: false,
-		birthday_privacy: false,
-		description_privacy: false,
-		metadata_privacy: false,
-		name_privacy: false,
-		pronoun_privacy: false,
-		visibility: false,
+	const privacy: MemberPrivacy = {
+		description_privacy: "public",
+		name_privacy: "public",
+		avatar_privacy: "public",
+		birthday_privacy: "public",
+		pronoun_privacy: "public",
+		visibility: "public",
+		metadata_privacy: "public",
 	};
-	let setPrivate = true;
+
+	const privacyNames: MemberPrivacy = {
+		avatar_privacy: "Avatar",
+		birthday_privacy: "Birthday",
+		description_privacy: "Description",
+		metadata_privacy: "Metadata",
+		name_privacy: "Name",
+		pronoun_privacy: "Pronouns",
+		visibility: "Visibility",
+	};
 
 	async function submit() {
+		success = false;
 		loading = true;
-		const data = {};
-		Object.keys(privacy).filter(x => privacy[x]).forEach(key => data[key] = setPrivate ? "private" : "public");
-		await api().private.bulk_privacy.member.post({ data });
+		const data = privacy;
+		try {
+			await api().private.bulk_privacy.member.post({ data });
+			success = true;
+		} catch (error) {
+			console.log(error);
+			err = error.message;
+		}
 		loading = false;
-	}	
+	}
+	
+	function changeAll(e: Event) {
+		const target = e.target as HTMLInputElement;
+		Object.keys(privacy).forEach(x => privacy[x] = target.value);
+	}
 </script>
 
 <Container>
@@ -43,22 +65,29 @@
 					</CardTitle>
 				</CardHeader>
 				<CardBody style="border-left: 4px solid #{user.color}">
-					<b>Apply the selected privacy options</b> (<i>and leave the unselected options untouched</i>):
-					<br><br>
-
-					{#each Object.keys(privacy) as key}
-						<FormCheck bind:checked={privacy[key]} label={capitalize(key.split("_")[0])}/>
-					{/each}
-
-					<br>
-					<Button on:click={() => Object.keys(privacy).forEach(x => privacy[x] = true)}>Select all</Button>
-					<Button on:click={() => Object.keys(privacy).forEach(x => privacy[x] = false)}>Select none</Button>
-					<br><br>
-
-					<input type="checkbox" bind:checked={setPrivate} class="form-check-input" id="privacy">
-					<label for="privacy">&nbsp;Check this box to set all selected privacy settings as <b>private</b>.
-						Uncheck to set to <b>public</b>.</label>
-					<br><br>
+					{#if err}
+					<Alert color="danger">{err}</Alert>
+					{/if}
+					{#if success}
+					<Alert color="success">Member privacy updated!</Alert>
+					{/if}
+					<Label><b>Set all to:</b></Label>
+					<Input type="select" on:change={(e) => changeAll(e)}>
+						<option>public</option>
+						<option>private</option>
+					</Input>
+					<hr/>
+					<Row>
+						{#each Object.keys(privacy) as x}
+						<Col xs={12} lg={6} class="mb-3">
+							<Label>{privacyNames[x]}:</Label>
+							<Input type="select" bind:value={privacy[x]}>
+								<option default>public</option>
+								<option>private</option>
+							</Input>
+						</Col>
+						{/each}
+					</Row>
 
 					<Button color="primary" on:click={submit} bind:disabled={loading}>
 						{#if loading}
