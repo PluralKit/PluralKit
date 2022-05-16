@@ -7,6 +7,9 @@ using Myriad.Rest;
 using Myriad.Rest.Exceptions;
 using Myriad.Types;
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -277,5 +280,25 @@ public class Checks
         {
             await ctx.Reply($"{e.Message}");
         }
+    }
+
+    public async Task DumpContext(Context ctx)
+    {
+        var o = new JObject();
+
+        o.Add("author_id", ctx.Author.Id);
+        o.Add("shard_id", ctx.ShardId);
+        o.Add("guild_id", ctx.Guild?.Id);
+        o.Add("channel_id", ctx.Channel.Id);
+        o.Add("channel_type", (int)ctx.Channel.Type);
+
+        if (ctx.MatchFlag("message-context", "mctx"))
+            o.Add("message_context", JsonConvert.DeserializeObject<JObject>(JsonConvert.SerializeObject(ctx.MessageContext)));
+
+        o.Add("bot_permissions", (ulong)await ctx.BotPermissions);
+        o.Add("user_permissions", (ulong)await ctx.UserPermissions);
+        o.Add("is_bot_admin", ctx.CheckBotAdmin());
+
+        await ctx.Reply("```json\n"+JsonConvert.SerializeObject(o, Formatting.Indented)+"\n```");
     }
 }

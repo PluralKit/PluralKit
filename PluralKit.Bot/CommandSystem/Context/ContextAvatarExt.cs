@@ -9,6 +9,7 @@ public static class ContextAvatarExt
     public static async Task<ParsedImage?> MatchImage(this Context ctx)
     {
         // If we have a user @mention/ID, use their avatar
+        // todo: this should probably just fetch the user from REST
         if (await ctx.MatchUser() is { } user)
         {
             var url = user.AvatarUrl("png", 256);

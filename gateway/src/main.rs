@@ -16,7 +16,8 @@ mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    init_tracing();
+    // init_tracing();
+    console_subscriber::init();
     info!("starting...");
 
     let cfg = config::load_config();

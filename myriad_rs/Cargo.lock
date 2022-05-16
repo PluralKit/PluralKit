@@ -528,6 +528,7 @@ dependencies = [
  "prost",
  "prost-build",
  "redis",
+ "tracing",
  "twilight-gateway",
 ]
 

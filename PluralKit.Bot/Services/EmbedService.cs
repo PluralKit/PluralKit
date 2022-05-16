@@ -347,6 +347,7 @@ public class EmbedService
         }
 
         if (userInfo == null)
+            // todo: this should probably just fetch the user
             userInfo = await _cache.GetOrFetchUser(_rest, msg.Message.Sender);
 
         // Calculate string displayed under "Sent by"

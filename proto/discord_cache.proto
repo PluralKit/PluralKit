@@ -13,7 +13,7 @@ message CachedChannel {
     uint64 id = 1;
     int32 type = 2;
     int32 position = 3;
-    string name = 4;
+    optional string name = 4;
     repeated Overwrite permission_overwrites = 5;
     optional uint64 guild_id = 6;
     optional uint64 parent_id = 7;

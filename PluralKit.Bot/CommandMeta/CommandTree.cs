@@ -136,6 +136,8 @@ public partial class CommandTree
             await ctx.Execute<Checks>(PermCheck, m => m.PermCheckChannel(ctx));
         else if (ctx.Match("proxy", "proxying", "proxycheck"))
             await ctx.Execute<Checks>(ProxyCheck, m => m.MessageProxyCheck(ctx));
+        else if (ctx.Match("ctx", "context"))
+            await ctx.Execute<Checks>(null, m => m.DumpContext(ctx));
         else if (!ctx.HasNext())
             await ctx.Reply($"{Emojis.Error} You need to pass a command. {availableCommandsStr}");
         else

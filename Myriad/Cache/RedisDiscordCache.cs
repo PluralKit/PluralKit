@@ -45,9 +45,6 @@ public class RedisDiscordCache: IDiscordCache
 
         foreach (var role in guild.Roles)
         {
-            // Don't call SaveRole because that updates guild state
-            // and we just got a brand new one :)
-            // actually with redis it doesn't update guild state, but we're still doing it here because transaction
             tr.HashSetAsync("roles", role.Id.HashWrapper(new CachedRole()
             {
                 Id = role.Id,

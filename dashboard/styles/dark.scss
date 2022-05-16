@@ -1,0 +1,23 @@
+.dark {
+    .navbar.bg-light {
+        background-color: var(--bs-body-bg) !important;
+    }
+    
+    .footer.bg-light {
+        background-color: var(--bs-dark) !important;
+    }
+    
+    > * {
+        .description a {
+            color: #159bd4 !important;
+        }
+    }
+
+    > * {
+        .nav-item {
+            .btn.btn-transparent {
+                color: rgba(250,250,250,.55);
+            }
+        }
+    }
+}
