@@ -124,7 +124,7 @@
 </Container>
 
 <svelte:head>
-    <title>pk-webs | settings</title>
+    <title>PluralKit | settings</title>
 </svelte:head>
 
 <style>

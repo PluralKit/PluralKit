@@ -24,7 +24,7 @@ import { get } from 'svelte/store';
 
 </script>
     <Navbar color="light" light expand="lg" class="mb-4">
-        <NavbarBrand>pk-webs</NavbarBrand>
+        <NavbarBrand>PluralKit</NavbarBrand>
         <NavbarToggler on:click={toggle}></NavbarToggler>
         <Collapse {isOpen} navbar expand="lg">
             <Nav class="ms-auto" navbar>

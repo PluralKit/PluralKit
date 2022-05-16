@@ -83,5 +83,5 @@
 </Container>
 
 <svelte:head>
-    <title>pk-webs | {title}</title>
+    <title>PluralKit | {title}</title>
 </svelte:head>

@@ -94,5 +94,5 @@
 </Container>
 
 <svelte:head>
-    <title>pk-webs | dash</title>
+    <title>PluralKit | dash</title>
 </svelte:head>
