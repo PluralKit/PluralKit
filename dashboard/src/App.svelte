@@ -4,7 +4,6 @@
   import Dash from "./pages/Dash.svelte";
   import Home from "./pages/Home.svelte";
   import Settings from './pages/Settings.svelte';
-  import Footer from './lib/Footer.svelte';
   import Public from "./pages/Public.svelte";
   import Main from "./pages/profiles/Main.svelte";
   import Status from './pages/status.svelte';
@@ -87,5 +86,4 @@ import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
     </Route>
     <Route path="status"><Status /></Route>
     <Route component={PageNotFound}/>
-  <Footer />
 </Router>
