@@ -7,12 +7,7 @@ export default defineConfig({
   plugins: [svelte()],
   optimizeDeps: { exclude: ["svelte-navigator"] },
   build: {
-    rollupOptions: {
-      input: {
-        main: 'index.html',
-        404: '404.html'
-      },
-    },
-    outDir: "docs"
+    outDir: "dist",
+    sourcemap: true,
   }
 })
