@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, CardHeader, CardBody, CardTitle, Row, Col, Button, Spinner } from 'sveltestrap';
+    import {Link} from 'svelte-navigator';
     import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
     import PrivacyEdit from './PrivacyEdit.svelte';
 
@@ -42,8 +43,8 @@
             </Col>
         </Row>
         <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
-        <Button style="flex: 0" color="secondary" on:click={() => window.location.href = window.location.origin+"/dash/bulk-member-privacy"}>Bulk member privacy</Button>
-        <Button style="flex: 0" color="secondary" on:click={() => window.location.href = window.location.origin+"/dash/bulk-group-privacy"}>Bulk group privacy</Button>
+        <Link to="/dash/bulk-member-privacy"><Button style="flex: 0" color="secondary">Bulk member privacy</Button></Link>
+        <Link to="/dash/bulk-group-privacy"><Button style="flex: 0" color="secondary">Bulk group privacy</Button></Link>
         {/if}
     </CardBody>
 </Card>

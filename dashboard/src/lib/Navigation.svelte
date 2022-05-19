@@ -24,7 +24,7 @@ import { get } from 'svelte/store';
 
 </script>
     <Navbar color="light" light expand="lg" class="mb-4">
-        <NavbarBrand>PluralKit</NavbarBrand>
+        <Link to="/" class="navbar-brand"><NavbarBrand tabindex={-1} class="m-0">PluralKit</NavbarBrand></Link>
         <NavbarToggler on:click={toggle}></NavbarToggler>
         <Collapse {isOpen} navbar expand="lg">
             <Nav class="ms-auto" navbar>
@@ -48,10 +48,10 @@ import { get } from 'svelte/store';
                 </Dropdown>
                 {/if}
                 <NavItem>
-                    <NavLink href="/settings">Settings</NavLink>
+                    <Link to="/settings" class="nav-link">Settings</Link>
                 </NavItem>
                 <NavItem>
-                    <NavLink href="/profile">Public</NavLink>
+                    <Link to="/profile" class="nav-link">Public</Link>
                 </NavItem>
             </Nav>
         </Collapse>
