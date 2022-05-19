@@ -113,6 +113,11 @@ code {
     background-color: var(--bs-body-bg) !important;
 }
 
+.sv-dd-item-active {
+    outline: 5px auto Highlight;
+    outline: 5px auto -webkit-focus-ring-color;
+}
+
 .sv-dropdown {
     position: static !important;
     border: 1px solid rgba(128, 128, 128, 0.3) !important;
