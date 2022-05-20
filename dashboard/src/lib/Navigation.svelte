@@ -39,9 +39,9 @@ import { get } from 'svelte/store';
                 <Dropdown nav inNavbar>
                     <DropdownToggle color="transparent" class="nav-link"><span class="select-text">Dash</span></DropdownToggle>
                     <DropdownMenu end>
-                        <Link style="text-decoration: none;" to="/dash?tab=system"><DropdownItem>System</DropdownItem></Link>
-                        <Link style="text-decoration: none;" to="/dash?tab=members"><DropdownItem>Members</DropdownItem></Link>
-                        <Link style="text-decoration: none;" to="/dash?tab=groups"><DropdownItem>Groups</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash?tab=system"><DropdownItem tabindex={-1}>System</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash?tab=members"><DropdownItem tabindex={-1}>Members</DropdownItem></Link>
+                        <Link style="text-decoration: none;" to="/dash?tab=groups"><DropdownItem tabindex={-1}>Groups</DropdownItem></Link>
                         <DropdownItem divider />
                         <DropdownItem on:click={logout}>Log out</DropdownItem>
                     </DropdownMenu>
