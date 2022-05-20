@@ -128,20 +128,20 @@
         <h5><div class="icon d-inline-block">
             <FaFolderPlus />
         </div>Add to Groups</h5>
-        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeAdded} options={groupsWithoutMemberSelection} multiple/>
+        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeAdded} options={groupsWithoutMemberSelection} multiple aria-label="search for groups to add"/>
         {#if !loading && groupsToBeAdded && groupsToBeAdded.length > 0}
-        <Button class="w-100 mt-2" color="primary" on:click={submitAdd}>Add</Button>{:else}
-        <Button class="w-100 mt-2" color="primary" disabled>{#if loading}<Spinner size="sm" />{:else}Add{/if}</Button>
+        <Button class="w-100 mt-2" color="primary" on:click={submitAdd} aria-label="add groups to member">Add</Button>{:else}
+        <Button class="w-100 mt-2" color="primary" disabled aria-label="add groups to member">{#if loading}<Spinner size="sm" />{:else}Add{/if}</Button>
         {/if}
         <hr/>
         <h5><div class="icon d-inline-block">
             <FaFolderMinus />
         </div>Remove from Groups</h5>
-        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeRemoved} options={groupsWithMemberSelection} multiple/>
+        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeRemoved} options={groupsWithMemberSelection} multiple aria-label="search for groups to remove"/>
         {#if !loading && groupsToBeRemoved && groupsToBeRemoved.length > 0}
-        <Button class="w-100 mt-2" color="primary" on:click={submitRemove}>Remove</Button>{:else}
-        <Button class="w-100 mt-2" color="primary" disabled>{#if loading}<Spinner size="sm" />{:else}Remove{/if}</Button>
+        <Button class="w-100 mt-2" color="primary" on:click={submitRemove} aria-label="remove groups from member">Remove</Button>{:else}
+        <Button class="w-100 mt-2" color="primary" disabled aria-label="remove groups from member">{#if loading}<Spinner size="sm" />{:else}Remove{/if}</Button>
         {/if}
     </Col>
 </Row>
-<Button style="flex: 0" color="secondary" on:click={() => groupMode = false}>Back</Button>
+<Button style="flex: 0" color="secondary" on:click={() => groupMode = false} aria-label="back to member card">Back</Button>

@@ -59,9 +59,9 @@
     {#each input as proxyTag, index (index)}
     <Col xs={12} lg={6} class="mb-2">
         <InputGroup>
-            <textarea class="form-control" style="resize: none; height: 1em" bind:value={proxyTag.prefix} use:focus={index === 0 ? true : false}/>
+            <textarea class="form-control" style="resize: none; height: 1em" bind:value={proxyTag.prefix} use:focus={index === 0 ? true : false} aria-label="proxy tag prefix"/>
             <Input disabled value="text"/>
-            <Input style="resize: none; height: 1em" type="textarea" bind:value={proxyTag.suffix}/>
+            <Input style="resize: none; height: 1em" type="textarea" bind:value={proxyTag.suffix} aria-label="proxy tag suffix"/>
         </InputGroup>
     </Col>
     {/each}
@@ -69,6 +69,6 @@
         <Button class="w-100" color="secondary" on:click={() => {input.push({prefix: "", suffix: ""}); input = input;}}>New</Button>
     </Col>
 </Row>
-{#if !loading}<Button style="flex 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={toggleProxyModal}>Back</Button>
-{:else}<Button style="flex 0" color="primary" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>
+{#if !loading}<Button style="flex 0" color="primary" on:click={submit} aria-label="submit proxy tags">Submit</Button> <Button style="flex: 0" color="secondary" on:click={toggleProxyModal} aria-label="go back">Back</Button>
+{:else}<Button style="flex 0" color="primary" disabled aria-label="submit proxy tags"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="go back">Back</Button>
 {/if}

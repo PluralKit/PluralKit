@@ -67,7 +67,7 @@
     <Alert color="danger">{err}</Alert>
     {/if}
     <Label><b>Set all to:</b></Label>
-    <select class="form-select" bind:value={allPrivacy} use:focus>
+    <select class="form-select" bind:value={allPrivacy} use:focus aria-label="set all to">
         <option>public</option>
         <option>private</option>
     </select>
@@ -75,54 +75,54 @@
     <Row>
         <Col xs={12} lg={6} class="mb-3">
             <Label>Description:</Label>
-            <Input type="select" bind:value={input.privacy.description_privacy}>
+            <Input type="select" bind:value={input.privacy.description_privacy} aria-label="member description privacy">
                 <option default={member.privacy.description_privacy === "public"}>public</option>
                 <option default={member.privacy.description_privacy === "private"}>private</option>
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
             <Label>Name:</Label>
-            <Input type="select" bind:value={input.privacy.name_privacy}>
+            <Input type="select" bind:value={input.privacy.name_privacy} aria-label="member name privacy">
                 <option default={member.privacy.name_privacy === "public"}>public</option>
                 <option default={member.privacy.name_privacy === "private"}>private</option>
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
             <Label>Avatar:</Label>
-            <Input type="select" bind:value={input.privacy.avatar_privacy}>
+            <Input type="select" bind:value={input.privacy.avatar_privacy} aria-label="member avatar privacy">
                 <option default={member.privacy.avatar_privacy === "public"}>public</option>
                 <option default={member.privacy.avatar_privacy === "private"}>private</option>
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
             <Label>Birthday:</Label>
-            <Input type="select" bind:value={input.privacy.birthday_privacy}>
+            <Input type="select" bind:value={input.privacy.birthday_privacy} aria-label="member birthday privacy">
                 <option default={member.privacy.birthday_privacy === "public"}>public</option>
                 <option default={member.privacy.birthday_privacy === "private"}>private</option>
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
             <Label>Pronouns:</Label>
-            <Input type="select" bind:value={input.privacy.pronoun_privacy}>
+            <Input type="select" bind:value={input.privacy.pronoun_privacy} aria-label="member pronoun privacy">
                 <option default={member.privacy.pronoun_privacy === "public"}>public</option>
                 <option default={member.privacy.pronoun_privacy === "private"}>private</option>
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
             <Label>Visibility:</Label>
-            <Input type="select" bind:value={input.privacy.visibility}>
+            <Input type="select" bind:value={input.privacy.visibility} aria-label="member visibility privacy">
                 <option default={member.privacy.visibility === "public"}>public</option>
                 <option default={member.privacy.visibility === "private"}>private</option>
             </Input>
         </Col>
         <Col xs={12} lg={6} class="mb-3">
             <Label>Metadata:</Label>
-            <Input type="select" bind:value={input.privacy.metadata_privacy}>
+            <Input type="select" bind:value={input.privacy.metadata_privacy} aria-label="member metadata privacy">
                 <option default={member.privacy.metadata_privacy === "public"}>public</option>
                 <option default={member.privacy.metadata_privacy === "private"}>private</option>
             </Input>
         </Col>
     </Row>
-{#if !loading}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={togglePrivacyModal}>Back</Button>
-{:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>
-{/if}
+    {#if !loading}<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit privacy edits">Submit</Button> <Button style="flex: 0" color="secondary" on:click={togglePrivacyModal} aria-label="cancel privacy edits">Back</Button>
+    {:else}<Button style="flex: 0" color="primary" disabled aria-label="submit privacy edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel privacy edits">Back</Button>
+    {/if}

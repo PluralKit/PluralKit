@@ -71,7 +71,7 @@
 					<Alert color="success">Group privacy updated!</Alert>
 					{/if}
 					<Label><b>Set all to:</b></Label>
-					<Input type="select" on:change={(e) => changeAll(e)}>
+					<Input type="select" on:change={(e) => changeAll(e)} aria-label="set all to">
 						<option>no change</option>
 						<option>public</option>
 						<option>private</option>
@@ -81,7 +81,7 @@
 						{#each Object.keys(privacy) as x}
 						<Col xs={12} lg={6} class="mb-3">
 							<Label>{privacyNames[x]}:</Label>
-							<Input type="select" bind:value={privacy[x]}>
+							<Input type="select" bind:value={privacy[x]} aria-label={`group ${privacyNames[x]} privacy`}>
 								<option default>no change</option>
 								<option>public</option>
 								<option>private</option>
@@ -90,7 +90,7 @@
 						{/each}
 					</Row>
 
-					<Button color="primary" on:click={submit} bind:disabled={loading}>
+					<Button color="primary" on:click={submit} bind:disabled={loading} aria-label="submit bulk group privacy">
 						{#if loading}
 						<Spinner />
 						{:else}

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert, Spinner, Modal, ModalHeader, ModalBody } from 'sveltestrap';
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, tick } from 'svelte';
     import autosize from 'svelte-autosize';
     import moment from 'moment';
 
@@ -102,6 +102,11 @@
             loading = false;
         }
     }
+
+    async function focus(el) {
+        await tick();
+        el.focus();
+    }
 </script>
 
 {#each err as error}
@@ -110,49 +115,49 @@
 <Row>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Name:</Label>
-        <Input bind:value={input.name} maxlength={100} type="text" placeholder={member.name} />
+        <Input bind:value={input.name} maxlength={100} type="text" placeholder={member.name} aria-label="member name"/>
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Display name:</Label>
-        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} type="text" placeholder={member.display_name} />
+        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} type="text" placeholder={member.display_name} aria-label="member display name" />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Pronouns:</Label>
-        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.pronouns} maxlength={100} type="text" placeholder={member.pronouns} />
+        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.pronouns} maxlength={100} type="text" placeholder={member.pronouns} aria-label="member pronouns" />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Birthday:</Label>
-        <Input bind:value={input.birthday} maxlength={100} type="text" placeholder={member.birthday} />
+        <Input bind:value={input.birthday} maxlength={100} type="text" placeholder={member.birthday} aria-label="member birthday" />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Color:</Label>
-        <Input bind:value={input.color} type="text" placeholder={member.color}/>
+        <Input bind:value={input.color} type="text" placeholder={member.color} aria-label="member color" />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Avatar url:</Label>
-        <Input bind:value={input.avatar_url} maxlength={256} type="url" placeholder={member.avatar_url}/>
+        <Input bind:value={input.avatar_url} maxlength={256} type="url" placeholder={member.avatar_url} aria-label="member avatar url"/>
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Banner url:</Label>
-        <Input bind:value={input.banner} maxlength={256} type="url" placeholder={member.banner}/>
+        <Input bind:value={input.banner} maxlength={256} type="url" placeholder={member.banner} aria-label="member banner url"/>
     </Col>
 </Row>
 <div class="my-2">
     <b>Description:</b><br />
     {#if descriptions.length > 0 && descriptions[0].trim() != ""}
-    <Button size="sm" color="primary" on:click={() => input.description = descriptions[0]}>Template 1</Button>
+    <Button size="sm" color="primary" on:click={() => input.description = descriptions[0]} aria-label="use template 1">Template 1</Button>
     {/if}
     {#if descriptions.length > 1 && descriptions[1].trim() != ""}
-    <Button size="sm" color="primary" on:click={() => input.description = descriptions[1]}>Template 2</Button>
+    <Button size="sm" color="primary" on:click={() => input.description = descriptions[1]} aria-label="use template 2">Template 2</Button>
     {/if}
     {#if descriptions.length > 2 && descriptions[2].trim() != ""}
-    <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]}>Template 3</Button>
+    <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]} aria-label="use template 3">Template 3</Button>
     {/if}
     <br>
-    <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={member.description}/>
+    <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={member.description} aria-label="member description"/>
 </div>
-{#if !loading}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false}>Back</Button><Button style="flex: 0; float: right;" color="danger" on:click={toggleDeleteModal}>Delete</Button>
-{:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button><Button style="flex: 0; float: right;" color="danger" disabled>Delete</Button>{/if}
+{#if !loading}<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit edits" >Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false} aria-label="cancel edits">Back</Button><Button style="flex: 0; float: right;" color="danger" on:click={toggleDeleteModal} aria-label="delete member">Delete</Button>
+{:else}<Button style="flex: 0" color="primary" disabled  aria-label="submit edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel edits">Back</Button><Button style="flex: 0; float: right;" color="danger" disabled aria-label="delete member">Delete</Button>{/if}
 <Modal size="lg" isOpen={deleteOpen} toggle={toggleDeleteModal}>
     <ModalHeader toggle={toggleDeleteModal}>
         Delete member
@@ -160,9 +165,9 @@
          <ModalBody>
              {#if deleteErr}<Alert color="danger">{deleteErr}</Alert>{/if}
              <Label>If you're sure you want to delete this member, type out the member ID (<code>{member.id}</code>) below.</Label>
-             <Input class="mb-3" bind:value={deleteInput} maxlength={7} placeholder={member.id}></Input>
-            {#if !loading}<Button style="flex 0" color="danger" on:click={submitDelete}>Delete</Button> <Button style="flex: 0" color="secondary" on:click={toggleDeleteModal}>Back</Button>
-            {:else}<Button style="flex 0" color="danger" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled>Back</Button>
+             <input class="mb-3 form-control" bind:value={deleteInput} maxlength={7} placeholder={member.id} aria-label={`type out the member id ${member.id} to confirm deletion`} use:focus>
+            {#if !loading}<Button style="flex 0" color="danger" on:click={submitDelete} aria-label="confirm delete">Delete</Button> <Button style="flex: 0" color="secondary" on:click={toggleDeleteModal} aria-label="cancel deletion">Back</Button>
+            {:else}<Button style="flex 0" color="danger" disabled><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel deletion">Back</Button>
             {/if}
         </ModalBody>
 </Modal>
