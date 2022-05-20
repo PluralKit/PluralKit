@@ -43,6 +43,8 @@
             </Col>
         </Row>
         <Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit system privacy">Edit</Button>
+        <Link to="/dash/bulk-member-privacy"><Button style="flex: 0" color="secondary" tabindex={-1}>Bulk member privacy</Button></Link>
+        <Link to="/dash/bulk-group-privacy"><Button style="flex: 0" color="secondary" tabindex={-1}>Bulk group privacy</Button></Link>
         {/if}
     </CardBody>
 </Card>

@@ -99,7 +99,7 @@
                         {:else}
                             <p>Welcome!</p>
                         {/if}
-                        <Link to="/dash"><Button style="float: left;" color='primary'>Go to dash</Button></Link><Button style="float: right;" color='danger' on:click={logout}>Log out</Button>
+                        <Link to="/dash"><Button style="float: left;" color='primary' tabindex={-1}>Go to dash</Button></Link><Button style="float: right;" color='danger' on:click={logout}>Log out</Button>
                     {:else}
                         <Row>
                             <Label>Enter your token here. You can get this by using <b>pk;token</b></Label>
