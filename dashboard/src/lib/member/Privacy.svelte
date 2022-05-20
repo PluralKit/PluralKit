@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, tick } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner } from "sveltestrap";
 
     import { Member } from '../../api/types';
@@ -54,6 +54,12 @@
             loading = false;
         }
     }
+
+    async function focus(el) {
+        await tick();
+        el.focus();
+    }
+
 </script>
 
 
@@ -61,10 +67,10 @@
     <Alert color="danger">{err}</Alert>
     {/if}
     <Label><b>Set all to:</b></Label>
-    <Input type="select" bind:value={allPrivacy}>
+    <select class="form-select" bind:value={allPrivacy} use:focus>
         <option>public</option>
         <option>private</option>
-    </Input>
+    </select>
     <hr />
     <Row>
         <Col xs={12} lg={6} class="mb-3">

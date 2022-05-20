@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, tick } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner, InputGroup } from "sveltestrap";
 
     import { Member } from '../../api/types';
@@ -43,6 +43,13 @@
             loading = false;
         }
     }
+
+    async function focus(el, first) {
+        if (first) {
+        await tick();
+        el.focus();
+        }
+    }
 </script>
 
 {#if err}
@@ -52,7 +59,7 @@
     {#each input as proxyTag, index (index)}
     <Col xs={12} lg={6} class="mb-2">
         <InputGroup>
-            <Input style="resize: none; height: 1em" type="textarea" bind:value={proxyTag.prefix} />
+            <textarea class="form-control" style="resize: none; height: 1em" bind:value={proxyTag.prefix} use:focus={index === 0 ? true : false}/>
             <Input disabled value="text"/>
             <Input style="resize: none; height: 1em" type="textarea" bind:value={proxyTag.suffix}/>
         </InputGroup>
