@@ -57,6 +57,7 @@
 {/if}
 <Container>
     <Row>
+        <h1 class="visually-hidden">Viewing a public system</h1>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
             {#if !user.id && !err}
             <div class="mx-auto text-center">
@@ -65,7 +66,7 @@
             {:else if err}
                 <Alert color="danger">{err}</Alert>
             {:else}
-            <Alert color="info">You are currently <b>viewing</b> a system.</Alert>
+            <Alert color="info" aria-hidden>You are currently <b>viewing</b> a system.</Alert>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <SystemMain bind:user isPublic={true} />

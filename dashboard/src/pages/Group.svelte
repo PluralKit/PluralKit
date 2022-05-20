@@ -109,11 +109,12 @@
 <Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
+            <h2 class="visually-hidden">Viewing {isPublic ? "a public" : "your own"} group</h2>
             {#if isDeleted}
                 <Alert color="success">Group has been successfully deleted. <Link to="/dash">Return to dash</Link></Alert>
             {:else}
             {#if isPublic}
-                <Alert color="info">You are currently <b>viewing</b> a group.</Alert>
+                <Alert color="info" aria-hidden>You are currently <b>viewing</b> a group.</Alert>
             {/if}
             {#if notOwnSystem}
                 <Alert color="danger">This group does not belong to your system, did you mean to look up <Link to={`/profile/g/${group.id}`}>it's public page</Link>?</Alert>

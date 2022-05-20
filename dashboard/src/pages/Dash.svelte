@@ -78,6 +78,7 @@
 <Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
+            <h2 class="visually-hidden">Viewing your own system</h2>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <SystemMain bind:user={user} bind:isPublic />

@@ -115,11 +115,12 @@
 <Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
+            <h2 class="visually-hidden">Viewing {isPublic ? "a public" : "your own"} member</h2>
             {#if isDeleted}
                 <Alert color="success">Member has been successfully deleted. <Link to="/dash">Return to dash</Link></Alert>
             {:else}
             {#if isPublic}
-                <Alert color="info">You are currently <b>viewing</b> a member.</Alert>
+                <Alert color="info" aria-hidden>You are currently <b>viewing</b> a member.</Alert>
             {/if}
             {#if notOwnSystem}
                 <Alert color="danger">This member does not belong to your system, did you mean to look up <Link to={`/profile/m/${member.id}`}>their public page</Link>?</Alert>

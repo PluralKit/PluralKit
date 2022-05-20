@@ -164,3 +164,15 @@ img.emoji {
     margin: 0 .05em 0 .1em;
     vertical-align: -0.1125em;
  }
+
+ //misc
+ .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
