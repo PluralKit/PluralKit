@@ -2,7 +2,8 @@
     import { Modal, CardHeader, CardTitle, Image, Spinner } from 'sveltestrap';
     import default_avatar from '../assets/default_avatar.png';
     import { toHTML } from 'discord-markdown';
-    import twemoji from 'twemoji';  
+    import twemoji from 'twemoji';
+    import type { Group, Member, System } from '../api/types'; 
 
     export let item: any;
 
@@ -21,6 +22,11 @@
 
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
+
+    let altText = "icon";
+    if (item.icon) altText = "group icon";
+    else if (item.proxy_tags) altText = "member avatar";
+    else if (item.tag) altText = "system avatar";
     
     export let loading: boolean = false;
 </script>
@@ -37,9 +43,9 @@
         <div class="d-inline-block mr-5" style="vertical-align: middle;"><Spinner color="primary" /></div>
         {/if}
         {#if item && (item.avatar_url || item.icon)}
-        <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt="Icon" />
+        <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt={altText} />
         {:else}
-        <img class="rounded-circle avatar" src={default_avatar} alt="avatar (default)" />
+        <img class="rounded-circle avatar" src={default_avatar} alt="icon (default)" />
         {/if}
         </div>
         <Modal isOpen={avatarOpen} toggle={toggleAvatarModal}>
