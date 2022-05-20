@@ -59,19 +59,19 @@
                     <hr/>
                     <Row class="mb-3">
                         <Col xs={12} lg={4} class="mb-2">
-                            <span id="s-bannertop">Show banners in the background?</span> <Toggle hideLabel style="display: inline" label="Remove banner from background" toggled={settings.appearance.banner_top} on:toggle={() => {settings.appearance.banner_top = !settings.appearance.banner_top; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <span id="s-bannertop">Show banners in the background?</span> <Toggle hideLabel style="display: inline" label="Show banners in the background of pages" toggled={settings.appearance.banner_top} on:toggle={() => {settings.appearance.banner_top = !settings.appearance.banner_top; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-bannertop" placement="bottom">If enabled, shows banners from the top of the system, member and group pages.</Tooltip>
                         </Col>
                         <Col xs={12} lg={4} class="mb-2">
-                            <span id="s-bannerbottom">Show banners at the bottom of cards?</span> <Toggle hideLabel style="display: inline" label="Remove banner from bottom" toggled={settings.appearance.banner_bottom} on:toggle={() => {settings.appearance.banner_bottom = !settings.appearance.banner_bottom; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <span id="s-bannerbottom">Show banners at the bottom of cards?</span> <Toggle hideLabel style="display: inline" label="Remove banner from bottom of cards and pages" toggled={settings.appearance.banner_bottom} on:toggle={() => {settings.appearance.banner_bottom = !settings.appearance.banner_bottom; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-bannerbottom" placement="bottom">If enabled, shows banners at the bottom of the system, member and group cards.</Tooltip>
                         </Col>
                         <Col xs={12} lg={4} class="mb-2">
-                            <span id="s-twemoji">Use twemoji?</span> <Toggle hideLabel style="display: inline" label="Convert to twemoji" toggled={settings.appearance.twemoji} on:toggle={() => {settings.appearance.twemoji = !settings.appearance.twemoji; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <span id="s-twemoji">Use twemoji?</span> <Toggle hideLabel style="display: inline" label="Convert all emojis to twemoji" toggled={settings.appearance.twemoji} on:toggle={() => {settings.appearance.twemoji = !settings.appearance.twemoji; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-twemoji" placement="bottom">If enabled, converts all emojis into twemoji.</Tooltip>
                         </Col>
                         <Col xs={12} lg={4} class="mb-2">
-                            <span id="s-colorbackground">Colored background?</span> <Toggle hideLabel style="display: inline" label="Member color as background" toggled={settings.appearance.color_background} on:toggle={() => {settings.appearance.color_background = !settings.appearance.color_background; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <span id="s-colorbackground">Colored background?</span> <Toggle hideLabel style="display: inline" label="Use member colors as background on pages" toggled={settings.appearance.color_background} on:toggle={() => {settings.appearance.color_background = !settings.appearance.color_background; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                                 <Tooltip target="s-colorbackground" placement="bottom">If enabled, turns the background on member pages into the member's color.</Tooltip>
                         </Col>
                     </Row>
@@ -83,11 +83,11 @@
                             <Tooltip target="s-opendyslexic" placement="bottom">If enabled, uses the opendyslexic font as it's main font.</Tooltip>
                         </Col> -->
                         <Col xs={12} lg={4} class="mb-2">
-                            <span id="s-expandedcards">Expand cards by default?</span> <Toggle hideLabel style="display: inline" label="Expand cards by default" toggled={settings.accessibility.expandedcards} on:toggle={() => {settings.accessibility.expandedcards = !settings.accessibility.expandedcards; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <span id="s-expandedcards">Expand cards by default?</span> <Toggle hideLabel style="display: inline" label="Expand cards by default in list" toggled={settings.accessibility.expandedcards} on:toggle={() => {settings.accessibility.expandedcards = !settings.accessibility.expandedcards; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-expandedcards" placement="bottom">If enabled, lists will be expanded by default (overrides page links).</Tooltip>
                         </Col>
                         <Col xs={12} lg={4} class="mb-2">
-                            <span id="s-pagelinks">Use page links instead of cards?</span> <Toggle hideLabel style="display: inline" label="Use page links" toggled={settings.accessibility.pagelinks} on:toggle={() => {settings.accessibility.pagelinks= !settings.accessibility.pagelinks; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
+                            <span id="s-pagelinks">Use page links instead of cards?</span> <Toggle hideLabel style="display: inline" label="Use page links instead of expandable cards" toggled={settings.accessibility.pagelinks} on:toggle={() => {settings.accessibility.pagelinks= !settings.accessibility.pagelinks; localStorage.setItem("pk-settings", JSON.stringify(settings));}}/>
                             <Tooltip target="s-pagelinks" placement="bottom">If enabled, the list items will not expand, but instead link to the corresponding page.</Tooltip>
                         </Col>
                     </Row>
@@ -108,13 +108,13 @@
                 <CardBody>
                     <p>Templates allow you to quickly set up a member description with a specific layout. Put in the template in one of the below fields, and access it whenever you create or edit a member. You can set up to 3 templates.</p>
                     <b>Template 1</b>
-                    <textarea class="form-control" bind:value={descriptions[0]} maxlength={1000} use:autosize placeholder={descriptions[0]}/>
+                    <textarea class="form-control" bind:value={descriptions[0]} maxlength={1000} use:autosize placeholder={descriptions[0]} aria-label="Description template 1"/>
                     <br>
                     <b>Template 2</b>
-                    <textarea class="form-control" bind:value={descriptions[1]} maxlength={1000} use:autosize placeholder={descriptions[1]}/>
+                    <textarea class="form-control" bind:value={descriptions[1]} maxlength={1000} use:autosize placeholder={descriptions[1]} aria-label="Description template 2"/>
                     <br>
                     <b>Template 3</b>
-                    <textarea class="form-control" bind:value={descriptions[2]} maxlength={1000} use:autosize placeholder={descriptions[2]}/>
+                    <textarea class="form-control" bind:value={descriptions[2]} maxlength={1000} use:autosize placeholder={descriptions[2]} aria-label="Description template 3"/>
                     <br>
                     <Button on:click={saveDescriptionTemplates}>Save</Button>
                 </CardBody>
