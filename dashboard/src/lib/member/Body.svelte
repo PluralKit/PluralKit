@@ -102,8 +102,8 @@
         </Col>
         {/if}
         {#if member.banner}
-        <Col xs={12} lg={3} class="mb-2">
-            <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal}>View</Button>
+        <Col xs={12} lg={4} class="mb-2">
+            <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal} aria-label="view member banner">View</Button>
             <Modal isOpen={bannerOpen} toggle={toggleBannerModal}>
                 <div slot="external" on:click={toggleBannerModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
                     <Image style="display: block; margin: auto;" src={member.banner} thumbnail alt="Your system banner" />
@@ -113,7 +113,7 @@
         {/if}
         {#if member.privacy && !isPublic}
         <Col xs={12} lg={4} class="mb-2">
-            <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal}>Edit</Button>
+            <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal} aria-label="edit member privacy">Edit</Button>
             <Modal size="lg" isOpen={privacyOpen} toggle={togglePrivacyModal}>
                 <ModalHeader toggle={togglePrivacyModal}>
                     Edit privacy
@@ -126,7 +126,7 @@
         {/if}
         {#if member.proxy_tags && !isPublic}
         <Col xs={12} lg={4} class="mb-2">
-            <b>Proxy Tags:</b> <Button size="sm" color="secondary" on:click={toggleProxyModal}>Edit</Button>
+            <b>Proxy Tags:</b> <Button size="sm" color="secondary" on:click={toggleProxyModal} aria-label="edit member proxy tags">Edit</Button>
             <Modal size="lg" isOpen={proxyOpen} toggle={toggleProxyModal}>
                 <ModalHeader toggle={toggleProxyModal}>
                     Edit proxy tags
@@ -143,16 +143,16 @@
         {@html htmlDescription && htmlDescription}
     </div>
     {#if (member.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
-    <img src={member.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 17em; object-fit: cover"/>
+    <img src={member.banner} alt="member banner" class="w-100 mb-3 rounded" style="max-height: 17em; object-fit: cover"/>
     {/if}
     {#if !isPublic}
-    <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
-    {#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => groupMode = true}>Groups</Button>{/if}
+    <Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit member information">Edit</Button>
+    {#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => groupMode = true} aria-label="edit member groups">Groups</Button>{/if}
     {/if}
     {#if !isPage}
-    <Link to={isPublic ? `/profile/m/${member.id}` : `/dash/m/${member.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View page</Button></Link>
+    <Link to={isPublic ? `/profile/m/${member.id}` : `/dash/m/${member.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member page">View page</Button></Link>
     {:else}
-    <Link to={isPublic ? `/profile/s/${member.system}?tab=members` : "/dash?tab=members"}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View system</Button></Link>
+    <Link to={isPublic ? `/profile/s/${member.system}?tab=members` : "/dash?tab=members"}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member's system">View system</Button></Link>
     {/if}
     {:else if editMode}
         <Edit on:deletion on:update bind:member bind:editMode />

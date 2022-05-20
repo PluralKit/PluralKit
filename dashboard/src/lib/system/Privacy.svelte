@@ -42,9 +42,7 @@
                 <b>Front history:</b> {user.privacy.front_history_privacy}
             </Col>
         </Row>
-        <Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
-        <Link to="/dash/bulk-member-privacy"><Button style="flex: 0" color="secondary">Bulk member privacy</Button></Link>
-        <Link to="/dash/bulk-group-privacy"><Button style="flex: 0" color="secondary">Bulk group privacy</Button></Link>
+        <Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit system privacy">Edit</Button>
         {/if}
     </CardBody>
 </Card>

@@ -73,10 +73,10 @@
     {/if}
     {#if user.banner}
     <Col xs={12} lg={3} class="mb-2">
-        <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal}>View</Button>
+        <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal} aria-label="view system banner">View</Button>
         <Modal isOpen={bannerOpen} toggle={toggleBannerModal}>
             <div slot="external" on:click={toggleBannerModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
-                <Image style="display: block; margin: auto;" src={user.banner} thumbnail alt="Your system banner" />
+                <Image style="display: block; margin: auto;" src={user.banner} thumbnail alt="system banner" />
             </div>
         </Modal>
     </Col>
@@ -87,8 +87,8 @@
     {@html htmlDescription}
 </div>
 {#if (user.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
-<img src={user.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
+<img src={user.banner} alt="system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
 {#if !isPublic}
-<Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button>
+<Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit system information">Edit</Button>
 {/if}

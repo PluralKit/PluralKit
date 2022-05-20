@@ -76,17 +76,17 @@
     {/if}
     {#if group.banner}
     <Col xs={12} lg={3} class="mb-2">
-        <b>Banner:</b> <Button size="sm" color="light" on:click={toggleBannerModal}>View</Button>
+        <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal} aria-label="view group banner">View</Button>
         <Modal isOpen={bannerOpen} toggle={toggleBannerModal}>
             <div slot="external" on:click={toggleBannerModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
-                <Image style="display: block; margin: auto;" src={group.banner} thumbnail alt="Your system banner" />
+                <Image style="display: block; margin: auto;" src={group.banner} thumbnail alt="group banner" />
             </div>
         </Modal>
     </Col>
     {/if}
     {#if group.privacy}
     <Col xs={12} lg={4} class="mb-2">
-        <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal}>Edit</Button>
+        <b>Privacy:</b> <Button size="sm" color="secondary" on:click={togglePrivacyModal} aria-label="edit group privacy">Edit</Button>
         <Modal size="lg" isOpen={privacyOpen} toggle={togglePrivacyModal}>
             <ModalHeader toggle={togglePrivacyModal}>
                Edit privacy
@@ -103,16 +103,16 @@
     {@html htmlDescription && htmlDescription}
 </div>
 {#if (group.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
-<img src={group.banner} alt="your system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
+<img src={group.banner} alt="group banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
 {#if !isPublic}
-<Button style="flex: 0" color="primary" on:click={() => editMode = true}>Edit</Button> 
-{#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => memberMode = true}>Members</Button>{/if}
+<Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit group information">Edit</Button> 
+{#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => memberMode = true} aria-label="edit group members">Members</Button>{/if}
 {/if}
 {#if !isPage}
-    <Link to={isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View page</Button></Link>
+    <Link to={isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view group page">View page</Button></Link>
     {:else if !isPublic}
-    <Link to="/dash?tab=groups"><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary">View system</Button></Link>
+    <Link to="/dash?tab=groups"><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view group system">View system</Button></Link>
     {/if}
 {:else if editMode}
 <Edit on:deletion on:update bind:group bind:editMode />
