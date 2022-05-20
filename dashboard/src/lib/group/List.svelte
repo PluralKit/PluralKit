@@ -198,7 +198,7 @@
             <Col xs={12} lg={3} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Page length</InputGroupText>
-                    <Input bind:value={itemsPerPageValue} type="select">
+                    <Input bind:value={itemsPerPageValue} type="select" aria-label="page length">
                         <option>10</option>
                         <option>25</option>
                         <option>50</option>
@@ -208,7 +208,7 @@
             <Col xs={12} lg={3} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Search by</InputGroupText>
-                    <Input bind:value={searchBy} type="select">
+                    <Input bind:value={searchBy} type="select" aria-label="search by">
                         <option>name</option>
                         <option>display name</option>
                         <option>description</option>
@@ -219,7 +219,7 @@
             <Col xs={12} lg={3} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Sort by</InputGroupText>
-                    <Input bind:value={sortBy} type="select">
+                    <Input bind:value={sortBy} type="select" aria-label="sort by">
                         <option>name</option>
                         <option>display name</option>
                         {#if !isPublic}<option>creation date</option>{/if}
@@ -230,7 +230,7 @@
             <Col xs={12} lg={3} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Sort order</InputGroupText>
-                    <Input bind:value={sortOrder} type="select">
+                    <Input bind:value={sortOrder} type="select" aria-label="sort order">
                         <option>ascending</option>
                         <option>descending</option>
                     </Input>
@@ -240,7 +240,7 @@
             <Col xs={12} lg={3} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Only show</InputGroupText>
-                    <Input bind:value={privacyFilter} type="select">
+                    <Input bind:value={privacyFilter} type="select" aria-label="only show">
                         <option>all</option>
                         <option>public</option>
                         <option>private</option>
@@ -277,7 +277,7 @@
         <Alert color="danger">{err}</Alert>
     </Col>
     <Col xs={12} lg={2}>
-        <Button class="w-100 mb-3" color="primary" on:click={fetchGroups}>Refresh</Button>
+        <Button class="w-100 mb-3" color="primary" on:click={fetchGroups} aria-label="refresh group list">Refresh</Button>
     </Col>
 </Row>
 {:else}
@@ -287,7 +287,7 @@
         <Input class="mb-3" bind:value={searchValue} placeholder="search by {searchBy}..."/>
     </Col>
     <Col xs={12} lg={2}>
-        <Button class="w-100 mb-3" color="primary" on:click={fetchGroups}>Refresh</Button>
+        <Button class="w-100 mb-3" color="primary" on:click={fetchGroups} aria-label="refresh group list">Refresh</Button>
     </Col>
 </Row>
 <ListPagination bind:currentPage bind:pageAmount />
