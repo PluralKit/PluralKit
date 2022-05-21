@@ -2,23 +2,35 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>annotations</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DebugSymbols>true</DebugSymbols>
-      <DebugType>full</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
+        <ProjectReference Include="..\Myriad\Myriad.csproj"/>
+        <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Google.Protobuf" Version="3.13.0"/>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.32.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.37.0" PrivateAssets="All"/>
+        <PackageReference Include="Humanizer.Core" Version="2.8.26"/>
+        <PackageReference Include="Sentry" Version="3.11.1"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="DSharpPlus" Version="4.0.0-nightly-00755" />
-      <PackageReference Include="DSharpPlus.Rest" Version="4.0.0-nightly-00755" />
-      <PackageReference Include="Humanizer.Core" Version="2.8.26" />
-      <PackageReference Include="Sentry" Version="2.1.6" />
-      <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2" />
+        <Protobuf Include="../proto/state.proto" GrpcServices="Client" Link="Protos/state.proto"/>
     </ItemGroup>
 </Project>

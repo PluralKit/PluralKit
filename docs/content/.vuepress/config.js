@@ -41,7 +41,6 @@ module.exports = {
           "/getting-started",
           "/user-guide",
           "/command-list",
-          "/api-documentation",
           "/privacy-policy",
           "/faq",
           "/tips-and-tricks"
@@ -58,18 +57,26 @@ module.exports = {
           "/staff/compatibility",
         ]
       },
+      {
+        title: "API Documentation",
+        collapsable: false,
+        children: [
+          "/api/changelog",
+          "/api/reference",
+          "/api/endpoints",
+          "/api/models",
+          "/api/errors",
+          "/api/dispatch",
+          "/api/legacy"
+        ]
+      },
       ["https://discord.gg/PczBt78", "Join the support server"],
     ]
   },
 
   plugins: [
     '@vuepress/plugin-back-to-top',
-    [
-      '@vuepress/google-analytics',
-      {
-        "ga": "UA-173942267-1"
-      }
-    ],
+    ["plausible-analytics", { domain: 'plausible.pluralkit.me' }],
     ["vuepress-plugin-clean-urls", { normalSuffix: "/" }],
   ],
 }

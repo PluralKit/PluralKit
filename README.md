@@ -47,13 +47,25 @@ $ docker-compose up -d
 ```
 
 ## Manually
-* Install the .NET 5 SDK (see https://dotnet.microsoft.com/download)
+* Install the .NET 6 SDK (see https://dotnet.microsoft.com/download)
 * Clone this repository: `git clone https://github.com/xSke/PluralKit`
 * Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`
   * Alternatively, `dotnet build -c Release -o build/`, then `dotnet build/PluralKit.Bot.dll`
 
 (tip: use `scripts/run-test-db.sh` to run a temporary PostgreSQL database on your local system. Requires Docker.)
+
+## Scheduled Tasks worker
+
+There is a scheduled tasks worker that needs to be ran separately from the bot. This handles cleaning up the database, and updating statistics (system/member/etc counts, shown in the `pk;stats` embed).
+
+Note: This worker is *not required*, and the bot will function correctly without it.
+
+If you are running the bot via docker-compose, this is set up automatically.
+
+If you run the bot manually you can run the worker as such:
+* `dotnet run --project PluralKit.ScheduledTasks`
+* or if you used `dotnet build` rather than `dotnet run` to run the bot: `dotnet build/PluralKit.ScheduledTasks.dll`
 
 # Upgrading database from legacy version
 If you have an instance of the Python version of the bot (from the `legacy` branch), you may need to take extra database migration steps.

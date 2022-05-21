@@ -1,275 +1,466 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using App.Metrics;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
+using Myriad.Cache;
+using Myriad.Extensions;
+using Myriad.Gateway;
+using Myriad.Rest;
+using Myriad.Rest.Exceptions;
+using Myriad.Rest.Types.Requests;
+using Myriad.Types;
 
 using PluralKit.Core;
 
 using Serilog;
 
-namespace PluralKit.Bot
+namespace PluralKit.Bot;
+
+public class ProxyService
 {
-    public class ProxyService
+    private static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
+    private readonly IDiscordCache _cache;
+    private readonly IDatabase _db;
+    private readonly DispatchService _dispatch;
+    private readonly LastMessageCacheService _lastMessage;
+
+    private readonly LogChannelService _logChannel;
+    private readonly ILogger _logger;
+    private readonly ProxyMatcher _matcher;
+    private readonly IMetrics _metrics;
+    private readonly ModelRepository _repo;
+    private readonly DiscordApiClient _rest;
+    private readonly WebhookExecutorService _webhookExecutor;
+    private readonly NodaTime.IClock _clock;
+
+    public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor,
+            DispatchService dispatch, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo,
+                      NodaTime.IClock clock, IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
     {
-        private static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
+        _logChannel = logChannel;
+        _webhookExecutor = webhookExecutor;
+        _dispatch = dispatch;
+        _db = db;
+        _matcher = matcher;
+        _metrics = metrics;
+        _repo = repo;
+        _cache = cache;
+        _lastMessage = lastMessage;
+        _rest = rest;
+        _clock = clock;
+        _logger = logger.ForContext<ProxyService>();
+    }
 
-        private readonly LogChannelService _logChannel;
-        private readonly IDatabase _db;
-        private readonly ModelRepository _repo;
-        private readonly ILogger _logger;
-        private readonly WebhookExecutorService _webhookExecutor;
-        private readonly ProxyMatcher _matcher;
-        private readonly IMetrics _metrics;
+    public async Task<bool> HandleIncomingMessage(MessageCreateEvent message, MessageContext ctx,
+                                Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions)
+    {
+        if (!ShouldProxy(channel, message, ctx))
+            return false;
 
-        public ProxyService(LogChannelService logChannel, ILogger logger,
-                            WebhookExecutorService webhookExecutor, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo)
+        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, guild.Id, null);
+
+        if (autoproxySettings.AutoproxyMode == AutoproxyMode.Latch && IsUnlatch(message))
         {
-            _logChannel = logChannel;
-            _webhookExecutor = webhookExecutor;
-            _db = db;
-            _matcher = matcher;
-            _metrics = metrics;
-            _repo = repo;
-            _logger = logger.ForContext<ProxyService>();
+            // "unlatch"
+            await _repo.UpdateAutoproxy(ctx.SystemId.Value, guild.Id, null, new()
+            {
+                AutoproxyMember = null
+            });
+            return false;
         }
 
-        public async Task<bool> HandleIncomingMessage(DiscordClient shard, DiscordMessage message, MessageContext ctx, bool allowAutoproxy)
-        {
-            if (!ShouldProxy(message, ctx)) return false;
+        var rootChannel = await _cache.GetRootChannel(message.ChannelId);
 
-            // Fetch members and try to match to a specific member
-            await using var conn = await _db.Obtain();
+        List<ProxyMember> members;
+        // Fetch members and try to match to a specific member
+        using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
+            members = (await _repo.GetProxyMembers(message.Author.Id, message.GuildId!.Value)).ToList();
 
-            List<ProxyMember> members;
-            using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
-                members = (await _repo.GetProxyMembers(conn, message.Author.Id, message.Channel.GuildId)).ToList();
-            
-            if (!_matcher.TryMatch(ctx, members, out var match, message.Content, message.Attachments.Count > 0,
+        if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
 
-            // Permission check after proxy match so we don't get spammed when not actually proxying
-            if (!await CheckBotPermissionsOrError(message.Channel)) return false;
+        // this is hopefully temporary, so not putting it into a separate method
+        if (message.Content != null && message.Content.Length > 2000)
+            throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
 
-            // this method throws, so no need to wrap it in an if statement
-            CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx));
-            
-            // Check if the sender account can mention everyone/here + embed links
-            // we need to "mirror" these permissions when proxying to prevent exploits
-            var senderPermissions = message.Channel.PermissionsInSync(message.Author);
-            var allowEveryone = (senderPermissions & Permissions.MentionEveryone) != 0;
-            var allowEmbeds = (senderPermissions & Permissions.EmbedLinks) != 0;
+        // Permission check after proxy match so we don't get spammed when not actually proxying
+        if (!CheckBotPermissionsOrError(botPermissions, rootChannel.Id))
+            return false;
 
-            // Everything's in order, we can execute the proxy!
-            await ExecuteProxy(shard, conn, message, ctx, match, allowEveryone, allowEmbeds);
-            return true;
-        }
+        // this method throws, so no need to wrap it in an if statement
+        CheckProxyNameBoundsOrError(match.Member.ProxyName(ctx));
 
-        private bool ShouldProxy(DiscordMessage msg, MessageContext ctx)
+        // Check if the sender account can mention everyone/here + embed links
+        // we need to "mirror" these permissions when proxying to prevent exploits
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message);
+        var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
+        var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
+
+        // Everything's in order, we can execute the proxy!
+        await ExecuteProxy(message, ctx, autoproxySettings, match, allowEveryone, allowEmbeds);
+        return true;
+    }
+
+    public bool ShouldProxy(Channel channel, Message msg, MessageContext ctx)
+    {
+        // Make sure author has a system
+        if (ctx.SystemId == null)
+            throw new ProxyChecksFailedException(Errors.NoSystemError.Message);
+
+        // Make sure channel is a guild text channel and this is a normal message
+        if (!DiscordUtils.IsValidGuildChannel(channel))
+            throw new ProxyChecksFailedException("This channel is not a text channel.");
+        if (msg.Type != Message.MessageType.Default && msg.Type != Message.MessageType.Reply)
+            throw new ProxyChecksFailedException("This message is not a normal message.");
+
+        // Make sure author is a normal user
+        if (msg.Author.System == true || msg.Author.Bot || msg.WebhookId != null)
+            throw new ProxyChecksFailedException("This message was not sent by a normal user.");
+
+        // Make sure proxying is enabled here
+        if (ctx.InBlacklist)
+            throw new ProxyChecksFailedException(
+                "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
+
+        // Make sure the system has proxying enabled in the server
+        if (!ctx.ProxyEnabled)
+            throw new ProxyChecksFailedException(
+                "Your system has proxying disabled in this server. Type `pk;proxy on` to enable it.");
+
+        // Make sure we have either an attachment or message content
+        var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
+        if (isMessageBlank && msg.Attachments.Length == 0)
+            throw new ProxyChecksFailedException("Message cannot be blank.");
+
+        if (msg.Activity != null)
+            throw new ProxyChecksFailedException("Message contains an invite to an activity, which cannot be re-sent by PluralKit.");
+
+        if (msg.StickerItems != null) // && msg.StickerItems.Any(s => s.Type == Sticker.StickerType.GUILD && s.GuildId != msg.GuildId))
+            throw new ProxyChecksFailedException("Message contains stickers, which cannot be re-sent by PluralKit.");
+
+        // All good!
+        return true;
+    }
+
+    private async Task ExecuteProxy(Message trigger, MessageContext ctx, AutoproxySettings autoproxySettings,
+                                    ProxyMatch match, bool allowEveryone, bool allowEmbeds)
+    {
+        // Create reply embed
+        var embeds = new List<Embed>();
+        if (trigger.Type == Message.MessageType.Reply && trigger.MessageReference?.ChannelId == trigger.ChannelId)
         {
-            // Make sure author has a system
-            if (ctx.SystemId == null) return false;
-            
-            // Make sure channel is a guild text channel and this is a normal message
-            if ((msg.Channel.Type != ChannelType.Text && msg.Channel.Type != ChannelType.News) || msg.MessageType != MessageType.Default) return false;
-            
-            // Make sure author is a normal user
-            if (msg.Author.IsSystem == true || msg.Author.IsBot || msg.WebhookMessage) return false;
-            
-            // Make sure proxying is enabled here
-            if (!ctx.ProxyEnabled || ctx.InBlacklist) return false;
-            
-            // Make sure we have either an attachment or message content
-            var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;
-            if (isMessageBlank && msg.Attachments.Count == 0) return false;
-            
-            // All good!
-            return true;
-        }
-
-        private async Task ExecuteProxy(DiscordClient shard, IPKConnection conn, DiscordMessage trigger, MessageContext ctx,
-                                        ProxyMatch match, bool allowEveryone, bool allowEmbeds)
-        {
-            // Create reply embed
-            var embeds = new List<DiscordEmbed>();
-            if (trigger.Reference?.Channel?.Id == trigger.ChannelId)
+            var repliedTo = trigger.ReferencedMessage.Value;
+            if (repliedTo != null)
             {
-                var repliedTo = await FetchReplyOriginalMessage(trigger.Reference);
-                if (repliedTo != null)
-                {
-                    var embed = CreateReplyEmbed(repliedTo);
-                    if (embed != null)
-                        embeds.Add(embed);
-                }
-                
-                // TODO: have a clean error for when message can't be fetched instead of just being silent
+                var (nickname, avatar) = await FetchReferencedMessageAuthorInfo(trigger, repliedTo);
+                var embed = CreateReplyEmbed(match, trigger, repliedTo, nickname, avatar);
+                if (embed != null)
+                    embeds.Add(embed);
             }
-            
-            // Send the webhook
-            var content = match.ProxyContent;
-            if (!allowEmbeds) content = content.BreakLinkEmbeds();
-            var proxyMessage = await _webhookExecutor.ExecuteWebhook(trigger.Channel, FixSingleCharacterName(match.Member.ProxyName(ctx)),
-                match.Member.ProxyAvatar(ctx),
-                content, trigger.Attachments, embeds, allowEveryone);
 
-            await HandleProxyExecutedActions(shard, conn, ctx, trigger, proxyMessage, match);
+            // TODO: have a clean error for when message can't be fetched instead of just being silent
         }
 
-        private async Task<DiscordMessage> FetchReplyOriginalMessage(DiscordMessageReference reference)
+        // Send the webhook
+        var content = match.ProxyContent;
+        if (!allowEmbeds) content = content.BreakLinkEmbeds();
+
+        var messageChannel = await _cache.GetChannel(trigger.ChannelId);
+        var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
+        var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
+        var guild = await _cache.GetGuild(trigger.GuildId.Value);
+
+        var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
+            GuildId = trigger.GuildId!.Value,
+            ChannelId = rootChannel.Id,
+            ThreadId = threadId,
+            Name = await FixSameName(messageChannel.Id, ctx, match.Member),
+            AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
+            Content = content,
+            Attachments = trigger.Attachments,
+            FileSizeLimit = guild.FileSizeLimit(),
+            Embeds = embeds.ToArray(),
+            Stickers = trigger.StickerItems,
+            AllowEveryone = allowEveryone
+        });
+        await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
+    }
+
+    public async Task ExecuteReproxy(Message trigger, PKMessage msg, ProxyMember member)
+    {
+        var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
+        if (originalMsg == null)
+            throw new PKError("Could not reproxy message.");
+
+        // Get a MessageContext for the original message
+        MessageContext ctx =
+            await _repo.GetMessageContext(msg.Sender, msg.Guild!.Value, msg.Channel);
+
+        // Make sure proxying is enabled here
+        if (ctx.InBlacklist)
+            throw new ProxyChecksFailedException(
+                "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
+
+        var match = new ProxyMatch
+        {
+            Member = member,
+        };
+
+        var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
+        var rootChannel = await _rest.GetChannelOrNull(messageChannel.IsThread() ? messageChannel.ParentId!.Value : messageChannel.Id);
+        var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
+        var guild = await _rest.GetGuildOrNull(msg.Guild!.Value);
+
+        // Grab user permissions
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, null);
+        var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
+
+        // Make sure user has permissions to send messages
+        if (!senderPermissions.HasFlag(PermissionSet.SendMessages))
+            throw new PKError("You don't have permission to send messages in the channel that message is in.");
+
+        // Send the reproxied webhook
+        var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
+        {
+            GuildId = guild.Id,
+            ChannelId = rootChannel.Id,
+            ThreadId = threadId,
+            Name = match.Member.ProxyName(ctx),
+            AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
+            Content = originalMsg.Content!,
+            Attachments = originalMsg.Attachments!,
+            FileSizeLimit = guild.FileSizeLimit(),
+            Embeds = originalMsg.Embeds!.ToArray(),
+            Stickers = originalMsg.StickerItems!,
+            AllowEveryone = allowEveryone
+        });
+
+        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+        await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
+        await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
+    }
+
+    private async Task<(string?, string?)> FetchReferencedMessageAuthorInfo(Message trigger, Message referenced)
+    {
+        if (referenced.WebhookId != null)
+            return (null, null);
+
+        try
+        {
+            var member = await _rest.GetGuildMember(trigger.GuildId!.Value, referenced.Author.Id);
+            return (member?.Nick, member?.Avatar);
+        }
+        catch (ForbiddenException)
+        {
+            _logger.Warning(
+                "Failed to fetch member {UserId} in guild {GuildId} when getting reply nickname, falling back to username",
+                referenced.Author.Id, trigger.GuildId!.Value);
+            return (null, null);
+        }
+    }
+
+    private Embed CreateReplyEmbed(ProxyMatch match, Message trigger, Message repliedTo, string? nickname,
+                                   string? avatar)
+    {
+        // repliedTo doesn't have a GuildId field :/
+        var jumpLink = $"https://discord.com/channels/{trigger.GuildId}/{repliedTo.ChannelId}/{repliedTo.Id}";
+
+        var content = new StringBuilder();
+
+        var hasContent = !string.IsNullOrWhiteSpace(repliedTo.Content);
+        if (hasContent)
+        {
+            var msg = repliedTo.Content;
+            if (msg.Length > 100)
+            {
+                msg = repliedTo.Content.Substring(0, 100);
+                var endsWithOpenMention = Regex.IsMatch(msg, @"<[at]?[@#:][!&]?(\w+:)?(\d+)?(:[tTdDfFR])?$");
+                if (endsWithOpenMention)
+                {
+                    var mentionTail = repliedTo.Content.Substring(100).Split(">")[0];
+                    if (repliedTo.Content.Contains(msg + mentionTail + ">"))
+                        msg += mentionTail + ">";
+                }
+
+                var endsWithUrl = Regex.IsMatch(msg,
+                    @"(http|https)(:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})?\.?([a-zA-Z0-9()]{1,6})?\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$");
+                if (endsWithUrl)
+                {
+                    var urlTail = repliedTo.Content.Substring(100).Split(" ")[0];
+                    msg += urlTail + " ";
+                }
+
+                var spoilersInOriginalString = Regex.Matches(repliedTo.Content, @"\|\|").Count;
+                var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
+                if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
+                    msg += "||";
+                if (msg != repliedTo.Content)
+                    msg += "…";
+            }
+
+            content.Append($"**[Reply to:]({jumpLink})** ");
+            content.Append(msg);
+            if (repliedTo.Attachments.Length > 0 || repliedTo.Embeds.Length > 0)
+                content.Append($" {Emojis.Paperclip}");
+        }
+        else
+        {
+            content.Append($"*[(click to see attachment)]({jumpLink})*");
+        }
+
+        var username = nickname ?? repliedTo.Author.Username;
+        var avatarUrl = avatar != null
+            ? $"https://cdn.discordapp.com/guilds/{trigger.GuildId}/users/{repliedTo.Author.Id}/avatars/{avatar}.png"
+            : $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";
+
+        return new Embed
+        {
+            // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
+            Author = new Embed.EmbedAuthor($"{username}\u2004\u21a9\ufe0f", IconUrl: avatarUrl),
+            Description = content.ToString(),
+            Color = match.Member.Color?.ToDiscordColor()
+        };
+    }
+
+    private async Task<string> FixSameName(ulong channelId, MessageContext ctx, ProxyMember member)
+    {
+        var proxyName = member.ProxyName(ctx);
+
+        var lastMessage = _lastMessage.GetLastMessage(channelId)?.Previous;
+        if (lastMessage == null)
+            // cache is out of date or channel is empty.
+            return proxyName;
+
+        var pkMessage = await _db.Execute(conn => _repo.GetMessage(conn, lastMessage.Id));
+
+        if (lastMessage.AuthorUsername == proxyName)
+        {
+            // last message wasn't proxied by us, but somehow has the same name
+            // it's probably from a different webhook (Tupperbox?) but let's fix it anyway!
+            if (pkMessage == null)
+                return FixSameNameInner(proxyName);
+
+            // last message was proxied by a different member
+            if (pkMessage.Member?.Id != member.Id)
+                return FixSameNameInner(proxyName);
+        }
+
+        // if we fixed the name last message and it's the same member proxying, we want to fix it again
+        if (lastMessage.AuthorUsername == FixSameNameInner(proxyName) && pkMessage?.Member?.Id == member.Id)
+            return FixSameNameInner(proxyName);
+
+        // No issues found, current proxy name is fine.
+        return proxyName;
+    }
+
+    private string FixSameNameInner(string name)
+        => $"{name}\u17b5";
+
+    public static bool IsUnlatch(Message message)
+        => message.Content.StartsWith(@"\\") || message.Content.StartsWith("\\\u200b\\");
+
+    private async Task HandleProxyExecutedActions(MessageContext ctx, AutoproxySettings autoproxySettings,
+                                                  Message triggerMessage, Message proxyMessage, ProxyMatch match,
+                                                  bool deletePrevious = true)
+    {
+        var sentMessage = new PKMessage
+        {
+            Channel = triggerMessage.ChannelId,
+            Guild = triggerMessage.GuildId,
+            Member = match.Member.Id,
+            Mid = proxyMessage.Id,
+            OriginalMid = triggerMessage.Id,
+            Sender = triggerMessage.Author.Id
+        };
+
+        Task SaveMessageInDatabase()
+            => _repo.AddMessage(sentMessage);
+
+        Task LogMessageToChannel() =>
+            _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
+
+        Task SaveLatchAutoproxy() => autoproxySettings.AutoproxyMode == AutoproxyMode.Latch
+            ? _repo.UpdateAutoproxy(ctx.SystemId.Value, triggerMessage.GuildId, null, new()
+            {
+                AutoproxyMember = match.Member.Id,
+                LastLatchTimestamp = _clock.GetCurrentInstant(),
+            })
+            : Task.CompletedTask;
+
+        Task DispatchWebhook() => _dispatch.Dispatch(ctx.SystemId.Value, sentMessage);
+
+        async Task DeleteProxyTriggerMessage()
+        {
+            if (!deletePrevious)
+                return;
+
+            // Wait a second or so before deleting the original message
+            await Task.Delay(MessageDeletionDelay);
             try
             {
-                return await reference.Channel.GetMessageAsync(reference.Message.Id);
+                await _rest.DeleteMessage(triggerMessage.ChannelId, triggerMessage.Id);
             }
             catch (NotFoundException)
             {
-                _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but it was not found",
-                    reference.Channel.Id, reference.Message.Id);
+                _logger.Debug(
+                    "Trigger message {TriggerMessageId} was already deleted when we attempted to; deleting proxy message {ProxyMessageId} also",
+                    triggerMessage.Id, proxyMessage.Id);
+                await HandleTriggerAlreadyDeleted(proxyMessage);
+                // Swallow the exception, we don't need it
             }
-            catch (UnauthorizedException)
-            {
-                _logger.Warning("Attempted to fetch reply message {ChannelId}/{MessageId} but bot was not allowed to",
-                    reference.Channel.Id, reference.Message.Id);
-            }
-
-            return null;
         }
 
-        private DiscordEmbed CreateReplyEmbed(DiscordMessage original)
+        // Run post-proxy actions (simultaneously; order doesn't matter)
+        await Task.WhenAll(
+            DeleteProxyTriggerMessage(),
+            SaveMessageInDatabase(),
+            LogMessageToChannel(),
+            SaveLatchAutoproxy(),
+            DispatchWebhook()
+        );
+    }
+
+    private async Task HandleTriggerAlreadyDeleted(Message proxyMessage)
+    {
+        // If a trigger message is deleted before we get to delete it, we can assume a mod bot or similar got to it
+        // In this case we should also delete the now-proxied message.
+        // This is going to hit the message delete event handler also, so that'll do the cleanup for us
+
+        try
         {
-            var content = new StringBuilder();
-
-            var hasContent = !string.IsNullOrWhiteSpace(original.Content);
-            if (hasContent)
-            {
-                var msg = original.Content;
-                if (msg.Length > 100)
-                {
-                    msg = original.Content.Substring(0, 100);
-                    var spoilersInOriginalString = Regex.Matches(original.Content, @"\|\|").Count;
-                    var spoilersInTruncatedString = Regex.Matches(msg, @"\|\|").Count;
-                    if (spoilersInTruncatedString % 2 == 1 && spoilersInOriginalString % 2 == 0)
-                        msg += "||";
-                    msg += "…";
-                }
-                
-                content.Append($"**[Reply to:]({original.JumpLink})** ");
-                content.Append(msg);
-                if (original.Attachments.Count > 0)
-                    content.Append($" {Emojis.Paperclip}");
-            }
-            else
-            {
-                content.Append($"*[(click to see attachment)]({original.JumpLink})*");
-            }
-            
-            var username = (original.Author as DiscordMember)?.Nickname ?? original.Author.Username;
-            
-            return new DiscordEmbedBuilder()
-                // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
-                .WithAuthor($"{username}\u2004\u21a9\ufe0f", iconUrl: original.Author.GetAvatarUrl(ImageFormat.Png, 1024))
-                .WithDescription(content.ToString())
-                .Build();
+            await _rest.DeleteMessage(proxyMessage.ChannelId, proxyMessage.Id);
         }
+        catch (NotFoundException) { }
+        catch (UnauthorizedException) { }
+    }
 
-        private async Task HandleProxyExecutedActions(DiscordClient shard, IPKConnection conn, MessageContext ctx,
-                                                      DiscordMessage triggerMessage, DiscordMessage proxyMessage,
-                                                      ProxyMatch match)
-        {
-            Task SaveMessageInDatabase() => _repo.AddMessage(conn, new PKMessage
-            {
-                Channel = triggerMessage.ChannelId,
-                Guild = triggerMessage.Channel.GuildId,
-                Member = match.Member.Id,
-                Mid = proxyMessage.Id,
-                OriginalMid = triggerMessage.Id,
-                Sender = triggerMessage.Author.Id
-            });
-            
-            Task LogMessageToChannel() => _logChannel.LogMessage(shard, ctx, match, triggerMessage, proxyMessage.Id).AsTask();
-            
-            async Task DeleteProxyTriggerMessage()
-            {
-                // Wait a second or so before deleting the original message
-                await Task.Delay(MessageDeletionDelay);
-                try
-                {
-                    await triggerMessage.DeleteAsync();
-                }
-                catch (NotFoundException)
-                {
-                    _logger.Debug("Trigger message {TriggerMessageId} was already deleted when we attempted to; deleting proxy message {ProxyMessageId} also", 
-                        triggerMessage.Id, proxyMessage.Id);
-                    await HandleTriggerAlreadyDeleted(proxyMessage);
-                    // Swallow the exception, we don't need it
-                }
-            }
-            
-            // Run post-proxy actions (simultaneously; order doesn't matter)
-            // Note that only AddMessage is using our passed-in connection, careful not to pass it elsewhere and run into conflicts
-            await Task.WhenAll(
-                DeleteProxyTriggerMessage(),
-                SaveMessageInDatabase(),
-                LogMessageToChannel()
-            );
-        }
+    private bool CheckBotPermissionsOrError(PermissionSet permissions, ulong responseChannel)
+    {
+        // If we can't send messages at all, just bail immediately.
+        // 2020-04-22: Manage Messages does *not* override a lack of Send Messages.
+        if (!permissions.HasFlag(PermissionSet.SendMessages))
+            return false;
 
-        private async Task HandleTriggerAlreadyDeleted(DiscordMessage proxyMessage)
-        {
-            // If a trigger message is deleted before we get to delete it, we can assume a mod bot or similar got to it
-            // In this case we should also delete the now-proxied message.
-            // This is going to hit the message delete event handler also, so that'll do the cleanup for us
+        if (!permissions.HasFlag(PermissionSet.ManageWebhooks))
+            throw new PKError("PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages."
+                            + " Please contact a server administrator to remedy this.");
 
-            try
-            {
-                await proxyMessage.DeleteAsync();
-            }
-            catch (NotFoundException) { }
-            catch (UnauthorizedException) { }
-        }
+        if (!permissions.HasFlag(PermissionSet.ManageMessages))
+            throw new PKError("PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the original trigger message."
+                            + " Please contact a server administrator to remedy this.");
 
-        private async Task<bool> CheckBotPermissionsOrError(DiscordChannel channel)
-        {
-            var permissions = channel.BotPermissions();
+        return true;
+    }
 
-            // If we can't send messages at all, just bail immediately.
-            // 2020-04-22: Manage Messages does *not* override a lack of Send Messages.
-            if ((permissions & Permissions.SendMessages) == 0) return false;
+    private void CheckProxyNameBoundsOrError(string proxyName)
+    {
+        if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
+    }
 
-            if ((permissions & Permissions.ManageWebhooks) == 0)
-            {
-                // todo: PKError-ify these
-                await channel.SendMessageFixedAsync(
-                    $"{Emojis.Error} PluralKit does not have the *Manage Webhooks* permission in this channel, and thus cannot proxy messages. Please contact a server administrator to remedy this.");
-                return false;
-            }
-
-            if ((permissions & Permissions.ManageMessages) == 0)
-            {
-                await channel.SendMessageFixedAsync(
-                    $"{Emojis.Error} PluralKit does not have the *Manage Messages* permission in this channel, and thus cannot delete the original trigger message. Please contact a server administrator to remedy this.");
-                return false;
-            }
-
-            return true;
-        }
-
-        private string FixSingleCharacterName(string proxyName)
-        {
-            if (proxyName.Length == 1) return proxyName += "\u17b5";
-            else return proxyName;
-        }
-
-        private void CheckProxyNameBoundsOrError(string proxyName)
-        {
-            if (proxyName.Length > Limits.MaxProxyNameLength) throw Errors.ProxyNameTooLong(proxyName);
-        }
+    public class ProxyChecksFailedException: Exception
+    {
+        public ProxyChecksFailedException(string message) : base(message) { }
     }
 }

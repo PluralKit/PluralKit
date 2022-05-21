@@ -1,81 +1,86 @@
-﻿#nullable enable
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+#nullable enable
+using SqlKata;
 
-using Dapper;
+namespace PluralKit.Core;
 
-namespace PluralKit.Core
+public partial class ModelRepository
 {
-    public partial class ModelRepository
+    public Task<PKGroup?> GetGroup(GroupId id)
     {
-        public Task<PKGroup?> GetGroupByName(IPKConnection conn, SystemId system, string name) =>
-            conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where system = @System and lower(Name) = lower(@Name)", new {System = system, Name = name});
-        
-        public Task<PKGroup?> GetGroupByDisplayName(IPKConnection conn, SystemId system, string display_name) =>
-            conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where system = @System and lower(display_name) = lower(@Name)", new {System = system, Name = display_name});
-        
-        public Task<PKGroup?> GetGroupByHid(IPKConnection conn, string hid) =>
-            conn.QueryFirstOrDefaultAsync<PKGroup?>("select * from groups where hid = @hid", new {hid = hid.ToLowerInvariant()});
-        
-        public Task<int> GetGroupMemberCount(IPKConnection conn, GroupId id, PrivacyLevel? privacyFilter = null)
-        {
-            var query = new StringBuilder("select count(*) from group_members");
-            if (privacyFilter != null)
-                query.Append(" inner join members on group_members.member_id = members.id");
-            query.Append(" where group_members.group_id = @Id");
-            if (privacyFilter != null)
-                query.Append(" and members.member_visibility = @PrivacyFilter");
-            return conn.QuerySingleOrDefaultAsync<int>(query.ToString(), new {Id = id, PrivacyFilter = privacyFilter});
-        }
-        
-        public async Task<PKGroup> CreateGroup(IPKConnection conn, SystemId system, string name)
-        {
-            var group = await conn.QueryFirstAsync<PKGroup>(
-                "insert into groups (hid, system, name) values (find_free_group_hid(), @System, @Name) returning *",
-                new {System = system, Name = name});
-            _logger.Information("Created group {GroupId} in system {SystemId}: {GroupName}", group.Id, system, name);
-            return group;
-        }
+        var query = new Query("groups").Where("id", id);
+        return _db.QueryFirst<PKGroup?>(query);
+    }
 
-        public Task<PKGroup> UpdateGroup(IPKConnection conn, GroupId id, GroupPatch patch)
-        {
-            _logger.Information("Updated {GroupId}: {@GroupPatch}", id, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("groups", "id = @id"))
-                .WithConstant("id", id)
-                .Build("returning *");
-            return conn.QueryFirstAsync<PKGroup>(query, pms);
-        }
+    public Task<PKGroup?> GetGroupByName(SystemId system, string name)
+    {
+        var query = new Query("groups").Where("system", system).WhereRaw("lower(name) = lower(?)", name.ToLower());
+        return _db.QueryFirst<PKGroup?>(query);
+    }
 
-        public Task DeleteGroup(IPKConnection conn, GroupId group)
-        {
-            _logger.Information("Deleted {GroupId}", group);
-            return conn.ExecuteAsync("delete from groups where id = @Id", new {Id = @group});
-        }
+    public Task<PKGroup?> GetGroupByDisplayName(SystemId system, string display_name)
+    {
+        var query = new Query("groups").Where("system", system)
+            .WhereRaw("lower(display_name) = lower(?)", display_name.ToLower());
+        return _db.QueryFirst<PKGroup?>(query);
+    }
 
-        public async Task AddMembersToGroup(IPKConnection conn, GroupId group,
-                                            IReadOnlyCollection<MemberId> members)
-        {
-            await using var w =
-                conn.BeginBinaryImport("copy group_members (group_id, member_id) from stdin (format binary)");
-            foreach (var member in members)
-            {
-                await w.StartRowAsync();
-                await w.WriteAsync(group.Value);
-                await w.WriteAsync(member.Value);
-            }
+    public Task<PKGroup?> GetGroupByHid(string hid, SystemId? system = null)
+    {
+        var query = new Query("groups").Where("hid", hid.ToLower());
+        if (system != null)
+            query = query.Where("system", system);
+        return _db.QueryFirst<PKGroup?>(query);
+    }
 
-            await w.CompleteAsync();
-            _logger.Information("Added members to {GroupId}: {MemberIds}", group, members);
-        }
+    public Task<PKGroup?> GetGroupByGuid(Guid uuid)
+    {
+        var query = new Query("groups").Where("uuid", uuid);
+        return _db.QueryFirst<PKGroup?>(query);
+    }
 
-        public Task RemoveMembersFromGroup(IPKConnection conn, GroupId group,
-                                           IReadOnlyCollection<MemberId> members)
-        {
-            _logger.Information("Removed members from {GroupId}: {MemberIds}", group, members);
-            return conn.ExecuteAsync("delete from group_members where group_id = @Group and member_id = any(@Members)",
-                new {Group = @group, Members = members.ToArray()});
-        }
+    public Task<int> GetGroupMemberCount(GroupId id, PrivacyLevel? privacyFilter = null)
+    {
+        var query = new Query("group_members")
+            .SelectRaw("count(*)")
+            .Where("group_members.group_id", id);
+
+        if (privacyFilter != null)
+            query = query
+                .Join("members", "group_members.member_id", "members.id")
+                .Where("members.member_visibility", privacyFilter);
+
+        return _db.QueryFirst<int>(query);
+    }
+
+    public async Task<PKGroup> CreateGroup(SystemId system, string name, IPKConnection? conn = null)
+    {
+        var query = new Query("groups").AsInsert(new { hid = new UnsafeLiteral("find_free_group_hid()"), system, name });
+        var group = await _db.QueryFirst<PKGroup>(conn, query, "returning *");
+        _logger.Information("Created group {GroupId} in system {SystemId}: {GroupName}", group.Id, system, name);
+        return group;
+    }
+
+    public async Task<PKGroup> UpdateGroup(GroupId id, GroupPatch patch, IPKConnection? conn = null)
+    {
+        _logger.Information("Updated {GroupId}: {@GroupPatch}", id, patch);
+        var query = patch.Apply(new Query("groups").Where("id", id));
+        var group = await _db.QueryFirst<PKGroup>(conn, query, "returning *");
+
+        if (conn == null)
+            _ = _dispatch.Dispatch(id,
+                new UpdateDispatchData { Event = DispatchEvent.UPDATE_GROUP, EventData = patch.ToJson() });
+        return group;
+    }
+
+    public async Task DeleteGroup(GroupId group)
+    {
+        var oldGroup = await GetGroup(group);
+
+        _logger.Information("Deleted {GroupId}", group);
+        var query = new Query("groups").AsDelete().Where("id", group);
+        await _db.ExecuteQuery(query);
+
+        if (oldGroup != null)
+            _ = _dispatch.Dispatch(oldGroup.System, oldGroup.Uuid, DispatchEvent.DELETE_GROUP);
     }
 }

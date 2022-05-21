@@ -2,10 +2,16 @@
 bin/
 obj/
 
+# rust build files
+target/
+
 # IDE files
 .idea/
+.run/
 .vscode/
 tags/
+.DS_Store
+mono_crash*
 
 # Dependencies
 node_modules/
@@ -18,3 +24,4 @@ pluralkit.*.conf
 
 # Generated
 logs/
+.version

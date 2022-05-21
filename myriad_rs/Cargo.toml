@@ -1,0 +1,16 @@
+[package]
+name = "myriad"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+
+prost = "0.10.3"
+twilight-gateway = "0.10.1"
+redis = { version = "0.21.5", features = ["aio", "tokio-comp"] }
+
+[build-dependencies]
+prost-build = "0.10.3"

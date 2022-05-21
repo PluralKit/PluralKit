@@ -1,15 +1,10 @@
-using System.Threading.Tasks;
+using Myriad.Gateway;
 
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
+namespace PluralKit.Bot;
 
-namespace PluralKit.Bot
+public interface IEventHandler<in T> where T : IGatewayEvent
 {
-    public interface IEventHandler<in T> where T: DiscordEventArgs
-    {
-        Task Handle(DiscordClient shard, T evt);
+    Task Handle(int shardId, T evt);
 
-        DiscordChannel ErrorChannelFor(T evt) => null;
-    }
+    ulong? ErrorChannelFor(T evt, ulong userId) => null;
 }

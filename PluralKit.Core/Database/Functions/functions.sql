@@ -1,19 +1,18 @@
 ﻿create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
     returns table (
         system_id int,
+        is_deleting bool,
         log_channel bigint,
         in_blacklist bool,
         in_log_blacklist bool,
         log_cleanup_enabled bool,
         proxy_enabled bool,
-        autoproxy_mode int,
-        autoproxy_member int,
-        last_message bigint,
-        last_message_member int,
         last_switch int,
         last_switch_members int[],
         last_switch_timestamp timestamp,
         system_tag text,
+        system_guild_tag text,
+        tag_enabled bool,
         system_avatar text,
         allow_autoproxy bool,
         latch_timeout integer
@@ -21,33 +20,34 @@
 as $$
     -- CTEs to query "static" (accessible only through args) data
     with
-        system as (select systems.*, allow_autoproxy as account_autoproxy from accounts inner join systems on systems.id = accounts.system where accounts.uid = account_id),
-        guild as (select * from servers where id = guild_id),
-        last_message as (select * from messages where messages.guild = guild_id and messages.sender = account_id order by mid desc limit 1)
+        system as (select systems.*, system_config.latch_timeout, system_guild.tag as guild_tag, system_guild.tag_enabled as tag_enabled, allow_autoproxy as account_autoproxy from accounts
+            left join systems on systems.id = accounts.system
+            left join system_config on system_config.system = accounts.system
+            left join system_guild on system_guild.system = accounts.system and system_guild.guild = guild_id
+            where accounts.uid = account_id),
+        guild as (select * from servers where id = guild_id)
     select
-        system.id as system_id,
+        system.id                                  as system_id,
+        system.is_deleting,
         guild.log_channel,
-        (channel_id = any(guild.blacklist)) as in_blacklist,
-        (channel_id = any(guild.log_blacklist)) as in_log_blacklist,
+        (channel_id = any (guild.blacklist))       as in_blacklist,
+        (channel_id = any (guild.log_blacklist))   as in_log_blacklist,
         coalesce(guild.log_cleanup_enabled, false),
         coalesce(system_guild.proxy_enabled, true) as proxy_enabled,
-        coalesce(system_guild.autoproxy_mode, 1) as autoproxy_mode,
-        system_guild.autoproxy_member,
-        last_message.mid as last_message,
-        last_message.member as last_message_member,
-        system_last_switch.switch as last_switch,
-        system_last_switch.members as last_switch_members,
-        system_last_switch.timestamp as last_switch_timestamp,
-        system.tag as system_tag,
-        system.avatar_url as system_avatar,
-        system.account_autoproxy as allow_autoproxy,
-        system.latch_timeout as latch_timeout
+        system_last_switch.switch                  as last_switch,
+        system_last_switch.members                 as last_switch_members,
+        system_last_switch.timestamp               as last_switch_timestamp,
+        system.tag                                 as system_tag,
+        system.guild_tag                           as system_guild_tag,
+        coalesce(system.tag_enabled, true)         as tag_enabled,
+        system.avatar_url                          as system_avatar,
+        system.account_autoproxy                   as allow_autoproxy,
+        system.latch_timeout                       as latch_timeout
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder
         left join system on true
         left join guild on true
-        left join last_message on true
         left join system_last_switch on system_last_switch.system = system.id
         left join system_guild on system_guild.system = system.id and system_guild.guild = guild_id
 $$ language sql stable rows 1;
@@ -60,33 +60,37 @@ create function proxy_members(account_id bigint, guild_id bigint)
         id int,
         proxy_tags proxy_tag[],
         keep_proxy bool,
-        
+
         server_name text,
         display_name text,
         name text,
-        
+
         server_avatar text,
         avatar text,
+
+        color char(6),
 
         allow_autoproxy bool
     )
 as $$
     select
         -- Basic data
-        members.id as id,
-        members.proxy_tags as proxy_tags,
-        members.keep_proxy as keep_proxy,
-    
+        members.id                as id,
+        members.proxy_tags        as proxy_tags,
+        members.keep_proxy        as keep_proxy,
+
         -- Name info
         member_guild.display_name as server_name,
-        members.display_name as display_name,
-        members.name as name,
-        
-        -- Avatar info
-        member_guild.avatar_url as server_avatar,
-        members.avatar_url as avatar,
+        members.display_name      as display_name,
+        members.name              as name,
 
-        members.allow_autoproxy as allow_autoproxy
+        -- Avatar info
+        member_guild.avatar_url   as server_avatar,
+        members.avatar_url        as avatar,
+
+        members.color             as color,
+
+        members.allow_autoproxy   as allow_autoproxy
     from accounts
         inner join systems on systems.id = accounts.system
         inner join members on members.system = systems.id

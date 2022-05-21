@@ -1,93 +1,98 @@
-using System.Collections.Generic;
-using System.Linq;
-
-using DSharpPlus;
-using DSharpPlus.EventArgs;
+using Myriad.Gateway;
 
 using Sentry;
 
-namespace PluralKit.Bot
+namespace PluralKit.Bot;
+
+public interface ISentryEnricher<T> where T : IGatewayEvent
 {
-    public interface ISentryEnricher<T> where T: DiscordEventArgs
+    void Enrich(Scope scope, int shardId, T evt);
+}
+
+public class SentryEnricher:
+    ISentryEnricher<MessageCreateEvent>,
+    ISentryEnricher<MessageDeleteEvent>,
+    ISentryEnricher<MessageUpdateEvent>,
+    ISentryEnricher<MessageDeleteBulkEvent>,
+    ISentryEnricher<MessageReactionAddEvent>
+{
+    private readonly Bot _bot;
+
+    public SentryEnricher(Bot bot)
     {
-        void Enrich(Scope scope, DiscordClient shard, T evt);
+        _bot = bot;
     }
 
-    public class SentryEnricher:
-        ISentryEnricher<MessageCreateEventArgs>,
-        ISentryEnricher<MessageDeleteEventArgs>,
-        ISentryEnricher<MessageUpdateEventArgs>,
-        ISentryEnricher<MessageBulkDeleteEventArgs>,
-        ISentryEnricher<MessageReactionAddEventArgs>
+    // TODO: should this class take the Scope by dependency injection instead?
+    // Would allow us to create a centralized "chain of handlers" where this class could just be registered as an entry in
+
+    public void Enrich(Scope scope, int shardId, MessageCreateEvent evt)
     {
-        // TODO: should this class take the Scope by dependency injection instead?
-        // Would allow us to create a centralized "chain of handlers" where this class could just be registered as an entry in
-        
-        public void Enrich(Scope scope, DiscordClient shard, MessageCreateEventArgs evt)
-        {
-            scope.AddBreadcrumb(evt.Message.Content, "event.message", data: new Dictionary<string, string>
+        scope.AddBreadcrumb(evt.Content, "event.message",
+            data: new Dictionary<string, string>
             {
                 {"user", evt.Author.Id.ToString()},
-                {"channel", evt.Channel.Id.ToString()},
-                {"guild", evt.Channel.GuildId.ToString()},
-                {"message", evt.Message.Id.ToString()},
+                {"channel", evt.ChannelId.ToString()},
+                {"guild", evt.GuildId.ToString()},
+                {"message", evt.Id.ToString()}
             });
-            scope.SetTag("shard", shard.ShardId.ToString());
+        scope.SetTag("shard", shardId.ToString());
 
-            // Also report information about the bot's permissions in the channel
-            // We get a lot of permission errors so this'll be useful for determining problems
-            var perms = evt.Channel.BotPermissions();
-            scope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
-        }
+        // Also report information about the bot's permissions in the channel
+        // We get a lot of permission errors so this'll be useful for determining problems
 
-        public void Enrich(Scope scope, DiscordClient shard, MessageDeleteEventArgs evt)
-        {
-            scope.AddBreadcrumb("", "event.messageDelete",
-                data: new Dictionary<string, string>()
-                {
-                    {"channel", evt.Channel.Id.ToString()},
-                    {"guild", evt.Channel.GuildId.ToString()},
-                    {"message", evt.Message.Id.ToString()},
-                });
-            scope.SetTag("shard", shard.ShardId.ToString());
-        }
+        // todo: re-add this
+        // var perms = _bot.PermissionsIn(evt.ChannelId);
+        // scope.AddBreadcrumb(perms.ToPermissionString(), "permissions");
+    }
 
-        public void Enrich(Scope scope, DiscordClient shard, MessageUpdateEventArgs evt)
-        {
-            scope.AddBreadcrumb(evt.Message.Content ?? "<unknown>", "event.messageEdit",
-                data: new Dictionary<string, string>()
-                {
-                    {"channel", evt.Channel.Id.ToString()},
-                    {"guild", evt.Channel.GuildId.ToString()},
-                    {"message", evt.Message.Id.ToString()}
-                });
-            scope.SetTag("shard", shard.ShardId.ToString());
-        }
+    public void Enrich(Scope scope, int shardId, MessageDeleteBulkEvent evt)
+    {
+        scope.AddBreadcrumb("", "event.messageDelete",
+            data: new Dictionary<string, string>
+            {
+                {"channel", evt.ChannelId.ToString()},
+                {"guild", evt.GuildId.ToString()},
+                {"messages", string.Join(",", evt.Ids)}
+            });
+        scope.SetTag("shard", shardId.ToString());
+    }
 
-        public void Enrich(Scope scope, DiscordClient shard, MessageBulkDeleteEventArgs evt)
-        {
-            scope.AddBreadcrumb("", "event.messageDelete",
-                data: new Dictionary<string, string>()
-                {
-                    {"channel", evt.Channel.Id.ToString()},
-                    {"guild", evt.Channel.Id.ToString()},
-                    {"messages", string.Join(",", evt.Messages.Select(m => m.Id))},
-                });
-            scope.SetTag("shard", shard.ShardId.ToString());
-        }
+    public void Enrich(Scope scope, int shardId, MessageUpdateEvent evt)
+    {
+        scope.AddBreadcrumb(evt.Content.Value ?? "<unknown>", "event.messageEdit",
+            data: new Dictionary<string, string>
+            {
+                {"channel", evt.ChannelId.ToString()},
+                {"guild", evt.GuildId.Value.ToString()},
+                {"message", evt.Id.ToString()}
+            });
+        scope.SetTag("shard", shardId.ToString());
+    }
 
-        public void Enrich(Scope scope, DiscordClient shard, MessageReactionAddEventArgs evt)
-        {
-            scope.AddBreadcrumb("", "event.reaction",
-                data: new Dictionary<string, string>()
-                {
-                    {"user", evt.User.Id.ToString()},
-                    {"channel", (evt.Channel?.Id ?? 0).ToString()},
-                    {"guild", (evt.Channel?.GuildId ?? 0).ToString()},
-                    {"message", evt.Message.Id.ToString()},
-                    {"reaction", evt.Emoji.Name}
-                });
-            scope.SetTag("shard", shard.ShardId.ToString());
-        }
+    public void Enrich(Scope scope, int shardId, MessageDeleteEvent evt)
+    {
+        scope.AddBreadcrumb("", "event.messageDelete",
+            data: new Dictionary<string, string>
+            {
+                {"channel", evt.ChannelId.ToString()},
+                {"guild", evt.GuildId.ToString()},
+                {"message", evt.Id.ToString()}
+            });
+        scope.SetTag("shard", shardId.ToString());
+    }
+
+    public void Enrich(Scope scope, int shardId, MessageReactionAddEvent evt)
+    {
+        scope.AddBreadcrumb("", "event.reaction",
+            data: new Dictionary<string, string>
+            {
+                {"user", evt.UserId.ToString()},
+                {"channel", evt.ChannelId.ToString()},
+                {"guild", (evt.GuildId ?? 0).ToString()},
+                {"message", evt.MessageId.ToString()},
+                {"reaction", evt.Emoji.Name}
+            });
+        scope.SetTag("shard", shardId.ToString());
     }
 }

@@ -1,26 +1,74 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
+#nullable enable
+using System.Collections.Concurrent;
 
-namespace PluralKit.Bot
+using Myriad.Types;
+
+namespace PluralKit.Bot;
+
+public class LastMessageCacheService
 {
-    // Doing things like this instead of enabling D.NET's message cache because the message cache is, let's face it,
-    // not particularly efficient? It allocates a dictionary *and* a queue for every single channel (500k in prod!)
-    // whereas this is, worst case, one dictionary *entry* of a single ulong per channel, and one dictionary instance
-    // on the whole instance, total. Yeah, much more efficient.
-    // TODO: is this still needed after the D#+ migration?
-    public class LastMessageCacheService
+    private readonly IDictionary<ulong, CacheEntry> _cache = new ConcurrentDictionary<ulong, CacheEntry>();
+
+    public void AddMessage(Message msg)
     {
-        private readonly IDictionary<ulong, ulong> _cache = new ConcurrentDictionary<ulong, ulong>();
+        var previous = GetLastMessage(msg.ChannelId);
+        var current = ToCachedMessage(msg);
+        _cache[msg.ChannelId] = new CacheEntry(current, previous?.Current);
+    }
 
-        public void AddMessage(ulong channel, ulong message)
-        {
-            _cache[channel] = message;
-        }
+    private CachedMessage ToCachedMessage(Message msg) =>
+        new(msg.Id, msg.ReferencedMessage.Value?.Id, msg.Author.Username);
 
-        public ulong? GetLastMessage(ulong channel)
-        {
-            if (_cache.TryGetValue(channel, out var message)) return message;
-            return null;
-        }
+    public CacheEntry? GetLastMessage(ulong channel) =>
+        _cache.TryGetValue(channel, out var message) ? message : null;
+
+    public void HandleMessageDeletion(ulong channel, ulong message)
+    {
+        var storedMessage = GetLastMessage(channel);
+        if (storedMessage == null)
+            return;
+
+        if (message == storedMessage.Current.Id)
+            if (storedMessage.Previous != null)
+                _cache[channel] = new CacheEntry(storedMessage.Previous, null);
+            else
+                _cache.Remove(channel);
+        else if (message == storedMessage.Previous?.Id)
+            _cache[channel] = new CacheEntry(storedMessage.Current, null);
+    }
+
+    public void HandleMessageDeletion(ulong channel, List<ulong> messages)
+    {
+        var storedMessage = GetLastMessage(channel);
+        if (storedMessage == null)
+            return;
+
+        if (!(messages.Contains(storedMessage.Current.Id) ||
+              storedMessage.Previous != null && messages.Contains(storedMessage.Previous.Id)))
+            // none of the deleted messages are relevant to the cache
+            return;
+
+        ulong? newLastMessage = null;
+
+        if (messages.Contains(storedMessage.Current.Id))
+            newLastMessage = storedMessage.Previous?.Id;
+
+        if (storedMessage.Previous != null && messages.Contains(storedMessage.Previous.Id))
+            if (newLastMessage == storedMessage.Previous?.Id)
+            {
+                newLastMessage = null;
+            }
+            else
+            {
+                _cache[channel] = new CacheEntry(storedMessage.Current, null);
+                return;
+            }
+
+        if (newLastMessage == null)
+            _cache.Remove(channel);
     }
 }
+
+public record CacheEntry(CachedMessage Current, CachedMessage? Previous);
+
+public record CachedMessage(ulong Id, ulong? ReferencedMessage, string AuthorUsername);

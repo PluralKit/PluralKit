@@ -1,27 +1,36 @@
-using System.Threading.Tasks;
+using SqlKata;
 
-using Dapper;
+namespace PluralKit.Core;
 
-namespace PluralKit.Core
+public partial class ModelRepository
 {
-    public partial class ModelRepository
-	{
-		public Task SaveCommandMessage(IPKConnection conn, ulong messageId, ulong authorId) =>
-			conn.QueryAsync("insert into command_messages (message_id, author_id) values (@Message, @Author)",
-				new {Message = messageId, Author = authorId });
-
-		public Task<CommandMessage> GetCommandMessage(IPKConnection conn, ulong messageId) =>
-			conn.QuerySingleOrDefaultAsync<CommandMessage>("select * from command_messages where message_id = @Message", 
-				new {Message = messageId});
-
-        public Task<int> DeleteCommandMessagesBefore(IPKConnection conn, ulong messageIdThreshold) =>
-            conn.ExecuteAsync("delete from command_messages where message_id < @Threshold",
-                new {Threshold = messageIdThreshold});
+    public Task SaveCommandMessage(ulong messageId, ulong channelId, ulong authorId)
+    {
+        var query = new Query("command_messages").AsInsert(new
+        {
+            message_id = messageId,
+            channel_id = channelId,
+            author_id = authorId,
+        });
+        return _db.ExecuteQuery(query);
     }
 
-	public class CommandMessage
-	{
-        public ulong AuthorId { get; set; }
-        public ulong MessageId { get; set; }
-	}
+    public Task<CommandMessage?> GetCommandMessage(ulong messageId)
+    {
+        var query = new Query("command_messages").Where("message_id", messageId);
+        return _db.QueryFirst<CommandMessage?>(query);
+    }
+
+    public Task<int> DeleteCommandMessagesBefore(ulong messageIdThreshold)
+    {
+        var query = new Query("command_messages").AsDelete().Where("message_id", "<", messageIdThreshold);
+        return _db.QueryFirst<int>(query);
+    }
+}
+
+public class CommandMessage
+{
+    public ulong AuthorId { get; set; }
+    public ulong MessageId { get; set; }
+    public ulong ChannelId { get; set; }
 }

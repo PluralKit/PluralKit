@@ -1,21 +1,19 @@
-using System.Collections.Generic;
-using System.Data;
-using System.Threading.Tasks;
-
 using Dapper;
 
-namespace PluralKit.Core
-{
-    public partial class ModelRepository
-    {
-        public async Task UpdateAccount(IPKConnection conn, ulong id, AccountPatch patch)
-        {
-            _logger.Information("Updated account {accountId}: {@AccountPatch}", id, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("accounts", "uid = @uid"))
-                .WithConstant("uid", id)
-                .Build();
-            await conn.ExecuteAsync(query, pms);
-        }
+using SqlKata;
 
+namespace PluralKit.Core;
+
+public partial class ModelRepository
+{
+    public async Task<ulong?> GetDmChannel(ulong id)
+        => await _db.Execute(c => c.QueryFirstOrDefaultAsync<ulong?>("select dm_channel from accounts where uid = @id", new { id = id }));
+
+    public async Task UpdateAccount(ulong id, AccountPatch patch)
+    {
+        _logger.Information("Updated account {accountId}: {@AccountPatch}", id, patch);
+        var query = patch.Apply(new Query("accounts").Where("uid", id));
+        _ = _dispatch.Dispatch(id, patch);
+        await _db.ExecuteQuery(query, "returning *");
     }
 }

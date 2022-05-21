@@ -3,9 +3,16 @@
 
 # Include project code and build files
 !PluralKit.*/
+!gateway/
+!myriad_rs/
+!Myriad/
 !PluralKit.sln
 !nuget.config
+!.git
+!proto
+!scripts/run-clustered.sh
 
 # Re-exclude host build artifact directories
 **/bin
 **/obj
+**/target

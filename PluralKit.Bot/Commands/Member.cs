@@ -1,100 +1,143 @@
-using System.Threading.Tasks;
 using System.Net;
-using System.Net.Http;
 using System.Web;
 
 using Dapper;
 
-using DSharpPlus.Entities;
+using Myriad.Builders;
 
 using Newtonsoft.Json.Linq;
 
 using PluralKit.Core;
 
-namespace PluralKit.Bot
+namespace PluralKit.Bot;
+
+public class Member
 {
-    public class Member
+    private readonly HttpClient _client;
+    private readonly DispatchService _dispatch;
+    private readonly EmbedService _embeds;
+
+    public Member(EmbedService embeds, HttpClient client,
+                  DispatchService dispatch)
     {
-        private readonly IDatabase _db;
-        private readonly ModelRepository _repo;
-        private readonly EmbedService _embeds;
-        private readonly HttpClient _client;
-        
-        public Member(EmbedService embeds, IDatabase db, ModelRepository repo, HttpClient client)
+        _embeds = embeds;
+        _client = client;
+        _dispatch = dispatch;
+    }
+
+    public async Task NewMember(Context ctx)
+    {
+        if (ctx.System == null) throw Errors.NoSystemError;
+        var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
+
+        // Hard name length cap
+        if (memberName.Length > Limits.MaxMemberNameLength)
+            throw Errors.StringTooLongError("Member name", memberName.Length, Limits.MaxMemberNameLength);
+
+        // Warn if there's already a member by this name
+        var existingMember = await ctx.Repository.GetMemberByName(ctx.System.Id, memberName);
+        if (existingMember != null)
         {
-            _embeds = embeds;
-            _db = db;
-            _repo = repo;
-            _client = client;
+            var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
+            if (!await ctx.PromptYesNo(msg, "Create")) throw new PKError("Member creation cancelled.");
         }
 
-        public async Task NewMember(Context ctx) {
-            if (ctx.System == null) throw Errors.NoSystemError;
-            var memberName = ctx.RemainderOrNull() ?? throw new PKSyntaxError("You must pass a member name.");
-            
-            // Hard name length cap
-            if (memberName.Length > Limits.MaxMemberNameLength) throw Errors.MemberNameTooLongError(memberName.Length);
+        await using var conn = await ctx.Database.Obtain();
 
-            // Warn if there's already a member by this name
-            var existingMember = await _db.Execute(c => _repo.GetMemberByName(c, ctx.System.Id, memberName));
-            if (existingMember != null) {
-                var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
-                if (!await ctx.PromptYesNo(msg)) throw new PKError("Member creation cancelled.");
+        // Enforce per-system member limit
+        var memberCount = await ctx.Repository.GetSystemMemberCount(ctx.System.Id);
+        var memberLimit = ctx.Config.MemberLimitOverride ?? Limits.MaxMemberCount;
+        if (memberCount >= memberLimit)
+            throw Errors.MemberLimitReachedError(memberLimit);
+
+        // Create the member
+        var member = await ctx.Repository.CreateMember(ctx.System.Id, memberName, conn);
+        memberCount++;
+
+        JObject dispatchData = new JObject();
+        dispatchData.Add("name", memberName);
+
+        if (ctx.Config.MemberDefaultPrivate)
+        {
+            var patch = new MemberPatch().WithAllPrivacy(PrivacyLevel.Private);
+            await ctx.Repository.UpdateMember(member.Id, patch, conn);
+            dispatchData.Merge(patch.ToJson());
+        }
+
+        // Try to match an image attached to the message
+        var avatarArg = ctx.Message.Attachments.FirstOrDefault();
+        Exception imageMatchError = null;
+        if (avatarArg != null)
+            try
+            {
+                await AvatarUtils.VerifyAvatarOrThrow(_client, avatarArg.Url);
+                await ctx.Repository.UpdateMember(member.Id, new MemberPatch { AvatarUrl = avatarArg.Url }, conn);
+
+                dispatchData.Add("avatar_url", avatarArg.Url);
+            }
+            catch (Exception e)
+            {
+                imageMatchError = e;
             }
 
-            await using var conn = await _db.Obtain();
-
-            // Enforce per-system member limit
-            var memberCount = await _repo.GetSystemMemberCount(conn, ctx.System.Id);
-            var memberLimit = ctx.System.MemberLimitOverride ?? Limits.MaxMemberCount;
-            if (memberCount >= memberLimit)
-                throw Errors.MemberLimitReachedError(memberLimit);
-
-            // Create the member
-            var member = await _repo.CreateMember(conn, ctx.System.Id, memberName);
-            memberCount++;
-            
-            // Send confirmation and space hint
-            await ctx.Reply($"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
-            if (await _db.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
-                new {System = ctx.System.Id}))) //if has private members
-                await ctx.Reply($"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
-
-            if (memberName.Contains(" "))
-                await ctx.Reply($"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
-            if (memberCount >= memberLimit)
-                await ctx.Reply($"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). You will be unable to create additional members until existing members are deleted.");
-            else if (memberCount >= Limits.MaxMembersWarnThreshold(memberLimit))
-                await ctx.Reply($"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
-        }
-        
-        public async Task ViewMember(Context ctx, PKMember target)
+        _ = _dispatch.Dispatch(member.Id, new UpdateDispatchData
         {
-            var system = await _db.Execute(c => _repo.GetSystem(c, target.System));
-            await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system)));
-        }
+            Event = DispatchEvent.CREATE_MEMBER,
+            EventData = dispatchData,
+        });
 
-        public async Task Soulscream(Context ctx, PKMember target)
-        {
-            // this is for a meme, please don't take this code seriously. :)
-            
-            var name = target.NameFor(ctx.LookupContextFor(target));
-            var encoded = HttpUtility.UrlEncode(name);
-            
-            var resp = await _client.GetAsync($"https://onomancer.sibr.dev/api/generateStats2?name={encoded}");
-            if (resp.StatusCode != HttpStatusCode.OK)
-                // lol
-                return;
+        // Send confirmation and space hint
+        await ctx.Reply(
+            $"{Emojis.Success} Member \"{memberName}\" (`{member.Hid}`) registered! Check out the getting started page for how to get a member up and running: https://pluralkit.me/start#create-a-member");
+        // todo: move this to ModelRepository
+        if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
+                new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
+            await ctx.Reply(
+                $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
+        if (avatarArg != null)
+            if (imageMatchError == null)
+                await ctx.Reply(
+                    $"{Emojis.Success} Member avatar set to attached image.\n{Emojis.Warn} If you delete the message containing the attachment, the avatar will stop working.");
+            else
+                await ctx.Reply($"{Emojis.Error} Couldn't set avatar: {imageMatchError.Message}");
+        if (memberName.Contains(" "))
+            await ctx.Reply(
+                $"{Emojis.Note} Note that this member's name contains spaces. You will need to surround it with \"double quotes\" when using commands referring to it, or just use the member's 5-character ID (which is `{member.Hid}`).");
+        if (memberCount >= memberLimit)
+            await ctx.Reply(
+                $"{Emojis.Warn} You have reached the per-system member limit ({memberLimit}). You will be unable to create additional members until existing members are deleted.");
+        else if (memberCount >= Limits.WarnThreshold(memberLimit))
+            await ctx.Reply(
+                $"{Emojis.Warn} You are approaching the per-system member limit ({memberCount} / {memberLimit} members). Please review your member list for unused or duplicate members.");
+    }
 
-            var data = JObject.Parse(await resp.Content.ReadAsStringAsync());
-            var scream = data["soulscream"]!.Value<string>();
+    public async Task ViewMember(Context ctx, PKMember target)
+    {
+        var system = await ctx.Repository.GetSystem(target.System);
+        await ctx.Reply(
+            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system.Id), ctx.Zone));
+    }
 
-            var eb = new DiscordEmbedBuilder()
-                .WithColor(DiscordColor.Red)
-                .WithTitle(name)
-                .WithUrl($"https://onomancer.sibr.dev/reflect?name={encoded}")
-                .WithDescription($"*{scream}*");
-            await ctx.Reply(embed: eb.Build());
-        }
+    public async Task Soulscream(Context ctx, PKMember target)
+    {
+        // this is for a meme, please don't take this code seriously. :)
+
+        var name = target.NameFor(ctx.LookupContextFor(target.System));
+        var encoded = HttpUtility.UrlEncode(name);
+
+        var resp = await _client.GetAsync($"https://onomancer.sibr.dev/api/generateStats2?name={encoded}");
+        if (resp.StatusCode != HttpStatusCode.OK)
+            // lol
+            return;
+
+        var data = JObject.Parse(await resp.Content.ReadAsStringAsync());
+        var scream = data["soulscream"]!.Value<string>();
+
+        var eb = new EmbedBuilder()
+            .Color(DiscordUtils.Red)
+            .Title(name)
+            .Url($"https://onomancer.sibr.dev/reflect?name={encoded}")
+            .Description($"*{scream}*");
+        await ctx.Reply(embed: eb.Build());
     }
 }

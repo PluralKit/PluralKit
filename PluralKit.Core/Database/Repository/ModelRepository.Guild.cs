@@ -1,53 +1,66 @@
-﻿using System.Threading.Tasks;
+using SqlKata;
 
-using Dapper;
+namespace PluralKit.Core;
 
-namespace PluralKit.Core
+public partial class ModelRepository
 {
-    public partial class ModelRepository
+    public Task<GuildConfig> GetGuild(ulong guild)
     {
-        public Task UpsertGuild(IPKConnection conn, ulong guild, GuildPatch patch)
-        {
-            _logger.Information("Updated guild {GuildId}: {@GuildPatch}", guild, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Upsert("servers", "id"))
-                .WithConstant("id", guild)
-                .Build();
-            return conn.ExecuteAsync(query, pms);
-        }
-        
-        public Task UpsertSystemGuild(IPKConnection conn, SystemId system, ulong guild,
-                                      SystemGuildPatch patch)
-        {
-            _logger.Information("Updated {SystemId} in guild {GuildId}: {@SystemGuildPatch}", system, guild, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Upsert("system_guild", "system, guild"))
-                .WithConstant("system", system)
-                .WithConstant("guild", guild)
-                .Build();
-            return conn.ExecuteAsync(query, pms);
-        }
+        var query = new Query("servers").AsInsert(new { id = guild });
+        // sqlkata doesn't support postgres on conflict, so we just hack it on here
+        return _db.QueryFirst<GuildConfig>(query, "on conflict (id) do update set id = @$1 returning *");
+    }
 
-        public Task UpsertMemberGuild(IPKConnection conn, MemberId member, ulong guild,
-                                      MemberGuildPatch patch)
-        {
-            _logger.Information("Updated {MemberId} in guild {GuildId}: {@MemberGuildPatch}", member, guild, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Upsert("member_guild", "member, guild"))
-                .WithConstant("member", member)
-                .WithConstant("guild", guild)
-                .Build();
-            return conn.ExecuteAsync(query, pms);
-        }
-        
-        public Task<GuildConfig> GetGuild(IPKConnection conn, ulong guild) =>
-            conn.QueryFirstAsync<GuildConfig>("insert into servers (id) values (@guild) on conflict (id) do update set id = @guild returning *", new {guild});
+    public Task UpdateGuild(ulong guild, GuildPatch patch)
+    {
+        _logger.Information("Updated guild {GuildId}: {@GuildPatch}", guild, patch);
+        var query = patch.Apply(new Query("servers").Where("id", guild));
+        return _db.ExecuteQuery(query, "returning *");
+    }
 
-        public Task<SystemGuildSettings> GetSystemGuild(IPKConnection conn, ulong guild, SystemId system) =>
-            conn.QueryFirstAsync<SystemGuildSettings>(
-                "insert into system_guild (guild, system) values (@guild, @system) on conflict (guild, system) do update set guild = @guild, system = @system returning *", 
-                new {guild, system});
 
-        public Task<MemberGuildSettings> GetMemberGuild(IPKConnection conn, ulong guild, MemberId member) =>
-            conn.QueryFirstAsync<MemberGuildSettings>(
-                "insert into member_guild (guild, member) values (@guild, @member) on conflict (guild, member) do update set guild = @guild, member = @member returning *",
-                new {guild, member});
+    public Task<SystemGuildSettings> GetSystemGuild(ulong guild, SystemId system, bool defaultInsert = true)
+    {
+        if (!defaultInsert)
+            return _db.QueryFirst<SystemGuildSettings>(new Query("system_guild")
+                .Where("guild", guild)
+                .Where("system", system)
+            );
+
+        var query = new Query("system_guild").AsInsert(new { guild, system });
+        return _db.QueryFirst<SystemGuildSettings>(query,
+            "on conflict (guild, system) do update set guild = $1, system = $2 returning *"
+        );
+    }
+
+    public async Task<SystemGuildSettings> UpdateSystemGuild(SystemId system, ulong guild, SystemGuildPatch patch)
+    {
+        _logger.Information("Updated {SystemId} in guild {GuildId}: {@SystemGuildPatch}", system, guild, patch);
+        var query = patch.Apply(new Query("system_guild").Where("system", system).Where("guild", guild));
+        var settings = await _db.QueryFirst<SystemGuildSettings>(query, "returning *");
+        _ = _dispatch.Dispatch(system, guild, patch);
+        return settings;
+    }
+
+    public Task<MemberGuildSettings> GetMemberGuild(ulong guild, MemberId member, bool defaultInsert = true)
+    {
+        if (!defaultInsert)
+            return _db.QueryFirst<MemberGuildSettings>(new Query("member_guild")
+                .Where("guild", guild)
+                .Where("member", member)
+            );
+
+        var query = new Query("member_guild").AsInsert(new { guild, member });
+        return _db.QueryFirst<MemberGuildSettings>(query,
+            "on conflict (guild, member) do update set guild = $1, member = $2 returning *"
+        );
+    }
+
+    public Task<MemberGuildSettings> UpdateMemberGuild(MemberId member, ulong guild, MemberGuildPatch patch)
+    {
+        _logger.Information("Updated {MemberId} in guild {GuildId}: {@MemberGuildPatch}", member, guild, patch);
+        var query = patch.Apply(new Query("member_guild").Where("member", member).Where("guild", guild));
+        _ = _dispatch.Dispatch(member, guild, patch);
+        return _db.QueryFirst<MemberGuildSettings>(query, "returning *");
     }
 }

@@ -1,203 +1,260 @@
-using System.Threading.Tasks;
-
-using DSharpPlus;
-using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Exceptions;
+using Myriad.Cache;
+using Myriad.Extensions;
+using Myriad.Gateway;
+using Myriad.Rest;
+using Myriad.Rest.Exceptions;
+using Myriad.Rest.Types;
+using Myriad.Rest.Types.Requests;
+using Myriad.Types;
 
 using PluralKit.Core;
 
+using NodaTime;
+
 using Serilog;
 
-namespace PluralKit.Bot
+namespace PluralKit.Bot;
+
+public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 {
-    public class ReactionAdded: IEventHandler<MessageReactionAddEventArgs>
+    private readonly Bot _bot;
+    private readonly IDiscordCache _cache;
+    private readonly Cluster _cluster;
+    private readonly CommandMessageService _commandMessageService;
+    private readonly IDatabase _db;
+    private readonly EmbedService _embeds;
+    private readonly ILogger _logger;
+    private readonly ModelRepository _repo;
+    private readonly DiscordApiClient _rest;
+    private readonly PrivateChannelService _dmCache;
+
+    public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo,
+                         CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, Cluster cluster,
+                         DiscordApiClient rest, EmbedService embeds, PrivateChannelService dmCache)
     {
-        private readonly IDatabase _db;
-        private readonly ModelRepository _repo;
-        private readonly CommandMessageService _commandMessageService;
-        private readonly EmbedService _embeds;
-        private readonly ILogger _logger;
+        _db = db;
+        _repo = repo;
+        _commandMessageService = commandMessageService;
+        _cache = cache;
+        _bot = bot;
+        _cluster = cluster;
+        _rest = rest;
+        _embeds = embeds;
+        _logger = logger.ForContext<ReactionAdded>();
+        _dmCache = dmCache;
+    }
 
-        public ReactionAdded(EmbedService embeds, ILogger logger, IDatabase db, ModelRepository repo, CommandMessageService commandMessageService)
+    public async Task Handle(int shardId, MessageReactionAddEvent evt)
+    {
+        await TryHandleProxyMessageReactions(evt);
+    }
+
+    private async ValueTask TryHandleProxyMessageReactions(MessageReactionAddEvent evt)
+    {
+        // ignore any reactions added by *us*
+        if (evt.UserId == await _cache.GetOwnUser())
+            return;
+
+        // Ignore reactions from bots (we can't DM them anyway)
+        // note: this used to get from cache since this event does not contain Member in DMs
+        // but we aren't able to get DMs from bots anyway, so it's not really needed
+        if (evt.GuildId != null && evt.Member.User.Bot) return;
+
+        var channel = await _cache.GetChannel(evt.ChannelId);
+
+        // check if it's a command message first
+        // since this can happen in DMs as well
+        if (evt.Emoji.Name == "\u274c")
         {
-            _embeds = embeds;
-            _db = db;
-            _repo = repo;
-            _commandMessageService = commandMessageService;
-            _logger = logger.ForContext<ReactionAdded>();
-        }
-
-        public async Task Handle(DiscordClient shard, MessageReactionAddEventArgs evt)
-        { 
-            await TryHandleProxyMessageReactions(shard, evt);
-        }
-
-        private async ValueTask TryHandleProxyMessageReactions(DiscordClient shard, MessageReactionAddEventArgs evt)
-        {
-
-            // Sometimes we get events from users that aren't in the user cache
-            // In that case we get a "broken" user object (where eg. calling IsBot throws an exception)
-            // We just ignore all of those for now, should be quite rare...
-            if (!shard.TryGetCachedUser(evt.User.Id, out _)) return;
-
-            // check if it's a command message first
-            // since this can happen in DMs as well
-            if (evt.Emoji.Name == "\u274c")
+            // in DMs, allow deleting any PK message
+            if (channel.GuildId == null)
             {
-                await using var conn = await _db.Obtain();
-                var commandMsg = await _commandMessageService.GetCommandMessage(conn, evt.Message.Id);
-                if (commandMsg != null)
-                {
-                    await HandleCommandDeleteReaction(evt, commandMsg);
-                    return;
-                }
+                await HandleCommandDeleteReaction(evt, null);
+                return;
             }
 
-            // Only proxies in guild text channels
-            if (evt.Channel == null || evt.Channel.Type != ChannelType.Text) return;
-
-            // Ignore reactions from bots (we can't DM them anyway)
-            if (evt.User.IsBot) return;
-            
-            switch (evt.Emoji.Name)
+            var commandMsg = await _commandMessageService.GetCommandMessage(evt.MessageId);
+            if (commandMsg != null)
             {
-                // Message deletion
-                case "\u274C": // Red X
+                await HandleCommandDeleteReaction(evt, commandMsg);
+                return;
+            }
+        }
+
+        // Proxied messages only exist in guild text channels, so skip checking if we're elsewhere
+        if (!DiscordUtils.IsValidGuildChannel(channel)) return;
+
+        switch (evt.Emoji.Name)
+        {
+            // Message deletion
+            case "\u274C": // Red X
                 {
-                    await using var conn = await _db.Obtain();
-                    var msg = await _repo.GetMessage(conn, evt.Message.Id);
+                    var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
                     if (msg != null)
                         await HandleProxyDeleteReaction(evt, msg);
-                    
+
                     break;
                 }
-                case "\u2753": // Red question mark
-                case "\u2754": // White question mark
+            case "\u2753": // Red question mark
+            case "\u2754": // White question mark
                 {
-                    await using var conn = await _db.Obtain();
-                    var msg = await _repo.GetMessage(conn, evt.Message.Id);
+                    var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
                     if (msg != null)
-                        await HandleQueryReaction(shard, evt, msg);
-                    
+                        await HandleQueryReaction(evt, msg);
+
                     break;
                 }
 
-                case "\U0001F514": // Bell
-                case "\U0001F6CE": // Bellhop bell
-                case "\U0001F3D3": // Ping pong paddle (lol)
-                case "\u23F0": // Alarm clock
-                case "\u2757": // Exclamation mark
+            case "\U0001F514": // Bell
+            case "\U0001F6CE": // Bellhop bell
+            case "\U0001F3D3": // Ping pong paddle (lol)
+            case "\u23F0": // Alarm clock
+            case "\u2757": // Exclamation mark
                 {
-                    await using var conn = await _db.Obtain();
-                    var msg = await _repo.GetMessage(conn, evt.Message.Id);
+                    var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
                     if (msg != null)
                         await HandlePingReaction(evt, msg);
                     break;
                 }
-            }
+        }
+    }
+
+    private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEvent evt, FullMessage msg)
+    {
+        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+            return;
+
+        var system = await _repo.GetSystemByAccount(evt.UserId);
+
+        // Can only delete your own message
+        if (msg.System?.Id != system?.Id && msg.Message.Sender != evt.UserId) return;
+
+        try
+        {
+            await _rest.DeleteMessage(evt.ChannelId, evt.MessageId);
+        }
+        catch (NotFoundException)
+        {
+            // Message was deleted by something/someone else before we got to it
         }
 
-        private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEventArgs evt, FullMessage msg)
+        await _repo.DeleteMessage(evt.MessageId);
+    }
+
+    private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage? msg)
+    {
+        // Can only delete your own message
+        // (except in DMs, where msg will be null)
+        if (msg != null && msg.AuthorId != evt.UserId)
+            return;
+
+        // todo: don't try to delete the user's own messages in DMs
+        // this is hard since we don't have the message author object, but it happens infrequently enough to not really care about the 403s, I guess?
+
+        try
         {
-            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages)) return;
-            
-            // Can only delete your own message
-            if (msg.Message.Sender != evt.User.Id) return;
-
-            try
-            {
-                await evt.Message.DeleteAsync();
-            }
-            catch (NotFoundException)
-            {
-                // Message was deleted by something/someone else before we got to it
-            }
-
-            await _db.Execute(c => _repo.DeleteMessage(c, evt.Message.Id));
+            await _rest.DeleteMessage(evt.ChannelId, evt.MessageId);
+        }
+        catch (NotFoundException)
+        {
+            // Message was deleted by something/someone else before we got to it
         }
 
-        private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEventArgs evt, CommandMessage msg)
+        // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
+    }
+
+    private async ValueTask HandleQueryReaction(MessageReactionAddEvent evt, FullMessage msg)
+    {
+        var guild = await _cache.GetGuild(evt.GuildId!.Value);
+
+        // Try to DM the user info about the message
+        try
         {
-            if (!evt.Channel.BotHasAllPermissions(Permissions.ManageMessages) && evt.Channel.Guild != null)
-                return;
+            var dm = await _dmCache.GetOrCreateDmChannel(evt.UserId);
 
-            // Can only delete your own message
-            if (msg.AuthorId != evt.User.Id) 
-                return;
+            var embeds = new List<Embed>();
 
-            try
-            {
-                await evt.Message.DeleteAsync();
-            }
-            catch (NotFoundException)
-            {
-                // Message was deleted by something/someone else before we got to it
-            }
+            if (msg.Member != null)
+                embeds.Add(await _embeds.CreateMemberEmbed(
+                    msg.System,
+                    msg.Member,
+                    guild,
+                    LookupContext.ByNonOwner,
+                    DateTimeZone.Utc
+                ));
 
-            // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
+            embeds.Add(await _embeds.CreateMessageInfoEmbed(msg, true));
+
+            await _rest.CreateMessage(dm, new MessageRequest { Embeds = embeds.ToArray() });
         }
+        catch (ForbiddenException) { } // No permissions to DM, can't check for this :(
 
-        private async ValueTask HandleQueryReaction(DiscordClient shard, MessageReactionAddEventArgs evt, FullMessage msg)
-        {
-            // Try to DM the user info about the message
-            var member = await evt.Guild.GetMember(evt.User.Id);
-            try
-            {
-                await member.SendMessageAsync(embed: await _embeds.CreateMemberEmbed(msg.System, msg.Member, evt.Guild, LookupContext.ByNonOwner));
-                await member.SendMessageAsync(embed: await _embeds.CreateMessageInfoEmbed(shard, msg));
-            }
-            catch (UnauthorizedException) { } // No permissions to DM, can't check for this :(
-            
-            await TryRemoveOriginalReaction(evt);
-        }
+        await TryRemoveOriginalReaction(evt);
+    }
 
-        private async ValueTask HandlePingReaction(MessageReactionAddEventArgs evt, FullMessage msg)
-        {
-            if (!evt.Channel.BotHasAllPermissions(Permissions.SendMessages)) return;
-            
-            // Check if the "pinger" has permission to send messages in this channel
-            // (if not, PK shouldn't send messages on their behalf)
-            var guildUser = await evt.Guild.GetMember(evt.User.Id);
-            var requiredPerms = Permissions.AccessChannels | Permissions.SendMessages;
-            if (guildUser == null || (guildUser.PermissionsIn(evt.Channel) & requiredPerms) != requiredPerms) return;
-            
-            if (msg.System.PingsEnabled)
+    private async ValueTask HandlePingReaction(MessageReactionAddEvent evt, FullMessage msg)
+    {
+        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+            return;
+
+        // Check if the "pinger" has permission to send messages in this channel
+        // (if not, PK shouldn't send messages on their behalf)
+        var member = await _rest.GetGuildMember(evt.GuildId!.Value, evt.UserId);
+        var requiredPerms = PermissionSet.ViewChannel | PermissionSet.SendMessages;
+        if (member == null || !(await _cache.PermissionsFor(evt.ChannelId, member)).HasFlag(requiredPerms)) return;
+
+        if (msg.Member == null) return;
+
+        var config = await _repo.GetSystemConfig(msg.System.Id);
+
+        if (config.PingsEnabled)
+            // If the system has pings enabled, go ahead
+            await _rest.CreateMessage(evt.ChannelId, new MessageRequest
             {
-                // If the system has pings enabled, go ahead
-                var embed = new DiscordEmbedBuilder().WithDescription($"[Jump to pinged message]({evt.Message.JumpLink})");
-                await evt.Channel.SendMessageFixedAsync($"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{evt.User.Id}>.", embed: embed.Build(),
-                    new IMention[] {new UserMention(msg.Message.Sender) });
-            }
-            else
-            {
-                // If not, tell them in DMs (if we can)
-                try
+                Content = $"Psst, **{msg.Member.DisplayName()}** (<@{msg.Message.Sender}>), you have been pinged by <@{evt.UserId}>.",
+                Components = new[]
                 {
-                    await guildUser.SendMessageFixedAsync($"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:");
-                    await guildUser.SendMessageFixedAsync($"<@{msg.Message.Sender}>".AsCode());
-                }
-                catch (UnauthorizedException) { }
-            }
-
-            await TryRemoveOriginalReaction(evt);
-        }
-
-        private async Task TryRemoveOriginalReaction(MessageReactionAddEventArgs evt)
-        {
+                    new MessageComponent
+                    {
+                        Type = ComponentType.ActionRow,
+                        Components = new[]
+                        {
+                            new MessageComponent
+                            {
+                                Style = ButtonStyle.Link,
+                                Type = ComponentType.Button,
+                                Label = "Jump",
+                                Url = evt.JumpLink()
+                            }
+                        }
+                    }
+                },
+                AllowedMentions = new AllowedMentions { Users = new[] { msg.Message.Sender } }
+            });
+        else
+            // If not, tell them in DMs (if we can)
             try
             {
-                if (evt.Channel.BotHasAllPermissions(Permissions.ManageMessages))
-                    await evt.Message.DeleteReactionAsync(evt.Emoji, evt.User);
+                var dm = await _dmCache.GetOrCreateDmChannel(evt.UserId);
+                await _rest.CreateMessage(dm,
+                    new MessageRequest
+                    {
+                        Content =
+                            $"{Emojis.Error} {msg.Member.DisplayName()}'s system has disabled reaction pings. If you want to mention them anyway, you can copy/paste the following message:"
+                    });
+                await _rest.CreateMessage(
+                    dm,
+                    new MessageRequest { Content = $"<@{msg.Message.Sender}>".AsCode() }
+                );
             }
-            catch (UnauthorizedException)
-            {
-                var botPerms = evt.Channel.BotPermissions();
-                // So, in some cases (see Sentry issue 11K) the above check somehow doesn't work, and
-                // Discord returns a 403 Unauthorized. TODO: figure out the root cause here instead of a workaround
-                _logger.Warning("Attempted to remove reaction {Emoji} from user {User} on message {Channel}/{Message}, but got 403. Bot has permissions {Permissions} according to itself.",
-                    evt.Emoji.Id, evt.User.Id, evt.Channel.Id, evt.Message.Id, botPerms);
-            }
-        }
+            catch (ForbiddenException) { }
+
+        await TryRemoveOriginalReaction(evt);
+    }
+
+    private async Task TryRemoveOriginalReaction(MessageReactionAddEvent evt)
+    {
+        if ((await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+            await _rest.DeleteUserReaction(evt.ChannelId, evt.MessageId, evt.Emoji, evt.UserId);
     }
 }

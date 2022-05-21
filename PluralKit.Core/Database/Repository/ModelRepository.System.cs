@@ -1,78 +1,152 @@
-﻿#nullable enable
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-
+#nullable enable
 using Dapper;
 
-namespace PluralKit.Core
+using SqlKata;
+
+namespace PluralKit.Core;
+
+public partial class ModelRepository
 {
-    public partial class ModelRepository
+    public Task<PKSystem?> GetSystem(SystemId id)
     {
-        public Task<PKSystem?> GetSystem(IPKConnection conn, SystemId id) =>
-            conn.QueryFirstOrDefaultAsync<PKSystem?>("select * from systems where id = @id", new {id});
+        var query = new Query("systems").Where("id", id);
+        return _db.QueryFirst<PKSystem?>(query);
+    }
 
-        public Task<PKSystem?> GetSystemByAccount(IPKConnection conn, ulong accountId) =>
-            conn.QuerySingleOrDefaultAsync<PKSystem?>(
-                "select systems.* from systems, accounts where accounts.system = systems.id and accounts.uid = @Id",
-                new {Id = accountId});
+    public Task<PKSystem?> GetSystemByGuid(Guid id)
+    {
+        var query = new Query("systems").Where("uuid", id);
+        return _db.QueryFirst<PKSystem?>(query);
+    }
 
-        public Task<PKSystem?> GetSystemByHid(IPKConnection conn, string hid) =>
-            conn.QuerySingleOrDefaultAsync<PKSystem?>("select * from systems where systems.hid = @Hid",
-                new {Hid = hid.ToLower()});
+    public Task<PKSystem?> GetSystemByAccount(ulong accountId)
+    {
+        var query = new Query("accounts")
+            .Select("systems.*")
+            .LeftJoin("systems", "systems.id", "accounts.system")
+            .Where("uid", accountId)
+            .WhereNotNull("system");
+        return _db.QueryFirst<PKSystem?>(query);
+    }
 
-        public Task<IEnumerable<ulong>> GetSystemAccounts(IPKConnection conn, SystemId system) =>
-            conn.QueryAsync<ulong>("select uid from accounts where system = @Id", new {Id = system});
+    public Task<PKSystem?> GetSystemByHid(string hid)
+    {
+        var query = new Query("systems").Where("hid", hid.ToLower());
+        return _db.QueryFirst<PKSystem?>(query);
+    }
 
-        public IAsyncEnumerable<PKMember> GetSystemMembers(IPKConnection conn, SystemId system) =>
-            conn.QueryStreamAsync<PKMember>("select * from members where system = @SystemID", new {SystemID = system});
+    public Task<IEnumerable<ulong>> GetSystemAccounts(SystemId system)
+    {
+        var query = new Query("accounts").Select("uid").Where("system", system);
+        return _db.Query<ulong>(query);
+    }
 
-        public Task<int> GetSystemMemberCount(IPKConnection conn, SystemId id, PrivacyLevel? privacyFilter = null)
+    public IAsyncEnumerable<PKMember> GetSystemMembers(SystemId system)
+    {
+        var query = new Query("members").Where("system", system);
+        return _db.QueryStream<PKMember>(query);
+    }
+
+    public IAsyncEnumerable<PKGroup> GetSystemGroups(SystemId system)
+    {
+        var query = new Query("groups").Where("system", system);
+        return _db.QueryStream<PKGroup>(query);
+    }
+
+    public Task<int> GetSystemMemberCount(SystemId system, PrivacyLevel? privacyFilter = null)
+    {
+        var query = new Query("members").SelectRaw("count(*)").Where("system", system);
+        if (privacyFilter != null)
+            query.Where("member_visibility", (int)privacyFilter.Value);
+
+        return _db.QueryFirst<int>(query);
+    }
+
+    public Task<int> GetSystemGroupCount(SystemId system, PrivacyLevel? privacyFilter = null)
+    {
+        var query = new Query("groups").SelectRaw("count(*)").Where("system", system);
+        if (privacyFilter != null)
+            query.Where("visibility", (int)privacyFilter.Value);
+
+        return _db.QueryFirst<int>(query);
+    }
+
+    public async Task<PKSystem> CreateSystem(string? systemName = null, IPKConnection? conn = null)
+    {
+        var query = new Query("systems").AsInsert(new
         {
-            var query = new StringBuilder("select count(*) from members where system = @Id");
-            if (privacyFilter != null)
-                query.Append($" and member_visibility = {(int) privacyFilter.Value}");
-            return conn.QuerySingleAsync<int>(query.ToString(), new {Id = id});
-        }
+            hid = new UnsafeLiteral("find_free_system_hid()"),
+            name = systemName
+        });
+        var system = await _db.QueryFirst<PKSystem>(conn, query, "returning *");
+        _logger.Information("Created {SystemId}", system.Id);
 
-        public async Task<PKSystem> CreateSystem(IPKConnection conn, string? systemName = null)
-        {
-            var system = await conn.QuerySingleAsync<PKSystem>(
-                "insert into systems (hid, name) values (find_free_system_hid(), @Name) returning *",
-                new {Name = systemName});
-            _logger.Information("Created {SystemId}", system.Id);
-            return system;
-        }
+        var (q, pms) = ("insert into system_config (system) values (@system)", new { system = system.Id });
 
-        public Task<PKSystem> UpdateSystem(IPKConnection conn, SystemId id, SystemPatch patch)
-        {
-            _logger.Information("Updated {SystemId}: {@SystemPatch}", id, patch);
-            var (query, pms) = patch.Apply(UpdateQueryBuilder.Update("systems", "id = @id"))
-                .WithConstant("id", id)
-                .Build("returning *");
-            return conn.QueryFirstAsync<PKSystem>(query, pms);
-        }
+        if (conn == null)
+            await _db.Execute(conn => conn.QueryAsync(q, pms));
+        else
+            await conn.QueryAsync(q, pms);
 
-        public async Task AddAccount(IPKConnection conn, SystemId system, ulong accountId)
-        {
-            // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
-            // This is used in import/export, although the pk;link command checks for this case beforehand
-            await conn.ExecuteAsync("insert into accounts (uid, system) values (@Id, @SystemId) on conflict do nothing",
-                new {Id = accountId, SystemId = system});
-            _logger.Information("Linked account {UserId} to {SystemId}", accountId, system);
-        }
+        // no dispatch call here - system was just created, we don't have a webhook URL
+        return system;
+    }
 
-        public async Task RemoveAccount(IPKConnection conn, SystemId system, ulong accountId)
-        {
-            await conn.ExecuteAsync("delete from accounts where uid = @Id and system = @SystemId",
-                new {Id = accountId, SystemId = system});
-            _logger.Information("Unlinked account {UserId} from {SystemId}", accountId, system);
-        }
+    public async Task<PKSystem> UpdateSystem(SystemId id, SystemPatch patch, IPKConnection? conn = null)
+    {
+        _logger.Information("Updated {SystemId}: {@SystemPatch}", id, patch);
+        var query = patch.Apply(new Query("systems").Where("id", id));
+        var res = await _db.QueryFirst<PKSystem>(conn, query, "returning *");
 
-        public Task DeleteSystem(IPKConnection conn, SystemId id)
+        _ = _dispatch.Dispatch(id, new UpdateDispatchData
         {
-            _logger.Information("Deleted {SystemId}", id);
-            return conn.ExecuteAsync("delete from systems where id = @Id", new {Id = id});
-        }
+            Event = DispatchEvent.UPDATE_SYSTEM,
+            EventData = patch.ToJson(),
+        });
+
+        return res;
+    }
+
+    public async Task AddAccount(SystemId system, ulong accountId, IPKConnection? conn = null)
+    {
+        // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
+        // This is used in import/export, although the pk;link command checks for this case beforehand
+
+        // update 2022-01: the accounts table is now independent of systems
+        // we MUST check for the presence of a system before inserting, or it will move the new account to the current system
+
+        var query = new Query("accounts").AsInsert(new { system, uid = accountId });
+        await _db.ExecuteQuery(conn, query, "on conflict (uid) do update set system = @p0");
+
+        _logger.Information("Linked account {UserId} to {SystemId}", accountId, system);
+
+        _ = _dispatch.Dispatch(system, new UpdateDispatchData
+        {
+            Event = DispatchEvent.LINK_ACCOUNT,
+            EntityId = accountId.ToString(),
+        });
+    }
+
+    public async Task RemoveAccount(SystemId system, ulong accountId)
+    {
+        var query = new Query("accounts").AsUpdate(new
+        {
+            system = (ulong?)null
+        }).Where("uid", accountId).Where("system", system);
+        await _db.ExecuteQuery(query);
+        _logger.Information("Unlinked account {UserId} from {SystemId}", accountId, system);
+        _ = _dispatch.Dispatch(system, new UpdateDispatchData
+        {
+            Event = DispatchEvent.UNLINK_ACCOUNT,
+            EntityId = accountId.ToString(),
+        });
+    }
+
+    public async Task DeleteSystem(SystemId id)
+    {
+        await _db.Execute(c => c.QueryAsync("update systems set is_deleting = true where id = @id", new { id = id }));
+        var query = new Query("systems").AsDelete().Where("id", id);
+        await _db.ExecuteQuery(query);
+        _logger.Information("Deleted {SystemId}", id);
     }
 }

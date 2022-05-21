@@ -31,7 +31,7 @@ Second, **create a member** with the following command, inserting the member nam
 ::: tip
 You can include spaces, punctuation, or symbols in the member name. However, you'll need to write them `"in quotes"` every time you refer to the member elsewhere.
 
-Instead, you can give your member a simple, easy to type name, then set the member's [display name](./user-guide.md#member-display-names) to a more complex version. That'll get displayed when proxying, and then you can keep the following commands simple.
+Instead, you can give your member a simple, easy to type name, then set the member's [display name](/guide/#member-display-names) to a more complex version. That'll get displayed when proxying, and then you can keep the following commands simple.
 ::: 
 
 ## Set some proxy tags
@@ -68,9 +68,9 @@ Avatars have some restrictions:
 ## What's next?
 
 You could...
-- [set up your member profile with descriptions, pronouns, etc](./user-guide.md#member-management)
-- [log your switches](./user-guide.md#managing-switches)
-- [configure privacy settings](./user-guide.md#privacy)
+- [set up your member profile with descriptions, pronouns, etc](/guide/#member-management)
+- [log your switches](/guide/#managing-switches)
+- [configure privacy settings](/guide/#privacy)
 - or something else!
 
-See the [User Guide](./user-guide.md) for a more complete reference of the bot's features.
+See the [User Guide](/guide) for a more complete reference of the bot's features.

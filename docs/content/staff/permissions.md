@@ -5,8 +5,8 @@ PluralKit requires some channel permissions in order to function properly:
 - Message proxying requires the **Manage Messages** and **Manage Webhooks** permissions in a channel.
 - Most commands require the **Embed Links**, **Attach Files** and **Add Reactions** permissions to function properly.
   - Commands with reaction menus also require **Manage Messages** to remove reactions after clicking.
-- [Proxy logging](./logging.md) requires the **Send Messages** permission in the log channel.
-- [Log cleanup](./compatibility.md#log-cleanup) requires the **Manage Messages** permission in the log channels.
+- [Proxy logging](/staff/logging) requires the **Send Messages** permission in the log channel.
+- [Log cleanup](/staff/compatibility/#log-cleanup) requires the **Manage Messages** permission in the log channels.
 
 Denying the **Send Messages** permission will *not* stop the bot from proxying, although it will prevent it from sending command responses. Denying the **Read Messages** permission will, as any other bot, prevent the bot from interacting in that channel at all.
 
