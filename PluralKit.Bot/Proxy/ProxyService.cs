@@ -148,11 +148,21 @@ public class ProxyService
     {
         // Create reply embed
         var embeds = new List<Embed>();
+        var content = "";
+        
         if (trigger.Type == Message.MessageType.Reply && trigger.MessageReference?.ChannelId == trigger.ChannelId)
         {
             var repliedTo = trigger.ReferencedMessage.Value;
             if (repliedTo != null)
             {
+                if (trigger.Mentions.Length > 0 
+                    && repliedTo.Author.Id == trigger.Mentions[0].Id
+                    && !(trigger.Content.Contains($"<@{repliedTo.Author.Id}>")
+                         || trigger.Content.Contains($"<@!{repliedTo.Author.Id}>")))
+                {
+                    content = $"*<@{repliedTo.Author.Id}>*\n";
+                }
+                
                 var (nickname, avatar) = await FetchReferencedMessageAuthorInfo(trigger, repliedTo);
                 var embed = CreateReplyEmbed(match, trigger, repliedTo, nickname, avatar);
                 if (embed != null)
@@ -163,7 +173,7 @@ public class ProxyService
         }
 
         // Send the webhook
-        var content = match.ProxyContent;
+        content += match.ProxyContent;
         if (!allowEmbeds) content = content.BreakLinkEmbeds();
 
         var messageChannel = await _cache.GetChannel(trigger.ChannelId);
