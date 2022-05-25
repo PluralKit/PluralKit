@@ -33,6 +33,9 @@ public class Fun
 
     public Task Sus(Context ctx) =>
         ctx.Reply("\U0001F4EE");
+    
+        public Task Endos(Context ctx) =>
+        ctx.Reply("Myriad fully supports endogenic and non-trauma related systems!");
 
     public Task Error(Context ctx)
     {
