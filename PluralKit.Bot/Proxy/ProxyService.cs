@@ -188,7 +188,7 @@ public class ProxyService
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
 
-    public async Task ExecuteReproxy(Message trigger, PKMessage msg, ProxyMember member)
+    public async Task ExecuteReproxy(Message trigger, PKMessage msg, List<ProxyMember> members, ProxyMember member)
     {
         var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
         if (originalMsg == null)
@@ -203,9 +203,15 @@ public class ProxyService
             throw new ProxyChecksFailedException(
                 "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
 
+        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+        var prevMatched = _matcher.TryMatch(ctx, autoproxySettings, members, out var prevMatch, originalMsg.Content,
+                                            originalMsg.Attachments.Length > 0, false);
+
         var match = new ProxyMatch
         {
             Member = member,
+            Content = prevMatched ? prevMatch.Content : originalMsg.Content,
+            ProxyTags = member.ProxyTags.First(),
         };
 
         var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
@@ -229,7 +235,7 @@ public class ProxyService
             ThreadId = threadId,
             Name = match.Member.ProxyName(ctx),
             AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
-            Content = originalMsg.Content!,
+            Content = match.ProxyContent!,
             Attachments = originalMsg.Attachments!,
             FileSizeLimit = guild.FileSizeLimit(),
             Embeds = originalMsg.Embeds!.ToArray(),
@@ -237,7 +243,7 @@ public class ProxyService
             AllowEveryone = allowEveryone
         });
 
-        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+        
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
         await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
     }

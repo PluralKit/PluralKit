@@ -70,7 +70,7 @@ public class ProxiedMessage
 
         try
         {
-            await _proxy.ExecuteReproxy(ctx.Message, msg.Message, match);
+            await _proxy.ExecuteReproxy(ctx.Message, msg.Message, members, match);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
