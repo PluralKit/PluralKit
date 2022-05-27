@@ -438,7 +438,7 @@ Absolute times will be interpreted in the [system time zone](#setting-a-system-t
     pk;switch move 1h
     pk;switch move 4d12h
     pk;switch move 2 PM
-    pk;switch move May 8th 4:30 PM
+    pk;switch move May 8, 4:30 PM
 
 Note that you can't move a switch *before* the *previous switch*, to avoid breaking consistency. Here's a rough ASCII-art illustration of this:
 
