@@ -44,6 +44,8 @@
         fetchMember();
     });
 
+    let title = isPublic ? "member" : "member (dash)";
+
     async function fetchMember() {
         try {
             member = await api().members($params.id).get({auth: !isPublic});
@@ -53,6 +55,9 @@
             }
             err = "";
             loading = false;
+            if (member.name) {
+                title = isPublic ? member.name : `${member.name} (dash)`;
+            }
             groupLoading = true;
             await new Promise(resolve => setTimeout(resolve, 1000));
             fetchGroups();
@@ -104,6 +109,7 @@
         groups = groups.filter(group => group.id !== event.detail);
         systemGroups = systemGroups.filter(group => group.id !== event.detail);
   }
+
 </script>
 
 {#if settings && settings.appearance.color_background && !notOwnSystem}
@@ -242,3 +248,7 @@
         z-index: -30;
     }
 </style>
+
+<svelte:head>
+    <title>PluralKit | {title}</title>
+</svelte:head>

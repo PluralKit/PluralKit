@@ -43,6 +43,8 @@
         fetchGroup();
     });
 
+    let title = isPublic ? "group" : "group (dash)";
+
     async function fetchGroup() {
         try {
             group = await api().groups($params.id).get({auth: !isPublic});
@@ -52,6 +54,9 @@
             }
             err = "";
             loading = false;
+            if (group.name) {
+                title = isPublic ? group.name : `${group.name} (dash)`;
+            }
             memberLoading = true;
             await new Promise(resolve => setTimeout(resolve, 1000));
             fetchMembers();
@@ -236,4 +241,8 @@
         z-index: -30;
     }
 </style>
+
+<svelte:head>
+    <title>PluralKit | {title}</title>
+</svelte:head>
 
