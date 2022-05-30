@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tick } from 'svelte';
     import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody, ModalFooter, Spinner } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
@@ -44,6 +45,10 @@
     let privacyOpen = false;
     const togglePrivacyModal = () => (privacyOpen = !privacyOpen);
 
+    async function focus(el) {
+        await tick();
+        el.focus();
+    }
 </script>
 
 <CardBody style="border-left: 4px solid #{settings && settings.appearance.color_background ? isPage ? "" : group.color : group.color }; margin: -1rem -1.25rem">
@@ -79,7 +84,7 @@
         <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal} aria-label="view group banner">View</Button>
         <Modal isOpen={bannerOpen} toggle={toggleBannerModal}>
             <div slot="external" on:click={toggleBannerModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
-                <Image style="display: block; margin: auto;" src={group.banner} thumbnail alt="group banner" />
+                <img class="img-thumbnail d-block m-auto" src={group.banner} tabindex={0} alt={`Group ${group.name} banner (full size)`} use:focus/>
             </div>
         </Modal>
     </Col>

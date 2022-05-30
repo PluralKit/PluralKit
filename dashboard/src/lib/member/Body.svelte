@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tick } from 'svelte';
     import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
@@ -61,6 +62,10 @@
 
     $: trimmedBirthday = birthday && birthday.endsWith(', 0004') ? trimmedBirthday = birthday.replace(', 0004', '') : birthday; 
     
+    async function focus(el) {
+        await tick();
+        el.focus();
+    }
 </script>
 
 <CardBody style="border-left: 4px solid #{settings && settings.appearance.color_background ? isPage ? "" : member.color : member.color }; margin: -1rem -1.25rem">
@@ -106,7 +111,7 @@
             <b>Banner:</b> <Button size="sm" color="secondary" on:click={toggleBannerModal} aria-label="view member banner">View</Button>
             <Modal isOpen={bannerOpen} toggle={toggleBannerModal}>
                 <div slot="external" on:click={toggleBannerModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
-                    <Image style="display: block; margin: auto;" src={member.banner} thumbnail alt="Your system banner" />
+                    <img class="img-thumbnail d-block m-auto" src={member.banner} tabindex={0} alt={`Member ${member.name} banner (full size)`} use:focus/>
                 </div>
             </Modal>
         </Col>
