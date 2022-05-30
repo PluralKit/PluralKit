@@ -26,9 +26,9 @@
 
     if (savedSettings) {
         settings = {...settings, ...savedSettings}
-    };
+    }
 
-    let descriptions = apiConfig.description_templates;
+    let descriptions = apiConfig?.description_templates;
 
     async function saveDescriptionTemplates() {
         const res = await api().systems("@me").settings.patch({ data: { description_templates: descriptions } });
@@ -95,6 +95,7 @@
             </Card>
         </Col>
     </Row>
+    {#if apiConfig}
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
             <Card class="mb-4">
@@ -121,6 +122,7 @@
             </Card>
         </Col>
     </Row>
+    {/if}
 </Container>
 
 <svelte:head>
