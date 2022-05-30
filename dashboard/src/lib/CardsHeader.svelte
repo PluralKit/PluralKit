@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tick } from 'svelte';
     import { Modal, CardHeader, CardTitle, Image, Spinner } from 'sveltestrap';
     import default_avatar from '../assets/default_avatar.png';
     import { toHTML } from 'discord-markdown';
@@ -29,6 +30,11 @@
     else if (item.tag) altText = "system avatar";
     
     export let loading: boolean = false;
+
+    async function focus(el) {
+        await tick();
+        el.focus();
+    }
 </script>
 
     <CardTitle style="margin-top: 0px; margin-bottom: 0px; outline: none; align-items: center;" class="d-flex justify-content-between align-middle w-100">
@@ -50,7 +56,7 @@
         </div>
         <Modal isOpen={avatarOpen} toggle={toggleAvatarModal}>
             <div slot="external" on:click={toggleAvatarModal} style="height: 100%;  max-width: 640px; width: 100%; margin-left: auto; margin-right: auto; display: flex;">
-                <Image style="display: block; margin: auto;" src={icon_url} thumbnail alt={altText}/>
+                <img class="d-block m-auto img-thumbnail" src={icon_url} alt={altText} tabindex={0} use:focus/>
             </div>
         </Modal>
     </CardTitle>
