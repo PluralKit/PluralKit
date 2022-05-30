@@ -4,7 +4,6 @@
     import default_avatar from '../assets/default_avatar.png';
     import { toHTML } from 'discord-markdown';
     import twemoji from 'twemoji';
-    import type { Group, Member, System } from '../api/types'; 
 
     export let item: any;
 
@@ -24,10 +23,12 @@
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
 
+    // this is the easiest way we can check what type of item the header has
+    // unsure if there's a better way
     let altText = "icon";
-    if (item.icon) altText = "group icon";
-    else if (item.proxy_tags) altText = "member avatar";
-    else if (item.tag) altText = "system avatar";
+    if (item.icon) altText = item.name ? `group ${item.name} icon (full size)` : "group icon (full size)";
+    else if (item.proxy_tags) altText = item.name ? `member ${item.name} avatar (full size)` : "member avatar (full size)";
+    else if (item.tag) altText = item.name ? `system ${item.name} avatar (full size)` : "system avatar (full size)";
     
     export let loading: boolean = false;
 
