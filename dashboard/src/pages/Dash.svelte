@@ -75,6 +75,7 @@
 {#if user && user.banner && ((settings && settings.appearance.banner_top) || !settings)}
 <div class="banner" style="background-image: url({user.banner})" />
 {/if}
+{#if user}
 <Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
@@ -93,6 +94,7 @@
         </Col>
     </Row>
 </Container>
+{/if}
 
 <svelte:head>
     <title>PluralKit | dash</title>

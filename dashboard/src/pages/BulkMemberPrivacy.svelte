@@ -1,11 +1,13 @@
 <script lang="ts">
     import { Container, Row, Col, Card, CardHeader, CardBody, CardTitle, Label, Input, Button, Spinner, Alert } from 'sveltestrap';
-    import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
+    import { navigate } from 'svelte-navigator';
+	import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
 
 	import api from '../api';
     import { MemberPrivacy, System } from '../api/types';
-import Member from './Member.svelte';
 	const user: System = JSON.parse(localStorage.getItem("pk-user"));
+
+	if (!user) navigate('/');
 
 	// const capitalize = (str: string) => str[0].toUpperCase() + str.substr(1);
 
@@ -54,6 +56,7 @@ import Member from './Member.svelte';
 	}
 </script>
 
+{#if user}
 <Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
@@ -104,3 +107,4 @@ import Member from './Member.svelte';
 		</Col>
 	</Row>
 </Container>
+{/if}
