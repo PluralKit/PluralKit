@@ -254,10 +254,10 @@
         <Label>Filter groups by member</Label>
         <Svelecte renderer="member-list" bind:value={selectedMembers} disableHighlight options={memberlist} multiple style="margin-bottom: 0.5rem">
         </Svelecte>
-        <span style="cursor: pointer" id="g-include" on:click={() => memberSearchMode = "include"}>{@html memberSearchMode === "include" ? "<b>include</b>" : "include"}</span>
-         | <span style="cursor: pointer" id="g-exclude" on:click={() => memberSearchMode = "exclude"}>{@html memberSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
-         | <span style="cursor: pointer" id="g-match" on:click={() => memberSearchMode = "match"}>{@html memberSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
-         | <span style="cursor: pointer" id="g-none" on:click={() => memberSearchMode = "none"}>{@html memberSearchMode === "none" ? "<b>none</b>" : "none"}</span>
+        <span style="cursor: pointer" id="g-include" on:click={() => memberSearchMode = "include"} on:keyup={e => e.key === "Enter" ? memberSearchMode = "include" : ""} tabindex={0}>{@html memberSearchMode === "include" ? "<b>include</b>" : "include"}</span>
+         | <span style="cursor: pointer" id="g-exclude" on:click={() => memberSearchMode = "exclude"} on:keyup={e => e.key === "Enter" ? memberSearchMode = "exclude" : ""} tabindex={0}>{@html memberSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
+         | <span style="cursor: pointer" id="g-match" on:click={() => memberSearchMode = "match"} on:keyup={e => e.key === "Enter" ? memberSearchMode = "match" : ""} tabindex={0}>{@html memberSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
+         | <span style="cursor: pointer" id="g-none" on:click={() => memberSearchMode = "none"} on:keyup={e => e.key === "Enter" ? memberSearchMode = "none" : ""} tabindex={0}>{@html memberSearchMode === "none" ? "<b>none</b>" : "none"}</span>
         <Tooltip placement="bottom" target="g-include">Includes every group with any of the members.</Tooltip>
         <Tooltip placement="bottom" target="g-exclude">Excludes every group with any of the members, opposite of include.</Tooltip>
         <Tooltip placement="bottom" target="g-match">Only includes groups which have all the members selected.</Tooltip>
