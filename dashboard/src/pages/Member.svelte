@@ -2,7 +2,7 @@
     import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, Accordion, AccordionItem, CardTitle } from "sveltestrap";
     import Body from '../lib/member/Body.svelte';
     import GroupBody from '../lib/group/Body.svelte';
-    import { useParams, Link } from 'svelte-navigator';
+    import { useParams, Link, navigate } from 'svelte-navigator';
     import { onMount } from 'svelte';
     import api from "../api";
     import { Member, Group } from "../api/types";
@@ -39,6 +39,11 @@
 
     $: orderedGroups = groups.sort((a, b) => a.name.localeCompare(b.name));
     $: slicedGroups = orderedGroups.slice(indexOfFirstItem, indexOfLastItem);
+
+    if (!isPublic && isPage) {
+        let user = localStorage.getItem("pk-user");
+        if (!user) navigate("/");
+    }
 
     onMount(() => {
         fetchMember();
