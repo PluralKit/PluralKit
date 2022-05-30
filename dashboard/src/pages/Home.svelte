@@ -135,3 +135,7 @@
         </Col>
     </Row>
 </Container>
+
+<svelte:head>
+    <title>PluralKit | home</title>
+</svelte:head>
