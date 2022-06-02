@@ -16,7 +16,7 @@ public class AutoproxySettings
 {
     public AutoproxyMode AutoproxyMode { get; }
     public MemberId? AutoproxyMember { get; }
-    public Instant LastLatchTimestamp { get; }
+    public Instant? LastLatchTimestamp { get; }
 }
 
 public static class AutoproxyExt
@@ -27,7 +27,8 @@ public static class AutoproxyExt
 
         // tbd
         o.Add("autoproxy_mode", settings.AutoproxyMode.ToString().ToLower());
-        o.Add("autoproxy_member", memberHid);
+        o.Add("autoproxy_member", settings.AutoproxyMode == AutoproxyMode.Front ? null : memberHid);
+        o.Add("last_latch_timestamp", settings.LastLatchTimestamp?.FormatExport());
 
         return o;
     }

@@ -6,7 +6,7 @@ namespace PluralKit.Core;
 
 public partial class ModelRepository
 {
-    public async Task UpdateAutoproxy(SystemId system, ulong? guildId, ulong? channelId, AutoproxyPatch patch)
+    public Task<AutoproxySettings> UpdateAutoproxy(SystemId system, ulong? guildId, ulong? channelId, AutoproxyPatch patch)
     {
         var locationStr = guildId != null ? "guild" : (channelId != null ? "channel" : "global");
         _logger.Information("Updated autoproxy for {SystemId} in location {location}: {@AutoproxyPatch}", system, locationStr, patch);
@@ -17,7 +17,7 @@ public partial class ModelRepository
             .Where("channel_id", channelId ?? 0)
         );
         _ = _dispatch.Dispatch(system, guildId, channelId, patch);
-        await _db.ExecuteQuery(query);
+        return _db.QueryFirst<AutoproxySettings>(query, "returning *");
     }
 
     // todo: this might break with differently scoped autoproxy
