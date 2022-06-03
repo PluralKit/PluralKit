@@ -53,6 +53,9 @@ import { get } from 'svelte/store';
                 <NavItem>
                     <Link to="/profile" class="nav-link">Public</Link>
                 </NavItem>
+                <NavItem>
+                    <Link to="/status" class="nav-link">Bot status</Link>
+                </NavItem>
             </Nav>
         </Collapse>
     </Navbar>
