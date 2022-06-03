@@ -15,6 +15,10 @@
         }
     }
 
+    pre {
+        background-color: $dark-alt;
+    }
+        
     // bootstrap
     .nav-tabs * .nav-link {
         background-color: $body-bg-alt !important;
