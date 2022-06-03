@@ -47,9 +47,12 @@
             currentUser.update(() => res);
         } catch (error) {
             console.log(error);
-            localStorage.removeItem("pk-token");
-            localStorage.removeItem("pk-user");
-            currentUser.update(() => null);
+            if (error.code == 401) {
+                error.message = "Invalid token";
+                localStorage.removeItem("pk-token");
+                localStorage.removeItem("pk-user");
+                currentUser.update(() => null);
+            }
             err = error.message;
         }
         loading = false;

@@ -58,9 +58,9 @@
             user = res;
         } catch (error) {
             console.log(error);
-            localStorage.removeItem("pk-token");
-            localStorage.removeItem("pk-user");
-            currentUser.update(() => null);
+            // localStorage.removeItem("pk-token");
+            // localStorage.removeItem("pk-user");
+            // currentUser.update(() => null);
             navigate("/");
         }
     }
