@@ -1,23 +1,51 @@
+$primary: #da9317;
+$primary-alt: #da9317;
+@import "../node_modules/bootstrap/scss/bootstrap.scss";
+@import "bootstrap-nightshade.scss";
+
 .dark {
     .navbar.bg-light {
-        background-color: var(--bs-body-bg) !important;
+        background-color: var(--bs-body-bg-alt) !important;
     }
     
     .footer.bg-light {
-        background-color: var(--bs-dark) !important;
+        background-color: var(--bs-dark-alt) !important;
     }
     
-    > * {
-        .description a {
-            color: #159bd4 !important;
-        }
-    }
-
     > * {
         .nav-item {
             .btn.btn-transparent {
                 color: rgba(250,250,250,.55);
             }
         }
+    }
+        
+    // bootstrap
+    .nav-tabs * .nav-link {
+        background-color: var(--bs-body-bg-alt) !important;
+    }
+
+    //svelecte
+    .svelecte-control .sv-control, .sv-content, .sv-dropdown, .sv-item, .sv-item-content {
+        color: var(--bs-body-color-alt) !important; //this can also be optionally overwritten
+        background-color: var(--bs-body-bg-alt) !important;
+    }
+
+    .sv-item-btn {
+        background-color: var(--bs-light-alt) !important;
+    }
+
+    // discord markdown
+    .d-spoiler {
+        color: var(--bs-dark-alt); //overwrite
+        background-color: var(--bs-dark-alt); //overwrite
+    }
+
+    .d-spoiler::selection {
+        color: var(--bs-dark-alt); //overwrite
+    }
+    
+    .d-spoiler:active {
+        color: var(--bs-body-color-alt); //overwrite
     }
 }

@@ -17,11 +17,6 @@ import BulkGroupPrivacy from "./pages/BulkGroupPrivacy.svelte";
 import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
   
   // theme cdns (I might make some myself too)
-  let light = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css";
-  let dark = "https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/css/bootstrap-night.min.css";
-
-  let styleSrc = dark;
-
   // if there's a style already set, retrieve it
   let style = localStorage.getItem("pk-style") && localStorage.getItem("pk-style");
 
@@ -31,17 +26,15 @@ import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
   // not sure if there's a better way to handle this
   function setStyle(style) {
     switch (style) {
-      case "light": document.getElementById("app").className = "light";
-      styleSrc = light;
+      case "light": document.documentElement.className = "light";
       localStorage.setItem("pk-style", "light");
       break;
-      case "dark": document.getElementById("app").className = "dark";
-      styleSrc = dark;
+      case "dark": document.documentElement.className = "dark";
       localStorage.setItem("pk-style", "dark");
       break;
-      default: document.getElementById("app").className = "dark";
-      styleSrc = dark;
+      default: document.documentElement.className = "dark";
       localStorage.setItem("pk-style", "dark");
+      break;
     };
   };
 
@@ -56,10 +49,6 @@ import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
   });
 
 </script>
-
-<svelte:head>
-  <link rel="stylesheet" href={styleSrc}>
-</svelte:head>
 
 <Router>
   <Navigation bind:style={style}/>

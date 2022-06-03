@@ -1,0 +1,115 @@
+/*!
+ * Bootstrap v5.x.x (https://getbootstrap.com/)
+ * Copyright 2011-2021 The Bootstrap Authors
+ * Copyright 2011-2021 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
+ *
+ * Bootstrap-Nightshade (https://vinorodrigues.github.io/bootstrap-dark-5/)
+ * Copyright 2020-2021 Vino Rodrigues
+ * This version is a dual color theme, with the default light mode and the dark
+ * elements optioned in by a `.dark` class in `<html>` tag.
+ * Why `<html>`? See https://css-tricks.com/html-vs-body-in-css/#quirky-background-color
+ */
+
+// stylelint-disable-next-line scss/dollar-variable-default
+$enable-colors-hack: true;
+
+// Configuration
+@import "../node_modules/bootstrap/scss/functions";
+@import "../node_modules/bootstrap-dark-5/scss/dark/functions";
+@import "../node_modules/bootstrap/scss/variables";
+@import "../node_modules/bootstrap-dark-5/scss/variables-alt";  // dark color set is here
+@import "../node_modules/bootstrap/scss/mixins";
+@import "../node_modules/bootstrap-dark-5/scss/dark/mixins-2";  // !!!! fix for issue #32
+@import "../node_modules/bootstrap/scss/utilities";
+@import "../node_modules/bootstrap-dark-5/scss/dark/utilities";
+@import "../node_modules/bootstrap-dark-5/scss/dark/patch";  // missing from BS, unsupported patch/hack
+
+// :root { color-scheme: light; }  // !!!! fix for issue #33, do not set
+
+// Layout & components
+// @import "../node_modules/bootstrap-dark-5/scss/dark/root";
+@import "../node_modules/bootstrap/scss/reboot";
+@import "../node_modules/bootstrap-dark-5/scss/dark/root-alts";  // !!!! fix for issue #35
+@import "../node_modules/bootstrap/scss/type";
+@import "../node_modules/bootstrap/scss/images";
+@import "../node_modules/bootstrap/scss/containers";
+@import "../node_modules/bootstrap/scss/grid";
+@import "../node_modules/bootstrap/scss/tables";
+@import "../node_modules/bootstrap/scss/forms";
+@import "../node_modules/bootstrap/scss/buttons";
+@import "../node_modules/bootstrap/scss/transitions";
+@import "../node_modules/bootstrap/scss/dropdown";
+@import "../node_modules/bootstrap/scss/button-group";
+@import "../node_modules/bootstrap/scss/nav";
+@import "../node_modules/bootstrap/scss/navbar";
+@import "../node_modules/bootstrap/scss/card";
+@import "../node_modules/bootstrap/scss/accordion";
+@import "../node_modules/bootstrap/scss/breadcrumb";
+@import "../node_modules/bootstrap/scss/pagination";
+@import "../node_modules/bootstrap/scss/badge";
+@import "../node_modules/bootstrap/scss/alert";
+@import "../node_modules/bootstrap/scss/progress";
+@import "../node_modules/bootstrap/scss/list-group";
+@import "../node_modules/bootstrap/scss/close";
+@import "../node_modules/bootstrap/scss/toasts";
+@import "../node_modules/bootstrap/scss/modal";
+@import "../node_modules/bootstrap/scss/tooltip";
+@import "../node_modules/bootstrap/scss/popover";
+@import "../node_modules/bootstrap/scss/carousel";
+@import "../node_modules/bootstrap/scss/spinners";
+@import "../node_modules/bootstrap/scss/offcanvas";
+@import "../node_modules/bootstrap/scss/placeholders";
+
+// Helpers
+@import "../node_modules/bootstrap/scss/helpers";
+
+// Utilities
+@import "../node_modules/bootstrap/scss/utilities/api";
+
+/*
+ * ---------- Dark Mode ------------------------------------------------------
+ */
+
+@include color-scheme-alt("html.dark") {
+
+  // :root { color-scheme: dark; }  // !!!! fix for issue #33, do not set
+
+  // Layout & components
+  // @import "../node_modules/bootstrap-dark-5/scss/dark/root";  // !!!! fix for issue #33, do not use `dark/root`
+  @import "../node_modules/bootstrap-dark-5/scss/dark/reboot";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/type";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/images";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/tables";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/forms";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/buttons-2";  // !!!! fix for issue #32
+  @import "../node_modules/bootstrap-dark-5/scss/dark/dropdown";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/button-group";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/nav";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/navbar";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/card";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/accordion";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/breadcrumb";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/pagination";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/badge";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/alert";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/progress";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/list-group";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/close";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/toasts";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/modal";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/tooltip";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/popover";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/carousel";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/offcanvas";
+  @import "../node_modules/bootstrap-dark-5/scss/dark/placeholders";
+
+  // Helpers
+  @import "../node_modules/bootstrap-dark-5/scss/dark/helpers";
+
+  // Utilities
+  @import "../node_modules/bootstrap-dark-5/scss/dark/utilities/api";
+
+  // Unique to dark-mode
+  @import "../node_modules/bootstrap-dark-5/scss/dark/dark";
+}

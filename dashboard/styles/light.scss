@@ -1,17 +1,18 @@
-.light > * {
-    .footer.bg-light {
-        background-color: var(--bs-light) !important;
-    }
-    
-    .description a {
-        color: var(--bs-primary) !important;
-    }
+$primary: #da9317;
+@import "../node_modules/bootstrap/scss/bootstrap.scss";
 
-    > * {
-        .nav-item {
-            .btn.btn-transparent {
-                color: rgba(0,0,0,.55);
-            }
+.footer.bg-light {
+    background-color: var(--bs-light) !important;
+}
+
+.description a {
+    color: var(--bs-primary) !important;
+}
+
+> * {
+    .nav-item {
+        .btn.btn-transparent {
+            color: rgba(0,0,0,.55);
         }
     }
 }
