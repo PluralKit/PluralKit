@@ -79,6 +79,21 @@ public class MemberControllerV2: PKControllerBase
         return Ok(member.ToJson(ContextFor(member), systemStr: system.Hid));
     }
 
+    [HttpGet("members/{memberRef}/oembed.json")]
+    public async Task<IActionResult> MemberEmbed(string memberRef)
+    {
+        var member = await ResolveMember(memberRef);
+        if (member == null)
+            throw Errors.MemberNotFound;
+        var system = await _repo.GetSystem(member.System);
+
+        var name = member.NameFor(LookupContext.ByNonOwner);
+        if (system.Name != null)
+            name += $" ({system.Name})";
+
+        return Ok(APIJsonExt.EmbedJson(name, "Member"));
+    }
+
     [HttpPatch("members/{memberRef}")]
     public async Task<IActionResult> DoMemberPatch(string memberRef, [FromBody] JObject data)
     {

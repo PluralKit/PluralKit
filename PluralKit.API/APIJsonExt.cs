@@ -25,6 +25,18 @@ public static class APIJsonExt
 
         return o;
     }
+
+    public static JObject EmbedJson(string title, string type)
+    {
+        var o = new JObject();
+
+        o.Add("type", "rich");
+        o.Add("provider_name", "PluralKit " + type);
+        o.Add("provider_url", "https://pluralkit.me");
+        o.Add("title", title);
+
+        return o;
+    }
 }
 
 public struct FrontersReturnNew

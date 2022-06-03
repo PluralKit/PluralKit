@@ -11,6 +11,7 @@
 !.git
 !proto
 !scripts/run-clustered.sh
+!dashboard
 
 # Re-exclude host build artifact directories
 **/bin
