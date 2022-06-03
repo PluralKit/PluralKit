@@ -146,6 +146,57 @@ public class ServerConfig
             });
     }
 
+    public async Task ShowLogDisabledChannels(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var config = await ctx.Repository.GetGuild(ctx.Guild.Id);
+
+        // Resolve all channels from the cache and order by position
+        var channels = (await Task.WhenAll(config.LogBlacklist
+                .Select(id => _cache.TryGetChannel(id))))
+            .Where(c => c != null)
+            .OrderBy(c => c.Position)
+            .ToList();
+
+        if (channels.Count == 0)
+        {
+            await ctx.Reply("This server has no channels where logging is disabled.");
+            return;
+        }
+
+        await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
+            $"Channels where logging is disabled for {ctx.Guild.Name}",
+            null,
+            async (eb, l) =>
+            {
+                async Task<string> CategoryName(ulong? id) =>
+                    id != null ? (await _cache.GetChannel(id.Value)).Name : "(no category)";
+
+                ulong? lastCategory = null;
+
+                var fieldValue = new StringBuilder();
+                foreach (var channel in l)
+                {
+                    if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
+                    {
+                        eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+                        fieldValue.Clear();
+                    }
+                    else
+                    {
+                        fieldValue.Append("\n");
+                    }
+
+                    fieldValue.Append(channel.Mention());
+                    lastCategory = channel.ParentId;
+                }
+
+                eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+            });
+    }
+
+
     public async Task SetBlacklisted(Context ctx, bool shouldAdd)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
