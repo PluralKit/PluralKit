@@ -26,10 +26,10 @@ public record User
     public string? Avatar { get; init; }
     public bool Bot { get; init; }
     public bool? System { get; init; }
-    public Flags PublicFlags { get; init; }
+    // public Flags PublicFlags { get; init; }
 
     public record Extra: User
     {
-        public GuildMemberPartial? Member { get; init; }
+        // public GuildMemberPartial? Member { get; init; }
     }
 }

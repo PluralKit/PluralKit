@@ -22,8 +22,8 @@ public record Channel
     public ulong? GuildId { get; init; }
     public int? Position { get; init; }
     public string? Name { get; init; }
-    public string? Topic { get; init; }
-    public bool? Nsfw { get; init; }
+    // public string? Topic { get; init; }
+    // public bool? Nsfw { get; init; }
     public ulong? ParentId { get; init; }
     public Overwrite[]? PermissionOverwrites { get; init; }
     public User[]? Recipients { get; init; } // NOTE: this may be null for stub channel objects
