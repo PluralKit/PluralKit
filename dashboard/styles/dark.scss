@@ -1,6 +1,7 @@
-@import "../node_modules/bootstrap-dark-5/scss/variables-alt"; 
+@import "bootstrap-dark-5/scss/variables-alt";
 
 .dark {
+    @import "highlight.js/styles/github-dark.css";
     .navbar.bg-light {
         background-color: $body-bg-alt !important;
     }
@@ -15,8 +16,8 @@
         }
     }
 
-    pre {
-        background-color: $dark-alt;
+    pre, code {
+        background: $dark-alt !important;
     }
         
     // bootstrap
