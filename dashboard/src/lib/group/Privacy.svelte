@@ -12,19 +12,16 @@
     let err: string;
     let loading = false;
 
-    let allPrivacy: string;
-
-    $: { changePrivacy(allPrivacy)}
-
-    function changePrivacy(value: string) {
-        if (value) {
+    function changePrivacy(e: Event) {
+        const target = e.target as HTMLInputElement;
+        let value = target.value;
+        
         input.privacy.description_privacy = value;
         input.privacy.list_privacy = value;
         input.privacy.visibility = value;
         input.privacy.icon_privacy = value;
         input.privacy.name_privacy = value;
         input.privacy.metadata_privacy = value;
-        }
     }
 
     const dispatch = createEventDispatcher();
@@ -65,7 +62,7 @@
     <Alert color="danger">{err}</Alert>
     {/if}
     <Label><b>Set all to:</b></Label>
-    <select class="form-select" bind:value={allPrivacy} use:focus aria-label="set all to">
+    <select class="form-select" on:change={(e) => changePrivacy(e)} use:focus aria-label="set all to">
         <option>public</option>
         <option>private</option>
     </select>

@@ -12,12 +12,10 @@
     
     let err: string;
 
-    let allPrivacy: string;
-
-    $: { changePrivacy(allPrivacy)}
-
-    function changePrivacy(value: string) {
-        if (value) {
+    function changePrivacy(e: Event) {
+        const target = e.target as HTMLInputElement;
+        let value = target.value;
+        
         input.privacy.description_privacy = value;
         input.privacy.name_privacy = value;
         input.privacy.avatar_privacy = value;
@@ -25,7 +23,6 @@
         input.privacy.pronoun_privacy = value;
         input.privacy.visibility = value;
         input.privacy.metadata_privacy = value;
-        }
     }
 
     const dispatch = createEventDispatcher();
@@ -35,6 +32,7 @@
     }
 
     let input: Member = {privacy: member.privacy};
+    console.log(member.privacy);
 
     async function submit() {
         let data = input;
@@ -67,7 +65,7 @@
     <Alert color="danger">{err}</Alert>
     {/if}
     <Label><b>Set all to:</b></Label>
-    <select class="form-select" bind:value={allPrivacy} use:focus aria-label="set all to">
+    <select class="form-select" on:change={(e) => changePrivacy(e)} use:focus aria-label="set all to">
         <option>public</option>
         <option>private</option>
     </select>
