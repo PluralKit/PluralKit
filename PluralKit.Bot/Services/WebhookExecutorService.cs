@@ -173,8 +173,9 @@ public class WebhookExecutorService
 
         // We don't care about whether the sending succeeds, and we don't want to *wait* for it, so we just fork it off
         var _ = TrySendRemainingAttachments(webhook, req.Name, req.AvatarUrl, attachmentChunks, req.ThreadId);
-
-        return webhookMessage;
+        
+        // for some reason discord may(?) return a null guildid here???
+        return webhookMessage with { GuildId = webhookMessage.GuildId ?? req.GuildId };
     }
 
     private async Task TrySendRemainingAttachments(Webhook webhook, string name, string avatarUrl,

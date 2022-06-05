@@ -86,7 +86,7 @@ public class LogChannelService
         {
             _logger.Information(
                 "Does not have permission to log proxy, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})",
-                logChannel.Id, trigger.GuildId!.Value, perms);
+                logChannel.Id, guildId, perms);
             return null;
         }
 
