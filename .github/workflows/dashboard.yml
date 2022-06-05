@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'dashboard/'
+      - 'dashboard/**'
 
 jobs:
   deploy:
