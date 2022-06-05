@@ -25,6 +25,8 @@ var baseURL = "https://api.pluralkit.me/v2"
 
 var version = "dev"
 
+const defaultEmbed = `<meta property="og:title" content="PluralKit | web dashboard" /> <meta name="theme-color" content="#da9317">`
+
 func main() {
 	r := chi.NewRouter()
 
@@ -66,7 +68,7 @@ func notFoundHandler(rw http.ResponseWriter, r *http.Request) {
 	} else {
 		data, err = fs.ReadFile("dist/index.html")
 		rw.Header().Add("content-type", "text/html")
-		data = []byte(strings.Replace(string(data), `<!-- extra data -->`, "", 1))
+		data = []byte(strings.Replace(string(data), `<!-- extra data -->`, defaultEmbed, 1))
 	}
 
 	if err != nil {
