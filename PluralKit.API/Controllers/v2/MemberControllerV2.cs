@@ -87,7 +87,7 @@ public class MemberControllerV2: PKControllerBase
             throw Errors.MemberNotFound;
         var system = await _repo.GetSystem(member.System);
 
-        var name = member.NameFor(LookupContext.ByNonOwner);
+        var name = member.DisplayName ?? member.Name;
         if (system.Name != null)
             name += $" ({system.Name})";
 

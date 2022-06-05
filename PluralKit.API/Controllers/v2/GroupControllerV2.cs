@@ -105,7 +105,7 @@ public class GroupControllerV2: PKControllerBase
             throw Errors.GroupNotFound;
         var system = await _repo.GetSystem(group.System);
 
-        var name = group.NameFor(LookupContext.ByNonOwner);
+        var name = group.DisplayName ?? group.Name;
         if (system.Name != null)
             name += $" ({system.Name})";
 
