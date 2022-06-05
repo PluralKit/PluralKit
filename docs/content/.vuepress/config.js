@@ -67,8 +67,7 @@ module.exports = {
           "/api/endpoints",
           "/api/models",
           "/api/errors",
-          "/api/dispatch",
-          "/api/legacy"
+          "/api/dispatch"
         ]
       },
       ["https://discord.gg/PczBt78", "Join the support server"],
