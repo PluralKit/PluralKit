@@ -215,7 +215,7 @@ public class ProxyService
         };
 
         var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
-        var rootChannel = await _rest.GetChannelOrNull(messageChannel.IsThread() ? messageChannel.ParentId!.Value : messageChannel.Id);
+        var rootChannel = messageChannel.IsThread() ? await _rest.GetChannelOrNull(messageChannel.ParentId!.Value) : messageChannel;
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _rest.GetGuildOrNull(msg.Guild!.Value);
 
