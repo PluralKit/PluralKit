@@ -7,7 +7,8 @@ Sentry.init({
 
   enabled: !window.location.origin.includes("localhost"),
   debug: false,
-  release: "dev",
+  // @ts-expect-error
+  release: window.pluralkitVersion,
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production

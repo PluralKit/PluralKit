@@ -24,10 +24,13 @@ type entity struct {
 var baseURL = "https://api.pluralkit.me/v2"
 
 var version = "dev"
+var versionJS string
 
 const defaultEmbed = `<meta property="og:title" content="PluralKit | web dashboard" /> <meta name="theme-color" content="#da9317">`
 
 func main() {
+	versionJS = "<script>window.pluralkitVersion = '" + version + "'</script>"
+
 	r := chi.NewRouter()
 
 	r.Use(func(next http.Handler) http.Handler {
@@ -68,7 +71,7 @@ func notFoundHandler(rw http.ResponseWriter, r *http.Request) {
 	} else {
 		data, err = fs.ReadFile("dist/index.html")
 		rw.Header().Add("content-type", "text/html")
-		data = []byte(strings.Replace(string(data), `<!-- extra data -->`, defaultEmbed, 1))
+		data = []byte(strings.Replace(string(data), `<!-- extra data -->`, defaultEmbed+versionJS, 1))
 	}
 
 	if err != nil {
@@ -134,7 +137,7 @@ func createEmbed(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(nil)
 	}
-	html = []byte(strings.Replace(string(html), `<!-- extra data -->`, text, 1))
+	html = []byte(strings.Replace(string(html), `<!-- extra data -->`, text+versionJS, 1))
 
 	rw.Header().Add("content-type", "text/html")
 	rw.Write(html)
