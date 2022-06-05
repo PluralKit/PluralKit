@@ -72,7 +72,8 @@ public class EmbedService
             .Thumbnail(new Embed.EmbedThumbnail(system.AvatarUrl.TryGetCleanCdnUrl()))
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.Hid} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
-            .Color(color);
+            .Color(color)
+            .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
 
         if (system.DescriptionPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(system.BannerImage));
@@ -179,8 +180,7 @@ public class EmbedService
             .ToListAsync();
 
         var eb = new EmbedBuilder()
-            // TODO: add URL of website when that's up
-            .Author(new Embed.EmbedAuthor(name, IconUrl: avatar.TryGetCleanCdnUrl()))
+            .Author(new Embed.EmbedAuthor(name, IconUrl: avatar.TryGetCleanCdnUrl(), Url: $"https://dash.pluralkit.me/profile/m/{member.Hid}"))
             // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
             .Color(color)
             .Footer(new Embed.EmbedFooter(
@@ -264,7 +264,7 @@ public class EmbedService
         }
 
         var eb = new EmbedBuilder()
-            .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx)))
+            .Author(new Embed.EmbedAuthor(nameField, IconUrl: target.IconFor(pctx), Url: $"https://dash.pluralkit.me/profile/g/{target.Hid}"))
             .Color(color);
 
         eb.Footer(new Embed.EmbedFooter($"System ID: {system.Hid} | Group ID: {target.Hid}{(target.MetadataPrivacy.CanAccess(pctx) ? $" | Created on {target.Created.FormatZoned(ctx.Zone)}" : "")}"));

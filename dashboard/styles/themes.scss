@@ -1,0 +1,9 @@
+$primary: #da9317;
+$primary-alt: #da9317;
+@import "generic.scss";
+@import "bootstrap/scss/bootstrap.scss";
+@import 'highlight.scss';
+
+// dark mode. dark.scss extends nightshade
+@import "bootstrap-nightshade.scss";
+@import "dark.scss";

@@ -97,6 +97,21 @@ public class GroupControllerV2: PKControllerBase
         return Ok(group.ToJson(ContextFor(group), system.Hid));
     }
 
+    [HttpGet("groups/{groupRef}/oembed.json")]
+    public async Task<IActionResult> GroupEmbed(string groupRef)
+    {
+        var group = await ResolveGroup(groupRef);
+        if (group == null)
+            throw Errors.GroupNotFound;
+        var system = await _repo.GetSystem(group.System);
+
+        var name = group.NameFor(LookupContext.ByNonOwner);
+        if (system.Name != null)
+            name += $" ({system.Name})";
+
+        return Ok(APIJsonExt.EmbedJson(name, "Group"));
+    }
+
     [HttpPatch("groups/{groupRef}")]
     public async Task<IActionResult> DoGroupPatch(string groupRef, [FromBody] JObject data)
     {

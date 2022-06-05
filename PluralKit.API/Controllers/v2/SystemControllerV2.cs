@@ -20,6 +20,16 @@ public class SystemControllerV2: PKControllerBase
         return Ok(system.ToJson(ContextFor(system)));
     }
 
+    [HttpGet("{systemRef}/oembed.json")]
+    public async Task<IActionResult> SystemEmbed(string systemRef)
+    {
+        var system = await ResolveSystem(systemRef);
+        if (system == null)
+            throw Errors.SystemNotFound;
+
+        return Ok(APIJsonExt.EmbedJson(system.Name ?? $"System with ID `{system.Hid}`", "System"));
+    }
+
     [HttpPatch("{systemRef}")]
     public async Task<IActionResult> DoSystemPatch(string systemRef, [FromBody] JObject data)
     {
