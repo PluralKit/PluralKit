@@ -219,8 +219,8 @@ public class ProxyService
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _rest.GetGuildOrNull(msg.Guild!.Value);
 
-        // Grab user permissions
-        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, null);
+        // Grab user permissions (the MessageCreateEvent cast is gross but so is our permission handling rn)
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, ((MessageCreateEvent) trigger).Member);
         var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
 
         // Make sure user has permissions to send messages
