@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"strings"
@@ -120,17 +121,17 @@ func createEmbed(rw http.ResponseWriter, r *http.Request) {
 	text := fmt.Sprintf(`<link type="application/json+oembed" href="%s/%s/oembed.json" />%s`, baseURL, path, "\n")
 
 	if data.AvatarURL != nil {
-		text += fmt.Sprintf(`<meta content='%s' property='og:image'>%s`, *data.AvatarURL, "\n")
+		text += fmt.Sprintf(`<meta content='%s' property='og:image'>%s`, html.EscapeString(*data.AvatarURL), "\n")
 	} else if data.IconURL != nil {
-		text += fmt.Sprintf(`<meta content='%s' property='og:image'>%s`, *data.IconURL, "\n")
+		text += fmt.Sprintf(`<meta content='%s' property='og:image'>%s`, html.EscapeString(*data.IconURL), "\n")
 	}
 
 	if data.Description != nil {
-		text += fmt.Sprintf(`<meta content="%s" property="og:description">%s`, *data.Description, "\n")
+		text += fmt.Sprintf(`<meta content="%s" property="og:description">%s`, html.EscapeString(*data.Description), "\n")
 	}
 
 	if data.Color != nil {
-		text += fmt.Sprintf(`<meta name="theme-color" content="#%s">%s`, *data.Color, "\n")
+		text += fmt.Sprintf(`<meta name="theme-color" content="#%s">%s`, html.EscapeString(*data.Color), "\n")
 	}
 
 	html, err := fs.ReadFile("dist/index.html")
