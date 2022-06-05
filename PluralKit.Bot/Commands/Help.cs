@@ -63,7 +63,7 @@ public class Help
                 "We also have a Discord server for support, discussion, suggestions, announcements, etc: https://discord.gg/PczBt78"
             )
         },
-        Footer = new("By @Ske#6201 | Myriad by @Layl#8888 | GitHub: https://github.com/xSke/PluralKit/ | Website: https://pluralkit.me/"),
+        Footer = new("By @Ske#6201 | Myriad by @Layl#8888 | GitHub: https://github.com/PluralKit/PluralKit/ | Website: https://pluralkit.me/"),
         Color = DiscordUtils.Blue,
     };
 

@@ -20,7 +20,7 @@ RUN dotnet build -c Release -o bin
 
 # Build runtime stage (doesn't include SDK)
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
-LABEL org.opencontainers.image.source = "https://github.com/xSke/PluralKit"
+LABEL org.opencontainers.image.source = "https://github.com/PluralKit/PluralKit"
 
 WORKDIR /app
 COPY --from=build /app ./

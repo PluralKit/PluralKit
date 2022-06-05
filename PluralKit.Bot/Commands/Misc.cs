@@ -127,7 +127,7 @@ public class Misc
             .Footer(new(String.Join(" \u2022 ", new[] {
                 $"PluralKit {BuildInfoService.Version}",
                 (isCluster ? $"Cluster {_botConfig.Cluster.NodeIndex}" : ""),
-                "https://github.com/xSke/PluralKit",
+                "https://github.com/PluralKit/PluralKit",
                 "Last restarted:",
             })))
             .Timestamp(process.StartTime.ToString("O"));

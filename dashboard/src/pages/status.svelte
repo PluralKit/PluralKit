@@ -37,7 +37,7 @@
             return shard;
         });
 
-        currentCommitMsg = `Current Git commit: <a href="https://github.com/xSke/PluralKit/commit/${pkdata.version}">${pkdata.version.slice(0,7)}</a>`;
+        currentCommitMsg = `Current Git commit: <a href="https://github.com/PluralKit/PluralKit/commit/${pkdata.version}">${pkdata.version.slice(0,7)}</a>`;
 
         if (data[0].cluster_id === 0) {
             let clusterData = {};
