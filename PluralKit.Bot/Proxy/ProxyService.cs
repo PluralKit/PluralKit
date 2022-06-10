@@ -243,7 +243,7 @@ public class ProxyService
             AllowEveryone = allowEveryone
         });
 
-        
+
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
         await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
     }

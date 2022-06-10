@@ -136,7 +136,7 @@ public class Startup
         app.UseEndpoints(endpoints =>
         {
             // register base / legacy routes
-            endpoints.MapMethods("", new string[] { }, (context) => { context.Response.Redirect("https://pluralkit.me/api"); return Task.CompletedTask;});
+            endpoints.MapMethods("", new string[] { }, (context) => { context.Response.Redirect("https://pluralkit.me/api"); return Task.CompletedTask; });
             endpoints.MapMethods("v1/{*_}", new string[] { }, (context) => context.Response.WriteJSON(410, "{\"message\":\"Unsupported API version\",\"code\":0}"));
 
             // register controllers
