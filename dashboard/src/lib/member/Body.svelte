@@ -3,6 +3,7 @@
     import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
+    import parseTimestamps from '../../api/markdown-timestamp';
     import twemoji from 'twemoji';
 
     import GroupEdit from './GroupEdit.svelte';
@@ -24,14 +25,14 @@
 
     let htmlDescription: string;
     $: if (member.description) { 
-        htmlDescription = toHTML(member.description, {embed: true});
+        htmlDescription = toHTML(parseTimestamps(member.description), {embed: true});
     } else {
         htmlDescription = "(no description)";
     }
 
     let htmlPronouns: string;
     $: if (member.pronouns) { 
-        htmlPronouns = toHTML(member.pronouns, {embed: true});
+        htmlPronouns = toHTML(parseTimestamps(member.pronouns), {embed: true});
     }
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));

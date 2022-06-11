@@ -3,6 +3,7 @@
     import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody, ModalFooter, Spinner } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
+    import parseTimestamps from '../../api/markdown-timestamp';
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
     import Privacy from './Privacy.svelte';
@@ -21,7 +22,7 @@
 
     let htmlDescription: string;
     $: if (group.description) { 
-        htmlDescription = toHTML(group.description, {embed: true});
+        htmlDescription = toHTML(parseTimestamps(group.description), {embed: true});
     } else {
         htmlDescription = "(no description)";
     }
