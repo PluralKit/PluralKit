@@ -32,7 +32,7 @@ Some arguments indicate the use of specific Discord features. These include:
 
 # Commands
 ## System commands
-*Optionally replace `[system]` with a @mention, Discord account ID, or 5-character ID. For most commands, adding `-clear` will clear/delete the field.*
+*To target your own PluralKit system with these commands, you do not need to enter anything for `[system]`. To target another system, replace `[system]` with that systems' 5-character ID, a Discord account ID, or an @mention. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;system [system]` - Shows information about a system.
 - `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system [system] rename [new name]` - Changes the name of your system.
