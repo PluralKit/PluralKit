@@ -31,7 +31,7 @@ public class RedisGatewayService
             _redis = await ConnectionMultiplexer.ConnectAsync(_config.RedisGatewayUrl);
 
         _logger.Debug("Subscribing to shard {ShardId} on redis", shardId);
-        
+
         var channel = await _redis.GetSubscriber().SubscribeAsync($"evt-{shardId}");
         channel.OnMessage((evt) => Handle(shardId, evt));
     }

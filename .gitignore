@@ -12,6 +12,7 @@ target/
 tags/
 .DS_Store
 mono_crash*
+.DotSettings
 
 # Dependencies
 node_modules/

@@ -45,7 +45,7 @@ public class ProxiedMessage
         _logChannel = logChannel;
         // _cache = cache;
         _metrics = metrics;
-        _proxy =  proxy;
+        _proxy = proxy;
     }
 
     public async Task ReproxyMessage(Context ctx)
@@ -61,7 +61,7 @@ public class ProxiedMessage
             throw new PKError("Could not find a member to reproxy the message with.");
 
         // Fetch members and get the ProxyMember for `target`
-        List <ProxyMember> members;
+        List<ProxyMember> members;
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
             members = (await _repo.GetProxyMembers(ctx.Author.Id, msg.Message.Guild!.Value)).ToList();
         var match = members.Find(x => x.Id == target.Id);
