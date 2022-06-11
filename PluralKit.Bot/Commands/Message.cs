@@ -140,13 +140,12 @@ public class ProxiedMessage
         var editType = isReproxy ? "reproxy" : "edit";
         var editTypeAction = isReproxy ? "reproxied" : "edited";
 
-        // todo: is it correct to get a connection here?
-        await using var conn = await ctx.Database.Obtain();
         FullMessage? msg = null;
 
         var (referencedMessage, _) = ctx.MatchMessage(false);
         if (referencedMessage != null)
         {
+            await using var conn = await ctx.Database.Obtain();
             msg = await ctx.Repository.GetMessage(conn, referencedMessage.Value);
             if (msg == null)
                 throw new PKError("This is not a message proxied by PluralKit.");
@@ -161,6 +160,7 @@ public class ProxiedMessage
             if (recent == null)
                 throw new PKSyntaxError($"Could not find a recent message to {editType}.");
 
+            await using var conn = await ctx.Database.Obtain();
             msg = await ctx.Repository.GetMessage(conn, recent.Mid);
             if (msg == null)
                 throw new PKSyntaxError($"Could not find a recent message to {editType}.");

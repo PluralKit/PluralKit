@@ -59,15 +59,26 @@
         }
 
         if (data.birthday) {
-            if (!moment(data.birthday, 'YYYY-MM-DD').isValid()) {
-                if (moment(data.birthday, 'MM-DD').isValid()) {
-                    data.birthday = '0004-' + data.birthday;
-                } else {
-                    err.push(`${data.birthday} is not a valid date, please use the following format: YYYY-MM-DD. (example: 2019-07-21)`);
-                }
-            }
+            let allowedFormats = ['YYYY-MM-DD','YYYY-M-D', 'YYYY-MM-D', 'YYYY-M-DD'];
+
+            // replace all brackets with dashes
             if (data.birthday.includes('/')) {
-                data.birthday.replace('/', '-');
+                data.birthday = data.birthday.replaceAll('/', '-');
+            }
+
+            // add a generic year if there's no year included
+            // NOTE: for some reason moment parses a date with only a month and day as a YEAR and a month
+            // so I'm just checking by the amount of dashes in the string
+            if (data.birthday.split('-').length - 1 === 1) {
+                data.birthday = '0004-' + data.birthday;
+            }
+
+            // try matching the birthday to the YYYY-MM-DD format
+            if (moment(data.birthday, allowedFormats, true).isValid()) {
+                // convert the format to have months and days as double digits.
+                data.birthday = moment(data.birthday, 'YYYY-MM-DD').format('YYYY-MM-DD');
+            } else {
+                err.push(`${data.birthday} is not a valid date, please use the following format: YYYY-MM-DD. (example: 2019-07-21)`);
             }
         }
 

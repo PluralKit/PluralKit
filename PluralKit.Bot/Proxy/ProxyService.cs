@@ -211,16 +211,17 @@ public class ProxyService
         {
             Member = member,
             Content = prevMatched ? prevMatch.Content : originalMsg.Content,
-            ProxyTags = member.ProxyTags.First(),
+            ProxyTags = member.ProxyTags.FirstOrDefault(),
         };
 
         var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
-        var rootChannel = await _rest.GetChannelOrNull(messageChannel.IsThread() ? messageChannel.ParentId!.Value : messageChannel.Id);
+        var rootChannel = messageChannel.IsThread() ? await _rest.GetChannelOrNull(messageChannel.ParentId!.Value) : messageChannel;
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _rest.GetGuildOrNull(msg.Guild!.Value);
+        var guildMember = await _rest.GetGuildMember(msg.Guild!.Value, trigger.Author.Id);
 
         // Grab user permissions
-        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, null);
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, guildMember);
         var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
 
         // Make sure user has permissions to send messages
@@ -373,8 +374,8 @@ public class ProxyService
     {
         var sentMessage = new PKMessage
         {
-            Channel = triggerMessage.ChannelId,
-            Guild = triggerMessage.GuildId,
+            Channel = proxyMessage.ChannelId,
+            Guild = proxyMessage.GuildId,
             Member = match.Member.Id,
             Mid = proxyMessage.Id,
             OriginalMid = triggerMessage.Id,
