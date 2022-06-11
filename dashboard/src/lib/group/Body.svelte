@@ -3,7 +3,7 @@
     import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody, ModalFooter, Spinner } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
-    import parseTimestamps from '../../api/markdown-timestamp';
+    import parseTimestamps from '../../api/parse-timestamps';
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
     import Privacy from './Privacy.svelte';

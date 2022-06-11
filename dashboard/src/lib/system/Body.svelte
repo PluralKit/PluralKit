@@ -2,7 +2,7 @@
     import { Row, Col, Modal, Image, Button } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
-    import parseTimestamps from '../../api/markdown-timestamp';
+    import parseTimestamps from '../../api/parse-timestamps';
     import twemoji from 'twemoji';
 
     import { System } from '../../api/types';
