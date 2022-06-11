@@ -183,7 +183,7 @@ public class SwitchControllerV2: PKControllerBase
         if (await _repo.GetSwitches(system.Id).Select(x => x.Timestamp).ContainsAsync(value))
             throw Errors.SameSwitchTimestampError;
 
-        await _repo.MoveSwitch(sw.Id, value);
+        sw = await _repo.MoveSwitch(sw.Id, value);
 
         var members = await _db.Execute(conn => _repo.GetSwitchMembers(conn, sw.Id)).ToListAsync();
         return Ok(new FrontersReturnNew

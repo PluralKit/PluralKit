@@ -92,11 +92,11 @@ public partial class ModelRepository
         _logger.Information("Updated {SwitchId} members: {Members}", switchId, members);
     }
 
-    public async Task MoveSwitch(SwitchId id, Instant time)
+    public async Task<PKSwitch> MoveSwitch(SwitchId id, Instant time)
     {
         _logger.Information("Updated {SwitchId} timestamp: {SwitchTimestamp}", id, time);
         var query = new Query("switches").AsUpdate(new { timestamp = time }).Where("id", id);
-        await _db.ExecuteQuery(query);
+        var ret = await _db.QueryFirst<PKSwitch>(query, extraSql: "returning *");
         _ = _dispatch.Dispatch(id, new UpdateDispatchData
         {
             Event = DispatchEvent.UPDATE_SWITCH,
@@ -105,6 +105,7 @@ public partial class ModelRepository
                 timestamp = time.FormatExport(),
             }),
         });
+        return ret;
     }
 
     public async Task DeleteSwitch(SwitchId id)
