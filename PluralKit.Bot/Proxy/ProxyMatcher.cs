@@ -43,6 +43,10 @@ public class ProxyMatcher
     {
         match = default;
 
+        if (!ctx.AllowAutoproxy)
+            throw new ProxyService.ProxyChecksFailedException(
+                "Autoproxy is disabled for your account. Type `pk;cfg autoproxy account enable` to re-enable it.");
+
         // Skip autoproxy match if we hit the escape character
         if (messageContent.StartsWith(AutoproxyEscapeCharacter))
             throw new ProxyService.ProxyChecksFailedException(

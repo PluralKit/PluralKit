@@ -178,8 +178,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
 
         try
         {
-            return await _proxy.HandleIncomingMessage(evt, ctx, guild, channel, ctx.AllowAutoproxy,
-                botPermissions);
+            return await _proxy.HandleIncomingMessage(evt, ctx, guild, channel, true, botPermissions);
         }
 
         // Catch any failed proxy checks so they get ignored in the global error handler
