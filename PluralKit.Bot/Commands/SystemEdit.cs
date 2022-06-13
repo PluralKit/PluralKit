@@ -132,12 +132,16 @@ public class SystemEdit
     public async Task Color(Context ctx, PKSystem target)
     {
         var isOwnSystem = ctx.System?.Id == target.Id;
+        var matchedRaw = ctx.MatchRaw();
+        var matchedClear = await ctx.MatchClear();
 
-        if (!isOwnSystem || !ctx.HasNext(false))
+        if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
         {
             if (target.Color == null)
                 await ctx.Reply(
                     "This system does not have a color set." + (isOwnSystem ? " To set one, type `pk;system color <color>`." : ""));
+            else if (matchedRaw)
+                await ctx.Reply("```\n#" + target.Color + "\n```");
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("System color")
@@ -151,7 +155,7 @@ public class SystemEdit
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.MatchClear())
+        if (matchedClear)
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Color = Partial<string>.Null() });
 

@@ -374,38 +374,39 @@ public class Groups
 
     public async Task GroupColor(Context ctx, PKGroup target)
     {
-        var color = ctx.RemainderOrNull();
-        if (await ctx.MatchClear())
-        {
-            ctx.CheckOwnGroup(target);
+        var isOwnSystem = ctx.System?.Id == target.System;
+        var matchedRaw = ctx.MatchRaw();
+        var matchedClear = await ctx.MatchClear();
 
-            var patch = new GroupPatch { Color = Partial<string>.Null() };
-            await ctx.Repository.UpdateGroup(target.Id, patch);
-
-            await ctx.Reply($"{Emojis.Success} Group color cleared.");
-        }
-        else if (!ctx.HasNext())
+        if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
         {
             if (target.Color == null)
-                if (ctx.System?.Id == target.System)
-                    await ctx.Reply(
-                        $"This group does not have a color set. To set one, type `pk;group {target.Reference(ctx)} color <color>`.");
-                else
-                    await ctx.Reply("This group does not have a color set.");
+                await ctx.Reply(
+                    "This group does not have a color set." + (isOwnSystem ? $" To set one, type `pk;group {target.Reference(ctx)} color <color>`." : ""));
+            else if (matchedRaw)
+                await ctx.Reply("```\n#" + target.Color + "\n```");
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("Group color")
                     .Color(target.Color.ToDiscordColor())
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description($"This group's color is **#{target.Color}**."
-                                 + (ctx.System?.Id == target.System
-                                     ? $" To clear it, type `pk;group {target.Reference(ctx)} color -clear`."
-                                     : ""))
+                        + (isOwnSystem ? $" To clear it, type `pk;group {target.Reference(ctx)} color -clear`." : ""))
                     .Build());
+            return;
+        }
+
+        ctx.CheckSystem().CheckOwnGroup(target);
+
+        if (matchedClear)
+        {
+            await ctx.Repository.UpdateGroup(target.Id, new() { Color = Partial<string>.Null() });
+
+            await ctx.Reply($"{Emojis.Success} Group color cleared.");
         }
         else
         {
-            ctx.CheckOwnGroup(target);
+            var color = ctx.RemainderOrNull();
 
             if (color.StartsWith("#")) color = color.Substring(1);
             if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);
