@@ -52,6 +52,7 @@ public record Message
     // public bool MentionEveryone { get; init; }
     public User.Extra[] Mentions { get; init; }
     // public ulong[] MentionRoles { get; init; }
+    public MessageComponent[]? Components { get; init; }
 
     public Attachment[] Attachments { get; init; }
     public Embed[]? Embeds { get; init; }
