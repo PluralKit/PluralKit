@@ -21,7 +21,7 @@ public class Init
     private static async Task Main(string[] args)
     {
         // set cluster config from Nomad node index env variable
-        if (Environment.GetEnvironmentVariable("NOMAD_NODE_INDEX") is {} nodeIndex)
+        if (Environment.GetEnvironmentVariable("NOMAD_ALLOC_INDEX") is { } nodeIndex)
             Environment.SetEnvironmentVariable("PluralKit__Bot__Cluster__NodeName", $"pluralkit-{nodeIndex}");
 
         // Load configuration and run global init stuff
