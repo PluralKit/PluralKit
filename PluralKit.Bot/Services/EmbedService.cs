@@ -144,6 +144,9 @@ public class EmbedService
                 $"System ID: {systemHid} | Member ID: {member.Hid} | Sender: {triggerMessage.Author.Username}#{triggerMessage.Author.Discriminator} ({triggerMessage.Author.Id}) | Message ID: {proxiedMessage.Id} | Original Message ID: {triggerMessage.Id}"))
             .Timestamp(timestamp.ToDateTimeOffset().ToString("O"));
 
+        if (oldContent == "")
+            oldContent = "*no message content*";
+
         if (oldContent != null)
             embed.Field(new Embed.Field("Old message", oldContent?.NormalizeLineEndSpacing().Truncate(1000)));
 
