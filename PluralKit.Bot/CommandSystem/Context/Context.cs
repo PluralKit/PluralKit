@@ -110,6 +110,12 @@ public class Context
     {
         _currentCommand = commandDef;
 
+        if (deprecated && commandDef != null)
+        {
+            await Reply($"{Emojis.Warn} This command has been removed. please use `pk;{commandDef.Key}` instead.");
+            return;
+        }
+
         try
         {
             using (_metrics.Measure.Timer.Time(BotMetrics.CommandTime, new MetricTags("Command", commandDef?.Key ?? "null")))
@@ -130,9 +136,6 @@ public class Context
             // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
             await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
         }
-
-        if (deprecated && commandDef != null)
-            await Reply($"{Emojis.Warn} This command is deprecated and will be removed soon. In the future, please use `pk;{commandDef.Key}`.");
     }
 
     /// <summary>
