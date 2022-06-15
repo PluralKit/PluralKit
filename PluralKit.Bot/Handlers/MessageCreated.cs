@@ -117,17 +117,6 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (!HasCommandPrefix(content, ourUserId, out var cmdStart) || cmdStart == content.Length)
             return false;
 
-        if (ctx.IsDeleting)
-        {
-            await _rest.CreateMessage(evt.ChannelId, new()
-            {
-                Content = $"{Emojis.Error} Your system is currently being deleted."
-                    + " Due to database issues, it is not possible to use commands while a system is being deleted. Please wait a few minutes and try again.",
-                MessageReference = new(guild?.Id, channel.Id, evt.Id)
-            });
-            return true;
-        }
-
         // Trim leading whitespace from command without actually modifying the string
         // This just moves the argPos pointer by however much whitespace is at the start of the post-argPos string
         var trimStartLengthDiff =
@@ -172,8 +161,6 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
     private async ValueTask<bool> TryHandleProxy(MessageCreateEvent evt, Guild guild, Channel channel,
                                                  MessageContext ctx)
     {
-        if (ctx.IsDeleting) return false;
-
         var botPermissions = await _cache.PermissionsIn(channel.Id);
 
         try
