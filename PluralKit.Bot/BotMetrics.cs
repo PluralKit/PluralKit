@@ -22,13 +22,6 @@ public static class BotMetrics
         Context = "Bot"
     };
 
-    public static MeterOptions LocalDMCacheHits => new()
-    {
-        Name = "Cluster local DM Cache Hits",
-        MeasurementUnit = Unit.Calls,
-        Context = "Bot"
-    };
-
     public static MeterOptions DatabaseDMCacheHits => new()
     {
         Name = "Database DM Cache Hits",
