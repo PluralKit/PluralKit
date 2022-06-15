@@ -277,7 +277,7 @@ public class SystemEdit
             await ctx.Reply(
                 $"{Emojis.Success} System server tag changed. Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
 
-            if (!ctx.MessageContext.TagEnabled)
+            if (!settings.TagEnabled)
                 await ctx.Reply(setDisabledWarning);
         }
 
@@ -288,7 +288,7 @@ public class SystemEdit
             await ctx.Reply(
                 $"{Emojis.Success} System server tag cleared. Member names will now end with the global system tag, if there is one set.");
 
-            if (!ctx.MessageContext.TagEnabled)
+            if (!settings.TagEnabled)
                 await ctx.Reply(setDisabledWarning);
         }
 
@@ -297,7 +297,7 @@ public class SystemEdit
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id,
                 new SystemGuildPatch { TagEnabled = newValue });
 
-            await ctx.Reply(PrintEnableDisableResult(newValue, newValue != ctx.MessageContext.TagEnabled));
+            await ctx.Reply(PrintEnableDisableResult(newValue, newValue != settings.TagEnabled));
         }
 
         string PrintEnableDisableResult(bool newValue, bool changedValue)
@@ -312,20 +312,20 @@ public class SystemEdit
 
             if (newValue)
             {
-                if (ctx.MessageContext.TagEnabled)
+                if (settings.TagEnabled)
                 {
-                    if (ctx.MessageContext.SystemGuildTag == null)
+                    if (settings.Tag == null)
                         str +=
                             " However, you do not have a system tag specific to this server. Messages will be proxied using your global system tag, if there is one set.";
                     else
                         str +=
-                            $" Your current system tag in '{ctx.Guild.Name}' is {ctx.MessageContext.SystemGuildTag.AsCode()}.";
+                            $" Your current system tag in '{ctx.Guild.Name}' is {settings.Tag.AsCode()}.";
                 }
                 else
                 {
-                    if (ctx.MessageContext.SystemGuildTag != null)
+                    if (settings.Tag != null)
                         str +=
-                            $" Member names will now end with the server-specific tag {ctx.MessageContext.SystemGuildTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.";
+                            $" Member names will now end with the server-specific tag {settings.Tag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.";
                     else
                         str +=
                             " Member names will now end with the global system tag when proxied in the current server, if there is one set.";

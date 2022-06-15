@@ -63,7 +63,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
         if (IsDuplicateMessage(evt)) return;
 
-        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.SendMessages)) return;
+        var botPermissions = await _cache.PermissionsIn(evt.ChannelId);
+        if (!botPermissions.HasFlag(PermissionSet.SendMessages)) return;
 
         // spawn off saving the private channel into another thread
         // it is not a fatal error if this fails, and it shouldn't block message processing
@@ -77,36 +78,33 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         _metrics.Measure.Meter.Mark(BotMetrics.MessagesReceived);
         _lastMessageCache.AddMessage(evt);
 
-        // Get message context from DB (tracking w/ metrics)
-        MessageContext ctx;
-        using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-            ctx = await _repo.GetMessageContext(evt.Author.Id, evt.GuildId ?? default, rootChannel.Id);
+        // if the message was not sent by an user account, only try running log cleanup
+        if (evt.Author.Bot || evt.WebhookId != null || evt.Author.System == true)
+        {
+            await TryHandleLogClean(channel, evt);
+            return;
+        }
 
         // Try each handler until we find one that succeeds
-        if (await TryHandleLogClean(evt, ctx))
+
+        if (await TryHandleCommand(shardId, evt, guild, channel))
             return;
 
-        // Only do command/proxy handling if it's a user account
-        if (evt.Author.Bot || evt.WebhookId != null || evt.Author.System == true)
-            return;
-
-        if (await TryHandleCommand(shardId, evt, guild, channel, ctx))
-            return;
-        await TryHandleProxy(evt, guild, channel, ctx);
+        await TryHandleProxy(evt, guild, channel, rootChannel.Id, botPermissions);
     }
 
-    private async ValueTask<bool> TryHandleLogClean(MessageCreateEvent evt, MessageContext ctx)
+    private async Task TryHandleLogClean(Channel channel, MessageCreateEvent evt)
     {
-        var channel = await _cache.GetChannel(evt.ChannelId);
-        if (!evt.Author.Bot || channel.Type != Channel.ChannelType.GuildText ||
-            !ctx.LogCleanupEnabled) return false;
+        if (evt.GuildId != null) return;
+        if (channel.Type != Channel.ChannelType.GuildText) return;
 
-        await _loggerClean.HandleLoggerBotCleanup(evt);
-        return true;
+        var guildSettings = await _repo.GetGuild(evt.GuildId!.Value);
+
+        if (guildSettings.LogCleanupEnabled)
+            await _loggerClean.HandleLoggerBotCleanup(evt);
     }
 
-    private async ValueTask<bool> TryHandleCommand(int shardId, MessageCreateEvent evt, Guild? guild,
-                                                   Channel channel, MessageContext ctx)
+    private async ValueTask<bool> TryHandleCommand(int shardId, MessageCreateEvent evt, Guild? guild, Channel channel)
     {
         var content = evt.Content;
         if (content == null) return false;
@@ -125,9 +123,9 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
 
         try
         {
-            var system = ctx.SystemId != null ? await _repo.GetSystem(ctx.SystemId.Value) : null;
-            var config = ctx.SystemId != null ? await _repo.GetSystemConfig(ctx.SystemId.Value) : null;
-            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config, ctx));
+            var system = await _repo.GetSystemByAccount(evt.Author.Id);
+            var config = system != null ? await _repo.GetSystemConfig(system.Id) : null;
+            await _tree.ExecuteCommand(new Context(_services, shardId, guild, channel, evt, cmdStart, system, config));
         }
         catch (PKError)
         {
@@ -158,10 +156,12 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         return false;
     }
 
-    private async ValueTask<bool> TryHandleProxy(MessageCreateEvent evt, Guild guild, Channel channel,
-                                                 MessageContext ctx)
+    private async ValueTask<bool> TryHandleProxy(MessageCreateEvent evt, Guild guild, Channel channel, ulong rootChannel, PermissionSet botPermissions)
     {
-        var botPermissions = await _cache.PermissionsIn(channel.Id);
+        // Get message context from DB (tracking w/ metrics)
+        MessageContext ctx;
+        using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
+            ctx = await _repo.GetMessageContext(evt.Author.Id, evt.GuildId ?? default, rootChannel);
 
         try
         {

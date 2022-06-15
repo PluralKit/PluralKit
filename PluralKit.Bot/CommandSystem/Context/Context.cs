@@ -28,8 +28,8 @@ public class Context
 
     private Command? _currentCommand;
 
-    public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
-                    PKSystem senderSystem, SystemConfig config, MessageContext messageContext)
+    public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
+                                                    int commandParseOffset, PKSystem senderSystem, SystemConfig config)
     {
         Message = (Message)message;
         ShardId = shardId;
@@ -37,7 +37,6 @@ public class Context
         Channel = channel;
         System = senderSystem;
         Config = config;
-        MessageContext = messageContext;
         Cache = provider.Resolve<IDiscordCache>();
         Database = provider.Resolve<IDatabase>();
         Repository = provider.Resolve<ModelRepository>();
@@ -61,7 +60,6 @@ public class Context
     public readonly Guild Guild;
     public readonly int ShardId;
     public readonly Cluster Cluster;
-    public readonly MessageContext MessageContext;
 
     public Task<PermissionSet> BotPermissions => Cache.PermissionsIn(Channel.Id);
     public Task<PermissionSet> UserPermissions => Cache.PermissionsFor((MessageCreateEvent)Message);

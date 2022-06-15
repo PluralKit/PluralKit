@@ -126,8 +126,7 @@ public class ProxiedMessage
             if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
 
-            await _logChannel.LogMessage(ctx.MessageContext, msg.Message, ctx.Message, editedMsg,
-                originalMsg!.Content!);
+            await _logChannel.LogMessage(msg.Message, ctx.Message, editedMsg, originalMsg!.Content!);
         }
         catch (NotFoundException)
         {

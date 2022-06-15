@@ -386,7 +386,7 @@ public class ProxyService
             => _repo.AddMessage(sentMessage);
 
         Task LogMessageToChannel() =>
-            _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
+            _logChannel.LogMessage(sentMessage, triggerMessage, proxyMessage).AsTask();
 
         Task SaveLatchAutoproxy() => autoproxySettings.AutoproxyMode == AutoproxyMode.Latch
             ? _repo.UpdateAutoproxy(ctx.SystemId.Value, triggerMessage.GuildId, null, new()
