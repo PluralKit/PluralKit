@@ -48,8 +48,7 @@
 	.wrapper {
 		height: 55px;
 		width: 55px;
-		display: block;
-		float: left;
+		display: inline-block;
 	}
 	.shard:hover {
 		cursor: pointer;

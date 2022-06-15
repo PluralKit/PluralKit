@@ -96,7 +96,7 @@
     
 </script>
 
-<Container fluid>
+<Container>
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
             <Card class="mb-4">
@@ -157,18 +157,27 @@
     {#each Object.keys(clusters) as key}
         <Row>
             <Col class="mx-auto" xs={12} lg={11} xl={10}>
-                <Card class="mb-4">
-                    <CardBody>
-                        <CardTitle style="margin-top: 8px; outline: none;">
-                            Cluster {key}
-                        </CardTitle>
-                        <br>
-                        {#each clusters[key] as shard}
-                            <ShardItem shard={shard} bind:hover={hover} />
-                        {/each}
-                    </CardBody>
-                </Card>
+                <div class="cluster-card">
+                    <span class="cluster-text">Cluster {key} &nbsp</span>
+                    {#each clusters[key] as shard}
+                    <ShardItem shard={shard} bind:hover={hover} />
+                    {/each}
+                </div>
             </Col>
         </Row>
     {/each}
 </Container>
+
+<style>
+    .cluster-card {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 2.5px;
+    }
+
+    .cluster-text {
+        min-width: 110px;
+        text-align: right;
+    }
+</style>
