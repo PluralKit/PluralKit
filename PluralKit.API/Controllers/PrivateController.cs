@@ -135,6 +135,9 @@ public class PrivateController: PKControllerBase
         //     guilds.Select(g => new HashEntry(g.Value<string>("id"), true)).ToArray()
         // );
 
+        if (system.Token == null)
+            system = await _repo.UpdateSystem(system.Id, new SystemPatch { Token = StringUtils.GenerateToken() });
+
         var o = new JObject();
 
         o.Add("system", system.ToJson(LookupContext.ByOwner));
