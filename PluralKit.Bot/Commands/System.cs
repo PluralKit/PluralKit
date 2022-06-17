@@ -31,6 +31,6 @@ public class System
 
         // TODO: better message, perhaps embed like in groups?
         await ctx.Reply(
-            $"{Emojis.Success} Your system has been created. Type `pk;system` to view it, and type `pk;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
+            $"{Emojis.Success} Your system has been created. Type `sp;system` to view it, and type `sp;system help` for more information about commands you can use now. Now that you have that set up, check out the getting started guide on setting up members and proxies: <https://pluralkit.me/start>");
     }
 }

@@ -92,7 +92,7 @@ public class ServerConfig
         await ctx.Reply(
             $"{Emojis.Success} Message logging for the given channels {(enable ? "enabled" : "disabled")}." +
             (logChannel == null
-                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `pk;log channel #your-log-channel`."
+                ? $"\n{Emojis.Warn} Please note that no logging channel is set, so there is nowhere to log messages to. You can set a logging channel using `sp;log channel #your-log-channel`."
                 : ""));
     }
 
@@ -255,10 +255,10 @@ public class ServerConfig
             var guildCfg = await ctx.Repository.GetGuild(ctx.Guild.Id);
             if (guildCfg.LogCleanupEnabled)
                 eb.Description(
-                    "Log cleanup is currently **on** for this server. To disable it, type `pk;logclean off`.");
+                    "Log cleanup is currently **on** for this server. To disable it, type `sp;logclean off`.");
             else
                 eb.Description(
-                    "Log cleanup is currently **off** for this server. To enable it, type `pk;logclean on`.");
+                    "Log cleanup is currently **off** for this server. To enable it, type `sp;logclean on`.");
             await ctx.Reply(embed: eb.Build());
             return;
         }

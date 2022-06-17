@@ -10,7 +10,7 @@ public partial class CommandTree
     {
         var commandListStr = CreatePotentialCommandList(potentialCommands);
         await ctx.Reply(
-            $"{Emojis.Error} Unknown command `pk;{ctx.FullCommand().Truncate(100)}`. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
+            $"{Emojis.Error} Unknown command `sp;{ctx.FullCommand().Truncate(100)}`. Perhaps you meant to use one of the following commands?\n{commandListStr}\n\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
     }
 
     private async Task PrintCommandExpectedError(Context ctx, params Command[] potentialCommands)
@@ -22,7 +22,7 @@ public partial class CommandTree
 
     private static string CreatePotentialCommandList(params Command[] potentialCommands)
     {
-        return string.Join("\n", potentialCommands.Select(cmd => $"- **pk;{cmd.Usage}** - *{cmd.Description}*"));
+        return string.Join("\n", potentialCommands.Select(cmd => $"- **sp;{cmd.Usage}** - *{cmd.Description}*"));
     }
 
     private async Task PrintCommandList(Context ctx, string subject, params Command[] commands)

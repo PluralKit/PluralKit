@@ -54,4 +54,4 @@ PluralKit will send invalid requests to your endpoint, with `PING` event type, o
 |UPDATE_SWITCH|a switch was updated|[switch object](/api/models#switch-model) with only modified keys|
 |DELETE_SWITCH|a switch was deleted|null|old switch ID can be found in top-level `id` key|
 |DELETE_ALL_SWITCHES|your system's switches were bulk deleted|null|
-|SUCCESSFUL_IMPORT|some information was successfully imported through the `pk;import` command to your system|null|
+|SUCCESSFUL_IMPORT|some information was successfully imported through the `sp;import` command to your system|null|

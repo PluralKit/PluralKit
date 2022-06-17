@@ -45,7 +45,7 @@ public class ProxyMatcher
 
         if (!ctx.AllowAutoproxy)
             throw new ProxyService.ProxyChecksFailedException(
-                "Autoproxy is disabled for your account. Type `pk;cfg autoproxy account enable` to re-enable it.");
+                "Autoproxy is disabled for your account. Type `sp;cfg autoproxy account enable` to re-enable it.");
 
         // Skip autoproxy match if we hit the escape character
         if (messageContent.StartsWith(AutoproxyEscapeCharacter))
@@ -71,7 +71,7 @@ public class ProxyMatcher
         {
             if (settings.AutoproxyMode == AutoproxyMode.Front)
                 throw new ProxyService.ProxyChecksFailedException(
-                    "You are using autoproxy front, but no members are currently registered as fronting. Please use `pk;switch <member>` to log a new switch.");
+                    "You are using autoproxy front, but no members are currently registered as fronting. Please use `sp;switch <member>` to log a new switch.");
             if (settings.AutoproxyMode == AutoproxyMode.Member)
                 throw new ProxyService.ProxyChecksFailedException(
                     "You are using member-specific autoproxy with an invalid member. Was this member deleted?");
@@ -84,7 +84,7 @@ public class ProxyMatcher
 
         if (settings.AutoproxyMode != AutoproxyMode.Member && !member.AllowAutoproxy)
             throw new ProxyService.ProxyChecksFailedException(
-                "This member has autoproxy disabled. To enable it, use `pk;m <member> autoproxy on`.");
+                "This member has autoproxy disabled. To enable it, use `sp;m <member> autoproxy on`.");
 
         // Moved the IsLatchExpired() check to here, so that an expired latch and a latch without any previous messages throw different errors
         if (settings.AutoproxyMode == AutoproxyMode.Latch && IsLatchExpired(ctx, settings))

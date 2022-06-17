@@ -17,8 +17,8 @@ The configuration file needs to be placed in the bot's working directory (usuall
 The configuration file is in JSON format (albeit with a `.conf` extension). The following keys are available (using `.` to indicate a nested object level), bolded key names are required:
 * **`PluralKit.Bot.Token`**: the Discord bot token to connect with
 * **`PluralKit.Database`**: the URI of the database to connect to (in [ADO.NET Npgsql format](https://www.connectionstrings.com/npgsql/))
-* `PluralKit.Bot.Prefixes`: an array of command prefixes to use (default `["pk;", "pk!"]`).
-* `PluralKit.Bot.ClientId` *(optional)*: the ID of the bot's user account, used when generating invite links through `pk;invite`. It's automatically determined if not present, but overriding it may be useful for private instances that still want a public invite link.
+* `PluralKit.Bot.Prefixes`: an array of command prefixes to use (default `["sp;", "sp!"]`).
+* `PluralKit.Bot.ClientId` *(optional)*: the ID of the bot's user account, used when generating invite links through `sp;invite`. It's automatically determined if not present, but overriding it may be useful for private instances that still want a public invite link.
 * `PluralKit.SentryUrl` *(optional)*: the [Sentry](https://sentry.io/welcome/) client key/DSN to report runtime errors to. If absent, disables Sentry integration.
 * `PluralKit.InfluxUrl` *(optional)*: the URL to an [InfluxDB](https://www.influxdata.com/products/influxdb-overview/) server to report aggregate statistics to. An example of these stats can be seen on [the public stats page](https://stats.pluralkit.me). 
 * `PluralKit.InfluxDb` *(optional)*: the name of an InfluxDB database to report statistics to. If either this field or `PluralKit.InfluxUrl` are absent, InfluxDB reporting will be disabled.
@@ -57,7 +57,7 @@ $ docker-compose up -d
 
 ## Scheduled Tasks worker
 
-There is a scheduled tasks worker that needs to be ran separately from the bot. This handles cleaning up the database, and updating statistics (system/member/etc counts, shown in the `pk;stats` embed).
+There is a scheduled tasks worker that needs to be ran separately from the bot. This handles cleaning up the database, and updating statistics (system/member/etc counts, shown in the `sp;stats` embed).
 
 Note: This worker is *not required*, and the bot will function correctly without it.
 

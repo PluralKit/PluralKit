@@ -93,7 +93,7 @@ public class Member
         if (await ctx.Database.Execute(conn => conn.QuerySingleAsync<bool>("select has_private_members(@System)",
                 new { System = ctx.System.Id })) && !ctx.Config.MemberDefaultPrivate) //if has private members
             await ctx.Reply(
-                $"{Emojis.Warn} This member is currently **public**. To change this, use `pk;member {member.Hid} private`.");
+                $"{Emojis.Warn} This member is currently **public**. To change this, use `sp;member {member.Hid} private`.");
         if (avatarArg != null)
             if (imageMatchError == null)
                 await ctx.Reply(

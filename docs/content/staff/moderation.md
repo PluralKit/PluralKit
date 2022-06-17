@@ -10,7 +10,7 @@ You can use PluralKit's lookup tools to connect a message to the sender account.
 To look up which account's behind a given message (as well as other information), you can either:
 
 - React to the message with the :question: emoji, which will DM you a message card
-- Use the `pk;msg <message-link>` command with the message's link, which will reply with a message card *(this also works in PluralKit's DMs)*
+- Use the `sp;msg <message-link>` command with the message's link, which will reply with a message card *(this also works in PluralKit's DMs)*
 
 An example of a message card is seen below:
 
@@ -19,11 +19,11 @@ An example of a message card is seen below:
 ### Looking up systems and accounts
 Looking up a system by its 5-character ID (`exmpl` in the above screenshot) will show you a list of its linked account IDs. For example:
 
-    pk;system exmpl
+    sp;system exmpl
 
 You can also do the reverse operation by passing a Discord account ID (or a @mention), like so:
 
-    pk;system 466378653216014359
+    sp;system 466378653216014359
 
 Both commands output a system card, which includes a linked account list. These commands also work in PluralKit's DMs.
 

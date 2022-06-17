@@ -110,7 +110,7 @@ public partial class ModelRepository
     public async Task AddAccount(SystemId system, ulong accountId, IPKConnection? conn = null)
     {
         // We have "on conflict do nothing" since linking an account when it's already linked to the same system is idempotent
-        // This is used in import/export, although the pk;link command checks for this case beforehand
+        // This is used in import/export, although the sp;link command checks for this case beforehand
 
         // update 2022-01: the accounts table is now independent of systems
         // we MUST check for the presence of a system before inserting, or it will move the new account to the current system

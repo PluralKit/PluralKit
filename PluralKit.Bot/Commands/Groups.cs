@@ -82,13 +82,13 @@ public class Groups
         var eb = new EmbedBuilder()
             .Description(
                 $"Your new group, **{groupName}**, has been created, with the group ID **`{newGroup.Hid}`**.\nBelow are a couple of useful commands:")
-            .Field(new Embed.Field("View the group card", $"> pk;group **{reference}**"))
+            .Field(new Embed.Field("View the group card", $"> sp;group **{reference}**"))
             .Field(new Embed.Field("Add members to the group",
-                $"> pk;group **{reference}** add **MemberName**\n> pk;group **{reference}** add **Member1** **Member2** **Member3** (and so on...)"))
+                $"> sp;group **{reference}** add **MemberName**\n> sp;group **{reference}** add **Member1** **Member2** **Member3** (and so on...)"))
             .Field(new Embed.Field("Set the description",
-                $"> pk;group **{reference}** description **This is my new group, and here is the description!**"))
+                $"> sp;group **{reference}** description **This is my new group, and here is the description!**"))
             .Field(new Embed.Field("Set the group icon",
-                $"> pk;group **{reference}** icon\n*(with an image attached)*"));
+                $"> sp;group **{reference}** icon\n*(with an image attached)*"));
         await ctx.Reply($"{Emojis.Success} Group created!", eb.Build());
 
         if (existingGroupCount >= Limits.WarnThreshold(groupLimit))
@@ -126,7 +126,7 @@ public class Groups
         var noDisplayNameSetMessage = "This group does not have a display name set.";
         if (ctx.System?.Id == target.System)
             noDisplayNameSetMessage +=
-                $" To set one, type `pk;group {target.Reference(ctx)} displayname <display name>`.";
+                $" To set one, type `sp;group {target.Reference(ctx)} displayname <display name>`.";
 
         // No perms check, display name isn't covered by member privacy
 
@@ -155,9 +155,9 @@ public class Groups
 
                 if (ctx.System?.Id == target.System)
                     eb.Description(
-                        $"To change display name, type `pk;group {reference} displayname <display name>`."
-                        + $"To clear it, type `pk;group {reference} displayname -clear`."
-                        + $"To print the raw display name, type `pk;group {reference} displayname -raw`.");
+                        $"To change display name, type `sp;group {reference} displayname <display name>`."
+                        + $"To clear it, type `sp;group {reference} displayname -clear`."
+                        + $"To print the raw display name, type `sp;group {reference} displayname -raw`.");
 
                 await ctx.Reply(embed: eb.Build());
             }
@@ -194,7 +194,7 @@ public class Groups
         var noDescriptionSetMessage = "This group does not have a description set.";
         if (ctx.System?.Id == target.System)
             noDescriptionSetMessage +=
-                $" To set one, type `pk;group {target.Reference(ctx)} description <description>`.";
+                $" To set one, type `sp;group {target.Reference(ctx)} description <description>`.";
 
         if (ctx.MatchRaw())
         {
@@ -214,9 +214,9 @@ public class Groups
                     .Title("Group description")
                     .Description(target.Description)
                     .Field(new Embed.Field("\u200B",
-                        $"To print the description with formatting, type `pk;group {target.Reference(ctx)} description -raw`."
+                        $"To print the description with formatting, type `sp;group {target.Reference(ctx)} description -raw`."
                         + (ctx.System?.Id == target.System
-                            ? $" To clear it, type `pk;group {target.Reference(ctx)} description -clear`."
+                            ? $" To clear it, type `sp;group {target.Reference(ctx)} description -clear`."
                             : "")))
                     .Build());
             return;
@@ -289,7 +289,7 @@ public class Groups
                     .Image(new Embed.EmbedImage(target.Icon.TryGetCleanCdnUrl()));
 
                 if (target.System == ctx.System?.Id)
-                    eb.Description($"To clear, use `pk;group {target.Reference(ctx)} icon -clear`.");
+                    eb.Description($"To clear, use `sp;group {target.Reference(ctx)} icon -clear`.");
 
                 await ctx.Reply(embed: eb.Build());
             }
@@ -353,7 +353,7 @@ public class Groups
                     .Image(new Embed.EmbedImage(target.BannerImage));
 
                 if (target.System == ctx.System?.Id)
-                    eb.Description($"To clear, use `pk;group {target.Reference(ctx)} banner clear`.");
+                    eb.Description($"To clear, use `sp;group {target.Reference(ctx)} banner clear`.");
 
                 await ctx.Reply(embed: eb.Build());
             }
@@ -382,7 +382,7 @@ public class Groups
         {
             if (target.Color == null)
                 await ctx.Reply(
-                    "This group does not have a color set." + (isOwnSystem ? $" To set one, type `pk;group {target.Reference(ctx)} color <color>`." : ""));
+                    "This group does not have a color set." + (isOwnSystem ? $" To set one, type `sp;group {target.Reference(ctx)} color <color>`." : ""));
             else if (matchedRaw)
                 await ctx.Reply("```\n#" + target.Color + "\n```");
             else
@@ -391,7 +391,7 @@ public class Groups
                     .Color(target.Color.ToDiscordColor())
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description($"This group's color is **#{target.Color}**."
-                        + (isOwnSystem ? $" To clear it, type `pk;group {target.Reference(ctx)} color -clear`." : ""))
+                        + (isOwnSystem ? $" To clear it, type `sp;group {target.Reference(ctx)} color -clear`." : ""))
                     .Build());
             return;
         }
@@ -482,7 +482,7 @@ public class Groups
                 .Field(new Embed.Field("Metadata (creation date)", target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.Visibility.Explanation()))
                 .Description(
-                    $"To edit privacy settings, use the command:\n> pk;group **{target.Reference(ctx)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    $"To edit privacy settings, use the command:\n> sp;group **{target.Reference(ctx)}** privacy **<subject>** **<level>**\n\n- `subject` is one of `name`, `description`, `icon`, `members`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }

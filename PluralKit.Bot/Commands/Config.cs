@@ -114,7 +114,7 @@ public class Config
                 eb.Description(description.ToString());
 
                 // using *large* blue diamond here since it's easier to see in the small footer
-                eb.Footer(new("\U0001f537 means this setting was changed. Type `pk;config <setting name> clear` to reset it to the default."));
+                eb.Footer(new("\U0001f537 means this setting was changed. Type `sp;config <setting name> clear` to reset it to the default."));
 
                 return Task.CompletedTask;
             }
@@ -209,7 +209,7 @@ public class Config
         if (zoneStr == null)
         {
             await ctx.Reply(
-                $"Your current system time zone is set to **{ctx.Config.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.Config.Zone)}** in that time zone. To change your system time zone, type `pk;config tz <zone>`.");
+                $"Your current system time zone is set to **{ctx.Config.UiTz}**. It is currently **{SystemClock.Instance.GetCurrentInstant().FormatZoned(ctx.Config.Zone)}** in that time zone. To change your system time zone, type `sp;config tz <zone>`.");
             return;
         }
 
@@ -287,14 +287,14 @@ public class Config
 
     public async Task SystemPing(Context ctx)
     {
-        // note: this is here because this is also used in `pk;system ping`, which does not CheckSystem
+        // note: this is here because this is also used in `sp;system ping`, which does not CheckSystem
         ctx.CheckSystem();
 
         // todo: move all the other config settings to this format
 
         String Response(bool isError, bool val)
             => $"Reaction pings are {(isError ? "already" : "currently")} **{EnabledDisabled(val)}** for your system. "
-             + $"To {EnabledDisabled(!val)[..^1]} reaction pings, type `pk;config ping {EnabledDisabled(!val)[..^1]}`.";
+             + $"To {EnabledDisabled(!val)[..^1]} reaction pings, type `sp;config ping {EnabledDisabled(!val)[..^1]}`.";
 
         if (!ctx.HasNext())
         {
@@ -317,8 +317,8 @@ public class Config
     {
         if (!ctx.HasNext())
         {
-            if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply("Newly created members will currently have their privacy settings set to private. To change this, type `pk;config private member off`"); }
-            else { await ctx.Reply("Newly created members will currently have their privacy settings set to public. To automatically set new members' privacy settings to private, type `pk;config private member on`"); }
+            if (ctx.Config.MemberDefaultPrivate) { await ctx.Reply("Newly created members will currently have their privacy settings set to private. To change this, type `sp;config private member off`"); }
+            else { await ctx.Reply("Newly created members will currently have their privacy settings set to public. To automatically set new members' privacy settings to private, type `sp;config private member on`"); }
         }
         else
         {
@@ -341,8 +341,8 @@ public class Config
     {
         if (!ctx.HasNext())
         {
-            if (ctx.Config.GroupDefaultPrivate) { await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this, type `pk;config private group off`"); }
-            else { await ctx.Reply("Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `pk;config private group on`"); }
+            if (ctx.Config.GroupDefaultPrivate) { await ctx.Reply("Newly created groups will currently have their privacy settings set to private. To change this, type `sp;config private group off`"); }
+            else { await ctx.Reply("Newly created groups will currently have their privacy settings set to public. To automatically set new groups' privacy settings to private, type `sp;config private group on`"); }
         }
         else
         {

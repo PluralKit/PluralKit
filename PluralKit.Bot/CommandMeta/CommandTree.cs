@@ -272,7 +272,7 @@ public partial class CommandTree
 
     private async Task HandleMemberCommandTargeted(Context ctx, PKMember target)
     {
-        // Commands that have a member target (eg. pk;member <member> delete)
+        // Commands that have a member target (eg. sp;member <member> delete)
         if (ctx.Match("rename", "name", "changename", "setname", "rn"))
             await ctx.Execute<MemberEdit>(MemberRename, m => m.Name(ctx, target));
         else if (ctx.Match("description", "info", "bio", "text", "desc"))
@@ -411,7 +411,7 @@ public partial class CommandTree
         {
             await ctx.Reply(
                 "Available command help targets: `system`, `member`, `group`, `switch`, `config`, `autoproxy`, `log`, `blacklist`."
-                + "\n- **pk;commands <target>** - *View commands related to a help target.*"
+                + "\n- **sp;commands <target>** - *View commands related to a help target.*"
                 + "\n\nFor the full list of commands, see the website: <https://pluralkit.me/commands>");
             return;
         }
@@ -502,6 +502,6 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
 
         // todo: maybe add the list of configuration keys here?
-        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");
+        return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `sp;commands config` for the list of possible config settings.");
     }
 }

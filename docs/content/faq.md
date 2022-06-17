@@ -55,12 +55,12 @@ In the meantime, this feature is supported in Tupperbox (an alternative proxying
 No. Since proxied messages are posted through webhooks, and those technically aren't real users on Discord's end, it's not possible to block them. Blocking PluralKit itself will also not block the webhook messages. Discord also does not allow you to control who can receive a specific message, so it's not possible to integrate a blocking system in the bot, either. Sorry :/
 
 ### What can people see if I have all the privacy options on a member set to private?
-You can see an example of exactly this by querying `cmpuv` with the command `pk;m cmpuv`. (Also useful: there is an example system with every field filled, you can use `pk;s exmpl`)
+You can see an example of exactly this by querying `cmpuv` with the command `sp;m cmpuv`. (Also useful: there is an example system with every field filled, you can use `sp;s exmpl`)
 
 ## Known issues
 
 ### The name color doesn't work/can we color our proxy names?
-No. This is a limitation in Discord itself, and cannot be changed. The color command instead colors your member card that come up when you type `pk;member <member name>`.
+No. This is a limitation in Discord itself, and cannot be changed. The color command instead colors your member card that come up when you type `sp;member <member name>`.
 
 ### Why does my avatar not work?
 * PluralKit doesn't check if the avatar will be accepted by Discord. If you just set your avatar and it's not showing up, please try a different avatar.

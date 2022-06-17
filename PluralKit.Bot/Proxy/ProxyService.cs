@@ -126,7 +126,7 @@ public class ProxyService
         // Make sure the system has proxying enabled in the server
         if (!ctx.ProxyEnabled)
             throw new ProxyChecksFailedException(
-                "Your system has proxying disabled in this server. Type `pk;proxy on` to enable it.");
+                "Your system has proxying disabled in this server. Type `sp;proxy on` to enable it.");
 
         // Make sure we have either an attachment or message content
         var isMessageBlank = msg.Content == null || msg.Content.Trim().Length == 0;

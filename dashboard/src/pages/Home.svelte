@@ -105,7 +105,7 @@
                         <Link to="/dash"><Button style="float: left;" color='primary' tabindex={-1}>Go to dash</Button></Link><Button style="float: right;" color='danger' on:click={logout}>Log out</Button>
                     {:else}
                         <Row>
-                            <Label>Enter your token here. You can get this by using <b>pk;token</b></Label>
+                            <Label>Enter your token here. You can get this by using <b>sp;token</b></Label>
                             <Col xs={12} md={10}>
                                 <Input class="mb-2 mb-md-0" type="text" bind:value={token}/>
                             </Col>

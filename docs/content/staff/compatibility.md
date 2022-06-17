@@ -16,7 +16,7 @@ If your server uses an in-house bot for logging, you can use [the API](/api) to 
 Another solution is for PluralKit to automatically delete log messages from other bots when they get posted.
 PluralKit supports this through the **log cleanup** feature. To enable it, use the following command:
 
-    pk;logclean on
+    sp;logclean on
     
 This requires you to have the *Manage Server* permission on the server. 
 

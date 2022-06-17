@@ -14,22 +14,22 @@ PluralKit has a couple of useful command shorthands to reduce the typing:
 
 |Original|Shorthand|
 |---|---|
-|pk;system|pk;s|
-|pk;system list|pk;s l|
-|pk;system list full|pk;s l f|
-|pk;system fronter|pk;s f|
-|pk;system fronthistory|pk;s fh|
-|pk;system frontpercent|pk;s fp|
-|pk;member|pk;m|
-|pk;member new|pk;m n|
-|pk;group|pk;g|
-|pk;group new|pk;g n|
-|pk;switch|pk;sw|
-|pk;message|pk;msg|
-|pk;autoproxy|pk;ap|
+|sp;system|sp;s|
+|sp;system list|sp;s l|
+|sp;system list full|sp;s l f|
+|sp;system fronter|sp;s f|
+|sp;system fronthistory|sp;s fh|
+|sp;system frontpercent|sp;s fp|
+|sp;member|sp;m|
+|sp;member new|sp;m n|
+|sp;group|sp;g|
+|sp;group new|sp;g n|
+|sp;switch|sp;sw|
+|sp;message|sp;msg|
+|sp;autoproxy|sp;ap|
 
 ## Member list flags
-There are a number of option flags that can be added to the `pk;system list` command.
+There are a number of option flags that can be added to the `sp;system list` command.
 
 ### Sorting options
 |Flag|Aliases|Lists|Description|
@@ -70,12 +70,12 @@ You cannot look up private members or groups of another system.
 |Command|Flag|Aliases|Description|
 |---|---|---|---|
 |List commands|-search-description|-sd|Search inside descriptions instead of member/group names|
-|pk;system frontpercent|-fronters-only|-fo|Show the system's frontpercent without the "no fronter" entry|
-|pk;system frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
-|pk;group \<group> frontpercent|-fronters-only|-fo|Show a group's frontpercent without the "no fronter" entry|
-|pk;group \<group> frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
-|pk;edit|-append||Append the new content to the old message instead of overwriting it|
-|pk;edit|-prepend||Prepend the new content to the old message instead of overwriting it|
+|sp;system frontpercent|-fronters-only|-fo|Show the system's frontpercent without the "no fronter" entry|
+|sp;system frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
+|sp;group \<group> frontpercent|-fronters-only|-fo|Show a group's frontpercent without the "no fronter" entry|
+|sp;group \<group> frontpercent|-flat||Show "flat" frontpercent - percentages add up to 100%|
+|sp;edit|-append||Append the new content to the old message instead of overwriting it|
+|sp;edit|-prepend||Prepend the new content to the old message instead of overwriting it|
 |Most commands|-all|-a|Show hidden/private information|
 |Most commands|-raw|-r|Show text with formatting, for easier copy-pasting|
 |All commands|-private|-priv|Show private information|

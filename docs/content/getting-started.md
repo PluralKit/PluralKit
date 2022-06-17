@@ -14,19 +14,19 @@ This page will get you started :zap: lightning-fast :zap: with the bot. You'll n
 ## Create a system
 First, **create a system** with the following command:
 
-    pk;system new
+    sp;system new
 
 ::: tip
 You can also specify a system name if you want:
 
-    pk;system new My System Name
+    sp;system new My System Name
 
 :::
 
 ## Create a member       
 Second, **create a member** with the following command, inserting the member name:
 
-    pk;member new MyMember
+    sp;member new MyMember
 
 ::: tip
 You can include spaces, punctuation, or symbols in the member name. However, you'll need to write them `"in quotes"` every time you refer to the member elsewhere.
@@ -39,10 +39,10 @@ Now, you'll need to tell PluralKit how you want to trigger the proxy using **pro
 
 To set a member's proxy tags, you'll need to "pretend" you're proxying the word `text` - just the word itself, all-lowercase. This often gets a bit confusing, so here are a couple of examples with various patterns:
 
-    pk;member MyMember proxy J:text
-    pk;member MyMember proxy [text]
-    pk;member MyMember proxy 🌸text
-    pk;member MyMember proxy text -Q
+    sp;member MyMember proxy J:text
+    sp;member MyMember proxy [text]
+    sp;member MyMember proxy 🌸text
+    sp;member MyMember proxy text -Q
 
 ::: tip
 You're not limited to the types of proxy tags shown above. You can put anything you'd like around the word `text` (before, after, or both), and PluralKit will look for that. Be creative!
@@ -51,7 +51,7 @@ You're not limited to the types of proxy tags shown above. You can put anything 
 ## Set an avatar (optional)
 If you want an avatar displayed, use the following command:
 
-    pk;member MyMember avatar https://link.to.your/avatar.png
+    sp;member MyMember avatar https://link.to.your/avatar.png
 
 ::: tip
 If you don't have a link, you can leave that out entirely, and then **attach** the image to the command message itself. PluralKit will pick up on the attachment, and use that instead.

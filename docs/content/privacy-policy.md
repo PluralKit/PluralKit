@@ -25,9 +25,9 @@ This is the data PluralKit does *not* collect:
 
 System and member information (names, member lists, descriptions, etc) are public by default, and can be looked up by anyone given a system/member ID or an account ID. This can be changed using the [privacy settings](/guide#privacy). 
 
-You can export your system information using the `pk;export` command. This does not include message metadata (as the file would be huge). If there's demand for a command to export that, [let me know on GitHub](https://github.com/PluralKit/PluralKit/issues).
+You can export your system information using the `sp;export` command. This does not include message metadata (as the file would be huge). If there's demand for a command to export that, [let me know on GitHub](https://github.com/PluralKit/PluralKit/issues).
 
-You can delete your information using `pk;system delete`. This will delete all system information and associated members, switches, and messages. This will not delete your information from the database backups. Contact me if you want that wiped, too.
+You can delete your information using `sp;system delete`. This will delete all system information and associated members, switches, and messages. This will not delete your information from the database backups. Contact me if you want that wiped, too.
 
 The bot is [open-source](https://github.com/PluralKit/PluralKit). While I can't *prove* this is the code that's running on the production server... it is, promise.
 

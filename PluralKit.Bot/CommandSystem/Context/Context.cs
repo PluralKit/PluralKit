@@ -110,7 +110,7 @@ public class Context
 
         if (deprecated && commandDef != null)
         {
-            await Reply($"{Emojis.Warn} This command has been removed. please use `pk;{commandDef.Key}` instead.");
+            await Reply($"{Emojis.Warn} This command has been removed. please use `sp;{commandDef.Key}` instead.");
             return;
         }
 
@@ -123,7 +123,7 @@ public class Context
         }
         catch (PKSyntaxError e)
         {
-            await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> pk;{commandDef?.Usage}");
+            await Reply($"{Emojis.Error} {e.Message}\n**Command usage:**\n> sp;{commandDef?.Usage}");
         }
         catch (PKError e)
         {

@@ -115,9 +115,9 @@ public class EmbedService
         {
             if (memberCount > 0)
                 eb.Field(new Embed.Field($"Members ({memberCount})",
-                    $"(see `pk;system {system.Hid} list` or `pk;system {system.Hid} list full`)", true));
+                    $"(see `sp;system {system.Hid} list` or `sp;system {system.Hid} list full`)", true));
             else
-                eb.Field(new Embed.Field($"Members ({memberCount})", "Add one with `pk;member new`!", true));
+                eb.Field(new Embed.Field($"Members ({memberCount})", "Add one with `sp;member new`!", true));
         }
 
         if (system.DescriptionFor(ctx) is { } desc)
@@ -285,13 +285,13 @@ public class EmbedService
             if (memberCount == 0 && pctx == LookupContext.ByOwner)
                 // Only suggest the add command if this is actually the owner lol
                 eb.Field(new Embed.Field("Members (0)",
-                    $"Add one with `pk;group {target.Reference(ctx)} add <member>`!"));
+                    $"Add one with `sp;group {target.Reference(ctx)} add <member>`!"));
             else
             {
                 var name = pctx == LookupContext.ByOwner
                     ? target.Reference(ctx)
                     : target.Hid;
-                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `pk;group {name} list`)"));
+                eb.Field(new Embed.Field($"Members ({memberCount})", $"(see `sp;group {name} list`)"));
             }
         }
 

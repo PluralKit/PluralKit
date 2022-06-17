@@ -44,11 +44,11 @@ public class Help
                     String.Join("\n", new[]
                     {
                         "To get started using PluralKit, try running the following commands (of course replacing the relevant names with your own):",
-                        "**1**. `pk;system new` - Create a system (if you haven't already)",
-                        "**2**. `pk;member add John` - Add a new member to your system",
-                        "**3**. `pk;member John proxy [text]` - Set up [square brackets] as proxy tags",
+                        "**1**. `sp;system new` - Create a system (if you haven't already)",
+                        "**2**. `sp;member add John` - Add a new member to your system",
+                        "**3**. `sp;member John proxy [text]` - Set up [square brackets] as proxy tags",
                         "**4**. You're done! You can now type [a message in brackets] and it'll be proxied appropriately.",
-                        "**5**. Optionally, you may set an avatar from the URL of an image with `pk;member John avatar [link to image]`, or from a file by typing `pk;member John avatar` and sending the message with an attached image.",
+                        "**5**. Optionally, you may set an avatar from the URL of an image with `sp;member John avatar [link to image]`, or from a file by typing `sp;member John avatar` and sending the message with an attached image.",
                         "\nSee [the Getting Started guide](https://pluralkit.me/start) for more information."
                     })
                 ),
@@ -65,7 +65,7 @@ public class Help
                         $"React with {Emojis.Error} on a proxied message to delete it (only if you sent it!)",
                         $"React with {Emojis.RedQuestion} on a proxied message to look up information about it (like who sent it)",
                         $"React with {Emojis.Bell} on a proxied message to \"ping\" the sender",
-                        "Type **`pk;invite`** to get a link to invite this bot to your own server!"
+                        "Type **`sp;invite`** to get a link to invite this bot to your own server!"
                     })
                 ),
             }
@@ -80,7 +80,7 @@ public class Help
                     String.Join("\n", new[] {
                         "For a full list of commands, see [the command list](https://pluralkit.me/commands).",
                         "For a more in-depth explanation of message proxying, see [the documentation](https://pluralkit.me/guide#proxying).",
-                        "If you're an existing user of Tupperbox, type `pk;import` and attach a Tupperbox export file (from `tul!export`) to import your data from there."
+                        "If you're an existing user of Tupperbox, type `sp;import` and attach a Tupperbox export file (from `tul!export`) to import your data from there."
                     })
                 ),
                 new
