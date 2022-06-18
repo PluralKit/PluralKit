@@ -2,6 +2,7 @@
     import { Row, Col, Modal, Image, Button } from 'sveltestrap';
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
+    import parseTimestamps from '../../api/parse-timestamps';
     import twemoji from 'twemoji';
 
     import { System } from '../../api/types';
@@ -13,7 +14,7 @@
     let htmlDescription: string;
     let htmlName: string;
     if (user.description) { 
-        htmlDescription = toHTML(user.description, {embed: true});
+        htmlDescription = toHTML(parseTimestamps(user.description), {embed: true});
     } else {
         htmlDescription = "(no description)";
     }
