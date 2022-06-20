@@ -94,12 +94,12 @@ public class Context
             AllowedMentions = mentions ?? new AllowedMentions()
         });
 
-        if (embed != null)
-        {
+        // if (embed != null)
+        // {
             // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
-            // This may need to be changed at some point but works well enough for now
+            // but since we can, we just store all sent messages for possible deletion
             await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
-        }
+        // }
 
         return msg;
     }

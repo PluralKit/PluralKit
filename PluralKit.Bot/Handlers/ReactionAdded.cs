@@ -73,10 +73,10 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
                 return;
             }
 
-            var commandMsg = await _commandMessageService.GetCommandMessage(evt.MessageId);
-            if (commandMsg != null)
+            var (authorId, _) = await _commandMessageService.GetCommandMessage(evt.MessageId);
+            if (authorId != null)
             {
-                await HandleCommandDeleteReaction(evt, commandMsg);
+                await HandleCommandDeleteReaction(evt, authorId.Value);
                 return;
             }
         }
@@ -141,11 +141,11 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         await _repo.DeleteMessage(evt.MessageId);
     }
 
-    private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, CommandMessage? msg)
+    private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, ulong? authorId)
     {
         // Can only delete your own message
         // (except in DMs, where msg will be null)
-        if (msg != null && msg.AuthorId != evt.UserId)
+        if (authorId != null && authorId != evt.UserId)
             return;
 
         // todo: don't try to delete the user's own messages in DMs

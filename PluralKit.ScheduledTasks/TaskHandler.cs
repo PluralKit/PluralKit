@@ -19,7 +19,6 @@ namespace PluralKit.ScheduledTasks;
 
 public class TaskHandler
 {
-    private static readonly Duration CommandMessageRetention = Duration.FromHours(24);
     private readonly IDatabase _db;
     private readonly RedisService _redis;
     private readonly bool _useRedisMetrics;
@@ -65,9 +64,6 @@ public class TaskHandler
         if (_useRedisMetrics)
             await CollectBotStats();
 
-        // Clean up message cache in postgres
-        await CleanupOldMessages();
-
         stopwatch.Stop();
         _logger.Information("Ran scheduled tasks in {Time}", stopwatch.ElapsedDuration());
     }
@@ -106,18 +102,6 @@ public class TaskHandler
 
         await Task.WhenAll(((IMetricsRoot)_metrics).ReportRunner.RunAllAsync());
         _logger.Debug("Submitted metrics to backend");
-    }
-
-    private async Task CleanupOldMessages()
-    {
-        var deleteThresholdInstant = SystemClock.Instance.GetCurrentInstant() - CommandMessageRetention;
-        var deleteThresholdSnowflake = InstantToSnowflake(deleteThresholdInstant);
-
-        var deletedRows = await _repo.DeleteCommandMessagesBefore(deleteThresholdSnowflake);
-
-        _logger.Information(
-            "Pruned {DeletedRows} command messages older than retention {Retention} (older than {DeleteThresholdInstant} / {DeleteThresholdSnowflake})",
-            deletedRows, CommandMessageRetention, deleteThresholdInstant, deleteThresholdSnowflake);
     }
 
     // we don't have access to PluralKit.Bot here, so this needs to be vendored

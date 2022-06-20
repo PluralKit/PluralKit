@@ -2,6 +2,8 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
+using Autofac;
+
 using Myriad.Builders;
 using Myriad.Cache;
 using Myriad.Extensions;
@@ -304,14 +306,14 @@ public class ProxiedMessage
 
     private async Task DeleteCommandMessage(Context ctx, ulong messageId)
     {
-        var message = await ctx.Repository.GetCommandMessage(messageId);
-        if (message == null)
+        var (authorId, channelId) = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
+        if (authorId == null)
             throw Errors.MessageNotFound(messageId);
 
-        if (message.AuthorId != ctx.Author.Id)
+        if (authorId != ctx.Author.Id)
             throw new PKError("You can only delete command messages queried by this account.");
 
-        await ctx.Rest.DeleteMessage(message.ChannelId, message.MessageId);
+        await ctx.Rest.DeleteMessage(channelId!.Value, messageId);
 
         if (ctx.Guild != null)
             await ctx.Rest.DeleteMessage(ctx.Message);
