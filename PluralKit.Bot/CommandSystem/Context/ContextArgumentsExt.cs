@@ -104,6 +104,13 @@ public static class ContextArgumentsExt
 
     public static bool MatchToggle(this Context ctx, bool? defaultValue = null)
     {
+        var value = ctx.MatchToggleOrNull(defaultValue);
+        if (value == null) throw new PKError("You must pass either \"on\" or \"off\" to this command.");
+        return value.Value;
+    }
+
+    public static bool? MatchToggleOrNull(this Context ctx, bool? defaultValue = null)
+    {
         if (defaultValue != null && ctx.MatchClearInner())
             return defaultValue.Value;
 
@@ -114,8 +121,7 @@ public static class ContextArgumentsExt
             return true;
         else if (ctx.Match(noToggles) || ctx.MatchFlag(noToggles))
             return false;
-        else
-            throw new PKError("You must pass either \"on\" or \"off\" to this command.");
+        else return null;
     }
 
     public static (ulong? messageId, ulong? channelId) MatchMessage(this Context ctx, bool parseRawMessageId)
