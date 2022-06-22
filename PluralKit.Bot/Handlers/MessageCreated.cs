@@ -95,7 +95,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
 
     private async Task TryHandleLogClean(Channel channel, MessageCreateEvent evt)
     {
-        if (evt.GuildId != null) return;
+        if (evt.GuildId == null) return;
         if (channel.Type != Channel.ChannelType.GuildText) return;
 
         var guildSettings = await _repo.GetGuild(evt.GuildId!.Value);
