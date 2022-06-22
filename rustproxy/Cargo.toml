@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "pk_bot",
+    "pk_command_parser"
+]

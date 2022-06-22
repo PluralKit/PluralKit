@@ -1,0 +1,9 @@
+[package]
+name = "pk_command_parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.57"
+matches = "0.1.9"
+slab = "0.4.6"

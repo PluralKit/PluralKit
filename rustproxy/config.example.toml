@@ -1,0 +1,7 @@
+token = "put your token here"
+
+database = "postgres://postgres:password@localhost/postgres"
+
+redis_addr = "redis://127.0.0.1/"
+redis_gateway_queue_addr = "redis://127.0.0.1/"
+shard_count = 1
