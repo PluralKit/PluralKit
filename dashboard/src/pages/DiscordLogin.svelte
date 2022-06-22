@@ -12,7 +12,12 @@
         const paramkeys = [...params.keys()];
         if (paramkeys.includes("code"))
         {
-            const res = await api().private.discord.callback.post({ data: { code: params.get("code"), redirect_domain: window.location.origin } });
+            let res: any;
+            try {
+                res = await api().private.discord.callback.post({ data: { code: params.get("code"), redirect_domain: window.location.origin } });
+            } catch(e) {
+                text = "Error: " + e.data.error;
+            }
             localStorage.setItem("pk-token", res.token);
             localStorage.setItem("pk-user", JSON.stringify(res.system));
             localStorage.setItem("pk-config", JSON.stringify(res.config));
