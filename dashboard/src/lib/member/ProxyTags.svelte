@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, tick } from "svelte";
+    import {tick } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner, InputGroup } from "sveltestrap";
 
     import { Member } from '../../api/types';
@@ -11,12 +11,6 @@
     const toggleProxyModal = () => (proxyOpen = !proxyOpen);
 
     let err: string;
-
-    const dispatch = createEventDispatcher();
-
-    function update() {
-        dispatch('update', member);
-    }
 
     let input = member.proxy_tags;
 
@@ -34,7 +28,6 @@
             let res = await api().members(member.id).patch({data});
             member = res;
             err = null;
-            update();
             loading = false;
             toggleProxyModal();
         } catch (error) {
@@ -66,7 +59,7 @@
     </Col>
     {/each}
     <Col xs={12} lg={6} class="mb-2">
-        <Button class="w-100" color="secondary" on:click={() => {input.push({prefix: "", suffix: ""}); input = input;}}>New</Button>
+        <button class="w-100 btn btn-secondary" use:focus={member.proxy_tags.length > 0 ? false : true} on:click={() => {input.push({prefix: "", suffix: ""}); input = input;}}>New</button>
     </Col>
 </Row>
 {#if !loading}<Button style="flex 0" color="primary" on:click={submit} aria-label="submit proxy tags">Submit</Button> <Button style="flex: 0" color="secondary" on:click={toggleProxyModal} aria-label="go back">Back</Button>
