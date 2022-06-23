@@ -122,7 +122,7 @@ function memberListRenderer(item: any) {
         <h5><div class="icon d-inline-block">
             <FaUserPlus />
         </div>Add Members</h5>
-        <Svelecte renderer="member-list" disableHighlight bind:value={membersToBeAdded} options={membersNotInGroupSelection} multiple aria-label="search for members to add"/>
+        <Svelecte renderer="member-list" disableHighlight bind:value={membersToBeAdded} options={membersNotInGroupSelection} multiple/>
         {#if !loading && membersToBeAdded && membersToBeAdded.length > 0}
         <Button class="w-100 mt-2" color="primary" on:click={submitAdd} aria-label="add members">Add</Button>{:else}
         <Button class="w-100 mt-2" color="primary" disabled aria-label="add members">{#if loading}<Spinner size="sm" />{:else}Add{/if}</Button>
@@ -131,7 +131,7 @@ function memberListRenderer(item: any) {
         <h5><div class="icon d-inline-block">
             <FaUserMinus />
         </div>Remove Members</h5>
-        <Svelecte renderer="member-list" disableHighlight bind:value={membersToBeRemoved} options={membersInGroupSelection} multiple aria-label="search for members to remove"/>
+        <Svelecte renderer="member-list" disableHighlight bind:value={membersToBeRemoved} options={membersInGroupSelection} multiple/>
         {#if !loading && membersToBeRemoved && membersToBeRemoved.length > 0}
         <Button class="w-100 mt-2" color="primary" on:click={submitRemove} aria-label="remove members">Remove</Button>{:else}
         <Button class="w-100 mt-2" color="primary" disabled aria-label="remove members">{#if loading}<Spinner size="sm" />{:else}Remove{/if}</Button>

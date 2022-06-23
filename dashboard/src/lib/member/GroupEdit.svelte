@@ -123,7 +123,7 @@
         <h5><div class="icon d-inline-block">
             <FaFolderPlus />
         </div>Add to Groups</h5>
-        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeAdded} options={groupsWithoutMemberSelection} multiple aria-label="search for groups to add"/>
+        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeAdded} options={groupsWithoutMemberSelection} multiple />
         {#if !loading && groupsToBeAdded && groupsToBeAdded.length > 0}
         <Button class="w-100 mt-2" color="primary" on:click={submitAdd} aria-label="add groups to member">Add</Button>{:else}
         <Button class="w-100 mt-2" color="primary" disabled aria-label="add groups to member">{#if loading}<Spinner size="sm" />{:else}Add{/if}</Button>
@@ -132,7 +132,7 @@
         <h5><div class="icon d-inline-block">
             <FaFolderMinus />
         </div>Remove from Groups</h5>
-        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeRemoved} options={groupsWithMemberSelection} multiple aria-label="search for groups to remove"/>
+        <Svelecte renderer="member-list" disableHighlight bind:value={groupsToBeRemoved} options={groupsWithMemberSelection} multiple />
         {#if !loading && groupsToBeRemoved && groupsToBeRemoved.length > 0}
         <Button class="w-100 mt-2" color="primary" on:click={submitRemove} aria-label="remove groups from member">Remove</Button>{:else}
         <Button class="w-100 mt-2" color="primary" disabled aria-label="remove groups from member">{#if loading}<Spinner size="sm" />{:else}Remove{/if}</Button>
