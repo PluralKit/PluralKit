@@ -45,7 +45,7 @@
         </div>
         <div>
         {#if item && (item.avatar_url || item.icon)}
-        <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt={altText} />
+        <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt={altText} />
         {:else}
         <img class="rounded-circle avatar" src={default_avatar} alt="icon (default)" />
         {/if}
