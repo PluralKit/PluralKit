@@ -4,8 +4,7 @@
     import { onMount } from 'svelte';
     
     import SystemMain from '../../lib/system/Main.svelte';
-    import MemberList from '../../lib/member/List.svelte';
-    import GroupList from '../../lib/group/List.svelte';
+    import List from '../../lib/list/List.svelte';
 
     import { System } from '../../api/types';
     import api from '../../api';
@@ -72,10 +71,10 @@
                         <SystemMain bind:user isPublic={true} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <MemberList bind:list={members} isPublic={true} />
+                        <List members={members} groups={groups} isPublic={true} itemType={"member"} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <GroupList bind:members={members} bind:list={groups} isPublic={true}/>
+                    <List members={members} groups={groups} isPublic={true} itemType={"group"} />
             </TabPane> 
             </TabContent>
             {/if}

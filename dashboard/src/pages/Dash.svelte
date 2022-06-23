@@ -4,13 +4,10 @@
     import { currentUser, loggedIn } from '../stores';
     
     import SystemMain from '../lib/system/Main.svelte';
-    import MemberList from '../lib/member/List.svelte';
-    import GroupList from '../lib/group/List.svelte';
+    import List from '../lib/list/List.svelte';
 
     import { System } from '../api/types';
     import api from '../api';
-
-    let isPublic = false;
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -82,13 +79,13 @@
             <h2 class="visually-hidden">Viewing your own system</h2>
             <TabContent class="mt-3">
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
-                        <SystemMain bind:user={user} bind:isPublic />
+                        <SystemMain bind:user={user} isPublic={false} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <MemberList bind:groups={groups} bind:list={members} bind:isPublic />
+                        <List bind:groups={groups} bind:members={members} isPublic={false} itemType={"member"}/>
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <GroupList bind:members={members} bind:list={groups} bind:isPublic />
+                    <List bind:members={members} bind:groups={groups} isPublic={false} itemType={"group"}/>
             </TabPane> 
             </TabContent>
         </Col>
