@@ -15,14 +15,10 @@
 
     let err: string[] = [];
 
-    let input: Member = {...member};
+    let input: Member = member;
 
     const dispatch = createEventDispatcher();
-
-    function update() {
-        dispatch('update', member);
-    }
-
+    
     function deletion() {
         dispatch('deletion', member.id);
     }
@@ -71,7 +67,6 @@
             let res = await api().members(member.id).patch({data});
             member = res;
             err = [];
-            update();
             editMode = false;
             loading = false;
         } catch (error) {

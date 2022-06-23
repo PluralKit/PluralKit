@@ -1,6 +1,5 @@
 <script lang="ts">
     import { Row, Col, Button, Alert, ListGroup, ListGroupItem, Spinner } from 'sveltestrap';
-    import { createEventDispatcher } from 'svelte';
     import ListPagination from "../ListPagination.svelte";
     import twemoji from "twemoji";
     import Svelecte, { addFormatter } from 'svelecte';
@@ -30,7 +29,9 @@
     let currentPage = 1;
     let smallPages = true;
 
-    $: if (groups) {
+    updateGroupLists();
+
+    function updateGroupLists() {
         groupsWithMember = groups.filter(group => group.members && group.members.includes(member.uuid));
         groupsWithMember.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -63,19 +64,13 @@
         'member-list': groupListRenderer
     });
 
-    const dispatch = createEventDispatcher();
-
-    function updateGroups() {
-        dispatch("updateGroups", groups);
-    }
-
     async function submitAdd() {
         let data = groupsToBeAdded;
         try {
             loading = true;
             await api().members(member.id).groups.add.post({data});
             groups.forEach(group =>  data.includes(group.uuid) && group.members.push(member.uuid));
-            updateGroups();
+            updateGroupLists();
             err = null;
             groupsToBeAdded = [];
             loading = false;
@@ -92,7 +87,7 @@
             loading = true;
             await api().members(member.id).groups.remove.post({data});
             groups.forEach(group => {if (data.includes(group.uuid)) group.members = group.members.filter(m => m !== member.uuid)});
-            updateGroups();
+            updateGroupLists();
             err = null;
             groupsToBeRemoved = [];
             loading = false;

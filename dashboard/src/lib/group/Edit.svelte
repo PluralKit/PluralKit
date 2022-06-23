@@ -13,13 +13,9 @@
 
     let err: string[] = [];
 
-    let input: Group = {...group};
+    let input: Group = group;
 
     const dispatch = createEventDispatcher();
-
-    function update() {
-        dispatch('update', group);
-    }
 
     function deletion() {
         dispatch('deletion', group.id);
@@ -45,7 +41,6 @@
             let res = await api().groups(group.id).patch({data});
             group = {...group, ...res};
             err = [];
-            update();
             editMode = false;
             loading = false;
         } catch (error) {
