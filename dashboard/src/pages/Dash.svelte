@@ -12,13 +12,21 @@
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
     let params = $location.search && new URLSearchParams($location.search);
-    let tabPane: string;
+    let tabPane: string|number;
     if (params) {
         tabPane = params.get("tab");
     }
     
     if (!tabPane) {
         tabPane = "system";
+    }
+
+    
+
+    // change the URL when changing tabs
+    function navigateTo(tab: string|number) {
+        navigate(`./dash?tab=${tab}`);
+        tabPane = tab;
     }
 
     // subscribe to the cached user in the store
@@ -77,7 +85,7 @@
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
             <h2 class="visually-hidden">Viewing your own system</h2>
-            <TabContent class="mt-3">
+            <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail)}>
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <SystemMain bind:user={user} isPublic={false} />
                 </TabPane>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container, Col, Row, TabContent, TabPane, Alert, Spinner } from 'sveltestrap';
-    import { useParams, useLocation } from "svelte-navigator";
+    import { useParams, useLocation, navigate } from "svelte-navigator";
     import { onMount } from 'svelte';
     
     import SystemMain from '../lib/system/Main.svelte';
@@ -27,6 +27,10 @@
     
     if (!tabPane) {
         tabPane = "system";
+    }
+
+    function navigateTo(tab: string|number) {
+        navigate(`./${id}?tab=${tab}`)
     }
     
     let err: string;
@@ -66,7 +70,7 @@
                 <Alert color="danger">{err}</Alert>
             {:else}
             <Alert color="info" aria-hidden>You are currently <b>viewing</b> a system.</Alert>
-            <TabContent class="mt-3">
+            <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail)}>
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <SystemMain bind:user isPublic={true} />
                 </TabPane>
