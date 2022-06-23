@@ -1,126 +1,83 @@
 <script lang="ts">
-    import { createEventDispatcher, tick } from "svelte";
+    import { tick } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner } from "sveltestrap";
 
-    import { Member } from '../../api/types';
+    import { Member, MemberPrivacy } from '../../api/types';
     import api from '../../api';
 
-    let loading: boolean;
     export let privacyOpen: boolean;
     export let member: Member;
     const togglePrivacyModal = () => (privacyOpen = !privacyOpen);
     
     let err: string;
+    let loading = false;
+    let success = false;
 
-    function changePrivacy(e: Event) {
-        const target = e.target as HTMLInputElement;
-        let value = target.value;
-        
-        input.privacy.description_privacy = value;
-        input.privacy.name_privacy = value;
-        input.privacy.avatar_privacy = value;
-        input.privacy.birthday_privacy = value;
-        input.privacy.pronoun_privacy = value;
-        input.privacy.visibility = value;
-        input.privacy.metadata_privacy = value;
-    }
+    function changeAll(e: Event) {
+		const target = e.target as HTMLInputElement;
+		Object.keys(privacy).forEach(x => privacy[x] = target.value);
+	}
 
-    const dispatch = createEventDispatcher();
+    // I can't use the hacked together Required<T> type from the bulk privacy here
+    // that breaks updating the displayed privacy after submitting
+    // but there's not really any way for any privacy fields here to be missing
+    let privacy = member.privacy;
 
-    function update() {
-        dispatch('update', member);
-    }
-
-    let input: Member = {privacy: member.privacy};
-    console.log(member.privacy);
+	const privacyNames: { [P in keyof MemberPrivacy]-?: string; } = {
+		avatar_privacy: "Avatar",
+		birthday_privacy: "Birthday",
+		description_privacy: "Description",
+		metadata_privacy: "Metadata",
+		name_privacy: "Name",
+		pronoun_privacy: "Pronouns",
+		visibility: "Visibility",
+	};
 
     async function submit() {
-        let data = input;
-        err = null;
-
-        loading = true;
-        try {
-            let res = await api().members(member.id).patch({data});
+		loading = true;
+		const data: Member = {privacy: privacy};
+		try {
+			let res = await api().members(member.id).patch({data});
             member = res;
-            update();
-            loading = false;
-            togglePrivacyModal();
-        } catch (error) {
-            console.log(error);
-            err = error.message;
-            err = err;
-            loading = false;
-        }
-    }
+            success = true;
+		} catch (error) {
+			console.log(error);
+			err = error.message;
+		}
+		loading = false;
+	}
 
     async function focus(el) {
         await tick();
         el.focus();
     }
-
 </script>
 
 
     {#if err}
     <Alert color="danger">{err}</Alert>
     {/if}
+    {#if success}
+        <Alert color="success">Member privacy updated!</Alert>
+    {/if}
     <Label><b>Set all to:</b></Label>
-    <select class="form-select" on:change={(e) => changePrivacy(e)} use:focus aria-label="set all to">
-        <option>public</option>
-        <option>private</option>
-    </select>
-    <hr />
-    <Row>
-        <Col xs={12} lg={6} class="mb-3">
-            <Label>Description:</Label>
-            <Input type="select" bind:value={input.privacy.description_privacy} aria-label="member description privacy">
-                <option default={member.privacy.description_privacy === "public"}>public</option>
-                <option default={member.privacy.description_privacy === "private"}>private</option>
-            </Input>
-        </Col>
-        <Col xs={12} lg={6} class="mb-3">
-            <Label>Name:</Label>
-            <Input type="select" bind:value={input.privacy.name_privacy} aria-label="member name privacy">
-                <option default={member.privacy.name_privacy === "public"}>public</option>
-                <option default={member.privacy.name_privacy === "private"}>private</option>
-            </Input>
-        </Col>
-        <Col xs={12} lg={6} class="mb-3">
-            <Label>Avatar:</Label>
-            <Input type="select" bind:value={input.privacy.avatar_privacy} aria-label="member avatar privacy">
-                <option default={member.privacy.avatar_privacy === "public"}>public</option>
-                <option default={member.privacy.avatar_privacy === "private"}>private</option>
-            </Input>
-        </Col>
-        <Col xs={12} lg={6} class="mb-3">
-            <Label>Birthday:</Label>
-            <Input type="select" bind:value={input.privacy.birthday_privacy} aria-label="member birthday privacy">
-                <option default={member.privacy.birthday_privacy === "public"}>public</option>
-                <option default={member.privacy.birthday_privacy === "private"}>private</option>
-            </Input>
-        </Col>
-        <Col xs={12} lg={6} class="mb-3">
-            <Label>Pronouns:</Label>
-            <Input type="select" bind:value={input.privacy.pronoun_privacy} aria-label="member pronoun privacy">
-                <option default={member.privacy.pronoun_privacy === "public"}>public</option>
-                <option default={member.privacy.pronoun_privacy === "private"}>private</option>
-            </Input>
-        </Col>
-        <Col xs={12} lg={6} class="mb-3">
-            <Label>Visibility:</Label>
-            <Input type="select" bind:value={input.privacy.visibility} aria-label="member visibility privacy">
-                <option default={member.privacy.visibility === "public"}>public</option>
-                <option default={member.privacy.visibility === "private"}>private</option>
-            </Input>
-        </Col>
-        <Col xs={12} lg={6} class="mb-3">
-            <Label>Metadata:</Label>
-            <Input type="select" bind:value={input.privacy.metadata_privacy} aria-label="member metadata privacy">
-                <option default={member.privacy.metadata_privacy === "public"}>public</option>
-                <option default={member.privacy.metadata_privacy === "private"}>private</option>
-            </Input>
-        </Col>
-    </Row>
+        <select class="form-control" on:change={(e) => changeAll(e)} aria-label="set all to" use:focus>
+            <option>public</option>
+            <option>private</option>
+        </select>
+        <hr/>
+        <Row>
+            {#each Object.keys(privacy) as x}
+            <Col xs={12} lg={6} class="mb-3">
+                <Label>{privacyNames[x]}:</Label>
+                <Input type="select" bind:value={privacy[x]} aria-label={`group ${privacyNames[x]} privacy`}>
+                    <option default={privacy[x] === "public"}>public</option>
+                    <option default={privacy[x] === "private"}>private</option>
+                </Input>
+            </Col>
+            {/each}
+        </Row>
+
     {#if !loading}<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit privacy edits">Submit</Button> <Button style="flex: 0" color="secondary" on:click={togglePrivacyModal} aria-label="cancel privacy edits">Back</Button>
     {:else}<Button style="flex: 0" color="primary" disabled aria-label="submit privacy edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel privacy edits">Back</Button>
     {/if}
