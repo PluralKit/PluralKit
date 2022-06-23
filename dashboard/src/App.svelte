@@ -5,7 +5,7 @@
   import Home from "./pages/Home.svelte";
   import Settings from './pages/Settings.svelte';
   import Public from "./pages/Public.svelte";
-  import Main from "./pages/profiles/Main.svelte";
+  import Main from "./pages/Profile.svelte";
   import Status from './pages/status.svelte';
   import Member from './pages/Member.svelte';
   import Group from './pages/Group.svelte';
