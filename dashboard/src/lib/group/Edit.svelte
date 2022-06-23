@@ -8,6 +8,8 @@
     const descriptions: string[] = JSON.parse(localStorage.getItem("pk-config"))?.description_templates;
 
     let loading: boolean = false;
+    let success = false;
+
     export let group: Group;
     export let editMode: boolean;
 
@@ -24,6 +26,7 @@
     async function submit() {
         let data = input;
         err = [];
+        success = false;
 
         if (data.color && !/^#?[A-Fa-f0-9]{6}$/.test(input.color)) {
             err.push(`"${data.color}" is not a valid color, the color must be a 6-digit hex code. (example: #ff0000)`);
@@ -41,7 +44,7 @@
             let res = await api().groups(group.id).patch({data});
             group = {...group, ...res};
             err = [];
-            editMode = false;
+            success = true;
             loading = false;
         } catch (error) {
             console.log(error);
@@ -90,8 +93,11 @@
 </script>
 
 {#each err as error}
-    <Alert color="danger">{@html error}</Alert>
+<Alert fade={false} color="danger">{@html error}</Alert>
 {/each}
+{#if success}
+<Alert fade={false} color="success">Group information updated!</Alert>
+{/if}
 <Row>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Name:</Label>

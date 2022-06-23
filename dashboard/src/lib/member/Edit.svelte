@@ -14,6 +14,7 @@
     export let editMode: boolean;
 
     let err: string[] = [];
+    let success = false;
 
     let input: Member = member;
 
@@ -66,15 +67,13 @@
         try {
             let res = await api().members(member.id).patch({data});
             member = res;
-            err = [];
-            editMode = false;
-            loading = false;
+            success = true;
         } catch (error) {
             console.log(error);
             err.push(error.message);
             err = err;
-            loading = false;
         }
+        loading = false;
     }
 
     let deleteOpen: boolean = false;
@@ -116,8 +115,11 @@
 </script>
 
 {#each err as error}
-    <Alert color="danger">{@html error}</Alert>
+    <Alert fade={false} color="danger">{@html error}</Alert>
 {/each}
+{#if success}
+<Alert fade={false} color="success">Member information updated!</Alert>
+{/if}
 <Row>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Name:</Label>
