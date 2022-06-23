@@ -12,6 +12,7 @@
     export let editMode: boolean;
     export let user: System;
     let loading: boolean;
+    let success = false;
 
     let err: string[] = [];
 
@@ -42,7 +43,7 @@
             user = res;
             currentUser.update(() => res);
             err = [];
-            editMode = false;
+            success = true;
             loading = false;
         } catch (error) {
             console.log(error);
@@ -56,6 +57,9 @@
 {#each err as error}
     <Alert color="danger">{@html error}</Alert>
 {/each}
+{#if success}
+<Alert fade={false} color="success">System information updated!</Alert>
+{/if}
 <Row>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Name:</Label>
