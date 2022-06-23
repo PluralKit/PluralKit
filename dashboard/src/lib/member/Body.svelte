@@ -125,7 +125,7 @@
                     Edit privacy
                 </ModalHeader>
                     <ModalBody>
-                        <Privacy on:update bind:member bind:privacyOpen/>
+                        <Privacy bind:member bind:privacyOpen/>
                     </ModalBody>
             </Modal>
         </Col>
@@ -138,7 +138,7 @@
                     Edit proxy tags
                 </ModalHeader>
                     <ModalBody>
-                        <ProxyTags on:update bind:member bind:proxyOpen/>
+                        <ProxyTags bind:member bind:proxyOpen/>
                     </ModalBody>
             </Modal>
         </Col>
@@ -161,8 +161,8 @@
     <Link to={isPublic ? `/profile/s/${member.system}?tab=members` : "/dash?tab=members"}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member's system">View system</Button></Link>
     {/if}
     {:else if editMode}
-        <Edit on:deletion on:update bind:member bind:editMode />
+        <Edit on:deletion bind:member bind:editMode />
     {:else if groupMode}
-        <GroupEdit on:updateGroups bind:member bind:groups bind:groupMode />
+        <GroupEdit bind:member bind:groups bind:groupMode />
     {/if}
     </CardBody>

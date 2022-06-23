@@ -98,7 +98,7 @@
                Edit privacy
             </ModalHeader>
                 <ModalBody>
-                    <Privacy on:update bind:group bind:privacyOpen={privacyOpen}/>
+                    <Privacy bind:group bind:privacyOpen={privacyOpen}/>
                 </ModalBody>
         </Modal>
     </Col>
@@ -121,8 +121,8 @@
     <Link to="/dash?tab=groups"><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view group system">View system</Button></Link>
     {/if}
 {:else if editMode}
-<Edit on:deletion on:update bind:group bind:editMode />
+<Edit on:deletion bind:group bind:editMode />
 {:else if memberMode}
-    <MemberEdit on:updateMembers bind:group bind:memberMode bind:members />
+    <MemberEdit bind:group bind:memberMode bind:members />
 {/if}
 </CardBody>
