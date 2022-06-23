@@ -29,8 +29,6 @@
     if (item.icon) altText = item.name ? `group ${item.name} icon (full size)` : "group icon (full size)";
     else if (item.proxy_tags) altText = item.name ? `member ${item.name} avatar (full size)` : "member avatar (full size)";
     else if (item.tag) altText = item.name ? `system ${item.name} avatar (full size)` : "system avatar (full size)";
-    
-    export let loading: boolean = false;
 
     async function focus(el) {
         await tick();
@@ -46,9 +44,6 @@
             <span bind:this={nameElement} style="vertical-align: middle;">{@html htmlName} ({item.id})</span>
         </div>
         <div>
-        {#if loading}
-        <div class="d-inline-block mr-5" style="vertical-align: middle;"><Spinner color="primary" /></div>
-        {/if}
         {#if item && (item.avatar_url || item.icon)}
         <img tabindex={0} on:keyup={(event) => {if (event.key === "Enter") avatarOpen = true}} on:click={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt={altText} />
         {:else}

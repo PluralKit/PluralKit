@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Row, Col, Input, Button, Label, Alert } from 'sveltestrap';
+    import { Row, Col, Input, Button, Label, Alert, Spinner } from 'sveltestrap';
     import autosize from 'svelte-autosize';
     // import moment from 'moment-timezone';
     import { currentUser } from '../../stores';
@@ -11,7 +11,7 @@
 
     export let editMode: boolean;
     export let user: System;
-    export let loading: boolean;
+    let loading: boolean;
 
     let err: string[] = [];
 
@@ -92,4 +92,5 @@
     <br>
     <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={user.description}  aria-label="system description"/>
 </div>
-<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit edits">Submit</Button> <Button style="flex: 0" color="light" on:click={() => editMode = false} aria-label="cancel edits" >Back</Button>
+{#if !loading}<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit edits" >Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false} aria-label="cancel edits">Back</Button>
+{:else}<Button style="flex: 0" color="primary" disabled  aria-label="submit edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel edits">Back</Button>{/if}

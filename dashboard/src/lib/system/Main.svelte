@@ -10,14 +10,13 @@
 
     export let user: System;
     export let isPublic = true;
-    let loading = false;
 
     let editMode = false;
 </script>
 
 <Card class="mb-4">
     <CardHeader>
-        <CardsHeader bind:item={user} bind:loading>
+        <CardsHeader bind:item={user}>
             <FaAddressCard slot="icon" />
         </CardsHeader>
     </CardHeader>
@@ -25,7 +24,7 @@
         {#if !editMode}
         <Body bind:user bind:editMode bind:isPublic/>
         {:else}
-        <Edit bind:user bind:editMode bind:loading />
+        <Edit bind:user bind:editMode />
         {/if}
     </CardBody>
 </Card>
