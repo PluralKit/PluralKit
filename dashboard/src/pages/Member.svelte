@@ -169,69 +169,53 @@
             {#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
             <Accordion class="mb-3" stayOpen>
             {#each slicedGroups as group, index (group.id)}
-            {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
                 <AccordionItem>
                     <CardsHeader bind:item={group} slot="header">
-                        <FaUsers slot="icon" />
+                        <div slot="icon">
+                            {#if isPublic || group.privacy.visibility === "public"}
+                            <FaUsers />
+                            {:else}
+                            <FaLock />
+                            {/if}
+                        </div>
                     </CardsHeader>
-                    <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
+                    <GroupBody bind:members={systemMembers} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
                 </AccordionItem>
-                {:else}
-                <AccordionItem>
-                    <CardsHeader bind:item={group} slot="header">
-                        <FaLock slot="icon" />
-                    </CardsHeader>
-                    <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
-                </AccordionItem>
-                {/if}
             {/each}
             </Accordion>
             {:else if settings.accessibility.expandedcards}
             {#each slicedGroups as group, index (group.id)}
-                {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
                 <Card class="mb-3">
                     <CardHeader>
-                        <CardsHeader bind:item={group} >
-                            <FaUsers slot="icon" />
-                        </CardsHeader>
+                        <div slot="icon">
+                            {#if isPublic || group.privacy.visibility === "public"}
+                            <FaUsers />
+                            {:else}
+                            <FaLock />
+                            {/if}
+                        </div>
                     </CardHeader>
                     <CardBody>
-                        <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
+                        <GroupBody bind:members={systemMembers} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
                     </CardBody>
                 </Card>
-                {:else}
-                <Card class="mb-3">
-                    <CardHeader>
-                        <CardsHeader bind:item={group} >
-                            <FaLock slot="icon" />
-                        </CardsHeader>
-                    </CardHeader>
-                    <CardBody>
-                        <GroupBody bind:members={systemMembers} on:update={updateGroupList} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
-                    </CardBody>
-                </Card>
-                {/if}
             {/each}
             {:else}
             <div class="my-3">
             {#each slicedGroups as group, index (group.id)}
-                {#if (!isPublic && group.privacy.visibility === "public") || isPublic}
                 <Card>
                     <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/g/${group.id}` : `/profile/g/${group.id}`}>
                         <CardsHeader bind:item={group}>
-                            <FaUsers slot="icon" />
+                            <div slot="icon">
+                                {#if isPublic || group.privacy.visibility === "public"}
+                                <FaUsers />
+                                {:else}
+                                <FaLock />
+                                {/if}
+                            </div>
                         </CardsHeader>
                     </Link>
                 </Card>
-                {:else}
-                <Card>
-                    <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/g/${group.id}` : `/profile/g/${group.id}`}>
-                        <CardsHeader bind:item={group}>
-                            <FaUsers slot="icon" />
-                        </CardsHeader>
-                    </Link>
-                </Card>
-                {/if}
             {/each}
             </div>
             {/if}
