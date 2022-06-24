@@ -141,7 +141,7 @@
 {:else}
 <ListSearch bind:searchBy bind:searchValue on:refresh={fetchList} />
 
-<ListPagination bind:currentPage bind:pageAmount />
+<ListPagination bind:currentPage {pageAmount} />
 
 {#if !err && !isPublic}
     {#if itemType === "member"}
