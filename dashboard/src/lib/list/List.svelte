@@ -182,7 +182,7 @@
     {#each slicedList as item, index (item.id)}
     <Card class="mb-3">
         <CardHeader>
-            <CardsHeader {item} slot="header">
+            <CardsHeader {item}>
                 <div slot="icon">
                     {#if isPublic || item.privacy.visibility === "public"}
                     {#if itemType === "member"}
@@ -210,7 +210,7 @@
     {#each slicedList as item, index (item.id)}
     <Card>
         <Link class="accordion-button collapsed" style="text-decoration: none;" to={getItemLink(item)}>
-            <CardsHeader {item} slot="header">
+            <CardsHeader {item}>
                 <div slot="icon">
                     {#if isPublic || item.privacy.visibility === "public"}
                     {#if itemType === "member"}
