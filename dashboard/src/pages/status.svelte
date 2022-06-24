@@ -154,30 +154,51 @@
             </Col>
         </Row>
     {/if}
-    {#each Object.keys(clusters) as key}
-        <Row>
-            <Col class="mx-auto" xs={12} lg={11} xl={10}>
-                <div class="cluster-card">
-                    <span class="cluster-text">Cluster {key} &nbsp</span>
-                    {#each clusters[key] as shard}
-                    <ShardItem shard={shard} bind:hover={hover} />
-                    {/each}
-                </div>
-            </Col>
-        </Row>
-    {/each}
+    <Row>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
+        <div class="cluster-grid">
+        {#each Object.keys(clusters) as key}
+            <div class="cluster-card">
+                <span class="cluster-text">Cluster {key} &nbsp</span>
+            </div>
+            <div class="cluster-shards">
+                {#each clusters[key] as shard}
+                <ShardItem shard={shard} bind:hover={hover} />
+                {/each}
+            </div>
+        {/each}
+        </div>
+        </Col>
+    </Row>
 </Container>
 
 <style>
-    .cluster-card {
+    .cluster-shards {
         display: flex;
         align-items: center;
+        gap: 5px;
         flex-wrap: wrap;
-        margin-bottom: 2.5px;
+        margin-bottom: 0.5em;
     }
 
-    .cluster-text {
-        min-width: 110px;
-        text-align: right;
+    .cluster-grid {
+        display: grid;
+        grid-template-columns: 100%;
+        gap: 0.5em;
+    }
+
+    @media (min-width: 576px) {
+        .cluster-card {
+            text-align: right;
+            margin-bottom: 0.5em;
+        }
+
+        .cluster-text {
+            line-height: 3em;
+        }
+
+        .cluster-grid {
+            grid-template-columns: max-content 1fr;
+        }
     }
 </style>

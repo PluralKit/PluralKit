@@ -46,8 +46,7 @@
 
 <style>
 	.wrapper {
-		height: 55px;
-		width: 55px;
+		position: relative;
 		display: inline-block;
 	}
 	.shard:hover {
@@ -63,10 +62,8 @@
 		text-align: center;
 		justify-content: center;
 		z-index: 1;
-		height: 50px;
-		width: 50px;
-		margin-right: 5px;
-		margin-bottom: 5px;
+		height: 3em;
+		width: 3em;
 		border-radius: 2px;
 		-webkit-touch-callout: none; /* iOS Safari */
 		  -webkit-user-select: none; /* Safari */
@@ -79,10 +76,11 @@
 	.more-info {
 		/* display: none; */
 		position: absolute;
-		margin-top: 3em;
+		top: 100%;
+		right: -50%;
 		will-change: transform;
 		min-height: 150px;
-		width: 200px;
+		width: 12em;
 		z-index: 2;
 		border-radius: 5px;
 		background-color: #333;
