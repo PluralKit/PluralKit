@@ -142,7 +142,6 @@
 <ListSearch bind:searchBy bind:searchValue on:refresh={fetchList} />
 
 <ListPagination bind:currentPage bind:pageAmount />
-{/if}
 
 {#if !err && !isPublic}
     {#if itemType === "member"}
@@ -152,7 +151,7 @@
     {/if}
 {/if}
 
-{#if !listLoading && !err}
+
 {#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
 <Accordion class="my-3" stayOpen>
     {#each slicedList as item, index (item.id)}
