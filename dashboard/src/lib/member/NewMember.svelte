@@ -38,8 +38,8 @@
 
     const dispatch = createEventDispatcher();
 
-    function create() {
-        dispatch('create', input);
+    function create(data: Member) {
+        dispatch('create', data);
     }
 
     async function submit() {
@@ -89,11 +89,10 @@
         loading = true;
         try {
             let res = await api().members().post({data});
-            input = res;
-            err = [];
-            create();
-            input = JSON.parse(JSON.stringify(defaultMember));;
+            create(res);
+            input = JSON.parse(JSON.stringify(defaultMember));
             message = `Member ${data.name} successfully created!`
+            err = [];
             loading = false;
         } catch (error) {
             console.log(error);
