@@ -21,7 +21,7 @@ let privacyFilter = "all";
 let groupSearchMode = "include";
 let selectedGroups = [];
 
-export let currentPage = 1;
+export let currentPage: number;
 export let isPublic: boolean;
 
 $: {searchValue; privacyFilter; currentPage = 1};

@@ -123,7 +123,7 @@
 
 </script>
 
-<ListControl {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:itemsPerPageValue />
+<ListControl {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:itemsPerPageValue bind:currentPage />
 
 {#if listLoading && !err}
     <div class="mx-auto text-center">
