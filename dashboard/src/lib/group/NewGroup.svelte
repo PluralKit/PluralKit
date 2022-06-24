@@ -30,7 +30,7 @@
         dispatch('create', input);
     }
 
-    let input: Group = defaultGroup;
+    let input: Group = JSON.parse(JSON.stringify(defaultGroup));
 
     async function submit() {
         let data = input;
@@ -51,7 +51,7 @@
         loading = true;
         try {
             let res = await api().groups().post({data});
-            input = res;
+            input = JSON.parse(JSON.stringify(defaultGroup));
             err = [];
             create();
             message = `Group ${data.name} successfully created!`

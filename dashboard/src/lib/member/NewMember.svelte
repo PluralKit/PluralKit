@@ -33,7 +33,8 @@
         ]
     };
 
-    let input: Member = defaultMember;
+    // creating a deep copy here so that defaultMember doesn't get updated too
+    let input: Member = JSON.parse(JSON.stringify(defaultMember));
 
     const dispatch = createEventDispatcher();
 
@@ -91,7 +92,7 @@
             input = res;
             err = [];
             create();
-            input = defaultMember;
+            input = JSON.parse(JSON.stringify(defaultMember));;
             message = `Member ${data.name} successfully created!`
             loading = false;
         } catch (error) {
