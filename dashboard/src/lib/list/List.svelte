@@ -101,7 +101,13 @@
     } */
 
     function updateDelete(event: any) {
-        list = (list as any[]).filter(item => item.id !== event.detail);
+        if (itemType === "member") {
+            members = members.filter(m => m.id !== event.detail);
+            list = members;
+        } else if (itemType === "group") {
+            groups = groups.filter(g => g.id !== event.detail);
+            list = groups;
+        }
     }
 
     function getItemLink(item: Member | Group): string {
