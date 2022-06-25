@@ -85,14 +85,11 @@
     function addItemToList(event: any) {
         if (itemType === "member") {
             members.push(event.detail);
-            members = members;
+            list = members;
         } else if (itemType === "group") {
-            
+            groups.push(event.detail);
+            list = groups;
         }
-
-
-        list.push(event.detail);
-        list = list;
     }
 
     /* function updateList(event: any) {
