@@ -12,8 +12,10 @@
 !proto
 !scripts/run-clustered.sh
 !dashboard
+!scheduled_tasks
 
 # Re-exclude host build artifact directories
 **/bin
 **/obj
 **/target
+**/node_modules

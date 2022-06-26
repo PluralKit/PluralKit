@@ -3,6 +3,7 @@ FROM alpine:latest AS builder
 RUN apk add go
 
 WORKDIR /build
+
 COPY scheduled_tasks/ /build
 
 RUN go build .

@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scheduled_tasks/**'
+      - 'Dockerfile.scheduled_tasks'
 
 jobs:
   deploy:
@@ -30,5 +31,5 @@ jobs:
             ghcr.io/pluralkit/scheduled_tasks:${{ env.BRANCH_NAME }}
             ghcr.io/pluralkit/scheduled_tasks:${{ github.sha }}
             ghcr.io/pluralkit/scheduled_tasks:latest
-          cache-from: type=registry,ref=ghcr.io/pluralkit/scheduled_tasks:${{ env.BRANCH_NAME }}
+          cache-from: type=registry,ref=ghcr.io/pluralkit/scheduledtasks:${{ env.BRANCH_NAME }}
           cache-to: type=inline
