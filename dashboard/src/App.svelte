@@ -15,6 +15,7 @@ import DiscordLogin from "./pages/DiscordLogin.svelte";
   import { onMount } from 'svelte';
 import BulkGroupPrivacy from "./pages/BulkGroupPrivacy.svelte";
 import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
+  import Random from './pages/Random.svelte';
   
   // theme cdns (I might make some myself too)
   // if there's a style already set, retrieve it
@@ -38,8 +39,6 @@ import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
     };
   };
 
-  let falseBool = false;
-
   onMount(() => {
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
@@ -55,21 +54,29 @@ import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
     <Route path="/"><Home /></Route>
     <Route path="/login/discord"><DiscordLogin /></Route>
     <Route path="dash"><Dash /></Route>
-    <Route path="dash/m/:id"><Member isPublic={falseBool}/></Route>
-    <Route path = "dash/g/:id"><Group isPublic={falseBool}/></Route>
+    <Route path="dash/m/:id"><Member isPublic={false}/></Route>
+    <Route path = "dash/g/:id"><Group isPublic={false}/></Route>
+    <Route path="dash/random"><Random isPublic={false} type={"member"}/></Route>
+    <Route path="dash/random/m"><Random isPublic={false} type={"member"}/></Route>
+    <Route path="dash/random/g"><Random isPublic={false} type={"group"}/></Route>
+    <Route path="dash/g/:groupId/random"><Random isPublic={false} type={"member"} pickFromGroup={true}/></Route>
     <Route path="dash/bulk-member-privacy"><BulkMemberPrivacy/></Route>
     <Route path="dash/bulk-group-privacy"><BulkGroupPrivacy/></Route>
     <Route path="settings"><Settings /></Route>
     <Route path="profile"><Public /></Route>
     <Route path = "profile/s/:id"><Main /></Route>
-    <Route path = "s">
+    <Route path = "profile/s">
       <Alert color="danger">Please provide a system ID in the URL.</Alert>
     </Route>
+    <Route path="profile/s/:id/random"><Random isPublic={true} type={"member"}/></Route>
+    <Route path="profile/s/:id/random/m"><Random isPublic={true} type={"member"}/></Route>
+    <Route path="profile/s/:id/random/g"><Random isPublic={true} type={"group"}/></Route>
     <Route path = "profile/m/:id"><Member/></Route>
     <Route path = "profile/m">
       <Alert color="danger">Please provide a member ID in the URL.</Alert>
     </Route>
     <Route path = "profile/g/:id"><Group/></Route>
+    <Route path="profile/g/:groupId/random"><Random isPublic={true} type={"member"} pickFromGroup={true}/></Route>
     <Route path = "profile/g">
       <Alert color="danger">Please provide a group ID in the URL.</Alert>
     </Route>

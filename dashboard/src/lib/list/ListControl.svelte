@@ -3,6 +3,7 @@ import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem,
 import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
 import Svelecte, { addFormatter } from 'svelecte';
 import { Member, Group } from '../../api/types';
+import { Link, useParams } from 'svelte-navigator';
 
 export let list: Member[] | Group[] = [];
 
@@ -23,6 +24,9 @@ let selectedGroups = [];
 
 export let currentPage: number;
 export let isPublic: boolean;
+
+let params = useParams();
+$: systemId = $params.id;
 
 $: {searchValue; privacyFilter; currentPage = 1};
 
@@ -143,6 +147,19 @@ function memberListRenderer(item: any) {
 addFormatter({
     'member-list': memberListRenderer
 });
+
+function getRandomizerUrl(): string {
+    let str: string;
+    if (isPublic) str = `/profile/s/${systemId}/random`
+    else str = "/dash/random";
+    
+    if (itemType === "group") str += "/g";
+    return str;
+}
+
+function capitalizeFirstLetter(string: string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
 </script>
 
 <Card class="mb-3">
@@ -210,6 +227,9 @@ addFormatter({
             </InputGroup>
         </Col>
         {/if}
+        <Col xs={12} lg={3} class="mb-2">
+            <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${itemType}s`}>Random {capitalizeFirstLetter(itemType)}</Button></Link>
+        </Col>
     </Row>
     {#if !isPublic}
     <hr/>
@@ -220,14 +240,29 @@ addFormatter({
     <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={selectedGroups} options={memberList} multiple style="margin-bottom: 0.5rem" />
     {/if}
 
-    <span style="cursor: pointer" id="m-include" on:click={() => groupSearchMode = "include"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "include" : ""} tabindex={0}>{@html groupSearchMode === "include" ? "<b>include</b>" : "include"}</span>
-     | <span style="cursor: pointer" id="m-exclude" on:click={() => groupSearchMode = "exclude"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "exclude" : ""} tabindex={0}>{@html groupSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
-     | <span style="cursor: pointer" id="m-match" on:click={() => groupSearchMode = "match"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "match" : ""} tabindex={0}>{@html groupSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
-     | <span style="cursor: pointer" id="m-none" on:click={() => groupSearchMode = "none"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "none" : ""} tabindex={0}>{@html groupSearchMode === "none" ? "<b>none</b>" : "none"}</span>
-    <Tooltip placement="bottom" target="m-include">Includes every member who's a part of any of the groups.</Tooltip>
+    <div class="filter-mode-group">
+    <span class="filter-mode-label" id="m-include" on:click={() => groupSearchMode = "include"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "include" : ""} tabindex={0}>{@html groupSearchMode === "include" ? "<b>include</b>" : "include"}</span>
+     | <span class="filter-mode-label" id="m-exclude" on:click={() => groupSearchMode = "exclude"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "exclude" : ""} tabindex={0}>{@html groupSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
+     | <span class="filter-mode-label" id="m-match" on:click={() => groupSearchMode = "match"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "match" : ""} tabindex={0}>{@html groupSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
+     | <span class="filter-mode-label" id="m-none" on:click={() => groupSearchMode = "none"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "none" : ""} tabindex={0}>{@html groupSearchMode === "none" ? "<b>none</b>" : "none"}</span>
+    </div>
+     <Tooltip placement="bottom" target="m-include">Includes every member who's a part of any of the groups.</Tooltip>
     <Tooltip placement="bottom" target="m-exclude">Excludes every member who's a part of any of the groups, the opposite of include.</Tooltip>
     <Tooltip placement="bottom" target="m-match">Only includes members who are a part of every group.</Tooltip>
     <Tooltip placement="bottom" target="m-none">Only includes members that are in no groups.</Tooltip>
     {/if}
 </CardBody>
 </Card>
+
+<style>
+    .filter-mode-label {
+        cursor: pointer;
+    }
+
+    .filter-mode-group {
+        line-height: 1.5em;
+        padding:0.375rem 0;
+        display: inline-block;
+        margin-bottom: 0.25em;
+    }
+</style>

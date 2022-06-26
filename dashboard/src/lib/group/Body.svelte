@@ -104,25 +104,50 @@
     </Col>
     {/if}
 </Row>
-<div class="my-2 description" bind:this={descriptionElement}>
+<div class="mt-2 mb-3 description" bind:this={descriptionElement}>
     <b>Description:</b><br />
     {@html htmlDescription && htmlDescription}
 </div>
 {#if (group.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img src={group.banner} alt="group banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
 {/if}
+
 {#if !isPublic}
-<Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit group information">Edit</Button> 
-{#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => memberMode = true} aria-label="edit group members">Members</Button>{/if}
-{/if}
-{#if !isPage}
-    <Link to={isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view group page">View page</Button></Link>
-    {:else if !isPublic}
-    <Link to="/dash?tab=groups"><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view group system">View system</Button></Link>
+<Button style="flex: 0" class="link-button" color="primary" on:click={() => editMode = true} aria-label="edit group information">Edit</Button> 
+    {#if isMainDash}
+    <Button class="link-button" style="flex: 0" color="secondary" on:click={() => memberMode = true} aria-label="edit group members">Members</Button>
     {/if}
+{/if}
+
+{#if !isPage}
+    <Link to={isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`}><button class="link-button button-right btn btn-primary" tabindex={-1} aria-label="view group page">View page</button></Link>
+    {:else if !isPublic}
+    <Link to="/dash?tab=groups"><button class="link-button button-right btn btn-primary" tabindex={-1} aria-label="view group system">View system</button></Link>
+{/if}
+<Link to={isPublic ? `/profile/g/${group.id}/random` : `/dash/g/${group.id}/random`}><button class="link-button button-right btn btn-secondary" style={isPublic ? "float: none !important; margin-left: 0;" : ""} tabindex={-1} aria-label="randomize group members">Randomize group</button></Link>
+
 {:else if editMode}
 <Edit on:deletion bind:group bind:editMode />
 {:else if memberMode}
     <MemberEdit bind:group bind:memberMode bind:members />
 {/if}
 </CardBody>
+
+<style>
+    .link-button {
+        width: 100%;
+        margin-bottom: 0.2em;
+    }
+
+    @media (min-width: 992px) {
+        .link-button {
+            width: max-content;
+            margin-bottom: 0;
+        }
+
+        .button-right {
+            float: right;
+            margin-left: 0.25em;
+        }
+    }
+</style>
