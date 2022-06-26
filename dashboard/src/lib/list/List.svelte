@@ -51,7 +51,7 @@
     export let itemType: string;
 
     let searchValue: string = "";
-    let searchBy: string = ""; 
+    let searchBy: string = "name"; 
 
     let params = useParams();
     $: id = $params.id;
