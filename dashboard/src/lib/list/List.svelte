@@ -157,7 +157,7 @@
 
 {#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
 <Accordion class="my-3" stayOpen>
-    {#each slicedList as item, index (item.id)}
+    {#each slicedList as item, index (item.id + index)}
     <AccordionItem>
         <CardsHeader {item} slot="header">
             <div slot="icon">
@@ -181,7 +181,7 @@
     {/each}
 </Accordion>
 {:else if settings.accessibility.expandedcards}
-    {#each slicedList as item, index (item.id)}
+    {#each slicedList as item, index (item.id + index)}
     <Card class="mb-3">
         <CardHeader>
             <CardsHeader {item}>
@@ -209,7 +209,7 @@
     {/each}
 {:else}
     <div class="my-3">
-    {#each slicedList as item, index (item.id)}
+    {#each slicedList as item, index (item.id + index)}
     <Card>
         <Link class="accordion-button collapsed" style="text-decoration: none;" to={getItemLink(item)}>
             <CardsHeader {item}>
