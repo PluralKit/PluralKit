@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, Accordion, AccordionItem, CardTitle } from "sveltestrap";
+    import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, CardTitle } from "sveltestrap";
     import Body from '../lib/group/Body.svelte';
-    import MemberBody from '../lib/member/Body.svelte';
     import { useParams, Link, navigate } from 'svelte-navigator';
     import { onMount } from 'svelte';
     import api from "../api";
@@ -9,9 +8,8 @@
     import CardsHeader from "../lib/CardsHeader.svelte";
     import FaUsers from 'svelte-icons/fa/FaUsers.svelte';
     import FaList from 'svelte-icons/fa/FaList.svelte';
-    import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte';
     import ListPagination from '../lib/ListPagination.svelte';
-    import FaLock from 'svelte-icons/fa/FaLock.svelte'
+    import CardsList from '../lib/list/CardsList.svelte';
 
     let loading = true;
     let memberLoading = false;
@@ -21,7 +19,6 @@
     let group: Group;
     let members: Member[] = [];
     let systemMembers: Group[] = [];
-    let isMainDash = false;
     let isDeleted = false;
     let notOwnSystem = false;
 
@@ -159,61 +156,7 @@
                 </CardHeader>
             </Card>
             <ListPagination bind:currentPage bind:pageAmount />
-            {#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
-            <Accordion class="mb-3" stayOpen>
-            {#each slicedMembers as member, index (member.id)}
-                <AccordionItem>
-                    <CardsHeader bind:item={member} slot="header">
-                        <div slot="icon">
-                            {#if isPublic || member.privacy.visibility === "public"}
-                            <FaUserCircle />
-                            {:else}
-                            <FaLock />
-                            {/if}
-                        </div>
-                    </CardsHeader>
-                    <MemberBody on:update={updateMemberList} isMainDash={isMainDash} on:deletion={deleteMemberFromList} bind:member bind:isPublic={isPublic}/>
-                </AccordionItem>
-            {/each}
-            </Accordion>
-            {:else if settings.accessibility.expandedcards}
-            {#each slicedMembers as member, index (member.id)}
-                <Card class="mb-3">
-                    <CardHeader>
-                        <CardsHeader bind:item={member}>
-                            <div slot="icon">
-                                {#if isPublic || member.privacy.visibility === "public"}
-                                <FaUserCircle />
-                                {:else}
-                                <FaLock />
-                                {/if}
-                            </div>
-                        </CardsHeader>
-                    </CardHeader>
-                    <CardBody>
-                        <MemberBody on:update={updateMemberList} isMainDash={isMainDash} on:deletion={deleteMemberFromList} bind:member bind:isPublic={isPublic}/>
-                    </CardBody>
-                </Card>
-            {/each}
-            {:else}
-            <div class="my-3">
-            {#each slicedMembers as member, index (member.id)}
-                <Card>
-                    <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/m/${member.id}` : `/profile/m/${member.id}`}>
-                        <CardsHeader bind:item={member}>
-                            <div slot="icon">
-                                {#if isPublic || member.privacy.visibility === "public"}
-                                <FaUserCircle />
-                                {:else}
-                                <FaLock />
-                                {/if}
-                            </div>
-                        </CardsHeader>
-                    </Link>
-                </Card>
-            {/each}
-            </div>
-            {/if}
+            <CardsList on:deletion={(e) => deleteMemberFromList(e)} bind:list={members} isPublic={isPublic} isMainDash={false} itemType="member" />
             <ListPagination bind:currentPage bind:pageAmount />
             {/if}
             {/if}

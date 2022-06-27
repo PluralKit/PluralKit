@@ -1,15 +1,13 @@
 <script lang="ts">
     import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, Accordion, AccordionItem, CardTitle } from "sveltestrap";
     import Body from '../lib/member/Body.svelte';
-    import GroupBody from '../lib/group/Body.svelte';
+    import CardsList from '../lib/list/CardsList.svelte';
     import { useParams, Link, navigate } from 'svelte-navigator';
     import { onMount } from 'svelte';
     import api from "../api";
     import { Member, Group } from "../api/types";
     import CardsHeader from "../lib/CardsHeader.svelte";
     import FaAddressCard from 'svelte-icons/fa/FaAddressCard.svelte'
-    import FaUsers from 'svelte-icons/fa/FaUsers.svelte'
-    import FaLock from 'svelte-icons/fa/FaLock.svelte'
     import FaList from 'svelte-icons/fa/FaList.svelte'
     import ListPagination from '../lib/ListPagination.svelte';
 
@@ -22,7 +20,6 @@
     let groups: Group[] = [];
     let systemGroups: Group[] = [];
     let systemMembers: Member[] = [];
-    let isMainDash = false;
     let isDeleted = false;
     let notOwnSystem = false;
 
@@ -105,11 +102,6 @@
         isDeleted = true;
     }
     
-    function updateGroupList(event: any) {
-        groups = groups.map(group => group.id !== event.detail.id ? group : event.detail);
-        systemGroups = systemGroups.map(group => group.id !== event.detail.id ? group : event.detail);
-    }
-
     function deleteGroupFromList(event: any) {
         groups = groups.filter(group => group.id !== event.detail);
         systemGroups = systemGroups.filter(group => group.id !== event.detail);
@@ -166,59 +158,7 @@
                 </CardHeader>
             </Card>
             <ListPagination bind:currentPage bind:pageAmount />
-            {#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
-            <Accordion class="mb-3" stayOpen>
-            {#each slicedGroups as group, index (group.id)}
-                <AccordionItem>
-                    <CardsHeader bind:item={group} slot="header">
-                        <div slot="icon">
-                            {#if isPublic || group.privacy.visibility === "public"}
-                            <FaUsers />
-                            {:else}
-                            <FaLock />
-                            {/if}
-                        </div>
-                    </CardsHeader>
-                    <GroupBody bind:members={systemMembers} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
-                </AccordionItem>
-            {/each}
-            </Accordion>
-            {:else if settings.accessibility.expandedcards}
-            {#each slicedGroups as group, index (group.id)}
-                <Card class="mb-3">
-                    <CardHeader>
-                        <div slot="icon">
-                            {#if isPublic || group.privacy.visibility === "public"}
-                            <FaUsers />
-                            {:else}
-                            <FaLock />
-                            {/if}
-                        </div>
-                    </CardHeader>
-                    <CardBody>
-                        <GroupBody bind:members={systemMembers} isMainDash={isMainDash} on:deletion={deleteGroupFromList} bind:group bind:isPublic={isPublic}/>
-                    </CardBody>
-                </Card>
-            {/each}
-            {:else}
-            <div class="my-3">
-            {#each slicedGroups as group, index (group.id)}
-                <Card>
-                    <Link class="accordion-button collapsed" style="text-decoration: none;" to={!isPublic ? `/dash/g/${group.id}` : `/profile/g/${group.id}`}>
-                        <CardsHeader bind:item={group}>
-                            <div slot="icon">
-                                {#if isPublic || group.privacy.visibility === "public"}
-                                <FaUsers />
-                                {:else}
-                                <FaLock />
-                                {/if}
-                            </div>
-                        </CardsHeader>
-                    </Link>
-                </Card>
-            {/each}
-            </div>
-            {/if}
+            <CardsList on:deletion={(e) => deleteGroupFromList(e)} bind:list={groups} isPublic={isPublic} isMainDash={false} itemType="group" />
             <ListPagination bind:currentPage bind:pageAmount />
             {/if}
             {/if}
