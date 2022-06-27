@@ -206,7 +206,7 @@
             {:else if err}
                 <Alert color="danger">{err}</Alert>
             {:else}
-                <CardsList openByDefault={openByDefault} bind:list={randomList} isPublic={true} isMainDash={false} itemType={type} itemsPerPage={5} currentPage={rollCounter} />
+                <CardsList openByDefault={openByDefault} bind:list={randomList} isPublic={true} isMainDash={false} itemType={type} itemsPerPage={5} currentPage={rollCounter} fullLength={randomList.length} />
             {/if}
         </Col>
     </Row>

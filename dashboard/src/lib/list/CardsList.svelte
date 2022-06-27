@@ -22,12 +22,11 @@
     export let isMainDash: boolean;
     export let itemsPerPage: number;
     export let currentPage: number;
+    export let fullLength: number;
 
     export let openByDefault = false;
 
     $: indexStart = itemsPerPage * (currentPage - 1);
-    
-    let cardIndexArray = [];
 
     function getItemLink(item: Member | Group): string {
         let url: string;
@@ -47,13 +46,14 @@
         let el;
 
         if (event.key === "ArrowDown") {
-            if (index + 1 < indexStart + itemsPerPage) el = cardIndexArray[index + 1];
-            else el = cardIndexArray[indexStart];
+            if (index + 1 < indexStart + itemsPerPage && index + 1 < fullLength) el = document.getElementById(`${itemType}-card-${index + 1}`);
+            else el = document.getElementById(`${itemType}-card-${indexStart}`);
         }
 
         if (event.key === "ArrowUp") {
-            if (index - 1 >= indexStart) el = cardIndexArray[index - 1];
-            else el = cardIndexArray[indexStart + itemsPerPage - 1];
+            if (index - 1 >= indexStart) el = document.getElementById(`${itemType}-card-${index - 1}`);
+            else if (fullLength <= indexStart + itemsPerPage) el = document.getElementById(`${itemType}-card-${fullLength - 1}`);
+            else el = document.getElementById(`${itemType}-card-${indexStart + itemsPerPage - 1}`);
         }
 
         if (el) {
@@ -110,9 +110,9 @@
     {#each list as item, index (item.id + index)}
         <Card>
             <h2 class="accordion-header">
-                <button class="w-100 accordion-button collapsed card-header" bind:this={cardIndexArray[indexStart + index]} on:click={() => toggleCard(indexStart + index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
+                <button class="w-100 accordion-button collapsed card-header" id={`${itemType}-card-${indexStart + index}`} on:click={() => toggleCard(indexStart + index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
                     <CardsHeader {item}>
-                        <div slot="icon" style="cursor: pointer;" id={`copy-${item.id}-${index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                        <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                             {#if isPublic || item.privacy.visibility === "public"}
                             {#if itemType === "member"}
                             <FaUserCircle />
@@ -124,7 +124,7 @@
                             {/if}
                         </div>
                     </CardsHeader>
-                    <Tooltip placement="top" target={`copy-${item.id}-${index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
+                    <Tooltip placement="top" target={`${itemType}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
                 </button>
             </h2>
             <Collapse isOpen={isOpenArray[indexStart + index]}>
@@ -142,10 +142,10 @@
 {:else if openByDefault || settings.accessibility.expandedcards}
     {#each list as item, index (item.id + index)}
     <Card class="mb-3">
-        <div class="accordion-button collapsed p-0" bind:this={cardIndexArray[indexStart + index]} on:keydown={(e) => skipToNextItem(e, indexStart + index)} tabindex={0}>
+        <div class="accordion-button collapsed p-0" id={`${itemType}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} tabindex={0}>
             <CardHeader class="w-100">
                 <CardsHeader {item}>
-                    <div slot="icon" style="cursor: pointer;" id={`copy-${item.id}-${index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                    <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                         {#if isPublic || item.privacy.visibility === "public"}
                         {#if itemType === "member"}
                         <FaUserCircle />
@@ -157,7 +157,7 @@
                         {/if}
                     </div>
                 </CardsHeader>
-                <Tooltip placement="top" target={`copy-${item.id}-${index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
+                <Tooltip placement="top" target={`${itemType}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
             </CardHeader>
         </div>
         <CardBody>
@@ -173,9 +173,9 @@
     <div class="my-3">
     {#each list as item, index (item.id + index)}
     <Card>
-        <a class="accordion-button collapsed" style="text-decoration: none;" href={getItemLink(item)} bind:this={cardIndexArray[indexStart + index]} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
+        <a class="accordion-button collapsed" style="text-decoration: none;" href={getItemLink(item)} id={`${itemType}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
             <CardsHeader {item}>
-                <div slot="icon" style="cursor: pointer;" id={`copy-${item.id}-${index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                     {#if isPublic || item.privacy.visibility === "public"}
                     {#if itemType === "member"}
                     <FaUserCircle />
@@ -187,7 +187,7 @@
                     {/if}
                 </div>
             </CardsHeader>
-            <Tooltip placement="top" target={`copy-${item.id}-${index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
+            <Tooltip placement="top" target={`${itemType}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
         </a>
     </Card>
     {/each}
