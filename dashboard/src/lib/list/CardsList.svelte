@@ -20,6 +20,8 @@
     export let isPublic: boolean;
     export let itemType: string;
     export let isMainDash: boolean;
+
+    export let openByDefault = false;
     
     let cardIndexArray = [];
 
@@ -61,10 +63,8 @@
     function toggleCard(index: number) {
         if (isOpenArray[index] === true) {
             isOpenArray[index] = false;
-            cardIndexArray[index].classList.add("collapsed");
         } else {
             isOpenArray[index] = true;
-            cardIndexArray[index].classList.remove("collapsed");
         }
     }
 
@@ -101,7 +101,7 @@
     }
 </script>
 
-{#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
+{#if !openByDefault && (settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true)}
     <div class="mb-3">    
     {#each list as item, index (item.id + index)}
         <Card>
@@ -135,7 +135,7 @@
         </Card>
     {/each}
     </div>
-{:else if settings.accessibility.expandedcards}
+{:else if openByDefault || settings.accessibility.expandedcards}
     {#each list as item, index (item.id + index)}
     <Card class="mb-3">
         <div class="accordion-button collapsed p-0" bind:this={cardIndexArray[index]} on:keydown={(e) => skipToNextItem(e, index)} tabindex={0}>

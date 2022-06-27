@@ -4,14 +4,9 @@
     import { Alert, Col, Container, Row, Card, CardBody, CardHeader, CardTitle, Input, Label, Button, Accordion, AccordionHeader, AccordionItem } from 'sveltestrap';
     import FaRandom from 'svelte-icons/fa/FaRandom.svelte'
     
-    import MemberBody from '../lib/member/Body.svelte';
-    import GroupBody from '../lib/group/Body.svelte';
-    import CardsHeader from '../lib/CardsHeader.svelte';
+    import CardsList from '../lib/list/CardsList.svelte';
     import api from '../api';
     import { Group, Member } from '../api/types';
-    import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte';
-    import FaUsers from 'svelte-icons/fa/FaUsers.svelte';
-    import FaLock from 'svelte-icons/fa/FaLock.svelte';
 
     export let isPublic: boolean = false;
     export let type: string = "member";
@@ -210,81 +205,7 @@
             {:else if err}
                 <Alert color="danger">{err}</Alert>
             {:else}
-            {#if !openByDefault && (settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true)}
-            <Accordion class="my-3" stayOpen>
-                {#each randomList as item, index (item.id + index)}
-                <AccordionItem>
-                    <CardsHeader {item} slot="header">
-                        <div slot="icon">
-                            {#if isPublic || item.privacy.visibility === "public"}
-                            {#if type === "member"}
-                            <FaUserCircle />
-                            {:else if type === "group"}
-                            <FaUsers />
-                            {/if}
-                            {:else}
-                            <FaLock />
-                            {/if}
-                        </div>
-                    </CardsHeader>
-                    {#if type === "member"}
-                    <MemberBody isPublic={true} bind:member={item} isMainDash={false} />
-                    {:else if type === "group"}
-                    <GroupBody isPublic={true} bind:group={item} isMainDash={false} />
-                    {/if}
-                </AccordionItem>
-                {/each}
-            </Accordion>
-            {:else if openByDefault || settings.accessibility.expandedcards}
-                {#each randomList as item, index (item.id + index)}
-                <Card class="mb-3">
-                    <CardHeader>
-                        <CardsHeader {item}>
-                            <div slot="icon">
-                                {#if isPublic || item.privacy.visibility === "public"}
-                                {#if type === "member"}
-                                <FaUserCircle />
-                                {:else if type === "group"}
-                                <FaUsers />
-                                {/if}
-                                {:else}
-                                <FaLock />
-                                {/if}
-                            </div>
-                        </CardsHeader>
-                    </CardHeader>
-                    <CardBody>
-                        {#if type === "member"}
-                        <MemberBody isPublic={true} bind:member={item} isMainDash={false} />
-                        {:else if type === "group"}
-                        <GroupBody isPublic={true} bind:group={item} isMainDash={false} />
-                        {/if}
-                    </CardBody>
-                </Card>
-                {/each}
-            {:else}
-                <div class="my-3">
-                {#each randomList as item, index (item.id + index)}
-                <Card>
-                    <Link class="accordion-button collapsed" style="text-decoration: none;" to={getItemLink(item)}>
-                        <CardsHeader {item}>
-                            <div slot="icon">
-                                {#if isPublic || item.privacy.visibility === "public"}
-                                {#if type === "member"}
-                                <FaUserCircle />
-                                {:else if type === "group"}
-                                <FaUsers />
-                                {/if}
-                                {:else}
-                                <FaLock />
-                                {/if}
-                            </div>
-                        </CardsHeader>
-                    </Link>
-                </Card>
-                {/each}
-                </div>
-            {/if}
+                <CardsList openByDefault={openByDefault} bind:list={randomList} isPublic={true} isMainDash={false} itemType={type} />
             {/if}
         </Col>
     </Row>
