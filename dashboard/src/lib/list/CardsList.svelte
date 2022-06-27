@@ -67,6 +67,38 @@
             cardIndexArray[index].classList.remove("collapsed");
         }
     }
+
+    function getShortLink(id: string) {
+        let url = "https://pk.mt"
+
+        if (itemType === "member") url += "/m/"
+        else if (itemType === "group") url += "/g/"
+
+        url += id;
+
+        return url;
+    }
+
+    let copiedArray = [];
+
+    async function copyShortLink(index: number, id: string, event?) {
+        if (event) {
+            if (event.key !== "Tab") event.preventDefault();
+            event.stopPropagation();
+
+            let ctrlDown = event.ctrlKey||event.metaKey; // mac support
+            if (!(ctrlDown && event.key === "c") && event.key !== "Enter") return;
+        }
+        try {
+            await navigator.clipboard.writeText(getShortLink(id));
+            
+            copiedArray[index] = true;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            copiedArray[index] = false;
+        } catch (error) {
+            console.log(error);
+        }
+    }
 </script>
 
 {#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
@@ -76,7 +108,7 @@
             <h2 class="accordion-header">
                 <button class="w-100 accordion-button collapsed" bind:this={cardIndexArray[index]} on:click={() => toggleCard(index)} on:keydown={(e) => skipToNextItem(e, index)}>
                     <CardsHeader {item}>
-                        <div slot="icon">
+                        <div slot="icon" style="cursor: pointer;" id={`copy-${item.id}-${index}`} on:click|stopPropagation={() => copyShortLink(index, item.id)} on:keydown={(e) => copyShortLink(index, item.id, e)} tabindex={0} >
                             {#if isPublic || item.privacy.visibility === "public"}
                             {#if itemType === "member"}
                             <FaUserCircle />
@@ -88,6 +120,7 @@
                             {/if}
                         </div>
                     </CardsHeader>
+                    <Tooltip placement="top" target={`copy-${item.id}-${index}`}>{copiedArray[index] ? "Copied!" : "Copy public link"}</Tooltip>
                 </button>
             </h2>
             <Collapse isOpen={isOpenArray[index]}>
@@ -108,7 +141,7 @@
         <div class="accordion-button collapsed p-0" bind:this={cardIndexArray[index]} on:keydown={(e) => skipToNextItem(e, index)} tabindex={0}>
             <CardHeader class="w-100">
                 <CardsHeader {item}>
-                    <div slot="icon">
+                    <div slot="icon" style="cursor: pointer;" id={`copy-${item.id}-${index}`} on:click|stopPropagation={() => copyShortLink(index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(index, item.id, e)} tabindex={0} >
                         {#if isPublic || item.privacy.visibility === "public"}
                         {#if itemType === "member"}
                         <FaUserCircle />
@@ -120,6 +153,7 @@
                         {/if}
                     </div>
                 </CardsHeader>
+                <Tooltip placement="top" target={`copy-${item.id}-${index}`}>{copiedArray[index] ? "Copied!" : "Copy public link"}</Tooltip>
             </CardHeader>
         </div>
         <CardBody>
@@ -137,7 +171,7 @@
     <Card>
         <a class="accordion-button collapsed" style="text-decoration: none;" href={getItemLink(item)} bind:this={cardIndexArray[index]} on:keydown={(e) => skipToNextItem(e, index)} use:link >
             <CardsHeader {item}>
-                <div slot="icon">
+                <div slot="icon" style="cursor: pointer;" id={`copy-${item.id}-${index}`} on:click|stopPropagation={() => copyShortLink(index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(index, item.id, e)} tabindex={0} >
                     {#if isPublic || item.privacy.visibility === "public"}
                     {#if itemType === "member"}
                     <FaUserCircle />
@@ -149,6 +183,7 @@
                     {/if}
                 </div>
             </CardsHeader>
+            <Tooltip placement="top" target={`copy-${item.id}-${index}`}>{copiedArray[index] ? "Copied!" : "Copy public link"}</Tooltip>
         </a>
     </Card>
     {/each}
