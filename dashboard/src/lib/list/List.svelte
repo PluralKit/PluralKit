@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button, Tooltip, Label } from 'sveltestrap';
+    import { Card, CardHeader, CardBody, Alert, Collapse, Row, Col, Spinner, Button, Tooltip } from 'sveltestrap';
     import { onMount } from 'svelte';
-    import { Link, useParams } from 'svelte-navigator';
+    import { link, useParams } from 'svelte-navigator';
 
     import FaLock from 'svelte-icons/fa/FaLock.svelte';
     import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte';
@@ -124,6 +124,38 @@
         return url;
     }
 
+    let cardIndexArray = [];
+
+    function skipToNextItem(event, index: number) {
+        let el;
+
+        if (event.key === "ArrowDown") {
+            if (cardIndexArray[index + 1]) el = cardIndexArray[index + 1];
+            else el = cardIndexArray[0];
+        }
+
+        if (event.key === "ArrowUp") {
+            if (cardIndexArray[index - 1]) el = cardIndexArray[index - 1];
+            else el = cardIndexArray[cardIndexArray.length - 1];
+        }
+
+        if (el) {
+            event.preventDefault();
+            el.focus();
+        }
+    }
+
+    let isOpenArray = [];
+
+    function toggleCard(index: number) {
+        if (isOpenArray[index] === true) {
+            isOpenArray[index] = false;
+            cardIndexArray[index].classList.add("collapsed");
+        } else {
+            isOpenArray[index] = true;
+            cardIndexArray[index].classList.remove("collapsed");
+        }
+    }
 </script>
 
 <ListControl {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:itemsPerPageValue bind:currentPage />
@@ -156,48 +188,56 @@
 
 
 {#if settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true}
-<Accordion class="my-3" stayOpen>
     {#each slicedList as item, index (item.id + index)}
-    <AccordionItem>
-        <CardsHeader {item} slot="header">
-            <div slot="icon">
-                {#if isPublic || item.privacy.visibility === "public"}
+    <Card>
+        <h2 class="accordion-header">
+            <button class="w-100 accordion-button collapsed" bind:this={cardIndexArray[index]} on:click={() => toggleCard(index)} on:keydown={(e) => skipToNextItem(e, index)}>
+                <CardsHeader {item}>
+                    <div slot="icon">
+                        {#if isPublic || item.privacy.visibility === "public"}
+                        {#if itemType === "member"}
+                        <FaUserCircle />
+                        {:else if itemType === "group"}
+                        <FaUsers />
+                        {/if}
+                        {:else}
+                        <FaLock />
+                        {/if}
+                    </div>
+                </CardsHeader>
+            </button>
+        </h2>
+        <Collapse isOpen={isOpenArray[index]}>
+            <CardBody>
                 {#if itemType === "member"}
-                <FaUserCircle />
+                <MemberBody on:deletion={updateDelete} bind:isPublic bind:groups bind:member={item} />
                 {:else if itemType === "group"}
-                <FaUsers />
+                <GroupBody on:deletion={updateDelete} {isPublic} {members} bind:group={item} />
                 {/if}
-                {:else}
-                <FaLock />
-                {/if}
-            </div>
-        </CardsHeader>
-        {#if itemType === "member"}
-        <MemberBody on:deletion={updateDelete} bind:isPublic bind:groups bind:member={item} />
-        {:else if itemType === "group"}
-        <GroupBody on:deletion={updateDelete} {isPublic} {members} bind:group={item} />
-        {/if}
-    </AccordionItem>
+            </CardBody>
+        </Collapse>
+    </Card>
     {/each}
-</Accordion>
 {:else if settings.accessibility.expandedcards}
     {#each slicedList as item, index (item.id + index)}
     <Card class="mb-3">
-        <CardHeader>
-            <CardsHeader {item}>
-                <div slot="icon">
-                    {#if isPublic || item.privacy.visibility === "public"}
-                    {#if itemType === "member"}
-                    <FaUserCircle />
-                    {:else if itemType === "group"}
-                    <FaUsers />
-                    {/if}
-                    {:else}
-                    <FaLock />
-                    {/if}
-                </div>
-            </CardsHeader>
-        </CardHeader>
+        <div bind:this={cardIndexArray[index]} on:keydown={(e) => skipToNextItem(e, index)} tabindex={0}>
+            <CardHeader>
+                <CardsHeader {item}>
+                    <div slot="icon">
+                        {#if isPublic || item.privacy.visibility === "public"}
+                        {#if itemType === "member"}
+                        <FaUserCircle />
+                        {:else if itemType === "group"}
+                        <FaUsers />
+                        {/if}
+                        {:else}
+                        <FaLock />
+                        {/if}
+                    </div>
+                </CardsHeader>
+            </CardHeader>
+        </div>
         <CardBody>
             {#if itemType === "member"}
             <MemberBody on:deletion={updateDelete} bind:isPublic bind:groups bind:member={item} />
@@ -211,7 +251,7 @@
     <div class="my-3">
     {#each slicedList as item, index (item.id + index)}
     <Card>
-        <Link class="accordion-button collapsed" style="text-decoration: none;" to={getItemLink(item)}>
+        <a class="accordion-button collapsed" style="text-decoration: none;" href={getItemLink(item)} bind:this={cardIndexArray[index]} on:keydown={(e) => skipToNextItem(e, index)} use:link >
             <CardsHeader {item}>
                 <div slot="icon">
                     {#if isPublic || item.privacy.visibility === "public"}
@@ -225,7 +265,7 @@
                     {/if}
                 </div>
             </CardsHeader>
-        </Link>
+        </a>
     </Card>
     {/each}
     </div>
