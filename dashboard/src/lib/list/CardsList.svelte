@@ -110,7 +110,7 @@
     {#each list as item, index (item.id + index)}
         <Card>
             <h2 class="accordion-header">
-                <button class="w-100 accordion-button collapsed" bind:this={cardIndexArray[indexStart + index]} on:click={() => toggleCard(indexStart + index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
+                <button class="w-100 accordion-button collapsed card-header" bind:this={cardIndexArray[indexStart + index]} on:click={() => toggleCard(indexStart + index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
                     <CardsHeader {item}>
                         <div slot="icon" style="cursor: pointer;" id={`copy-${item.id}-${index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                             {#if isPublic || item.privacy.visibility === "public"}
