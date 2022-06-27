@@ -12,7 +12,7 @@
     import ProxyTags from './ProxyTags.svelte';
 
     import { Member, Group } from '../../api/types';
-    import { Link } from 'svelte-navigator';
+    import { Link, useLocation } from 'svelte-navigator';
 
     export let groups: Group[] = [];
     export let member: Member;
@@ -66,6 +66,31 @@
     async function focus(el) {
         await tick();
         el.focus();
+    }
+
+    let location = useLocation()
+    let pathName = $location.pathname;
+
+    function getMemberPageUrl() {
+        let str: string;
+        if (pathName.startsWith("/dash/")) str = "/dash";
+        else str = "/profile";
+
+        str += `/m/${member.id}`;
+
+        return str;
+    }
+
+    function getSystemPageUrl() {
+        let str: string;
+        if (pathName.startsWith("/dash/")) str = "/dash";
+        else {
+            str = "/profile";
+            str += `/s/${member.system}`;
+        }
+        str += "?tab=members";
+
+        return str;
     }
 </script>
 
@@ -156,9 +181,9 @@
     {#if isMainDash}<Button style="flex: 0" color="secondary" on:click={() => groupMode = true} aria-label="edit member groups">Groups</Button>{/if}
     {/if}
     {#if !isPage}
-    <Link to={isPublic ? `/profile/m/${member.id}` : `/dash/m/${member.id}`}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member page">View page</Button></Link>
+    <Link to={getMemberPageUrl()}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member page">View page</Button></Link>
     {:else}
-    <Link to={isPublic ? `/profile/s/${member.system}?tab=members` : "/dash?tab=members"}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member's system">View system</Button></Link>
+    <Link to={getSystemPageUrl()}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member's system">View system</Button></Link>
     {/if}
     {:else if editMode}
         <Edit on:deletion bind:member bind:editMode />

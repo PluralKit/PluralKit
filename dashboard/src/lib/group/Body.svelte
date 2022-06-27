@@ -8,7 +8,7 @@
     import twemoji from 'twemoji';
     import Privacy from './Privacy.svelte';
     import MemberEdit from './MemberEdit.svelte';
-    import { Link } from 'svelte-navigator';
+    import { Link, useLocation } from 'svelte-navigator';
 
     import { Member, Group } from '../../api/types';
    
@@ -49,6 +49,21 @@
     async function focus(el) {
         await tick();
         el.focus();
+    }
+
+    let location = useLocation()
+    let pathName = $location.pathname;
+
+    function getGroupPageUrl(randomizer?: boolean) {
+        let str: string;
+        if (pathName.startsWith("/dash/")) str = "/dash";
+        else str = "/profile";
+
+        str += `/g/${group.id}`;
+
+        if (randomizer) str += "/random";
+
+        return str;
     }
 </script>
 
@@ -120,11 +135,11 @@
 {/if}
 
 {#if !isPage}
-    <Link to={isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`}><button class="link-button button-right btn btn-primary" tabindex={-1} aria-label="view group page">View page</button></Link>
+    <Link to={getGroupPageUrl()}><button class="link-button button-right btn btn-primary" tabindex={-1} aria-label="view group page">View page</button></Link>
     {:else if !isPublic}
     <Link to="/dash?tab=groups"><button class="link-button button-right btn btn-primary" tabindex={-1} aria-label="view group system">View system</button></Link>
 {/if}
-<Link to={isPublic ? `/profile/g/${group.id}/random` : `/dash/g/${group.id}/random`}><button class="link-button button-right btn btn-secondary" style={isPublic ? "float: none !important; margin-left: 0;" : ""} tabindex={-1} aria-label="randomize group members">Randomize group</button></Link>
+<Link to={getGroupPageUrl(true)}><button class="link-button button-right btn btn-secondary" style={isPublic ? "float: none !important; margin-left: 0;" : ""} tabindex={-1} aria-label="randomize group members">Randomize group</button></Link>
 
 {:else if editMode}
 <Edit on:deletion bind:group bind:editMode />
