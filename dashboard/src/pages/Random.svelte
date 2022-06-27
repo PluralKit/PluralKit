@@ -35,9 +35,9 @@
         else if (amount > 5) amount = 5;
     }
 
-    let usePrivateMembers = false;
+    let usePrivateItems = false;
 
-    if (searchParams && searchParams.get("all") === "true") usePrivateMembers = true;
+    if (searchParams && searchParams.get("all") === "true") usePrivateItems = true;
 
     let allowDoubles = false;
     if (searchParams && searchParams.get("doubles") === "true") allowDoubles = true;
@@ -49,7 +49,7 @@
     let rollCounter = 1;
 
     onMount(async () => {
-        await fetchList(amount, usePrivateMembers);
+        await fetchList(amount, usePrivateItems);
     });
 
     async function fetchList(amount: number, usePrivateMembers?: boolean|string) {
@@ -105,10 +105,10 @@
         let paramArray = [];
         if (amount > 1) paramArray.push(`amount=${amount}`);
         if (optionAllowDoubles === "true") paramArray.push("doubles=true");
-        if (optionUsePrivateMembers === "true") paramArray.push("all=true");
+        if (optionUsePrivateItems === "true") paramArray.push("all=true");
         if (openByDefault === true) paramArray.push("open=true");
         
-        randomList = randomizeList(parseInt(optionAmount), optionUsePrivateMembers, optionAllowDoubles);
+        randomList = randomizeList(parseInt(optionAmount), optionUsePrivateItems, optionAllowDoubles);
         navigate(`${path}${paramArray.length > 0 ? `?${paramArray.join('&')}` : ""}`);
         rollCounter ++;
     }
@@ -119,8 +119,8 @@
     
     let optionAmount = amount.toString();
     
-    let optionUsePrivateMembers = "false";
-    if (usePrivateMembers === true) optionUsePrivateMembers = "true";
+    let optionUsePrivateItems = "false";
+    if (usePrivateItems === true) optionUsePrivateItems = "true";
 
     let optionAllowDoubles = "false";
     if (allowDoubles === true) optionAllowDoubles = "true";
@@ -183,10 +183,10 @@
                         </Col>
                         {#if !isPublic}
                         <Col xs={12} lg={4} class="mb-2">
-                            <Label>Use all members:</Label>
-                            <Input bind:value={optionUsePrivateMembers} type="select" aria-label="include private members">
-                                <option value="false" default={usePrivateMembers === false}>no (only public members)</option>
-                                <option value="true" default={usePrivateMembers === true}>yes (include private members)</option>
+                            <Label>Use all {type}s:</Label>
+                            <Input bind:value={optionUsePrivateItems} type="select" aria-label="include private members">
+                                <option value="false" default={usePrivateItems === false}>no (only public {type}s)</option>
+                                <option value="true" default={usePrivateItems === true}>yes (include private {type}s)</option>
                             </Input>
                         </Col>
                         {/if}
