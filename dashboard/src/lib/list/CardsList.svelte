@@ -19,7 +19,6 @@
     
     export let isPublic: boolean;
     export let itemType: string;
-    export let isMainDash: boolean;
     export let itemsPerPage: number;
     export let currentPage: number;
     export let fullLength: number;
@@ -31,7 +30,7 @@
     function getItemLink(item: Member | Group): string {
         let url: string;
 
-        if (isMainDash) url = "/dash/";
+        if (!isPublic) url = "/dash/";
         else url = "/profile/";
         
         if (itemType === "member") url += "m/";

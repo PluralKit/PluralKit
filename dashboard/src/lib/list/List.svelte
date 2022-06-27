@@ -41,7 +41,6 @@
     $: slicedList = processedList.slice(indexOfFirstItem, indexOfLastItem);
 
     export let isPublic: boolean;
-    export let isMainDash = true;
     export let itemType: string;
 
     let searchValue: string = "";
@@ -132,6 +131,6 @@
     <NewGroup on:create={addItemToList} />
     {/if}
 {/if}
-<CardsList on:deletion bind:list={slicedList} bind:groups bind:members isMainDash={isMainDash} isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} />
+<CardsList on:deletion bind:list={slicedList} bind:groups bind:members isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} />
 <ListPagination bind:currentPage {pageAmount} />
 {/if}
