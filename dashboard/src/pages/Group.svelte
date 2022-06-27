@@ -156,7 +156,7 @@
                 </CardHeader>
             </Card>
             <ListPagination bind:currentPage bind:pageAmount />
-            <CardsList on:deletion={(e) => deleteMemberFromList(e)} bind:list={members} isPublic={isPublic} isMainDash={false} itemType="member" />
+            <CardsList on:deletion={(e) => deleteMemberFromList(e)} bind:list={members} isPublic={isPublic} isMainDash={false} itemType="member" itemsPerPage={itemsPerPage} currentPage={currentPage} />
             <ListPagination bind:currentPage bind:pageAmount />
             {/if}
             {/if}

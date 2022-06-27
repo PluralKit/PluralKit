@@ -45,9 +45,9 @@
     // just a hidden option to expand the cards by default regardless of your global settings
     let openByDefault = false;
     if (searchParams && searchParams.get("open") === "true") openByDefault = true;
-
-    let settings = JSON.parse(localStorage.getItem("pk-settings"));
     
+    let rollCounter = 1;
+
     onMount(async () => {
         await fetchList(amount, usePrivateMembers);
     });
@@ -110,6 +110,7 @@
         
         randomList = randomizeList(parseInt(optionAmount), optionUsePrivateMembers, optionAllowDoubles);
         navigate(`${path}${paramArray.length > 0 ? `?${paramArray.join('&')}` : ""}`);
+        rollCounter ++;
     }
 
     function capitalizeFirstLetter(string: string) {
@@ -205,7 +206,7 @@
             {:else if err}
                 <Alert color="danger">{err}</Alert>
             {:else}
-                <CardsList openByDefault={openByDefault} bind:list={randomList} isPublic={true} isMainDash={false} itemType={type} />
+                <CardsList openByDefault={openByDefault} bind:list={randomList} isPublic={true} isMainDash={false} itemType={type} itemsPerPage={5} currentPage={rollCounter} />
             {/if}
         </Col>
     </Row>
