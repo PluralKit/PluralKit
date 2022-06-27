@@ -90,7 +90,7 @@ public class Autoproxy
             .Title($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
 
         var sw = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
-        var fronters = await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
+        var fronters = sw == null ? new() : await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
 
         var relevantMember = settings.AutoproxyMode switch
         {
