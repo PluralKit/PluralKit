@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, Accordion, AccordionItem, CardTitle } from "sveltestrap";
+    import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, CardTitle, Tooltip } from "sveltestrap";
     import Body from '../lib/member/Body.svelte';
     import CardsList from '../lib/list/CardsList.svelte';
     import { useParams, Link, navigate } from 'svelte-navigator';
@@ -22,6 +22,7 @@
     let systemMembers: Member[] = [];
     let isDeleted = false;
     let notOwnSystem = false;
+    let copied = false;
 
     const isPage = true;
     export let isPublic = true;
@@ -107,6 +108,20 @@
         systemGroups = systemGroups.filter(group => group.id !== event.detail);
   }
 
+    async function copyShortLink(event?) {
+        if (event) {
+            let ctrlDown = event.ctrlKey||event.metaKey; // mac support
+            if (!(ctrlDown && event.key === "c") && event.key !== "Enter") return;
+        }
+        try {
+            await navigator.clipboard.writeText(`https://pk.mt/m/${member.id}`);
+            copied = true;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            copied = false;
+        } catch (error) {
+            console.log(error);
+        }
+    }
 </script>
 
 {#if settings && settings.appearance.color_background && !notOwnSystem}
@@ -135,8 +150,11 @@
                 <Card class="mb-4">
                     <CardHeader>
                         <CardsHeader bind:item={member}>
-                            <FaAddressCard slot="icon" />
+                            <div slot="icon" style="cursor: pointer;" id={`member-copy-${member.id}`} on:click|stopPropagation={() => copyShortLink()} on:keydown={(e) => copyShortLink(e)} tabindex={0} >
+                                <FaAddressCard slot="icon" />
+                            </div>
                         </CardsHeader>
+                        <Tooltip placement="top" target={`member-copy-${member.id}`}>{copied ? "Copied!" : "Copy public link"}</Tooltip>
                     </CardHeader>
                     <CardBody>
                         <Body on:deletion={updateDelete} on:updateGroups={updateGroups} bind:groups={systemGroups} bind:member={member} isPage={isPage} isPublic={isPublic}/>
