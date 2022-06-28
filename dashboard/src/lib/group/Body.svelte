@@ -56,7 +56,7 @@
 
     function getGroupPageUrl(randomizer?: boolean) {
         let str: string;
-        if (pathName.startsWith("/dash/")) str = "/dash";
+        if (pathName.startsWith("/dash")) str = "/dash";
         else str = "/profile";
 
         str += `/g/${group.id}`;

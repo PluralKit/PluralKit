@@ -73,7 +73,7 @@
 
     function getMemberPageUrl() {
         let str: string;
-        if (pathName.startsWith("/dash/")) str = "/dash";
+        if (pathName.startsWith("/dash")) str = "/dash";
         else str = "/profile";
 
         str += `/m/${member.id}`;
@@ -83,7 +83,7 @@
 
     function getSystemPageUrl() {
         let str: string;
-        if (pathName.startsWith("/dash/")) str = "/dash";
+        if (pathName.startsWith("/dash")) str = "/dash";
         else {
             str = "/profile";
             str += `/s/${member.system}`;
