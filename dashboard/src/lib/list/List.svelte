@@ -131,6 +131,6 @@
     <NewGroup on:create={addItemToList} />
     {/if}
 {/if}
-<CardsList on:deletion bind:list={slicedList} bind:groups bind:members isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} />
+<CardsList on:deletion={updateDelete} bind:list={slicedList} bind:groups bind:members isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} />
 <ListPagination bind:currentPage {pageAmount} />
 {/if}
