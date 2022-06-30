@@ -50,7 +50,8 @@
 
         loading = true;
         try {
-            let res = await api().groups().post({data});
+            let res: Group = await api().groups().post({data});
+            res.members = [];
             create(res);
             input = JSON.parse(JSON.stringify(defaultGroup));
             message = `Group ${data.name} successfully created!`
