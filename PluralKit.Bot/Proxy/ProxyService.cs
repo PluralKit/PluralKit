@@ -228,6 +228,9 @@ public class ProxyService
         if (!senderPermissions.HasFlag(PermissionSet.SendMessages))
             throw new PKError("You don't have permission to send messages in the channel that message is in.");
 
+        // Mangle embeds (for reply embed color changing)
+        var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).ToArray();
+
         // Send the reproxied webhook
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
@@ -239,7 +242,7 @@ public class ProxyService
             Content = match.ProxyContent!,
             Attachments = originalMsg.Attachments!,
             FileSizeLimit = guild.FileSizeLimit(),
-            Embeds = originalMsg.Embeds!.ToArray(),
+            Embeds = mangledEmbeds,
             Stickers = originalMsg.StickerItems!,
             AllowEveryone = allowEveryone
         });
@@ -266,6 +269,28 @@ public class ProxyService
                 referenced.Author.Id, trigger.GuildId!.Value);
             return (null, null);
         }
+    }
+
+    private Embed MangleReproxyEmbed(Embed embed, ProxyMember member)
+    {
+        // XXX: This is a naïve implementation of detecting reply embeds: looking for the same Unicode
+        // characters as used in the reply embed generation, since we don't _really_ have a good way
+        // to detect whether an embed is a PluralKit reply embed right now, whether a message is in
+        // reply to another message isn't currently stored anywhere in the database.
+        //
+        // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
+        if (embed.Author != null && embed.Author!.Name.EndsWith("\u2004\u21a9\ufe0f"))
+        {
+            return new Embed
+            {
+                Type = "rich",
+                Author = embed.Author!,
+                Description = embed.Description!,
+                Color = member.Color?.ToDiscordColor()
+            };
+        }
+
+        return embed;
     }
 
     private Embed CreateReplyEmbed(ProxyMatch match, Message trigger, Message repliedTo, string? nickname,
