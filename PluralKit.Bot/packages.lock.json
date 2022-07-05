@@ -24,9 +24,9 @@
       },
       "Grpc.Tools": {
         "type": "Direct",
-        "requested": "[2.37.0, )",
-        "resolved": "2.37.0",
-        "contentHash": "cud/urkbw3QoQ8+kNeCy2YI0sHrh7td/1cZkVbH6hDLIXX7zzmJbV/KjYSiqiYtflQf+S5mJPLzDQWScN/QdDg=="
+        "requested": "[2.47.0, )",
+        "resolved": "2.47.0",
+        "contentHash": "nInNoLfT/zR7+0VNIC4Lu5nF8azjTz3KwHB1ckwsYUxvof4uSxIt/LlCKb/NH7GPfXfdvqDDinguPpP5t55nuA=="
       },
       "Humanizer.Core": {
         "type": "Direct",
