@@ -32,7 +32,7 @@
         <PackageReference Include="App.Metrics.Prometheus" Version="4.3.0" />
         <PackageReference Include="App.Metrics.Reporting.Console" Version="4.3.0" />
         <PackageReference Include="Google.Protobuf" Version="3.13.0" />
-        <PackageReference Include="Grpc.Tools" Version="2.37.0" PrivateAssets="All" />
+        <PackageReference Include="Grpc.Tools" Version="2.47.0" PrivateAssets="all" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="4.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="4.2.0" />
