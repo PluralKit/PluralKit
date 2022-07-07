@@ -4,6 +4,7 @@ import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
 import Svelecte, { addFormatter } from 'svelecte';
 import { Member, Group } from '../../api/types';
 import { Link, useParams } from 'svelte-navigator';
+import moment from 'moment';
 
 export let list: Member[] | Group[] = [];
 
@@ -68,8 +69,9 @@ $: filteredList = searchedList.filter((item) => {
 let sortedList = [];
 
 $: if (filteredList) {
+    let alphabeticalList = filteredList.sort((a, b) => a.name.localeCompare(b.name));
     switch (sortBy) {
-        case "name": sortedList = filteredList.sort((a, b) => a.name.localeCompare(b.name));
+        case "name": sortedList = alphabeticalList;
         break;
         case "display name": sortedList = filteredList.sort((a, b) => {
             if (a.display_name && b.display_name) return a.display_name.localeCompare(b.display_name);
@@ -83,6 +85,60 @@ $: if (filteredList) {
         });
         break;
         case "ID": sortedList = filteredList.sort((a, b) => a.id.localeCompare(b.id));
+        break;
+        case "avatar": sortedList = alphabeticalList.sort((a, b) => {
+                if (a.icon === null || a.avatar_url === null) {
+                    return 1;
+                };
+                if (b.icon === null || b.avatar_url === null) {
+                    return -1;
+                };
+                if (a.icon === b.icon || a.avatar_url === b.avatar_url) {
+                    return 0;
+                }
+            });
+        break;
+        case "color": sortedList = alphabeticalList.sort((a, b) => {
+                if (a.color === null) {
+                    return 1;
+                };
+                if (b.color === null) {
+                    return -1;
+                };
+                if (a.color === b.color) {
+                    return 0;
+                }
+            });
+        break;
+        case "birthday": sortedList = alphabeticalList.sort((a, b) => {
+            if (a.birthday === null) {
+                return 1;
+            }
+            if (b.birthday === null) {
+                return -1;
+            }
+            let aBirthday = moment(a.birthday.slice(5, a.birthday.length), "MM-DD", true);
+            let bBirthday = moment(b.birthday.slice(5, b.birthday.length), "MM-DD", true);
+            if (aBirthday.isBefore(bBirthday)) {
+                return -1;
+            }
+            if (aBirthday.isAfter(bBirthday)) {
+                return 1;
+            }
+            if (aBirthday === bBirthday) {
+                return 0;
+            }
+        });
+        break;
+        case "pronouns": sortedList = alphabeticalList.sort((a, b) => {
+            if (a.pronouns === null) {
+                    return 1;
+                };
+                if (b.pronouns === null) {
+                    return -1;
+                };
+                return 0;
+        })
         break;
         default: sortedList = filteredList.sort((a, b) => a.name.localeCompare(b.name));
         break;
@@ -203,6 +259,10 @@ function capitalizeFirstLetter(string: string) {
                     <option>display name</option>
                     {#if !isPublic}<option>creation date</option>{/if}
                     <option>ID</option>
+                    <option>avatar</option>
+                    <option>color</option>
+                    {#if itemType === "member"}<option>birthday</option>{/if}
+                    {#if itemType === "member"}<option>pronouns</option>{/if}
                 </Input>
             </InputGroup>
         </Col>
