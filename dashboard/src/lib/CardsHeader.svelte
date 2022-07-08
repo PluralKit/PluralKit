@@ -2,6 +2,7 @@
     import { tick } from 'svelte';
     import { Modal, CardHeader, CardTitle, Image, Spinner } from 'sveltestrap';
     import default_avatar from '../assets/default_avatar.png';
+    import resizeMedia from '../api/resize-media';
     import { toHTML } from 'discord-markdown';
     import twemoji from 'twemoji';
 
@@ -19,6 +20,7 @@
     }
 
     $: icon_url = item.avatar_url ? item.avatar_url : item.icon ? item.icon : default_avatar;
+    $: icon_url_resized = resizeMedia(icon_url)
 
     let avatarOpen = false;
     const toggleAvatarModal = () => (avatarOpen = !avatarOpen);
@@ -45,7 +47,7 @@
         </div>
         <div>
         {#if item && (item.avatar_url || item.icon)}
-        <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url} alt={altText} />
+        <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url_resized} alt={altText} />
         {:else}
         <img class="rounded-circle avatar" src={default_avatar} alt="icon (default)" tabindex={0} />
         {/if}

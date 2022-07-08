@@ -4,6 +4,7 @@
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
     import parseTimestamps from '../../api/parse-timestamps';
+    import resizeMedia from '../../api/resize-media';
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
     import Privacy from './Privacy.svelte';
@@ -124,7 +125,7 @@
     {@html htmlDescription && htmlDescription}
 </div>
 {#if (group.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
-<img src={group.banner} alt="group banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
+<img src={resizeMedia(group.banner, [1200, 480])} alt="group banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover"/>
 {/if}
 
 {#if !isPublic}
