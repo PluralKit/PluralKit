@@ -5,8 +5,6 @@
 
     import api from '../api';
 
-    let hover = null;
-
     let message = "Loading...";
     let shards = [];
     let clusters = {};
@@ -147,7 +145,7 @@
                     <CardBody>
                         <span>{ message }</span>
                         {#each shards as shard}
-                            <ShardItem shard={shard} bind:hover={hover} />
+                            <ShardItem shard={shard} />
                         {/each}
                     </CardBody>
                 </Card>
@@ -163,7 +161,7 @@
             </div>
             <div class="cluster-shards">
                 {#each clusters[key] as shard}
-                <ShardItem shard={shard} bind:hover={hover} />
+                <ShardItem shard={shard} />
                 {/each}
             </div>
         {/each}
