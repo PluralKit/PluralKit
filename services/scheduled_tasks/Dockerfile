@@ -4,7 +4,7 @@ RUN apk add go
 
 WORKDIR /build
 
-COPY services/scheduled_tasks/ /build
+COPY ./ /build
 
 RUN go build .
 
