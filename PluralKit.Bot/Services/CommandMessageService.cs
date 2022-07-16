@@ -20,6 +20,8 @@ public class CommandMessageService
 
     public async Task RegisterMessage(ulong messageId, ulong channelId, ulong authorId)
     {
+        if (_redis.Connection == null) return;
+
         _logger.Debug(
             "Registering command response {MessageId} from author {AuthorId} in {ChannelId}",
             messageId, authorId, channelId
