@@ -229,7 +229,7 @@ public class ProxyService
             throw new PKError("You don't have permission to send messages in the channel that message is in.");
 
         // Mangle embeds (for reply embed color changing)
-        var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).ToArray();
+        var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
         // Send the reproxied webhook
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
@@ -271,7 +271,7 @@ public class ProxyService
         }
     }
 
-    private Embed MangleReproxyEmbed(Embed embed, ProxyMember member)
+    private Embed? MangleReproxyEmbed(Embed embed, ProxyMember member)
     {
         // XXX: This is a naïve implementation of detecting reply embeds: looking for the same Unicode
         // characters as used in the reply embed generation, since we don't _really_ have a good way
@@ -288,6 +288,12 @@ public class ProxyService
                 Description = embed.Description!,
                 Color = member.Color?.ToDiscordColor()
             };
+        }
+
+        // XXX: remove non-rich embeds as including them breaks link embeds completely
+        else if (embed.Type != "rich")
+        {
+            return null;
         }
 
         return embed;
