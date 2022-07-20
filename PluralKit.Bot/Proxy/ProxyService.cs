@@ -229,8 +229,7 @@ public class ProxyService
             throw new PKError("You don't have permission to send messages in the channel that message is in.");
 
         // Mangle embeds (for reply embed color changing)
-        var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).ToList();
-        mangledEmbeds.RemoveAll(x => x == null);
+        var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
         // Send the reproxied webhook
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
@@ -243,7 +242,7 @@ public class ProxyService
             Content = match.ProxyContent!,
             Attachments = originalMsg.Attachments!,
             FileSizeLimit = guild.FileSizeLimit(),
-            Embeds = mangledEmbeds.ToArray(),
+            Embeds = mangledEmbeds,
             Stickers = originalMsg.StickerItems!,
             AllowEveryone = allowEveryone
         });
