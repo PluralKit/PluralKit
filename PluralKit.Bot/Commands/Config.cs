@@ -17,10 +17,12 @@ public class Config
     {
         var items = new List<PaginatedConfigItem>();
 
+        var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
+
         items.Add(new(
             "autoproxy account",
             "Whether autoproxy is enabled for the current account",
-            EnabledDisabled(ctx.MessageContext.AllowAutoproxy),
+            EnabledDisabled(allowAutoproxy),
             "enabled"
         ));
 
@@ -122,16 +124,18 @@ public class Config
 
     public async Task AutoproxyAccount(Context ctx)
     {
+        var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
+
         if (!ctx.HasNext())
         {
-            await ctx.Reply($"Autoproxy is currently **{EnabledDisabled(ctx.MessageContext.AllowAutoproxy)}** for account <@{ctx.Author.Id}>.");
+            await ctx.Reply($"Autoproxy is currently **{EnabledDisabled(allowAutoproxy)}** for account <@{ctx.Author.Id}>.");
             return;
         }
 
         var allow = ctx.MatchToggle(true);
 
         var statusString = EnabledDisabled(allow);
-        if (ctx.MessageContext.AllowAutoproxy == allow)
+        if (allowAutoproxy == allow)
         {
             await ctx.Reply($"{Emojis.Note} Autoproxy is already {statusString} for account <@{ctx.Author.Id}>.");
             return;

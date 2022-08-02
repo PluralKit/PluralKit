@@ -35,7 +35,7 @@ internal partial class Database: IDatabase
         _migrator = migrator;
         _logger = logger.ForContext<Database>();
 
-        _connectionString = new NpgsqlConnectionStringBuilder(_config.Database)
+        var connectionString = new NpgsqlConnectionStringBuilder(_config.Database)
         {
             Pooling = true,
             Enlist = false,
@@ -43,7 +43,12 @@ internal partial class Database: IDatabase
 
             // Lower timeout than default (15s -> 2s), should ideally fail-fast instead of hanging
             Timeout = 2
-        }.ConnectionString;
+        };
+
+        if (_config.DatabasePassword != null)
+            connectionString.Password = _config.DatabasePassword;
+
+        _connectionString = connectionString.ConnectionString;
     }
 
     private static readonly PostgresCompiler _compiler = new();

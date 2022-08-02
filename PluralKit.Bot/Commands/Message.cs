@@ -2,6 +2,8 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
+using Autofac;
+
 using Myriad.Builders;
 using Myriad.Cache;
 using Myriad.Extensions;
@@ -45,7 +47,7 @@ public class ProxiedMessage
         _logChannel = logChannel;
         // _cache = cache;
         _metrics = metrics;
-        _proxy =  proxy;
+        _proxy = proxy;
     }
 
     public async Task ReproxyMessage(Context ctx)
@@ -61,7 +63,7 @@ public class ProxiedMessage
             throw new PKError("Could not find a member to reproxy the message with.");
 
         // Fetch members and get the ProxyMember for `target`
-        List <ProxyMember> members;
+        List<ProxyMember> members;
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
             members = (await _repo.GetProxyMembers(ctx.Author.Id, msg.Message.Guild!.Value)).ToList();
         var match = members.Find(x => x.Id == target.Id);
@@ -70,7 +72,7 @@ public class ProxiedMessage
 
         try
         {
-            await _proxy.ExecuteReproxy(ctx.Message, msg.Message, match);
+            await _proxy.ExecuteReproxy(ctx.Message, msg.Message, members, match);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
@@ -126,8 +128,7 @@ public class ProxiedMessage
             if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
 
-            await _logChannel.LogMessage(ctx.MessageContext, msg.Message, ctx.Message, editedMsg,
-                originalMsg!.Content!);
+            await _logChannel.LogMessage(msg.Message, ctx.Message, editedMsg, originalMsg!.Content!);
         }
         catch (NotFoundException)
         {
@@ -140,13 +141,12 @@ public class ProxiedMessage
         var editType = isReproxy ? "reproxy" : "edit";
         var editTypeAction = isReproxy ? "reproxied" : "edited";
 
-        // todo: is it correct to get a connection here?
-        await using var conn = await ctx.Database.Obtain();
         FullMessage? msg = null;
 
         var (referencedMessage, _) = ctx.MatchMessage(false);
         if (referencedMessage != null)
         {
+            await using var conn = await ctx.Database.Obtain();
             msg = await ctx.Repository.GetMessage(conn, referencedMessage.Value);
             if (msg == null)
                 throw new PKError("This is not a message proxied by PluralKit.");
@@ -161,6 +161,7 @@ public class ProxiedMessage
             if (recent == null)
                 throw new PKSyntaxError($"Could not find a recent message to {editType}.");
 
+            await using var conn = await ctx.Database.Obtain();
             msg = await ctx.Repository.GetMessage(conn, recent.Mid);
             if (msg == null)
                 throw new PKSyntaxError($"Could not find a recent message to {editType}.");
@@ -305,14 +306,14 @@ public class ProxiedMessage
 
     private async Task DeleteCommandMessage(Context ctx, ulong messageId)
     {
-        var message = await ctx.Repository.GetCommandMessage(messageId);
-        if (message == null)
+        var (authorId, channelId) = await ctx.Services.Resolve<CommandMessageService>().GetCommandMessage(messageId);
+        if (authorId == null)
             throw Errors.MessageNotFound(messageId);
 
-        if (message.AuthorId != ctx.Author.Id)
+        if (authorId != ctx.Author.Id)
             throw new PKError("You can only delete command messages queried by this account.");
 
-        await ctx.Rest.DeleteMessage(message.ChannelId, message.MessageId);
+        await ctx.Rest.DeleteMessage(channelId!.Value, messageId);
 
         if (ctx.Guild != null)
             await ctx.Rest.DeleteMessage(ctx.Message);

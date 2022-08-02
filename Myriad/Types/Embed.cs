@@ -11,8 +11,8 @@ public record Embed
     public EmbedFooter? Footer { get; init; }
     public EmbedImage? Image { get; init; }
     public EmbedThumbnail? Thumbnail { get; init; }
-    public EmbedVideo? Video { get; init; }
-    public EmbedProvider? Provider { get; init; }
+    // public EmbedVideo? Video { get; init; }
+    // public EmbedProvider? Provider { get; init; }
     public EmbedAuthor? Author { get; init; }
     public Field[]? Fields { get; init; }
 

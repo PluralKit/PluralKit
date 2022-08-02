@@ -286,7 +286,7 @@ You can have any proxy tags you want, including one containing emojis.
 You can now type a message enclosed in your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
 
 **NB:** If you want `<angle brackets>` as proxy tags, there is currently a bug where custom server emojis will (wrongly)
-be interpreted as proxying with that member (see [issue #37](https://github.com/xSke/PluralKit/issues/37)). The current workaround is to use different proxy tags.
+be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)). The current workaround is to use different proxy tags.
 
 ### Using multiple distinct proxy tag pairs
 If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc), you can add multiple tag pairs.
@@ -438,7 +438,7 @@ Absolute times will be interpreted in the [system time zone](#setting-a-system-t
     pk;switch move 1h
     pk;switch move 4d12h
     pk;switch move 2 PM
-    pk;switch move May 8th 4:30 PM
+    pk;switch move May 8, 4:30 PM
 
 Note that you can't move a switch *before* the *previous switch*, to avoid breaking consistency. Here's a rough ASCII-art illustration of this:
 

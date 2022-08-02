@@ -1,0 +1,34 @@
+name: Build dashboard Docker image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    if: github.repository == 'PluralKit/PluralKit'
+    steps:
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+      - uses: actions/checkout@v2
+      - run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      - uses: docker/build-push-action@v2
+        with:
+          # https://github.com/docker/build-push-action/issues/378
+          context: .
+          file: dashboard/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/pluralkit/dashboard:${{ env.BRANCH_NAME }}
+            ghcr.io/pluralkit/dashboard:${{ github.sha }}
+            ghcr.io/pluralkit/dashboard:latest
+          cache-from: type=registry,ref=ghcr.io/pluralkit/dashboard:${{ env.BRANCH_NAME }}
+          cache-to: type=inline

@@ -146,6 +146,57 @@ public class ServerConfig
             });
     }
 
+    public async Task ShowLogDisabledChannels(Context ctx)
+    {
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
+
+        var config = await ctx.Repository.GetGuild(ctx.Guild.Id);
+
+        // Resolve all channels from the cache and order by position
+        var channels = (await Task.WhenAll(config.LogBlacklist
+                .Select(id => _cache.TryGetChannel(id))))
+            .Where(c => c != null)
+            .OrderBy(c => c.Position)
+            .ToList();
+
+        if (channels.Count == 0)
+        {
+            await ctx.Reply("This server has no channels where logging is disabled.");
+            return;
+        }
+
+        await ctx.Paginate(channels.ToAsyncEnumerable(), channels.Count, 25,
+            $"Channels where logging is disabled for {ctx.Guild.Name}",
+            null,
+            async (eb, l) =>
+            {
+                async Task<string> CategoryName(ulong? id) =>
+                    id != null ? (await _cache.GetChannel(id.Value)).Name : "(no category)";
+
+                ulong? lastCategory = null;
+
+                var fieldValue = new StringBuilder();
+                foreach (var channel in l)
+                {
+                    if (lastCategory != channel!.ParentId && fieldValue.Length > 0)
+                    {
+                        eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+                        fieldValue.Clear();
+                    }
+                    else
+                    {
+                        fieldValue.Append("\n");
+                    }
+
+                    fieldValue.Append(channel.Mention());
+                    lastCategory = channel.ParentId;
+                }
+
+                eb.Field(new Embed.Field(await CategoryName(lastCategory), fieldValue.ToString()));
+            });
+    }
+
+
     public async Task SetBlacklisted(Context ctx, bool shouldAdd)
     {
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
@@ -180,27 +231,26 @@ public class ServerConfig
 
     public async Task SetLogCleanup(Context ctx)
     {
-        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
-
         var botList = string.Join(", ", LoggerCleanService.Bots.Select(b => b.Name).OrderBy(x => x.ToLowerInvariant()));
+        var eb = new EmbedBuilder()
+            .Title("Log cleanup settings")
+            .Field(new Embed.Field("Supported bots", botList));
+
+        if (ctx.Guild == null)
+        {
+            eb.Description("Run this command in a server to enable/disable log cleanup.");
+            await ctx.Reply(embed: eb.Build());
+            return;
+        }
+
+        await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
 
         var guild = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
-        bool newValue;
-        if (ctx.Match("enable", "on", "yes"))
-        {
-            newValue = true;
-        }
-        else if (ctx.Match("disable", "off", "no"))
-        {
-            newValue = false;
-        }
-        else
-        {
-            var eb = new EmbedBuilder()
-                .Title("Log cleanup settings")
-                .Field(new Embed.Field("Supported bots", botList));
+        bool? newValue = ctx.MatchToggleOrNull();
 
+        if (newValue == null)
+        {
             var guildCfg = await ctx.Repository.GetGuild(ctx.Guild.Id);
             if (guildCfg.LogCleanupEnabled)
                 eb.Description(
@@ -212,9 +262,9 @@ public class ServerConfig
             return;
         }
 
-        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogCleanupEnabled = newValue });
+        await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogCleanupEnabled = newValue.Value });
 
-        if (newValue)
+        if (newValue.Value)
             await ctx.Reply(
                 $"{Emojis.Success} Log cleanup has been **enabled** for this server. Messages deleted by PluralKit will now be cleaned up from logging channels managed by the following bots:\n- **{botList}**\n\n{Emojis.Note} Make sure PluralKit has the **Manage Messages** permission in the channels in question.\n{Emojis.Note} Also, make sure to blacklist the logging channel itself from the bots in question to prevent conflicts.");
         else

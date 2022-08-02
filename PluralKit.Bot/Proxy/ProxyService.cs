@@ -198,7 +198,7 @@ public class ProxyService
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
 
-    public async Task ExecuteReproxy(Message trigger, PKMessage msg, ProxyMember member)
+    public async Task ExecuteReproxy(Message trigger, PKMessage msg, List<ProxyMember> members, ProxyMember member)
     {
         var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
         if (originalMsg == null)
@@ -213,23 +213,33 @@ public class ProxyService
             throw new ProxyChecksFailedException(
                 "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
 
+        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+        var prevMatched = _matcher.TryMatch(ctx, autoproxySettings, members, out var prevMatch, originalMsg.Content,
+                                            originalMsg.Attachments.Length > 0, false);
+
         var match = new ProxyMatch
         {
             Member = member,
+            Content = prevMatched ? prevMatch.Content : originalMsg.Content,
+            ProxyTags = member.ProxyTags.FirstOrDefault(),
         };
 
         var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
-        var rootChannel = await _rest.GetChannelOrNull(messageChannel.IsThread() ? messageChannel.ParentId!.Value : messageChannel.Id);
+        var rootChannel = messageChannel.IsThread() ? await _rest.GetChannelOrNull(messageChannel.ParentId!.Value) : messageChannel;
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _rest.GetGuildOrNull(msg.Guild!.Value);
+        var guildMember = await _rest.GetGuildMember(msg.Guild!.Value, trigger.Author.Id);
 
         // Grab user permissions
-        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, null);
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, guildMember);
         var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
 
         // Make sure user has permissions to send messages
         if (!senderPermissions.HasFlag(PermissionSet.SendMessages))
             throw new PKError("You don't have permission to send messages in the channel that message is in.");
+
+        // Mangle embeds (for reply embed color changing)
+        var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
         // Send the reproxied webhook
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
@@ -239,15 +249,15 @@ public class ProxyService
             ThreadId = threadId,
             Name = match.Member.ProxyName(ctx),
             AvatarUrl = AvatarUtils.TryRewriteCdnUrl(match.Member.ProxyAvatar(ctx)),
-            Content = originalMsg.Content!,
+            Content = match.ProxyContent!,
             Attachments = originalMsg.Attachments!,
             FileSizeLimit = guild.FileSizeLimit(),
-            Embeds = originalMsg.Embeds!.ToArray(),
+            Embeds = mangledEmbeds,
             Stickers = originalMsg.StickerItems!,
             AllowEveryone = allowEveryone
         });
 
-        var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match, deletePrevious: false);
         await _rest.DeleteMessage(originalMsg.ChannelId!, originalMsg.Id!);
     }
@@ -269,6 +279,34 @@ public class ProxyService
                 referenced.Author.Id, trigger.GuildId!.Value);
             return (null, null);
         }
+    }
+
+    private Embed? MangleReproxyEmbed(Embed embed, ProxyMember member)
+    {
+        // XXX: This is a naïve implementation of detecting reply embeds: looking for the same Unicode
+        // characters as used in the reply embed generation, since we don't _really_ have a good way
+        // to detect whether an embed is a PluralKit reply embed right now, whether a message is in
+        // reply to another message isn't currently stored anywhere in the database.
+        //
+        // unicodes: [three-per-em space] [left arrow emoji] [force emoji presentation]
+        if (embed.Author != null && embed.Author!.Name.EndsWith("\u2004\u21a9\ufe0f"))
+        {
+            return new Embed
+            {
+                Type = "rich",
+                Author = embed.Author!,
+                Description = embed.Description!,
+                Color = member.Color?.ToDiscordColor()
+            };
+        }
+
+        // XXX: remove non-rich embeds as including them breaks link embeds completely
+        else if (embed.Type != "rich")
+        {
+            return null;
+        }
+
+        return embed;
     }
 
     private Embed CreateReplyEmbed(ProxyMatch match, Message trigger, Message repliedTo, string? nickname,
@@ -377,8 +415,8 @@ public class ProxyService
     {
         var sentMessage = new PKMessage
         {
-            Channel = triggerMessage.ChannelId,
-            Guild = triggerMessage.GuildId,
+            Channel = proxyMessage.ChannelId,
+            Guild = proxyMessage.GuildId,
             Member = match.Member.Id,
             Mid = proxyMessage.Id,
             OriginalMid = triggerMessage.Id,
@@ -389,7 +427,7 @@ public class ProxyService
             => _repo.AddMessage(sentMessage);
 
         Task LogMessageToChannel() =>
-            _logChannel.LogMessage(ctx, sentMessage, triggerMessage, proxyMessage).AsTask();
+            _logChannel.LogMessage(sentMessage, triggerMessage, proxyMessage).AsTask();
 
         Task SaveLatchAutoproxy() => autoproxySettings.AutoproxyMode == AutoproxyMode.Latch
             ? _repo.UpdateAutoproxy(ctx.SystemId.Value, triggerMessage.GuildId, null, new()

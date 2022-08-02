@@ -1,7 +1,6 @@
 ﻿create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
     returns table (
         system_id int,
-        is_deleting bool,
         log_channel bigint,
         in_blacklist bool,
         in_log_blacklist bool,
@@ -28,7 +27,6 @@ as $$
         guild as (select * from servers where id = guild_id)
     select
         system.id                                  as system_id,
-        system.is_deleting,
         guild.log_channel,
         (channel_id = any (guild.blacklist))       as in_blacklist,
         (channel_id = any (guild.log_blacklist))   as in_log_blacklist,

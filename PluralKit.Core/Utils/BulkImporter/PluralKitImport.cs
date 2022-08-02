@@ -30,23 +30,23 @@ public partial class BulkImporter
 
         await _repo.UpdateSystem(_system.Id, patch, _conn);
 
-        var configPatch = new SystemConfigPatch();
-
         if (importFile.ContainsKey("config"))
-            configPatch = SystemConfigPatch.FromJson(importFile.Value<JObject>("config"));
+        {
+            var configPatch = SystemConfigPatch.FromJson(importFile.Value<JObject>("config"));
 
-        if (importFile.ContainsKey("timezone"))
-            configPatch.UiTz = importFile.Value<string>("timezone");
+            if (importFile.ContainsKey("timezone"))
+                configPatch.UiTz = importFile.Value<string>("timezone");
 
-        configPatch.AssertIsValid();
-        if (configPatch.Errors.Count > 0)
-            throw new ImportException($"Field config.{patch.Errors[0].Key} in export file is invalid.");
+            configPatch.AssertIsValid();
+            if (configPatch.Errors.Count > 0)
+                throw new ImportException($"Field config.{patch.Errors[0].Key} in export file is invalid.");
 
-        await _repo.UpdateSystemConfig(_system.Id, configPatch, _conn);
+            await _repo.UpdateSystemConfig(_system.Id, configPatch, _conn);
+        }
 
         var members = importFile.Value<JArray>("members");
-        var groups = importFile.Value<JArray>("groups");
         var switches = importFile.Value<JArray>("switches");
+        var groups = importFile.Value<JArray>("groups");
 
         var newMembers = members.Count(m =>
         {

@@ -28,8 +28,8 @@ public class Context
 
     private Command? _currentCommand;
 
-    public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message, int commandParseOffset,
-                    PKSystem senderSystem, SystemConfig config, MessageContext messageContext)
+    public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
+                                                    int commandParseOffset, PKSystem senderSystem, SystemConfig config)
     {
         Message = (Message)message;
         ShardId = shardId;
@@ -37,7 +37,6 @@ public class Context
         Channel = channel;
         System = senderSystem;
         Config = config;
-        MessageContext = messageContext;
         Cache = provider.Resolve<IDiscordCache>();
         Database = provider.Resolve<IDatabase>();
         Repository = provider.Resolve<ModelRepository>();
@@ -61,7 +60,6 @@ public class Context
     public readonly Guild Guild;
     public readonly int ShardId;
     public readonly Cluster Cluster;
-    public readonly MessageContext MessageContext;
 
     public Task<PermissionSet> BotPermissions => Cache.PermissionsIn(Channel.Id);
     public Task<PermissionSet> UserPermissions => Cache.PermissionsFor((MessageCreateEvent)Message);
@@ -96,12 +94,12 @@ public class Context
             AllowedMentions = mentions ?? new AllowedMentions()
         });
 
-        if (embed != null)
-        {
-            // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
-            // This may need to be changed at some point but works well enough for now
-            await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
-        }
+        // if (embed != null)
+        // {
+        // Sensitive information that might want to be deleted by :x: reaction is typically in an embed format (member cards, for example)
+        // but since we can, we just store all sent messages for possible deletion
+        await _commandMessageService.RegisterMessage(msg.Id, msg.ChannelId, Author.Id);
+        // }
 
         return msg;
     }
@@ -109,6 +107,12 @@ public class Context
     public async Task Execute<T>(Command? commandDef, Func<T, Task> handler, bool deprecated = false)
     {
         _currentCommand = commandDef;
+
+        if (deprecated && commandDef != null)
+        {
+            await Reply($"{Emojis.Warn} This command has been removed. please use `pk;{commandDef.Key}` instead.");
+            return;
+        }
 
         try
         {
@@ -130,9 +134,6 @@ public class Context
             // Got a complaint the old error was a bit too patronizing. Hopefully this is better?
             await Reply($"{Emojis.Error} Operation timed out, sorry. Try again, perhaps?");
         }
-
-        if (deprecated && commandDef != null)
-            await Reply($"{Emojis.Warn} This command is deprecated and will be removed soon. In the future, please use `pk;{commandDef.Key}`.");
     }
 
     /// <summary>

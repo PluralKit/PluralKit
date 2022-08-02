@@ -60,6 +60,40 @@ Takes a partial [system guild settings](/api/models#system-guild-settings-model)
 
 Returns a [system guild settings](/api/models#system-guild-settings-model) object on success.
 
+### Get System Autoproxy Settings
+
+GET `/systems/@me/autoproxy`
+
+Query String Parameters
+|name|type|
+|---|---|
+|guild_id?|snowflake|
+|channel_id?|snowflake|
+
+Returns an [autoproxy settings](/api/models/#autoproxy-settings-model) object on success.
+
+::: warning
+Currently, only autoproxy with `guild_id` is supported. The API will return an error message if you specify `channel_id`, or do not specify a `guild_id`.
+:::
+
+### Update System Autoproxy Settings
+
+PATCH `/systems/@me/autoproxy`
+
+Query String Parameters
+|name|type|
+|---|---|
+|guild_id?|snowflake|
+|channel_id?|snowflake|
+
+Takes a partial [autoproxy settings](/api/models/#autoproxy-settings-model) object.
+
+Returns an [autoproxy settings](/api/models/#autoproxy-settings-model) object on success.
+
+::: warning
+Currently, only autoproxy with `guild_id` is supported. The API will return an error message if you specify `channel_id`, or do not specify a `guild_id`.
+:::
+
 ---
 ## Members
 

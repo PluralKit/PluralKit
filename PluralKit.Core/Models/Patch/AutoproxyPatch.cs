@@ -1,3 +1,5 @@
+using Newtonsoft.Json.Linq;
+
 using NodaTime;
 
 using SqlKata;
@@ -16,4 +18,30 @@ public class AutoproxyPatch: PatchObject
         .With("autoproxy_member", AutoproxyMember)
         .With("last_latch_timestamp", LastLatchTimestamp)
     );
+
+    public new void AssertIsValid()
+    {
+        // this is checked in FromJson
+        // not really the best way to do this, maybe fix at some point?
+        if ((int?)AutoproxyMode.Value == -1)
+            Errors.Add(new("autoproxy_mode"));
+    }
+
+    public static AutoproxyPatch FromJson(JObject o, MemberId? autoproxyMember = null)
+    {
+        var p = new AutoproxyPatch();
+
+        if (o.ContainsKey("autoproxy_mode"))
+        {
+            var (autoproxyMode, error) = o.Value<JToken>("autoproxy_mode").ParseAutoproxyMode();
+            if (error != null)
+                p.AutoproxyMode = Partial<AutoproxyMode>.Present((AutoproxyMode)(-1));
+            else
+                p.AutoproxyMode = autoproxyMode.Value;
+        }
+
+        p.AutoproxyMember = autoproxyMember ?? Partial<MemberId?>.Absent;
+
+        return p;
+    }
 }

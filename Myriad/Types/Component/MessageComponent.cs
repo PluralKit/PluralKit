@@ -3,7 +3,7 @@ namespace Myriad.Types;
 public record MessageComponent
 {
     public ComponentType Type { get; init; }
-    public ButtonStyle? Style { get; init; }
+    public ButtonStyle? Style { get; set; }
     public string? Label { get; init; }
     public Emoji? Emoji { get; init; }
     public string? CustomId { get; init; }

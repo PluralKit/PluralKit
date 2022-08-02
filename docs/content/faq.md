@@ -21,7 +21,7 @@ Although this bot is designed with plural systems and their use cases in mind, t
 
 You can suggest features in the [support server](https://discord.gg/PczBt78)'s `#suggestions-feedback` channel. Check the `#frequent-suggestions` channel to see if your idea has already been suggested!
 
-We also track feature requests through [Github Issues](https://github.com/xSke/PluralKit/issues). Feel free to open issue reports or feature requests there as well.
+We also track feature requests through [Github Issues](https://github.com/PluralKit/PluralKit/issues). Feel free to open issue reports or feature requests there as well.
 
 ### How can I support the bot's development?
 I (the bot author, [Ske](https://twitter.com/floofstrid)) have a Patreon. The income from there goes towards server hosting, domains, infrastructure, my Monster Energy addiction, et cetera. There are no benefits. There might never be any. But nevertheless, it can be found here: [https://www.patreon.com/floofstrid](https://www.patreon.com/floofstrid)
@@ -32,7 +32,7 @@ I (the bot author, [Ske](https://twitter.com/floofstrid)) have a Patreon. The in
 
 The only people with access to the database or the information the bot processes is the developer, no one else has access. More information about how information is processed is described on the [Privacy Policy](/privacy).
 
-But in short: the bot does not save or log messages beyond metadata necessary for the bot's functioning, and we do not have the ability to read messages going through the bot, proxied or not. The bot is [open-source](https://github.com/xSke/PluralKit), so anyone with technical knowledge can confirm this.
+But in short: the bot does not save or log messages beyond metadata necessary for the bot's functioning, and we do not have the ability to read messages going through the bot, proxied or not. The bot is [open-source](https://github.com/PluralKit/PluralKit), so anyone with technical knowledge can confirm this.
 
 ### I set all my privacy options to private. Why can others still see some information?
 There are two possible answers here:
@@ -45,7 +45,7 @@ This includes:
   * the information that would be shown when a member proxies (proxy name/avatar image);
   * and the system ID on a member card.
 
-For more information about why certain information must be public, see [this github issue](https://github.com/xSke/PluralKit/issues/238).
+For more information about why certain information must be public, see [this github issue](https://github.com/PluralKit/PluralKit/issues/238).
 
 ### Is there a way to restrict PluralKit usage to a certain role? / Can I remove PluralKit access for specific users in my server?
 This is not a feature currently available in PluralKit. It may be added in the future.

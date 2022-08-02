@@ -1,0 +1,191 @@
+/*
+This stylesheet should be used globally regardless of theming
+
+some specific rules are meant to be overwritten by the individual themes
+*/
+@import url('http://fonts.cdnfonts.com/css/open-dyslexic');
+
+// some variables
+$breakpoint-xs: 0px;
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+$breakpoint-xxl: 1400px;
+
+$gray-transparent: rgba(128, 128, 128, 0.3);
+
+// general elements
+#app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+blockquote {
+    padding-left: 0.5em;
+    margin: 0.25em 0 0.25em 0 !important;
+    border-left: 4px solid $gray-transparent; // overwrite this in the individual styles
+}
+
+pre {
+    white-space: pre-wrap;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+pre, code {
+    background: var(--bs-light) !important;
+    border-radius: 4px;
+}
+
+code {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+.dyslexic {
+    font-family: 'Open-Dyslexic', sans-serif;
+}
+
+// dashboard specific elements
+.icon {
+    height: 1.5em;
+    width: 1.5em;
+    margin-right: 0.5em;
+}
+
+.avatar {
+    height: 2.5em;
+    width: 2.5em;
+    object-fit: cover;
+}
+
+.modal-content {
+    border: none !important;
+}
+
+.banner {
+    z-index: -20;
+    width: 100%;
+    height: 40vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-size: cover;
+}
+
+@media (min-width: $breakpoint-md) {
+    .banner {
+        height: 50vh;
+    }
+}
+
+.description a {
+    text-decoration: none;
+}
+
+// bootstrap elements
+.container {
+    flex: 1 0 auto !important;
+}
+
+.nav-tabs * .nav-link {
+    background-color: var(--bs-body-bg) !important;
+    border-color: $gray-transparent !important; // overwrite
+    border-bottom: none !important
+}
+
+.nav-tabs {
+    gap: 0.25em;
+}
+
+.nav-tabs {
+    border-bottom: none !important;
+}
+
+.accordion-button::after {
+    display: none;
+}
+
+.pagination {
+    justify-content: center !important;
+}
+
+.page-link {
+    z-index: initial !important;
+}
+
+// svelecte styling
+.svelecte-control .sv-control {
+    border-color: $gray-transparent !important; // overwrite
+}
+
+.svelecte-control .sv-control, .sv-content, .sv-dropdown, .sv-item, .sv-item-content {
+    color: var(--bs-body-color) !important; //this can also be optionally overwritten
+    background-color: var(--bs-body-bg) !important;
+}
+
+.sv-dd-item-active {
+    outline: 5px auto Highlight;
+    outline: 5px auto -webkit-focus-ring-color;
+}
+
+.sv-dropdown {
+    position: static !important;
+    border: 1px solid rgba(128, 128, 128, 0.3) !important;
+}
+
+.sv-item-btn {
+    background-color: var(--bs-light) !important;
+}
+
+.sv-item {
+    cursor: pointer !important;
+}
+
+// discord markdown styling
+.d-spoiler {
+    color: var(--bs-dark); //overwrite
+    background-color: var(--bs-dark); //overwrite
+    border-radius: 2px;
+    transition-delay: 6000s;
+}
+
+.d-spoiler::selection {
+    color: var(--bs-dark); //overwrite
+    background-color: transparent;
+}
+
+.d-spoiler:active {
+    background-color: $gray-transparent; // overwrite
+    color: var(--bs-body-color); //overwrite
+    transition-delay: 0s;
+}
+
+.d-emoji {
+    height: 1.125em;
+    width: auto;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1125em;
+}
+
+//twemoji
+img.emoji {
+    height: 1.125em;
+    width: auto;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1125em;
+ }
+
+ //misc
+ .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

@@ -11,7 +11,7 @@ Running the bot requires [.NET 5](https://dotnet.microsoft.com/download) and a P
 Optionally, it can integrate with [Sentry](https://sentry.io/welcome/) for error reporting and [InfluxDB](https://www.influxdata.com/products/influxdb-overview/) for aggregate statistics.
 
 # Configuration
-Configuring the bot is done through a JSON configuration file. An example of the configuration format can be seen in [`pluralkit.conf.example`](https://github.com/xSke/PluralKit/blob/master/pluralkit.conf.example).
+Configuring the bot is done through a JSON configuration file. An example of the configuration format can be seen in [`pluralkit.conf.example`](https://github.com/PluralKit/PluralKit/blob/master/pluralkit.conf.example).
 The configuration file needs to be placed in the bot's working directory (usually the repository root) and must be called `pluralkit.conf`.
 
 The configuration file is in JSON format (albeit with a `.conf` extension). The following keys are available (using `.` to indicate a nested object level), bolded key names are required:
@@ -31,7 +31,7 @@ The bot can also take configuration from environment variables, which will overr
 ## Docker
 The easiest way to get the bot running is with Docker. The repository contains a `docker-compose.yml` file ready to use.
 
-* Clone this repository: `git clone https://github.com/xSke/PluralKit`
+* Clone this repository: `git clone https://github.com/PluralKit/PluralKit`
 * Create a `pluralkit.conf` file in the same directory as `docker-compose.yml` containing at least a `PluralKit.Bot.Token` field
   * (`PluralKit.Database` is overridden in `docker-compose.yml` to point to the Postgres container)
 * Build the bot: `docker-compose build`
@@ -39,7 +39,7 @@ The easiest way to get the bot running is with Docker. The repository contains a
 
 In other words:
 ```
-$ git clone https://github.com/xSke/PluralKit
+$ git clone https://github.com/PluralKit/PluralKit
 $ cd PluralKit
 $ cp pluralkit.conf.example pluralkit.conf
 $ nano pluralkit.conf  # (or vim, or whatever)
@@ -48,7 +48,7 @@ $ docker-compose up -d
 
 ## Manually
 * Install the .NET 6 SDK (see https://dotnet.microsoft.com/download)
-* Clone this repository: `git clone https://github.com/xSke/PluralKit`
+* Clone this repository: `git clone https://github.com/PluralKit/PluralKit`
 * Create and fill in a `pluralkit.conf` file in the same directory as `docker-compose.yml`
 * Run the bot: `dotnet run --project PluralKit.Bot`
   * Alternatively, `dotnet build -c Release -o build/`, then `dotnet build/PluralKit.Bot.dll`

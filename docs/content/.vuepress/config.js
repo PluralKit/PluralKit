@@ -18,7 +18,7 @@ module.exports = {
   },
 
   themeConfig: {
-    repo: 'xSke/PluralKit',
+    repo: 'PluralKit/PluralKit',
     docsDir: 'docs/content/',
     docsBranch: 'main',
     editLinks: true,
@@ -27,6 +27,7 @@ module.exports = {
     nextLinks: true,
     prevLinks: true,
     nav: [
+      { text: "Web dashboard", link: "https://dash.pluralkit.me" },
       { text: "Support server", link: "https://discord.gg/PczBt78" },
       { text: "Invite bot", link: "https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot%20applications.commands&permissions=536995904" }
     ],
@@ -66,8 +67,7 @@ module.exports = {
           "/api/endpoints",
           "/api/models",
           "/api/errors",
-          "/api/dispatch",
-          "/api/legacy"
+          "/api/dispatch"
         ]
       },
       ["https://discord.gg/PczBt78", "Join the support server"],

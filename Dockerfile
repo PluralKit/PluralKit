@@ -8,7 +8,6 @@ COPY Myriad/Myriad.csproj /app/Myriad/
 COPY PluralKit.API/PluralKit.API.csproj /app/PluralKit.API/
 COPY PluralKit.Bot/PluralKit.Bot.csproj /app/PluralKit.Bot/
 COPY PluralKit.Core/PluralKit.Core.csproj /app/PluralKit.Core/
-COPY PluralKit.ScheduledTasks/PluralKit.ScheduledTasks.csproj /app/PluralKit.ScheduledTasks/
 COPY PluralKit.Tests/PluralKit.Tests.csproj /app/PluralKit.Tests/
 COPY .git/ /app/.git
 COPY proto/ /app/proto
@@ -20,7 +19,7 @@ RUN dotnet build -c Release -o bin
 
 # Build runtime stage (doesn't include SDK)
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
-LABEL org.opencontainers.image.source = "https://github.com/xSke/PluralKit"
+LABEL org.opencontainers.image.source = "https://github.com/PluralKit/PluralKit"
 
 WORKDIR /app
 COPY --from=build /app ./

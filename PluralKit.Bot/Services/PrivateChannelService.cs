@@ -1,3 +1,5 @@
+using App.Metrics;
+
 using Serilog;
 
 using Myriad.Gateway;
@@ -9,13 +11,13 @@ namespace PluralKit.Bot;
 
 public class PrivateChannelService
 {
-    private static readonly Dictionary<ulong, ulong> _channelsCache = new();
-
+    private readonly IMetrics _metrics;
     private readonly ILogger _logger;
     private readonly ModelRepository _repo;
     private readonly DiscordApiClient _rest;
-    public PrivateChannelService(ILogger logger, ModelRepository repo, DiscordApiClient rest)
+    public PrivateChannelService(IMetrics metrics, ILogger logger, ModelRepository repo, DiscordApiClient rest)
     {
+        _metrics = metrics;
         _logger = logger;
         _repo = repo;
         _rest = rest;
@@ -23,35 +25,32 @@ public class PrivateChannelService
 
     public async Task TrySavePrivateChannel(MessageCreateEvent evt)
     {
-        if (evt.GuildId != null) return;
-        if (_channelsCache.TryGetValue(evt.Author.Id, out _)) return;
-
-        await SaveDmChannel(evt.Author.Id, evt.ChannelId);
+        if (evt.GuildId == null) await SaveDmChannel(evt.Author.Id, evt.ChannelId);
     }
 
     public async Task<ulong> GetOrCreateDmChannel(ulong userId)
     {
-        if (_channelsCache.TryGetValue(userId, out var cachedChannelId))
-            return cachedChannelId;
-
         var channelId = await _repo.GetDmChannel(userId);
-        if (channelId == null)
+        if (channelId != null)
         {
-            var channel = await _rest.CreateDm(userId);
-            channelId = channel.Id;
+            _metrics.Measure.Meter.Mark(BotMetrics.DatabaseDMCacheHits);
+            return channelId.Value;
         }
 
-        // spawn off saving the channel as to not block the current thread
-        _ = SaveDmChannel(userId, channelId.Value);
+        _metrics.Measure.Meter.Mark(BotMetrics.DMCacheMisses);
 
-        return channelId.Value;
+        var channel = await _rest.CreateDm(userId);
+
+        // spawn off saving the channel as to not block the current thread
+        _ = SaveDmChannel(userId, channel.Id);
+
+        return channel.Id;
     }
 
     private async Task SaveDmChannel(ulong userId, ulong channelId)
     {
         try
         {
-            _channelsCache.Add(userId, channelId);
             await _repo.UpdateAccount(userId, new() { DmChannel = channelId });
         }
         catch (Exception e)

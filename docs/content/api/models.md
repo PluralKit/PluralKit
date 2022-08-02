@@ -94,7 +94,8 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |timestamp|datetime||
 |id|snowflake|The ID of the message sent by the webhook. Encoded as string for precision reasons.|
-|original| snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.||sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
+|original| snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.|
+|sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
 |channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
 |guild|snowflake|The ID of the server the message was sent in. Encoded as string for precision reasons.|
 |system?|full System object|The system that proxied the message. Null if the member associated with this message was deleted.|
@@ -124,7 +125,14 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |tag|?string|79-character limit|
 |tag_enabled|boolean||
 
-<!--
+
+### Autoproxy settings model
+|key|type|notes|
+|---|---|---|
+|autoproxy_mode|[autoproxy mode](#autoproxy-mode-enum)||
+|autoproxy_member|?member id|must be `null` if autoproxy_mode is set to `front`|
+|last_latch_timestamp|?datetime|read-only|
+
 #### Autoproxy mode enum
 
 |key|description|
@@ -133,7 +141,6 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |front|autoproxy is set to the first member in the current fronters list, or disabled if the current switch contains no members|
 |latch|autoproxy is set to the last member who sent a proxied message in the server|
 |member|autoproxy is set to a specific member (see `autoproxy_member` key)|
--->
 
 ### Member guild settings model
 

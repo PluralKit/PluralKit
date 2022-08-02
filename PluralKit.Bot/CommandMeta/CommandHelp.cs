@@ -92,6 +92,7 @@ public partial class CommandTree
     public static Command LogChannelClear = new Command("log channel", "log channel -clear", "Clears the currently set log channel");
     public static Command LogEnable = new Command("log enable", "log enable all|<channel> [channel 2] [channel 3...]", "Enables message logging in certain channels");
     public static Command LogDisable = new Command("log disable", "log disable all|<channel> [channel 2] [channel 3...]", "Disables message logging in certain channels");
+    public static Command LogShow = new Command("log show", "log show", "Displays the current list of channels where logging is disabled");
     public static Command LogClean = new Command("logclean", "logclean [on|off]", "Toggles whether to clean up other bots' log channels");
     public static Command BlacklistShow = new Command("blacklist show", "blacklist show", "Displays the current proxy blacklist");
     public static Command BlacklistAdd = new Command("blacklist add", "blacklist add all|<channel> [channel 2] [channel 3...]", "Adds certain channels to the proxy blacklist");
@@ -142,7 +143,7 @@ public partial class CommandTree
         AutoproxyOff, AutoproxyFront, AutoproxyLatch, AutoproxyMember
     };
 
-    public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable };
+    public static Command[] LogCommands = { LogChannel, LogChannelClear, LogEnable, LogDisable, LogShow };
 
     public static Command[] BlacklistCommands = { BlacklistAdd, BlacklistRemove, BlacklistShow };
 }

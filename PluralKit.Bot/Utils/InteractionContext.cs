@@ -36,7 +36,7 @@ public class InteractionContext
         await Respond(InteractionResponse.ResponseType.DeferredUpdateMessage,
             new InteractionApplicationCommandCallbackData
             {
-                // Components = _evt.Message.Components
+                Components = Event.Message.Components
             });
     }
 

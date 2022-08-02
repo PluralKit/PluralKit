@@ -89,10 +89,12 @@ public class Autoproxy
         var eb = new EmbedBuilder()
             .Title($"Current autoproxy status (for {ctx.Guild.Name.EscapeMarkdown()})");
 
-        var fronters = ctx.MessageContext.LastSwitchMembers;
+        var sw = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
+        var fronters = sw == null ? new() : await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
+
         var relevantMember = settings.AutoproxyMode switch
         {
-            AutoproxyMode.Front => fronters.Length > 0 ? await ctx.Repository.GetMember(fronters[0]) : null,
+            AutoproxyMode.Front => fronters.Count > 0 ? fronters[0] : null,
             AutoproxyMode.Member when settings.AutoproxyMember.HasValue => await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
             _ => null
         };
@@ -104,7 +106,7 @@ public class Autoproxy
                 break;
             case AutoproxyMode.Front:
                 {
-                    if (fronters.Length == 0)
+                    if (fronters.Count == 0)
                     {
                         eb.Description("Autoproxy is currently set to **front mode** in this server, but there are currently no fronters registered. Use the `pk;switch` command to log a switch.");
                     }
@@ -135,7 +137,8 @@ public class Autoproxy
             default: throw new ArgumentOutOfRangeException();
         }
 
-        if (!ctx.MessageContext.AllowAutoproxy)
+        var allowAutoproxy = await ctx.Repository.GetAutoproxyEnabled(ctx.Author.Id);
+        if (!allowAutoproxy)
             eb.Field(new Embed.Field("\u200b", $"{Emojis.Note} Autoproxy is currently **disabled** for your account (<@{ctx.Author.Id}>). To enable it, use `pk;autoproxy account enable`."));
 
         return eb.Build();

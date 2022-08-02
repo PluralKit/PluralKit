@@ -34,17 +34,16 @@ public class LogChannelService
         _logger = logger.ForContext<LogChannelService>();
     }
 
-    public async ValueTask LogMessage(MessageContext ctx, PKMessage proxiedMessage, Message trigger,
-                                      Message hookMessage, string oldContent = null)
+    public async ValueTask LogMessage(PKMessage proxiedMessage, Message trigger, Message hookMessage, string oldContent = null)
     {
-        var logChannelId = await GetAndCheckLogChannel(ctx, trigger, proxiedMessage);
+        var logChannelId = await GetAndCheckLogChannel(trigger, proxiedMessage);
         if (logChannelId == null)
             return;
 
         var triggerChannel = await _cache.GetChannel(proxiedMessage.Channel);
 
-        var system = await _repo.GetSystem(ctx.SystemId.Value);
         var member = await _repo.GetMember(proxiedMessage.Member!.Value);
+        var system = await _repo.GetSystem(member.System);
 
         // Send embed!
         var embed = _embed.CreateLoggedMessageEmbed(trigger, hookMessage, system.Hid, member, triggerChannel.Name,
@@ -54,8 +53,7 @@ public class LogChannelService
         await _rest.CreateMessage(logChannelId.Value, new MessageRequest { Content = url, Embeds = new[] { embed } });
     }
 
-    private async Task<ulong?> GetAndCheckLogChannel(MessageContext ctx, Message trigger,
-                                                       PKMessage proxiedMessage)
+    private async Task<ulong?> GetAndCheckLogChannel(Message trigger, PKMessage proxiedMessage)
     {
         if (proxiedMessage.Guild == null && proxiedMessage.Channel != trigger.ChannelId)
             // a very old message is being edited outside of its original channel
@@ -63,18 +61,15 @@ public class LogChannelService
             return null;
 
         var guildId = proxiedMessage.Guild ?? trigger.GuildId.Value;
-        var logChannelId = ctx.LogChannel;
-        var isBlacklisted = ctx.InLogBlacklist;
 
-        if (proxiedMessage.Guild != trigger.GuildId)
-        {
-            // we're editing a message from a different server, get log channel info from the database
-            var guild = await _repo.GetGuild(proxiedMessage.Guild.Value);
-            logChannelId = guild.LogChannel;
-            isBlacklisted = guild.LogBlacklist.Any(x => x == trigger.ChannelId);
-        }
+        // get log channel info from the database
+        var guild = await _repo.GetGuild(guildId);
+        var logChannelId = guild.LogChannel;
+        var isBlacklisted = guild.LogBlacklist.Any(x => x == trigger.ChannelId);
 
-        if (ctx.SystemId == null || logChannelId == null || isBlacklisted) return null;
+        // if (ctx.SystemId == null ||
+        // removed the above, there shouldn't be a way to get to this code path if you don't have a system registered
+        if (logChannelId == null || isBlacklisted) return null;
 
         // Find log channel and check if valid
         var logChannel = await FindLogChannel(guildId, logChannelId.Value);
@@ -86,7 +81,7 @@ public class LogChannelService
         {
             _logger.Information(
                 "Does not have permission to log proxy, ignoring (channel: {ChannelId}, guild: {GuildId}, bot permissions: {BotPermissions})",
-                logChannel.Id, trigger.GuildId!.Value, perms);
+                logChannel.Id, guildId, perms);
             return null;
         }
 

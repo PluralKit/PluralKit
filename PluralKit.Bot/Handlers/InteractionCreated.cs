@@ -21,11 +21,14 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
         if (evt.Type == Interaction.InteractionType.MessageComponent)
         {
             var customId = evt.Data?.CustomId;
-            if (customId != null)
-            {
-                var ctx = new InteractionContext(evt, _services);
+            if (customId == null) return;
+
+            var ctx = new InteractionContext(evt, _services);
+
+            if (customId.Contains("help-menu"))
+                await Help.ButtonClick(ctx);
+            else
                 await _interactionDispatch.Dispatch(customId, ctx);
-            }
         }
     }
 }

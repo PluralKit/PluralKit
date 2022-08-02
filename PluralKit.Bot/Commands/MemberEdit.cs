@@ -225,41 +225,39 @@ public class MemberEdit
 
     public async Task Color(Context ctx, PKMember target)
     {
-        var color = ctx.RemainderOrNull();
-        if (await ctx.MatchClear())
+        var isOwnSystem = ctx.System?.Id == target.System;
+        var matchedRaw = ctx.MatchRaw();
+        var matchedClear = await ctx.MatchClear();
+
+        if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
         {
-            ctx.CheckOwnMember(target);
-
-            var patch = new MemberPatch { Color = Partial<string>.Null() };
-            await ctx.Repository.UpdateMember(target.Id, patch);
-
-            await ctx.Reply($"{Emojis.Success} Member color cleared.");
-        }
-        else if (!ctx.HasNext())
-        {
-            // if (!target.ColorPrivacy.CanAccess(ctx.LookupContextFor(target.System)))
-            //     throw Errors.LookupNotAllowed;
-
             if (target.Color == null)
-                if (ctx.System?.Id == target.System)
-                    await ctx.Reply(
-                        $"This member does not have a color set. To set one, type `pk;member {target.Reference(ctx)} color <color>`.");
-                else
-                    await ctx.Reply("This member does not have a color set.");
+                await ctx.Reply(
+                    "This member does not have a color set." + (isOwnSystem ? $" To set one, type `pk;member {target.Reference(ctx)} color <color>`." : ""));
+            else if (matchedRaw)
+                await ctx.Reply("```\n#" + target.Color + "\n```");
             else
                 await ctx.Reply(embed: new EmbedBuilder()
                     .Title("Member color")
                     .Color(target.Color.ToDiscordColor())
                     .Thumbnail(new Embed.EmbedThumbnail($"https://fakeimg.pl/256x256/{target.Color}/?text=%20"))
                     .Description($"This member's color is **#{target.Color}**."
-                                 + (ctx.System?.Id == target.System
-                                     ? $" To clear it, type `pk;member {target.Reference(ctx)} color -clear`."
-                                     : ""))
+                        + (isOwnSystem ? $" To clear it, type `pk;member {target.Reference(ctx)} color -clear`." : ""))
                     .Build());
+            return;
+        }
+
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        if (matchedClear)
+        {
+            await ctx.Repository.UpdateMember(target.Id, new() { Color = Partial<string>.Null() });
+
+            await ctx.Reply($"{Emojis.Success} Member color cleared.");
         }
         else
         {
-            ctx.CheckOwnMember(target);
+            var color = ctx.RemainderOrNull();
 
             if (color.StartsWith("#")) color = color.Substring(1);
             if (!Regex.IsMatch(color, "^[0-9a-fA-F]{6}$")) throw Errors.InvalidColorError(color);

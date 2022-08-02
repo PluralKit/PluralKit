@@ -1,0 +1,51 @@
+@import "bootstrap-dark-5/scss/variables-alt";
+
+.dark {
+    @import "highlight.js/styles/github-dark.css";
+    .navbar.bg-light {
+        background-color: $body-bg-alt !important;
+    }
+    
+    .footer.bg-light {
+        background-color: $dark-alt !important;
+    }
+    
+    .nav-item {
+        .btn.btn-transparent {
+            color: rgba(250,250,250,.55);
+        }
+    }
+
+    pre, code {
+        background: $dark-alt !important;
+    }
+        
+    // bootstrap
+    .nav-tabs * .nav-link {
+        background-color: $body-bg-alt !important;
+    }
+
+    //svelecte
+    .svelecte-control .sv-control, .sv-content, .sv-dropdown, .sv-item, .sv-item-content {
+        color: $body-color-alt !important; //this can also be optionally overwritten
+        background-color: $body-bg-alt !important;
+    }
+
+    .sv-item-btn {
+        background-color: $light-alt !important;
+    }
+
+    // discord markdown
+    .d-spoiler {
+        color: $dark-alt; //overwrite
+        background-color: $dark-alt; //overwrite
+    }
+
+    .d-spoiler::selection {
+        color: $dark-alt; //overwrite
+    }
+    
+    .d-spoiler:active {
+        color: $body-color-alt; //overwrite
+    }
+}

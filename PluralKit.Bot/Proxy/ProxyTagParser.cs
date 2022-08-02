@@ -78,7 +78,7 @@ public class ProxyTagParser
         // We got a match, extract inner text
         inner = input.Substring(prefix.Length, input.Length - prefix.Length - suffix.Length);
 
-        // (see https://github.com/xSke/PluralKit/pull/181)
+        // (see https://github.com/PluralKit/PluralKit/pull/181)
         return inner.Trim() != "\U0000fe0f";
     }
 

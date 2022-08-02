@@ -32,7 +32,7 @@ public class SystemLink
 
         ulong id;
         if (!ctx.MatchUserRaw(out id))
-            throw new PKSyntaxError("You must pass an account to link with (either ID or @mention).");
+            throw new PKSyntaxError("You must pass an account to unlink from (either ID or @mention).");
 
         var accountIds = (await ctx.Repository.GetSystemAccounts(ctx.System.Id)).ToList();
         if (!accountIds.Contains(id)) throw Errors.AccountNotLinked;

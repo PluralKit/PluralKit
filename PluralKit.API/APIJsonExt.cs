@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -24,6 +26,25 @@ public static class APIJsonExt
         o.Add("channel_count", channelCount);
 
         return o;
+    }
+
+    public static JObject EmbedJson(string title, string type)
+    {
+        var o = new JObject();
+
+        o.Add("type", "rich");
+        o.Add("provider_name", "PluralKit " + type);
+        o.Add("provider_url", "https://pluralkit.me");
+        o.Add("title", title);
+
+        return o;
+    }
+
+    public static async Task WriteJSON(this HttpResponse resp, int statusCode, string jsonText)
+    {
+        resp.StatusCode = statusCode;
+        resp.Headers.Add("content-type", "application/json");
+        await resp.WriteAsync(jsonText);
     }
 }
 

@@ -17,10 +17,12 @@ public class SentryEnricher:
     ISentryEnricher<MessageReactionAddEvent>
 {
     private readonly Bot _bot;
+    private readonly BotConfig _config;
 
-    public SentryEnricher(Bot bot)
+    public SentryEnricher(Bot bot, BotConfig config)
     {
         _bot = bot;
+        _config = config;
     }
 
     // TODO: should this class take the Scope by dependency injection instead?
@@ -37,6 +39,8 @@ public class SentryEnricher:
                 {"message", evt.Id.ToString()}
             });
         scope.SetTag("shard", shardId.ToString());
+        if (_config.Cluster != null)
+            scope.SetTag("cluster", _config.Cluster!.NodeIndex.ToString());
 
         // Also report information about the bot's permissions in the channel
         // We get a lot of permission errors so this'll be useful for determining problems
@@ -56,6 +60,8 @@ public class SentryEnricher:
                 {"messages", string.Join(",", evt.Ids)}
             });
         scope.SetTag("shard", shardId.ToString());
+        if (_config.Cluster != null)
+            scope.SetTag("cluster", _config.Cluster!.NodeIndex.ToString());
     }
 
     public void Enrich(Scope scope, int shardId, MessageUpdateEvent evt)
@@ -68,6 +74,8 @@ public class SentryEnricher:
                 {"message", evt.Id.ToString()}
             });
         scope.SetTag("shard", shardId.ToString());
+        if (_config.Cluster != null)
+            scope.SetTag("cluster", _config.Cluster!.NodeIndex.ToString());
     }
 
     public void Enrich(Scope scope, int shardId, MessageDeleteEvent evt)
@@ -80,6 +88,8 @@ public class SentryEnricher:
                 {"message", evt.Id.ToString()}
             });
         scope.SetTag("shard", shardId.ToString());
+        if (_config.Cluster != null)
+            scope.SetTag("cluster", _config.Cluster!.NodeIndex.ToString());
     }
 
     public void Enrich(Scope scope, int shardId, MessageReactionAddEvent evt)
@@ -94,5 +104,7 @@ public class SentryEnricher:
                 {"reaction", evt.Emoji.Name}
             });
         scope.SetTag("shard", shardId.ToString());
+        if (_config.Cluster != null)
+            scope.SetTag("cluster", _config.Cluster!.NodeIndex.ToString());
     }
 }

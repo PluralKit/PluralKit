@@ -48,7 +48,7 @@ public partial class CommandTree
             return ctx.Execute<ProxiedMessage>(Message, m => m.GetMessage(ctx));
         if (ctx.Match("edit", "e"))
             return ctx.Execute<ProxiedMessage>(MessageEdit, m => m.EditMessage(ctx));
-        if (ctx.Match("reproxy", "rp"))
+        if (ctx.Match("reproxy", "rp", "crimes"))
             return ctx.Execute<ProxiedMessage>(MessageReproxy, m => m.ReproxyMessage(ctx));
         if (ctx.Match("log"))
             if (ctx.Match("channel"))
@@ -57,6 +57,8 @@ public partial class CommandTree
                 return ctx.Execute<ServerConfig>(LogEnable, m => m.SetLogEnabled(ctx, true));
             else if (ctx.Match("disable", "off"))
                 return ctx.Execute<ServerConfig>(LogDisable, m => m.SetLogEnabled(ctx, false));
+            else if (ctx.Match("list", "show"))
+                return ctx.Execute<ServerConfig>(LogShow, m => m.ShowLogDisabledChannels(ctx));
             else if (ctx.Match("commands"))
                 return PrintCommandList(ctx, "message logging", LogCommands);
             else return PrintCommandExpectedError(ctx, LogCommands);
