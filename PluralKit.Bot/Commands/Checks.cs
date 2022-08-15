@@ -24,7 +24,7 @@ public class Checks
     {
         PermissionSet.ViewChannel, PermissionSet.SendMessages, PermissionSet.AddReactions,
         PermissionSet.AttachFiles, PermissionSet.EmbedLinks, PermissionSet.ManageMessages,
-        PermissionSet.ManageWebhooks, PermissionSet.ReadMessageHistory
+        PermissionSet.ManageWebhooks, PermissionSet.ReadMessageHistory, PermissionSet.UseExternalEmojis
     };
 
     // todo: make sure everything uses the minimum amount of REST calls necessary
@@ -74,11 +74,9 @@ public class Checks
         // Loop through every channel and group them by sets of permissions missing
         var permissionsMissing = new Dictionary<ulong, List<Channel>>();
         var hiddenChannels = false;
-        var missingEmojiPermissions = false;
         foreach (var channel in await _rest.GetGuildChannels(guild.Id))
         {
             var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
-            var webhookPermissions = PermissionExtensions.EveryonePermissions(guild, channel);
             var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
 
             if ((userPermissions & PermissionSet.ViewChannel) == 0)
@@ -97,12 +95,6 @@ public class Checks
             foreach (var requiredPermission in requiredPermissions)
                 if ((botPermissions & requiredPermission) == 0)
                     missingPermissionField |= (ulong)requiredPermission;
-
-            if ((webhookPermissions & PermissionSet.UseExternalEmojis) == 0)
-            {
-                missingPermissionField |= (ulong)PermissionSet.UseExternalEmojis;
-                missingEmojiPermissions = true;
-            }
 
             // If we're not missing any permissions, don't bother adding it to the dict
             // This means we can check if the dict is empty to see if all channels are proxyable
@@ -136,12 +128,6 @@ public class Checks
         var footer = "";
         if (hiddenChannels)
             footer += "Some channels were ignored as you do not have view access to them.";
-        if (missingEmojiPermissions)
-        {
-            if (hiddenChannels) footer += " | ";
-            footer +=
-                "Use External Emojis permissions must be granted to the @everyone role / Default Permissions.";
-        }
 
         if (footer.Length > 0)
             eb.Footer(new Embed.EmbedFooter(footer));
@@ -172,7 +158,6 @@ public class Checks
             throw new PKError(error);
 
         var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
-        var webhookPermissions = PermissionExtensions.EveryonePermissions(guild, channel);
 
         // We use a bitfield so we can set individual permission bits
         ulong missingPermissions = 0;
@@ -180,9 +165,6 @@ public class Checks
         foreach (var requiredPermission in requiredPermissions)
             if ((botPermissions & requiredPermission) == 0)
                 missingPermissions |= (ulong)requiredPermission;
-
-        if ((webhookPermissions & PermissionSet.UseExternalEmojis) == 0)
-            missingPermissions |= (ulong)PermissionSet.UseExternalEmojis;
 
         // Generate the output embed
         var eb = new EmbedBuilder()
@@ -199,10 +181,6 @@ public class Checks
             foreach (var permission in requiredPermissions)
                 if (((ulong)permission & missingPermissions) == (ulong)permission)
                     missing += $"\n- **{permission.ToPermissionString()}**";
-
-            if (((ulong)PermissionSet.UseExternalEmojis & missingPermissions) ==
-                (ulong)PermissionSet.UseExternalEmojis)
-                missing += $"\n- **{PermissionSet.UseExternalEmojis.ToPermissionString()}**";
 
             eb.Description($"Missing permissions:\n{missing}");
         }

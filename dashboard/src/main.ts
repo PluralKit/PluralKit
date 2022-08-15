@@ -1,6 +1,11 @@
 import * as Sentry from "@sentry/browser";
 import { Integrations } from "@sentry/tracing";
 
+// polyfill for replaceAll
+import * as replaceAll from 'core-js-pure/es/string/virtual/replace-all.js';
+if (!String.prototype.replaceAll)
+  String.prototype.replaceAll = replaceAll;
+
 Sentry.init({
   dsn: "https://58109fec589f4c2bbfa190329acf679a@sentry.pluralkit.me/4",
   integrations: [new Integrations.BrowserTracing()],
