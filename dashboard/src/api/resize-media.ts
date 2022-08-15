@@ -1,5 +1,5 @@
 const discordCDNAttachmentRegex =
-  /^https:\/\/cdn\.discordapp\.com\/attachments\/(.+)$/i
+  /^https:\/\/cdn\.discordapp\.com\/attachments\/([^?]+)/i
 
 const resizeMedia = (
   mediaURL: string,
