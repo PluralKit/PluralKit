@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert, Spinner } from 'sveltestrap';
-    import autosize from 'svelte-autosize';
+    import { autoresize } from 'svelte-textarea-autoresize';
     // import moment from 'moment-timezone';
     import { currentUser } from '../../stores';
 
@@ -94,7 +94,7 @@
     <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]} aria-label="use template 3">Template 3</Button>
     {/if}
     <br>
-    <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={user.description}  aria-label="system description"/>
+    <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autoresize placeholder={user.description}  aria-label="system description"/>
 </div>
 {#if !loading}<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit edits" >Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false} aria-label="cancel edits">Back</Button>
 {:else}<Button style="flex: 0" color="primary" disabled  aria-label="submit edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel edits">Back</Button>{/if}

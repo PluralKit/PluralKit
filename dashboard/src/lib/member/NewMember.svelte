@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Accordion, AccordionItem, Row, Col, Input, Button, Label, Alert, Spinner, CardTitle, InputGroup } from 'sveltestrap';
     import { createEventDispatcher } from 'svelte';
-    import autosize from 'svelte-autosize';
+    import { autoresize } from 'svelte-textarea-autoresize';
     import moment from 'moment';
     import FaPlus from 'svelte-icons/fa/FaPlus.svelte';
     import { Member } from '../../api/types';
@@ -242,7 +242,7 @@
             <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]}>Template 3</Button>
             {/if}
             <br>
-            <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={input.description}/>
+            <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autoresize placeholder={input.description}/>
         </div>
         {#if !loading && input.name}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button>
         {:else if !input.name }<Button style="flex: 0" color="primary" disabled>Submit</Button>

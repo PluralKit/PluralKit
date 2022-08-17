@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert, Spinner, Modal, ModalHeader, ModalBody } from 'sveltestrap';
     import { createEventDispatcher, tick } from 'svelte';
-    import autosize from 'svelte-autosize';
+    import { autoresize } from 'svelte-textarea-autoresize';
     import moment from 'moment';
 
     import { Member } from '../../api/types'
@@ -162,7 +162,7 @@
     <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]} aria-label="use template 3">Template 3</Button>
     {/if}
     <br>
-    <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autosize placeholder={member.description} aria-label="member description"/>
+    <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autoresize placeholder={member.description} aria-label="member description"/>
 </div>
 {#if !loading}<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit edits" >Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false} aria-label="cancel edits">Back</Button><Button style="flex: 0; float: right;" color="danger" on:click={toggleDeleteModal} aria-label="delete member">Delete</Button>
 {:else}<Button style="flex: 0" color="primary" disabled  aria-label="submit edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel edits">Back</Button><Button style="flex: 0; float: right;" color="danger" disabled aria-label="delete member">Delete</Button>{/if}

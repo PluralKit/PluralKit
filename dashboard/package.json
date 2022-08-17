@@ -32,10 +32,10 @@
     "moment": "^2.29.1",
     "sass": "^1.52.2",
     "svelecte": "^3.4.5",
-    "svelte-autosize": "^1.0.1",
     "svelte-icons": "^2.1.0",
     "svelte-navigator": "^3.1.5",
     "svelte-preprocess": "^4.10.6",
+    "svelte-textarea-autoresize": "^1.0.0",
     "sveltestrap": "^5.6.3",
     "twemoji": "^13.1.0"
   }

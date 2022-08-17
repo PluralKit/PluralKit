@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Card, CardHeader, CardBody, Container, Row, Col, CardTitle, Tooltip, Button } from 'sveltestrap';
     import Toggle from 'svelte-toggle';
-    import autosize from 'svelte-autosize';
+    import { autoresize } from 'svelte-textarea-autoresize';
     import FaCogs from 'svelte-icons/fa/FaCogs.svelte'
     import { Config } from '../api/types';
     import api from '../api';
@@ -109,13 +109,13 @@
                 <CardBody>
                     <p>Templates allow you to quickly set up a member description with a specific layout. Put in the template in one of the below fields, and access it whenever you create or edit a member. You can set up to 3 templates.</p>
                     <b>Template 1</b>
-                    <textarea class="form-control" bind:value={descriptions[0]} maxlength={1000} use:autosize placeholder={descriptions[0]} aria-label="Description template 1"/>
+                    <textarea class="form-control" bind:value={descriptions[0]} maxlength={1000} use:autoresize placeholder={descriptions[0]} aria-label="Description template 1"/>
                     <br>
                     <b>Template 2</b>
-                    <textarea class="form-control" bind:value={descriptions[1]} maxlength={1000} use:autosize placeholder={descriptions[1]} aria-label="Description template 2"/>
+                    <textarea class="form-control" bind:value={descriptions[1]} maxlength={1000} use:autoresize placeholder={descriptions[1]} aria-label="Description template 2"/>
                     <br>
                     <b>Template 3</b>
-                    <textarea class="form-control" bind:value={descriptions[2]} maxlength={1000} use:autosize placeholder={descriptions[2]} aria-label="Description template 3"/>
+                    <textarea class="form-control" bind:value={descriptions[2]} maxlength={1000} use:autoresize placeholder={descriptions[2]} aria-label="Description template 3"/>
                     <br>
                     <Button on:click={saveDescriptionTemplates}>Save</Button>
                 </CardBody>
