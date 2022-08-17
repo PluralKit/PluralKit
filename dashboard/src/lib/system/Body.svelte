@@ -3,6 +3,7 @@
     import moment from 'moment';
     import { toHTML } from 'discord-markdown';
     import parseTimestamps from '../../api/parse-timestamps';
+    import resizeMedia from '../../api/resize-media';
     import twemoji from 'twemoji';
 
     import { System } from '../../api/types';
@@ -88,7 +89,7 @@
     {@html htmlDescription}
 </div>
 {#if (user.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
-<img src={user.banner} alt="system banner" class="w-100 mb-3 rounded" style="max-height: 12em; object-fit: cover"/>
+<img src={resizeMedia(user.banner, [1200, 480])} alt="system banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover"/>
 {/if}
 {#if !isPublic}
 <Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit system information">Edit</Button>
