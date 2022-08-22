@@ -19,6 +19,7 @@ export interface System {
     created?: string;
     privacy?: SystemPrivacy;
     color?: string;
+    pronouns?: string;
 }
 
 export interface Config {

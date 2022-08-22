@@ -14,6 +14,8 @@
 
     let htmlDescription: string;
     let htmlName: string;
+    let htmlPronouns: string;
+
     if (user.description) { 
         htmlDescription = toHTML(parseTimestamps(user.description), {embed: true});
     } else {
@@ -22,6 +24,10 @@
 
     if (user.name) {
         htmlName = toHTML(user.name);
+    }
+
+    if (user.pronouns) {
+        htmlPronouns = toHTML(user.pronouns);
     }
 
     let created = moment(user.created).format("MMM D, YYYY");
@@ -33,11 +39,13 @@
     let descriptionElement: any;
     let nameElement: any;
     let tagElement: any;
+    let pronounElement: any;
 
     $: if (settings && settings.appearance.twemoji) {
         if (descriptionElement) twemoji.parse(descriptionElement);
         if (nameElement) twemoji.parse(nameElement);
         if (tagElement) twemoji.parse(tagElement);
+        if (pronounElement) twemoji.parse(pronounElement);
     }
 
 </script>
@@ -56,6 +64,11 @@
     {#if user.tag}
     <Col xs={12} lg={4} class="mb-2">
         <span bind:this={tagElement}><b>Tag:</b> {user.tag}</span>
+    </Col>
+    {/if}
+    {#if user.pronouns}
+    <Col xs={12} lg={4} class="mb-2">
+        <span bind:this={pronounElement}><b>Pronouns:</b> {@html htmlPronouns}</span>
     </Col>
     {/if}
     {#if user.created && !isPublic}

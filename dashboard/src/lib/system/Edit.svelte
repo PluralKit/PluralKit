@@ -73,6 +73,10 @@
         <Input bind:value={input.tag} maxlength={100} type="text" placeholder={user.tag} aria-label="system tag" />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
+        <Label>Pronouns:</Label>
+        <Input bind:value={input.pronouns} maxlength={100} style="resize: none; height: 1em" type="textarea" placeholder={user.pronouns} aria-label="system pronouns" />
+    </Col>
+    <Col xs={12} lg={4} class="mb-2">
         <Label>Color:</Label>
         <Input bind:value={input.color} type="text" placeholder={user.color} aria-label="system color"/>
     </Col>
