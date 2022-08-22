@@ -4,12 +4,22 @@
     import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
     import PrivacyEdit from './PrivacyEdit.svelte';
 
-    import { System } from '../../api/types';
+    import { System, SystemPrivacy } from '../../api/types';
 
     export let user: System;
     let editMode = false;
 
     let loading: boolean;
+
+    const privacyNames: { [P in keyof SystemPrivacy]-?: string; } = {
+		description_privacy: "Description",
+        member_list_privacy: "Member list",
+        front_privacy: "Front",
+        front_history_privacy: "Front history",
+        group_list_privacy: "Group list",
+        pronoun_privacy: "Pronouns"
+	};
+
 </script>
 
 <Card class="mb-4">
@@ -23,24 +33,14 @@
     </CardHeader>
     <CardBody style="border-left: 4px solid #{user.color}">
         {#if editMode}
-        <PrivacyEdit bind:loading bind:user={user} bind:editMode/>
+        <PrivacyEdit bind:user={user} bind:editMode/>
         {:else}
         <Row>
-            <Col xs={12} lg={4} class="mb-3">
-                <b>Description:</b> {user.privacy.description_privacy}
-            </Col>
-            <Col xs={12} lg={4} class="mb-3">
-                <b>Member list:</b> {user.privacy.member_list_privacy}
-            </Col>
-            <Col xs={12} lg={4} class="mb-3">
-                <b>Group list:</b> {user.privacy.group_list_privacy}
-            </Col>
-            <Col xs={12} lg={4} class="mb-3">
-                <b>Current front:</b> {user.privacy.front_privacy}
-            </Col>
-            <Col xs={12} lg={4} class="mb-3">
-                <b>Front history:</b> {user.privacy.front_history_privacy}
-            </Col>
+            {#each Object.keys(user.privacy) as x}
+                <Col xs={12} lg={4} class="mb-3">
+                    <b>{privacyNames[x]}:</b> {user.privacy[x]}
+                </Col>
+            {/each}
         </Row>
         <Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit system privacy">Edit</Button>
         <Link to="/dash/bulk-member-privacy"><Button style="flex: 0" color="secondary" tabindex={-1}>Bulk member privacy</Button></Link>

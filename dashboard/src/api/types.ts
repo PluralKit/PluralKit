@@ -1,9 +1,10 @@
-interface SystemPrivacy {
+export interface SystemPrivacy {
     description_privacy?: string,
     member_list_privacy?: string,
     front_privacy?: string,
     front_history_privacy?: string,
-    group_list_privacy?: string
+    group_list_privacy?: string,
+    pronoun_privacy?: string,
 }
 
 export interface System {
