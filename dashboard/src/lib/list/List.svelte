@@ -96,8 +96,10 @@
     function updateDelete(event: any) {
         if (itemType === "member") {
             members = members.filter(m => m.id !== event.detail);
+            list = members;
         } else if (itemType === "group") {
             groups = groups.filter(g => g.id !== event.detail);
+            list = groups;
         }
     }
 
@@ -105,8 +107,10 @@
         console.log(event.detail);
         if (itemType === "member") {
             members = members.map(m => m.id === event.detail.id ? m = event.detail : m);
+            list = members;
         } else if (itemType === "group") {
             groups = groups.map(g => g.id === event.detail.id ? g = event.detail : g);
+            list = groups;
         }
     }
 
