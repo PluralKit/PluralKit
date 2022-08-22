@@ -44,7 +44,8 @@
     export let itemType: string;
 
     let searchValue: string = "";
-    let searchBy: string = "name"; 
+    let searchBy: string = "name";
+    let sortBy: string = "name";
 
     let params = useParams();
     $: id = $params.id;
@@ -116,7 +117,7 @@
 
 </script>
 
-<ListControl {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:itemsPerPageValue bind:currentPage />
+<ListControl {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:sortBy bind:itemsPerPageValue bind:currentPage />
 
 {#if listLoading && !err}
     <div class="mx-auto text-center">
@@ -143,6 +144,6 @@
     <NewGroup on:create={addItemToList} />
     {/if}
 {/if}
-<CardsList on:update={update} on:deletion={updateDelete} list={slicedList} groups={groups} members={members} isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} />
+<CardsList on:update={update} on:deletion={updateDelete} list={slicedList} groups={groups} members={members} isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} {sortBy} {searchBy} />
 <ListPagination bind:currentPage {pageAmount} />
 {/if}

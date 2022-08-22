@@ -17,7 +17,7 @@ export let searchBy = "name";
 export let searchValue: string;
 export let itemsPerPageValue: string;
 
-let sortBy = "name";
+export let sortBy = "name";
 let sortOrder = "ascending";
 let privacyFilter = "all";
 let groupSearchMode = "include";

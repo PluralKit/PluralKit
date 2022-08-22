@@ -7,13 +7,17 @@
     import twemoji from 'twemoji';
 
     export let item: any;
+    export let searchBy: string;
+    export let sortBy: string;
 
     let htmlName: string;
     let nameElement: any; 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
-    $: if (item.name) htmlName = toHTML(item.name);
-        else htmlName = "";
+    $: if (item.name) {
+        if ((searchBy === "display name" || sortBy === "display name") && item.display_name) htmlName = toHTML(item.display_name);
+        else htmlName = toHTML(item.name);
+    } else htmlName = "";
 
     $: if (settings && settings.appearance.twemoji) {
         if (nameElement) twemoji.parse(nameElement);
