@@ -7,8 +7,8 @@
     import twemoji from 'twemoji';
 
     export let item: any;
-    export let searchBy: string;
-    export let sortBy: string;
+    export let searchBy: string = null;
+    export let sortBy: string = null;
 
     let htmlName: string;
     let nameElement: any; 
