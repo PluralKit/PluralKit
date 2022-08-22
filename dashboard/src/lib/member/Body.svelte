@@ -175,7 +175,7 @@
         {@html htmlDescription && htmlDescription}
     </div>
     {#if (member.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
-    <img src={resizeMedia(member.banner, [1200, 480])} alt="member banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover"/>
+    <img on:click={toggleBannerModal} src={resizeMedia(member.banner, [1200, 480])} alt="member banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer"/>
     {/if}
     {#if !isPublic}
     <Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit member information">Edit</Button>

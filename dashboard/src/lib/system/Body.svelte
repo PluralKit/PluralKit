@@ -89,7 +89,7 @@
     {@html htmlDescription}
 </div>
 {#if (user.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
-<img src={resizeMedia(user.banner, [1200, 480])} alt="system banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover"/>
+<img on:click={toggleBannerModal} src={resizeMedia(user.banner, [1200, 480])} alt="system banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer;"/>
 {/if}
 {#if !isPublic}
 <Button style="flex: 0" color="primary" on:click={() => editMode = true} aria-label="edit system information">Edit</Button>
