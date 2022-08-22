@@ -133,6 +133,7 @@
     </Col>
 </Row>
 {:else}
+<span class="itemcounter">{list.length} {itemType}s ({slicedList.length} shown)</span>
 <ListSearch bind:searchBy bind:searchValue on:refresh={fetchList} />
 
 <ListPagination bind:currentPage {pageAmount} />
@@ -147,3 +148,12 @@
 <CardsList on:update={update} on:deletion={updateDelete} list={slicedList} groups={groups} members={members} isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} {sortBy} {searchBy} />
 <ListPagination bind:currentPage {pageAmount} />
 {/if}
+
+<style>
+    .itemcounter {
+        width: 100%;
+        text-align: center;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+</style>
