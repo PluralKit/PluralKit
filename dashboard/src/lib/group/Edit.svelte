@@ -23,6 +23,10 @@
         dispatch('deletion', group.id);
     }
 
+    function update(group: Group) {
+        dispatch('update', group);
+    }
+
     async function submit() {
         let data = input;
         err = [];
@@ -45,7 +49,7 @@
         loading = true;
         try {
             let res = await api().groups(group.id).patch({data});
-            group = {...group, ...res};
+            update({...group, ...res});
             err = [];
             success = true;
             loading = false;

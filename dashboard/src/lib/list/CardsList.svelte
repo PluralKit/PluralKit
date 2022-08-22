@@ -129,9 +129,9 @@
             <Collapse isOpen={isOpenArray[indexStart + index]}>
                 <CardBody>
                     {#if itemType === "member"}
-                    <MemberBody on:deletion bind:isPublic bind:groups bind:member={item} />
+                    <MemberBody on:update on:deletion bind:isPublic groups={groups} member={item} />
                     {:else if itemType === "group"}
-                    <GroupBody on:deletion {isPublic} {members} bind:group={item} />
+                    <GroupBody on:update on:deletion bind:isPublic {members} group={item} />
                     {/if}
                 </CardBody>
             </Collapse>
@@ -161,9 +161,9 @@
         </div>
         <CardBody>
             {#if itemType === "member"}
-            <MemberBody on:deletion bind:isPublic bind:groups bind:member={item} />
+            <MemberBody on:update on:deletion bind:isPublic groups={groups} member={item} />
             {:else if itemType === "group"}
-            <GroupBody on:deletion {isPublic} {members} bind:group={item} />
+            <GroupBody on:update on:deletion bind:isPublic {members} group={item} />
             {/if}
         </CardBody>
     </Card>

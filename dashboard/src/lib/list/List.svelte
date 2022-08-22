@@ -96,12 +96,20 @@
     function updateDelete(event: any) {
         if (itemType === "member") {
             members = members.filter(m => m.id !== event.detail);
-            list = members;
         } else if (itemType === "group") {
             groups = groups.filter(g => g.id !== event.detail);
-            list = groups;
         }
     }
+
+    function update(event: any) {
+        console.log(event.detail);
+        if (itemType === "member") {
+            members = members.map(m => m.id === event.detail.id ? m = event.detail : m);
+        } else if (itemType === "group") {
+            groups = groups.map(g => g.id === event.detail.id ? g = event.detail : g);
+        }
+    }
+
 </script>
 
 <ListControl {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:itemsPerPageValue bind:currentPage />
@@ -131,6 +139,6 @@
     <NewGroup on:create={addItemToList} />
     {/if}
 {/if}
-<CardsList on:deletion={updateDelete} bind:list={slicedList} bind:groups bind:members isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} />
+<CardsList on:update={update} on:deletion={updateDelete} list={slicedList} groups={groups} members={members} isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} />
 <ListPagination bind:currentPage {pageAmount} />
 {/if}

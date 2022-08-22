@@ -16,12 +16,16 @@
     let err: string[] = [];
     let success = false;
 
-    let input: Member = member;
+    let input: Member = JSON.parse(JSON.stringify(member));
 
     const dispatch = createEventDispatcher();
     
     function deletion() {
         dispatch('deletion', member.id);
+    }
+
+    function update(member: Member) {
+        dispatch('update', member);
     }
 
     async function submit() {
@@ -69,7 +73,7 @@
         loading = true;
         try {
             let res = await api().members(member.id).patch({data});
-            member = res;
+            update({...member, ...res});
             success = true;
         } catch (error) {
             console.log(error);
