@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick } from "svelte";
+    import { tick, createEventDispatcher } from "svelte";
     import { ModalBody, ModalHeader, Col, Row, Input, Label, ModalFooter, Button, Spinner, Alert } from "sveltestrap";
 
     import { Group, GroupPrivacy } from '../../api/types';
@@ -17,6 +17,12 @@
 		const target = e.target as HTMLInputElement;
 		Object.keys(privacy).forEach(x => privacy[x] = target.value);
 	}
+
+    const dispatch = createEventDispatcher();
+
+    function update(group) {
+        dispatch('update', group);
+    }
 
     // I can't use the hacked together Required<T> type from the bulk privacy here
     // that breaks updating the displayed privacy after submitting

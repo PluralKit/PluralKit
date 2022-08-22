@@ -114,7 +114,7 @@
                Edit privacy
             </ModalHeader>
                 <ModalBody>
-                    <Privacy bind:group bind:privacyOpen={privacyOpen}/>
+                    <Privacy on:update bind:group bind:privacyOpen={privacyOpen}/>
                 </ModalBody>
         </Modal>
     </Col>

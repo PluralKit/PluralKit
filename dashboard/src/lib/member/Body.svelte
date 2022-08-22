@@ -151,7 +151,7 @@
                     Edit privacy
                 </ModalHeader>
                     <ModalBody>
-                        <Privacy bind:member bind:privacyOpen/>
+                        <Privacy on:update bind:member bind:privacyOpen/>
                     </ModalBody>
             </Modal>
         </Col>
