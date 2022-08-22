@@ -45,6 +45,9 @@
             }
         }
 
+        // trim all string fields
+        Object.keys(data).forEach(k => data[k] = typeof data[k] == "string" ? data[k].trim() : data[k]);
+
         err = err;
         if (err.length > 0) return;
 
