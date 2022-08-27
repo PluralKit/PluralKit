@@ -42,6 +42,8 @@ public class SystemFront
             ? $"Front history of {system.Name} (`{system.Hid}`)"
             : $"Front history of `{system.Hid}`";
 
+        var showMemberId = ctx.MatchFlag("with-id", "wid");
+
         await ctx.Paginate(
             sws,
             totalSwitches,
@@ -61,8 +63,8 @@ public class SystemFront
 
                     var members = await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
                     var membersStr = members.Any()
-                        ? string.Join(", ", members.Select(m => m.NameFor(ctx)))
-                        : "no fronter";
+                        ? string.Join(", ", members.Select(m => $"**{m.NameFor(ctx)}**{(showMemberId ? $" (`{m.Hid}`)" : "")}"))
+                        : "**no fronter**";
 
                     var switchSince = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
 
@@ -73,12 +75,12 @@ public class SystemFront
                         // Calculate the time between the last switch (that we iterated - ie. the next one on the timeline) and the current one
                         var switchDuration = lastSw.Value - sw.Timestamp;
                         stringToAdd =
-                            $"**{membersStr}** ({sw.Timestamp.FormatZoned(ctx.Zone)}, {switchSince.FormatDuration()} ago, for {switchDuration.FormatDuration()})\n";
+                            $"{membersStr} ({sw.Timestamp.FormatZoned(ctx.Zone)}, {switchSince.FormatDuration()} ago, for {switchDuration.FormatDuration()})\n";
                     }
                     else
                     {
                         stringToAdd =
-                            $"**{membersStr}** ({sw.Timestamp.FormatZoned(ctx.Zone)}, {switchSince.FormatDuration()} ago)\n";
+                            $"{membersStr} ({sw.Timestamp.FormatZoned(ctx.Zone)}, {switchSince.FormatDuration()} ago)\n";
                     }
 
                     if (sb.Length + stringToAdd.Length >= 4096)
