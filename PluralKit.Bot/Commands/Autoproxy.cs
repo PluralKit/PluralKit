@@ -1,3 +1,5 @@
+using NodaTime;
+
 using Myriad.Builders;
 using Myriad.Types;
 
@@ -7,6 +9,13 @@ namespace PluralKit.Bot;
 
 public class Autoproxy
 {
+    private readonly IClock _clock;
+
+    public Autoproxy(IClock clock)
+    {
+        _clock = clock;
+    }
+
     public async Task SetAutoproxyMode(Context ctx)
     {
         // no need to check account here, it's already done at CommandTree
@@ -91,11 +100,18 @@ public class Autoproxy
 
         var sw = await ctx.Repository.GetLatestSwitch(ctx.System.Id);
         var fronters = sw == null ? new() : await ctx.Database.Execute(c => ctx.Repository.GetSwitchMembers(c, sw.Id)).ToListAsync();
+        var latchTimeout = ctx.Config.LatchTimeout.HasValue ? Duration.FromSeconds(ctx.Config.LatchTimeout.Value) : ProxyMatcher.DefaultLatchExpiryTime;
 
         var relevantMember = settings.AutoproxyMode switch
         {
             AutoproxyMode.Front => fronters.Count > 0 ? fronters[0] : null,
             AutoproxyMode.Member when settings.AutoproxyMember.HasValue => await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
+            AutoproxyMode.Latch when settings.AutoproxyMember.HasValue && ctx.Config.LatchTimeout == 0 => await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
+            AutoproxyMode.Latch when settings.AutoproxyMember.HasValue => 
+                _clock.GetCurrentInstant() - settings.LastLatchTimestamp > latchTimeout
+                    ? null
+                    : await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
+
             _ => null
         };
 
@@ -131,7 +147,11 @@ public class Autoproxy
                     break;
                 }
             case AutoproxyMode.Latch:
-                eb.Description("Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. To disable, type `pk;autoproxy off`.");
+                if (relevantMember == null)
+                    eb.Description("Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. **No member is currently latched.** To disable, type `pk;autoproxy off`.");
+                else
+                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. The currently latched member is **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+
                 break;
 
             default: throw new ArgumentOutOfRangeException();
