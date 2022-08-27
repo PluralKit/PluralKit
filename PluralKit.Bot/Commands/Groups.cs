@@ -577,6 +577,11 @@ public class Groups
         await ctx.Reply($"{Emojis.Success} Group deleted.");
     }
 
+    public async Task DisplayId(Context ctx, PKGroup target)
+    {
+        await ctx.Reply($"{target.Hid}");
+    }
+
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)
     {
         var system = ctx.System;

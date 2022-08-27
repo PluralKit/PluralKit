@@ -140,4 +140,9 @@ public class Member
             .Description($"*{scream}*");
         await ctx.Reply(embed: eb.Build());
     }
+
+    public async Task DisplayId(Context ctx, PKMember target)
+    {
+        await ctx.Reply($"{target.Hid}");
+    }
 }

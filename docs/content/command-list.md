@@ -54,6 +54,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;find <search term>` - Searches members by name.
 - `pk;system [system] find <search term>` - (same as above, but for a specific system)
 - `pk;system [system] random [-group]` - Shows the info card of a randomly selected member [or group] in a system.
+- `pk;system [system] id` - Prints a system's id. 
 
 ## Member commands
 *Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -77,6 +78,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;member <member> color [color]` - Changes the color of a member.
 - `pk;member <member> birthdate [birthdate|today]` - Changes the birthday of a member.
 - `pk;member <member> delete` - Deletes a member.
+- `pk;member <member> id` - Prints a member's id. 
 
 ## Group commands
 *Replace `<group>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -94,6 +96,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;group <group> icon [icon url|@mention|upload]` - Shows or changes a group's icon.
 - `pk;group <group> banner [image url|upload]` - Shows or changes a group's banner image.
 - `pk;group <group> delete` - Deletes a group.
+- `pk;group <group> id` - Prints a group's id. 
 
 ## Switching commands
 - `pk;switch [member...]` - Registers a switch with the given members.

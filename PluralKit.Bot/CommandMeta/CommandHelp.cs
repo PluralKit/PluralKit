@@ -19,6 +19,7 @@ public partial class CommandTree
     public static Command SystemFronter = new Command("system fronter", "system [system] fronter", "Shows a system's fronter(s)");
     public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
     public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
+    public static Command SystemId = new Command("system id", "system [system] id", "Prints your system's id.");
     public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
     public static Command ConfigTimezone = new Command("config timezone", "config timezone [timezone]", "Changes your system's time zone");
     public static Command ConfigPing = new Command("config ping", "config ping [on|off]", "Changes your system's ping preferences");
@@ -52,6 +53,7 @@ public partial class CommandTree
     public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.");
     public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
     public static Command MemberRandom = new Command("system random", "system [system] random", "Shows the info card of a randomly selected member in a system.");
+    public static Command MemberId = new Command("member id", "member [member] id", "Prints a member's id.");
     public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
     public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
     public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
@@ -63,6 +65,7 @@ public partial class CommandTree
     public static Command GroupColor = new Command("group color", "group <group> color [color]", "Changes a group's color");
     public static Command GroupAdd = new Command("group add", "group <group> add <member> [member 2] [member 3...]", "Adds one or more members to a group");
     public static Command GroupRemove = new Command("group remove", "group <group> remove <member> [member 2] [member 3...]", "Removes one or more members from a group");
+    public static Command GroupId = new Command("group id", "group [group] id", "Prints a group's id.");
     public static Command GroupPrivacy = new Command("group privacy", "group <group> privacy <name|description|icon|metadata|visibility|all> <public|private>", "Changes a group's privacy settings");
     public static Command GroupBannerImage = new Command("group banner", "group <group> banner [url]", "Set the group's banner image");
     public static Command GroupIcon = new Command("group icon", "group <group> icon [url|@mention]", "Changes a group's icon");

@@ -250,6 +250,8 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
         else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
+        else if (ctx.Match("id"))
+            await ctx.CheckSystem(target).Execute<System>(SystemId, m => m.DisplayId(ctx, target));
         else if (ctx.Match("random", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
                 await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
@@ -317,6 +319,8 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberAutoproxy, m => m.MemberAutoproxy(ctx, target));
         else if (ctx.Match("keepproxy", "keeptags", "showtags", "kp"))
             await ctx.Execute<MemberEdit>(MemberKeepProxy, m => m.KeepProxy(ctx, target));
+        else if (ctx.Match("id"))
+            await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
         else if (ctx.Match("privacy"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, null));
         else if (ctx.Match("private", "hidden", "hide"))
@@ -377,6 +381,8 @@ public partial class CommandTree
                 await ctx.Execute<SystemFront>(GroupFrontPercent, g => g.FrontPercent(ctx, group: target));
             else if (ctx.Match("color", "colour"))
                 await ctx.Execute<Groups>(GroupColor, g => g.GroupColor(ctx, target));
+            else if (ctx.Match("id"))
+                await ctx.Execute<Groups>(GroupId, g => g.DisplayId(ctx, target));
             else if (!ctx.HasNext())
                 await ctx.Execute<Groups>(GroupInfo, g => g.ShowGroupCard(ctx, target));
             else
