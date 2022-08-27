@@ -53,6 +53,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;system [system] list -full` - Shows a paginated list of a system's members, with increased detail.
 - `pk;find <search term>` - Searches members by name.
 - `pk;system [system] find <search term>` - (same as above, but for a specific system)
+- `pk;system [system] random [-group]` - Shows the info card of a randomly selected member [or group] in a system.
 
 ## Member commands
 *Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
@@ -127,7 +128,6 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
 
 ## Utility
-- `pk;random [-group]` - Shows the info card of a randomly selected member [or group] in your system.
 - `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.

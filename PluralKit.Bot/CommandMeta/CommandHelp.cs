@@ -51,7 +51,7 @@ public partial class CommandTree
     public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
     public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.");
     public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
-    public static Command MemberRandom = new Command("random", "random", "Shows the info card of a randomly selected member in your system.");
+    public static Command MemberRandom = new Command("system random", "system [system] random", "Shows the info card of a randomly selected member in a system.");
     public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
     public static Command GroupInfo = new Command("group", "group <name>", "Looks up information about a group");
     public static Command GroupNew = new Command("group new", "group new <name>", "Creates a new group");
@@ -69,7 +69,7 @@ public partial class CommandTree
     public static Command GroupDelete = new Command("group delete", "group <group> delete", "Deletes a group");
     public static Command GroupFrontPercent = new Command("group frontpercent", "group <group> frontpercent [timespan]", "Shows a group's front breakdown.");
     public static Command GroupMemberRandom = new Command("group random", "group <group> random", "Shows the info card of a randomly selected member in a group.");
-    public static Command GroupRandom = new Command("random", "random group", "Shows the info card of a randomly selected group in your system.");
+    public static Command GroupRandom = new Command("system random", "system [system] random group", "Shows the info card of a randomly selected group in a system.");
     public static Command Switch = new Command("switch", "switch <member> [member 2] [member 3...]", "Registers a switch");
     public static Command SwitchOut = new Command("switch out", "switch out", "Registers a switch with no members");
     public static Command SwitchMove = new Command("switch move", "switch move <date/time>", "Moves the latest switch in time");

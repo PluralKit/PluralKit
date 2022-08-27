@@ -100,9 +100,9 @@ public partial class CommandTree
             return HandleAdminCommand(ctx);
         if (ctx.Match("random", "r"))
             if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
-                return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx));
+                return ctx.Execute<Random>(GroupRandom, r => r.Group(ctx, ctx.System));
             else
-                return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx));
+                return ctx.Execute<Random>(MemberRandom, m => m.Member(ctx, ctx.System));
 
         // remove compiler warning
         return ctx.Reply(
@@ -250,6 +250,11 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemPrivacy, m => m.SystemPrivacy(ctx, target));
         else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemDelete, m => m.Delete(ctx, target));
+        else if (ctx.Match("random", "r"))
+            if (ctx.Match("group", "g") || ctx.MatchFlag("group", "g"))
+                await ctx.CheckSystem(target).Execute<Random>(GroupRandom, r => r.Group(ctx, target));
+            else
+                await ctx.CheckSystem(target).Execute<Random>(MemberRandom, m => m.Member(ctx, target));
     }
 
     private async Task HandleMemberCommand(Context ctx)
