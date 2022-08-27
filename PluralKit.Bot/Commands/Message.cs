@@ -35,10 +35,12 @@ public class ProxiedMessage
     private readonly DiscordApiClient _rest;
     private readonly WebhookExecutorService _webhookExecutor;
     private readonly ProxyService _proxy;
+    private readonly LastMessageCacheService _lastMessageCache;
 
     public ProxiedMessage(EmbedService embeds,
                           DiscordApiClient rest, IMetrics metrics, ModelRepository repo, ProxyService proxy,
-                          WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache)
+                          WebhookExecutorService webhookExecutor, LogChannelService logChannel, IDiscordCache cache,
+                          LastMessageCacheService lastMessageCache)
     {
         _embeds = embeds;
         _rest = rest;
@@ -48,6 +50,7 @@ public class ProxiedMessage
         // _cache = cache;
         _metrics = metrics;
         _proxy = proxy;
+        _lastMessageCache = lastMessageCache;
     }
 
     public async Task ReproxyMessage(Context ctx)
@@ -188,10 +191,9 @@ public class ProxiedMessage
                 throw new PKError(error);
         }
 
-        var latestMessages = await _rest.GetChannelMessages(msg.Message.Channel, 2);
-        var isLatestMessage = latestMessages.LastOrDefault()?.Id == ctx.Message.Id
-            ? latestMessages.FirstOrDefault()?.Id == msg.Message.Mid
-            : latestMessages.LastOrDefault()?.Id == msg.Message.Mid;
+        var isLatestMessage = _lastMessageCache.GetLastMessage(ctx.Message.ChannelId)?.Current.Id == ctx.Message.Id
+            ? _lastMessageCache.GetLastMessage(ctx.Message.ChannelId)?.Previous?.Id == msg.Message.Mid
+            : _lastMessageCache.GetLastMessage(ctx.Message.ChannelId)?.Current.Id == msg.Message.Mid;
 
         var msgTimestamp = DiscordUtils.SnowflakeToInstant(msg.Message.Mid);
         if (isReproxy && !isLatestMessage)
