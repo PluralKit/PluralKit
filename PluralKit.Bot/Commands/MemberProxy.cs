@@ -79,7 +79,7 @@ public class MemberProxy
             var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags.ToArray()) };
             await ctx.Repository.UpdateMember(target.Id, patch);
 
-            await ctx.Reply($"{Emojis.Success} Added proxy tags {tagToAdd.ProxyString.AsCode()}.");
+            await ctx.Reply($"{Emojis.Success} Added proxy tags {tagToAdd.ProxyString.AsCode()} (using {tagToAdd.ProxyString.Length}/{Limits.MaxProxyTagLength} characters).");
         }
         // Subcommand: "remove"
         else if (ctx.Match("remove", "delete"))
@@ -121,7 +121,7 @@ public class MemberProxy
             var patch = new MemberPatch { ProxyTags = Partial<ProxyTag[]>.Present(newTags) };
             await ctx.Repository.UpdateMember(target.Id, patch);
 
-            await ctx.Reply($"{Emojis.Success} Member proxy tags set to {requestedTag.ProxyString.AsCode()}.");
+            await ctx.Reply($"{Emojis.Success} Member proxy tags set to {requestedTag.ProxyString.AsCode()} (using {requestedTag.ProxyString.Length}/{Limits.MaxProxyTagLength} characters).");
         }
     }
 }

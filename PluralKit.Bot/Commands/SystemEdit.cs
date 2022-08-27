@@ -48,7 +48,8 @@ public class SystemEdit
             if (target.Name != null)
                 await ctx.Reply(
                     $"{(isOwnSystem ? "Your" : "This")} system's name is currently **{target.Name}**."
-                    + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : ""));
+                    + (isOwnSystem ? " Type `pk;system name -clear` to clear it." : "")
+                    + $" Using {target.Name.Length}/{Limits.MaxSystemNameLength} characters.");
             else
                 await ctx.Reply(noNameSetMessage);
             return;
@@ -71,7 +72,7 @@ public class SystemEdit
 
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = newSystemName });
 
-            await ctx.Reply($"{Emojis.Success} System name changed.");
+            await ctx.Reply($"{Emojis.Success} System name changed (using {newSystemName.Length}/{Limits.MaxSystemNameLength} characters).");
         }
     }
 
@@ -104,7 +105,8 @@ public class SystemEdit
                     .Description(target.Description)
                     .Footer(new Embed.EmbedFooter(
                         "To print the description with formatting, type `pk;s description -raw`."
-                            + (isOwnSystem ? "To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")))
+                            + (isOwnSystem ? " To clear it, type `pk;s description -clear`. To change it, type `pk;s description <new description>`." : "")
+                            + $" Using {target.Description.Length}/{Limits.MaxDescriptionLength} characters."))
                     .Build());
             return;
         }
@@ -125,7 +127,7 @@ public class SystemEdit
 
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Description = newDescription });
 
-            await ctx.Reply($"{Emojis.Success} System description changed.");
+            await ctx.Reply($"{Emojis.Success} System description changed (using {newDescription.Length}/{Limits.MaxDescriptionLength} characters).");
         }
     }
 
@@ -224,7 +226,7 @@ public class SystemEdit
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Tag = newTag });
 
             await ctx.Reply(
-                $"{Emojis.Success} System tag changed. Member names will now end with {newTag.AsCode()} when proxied.");
+                $"{Emojis.Success} System tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now end with {newTag.AsCode()} when proxied.");
         }
     }
 
@@ -275,7 +277,7 @@ public class SystemEdit
             await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { Tag = newTag });
 
             await ctx.Reply(
-                $"{Emojis.Success} System server tag changed. Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
+                $"{Emojis.Success} System server tag changed (using {newTag.Length}/{Limits.MaxSystemTagLength} characters). Member names will now end with {newTag.AsCode()} when proxied in the current server '{ctx.Guild.Name}'.");
 
             if (!settings.TagEnabled)
                 await ctx.Reply(setDisabledWarning);
@@ -375,7 +377,8 @@ public class SystemEdit
             else
                 await ctx.Reply($"{(isOwnSystem ? "Your" : "This system's")} current pronouns are **{target.Pronouns}**.\nTo print the pronouns with formatting, type `pk;system pronouns -raw`."
                 + (isOwnSystem ? " To clear them, type `pk;system pronouns -clear`."
-                : ""));
+                : "")
+                + $" Using {target.Pronouns.Length}/{Limits.MaxPronounsLength} characters.");
             return;
         }
 
@@ -397,7 +400,7 @@ public class SystemEdit
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = newPronouns });
 
             await ctx.Reply(
-                $"{Emojis.Success} System pronouns changed.");
+                $"{Emojis.Success} System pronouns changed (using {newPronouns.Length}/{Limits.MaxPronounsLength} characters).");
         }
     }
 
