@@ -47,6 +47,15 @@ public class DiscordApiClient
         _client.Get<GuildMember>($"/guilds/{guildId}/members/{userId}",
             ("GetGuildMember", guildId));
 
+    public Task<Message[]> GetChannelMessages(ulong channelId, int? limit)
+    {
+        var url = $"/channels/{channelId}/messages";
+        if (limit != null)
+            url += $"?limit={limit}";
+
+        return _client.Get<Message[]>(url, ("GetChannelMessages", channelId))!;
+    }
+
     public Task<Message> CreateMessage(ulong channelId, MessageRequest request, MultipartFile[]? files = null) =>
         _client.PostMultipart<Message>($"/channels/{channelId}/messages", ("CreateMessage", channelId), request,
             files)!;
