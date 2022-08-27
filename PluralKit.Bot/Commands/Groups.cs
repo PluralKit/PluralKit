@@ -159,7 +159,8 @@ public class Groups
                         + $"To clear it, type `pk;group {reference} displayname -clear`."
                         + $"To print the raw display name, type `pk;group {reference} displayname -raw`.");
 
-                eb.Footer(new Embed.EmbedFooter($"Using {target.DisplayName.Length}/{Limits.MaxGroupNameLength} characters."));
+                if (ctx.System?.Id == target.System)
+                    eb.Footer(new Embed.EmbedFooter($"Using {target.DisplayName.Length}/{Limits.MaxGroupNameLength} characters."));
 
                 await ctx.Reply(embed: eb.Build());
             }
@@ -579,7 +580,7 @@ public class Groups
 
     public async Task DisplayId(Context ctx, PKGroup target)
     {
-        await ctx.Reply($"{target.Hid}");
+        await ctx.Reply(target.Hid);
     }
 
     private async Task<PKSystem> GetGroupSystem(Context ctx, PKGroup target)

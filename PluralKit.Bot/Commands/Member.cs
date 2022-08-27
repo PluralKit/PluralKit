@@ -143,6 +143,6 @@ public class Member
 
     public async Task DisplayId(Context ctx, PKMember target)
     {
-        await ctx.Reply($"{target.Hid}");
+        await ctx.Reply(target.Hid);
     }
 }

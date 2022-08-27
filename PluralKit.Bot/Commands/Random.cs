@@ -31,7 +31,9 @@ public class Random
 
         if (members == null || !members.Any())
             throw new PKError(
-                "Your system has no members! Please create at least one member before using this command.");
+                ctx.System?.Id == target.Id ?
+                "Your system has no members! Please create at least one member before using this command." :
+                "This system has no members!");
 
         var randInt = randGen.Next(members.Count);
         await ctx.Reply(embed: await _embeds.CreateMemberEmbed(target, members[randInt], ctx.Guild,
@@ -53,7 +55,9 @@ public class Random
 
         if (groups == null || !groups.Any())
             throw new PKError(
-                "Your system has no groups! Please create at least one group before using this command.");
+                ctx.System?.Id == target.Id ? 
+                    "Your system has no groups! Please create at least one group before using this command." : 
+                    $"This system has no groups!");
 
         var randInt = randGen.Next(groups.Count());
         await ctx.Reply(embed: await _embeds.CreateGroupEmbed(ctx, target, groups.ToArray()[randInt]));
@@ -70,7 +74,8 @@ public class Random
 
         if (members == null || !members.Any())
             throw new PKError(
-                "This group has no members! Please add at least one member to this group before using this command.");
+                "This group has no members!"
+                + ( ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
 
         if (!ctx.MatchFlag("all", "a"))
             members = members.Where(g => g.MemberVisibility == PrivacyLevel.Public);

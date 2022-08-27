@@ -336,7 +336,7 @@ public class MemberEdit
             .Title("Member names")
             .Footer(new Embed.EmbedFooter(
                 $"Member ID: {target.Hid} | Active name in bold. Server name overrides display name, which overrides base name."
-                + (target.DisplayName != null ? $" Using {target.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the display name." : "")
+                + (target.DisplayName != null && ctx.System?.Id == target.System ? $" Using {target.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the display name." : "")
                 + (memberGuildConfig?.DisplayName != null ? $" Using {memberGuildConfig?.DisplayName.Length}/{Limits.MaxMemberNameLength} characters for the server name." : "")));
 
         var showDisplayName = target.NamePrivacy.CanAccess(lcx);
