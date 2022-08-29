@@ -106,7 +106,11 @@
     <Col xs={12} lg={6} class="text-center mb-3">
         <h5><div class="icon d-inline-block">
             <FaFolderOpen />
-        </div>Current Groups</h5>
+        </div>Current Groups
+        {#if finalGroupsList && finalGroupsList.length > 0}
+            ({groupsWithMember.length} total)
+        {/if}
+        </h5>
         <ListPagination bind:currentPage bind:pageAmount bind:smallPages/>
         {#if finalGroupsList && finalGroupsList.length > 0}
         <ListGroup>

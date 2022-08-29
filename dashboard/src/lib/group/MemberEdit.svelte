@@ -105,7 +105,11 @@ function memberListRenderer(item: any) {
     <Col xs={12} lg={6} class="text-center mb-3">
         <h5><div class="icon d-inline-block">
             <FaUserFriends />
-        </div>Current Members</h5>
+        </div>Current Members
+        {#if finalMemberList && finalMemberList.length > 0}
+            ({membersInGroup.length} total)
+        {/if}
+        </h5>
         <ListPagination bind:currentPage bind:pageAmount bind:smallPages/>
         {#if finalMemberList && finalMemberList.length > 0}
         <ListGroup>
