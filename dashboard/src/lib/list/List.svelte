@@ -133,7 +133,7 @@
     </Col>
 </Row>
 {:else}
-<span class="itemcounter">{list.length} {itemType}s ({slicedList.length} shown)</span>
+<span class="itemcounter">{processedList.length} {itemType}s ({slicedList.length} shown)</span>
 <ListSearch bind:searchBy bind:searchValue on:refresh={fetchList} />
 
 <ListPagination bind:currentPage {pageAmount} />
