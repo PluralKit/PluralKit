@@ -16,7 +16,7 @@
     "svelte-toggle": "^3.1.0",
     "tslib": "^2.3.1",
     "typescript": "^4.4.4",
-    "vite": "^2.7.0"
+    "vite": "^2.9.13"
   },
   "dependencies": {
     "@sentry/browser": "^6.19.5",
