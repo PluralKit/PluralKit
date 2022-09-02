@@ -53,7 +53,7 @@ public class Init
 
             // initialize Redis
             var redis = services.Resolve<RedisService>();
-            if (config.UseRedisRatelimiter)
+            if (coreConfig.RedisAddr != null)
                 await redis.InitAsync(coreConfig);
 
             var cache = services.Resolve<IDiscordCache>();
