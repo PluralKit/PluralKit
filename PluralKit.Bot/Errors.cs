@@ -50,6 +50,9 @@ public static class Errors
 
     public static PKError ProxyMultipleText =>
         new PKSyntaxError("Example proxy message must contain the string 'text' exactly once.");
+    
+    public static PKError ProxyTooBig =>
+        new PKSyntaxError("Given proxy tag contains too many characters.");
 
     public static PKError MemberDeleteCancelled => new($"Member deletion cancelled. Stay safe! {Emojis.ThumbsUp}");
 

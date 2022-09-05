@@ -17,6 +17,8 @@ public class MemberProxy
             if (prefixAndSuffix.Length == 1) prefixAndSuffix = prefixAndSuffix[0].Split("TEXT");
             if (prefixAndSuffix.Length < 2) throw Errors.ProxyMustHaveText;
             if (prefixAndSuffix.Length > 2) throw Errors.ProxyMultipleText;
+            if (prefixAndSuffix[0].length > 64) throw Errors.ProxyTooBig;
+            if (prefixAndSuffix[1].length > 64) throw Errors.ProxyTooBig;
             return new ProxyTag(prefixAndSuffix[0], prefixAndSuffix[1]);
         }
 
