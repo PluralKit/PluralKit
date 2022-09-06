@@ -18,26 +18,22 @@ namespace PluralKit.Bot;
 public class Misc
 {
     private readonly BotConfig _botConfig;
-    private readonly IDiscordCache _cache;
     private readonly CpuStatService _cpu;
     private readonly IMetrics _metrics;
     private readonly ShardInfoService _shards;
     private readonly ModelRepository _repo;
 
-    public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ModelRepository repo, ShardInfoService shards, IDiscordCache cache)
+    public Misc(BotConfig botConfig, IMetrics metrics, CpuStatService cpu, ModelRepository repo, ShardInfoService shards)
     {
         _botConfig = botConfig;
         _metrics = metrics;
         _cpu = cpu;
         _repo = repo;
         _shards = shards;
-        _cache = cache;
     }
 
     public async Task Invite(Context ctx)
     {
-        var clientId = _botConfig.ClientId ?? await _cache.GetOwnUser();
-
         var permissions =
             PermissionSet.AddReactions |
             PermissionSet.AttachFiles |
@@ -48,7 +44,7 @@ public class Misc
             PermissionSet.SendMessages;
 
         var invite =
-            $"https://discord.com/oauth2/authorize?client_id={clientId}&scope=bot%20applications.commands&permissions={(ulong)permissions}";
+            $"https://discord.com/oauth2/authorize?client_id={_botConfig.ClientId}&scope=bot%20applications.commands&permissions={(ulong)permissions}";
 
         var botName = _botConfig.IsBetaBot ? "PluralKit Beta" : "PluralKit";
         await ctx.Reply($"{Emojis.Success} Use this link to add {botName} to your server:\n<{invite}>");

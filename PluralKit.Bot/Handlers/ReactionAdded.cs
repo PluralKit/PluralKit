@@ -18,6 +18,7 @@ namespace PluralKit.Bot;
 public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 {
     private readonly Bot _bot;
+    private readonly BotConfig _config;
     private readonly IDiscordCache _cache;
     private readonly Cluster _cluster;
     private readonly CommandMessageService _commandMessageService;
@@ -30,13 +31,14 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
 
     public ReactionAdded(ILogger logger, IDatabase db, ModelRepository repo,
                          CommandMessageService commandMessageService, IDiscordCache cache, Bot bot, Cluster cluster,
-                         DiscordApiClient rest, EmbedService embeds, PrivateChannelService dmCache)
+                         BotConfig config, DiscordApiClient rest, EmbedService embeds, PrivateChannelService dmCache)
     {
         _db = db;
         _repo = repo;
         _commandMessageService = commandMessageService;
         _cache = cache;
         _bot = bot;
+        _config = config;
         _cluster = cluster;
         _rest = rest;
         _embeds = embeds;
@@ -52,7 +54,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
     private async ValueTask TryHandleProxyMessageReactions(MessageReactionAddEvent evt)
     {
         // ignore any reactions added by *us*
-        if (evt.UserId == await _cache.GetOwnUser())
+        if (evt.UserId == _config.ClientId)
             return;
 
         // Ignore reactions from bots (we can't DM them anyway)

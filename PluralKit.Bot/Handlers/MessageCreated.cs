@@ -59,7 +59,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
 
     public async Task Handle(int shardId, MessageCreateEvent evt)
     {
-        if (evt.Author.Id == await _cache.GetOwnUser()) return;
+        if (evt.Author.Id == _config.ClientId) return;
         if (evt.Type != Message.MessageType.Default && evt.Type != Message.MessageType.Reply) return;
         if (IsDuplicateMessage(evt)) return;
 
@@ -109,10 +109,8 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         var content = evt.Content;
         if (content == null) return false;
 
-        var ourUserId = await _cache.GetOwnUser();
-
         // Check for command prefix
-        if (!HasCommandPrefix(content, ourUserId, out var cmdStart) || cmdStart == content.Length)
+        if (!HasCommandPrefix(content, _config.ClientId, out var cmdStart) || cmdStart == content.Length)
             return false;
 
         // Trim leading whitespace from command without actually modifying the string

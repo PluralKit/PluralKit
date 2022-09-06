@@ -14,8 +14,6 @@ namespace PluralKit.Bot;
 public class Checks
 {
     private readonly BotConfig _botConfig;
-    // this must ONLY be used to get the bot's user ID
-    private readonly IDiscordCache _cache;
     private readonly ProxyMatcher _matcher;
     private readonly ProxyService _proxy;
     private readonly DiscordApiClient _rest;
@@ -28,10 +26,9 @@ public class Checks
     };
 
     // todo: make sure everything uses the minimum amount of REST calls necessary
-    public Checks(DiscordApiClient rest, IDiscordCache cache, BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher)
+    public Checks(DiscordApiClient rest, BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher)
     {
         _rest = rest;
-        _cache = cache;
         _botConfig = botConfig;
         _proxy = proxy;
         _matcher = matcher;
@@ -69,14 +66,14 @@ public class Checks
                 throw Errors.GuildNotFound(guildId);
         }
 
-        var guildMember = await _rest.GetGuildMember(guild.Id, await _cache.GetOwnUser());
+        var guildMember = await _rest.GetGuildMember(guild.Id, _botConfig.ClientId);
 
         // Loop through every channel and group them by sets of permissions missing
         var permissionsMissing = new Dictionary<ulong, List<Channel>>();
         var hiddenChannels = false;
         foreach (var channel in await _rest.GetGuildChannels(guild.Id))
         {
-            var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
+            var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, _botConfig.ClientId, guildMember);
             var userPermissions = PermissionExtensions.PermissionsFor(guild, channel, ctx.Author.Id, senderGuildUser);
 
             if ((userPermissions & PermissionSet.ViewChannel) == 0)
@@ -152,12 +149,12 @@ public class Checks
         if (guild == null)
             throw new PKError(error);
 
-        var guildMember = await _rest.GetGuildMember(channel.GuildId.Value, await _cache.GetOwnUser());
+        var guildMember = await _rest.GetGuildMember(channel.GuildId.Value, _botConfig.ClientId);
 
         if (!await ctx.CheckPermissionsInGuildChannel(channel, PermissionSet.ViewChannel))
             throw new PKError(error);
 
-        var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
+        var botPermissions = PermissionExtensions.PermissionsFor(guild, channel, _botConfig.ClientId, guildMember);
 
         // We use a bitfield so we can set individual permission bits
         ulong missingPermissions = 0;

@@ -58,7 +58,7 @@ public class Init
 
             var cache = services.Resolve<IDiscordCache>();
             if (cache is RedisDiscordCache)
-                await (cache as RedisDiscordCache).InitAsync(coreConfig.RedisAddr, config.ClientId!.Value);
+                await (cache as RedisDiscordCache).InitAsync(coreConfig.RedisAddr);
 
             if (config.Cluster == null)
             {

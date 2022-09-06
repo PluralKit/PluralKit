@@ -11,7 +11,12 @@ public class MemoryDiscordCache: IDiscordCache
     private readonly ConcurrentDictionary<ulong, CachedGuild> _guilds = new();
     private readonly ConcurrentDictionary<ulong, Role> _roles = new();
     private readonly ConcurrentDictionary<ulong, User> _users = new();
-    private ulong? _ownUserId { get; set; }
+    private readonly ulong _ownUserId;
+
+    public MemoryDiscordCache(ulong ownUserId)
+    {
+        _ownUserId = ownUserId;
+    }
 
     public ValueTask SaveGuild(Guild guild)
     {
@@ -46,15 +51,6 @@ public class MemoryDiscordCache: IDiscordCache
         if (channel.Recipients != null)
             foreach (var recipient in channel.Recipients)
                 await SaveUser(recipient);
-    }
-
-    public ValueTask SaveOwnUser(ulong userId)
-    {
-        // this (hopefully) never changes at runtime, so we skip out on re-assigning it
-        if (_ownUserId == null)
-            _ownUserId = userId;
-
-        return default;
     }
 
     public ValueTask SaveUser(User user)
@@ -127,7 +123,7 @@ public class MemoryDiscordCache: IDiscordCache
         return default;
     }
 
-    public Task<ulong> GetOwnUser() => Task.FromResult(_ownUserId!.Value);
+    public ulong GetOwnUser() => _ownUserId;
 
     public ValueTask RemoveRole(ulong guildId, ulong roleId)
     {

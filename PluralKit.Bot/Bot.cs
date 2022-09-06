@@ -94,8 +94,7 @@ public class Bot
         // we HandleGatewayEvent **before** getting the own user, because the own user is set in HandleGatewayEvent for ReadyEvent
         await _cache.HandleGatewayEvent(evt);
 
-        var userId = await _cache.GetOwnUser();
-        await _cache.TryUpdateSelfMember(userId, evt);
+        await _cache.TryUpdateSelfMember(_config.ClientId, evt);
 
         await OnEventReceivedInner(shardId, evt);
     }
@@ -200,13 +199,11 @@ public class Bot
     {
         _metrics.Measure.Meter.Mark(BotMetrics.BotErrors, exc.GetType().FullName);
 
-        var ourUserId = await _cache.GetOwnUser();
-
         // Make this beforehand so we can access the event ID for logging
         var sentryEvent = new SentryEvent(exc);
 
         // If the event is us responding to our own error messages, don't bother logging
-        if (evt is MessageCreateEvent mc && mc.Author.Id == ourUserId)
+        if (evt is MessageCreateEvent mc && mc.Author.Id == _config.ClientId)
             return;
 
         var shouldReport = exc.IsOurProblem();
@@ -235,7 +232,7 @@ public class Bot
                 return;
 
             // Once we've sent it to Sentry, report it to the user (if we have permission to)
-            var reportChannel = handler.ErrorChannelFor(evt, ourUserId);
+            var reportChannel = handler.ErrorChannelFor(evt, _config.ClientId);
             if (reportChannel == null)
                 return;
 

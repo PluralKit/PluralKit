@@ -17,16 +17,18 @@ public class WebhookCacheService
     private readonly IDiscordCache _cache;
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
+    private readonly BotConfig _config;
 
 
     private readonly DiscordApiClient _rest;
     private readonly ConcurrentDictionary<ulong, Lazy<Task<Webhook>>> _webhooks;
 
-    public WebhookCacheService(ILogger logger, IMetrics metrics, DiscordApiClient rest, IDiscordCache cache)
+    public WebhookCacheService(ILogger logger, IMetrics metrics, DiscordApiClient rest, IDiscordCache cache, BotConfig config)
     {
         _metrics = metrics;
         _rest = rest;
         _cache = cache;
+        _config = config;
         _logger = logger.ForContext<WebhookCacheService>();
         _webhooks = new ConcurrentDictionary<ulong, Lazy<Task<Webhook>>>();
     }
@@ -86,8 +88,7 @@ public class WebhookCacheService
         var webhooks = await FetchChannelWebhooks(channelId);
 
         // If the channel has a webhook created by PK, just return that one
-        var ourUserId = await _cache.GetOwnUser();
-        var ourWebhook = webhooks.FirstOrDefault(hook => IsWebhookMine(ourUserId, hook));
+        var ourWebhook = webhooks.FirstOrDefault(hook => IsWebhookMine(hook));
         if (ourWebhook != null)
             return ourWebhook;
 
@@ -122,5 +123,5 @@ public class WebhookCacheService
         return await _rest.CreateWebhook(channelId, new CreateWebhookRequest(WebhookName));
     }
 
-    private bool IsWebhookMine(ulong userId, Webhook arg) => arg.User?.Id == userId && arg.Name == WebhookName;
+    private bool IsWebhookMine(Webhook arg) => arg.User?.Id == _config.ClientId && arg.Name == WebhookName;
 }

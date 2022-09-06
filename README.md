@@ -32,7 +32,7 @@ The bot can also take configuration from environment variables, which will overr
 The easiest way to get the bot running is with Docker. The repository contains a `docker-compose.yml` file ready to use.
 
 * Clone this repository: `git clone https://github.com/PluralKit/PluralKit`
-* Create a `pluralkit.conf` file in the same directory as `docker-compose.yml` containing at least a `PluralKit.Bot.Token` field
+* Create a `pluralkit.conf` file in the same directory as `docker-compose.yml` containing at least `PluralKit.Bot.Token` and `PluralKit.Bot.ClientId` fields
   * (`PluralKit.Database` is overridden in `docker-compose.yml` to point to the Postgres container)
 * Build the bot: `docker-compose build`
 * Run the bot: `docker-compose up`

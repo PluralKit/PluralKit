@@ -13,18 +13,18 @@ namespace Myriad.Cache;
 public class RedisDiscordCache: IDiscordCache
 {
     private readonly ILogger _logger;
-    public RedisDiscordCache(ILogger logger)
+    private readonly ulong _ownUserId;
+    public RedisDiscordCache(ILogger logger, ulong ownUserId)
     {
         _logger = logger;
+        _ownUserId = ownUserId;
     }
 
     private ConnectionMultiplexer _redis { get; set; }
-    private ulong _ownUserId { get; set; }
 
-    public async Task InitAsync(string addr, ulong ownUserId)
+    public async Task InitAsync(string addr)
     {
         _redis = await ConnectionMultiplexer.ConnectAsync(addr);
-        _ownUserId = ownUserId;
     }
 
     private IDatabase db => _redis.GetDatabase().WithKeyPrefix("discord:");
@@ -76,12 +76,6 @@ public class RedisDiscordCache: IDiscordCache
         if (channel.Recipients != null)
             foreach (var recipient in channel.Recipients)
                 await SaveUser(recipient);
-    }
-
-    public ValueTask SaveOwnUser(ulong userId)
-    {
-        // we get the own user ID in InitAsync, so no need to save it here
-        return default;
     }
 
     public async ValueTask SaveUser(User user)
@@ -161,8 +155,7 @@ public class RedisDiscordCache: IDiscordCache
     public async ValueTask RemoveUser(ulong userId)
         => await db.HashDeleteAsync("users", userId);
 
-    // todo: try getting this from redis if we don't have it yet
-    public Task<ulong> GetOwnUser() => Task.FromResult(_ownUserId);
+    public ulong GetOwnUser() => _ownUserId;
 
     public async ValueTask RemoveRole(ulong guildId, ulong roleId)
     {

@@ -10,8 +10,6 @@ public static class DiscordCacheExtensions
     {
         switch (evt)
         {
-            case ReadyEvent ready:
-                return cache.SaveOwnUser(ready.User.Id);
             case GuildCreateEvent gc:
                 return cache.SaveGuildCreate(gc);
             case GuildUpdateEvent gu:
@@ -108,7 +106,7 @@ public static class DiscordCacheExtensions
 
         if (channel.GuildId != null)
         {
-            var userId = await cache.GetOwnUser();
+            var userId = cache.GetOwnUser();
             var member = await cache.TryGetSelfMember(channel.GuildId.Value);
             return await cache.PermissionsFor(channelId, userId, member);
         }

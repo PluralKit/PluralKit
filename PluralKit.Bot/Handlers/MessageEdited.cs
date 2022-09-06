@@ -15,6 +15,7 @@ namespace PluralKit.Bot;
 public class MessageEdited: IEventHandler<MessageUpdateEvent>
 {
     private readonly Bot _bot;
+    private readonly BotConfig _config;
     private readonly IDiscordCache _cache;
     private readonly Cluster _client;
     private readonly IDatabase _db;
@@ -27,7 +28,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
 
     public MessageEdited(LastMessageCacheService lastMessageCache, ProxyService proxy, IDatabase db,
                          IMetrics metrics, ModelRepository repo, Cluster client, IDiscordCache cache, Bot bot,
-                         DiscordApiClient rest, ILogger logger)
+                         BotConfig config, DiscordApiClient rest, ILogger logger)
     {
         _lastMessageCache = lastMessageCache;
         _proxy = proxy;
@@ -37,13 +38,14 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         _client = client;
         _cache = cache;
         _bot = bot;
+        _config = config;
         _rest = rest;
         _logger = logger.ForContext<MessageEdited>();
     }
 
     public async Task Handle(int shardId, MessageUpdateEvent evt)
     {
-        if (evt.Author.Value?.Id == await _cache.GetOwnUser()) return;
+        if (evt.Author.Value?.Id == _config.ClientId) return;
 
         // Edit message events sometimes arrive with missing data; double-check it's all there
         if (!evt.Content.HasValue || !evt.Author.HasValue || !evt.Member.HasValue)

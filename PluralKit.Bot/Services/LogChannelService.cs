@@ -15,6 +15,7 @@ namespace PluralKit.Bot;
 public class LogChannelService
 {
     private readonly Bot _bot;
+    private readonly BotConfig _config;
     private readonly IDiscordCache _cache;
     private readonly IDatabase _db;
     private readonly EmbedService _embed;
@@ -23,7 +24,7 @@ public class LogChannelService
     private readonly DiscordApiClient _rest;
 
     public LogChannelService(EmbedService embed, ILogger logger, IDatabase db, ModelRepository repo,
-                             IDiscordCache cache, DiscordApiClient rest, Bot bot)
+                             IDiscordCache cache, DiscordApiClient rest, Bot bot, BotConfig config)
     {
         _embed = embed;
         _db = db;
@@ -31,6 +32,7 @@ public class LogChannelService
         _cache = cache;
         _rest = rest;
         _bot = bot;
+        _config = config;
         _logger = logger.ForContext<LogChannelService>();
     }
 
@@ -97,9 +99,9 @@ public class LogChannelService
 
         var guildMember = await _cache.TryGetSelfMember(channel.GuildId.Value);
         if (guildMember == null)
-            guildMember = await _rest.GetGuildMember(channel.GuildId.Value, await _cache.GetOwnUser());
+            guildMember = await _rest.GetGuildMember(channel.GuildId.Value, _config.ClientId);
 
-        var perms = PermissionExtensions.PermissionsFor(guild, channel, await _cache.GetOwnUser(), guildMember);
+        var perms = PermissionExtensions.PermissionsFor(guild, channel, _config.ClientId, guildMember);
         return perms;
     }
 
