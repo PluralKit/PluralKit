@@ -84,7 +84,7 @@ func notFoundHandler(rw http.ResponseWriter, r *http.Request) {
 
 // explanation for createEmbed:
 // we don't care about errors, we just want to return a HTML page as soon as possible
-// `panic(nil)` is caught by upstream, which then returns the raw HTML page
+// `panic(1)` is caught by upstream, which then returns the raw HTML page
 
 func createEmbed(rw http.ResponseWriter, r *http.Request) {
 	entityType := chi.URLParam(r, "type")
@@ -100,22 +100,22 @@ func createEmbed(rw http.ResponseWriter, r *http.Request) {
 	case "g":
 		path = "/groups/" + id
 	default:
-		panic(nil)
+		panic(1)
 	}
 
 	res, err := http.Get(baseURL + path)
 	if err != nil {
-		panic(nil)
+		panic(1)
 	}
 	if res.StatusCode != 200 {
-		panic(nil)
+		panic(1)
 	}
 
 	var data entity
 	body, _ := io.ReadAll(res.Body)
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		panic(nil)
+		panic(1)
 	}
 
 	text := fmt.Sprintf(`<link type="application/json+oembed" href="%s/%s/oembed.json" />%s`, baseURL, path, "\n")
@@ -136,7 +136,7 @@ func createEmbed(rw http.ResponseWriter, r *http.Request) {
 
 	html, err := fs.ReadFile("dist/index.html")
 	if err != nil {
-		panic(nil)
+		panic(1)
 	}
 	html = []byte(strings.Replace(string(html), `<!-- extra data -->`, text+versionJS, 1))
 
