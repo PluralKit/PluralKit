@@ -253,8 +253,8 @@ public static class ProxyNameExt
         .FixEveryone()
         .FixDiscord()
         .FixBackticks()
-        .FixSingleCharacterName()
-        .ThrowOnInvalidCharacters();
+        .FixSingleCharacterName();
+        // .ThrowOnInvalidCharacters();
 
     static string ThrowOnInvalidCharacters(this string name)
     {
