@@ -17,6 +17,7 @@
                 res = await api().private.discord.callback.post({ data: { code: params.get("code"), redirect_domain: window.location.origin } });
             } catch(e) {
                 text = "Error: " + e.data.error;
+                return;
             }
             localStorage.setItem("pk-token", res.token);
             localStorage.setItem("pk-user", JSON.stringify(res.system));
