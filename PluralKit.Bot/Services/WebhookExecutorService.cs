@@ -251,6 +251,7 @@ public static class ProxyNameExt
         .FixClyde()
         .FixHere()
         .FixEveryone()
+        .FixDiscord()
         .FixBackticks()
         .FixSingleCharacterName()
         .ThrowOnInvalidCharacters();
@@ -271,7 +272,10 @@ public static class ProxyNameExt
         => Regex.Replace(name, "(e)(veryone)", Replacement, RegexOptions.IgnoreCase);
 
     static string FixBackticks(this string name)
-        => Regex.Replace(name, "(e)(veryone)", Replacement, RegexOptions.IgnoreCase);
+        => Regex.Replace(name, "(`)(``)", Replacement, RegexOptions.IgnoreCase);
+
+    static string FixDiscord(this string name)
+        => Regex.Replace(name, "(d)(iscord)", Replacement, RegexOptions.IgnoreCase);
 
     // Adds a Unicode hair space (\u200A) between the "c" and the "lyde" to avoid Discord matching it
     // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
