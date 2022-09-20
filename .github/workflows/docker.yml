@@ -1,7 +1,13 @@
-﻿name: Build and push Docker image
+name: Build and push Docker image
 on:
   push:
     branches: [main]
+    paths:
+    - 'Myriad/**'
+    - 'PluralKit.API/**'
+    - 'PluralKit.Bot/**'
+    - 'PluralKit.Core/**'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
