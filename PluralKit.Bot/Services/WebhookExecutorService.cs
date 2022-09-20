@@ -115,7 +115,7 @@ public class WebhookExecutorService
 
         var webhookReq = new ExecuteWebhookRequest
         {
-            Username = FixProxyName(req.Name).Truncate(80),
+            Username = req.Name.FixProxyName().Truncate(80),
             Content = content,
             AllowedMentions = allowedMentions,
             AvatarUrl = !string.IsNullOrWhiteSpace(req.AvatarUrl) ? req.AvatarUrl : null,
@@ -243,21 +243,46 @@ public class WebhookExecutorService
         return chunks;
     }
 
-    private string FixProxyName(string name) => FixSingleCharacterName(FixClyde(name));
+}
 
-    private string FixClyde(string name)
+public static class ProxyNameExt
+{
+    public static string FixProxyName(this string name) => name
+        .FixClyde()
+        .FixHere()
+        .FixEveryone()
+        .FixBackticks()
+        .FixSingleCharacterName()
+        .ThrowOnInvalidCharacters();
+
+    static string ThrowOnInvalidCharacters(this string name)
     {
-        static string Replacement(Match m) => m.Groups[1].Value + "\u200A" + m.Groups[2].Value;
-
-        // Adds a Unicode hair space (\u200A) between the "c" and the "lyde" to avoid Discord matching it
-        // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
-        return Regex.Replace(name, "(c)(lyde)", Replacement, RegexOptions.IgnoreCase);
+        var invalidCharacters = new[] { "@", "#", ":" };
+        if (invalidCharacters.Any(x => name.Contains(x)))
+            throw new PKError("Due to Discord limitations, proxy names cannot contain the characters `@`, `#` or `:`. "
+                    + $"The webhook's name, {name.AsCode()}, contains one or more of these characters.");
+        return name;
     }
 
-    private string FixSingleCharacterName(string proxyName)
+    static string FixHere(this string name)
+        => Regex.Replace(name, "(h)(ere)", Replacement, RegexOptions.IgnoreCase);
+
+    static string FixEveryone(this string name)
+        => Regex.Replace(name, "(e)(veryone)", Replacement, RegexOptions.IgnoreCase);
+
+    static string FixBackticks(this string name)
+        => Regex.Replace(name, "(e)(veryone)", Replacement, RegexOptions.IgnoreCase);
+
+    // Adds a Unicode hair space (\u200A) between the "c" and the "lyde" to avoid Discord matching it
+    // since Discord blocks webhooks containing the word "Clyde"... for some reason. /shrug
+    static string FixClyde(this string name)
+        => Regex.Replace(name, "(c)(lyde)", Replacement, RegexOptions.IgnoreCase);
+
+    static string FixSingleCharacterName(this string proxyName)
     {
         if (proxyName.Length == 1)
             return proxyName + "\u17b5";
         return proxyName;
     }
+    static string Replacement(Match m) => m.Groups[1].Value + "\u200A" + m.Groups[2].Value;
 }
