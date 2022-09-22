@@ -42,6 +42,18 @@ public class ListOptions
     public bool IncludeDisplayName { get; set; }
     public bool IncludeBirthday { get; set; }
 
+    // hacky but works, remember to update this when more include flags are added 
+    public int includedCount => new[] {
+        IncludeMessageCount,
+        IncludeLastSwitch,
+        IncludeLastMessage,
+        IncludeCreated,
+        IncludeAvatar,
+        IncludePronouns,
+        IncludeDisplayName,
+        IncludeBirthday,
+    }.Sum(x => Convert.ToInt32(x));
+
     public string CreateFilterString()
     {
         var str = new StringBuilder();
@@ -165,22 +177,8 @@ public static class ListOptionsExt
 
     public static void AssertIsValid(this ListOptions opts)
     {
-        if (opts.Type == ListType.Short)
-        {
-            var hasMultipleIncluded = new[] {
-                opts.IncludeMessageCount,
-                opts.IncludeLastSwitch,
-                opts.IncludeLastMessage,
-                opts.IncludeCreated,
-                opts.IncludeAvatar,
-                opts.IncludePronouns,
-                opts.IncludeDisplayName,
-                opts.IncludeBirthday,
-            }.Sum(x => Convert.ToInt32(x)) > 1;
-            
-            if (hasMultipleIncluded)
-                throw new PKError("The short list does not support showing items from multiple flags. Try using the full list instead.");
-        }
+        if (opts.Type == ListType.Short && opts.includedCount > 1)
+            throw new PKError("The short list does not support showing items from multiple flags. Try using the full list instead.");
 
         // the check for multiple *sorting* property flags is done in SortProperty setter
     }

@@ -78,8 +78,8 @@ public static class ContextListExt
         if (ctx.MatchFlag("with-birthday", "wbd", "wb"))
             p.IncludeBirthday = true;
 
-        // Always show the sort property, too (unless this is the short list)
-        if (p.Type != ListType.Short)
+        // Always show the sort property, too (unless this is the short list and we are already showing something else)
+        if (p.Type != ListType.Short || p.includedCount == 0)
         {
             if (p.SortProperty == SortProperty.DisplayName) p.IncludeDisplayName = true;
             if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
@@ -131,89 +131,28 @@ public static class ContextListExt
             {
                 var ret = $"[`{m.Hid}`] **{m.NameFor(ctx)}** ";
 
-                switch (opts.SortProperty)
+                if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
+                    ret += $"({count} messages)";
+                else if (opts.IncludeLastSwitch && m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
+                    ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
+                // else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
+                //     ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
+                else if (opts.IncludeCreated && m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
+                    ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
+                else if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatarUrl)
+                    ret += $"([avatar URL]({avatarUrl}))";
+                else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is { } pronouns)
+                    ret += $"({pronouns})";
+                else if (opts.IncludeDisplayName && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
+                    ret += $"({m.DisplayName})";
+                else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is { } birthday)
+                    ret += $"(birthday: {m.BirthdayString})";
+                else if (m.HasProxyTags)
                 {
-                    case SortProperty.Birthdate:
-                        {
-                            var birthday = m.BirthdayFor(lookupCtx);
-                            if (birthday != null)
-                                ret += $"(birthday: {m.BirthdayString})";
-                            break;
-                        }
-                    case SortProperty.DisplayName:
-                        {
-                            if (m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
-                                ret += $"({m.DisplayName})";
-                            break;
-                        }
-                    case SortProperty.MessageCount:
-                        {
-                            if (m.MessageCountFor(lookupCtx) is { } count)
-                                ret += $"({count} messages)";
-                            break;
-                        }
-                    case SortProperty.LastSwitch:
-                        {
-                            if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
-                                ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                            break;
-                        }
-                    // case SortProperty.LastMessage:
-                    //     {
-                    //         if (m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
-                    //             ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
-                    //         break;
-                    //     }
-                    case SortProperty.CreationDate:
-                        {
-                            if (m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
-                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                            break;
-                        }
-                    default:
-                        {
-                            if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
-                            {
-                                ret += $"({count} messages)";
-                            }
-                            else if (opts.IncludeDisplayName && m.DisplayName != null && m.NamePrivacy.CanAccess(lookupCtx))
-                            {
-                                ret += $"({m.DisplayName})";
-                            }
-                            else if (opts.IncludeLastSwitch &&
-                                     m.MetadataPrivacy.TryGet(lookupCtx, m.LastSwitchTime, out var lastSw))
-                            {
-                                ret += $"(last switched in: <t:{lastSw.Value.ToUnixTimeSeconds()}>)";
-                            }
-                            // else if (opts.IncludeLastMessage && m.MetadataPrivacy.TryGet(lookupCtx, m.LastMessage, out var lastMsg))
-                            //     ret += $"(last message: <t:{DiscordUtils.SnowflakeToInstant(lastMsg.Value).ToUnixTimeSeconds()}>)";
-                            else if (opts.IncludeCreated &&
-                                     m.MetadataPrivacy.TryGet(lookupCtx, m.Created, out var created))
-                            {
-                                ret += $"(created at <t:{created.ToUnixTimeSeconds()}>)";
-                            }
-                            else if (opts.IncludeAvatar && m.AvatarFor(lookupCtx) is { } avatarUrl)
-                            {
-                                ret += $"([avatar URL]({avatarUrl}))";
-                            }
-                            else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is { } pronouns)
-                            {
-                                ret += $"({pronouns})";
-                            }
-                            else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is {} birthday)
-                            {
-                                ret += $"(birthday: {m.BirthdayString})";
-                            }
-                            else if (m.HasProxyTags)
-                            {
-                                var proxyTagsString = m.ProxyTagsString();
-                                if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
-                                    proxyTagsString = "tags too long, see member card";
-                                ret += $"*(*{proxyTagsString}*)*";
-                            }
-
-                            break;
-                        }
+                    var proxyTagsString = m.ProxyTagsString();
+                    if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
+                        proxyTagsString = "tags too long, see member card";
+                    ret += $"*(*{proxyTagsString}*)*";
                 }
 
                 return ret;

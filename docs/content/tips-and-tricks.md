@@ -65,6 +65,7 @@ You cannot look up private members or groups of another system.
 |-with-avatar|-wa, -wi, -ia, -ii, -img|Member, Group|Show each item's avatar URL|
 |-with-pronouns|-wp -wprns|Member|Show each member's pronouns in the short list (shown by default in full list)|
 |-with-displayname|-wdn|Member, Group|Show each item's displayname|
+|-with-birthday|-wbd, -wb|Member|Show each member's birthday in the short list (shown by default in full list)|
 
 ## Miscellaneous flags
 |Command|Flag|Aliases|Description|
