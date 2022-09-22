@@ -40,6 +40,7 @@ public class ListOptions
     public bool IncludeAvatar { get; set; }
     public bool IncludePronouns { get; set; }
     public bool IncludeDisplayName { get; set; }
+    public bool IncludeBirthday { get; set; }
 
     public string CreateFilterString()
     {
@@ -174,6 +175,7 @@ public static class ListOptionsExt
                 opts.IncludeAvatar,
                 opts.IncludePronouns,
                 opts.IncludeDisplayName,
+                opts.IncludeBirthday,
             }.Sum(x => Convert.ToInt32(x)) > 1;
             
             if (hasMultipleIncluded)

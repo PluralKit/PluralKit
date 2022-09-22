@@ -75,6 +75,8 @@ public static class ContextListExt
             p.IncludePronouns = true;
         if (ctx.MatchFlag("with-displayname", "wdn"))
             p.IncludeDisplayName = true;
+        if (ctx.MatchFlag("with-birthday", "wbd", "wb"))
+            p.IncludeBirthday = true;
 
         // Always show the sort property, too (unless this is the short list)
         if (p.Type != ListType.Short)
@@ -84,6 +86,7 @@ public static class ContextListExt
             if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
             if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
             if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
+            if (p.SortProperty == SortProperty.Birthdate) p.IncludeBirthday = true;
         }
 
         // Make sure the options are valid
@@ -196,6 +199,10 @@ public static class ContextListExt
                             else if (opts.IncludePronouns && m.PronounsFor(lookupCtx) is { } pronouns)
                             {
                                 ret += $"({pronouns})";
+                            }
+                            else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is {} birthday)
+                            {
+                                ret += $"(birthday: {m.BirthdayString})";
                             }
                             else if (m.HasProxyTags)
                             {
