@@ -183,7 +183,7 @@ public static class DiscordUtils
     {
         static int CharacterLimit(int pageNumber) =>
             // First chunk goes in description (2048 chars), rest go in embed values (1000 chars)
-            pageNumber == 0 ? 2048 : 1000;
+            pageNumber == 0 ? 4096 : 1024;
 
         var linesWithEnding = lines.Select(l => $"{l}\n");
         var pages = StringUtils.JoinPages(linesWithEnding, CharacterLimit);
