@@ -174,7 +174,7 @@ public static class ListOptionsExt
                 opts.IncludeAvatar,
                 opts.IncludePronouns,
                 opts.IncludeDisplayName,
-            }.Sum(x => Convert.ToInt32(x)) > 0;
+            }.Sum(x => Convert.ToInt32(x)) > 1;
             
             if (hasMultipleIncluded)
                 throw new PKError("The short list does not support showing items from multiple flags. Try using the full list instead.");
