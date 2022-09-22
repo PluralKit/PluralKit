@@ -423,6 +423,9 @@ public class MemberEdit
         {
             var newDisplayName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
 
+            if (newDisplayName.Length > Limits.MaxMemberNameLength)
+                throw Errors.StringTooLongError("Member display name", newDisplayName.Length, Limits.MaxMemberNameLength);
+
             var patch = new MemberPatch { DisplayName = Partial<string>.Present(newDisplayName) };
             await ctx.Repository.UpdateMember(target.Id, patch);
 
