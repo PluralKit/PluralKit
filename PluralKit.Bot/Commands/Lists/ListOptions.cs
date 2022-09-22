@@ -178,7 +178,7 @@ public static class ListOptionsExt
     public static void AssertIsValid(this ListOptions opts)
     {
         if (opts.Type == ListType.Short && opts.includedCount > 1)
-            throw new PKError("The short list does not support showing items from multiple flags. Try using the full list instead.");
+            throw new PKError("The short list does not support showing information from multiple flags. Try using the full list instead.");
 
         // the check for multiple *sorting* property flags is done in SortProperty setter
     }
