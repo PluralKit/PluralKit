@@ -76,11 +76,18 @@ public static class ContextListExt
         if (ctx.MatchFlag("with-displayname", "wdn"))
             p.IncludeDisplayName = true;
 
-        // Always show the sort property, too
-        if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
-        if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
-        if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
-        if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
+        // Always show the sort property, too (unless this is the short list)
+        if (p.Type != ListType.Short)
+        {
+            if (p.SortProperty == SortProperty.DisplayName) p.IncludeDisplayName = true;
+            if (p.SortProperty == SortProperty.MessageCount) p.IncludeMessageCount = true;
+            if (p.SortProperty == SortProperty.CreationDate) p.IncludeCreated = true;
+            if (p.SortProperty == SortProperty.LastSwitch) p.IncludeLastSwitch = true;
+            if (p.SortProperty == SortProperty.LastMessage) p.IncludeLastMessage = true;
+        }
+
+        // Make sure the options are valid
+        p.AssertIsValid();
 
         // Done!
         return p;
