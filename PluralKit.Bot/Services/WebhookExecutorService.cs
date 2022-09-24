@@ -266,10 +266,10 @@ public static class ProxyNameExt
     }
 
     static string FixHere(this string name)
-        => Regex.Replace(name, "(h)(ere)", Replacement, RegexOptions.IgnoreCase);
+        => Regex.Replace(name, "^(h)(ere)$", Replacement, RegexOptions.IgnoreCase);
 
     static string FixEveryone(this string name)
-        => Regex.Replace(name, "(e)(veryone)", Replacement, RegexOptions.IgnoreCase);
+        => Regex.Replace(name, "^(e)(veryone)$", Replacement, RegexOptions.IgnoreCase);
 
     static string FixBackticks(this string name)
         => Regex.Replace(name, "(`)(``)", Replacement, RegexOptions.IgnoreCase);
