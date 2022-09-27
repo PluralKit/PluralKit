@@ -64,13 +64,14 @@
         }
     }
 
-    let isOpenArray = [];
+    let isOpen = {};
 
-    function toggleCard(index: number) {
-        if (isOpenArray[index] === true) {
-            isOpenArray[index] = false;
+    function toggleCard(index: string) {
+        isOpen[index] = isOpen[index] || {};
+        if (isOpen[index] === true) {
+            isOpen[index] = false;
         } else {
-            isOpenArray[index] = true;
+            isOpen[index] = true;
         }
     }
 
@@ -109,10 +110,10 @@
 
 {#if !openByDefault && (settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true)}
     <div class="mb-3">    
-    {#each list as item, index (item.id + index)}
+    {#each list as item, index (item.uuid)}
         <Card>
             <h2 class="accordion-header">
-                <button class="w-100 accordion-button collapsed card-header" id={`${itemType}-card-${indexStart + index}`} on:click={() => toggleCard(indexStart + index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
+                <button class="w-100 accordion-button collapsed card-header" id={`${itemType}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
                     <CardsHeader {item} {sortBy} {searchBy}>
                         <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                             {#if isPublic || item.privacy.visibility === "public"}
@@ -129,7 +130,7 @@
                     <Tooltip placement="top" target={`${itemType}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
                 </button>
             </h2>
-            <Collapse isOpen={isOpenArray[indexStart + index]}>
+            <Collapse isOpen={isOpen[item.uuid]}>
                 <CardBody>
                     {#if itemType === "member"}
                     <MemberBody on:update on:deletion bind:isPublic groups={groups} member={item} />

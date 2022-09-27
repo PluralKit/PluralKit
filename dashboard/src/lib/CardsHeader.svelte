@@ -49,7 +49,7 @@
             </div>
             <span bind:this={nameElement} style="vertical-align: middle;">{@html htmlName} ({item.id})</span>
         </div>
-        <div>
+        <div style="margin-left: auto;">
         {#if item && (item.avatar_url || item.icon)}
         <img tabindex={0} on:keydown|stopPropagation={(event) => {if (event.key === "Enter") {avatarOpen = true}}} on:click|stopPropagation={toggleAvatarModal} class="rounded-circle avatar" src={icon_url_resized} alt={altText} />
         {:else}

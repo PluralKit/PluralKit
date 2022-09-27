@@ -86,14 +86,6 @@
         }
     }
 
-    /* function updateList(event: any) {
-        list = list.map(member => member.id !== event.detail.id ? member : event.detail);
-    } */
-
-    /* function updateGroups(event: any) {
-        groups = event.detail;
-    } */
-
     function updateDelete(event: any) {
         if (itemType === "member") {
             members = members.filter(m => m.id !== event.detail);
@@ -105,7 +97,6 @@
     }
 
     function update(event: any) {
-        console.log(event.detail);
         if (itemType === "member") {
             members = members.map(m => m.id === event.detail.id ? m = event.detail : m);
             list = members;
