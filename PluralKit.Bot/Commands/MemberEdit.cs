@@ -399,8 +399,8 @@ public class MemberEdit
             var reference = target.Reference(ctx);
             if (ctx.System?.Id == target.System)
                 eb.Description(
-                    $"To change display name, type `pk;member {reference} displayname <display name>`."
-                    + $"To clear it, type `pk;member {reference} displayname -clear`."
+                    $"To change display name, type `pk;member {reference} displayname <display name>`.\n"
+                    + $"To clear it, type `pk;member {reference} displayname -clear`.\n"
                     + $"To print the raw display name, type `pk;member {reference} displayname -raw`.");
             await ctx.Reply(embed: eb.Build());
             return;

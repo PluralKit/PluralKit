@@ -155,8 +155,8 @@ public class Groups
 
                 if (ctx.System?.Id == target.System)
                     eb.Description(
-                        $"To change display name, type `pk;group {reference} displayname <display name>`."
-                        + $"To clear it, type `pk;group {reference} displayname -clear`."
+                        $"To change display name, type `pk;group {reference} displayname <display name>`.\n"
+                        + $"To clear it, type `pk;group {reference} displayname -clear`.\n"
                         + $"To print the raw display name, type `pk;group {reference} displayname -raw`.");
 
                 if (ctx.System?.Id == target.System)
