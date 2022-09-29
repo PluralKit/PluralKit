@@ -13,8 +13,11 @@ using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using Serilog;
+
+using PluralKit.Core;
 
 namespace PluralKit.Bot;
 
@@ -147,6 +150,34 @@ public class WebhookExecutorService
             {
                 webhookMessage =
                     await _rest.ExecuteWebhook(webhook.Id, webhook.Token, webhookReq, files, req.ThreadId);
+            }
+            catch (BadRequestException e)
+            {
+                // explanation for hacky: I don't care if this code fails, it just means it wasn't a username error
+                try
+                {
+                    var json = JsonConvert.DeserializeObject<JObject>(e.FormError);
+                    var error = json.Value<JObject>("username").Value<JArray>("_errors").First.Value<string>("message");
+
+                    await _rest.CreateMessage(req.ChannelId, new MessageRequest {
+                        Content = $"{Emojis.Error} Discord rejected your proxy name: {error.AsCode()}",
+                        AllowedMentions = new AllowedMentions { Parse = {} },
+                    });
+
+                    Sentry.SentrySdk.CaptureException(e);
+
+                    // this exception is ignored in the message handler lol
+                    throw new ProxyService.ProxyChecksFailedException("_internal_discord_rejected_message");
+                }
+                catch (Exception ex)
+                {
+                    // this exception is expected, see comment above
+                    if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
+                        throw ex;
+                    else
+                        // if something breaks, just ignore it and throw the original exception
+                        throw e;
+                }
             }
             catch (JsonReaderException)
             {
