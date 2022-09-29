@@ -179,6 +179,25 @@ public class WebhookExecutorService
                         throw e;
                 }
             }
+            catch (RequestEntityTooLargeException e)
+            {
+                try
+                {
+                    await _rest.CreateMessage(req.ChannelId, new MessageRequest {
+                        Content = $"{Emojis.Error} One or more of the files attached to this message were not able to be proxied because they were too large.",
+                        AllowedMentions = new AllowedMentions { Parse = {} },
+                    });
+
+                    throw new ProxyService.ProxyChecksFailedException("_internal_discord_rejected_message");
+                }
+                catch (Exception ex)
+                {
+                    if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
+                        throw ex;
+                    else
+                        throw e;
+                }
+            }
             catch (JsonReaderException)
             {
                 // This happens sometimes when we hit a CloudFlare error (or similar) on Discord's end

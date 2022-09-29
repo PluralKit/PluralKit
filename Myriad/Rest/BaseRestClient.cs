@@ -262,6 +262,7 @@ public class BaseRestClient: IAsyncDisposable
             HttpStatusCode.Unauthorized => new UnauthorizedException(response, body, apiError),
             HttpStatusCode.NotFound => new NotFoundException(response, body, apiError),
             HttpStatusCode.Conflict => new ConflictException(response, body, apiError),
+            HttpStatusCode.RequestEntityTooLarge => new RequestEntityTooLargeException(response, body, apiError),
             HttpStatusCode.TooManyRequests => new TooManyRequestsException(response, body, apiError),
             _ => new UnknownDiscordRequestException(response, body, apiError)
         };

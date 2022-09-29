@@ -61,6 +61,14 @@ public class BadRequestException: DiscordRequestException
     { }
 }
 
+public class RequestEntityTooLargeException: DiscordRequestException
+{
+    public RequestEntityTooLargeException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError) : base(
+        response, responseBody, apiError)
+    { }
+}
+
+
 public class TooManyRequestsException: DiscordRequestException
 {
     public TooManyRequestsException(HttpResponseMessage response, string responseBody, DiscordApiError? apiError) :
