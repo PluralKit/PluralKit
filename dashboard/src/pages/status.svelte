@@ -9,7 +9,6 @@
     let shards = [];
     let clusters = {};
     let pingAverage = "";
-    let currentCommitMsg = "";
 
     let foundShard = {
         id: 1,
@@ -34,8 +33,6 @@
             shard.last_heartbeat = new Date(Number(shard.last_heartbeat) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
             return shard;
         });
-
-        currentCommitMsg = `Current Git commit: <a href="https://github.com/PluralKit/PluralKit/commit/${pkdata.version}">${pkdata.version.slice(0,7)}</a>`;
 
         if (data[0].cluster_id === 0) {
             let clusterData = {};
@@ -107,7 +104,6 @@
                     </CardTitle>
                 </CardHeader>
                 <CardBody>
-                    <span>{@html currentCommitMsg}</span>
                     <br>
                     <noscript>Please enable JavaScript to view this page!</noscript>
 

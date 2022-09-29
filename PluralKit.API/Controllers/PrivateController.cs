@@ -45,7 +45,6 @@ public class PrivateController: PKControllerBase
         var o = new JObject();
         o.Add("shards", shards.ToJson());
         o.Add("stats", stats.ToJson(guildCount, channelCount));
-        o.Add("version", BuildInfoService.FullVersion);
 
         return Ok(o);
     }
