@@ -4,7 +4,7 @@
     import { Alert, Col, Container, Row, Card, CardBody, CardHeader, CardTitle, Input, Label, Button, Accordion, AccordionHeader, AccordionItem } from 'sveltestrap';
     import FaRandom from 'svelte-icons/fa/FaRandom.svelte'
     
-    import CardsList from '../lib/list/CardsList.svelte';
+    import CardsList from '../lib/list/ListView.svelte';
     import api from '../api';
     import { Group, Member } from '../api/types';
 

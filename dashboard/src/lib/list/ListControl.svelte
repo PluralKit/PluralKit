@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createEventDispatcher } from 'svelte';
 import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button, Tooltip, Label } from 'sveltestrap';
 import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
 import Svelecte, { addFormatter } from 'svelecte';
@@ -16,6 +17,33 @@ export let groupList: any = [];
 export let searchBy = "name";
 export let searchValue: string;
 export let itemsPerPageValue: string;
+export let view = "list";
+
+let itemsPerPageSelection = {
+    small: "10",
+    default: "25",
+    large: "50"
+}
+
+$: { if (view === "card") itemsPerPageSelection = {
+        small: "12",
+        default: "24",
+        large: "60"
+    }
+    else {
+        itemsPerPageSelection = {
+            small: "10",
+            default: "25",
+            large: "50"
+        }
+    }
+}
+
+const dispatch = createEventDispatcher();
+
+function onViewChange(e: any) {
+    dispatch("viewChange", e.target.value);
+}
 
 export let sortBy = "name";
 let sortOrder = "ascending";
@@ -234,9 +262,9 @@ function capitalizeFirstLetter(string: string) {
             <InputGroup>
                 <InputGroupText>Page length</InputGroupText>
                 <Input bind:value={itemsPerPageValue} type="select" aria-label="page length">
-                    <option>10</option>
-                    <option>25</option>
-                    <option>50</option>
+                    <option>{itemsPerPageSelection.small}</option>
+                    <option>{itemsPerPageSelection.default}</option>
+                    <option>{itemsPerPageSelection.large}</option>
                 </Input>
             </InputGroup>
         </Col>
@@ -287,6 +315,15 @@ function capitalizeFirstLetter(string: string) {
             </InputGroup>
         </Col>
         {/if}
+        <Col xs={12} lg={3} class="mb-2">
+            <InputGroup>
+                <InputGroupText>View mode</InputGroupText>
+                <Input bind:value={view} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
+                    <option>list</option>
+                    <option value="card">cards</option>
+                </Input>
+            </InputGroup>
+        </Col>
         <Col xs={12} lg={3} class="mb-2">
             <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${itemType}s`}>Random {capitalizeFirstLetter(itemType)}</Button></Link>
         </Col>

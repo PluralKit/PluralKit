@@ -12,20 +12,19 @@
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
     let params = $location.search && new URLSearchParams($location.search);
-    let tabPane: string|number;
-    if (params) {
-        tabPane = params.get("tab");
-    }
     
-    if (!tabPane) {
-        tabPane = "system";
-    }
-
-    
+    let tabPane: string|number = params && params.get("tab") || "system";
+    let listView: string = params && params.get("view") || "list";
 
     // change the URL when changing tabs
-    function navigateTo(tab: string|number) {
-        navigate(`./dash?tab=${tab}`);
+    function navigateTo(tab: string|number, view: string) {
+        let url = "./dash";
+        if (tab || view) url += "?";
+        if (tab) url += `tab=${tab}`
+        if (tab && view) url += "&";
+        if (view) url += `view=${view}`
+
+        navigate(url);
         tabPane = tab;
     }
 
@@ -85,15 +84,15 @@
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
             <h2 class="visually-hidden">Viewing your own system</h2>
-            <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail)}>
+            <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail, listView)}>
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <SystemMain bind:user={user} isPublic={false} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <List bind:groups={groups} bind:members={members} isPublic={false} itemType={"member"}/>
+                        <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:groups={groups} bind:members={members} isPublic={false} itemType={"member"} bind:view={listView} isDash={true} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <List bind:members={members} bind:groups={groups} isPublic={false} itemType={"group"}/>
+                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:members={members} bind:groups={groups} isPublic={false} itemType={"group"} bind:view={listView} isDash={true} />
             </TabPane> 
             </TabContent>
         </Col>

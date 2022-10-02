@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, CardTitle, Tooltip } from "sveltestrap";
     import Body from '../lib/member/Body.svelte';
-    import CardsList from '../lib/list/CardsList.svelte';
-    import { useParams, Link, navigate } from 'svelte-navigator';
+    import ListView from '../lib/list/ListView.svelte';
+    import { useParams, Link, navigate, useLocation } from 'svelte-navigator';
     import { onMount } from 'svelte';
     import api from "../api";
     import { Member, Group } from "../api/types";
@@ -10,6 +10,13 @@
     import FaAddressCard from 'svelte-icons/fa/FaAddressCard.svelte'
     import FaList from 'svelte-icons/fa/FaList.svelte'
     import ListPagination from '../lib/ListPagination.svelte';
+    import CardView from '../lib/list/CardView.svelte';
+
+    // get the state from the navigator so that we know which tab to start on
+    let location = useLocation();
+    let urlParams = $location.search && new URLSearchParams($location.search);
+    
+    let listView: string = urlParams && urlParams.get("view") || "list";
 
     let loading = true;
     let groupLoading = false;
@@ -29,7 +36,7 @@
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
     let currentPage = 1;
-    let itemsPerPage = settings && settings.accessibility && settings.accessibility.expandedcards ? 5 : 10;
+    let itemsPerPage = listView === "card" ? 12 : settings && settings.accessibility && settings.accessibility.expandedcards ? 5 : 10;
 
     $: indexOfLastItem = currentPage * itemsPerPage;
     $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -176,8 +183,12 @@
                 </CardHeader>
             </Card>
             <ListPagination bind:currentPage bind:pageAmount />
-            <CardsList on:deletion={(e) => deleteGroupFromList(e)} bind:list={slicedGroups} isPublic={isPublic} itemType="group" itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={groups.length} />
-            <ListPagination bind:currentPage bind:pageAmount />
+                {#if listView === "card"}
+                <CardView list={slicedGroups} {isPublic} itemType="group" isDash={false} />
+                {:else}
+                <ListView on:deletion={(e) => deleteGroupFromList(e)} bind:list={slicedGroups} isPublic={isPublic} itemType="group" itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={groups.length} />
+                <ListPagination bind:currentPage bind:pageAmount />
+                {/if}
             {/if}
             {/if}
         </Col>

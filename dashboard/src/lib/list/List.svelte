@@ -8,13 +8,18 @@
     import ListPagination from '../ListPagination.svelte';
     import ListControl from './ListControl.svelte';
     import ListSearch from './ListSearch.svelte';
-    import CardsList from './CardsList.svelte';
+    import ListView from './ListView.svelte';
+    import CardView from './CardView.svelte';
 
     import { Member, Group } from '../../api/types';
     import api from '../../api';
 
     export let members: Member[] = [];
     export let groups: Group[] = [];
+    
+    export let view: string = "list";
+
+    export let isDash = false;
 
     let list: Member[] | Group[] = [];
     let processedList: Member[] | Group[] = [];
@@ -31,7 +36,14 @@
     let pageAmount: number;
     let currentPage: number = 1;
 
-    let itemsPerPageValue = settings && settings.accessibility && settings.accessibility.expandedcards ? "10" : "25";
+    let itemsPerPageValue;
+    $: {
+        if (view === "card") itemsPerPageValue = "24";
+    
+        else if (settings && settings.accessibility && settings.accessibility.expandedcards) itemsPerPageValue = "10";
+        else itemsPerPageValue = "25";
+    }
+    
     $: itemsPerPage = parseInt(itemsPerPageValue);
 
     $: indexOfLastItem = currentPage * itemsPerPage;
@@ -108,7 +120,7 @@
 
 </script>
 
-<ListControl {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:sortBy bind:itemsPerPageValue bind:currentPage />
+<ListControl on:viewChange {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:sortBy bind:itemsPerPageValue bind:currentPage bind:view />
 
 {#if listLoading && !err}
     <div class="mx-auto text-center">
@@ -136,7 +148,13 @@
     <NewGroup on:create={addItemToList} />
     {/if}
 {/if}
-<CardsList on:update={update} on:deletion={updateDelete} list={slicedList} groups={groups} members={members} isPublic={isPublic} itemType={itemType} itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={list.length} {sortBy} {searchBy} />
+{#if view === "card"}
+    <CardView on:update={update} list={slicedList} {groups} {members} {itemType} {sortBy} {searchBy} {isPublic} {isDash} />
+{:else if view === "tiny"}
+    tiny!
+{:else}
+<ListView on:update={update} on:deletion={updateDelete} list={slicedList} {groups} {members} {isPublic} {itemType} {itemsPerPage} {currentPage} {sortBy} {searchBy} fullLength={list.length} />
+{/if}
 <ListPagination bind:currentPage {pageAmount} />
 {/if}
 
