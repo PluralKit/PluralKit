@@ -66,7 +66,8 @@ public class ProxyTagParser
 
         // Check if our input starts/ends with the tags
         var isMatch = input.Length >= prefix.Length + suffix.Length
-                      && input.StartsWith(prefix) && input.EndsWith(suffix);
+                      && input.StartsWith(prefix, StringComparison.CurrentCultureIgnoreCase) 
+                      && input.EndsWith(suffix, StringComparison.CurrentCultureIgnoreCase);
 
         // Special case: image-only proxies + proxy tags with spaces
         // Trim everything, then see if we have a "contentless tag pair" (normally disallowed, but OK if we have an attachment)
