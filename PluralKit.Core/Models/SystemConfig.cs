@@ -18,7 +18,7 @@ public class SystemConfig
     public ICollection<string> DescriptionTemplates { get; }
 
     public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
-    
+
     public bool CaseSensitiveProxyTags { get; set; }
 }
 

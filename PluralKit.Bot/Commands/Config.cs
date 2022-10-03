@@ -87,8 +87,8 @@ public class Config
             ctx.Config.GroupLimitOverride?.ToString(),
             Limits.MaxGroupCount.ToString()
         ));
-        
-        items.Add(new (
+
+        items.Add(new(
             "Case sensitive proxy tags",
             "If proxy tags should be case sensitive",
             EnabledDisabled(ctx.Config.CaseSensitiveProxyTags),
@@ -399,17 +399,17 @@ public class Config
             else { await ctx.Reply("Proxy tags are currently case insensitive"); }
             return;
         }
-        
+
         if (ctx.MatchToggle(true))
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = true });
-            
+
             await ctx.Reply("Proxy tags are now case sensitive");
         }
         else
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = false });
-            
+
             await ctx.Reply("Proxy tags are now case insensitive");
         }
     }

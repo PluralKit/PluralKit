@@ -70,7 +70,7 @@ public class ProxyTagParser
 
         // Check if our input starts/ends with the tags
         var isMatch = input.Length >= prefix.Length + suffix.Length
-                      && input.StartsWith(prefix, comparision) 
+                      && input.StartsWith(prefix, comparision)
                       && input.EndsWith(suffix, comparision);
 
         // Special case: image-only proxies + proxy tags with spaces

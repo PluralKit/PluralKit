@@ -511,7 +511,7 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
         if (ctx.MatchMultiple(new[] { "show" }, new[] { "private" }) || ctx.Match("sp"))
             return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
-        if (ctx.MatchMultiple(new []{ "proxy" }, new []{ "case" }))
+        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "case" }))
             return ctx.Execute<Config>(null, m => m.CaseSensitiveProxyTags(ctx));
 
         // todo: maybe add the list of configuration keys here?

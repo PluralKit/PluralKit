@@ -79,7 +79,7 @@ public class SystemConfigPatch: PatchObject
 
         if (DescriptionTemplates.IsPresent)
             o.Add("description_templates", JArray.FromObject(DescriptionTemplates.Value));
-        
+
         if (CaseSensitiveProxyTags.IsPresent)
             o.Add("case_sensitive_proxy_tags", CaseSensitiveProxyTags.Value);
 
@@ -107,7 +107,7 @@ public class SystemConfigPatch: PatchObject
 
         if (o.ContainsKey("description_templates"))
             patch.DescriptionTemplates = o.Value<JArray>("description_templates").Select(x => x.Value<string>()).ToArray();
-        
+
         if (o.ContainsKey("case_sensitive_proxy_tags"))
             patch.CaseSensitiveProxyTags = o.Value<bool>("case_sensitive_proxy_tags");
 

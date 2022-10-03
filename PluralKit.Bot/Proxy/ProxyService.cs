@@ -76,7 +76,7 @@ public class ProxyService
         // Fetch members and try to match to a specific member
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
             members = (await _repo.GetProxyMembers(message.Author.Id, message.GuildId!.Value)).ToList();
-        
+
         var config = await _repo.GetSystemConfig(ctx.SystemId.Value);
 
         if (!_matcher.TryMatch(ctx, config, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,

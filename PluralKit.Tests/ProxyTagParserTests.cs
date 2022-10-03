@@ -9,7 +9,7 @@ namespace PluralKit.Tests;
 public class ProxyTagParserTests
 {
     internal static ProxyMatch AssertMatch(IEnumerable<ProxyMember> members, string input, string? name = null,
-                                           string? prefix = null, string? suffix = null, string? content = null, 
+                                           string? prefix = null, string? suffix = null, string? content = null,
                                            SystemConfig? config = null)
     {
         config ??= new SystemConfig();
@@ -58,7 +58,7 @@ public class ProxyTagParserTests
         [InlineData("a:tag with lowercase prefix")]
         public void StringWithLowercaseUsingDefaultConfigMatchesNothing(string input) =>
             AssertNoMatch(members, input);
-        
+
         [Theory]
         [InlineData("a:tag with lowercase prefix")]
         public void StringWithLowercaseUsingCaseInsensitiveConfigMatches(string input) =>
