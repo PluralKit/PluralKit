@@ -9,9 +9,11 @@ namespace PluralKit.Tests;
 public class ProxyTagParserTests
 {
     internal static ProxyMatch AssertMatch(IEnumerable<ProxyMember> members, string input, string? name = null,
-                                           string? prefix = null, string? suffix = null, string? content = null)
+                                           string? prefix = null, string? suffix = null, string? content = null, 
+                                           SystemConfig? config = null)
     {
-        Assert.True(new ProxyTagParser().TryMatch(members, input, out var result));
+        config ??= new SystemConfig();
+        Assert.True(new ProxyTagParser().TryMatch(config, members, input, out var result));
         if (name != null) Assert.Equal(name, result.Member.Name);
         if (prefix != null) Assert.Equal(prefix, result.ProxyTags?.Prefix);
         if (suffix != null) Assert.Equal(suffix, result.ProxyTags?.Suffix);
@@ -19,13 +21,19 @@ public class ProxyTagParserTests
         return result;
     }
 
-    internal static void AssertNoMatch(IEnumerable<ProxyMember> members, string? input)
+    internal static void AssertNoMatch(IEnumerable<ProxyMember> members, string? input, SystemConfig? config = null)
     {
-        Assert.False(new ProxyTagParser().TryMatch(members, input, out _));
+        config ??= new SystemConfig();
+        Assert.False(new ProxyTagParser().TryMatch(config, members, input, out _));
     }
 
     public class Basics
     {
+        private readonly SystemConfig caseInsensitiveSystemConfig = new SystemConfig
+        {
+            CaseSensitiveProxyTags = true
+        };
+
         private readonly ProxyMember[] members =
         {
             new("John", new ProxyTag("[", "]")),
@@ -45,6 +53,16 @@ public class ProxyTagParserTests
         [InlineData("A:tag with prefix")]
         public void StringWithTagsMatch(string input) =>
             AssertMatch(members, input);
+
+        [Theory]
+        [InlineData("a:tag with lowercase prefix")]
+        public void StringWithLowercaseUsingDefaultConfigMatchesNothing(string input) =>
+            AssertNoMatch(members, input);
+        
+        [Theory]
+        [InlineData("a:tag with lowercase prefix")]
+        public void StringWithLowercaseUsingCaseInsensitiveConfigMatches(string input) =>
+            AssertMatch(members, input, config: caseInsensitiveSystemConfig);
 
         [Theory]
         [InlineData("[john's tags]", "John")]

@@ -117,6 +117,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;config ping <enable|disable>` - Changes your system's ping preferences.
 - `pk;config autoproxy timeout [<duration>|off|reset]` - Sets the latch timeout duration for your system.
 - `pk;config autoproxy account [on|off]` - Toggles autoproxy globally for the current account.
+- `pk;config proxy case [on|off]` - Toggles case sensitive proxy tags for your system.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*

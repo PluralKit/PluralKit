@@ -76,8 +76,10 @@ public class ProxyService
         // Fetch members and try to match to a specific member
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
             members = (await _repo.GetProxyMembers(message.Author.Id, message.GuildId!.Value)).ToList();
+        
+        var config = await _repo.GetSystemConfig(ctx.SystemId.Value);
 
-        if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
+        if (!_matcher.TryMatch(ctx, config, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy)) return false;
 
         // this is hopefully temporary, so not putting it into a separate method
@@ -204,7 +206,8 @@ public class ProxyService
                 "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
-        var prevMatched = _matcher.TryMatch(ctx, autoproxySettings, members, out var prevMatch, originalMsg.Content,
+        var config = await _repo.GetSystemConfig(ctx.SystemId.Value);
+        var prevMatched = _matcher.TryMatch(ctx, config, autoproxySettings, members, out var prevMatch, originalMsg.Content,
                                             originalMsg.Attachments.Length > 0, false);
 
         var match = new ProxyMatch

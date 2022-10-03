@@ -18,6 +18,8 @@ public class SystemConfig
     public ICollection<string> DescriptionTemplates { get; }
 
     public DateTimeZone Zone => DateTimeZoneProviders.Tzdb.GetZoneOrNull(UiTz);
+    
+    public bool CaseSensitiveProxyTags { get; set; }
 }
 
 public static class SystemConfigExt
@@ -34,6 +36,7 @@ public static class SystemConfigExt
         o.Add("show_private_info", cfg.ShowPrivateInfo);
         o.Add("member_limit", cfg.MemberLimitOverride ?? Limits.MaxMemberCount);
         o.Add("group_limit", cfg.GroupLimitOverride ?? Limits.MaxGroupCount);
+        o.Add("case_sensitive_proxy_tags", cfg.CaseSensitiveProxyTags);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 

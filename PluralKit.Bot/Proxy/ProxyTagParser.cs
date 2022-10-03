@@ -10,7 +10,7 @@ public class ProxyTagParser
     private readonly Regex prefixPattern = new(@"^<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>");
     private readonly Regex suffixPattern = new(@"<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>$");
 
-    public bool TryMatch(IEnumerable<ProxyMember> members, string? input, out ProxyMatch result)
+    public bool TryMatch(SystemConfig systemConfig, IEnumerable<ProxyMember> members, string? input, out ProxyMatch result)
     {
         result = default;
 
@@ -42,7 +42,7 @@ public class ProxyTagParser
             if (tag.Suffix == ">" && suffixPattern.IsMatch(input)) continue;
 
             // Can we match with these tags?
-            if (TryMatchTagsInner(input, tag, out result.Content))
+            if (TryMatchTagsInner(systemConfig, input, tag, out result.Content))
             {
                 // If we extracted a leading mention before, add that back now
                 if (leadingMention != null) result.Content = $"{leadingMention} {result.Content}";
@@ -56,7 +56,7 @@ public class ProxyTagParser
         return false;
     }
 
-    private bool TryMatchTagsInner(string input, ProxyTag tag, out string inner)
+    private bool TryMatchTagsInner(SystemConfig systemConfig, string input, ProxyTag tag, out string inner)
     {
         inner = "";
 
@@ -64,10 +64,14 @@ public class ProxyTagParser
         var prefix = tag.Prefix ?? "";
         var suffix = tag.Suffix ?? "";
 
+        var comparision = systemConfig.CaseSensitiveProxyTags
+            ? StringComparison.CurrentCulture
+            : StringComparison.CurrentCultureIgnoreCase;
+
         // Check if our input starts/ends with the tags
         var isMatch = input.Length >= prefix.Length + suffix.Length
-                      && input.StartsWith(prefix, StringComparison.CurrentCultureIgnoreCase) 
-                      && input.EndsWith(suffix, StringComparison.CurrentCultureIgnoreCase);
+                      && input.StartsWith(prefix, comparision) 
+                      && input.EndsWith(suffix, comparision);
 
         // Special case: image-only proxies + proxy tags with spaces
         // Trim everything, then see if we have a "contentless tag pair" (normally disallowed, but OK if we have an attachment)

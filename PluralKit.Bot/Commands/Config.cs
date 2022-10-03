@@ -87,6 +87,13 @@ public class Config
             ctx.Config.GroupLimitOverride?.ToString(),
             Limits.MaxGroupCount.ToString()
         ));
+        
+        items.Add(new (
+            "Case sensitive proxy tags",
+            "If proxy tags should be case sensitive",
+            EnabledDisabled(ctx.Config.CaseSensitiveProxyTags),
+            "enabled"
+        ));
 
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
@@ -381,6 +388,29 @@ public class Config
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ShowPrivateInfo = false });
 
             await ctx.Reply("Private information will now be **hidden** when looking up your own info. Use the `-private` flag to show it.");
+        }
+    }
+
+    public async Task CaseSensitiveProxyTags(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            if (ctx.Config.CaseSensitiveProxyTags) { await ctx.Reply("Proxy tags are currently case sensitive"); }
+            else { await ctx.Reply("Proxy tags are currently case insensitive"); }
+            return;
+        }
+        
+        if (ctx.MatchToggle(true))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = true });
+            
+            await ctx.Reply("Proxy tags are now case sensitive");
+        }
+        else
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = false });
+            
+            await ctx.Reply("Proxy tags are now case insensitive");
         }
     }
 }
