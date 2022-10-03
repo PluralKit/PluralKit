@@ -10,10 +10,9 @@ public class ProxyTagParserTests
 {
     internal static ProxyMatch AssertMatch(IEnumerable<ProxyMember> members, string input, string? name = null,
                                            string? prefix = null, string? suffix = null, string? content = null,
-                                           SystemConfig? config = null)
+                                           bool caseSensitive = true)
     {
-        config ??= new SystemConfig();
-        Assert.True(new ProxyTagParser().TryMatch(config, members, input, out var result));
+        Assert.True(new ProxyTagParser().TryMatch(members, input, caseSensitive, out var result));
         if (name != null) Assert.Equal(name, result.Member.Name);
         if (prefix != null) Assert.Equal(prefix, result.ProxyTags?.Prefix);
         if (suffix != null) Assert.Equal(suffix, result.ProxyTags?.Suffix);
@@ -21,19 +20,13 @@ public class ProxyTagParserTests
         return result;
     }
 
-    internal static void AssertNoMatch(IEnumerable<ProxyMember> members, string? input, SystemConfig? config = null)
+    internal static void AssertNoMatch(IEnumerable<ProxyMember> members, string? input, bool caseSensitive = true)
     {
-        config ??= new SystemConfig();
-        Assert.False(new ProxyTagParser().TryMatch(config, members, input, out _));
+        Assert.False(new ProxyTagParser().TryMatch(members, input, caseSensitive, out _));
     }
 
     public class Basics
     {
-        private readonly SystemConfig caseInsensitiveSystemConfig = new SystemConfig
-        {
-            CaseSensitiveProxyTags = true
-        };
-
         private readonly ProxyMember[] members =
         {
             new("John", new ProxyTag("[", "]")),
@@ -62,7 +55,7 @@ public class ProxyTagParserTests
         [Theory]
         [InlineData("a:tag with lowercase prefix")]
         public void StringWithLowercaseUsingCaseInsensitiveConfigMatches(string input) =>
-            AssertMatch(members, input, config: caseInsensitiveSystemConfig);
+            AssertMatch(members, input, caseSensitive: false);
 
         [Theory]
         [InlineData("[john's tags]", "John")]

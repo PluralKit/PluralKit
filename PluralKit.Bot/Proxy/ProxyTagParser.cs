@@ -10,7 +10,7 @@ public class ProxyTagParser
     private readonly Regex prefixPattern = new(@"^<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>");
     private readonly Regex suffixPattern = new(@"<(?:@!?|#|@&|a?:[\d\w_]+?:)\d+>$");
 
-    public bool TryMatch(SystemConfig systemConfig, IEnumerable<ProxyMember> members, string? input, out ProxyMatch result)
+    public bool TryMatch(IEnumerable<ProxyMember> members, string? input, bool caseSensitive, out ProxyMatch result)
     {
         result = default;
 
@@ -42,7 +42,7 @@ public class ProxyTagParser
             if (tag.Suffix == ">" && suffixPattern.IsMatch(input)) continue;
 
             // Can we match with these tags?
-            if (TryMatchTagsInner(systemConfig, input, tag, out result.Content))
+            if (TryMatchTagsInner(input, tag, caseSensitive, out result.Content))
             {
                 // If we extracted a leading mention before, add that back now
                 if (leadingMention != null) result.Content = $"{leadingMention} {result.Content}";
@@ -56,7 +56,7 @@ public class ProxyTagParser
         return false;
     }
 
-    private bool TryMatchTagsInner(SystemConfig systemConfig, string input, ProxyTag tag, out string inner)
+    private bool TryMatchTagsInner(string input, ProxyTag tag, bool caseSensitive, out string inner)
     {
         inner = "";
 
@@ -64,7 +64,7 @@ public class ProxyTagParser
         var prefix = tag.Prefix ?? "";
         var suffix = tag.Suffix ?? "";
 
-        var comparision = systemConfig.CaseSensitiveProxyTags
+        var comparision = caseSensitive
             ? StringComparison.CurrentCulture
             : StringComparison.CurrentCultureIgnoreCase;
 
