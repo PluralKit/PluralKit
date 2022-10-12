@@ -394,7 +394,7 @@ public class ProxyService
     }
 
     private string FixSameNameInner(string name)
-        => $"{name}\u200a";
+        => $"{name}\u200a\u17b5";
 
     public static bool IsUnlatch(Message message)
         => message.Content.StartsWith(@"\\") || message.Content.StartsWith("\\\u200b\\");
