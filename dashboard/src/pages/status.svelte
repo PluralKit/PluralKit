@@ -16,7 +16,8 @@
         ping:"",
         disconnection_count:0,
         last_connection:0,
-        last_heartbeat:0.
+        last_heartbeat:0,
+        heartbeat_minutes_ago:0
     };
     foundShard = null;
 
@@ -29,7 +30,8 @@
         let pings = 0;
         data = data.map(shard => {
             pings += shard.ping;
-            shard.last_connection = new Date(Number(shard.last_connection) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
+            shard.heartbeat_minutes_ago = heartbeatMinutesAgo(shard);
+            shard.last_connection =  new Date(Number(shard.last_connection) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
             shard.last_heartbeat = new Date(Number(shard.last_heartbeat) * 1000).toUTCString().match(/([0-9][0-9]:[0-9][0-9]:[0-9][0-9])/)?.shift()
             return shard;
         });
@@ -64,7 +66,7 @@
             shardInfoMsg = "";
             return;
         };
-        var match = findShardInput.match(/https:\/\/[\w+]?discord[app]?.com\/channels\/(\d+)\/\d+\/\d+/);
+        var match = findShardInput.match(/https:\/\/(?:[\w]*\.)?discord(?:app)?\.com\/channels\/(\d+)\/\d+\/\d+/);
         if (match != null) {
             console.log("match", match)
             foundShard = shards[Number(getShardID(match[1], shards.length))];
@@ -89,6 +91,14 @@
         }
     };
     
+    function heartbeatMinutesAgo(shard) {
+		// difference in milliseconds
+		const msDifference = Math.abs((Number(new Date(Number(shard.last_heartbeat) * 1000)) - Date.now()));
+		// convert to minutes
+		const minuteDifference = msDifference / (60 * 1000);
+		
+        return minuteDifference;
+	}
 </script>
 
 <Container>
@@ -107,29 +117,46 @@
                     <br>
                     <noscript>Please enable JavaScript to view this page!</noscript>
 
-                    { shards.length } shards ({ shards.filter(x => x.status == "up").length } up) <br>
-                    Average latency: { pingAverage }ms
-                    <br><br>
-                    All times in UTC. More statistics available at <a href="https://stats.pluralkit.me">https://stats.pluralkit.me</a>
-                    <br><br>
-                    <details>
-                        <summary><b>Find my shard</b></summary>
-                        <br>
-                        Enter a server ID or a message link to find the shard currently assigned to your server:
-                        <br>
-                        <input bind:value={findShardInput} on:input={shardInfoHandler} />
-                        <br><br>
-                        <span>{ shardInfoMsg }</span>
+                    <Row>
+                        <Col class="mb-2" xs={12} md={6} lg={4} >
+                            <span>{ shards.length } shards ({ shards.filter(x => x.status == "up").length } up)</span>
+                        </Col>
+                        <Col class="mb-2" xs={12} md={6} lg={4}>
+                            <span>Average latency: { pingAverage }ms</span>
+                        </Col>
+                        <Col class="mb-2" xs={12} md={6} lg={4}>
+                            <span>More statistics available at <a href="https://stats.pluralkit.me">https://stats.pluralkit.me</a></span>
+                        </Col>
+                    </Row>
+                    <hr/>
+                    <h3 style="font-size: 1.2rem;">Find my shard</h3>
+                        <p>Enter a server ID or a message link to find the shard currently assigned to your server</p>
+                        <label for="shardInput">Server ID or message link</label>
+                        <input id="shardInput" class="form form-control" bind:value={findShardInput} on:input={shardInfoHandler} />
+                        {#if shardInfoMsg || foundShard}
+                        <Card class="mt-4">
+                            <CardHeader>
+                                <CardTitle>
+                                    {#if shardInfoMsg}
+                                        {shardInfoMsg}
+                                    {/if}
+                                    {#if foundShard}
+                                        Your shard is: Shard { foundShard.id }
+                                    {/if}
+                                </CardTitle>
+                            </CardHeader>
+
                         {#if valid}
-                            <h3>Your shard is: Shard { foundShard.id }</h3>
-                            <br>
+                            <CardBody>
                             <span>Status: <b>{ foundShard.status }</b></span><br>
                             <span>Latency: { foundShard.ping }ms</span><br>
                             <span>Disconnection count: { foundShard.disconnection_count }</span><br>
-                            <span>Last connection: { foundShard.last_connection }</span><br>
-                            <span>Last heartbeat: { foundShard.last_heartbeat }</span><br>
+                            <span>Last connection: { foundShard.last_connection } UTC</span><br>
+                            <span>Last heartbeat: { foundShard.last_heartbeat } UTC</span><br>
+                            </CardBody>
                         {/if}
-                    </details>
+                        </Card>
+                        {/if}
                 </CardBody>
             </Card>
         </Col>

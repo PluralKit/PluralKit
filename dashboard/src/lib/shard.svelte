@@ -7,14 +7,14 @@
 		ping:0,
 		disconnection_count:0,
 		last_connection:0,
-		last_heartbeat:0.
+		last_heartbeat:0,
+        heartbeat_minutes_ago:0
 	};
 	
 	let color = "background-color: #fff";
 
 	// shard is down
-	// todo: check if last heartbeat is really recent, since database up/down status can get out of sync
-	if (shard.status != "up") color = "background-color: #000;";
+	if (shard.status != "up" || shard.heartbeat_minutes_ago > 5) color = "background-color: #000;";
 	// shard latency is < 250ms: OK!
 	else if (shard.ping < 300) color = "background-color: #00cc00;";
 	// shard latency is 250ms < ping < 600ms: slow, but OK
@@ -35,9 +35,12 @@
 		<span>Status: <b>{ shard.status }</b></span><br>
 		<span>Latency: { shard.ping }ms</span><br>
 		<span>Disconnection count: { shard.disconnection_count }</span><br>
-		<span>Last connection: { shard.last_connection }</span><br>
-		<span>Last heartbeat: { shard.last_heartbeat }</span><br>
-		<br>
+		<span>Last connection: { shard.last_connection } UTC</span><br>
+		<span>Last heartbeat: { shard.last_heartbeat } UTC</span>
+		{#if shard.heartbeat_minutes_ago > 5}
+		<span>(over {Math.floor(shard.heartbeat_minutes_ago)} minutes ago)</span>
+		{/if}
+		<br><br>
 	</Tooltip>
 </div>
 
