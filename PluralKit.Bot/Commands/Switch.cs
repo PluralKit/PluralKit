@@ -48,9 +48,13 @@ public class Switch
 
         if (members.Count == 0)
             await ctx.Reply($"{Emojis.Success} Switch-out registered.");
-        else
+        else if (members.Count == 1)
             await ctx.Reply(
                 $"{Emojis.Success} Switch registered. Current fronter is now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
+        else{
+            await ctx.Reply(
+                $"{Emojis.Success} Switch registered. Current fronters are now {string.Join(", ", members.Select(m => m.NameFor(ctx)))}.");
+        }
     }
 
     public async Task SwitchMove(Context ctx)
