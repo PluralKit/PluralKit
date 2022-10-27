@@ -1,5 +1,7 @@
 using Humanizer;
 
+using Myriad.Types;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -28,7 +30,14 @@ public partial class CommandTree
     private async Task PrintCommandList(Context ctx, string subject, params Command[] commands)
     {
         var str = CreatePotentialCommandList(commands);
-        await ctx.Reply($"Here is a list of commands related to {subject}: \n{str}\nFor a full list of possible commands, see <https://pluralkit.me/commands>.");
+        await ctx.Reply(
+            $"Here is a list of commands related to {subject}:",
+            embed: new Embed()
+            {
+                Description = $"{str}\nFor a full list of possible commands, see <https://pluralkit.me/commands>.",
+                Color = DiscordUtils.Blue,
+            }
+        );
     }
 
     private async Task<string> CreateSystemNotFoundError(Context ctx)
