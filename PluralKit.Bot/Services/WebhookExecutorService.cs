@@ -174,7 +174,9 @@ public class WebhookExecutorService
                 {
                     // this exception is expected, see comment above
                     if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
+#pragma warning disable CA2200
                         throw ex;
+#pragma warning restore CA2200
                     else
                         // if something breaks, just ignore it and throw the original exception
                         throw e;
@@ -195,7 +197,9 @@ public class WebhookExecutorService
                 catch (Exception ex)
                 {
                     if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
+#pragma warning disable CA2200
                         throw ex;
+#pragma warning restore CA2200
                     else
                         throw e;
                 }
