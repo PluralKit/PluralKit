@@ -159,9 +159,10 @@ public class WebhookExecutorService
                     var json = JsonConvert.DeserializeObject<JObject>(e.FormError);
                     var error = json.Value<JObject>("username").Value<JArray>("_errors").First.Value<string>("message");
 
-                    await _rest.CreateMessage(req.ChannelId, new MessageRequest {
+                    await _rest.CreateMessage(req.ChannelId, new MessageRequest
+                    {
                         Content = $"{Emojis.Error} Discord rejected your proxy name: {error.AsCode()}",
-                        AllowedMentions = new AllowedMentions { Parse = {} },
+                        AllowedMentions = new AllowedMentions { Parse = { } },
                     });
 
                     Sentry.SentrySdk.CaptureException(e);
@@ -183,9 +184,10 @@ public class WebhookExecutorService
             {
                 try
                 {
-                    await _rest.CreateMessage(req.ChannelId, new MessageRequest {
+                    await _rest.CreateMessage(req.ChannelId, new MessageRequest
+                    {
                         Content = $"{Emojis.Error} One or more of the files attached to this message were not able to be proxied because they were too large.",
-                        AllowedMentions = new AllowedMentions { Parse = {} },
+                        AllowedMentions = new AllowedMentions { Parse = { } },
                     });
 
                     throw new ProxyService.ProxyChecksFailedException("_internal_discord_rejected_message");
@@ -304,7 +306,7 @@ public static class ProxyNameExt
         .FixDiscord()
         .FixBackticks()
         .FixSingleCharacterName();
-        // .ThrowOnInvalidCharacters();
+    // .ThrowOnInvalidCharacters();
 
     static string ThrowOnInvalidCharacters(this string name)
     {
