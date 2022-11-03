@@ -22,14 +22,14 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|string||
 |uuid|string||
-|name|string|100-character limit|
+|name|?string|100-character limit|
 |description|?string|1000-character limit|
-|tag|string||
+|tag|?string||
 |pronouns|?string|100-character limit|
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
 |banner|?string|256-character limit, must be a publicly-accessible URL|
-|color|string|6-character hex code, no `#` at the beginning|
-|created|datetime||
+|color|?string|6-character hex code, no `#` at the beginning|
+|created|?datetime||
 |privacy|?system privacy object||
 
 * System privacy keys: `description_privacy`, `pronoun_privacy`, `member_list_privacy`, `group_list_privacy`, `front_privacy`, `front_history_privacy`
@@ -42,7 +42,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |uuid|string||
 |name|string|100-character limit|
 |display_name|?string|100-character limit|
-|color|string|6-character hex code, no `#` at the beginning|
+|color|?string|6-character hex code, no `#` at the beginning|
 |birthday|?string|`YYYY-MM-DD` format, 0004 hides the year|
 |pronouns|?string|100-character-limit|
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
@@ -75,7 +75,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |description|?string|1000-character limit|
 |icon|?string|256-character limit, must be a publicly-accessible URL|
 |banner|?string|256-character limit, must be a publicly-accessible URL|
-|color|string|6-character hex code, no `#` at the beginning|
+|color|?string|6-character hex code, no `#` at the beginning|
 |privacy|?group privacy object||
 
 * Group privacy keys: `name_privacy`, `description_privacy`, `icon_privacy`, `list_privacy`, `metadata_privacy`, `visibility`
@@ -94,7 +94,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |timestamp|datetime||
 |id|snowflake|The ID of the message sent by the webhook. Encoded as string for precision reasons.|
-|original| snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.|
+|original|snowflake|The ID of the (now-deleted) message that triggered the proxy. Encoded as string for precision reasons.|
 |sender|snowflake|The user ID of the account that triggered the proxy. Encoded as string for precision reasons.|
 |channel|snowflake|The ID of the channel the message was sent in. Encoded as string for precision reasons.|
 |guild|snowflake|The ID of the server the message was sent in. Encoded as string for precision reasons.|
@@ -120,7 +120,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 
 |key|type|notes|
 |---|---|---|
-|guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
+|?guild_id|snowflake|only sent if the guild ID isn't already known (in dispatch payloads)|
 |proxying_enabled|boolean||
 |tag|?string|79-character limit|
 |tag_enabled|boolean||
