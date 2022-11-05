@@ -44,7 +44,7 @@ public class Random
     {
         if (target == null)
             throw Errors.NoSystemError;
-        
+
         ctx.CheckSystemPrivacy(target.Id, target.GroupListPrivacy);
 
         var groups = await ctx.Repository.GetSystemGroups(target.Id).ToListAsync();
@@ -55,8 +55,8 @@ public class Random
 
         if (groups == null || !groups.Any())
             throw new PKError(
-                ctx.System?.Id == target.Id ? 
-                    "Your system has no groups! Please create at least one group before using this command." : 
+                ctx.System?.Id == target.Id ?
+                    "Your system has no groups! Please create at least one group before using this command." :
                     $"This system has no groups!");
 
         var randInt = randGen.Next(groups.Count());
@@ -75,7 +75,7 @@ public class Random
         if (members == null || !members.Any())
             throw new PKError(
                 "This group has no members!"
-                + ( ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
+                + (ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
 
         if (!ctx.MatchFlag("all", "a"))
             members = members.Where(g => g.MemberVisibility == PrivacyLevel.Public);

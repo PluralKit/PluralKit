@@ -159,9 +159,10 @@ public class WebhookExecutorService
                     var json = JsonConvert.DeserializeObject<JObject>(e.FormError);
                     var error = json.Value<JObject>("username").Value<JArray>("_errors").First.Value<string>("message");
 
-                    await _rest.CreateMessage(req.ChannelId, new MessageRequest {
+                    await _rest.CreateMessage(req.ChannelId, new MessageRequest
+                    {
                         Content = $"{Emojis.Error} Discord rejected your proxy name: {error.AsCode()}",
-                        AllowedMentions = new AllowedMentions { Parse = {} },
+                        AllowedMentions = new AllowedMentions { Parse = { } },
                     });
 
                     Sentry.SentrySdk.CaptureException(e);
@@ -173,7 +174,9 @@ public class WebhookExecutorService
                 {
                     // this exception is expected, see comment above
                     if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
+#pragma warning disable CA2200
                         throw ex;
+#pragma warning restore CA2200
                     else
                         // if something breaks, just ignore it and throw the original exception
                         throw e;
@@ -183,9 +186,10 @@ public class WebhookExecutorService
             {
                 try
                 {
-                    await _rest.CreateMessage(req.ChannelId, new MessageRequest {
+                    await _rest.CreateMessage(req.ChannelId, new MessageRequest
+                    {
                         Content = $"{Emojis.Error} One or more of the files attached to this message were not able to be proxied because they were too large.",
-                        AllowedMentions = new AllowedMentions { Parse = {} },
+                        AllowedMentions = new AllowedMentions { Parse = { } },
                     });
 
                     throw new ProxyService.ProxyChecksFailedException("_internal_discord_rejected_message");
@@ -193,7 +197,9 @@ public class WebhookExecutorService
                 catch (Exception ex)
                 {
                     if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
+#pragma warning disable CA2200
                         throw ex;
+#pragma warning restore CA2200
                     else
                         throw e;
                 }
@@ -304,7 +310,7 @@ public static class ProxyNameExt
         .FixDiscord()
         .FixBackticks()
         .FixSingleCharacterName();
-        // .ThrowOnInvalidCharacters();
+    // .ThrowOnInvalidCharacters();
 
     static string ThrowOnInvalidCharacters(this string name)
     {
