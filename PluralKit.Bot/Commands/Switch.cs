@@ -154,8 +154,10 @@ public class Switch
         // Tell the user the edit suceeded
         if (members.Count == 0)
             await ctx.Reply($"{Emojis.Success} Switch edited. The latest switch is now a switch-out.");
-        else
+        if (members.Count == 1)
             await ctx.Reply($"{Emojis.Success} Switch edited. Current fronter is now {newSwitchMemberStr}.");
+        else
+            await ctx.Reply($"{Emojis.Success} Switch edited. Current fronters are now {newSwitchMemberStr}.");
     }
 
     public async Task SwitchDelete(Context ctx)
