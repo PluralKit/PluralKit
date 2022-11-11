@@ -49,7 +49,7 @@ public class ErrorMessageService
         }
 
         var channelInfo = _botConfig.IsBetaBot
-            ? "**#hi-please-break-the-beta-bot** on **[the support server *(click to join)*](https://discord.gg/THvbH59btW)**"
+            ? "**#beta-testing** on **[the support server *(click to join)*](https://discord.gg/THvbH59btW)**"
             : "**#bug-reports-and-errors** on **[the support server *(click to join)*](https://discord.gg/PczBt78)**";
 
         var embed = new EmbedBuilder()
