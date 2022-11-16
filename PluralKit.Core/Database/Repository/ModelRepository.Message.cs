@@ -63,17 +63,4 @@ public partial class ModelRepository
             _logger.Information("Bulk deleted messages ({FoundCount} found) from database: {MessageIds}", rowCount,
                 ids);
     }
-
-    public Task<PKMessage?> GetLastMessage(ulong guildId, ulong channelId, ulong accountId)
-    {
-        // Want to index scan on the (guild, sender, mid) index so need the additional constraint
-        var query = new Query("messages")
-            .Where("guild", guildId)
-            .Where("channel", channelId)
-            .Where("sender", accountId)
-            .OrderByDesc("mid")
-            .Limit(1);
-
-        return _db.QueryFirst<PKMessage?>(query);
-    }
 }

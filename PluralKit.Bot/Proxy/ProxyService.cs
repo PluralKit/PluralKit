@@ -22,6 +22,7 @@ public class ProxyService
     private static readonly TimeSpan MessageDeletionDelay = TimeSpan.FromMilliseconds(1000);
     private readonly IDiscordCache _cache;
     private readonly IDatabase _db;
+    private readonly RedisService _redis;
     private readonly DispatchService _dispatch;
     private readonly LastMessageCacheService _lastMessage;
 
@@ -35,13 +36,14 @@ public class ProxyService
     private readonly NodaTime.IClock _clock;
 
     public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor,
-            DispatchService dispatch, IDatabase db, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo,
+            DispatchService dispatch, IDatabase db, RedisService redis, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo,
                       NodaTime.IClock clock, IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
     {
         _logChannel = logChannel;
         _webhookExecutor = webhookExecutor;
         _dispatch = dispatch;
         _db = db;
+        _redis = redis;
         _matcher = matcher;
         _metrics = metrics;
         _repo = repo;
@@ -420,6 +422,15 @@ public class ProxyService
         Task SaveMessageInDatabase()
             => _repo.AddMessage(sentMessage);
 
+        async Task SaveMessageInRedis()
+        {
+            // logclean info
+            await _redis.SetLogCleanup(triggerMessage.Author.Id, triggerMessage.GuildId.Value);
+
+            // last message info (edit/reproxy)
+            await _redis.SetLastMessage(triggerMessage.Author.Id, triggerMessage.ChannelId, sentMessage.Mid);
+        }
+
         Task LogMessageToChannel() =>
             _logChannel.LogMessage(sentMessage, triggerMessage, proxyMessage).AsTask();
 
@@ -458,6 +469,7 @@ public class ProxyService
         await Task.WhenAll(
             DeleteProxyTriggerMessage(),
             SaveMessageInDatabase(),
+            SaveMessageInRedis(),
             LogMessageToChannel(),
             SaveLatchAutoproxy(),
             DispatchWebhook()

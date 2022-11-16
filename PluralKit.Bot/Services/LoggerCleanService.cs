@@ -80,11 +80,13 @@ public class LoggerCleanService
     private readonly DiscordApiClient _client;
 
     private readonly IDatabase _db;
+    private readonly RedisService _redis;
     private readonly ILogger _logger;
 
-    public LoggerCleanService(IDatabase db, DiscordApiClient client, IDiscordCache cache, ILogger logger)
+    public LoggerCleanService(IDatabase db, RedisService redis, DiscordApiClient client, IDiscordCache cache, ILogger logger)
     {
         _db = db;
+        _redis = redis;
         _client = client;
         _cache = cache;
         _logger = logger.ForContext<LoggerCleanService>();
@@ -124,20 +126,10 @@ public class LoggerCleanService
                 _logger.Debug("Fuzzy logclean for {BotName} on {MessageId}: {@FuzzyExtractResult}",
                     bot.Name, msg.Id, fuzzy);
 
-                var mid = await _db.Execute(conn =>
-                    conn.QuerySingleOrDefaultAsync<ulong?>(
-                        "select mid from messages where sender = @User and mid > @ApproxID and guild = @Guild limit 1",
-                        new
-                        {
-                            fuzzy.Value.User,
-                            Guild = msg.GuildId,
-                            ApproxId = DiscordUtils.InstantToSnowflake(
-                                fuzzy.Value.ApproxTimestamp - Duration.FromSeconds(3))
-                        }));
+                var exists = await _redis.HasLogCleanup(fuzzy.Value.User, msg.GuildId.Value);
 
                 // If we didn't find a corresponding message, bail
-                if (mid == null)
-                    return;
+                if (!exists) return;
 
                 // Otherwise, we can *reasonably assume* that this is a logged deletion, so delete the log message.
                 await _client.DeleteMessage(msg.ChannelId, msg.Id);
