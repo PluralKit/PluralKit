@@ -7,11 +7,11 @@ namespace PluralKit.Core;
 public interface IDatabase
 {
     Task ApplyMigrations();
-    Task<IPKConnection> Obtain();
+    Task<IPKConnection> Obtain(bool messages = false);
     Task Execute(Func<IPKConnection, Task> func);
     Task<T> Execute<T>(Func<IPKConnection, Task<T>> func);
     IAsyncEnumerable<T> Execute<T>(Func<IPKConnection, IAsyncEnumerable<T>> func);
-    Task<int> ExecuteQuery(Query q, string extraSql = "", [CallerMemberName] string queryName = "");
+    Task<int> ExecuteQuery(Query q, string extraSql = "", [CallerMemberName] string queryName = "", bool messages = false);
 
     Task<int> ExecuteQuery(IPKConnection? conn, Query q, string extraSql = "",
                            [CallerMemberName] string queryName = "");

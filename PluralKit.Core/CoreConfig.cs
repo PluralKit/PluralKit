@@ -5,6 +5,7 @@ namespace PluralKit.Core;
 public class CoreConfig
 {
     public string Database { get; set; }
+    public string? MessagesDatabase { get; set; }
     public string? DatabasePassword { get; set; }
     public string RedisAddr { get; set; }
     public bool UseRedisMetrics { get; set; } = false;

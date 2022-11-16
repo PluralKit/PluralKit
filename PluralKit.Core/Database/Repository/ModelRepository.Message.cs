@@ -20,29 +20,35 @@ public partial class ModelRepository
         _logger.Debug("Stored message {@StoredMessage} in channel {Channel}", msg, msg.Channel);
 
         // "on conflict do nothing" in the (pretty rare) case of duplicate events coming in from Discord, which would lead to a DB error before
-        return _db.ExecuteQuery(query, "on conflict do nothing");
+        return _db.ExecuteQuery(query, "on conflict do nothing", messages: true);
     }
 
-    // todo: add a Mapper to QuerySingle and move this to SqlKata
-    public async Task<FullMessage?> GetMessage(IPKConnection conn, ulong id)
+    public async Task<PKMessage?> GetMessage(ulong id)
     {
-        FullMessage Mapper(PKMessage msg, PKMember member, PKSystem system) =>
-            new() { Message = msg, System = system, Member = member };
+        await using var conn = await _db.Obtain(messages: true);
+        return await conn.QuerySingleOrDefaultAsync<PKMessage?>("select * from messages where mid = @Id", new { Id = id });
+    }
 
-        var query = "select * from messages"
-            + " left join members on messages.member = members.id"
-            + " left join systems on members.system = systems.id"
-            + " where (mid = @Id or original_mid = @Id)";
+    public async Task<FullMessage?> GetFullMessage(ulong id)
+    {
+        var rawMessage = await GetMessage(id);
+        if (rawMessage == null) return null;
 
-        var result = await conn.QueryAsync<PKMessage, PKMember, PKSystem, FullMessage>(
-            query, Mapper, new { Id = id });
-        return result.FirstOrDefault();
+        var member = rawMessage.Member == null ? null : await GetMember(rawMessage.Member.Value);
+        var system = member == null ? null : await GetSystem(member.System);
+
+        return new FullMessage
+        {
+            Message = rawMessage,
+            Member = member,
+            System = system,
+        };
     }
 
     public async Task DeleteMessage(ulong id)
     {
         var query = new Query("messages").AsDelete().Where("mid", id);
-        var rowCount = await _db.ExecuteQuery(query);
+        var rowCount = await _db.ExecuteQuery(query, messages: true);
         if (rowCount > 0)
             _logger.Information("Deleted message {MessageId} from database", id);
     }
@@ -52,7 +58,7 @@ public partial class ModelRepository
         // Npgsql doesn't support ulongs in general - we hacked around it for plain ulongs but tbh not worth it for collections of ulong
         // Hence we map them to single longs, which *are* supported (this is ok since they're Technically (tm) stored as signed longs in the db anyway)
         var query = new Query("messages").AsDelete().WhereIn("mid", ids.Select(id => (long)id).ToArray());
-        var rowCount = await _db.ExecuteQuery(query);
+        var rowCount = await _db.ExecuteQuery(query, messages: true);
         if (rowCount > 0)
             _logger.Information("Bulk deleted messages ({FoundCount} found) from database: {MessageIds}", rowCount,
                 ids);

@@ -31,10 +31,10 @@ internal partial class Database: IDatabase
             yield return val;
     }
 
-    public async Task<int> ExecuteQuery(Query q, string extraSql = "", [CallerMemberName] string queryName = "")
+    public async Task<int> ExecuteQuery(Query q, string extraSql = "", [CallerMemberName] string queryName = "", bool messages = false)
     {
         var query = _compiler.Compile(q);
-        using var conn = await Obtain();
+        using var conn = await Obtain(messages);
         using (_metrics.Measure.Timer.Time(CoreMetrics.DatabaseQuery, new MetricTags("Query", queryName)))
             return await conn.ExecuteAsync(query.Sql + $" {extraSql}", query.NamedBindings);
     }

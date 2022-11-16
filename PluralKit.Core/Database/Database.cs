@@ -25,6 +25,7 @@ internal partial class Database: IDatabase
     private readonly DbConnectionCountHolder _countHolder;
     private readonly DatabaseMigrator _migrator;
     private readonly string _connectionString;
+    private readonly string _messagesConnectionString;
 
     public Database(CoreConfig config, DbConnectionCountHolder countHolder, ILogger logger,
                     IMetrics metrics, DatabaseMigrator migrator)
@@ -35,20 +36,26 @@ internal partial class Database: IDatabase
         _migrator = migrator;
         _logger = logger.ForContext<Database>();
 
-        var connectionString = new NpgsqlConnectionStringBuilder(_config.Database)
+        string connectionString(string src)
         {
-            Pooling = true,
-            Enlist = false,
-            NoResetOnClose = true,
+            var builder = new NpgsqlConnectionStringBuilder(src)
+            {
+                Pooling = true,
+                Enlist = false,
+                NoResetOnClose = true,
 
-            // Lower timeout than default (15s -> 2s), should ideally fail-fast instead of hanging
-            Timeout = 2
-        };
+                // Lower timeout than default (15s -> 2s), should ideally fail-fast instead of hanging
+                Timeout = 2
+            };
 
-        if (_config.DatabasePassword != null)
-            connectionString.Password = _config.DatabasePassword;
+            if (_config.DatabasePassword != null)
+                builder.Password = _config.DatabasePassword;
 
-        _connectionString = connectionString.ConnectionString;
+            return builder.ConnectionString;
+        }
+
+        _connectionString = connectionString(_config.Database);
+        _messagesConnectionString = connectionString(_config.MessagesDatabase ?? _config.Database);
     }
 
     private static readonly PostgresCompiler _compiler = new();
@@ -87,14 +94,14 @@ internal partial class Database: IDatabase
         NpgsqlConnection.GlobalTypeMapper.MapEnum<PrivacyLevel>("privacy_level");
     }
 
-    public async Task<IPKConnection> Obtain()
+    public async Task<IPKConnection> Obtain(bool messages = false)
     {
         // Mark the request (for a handle, I guess) in the metrics
         _metrics.Measure.Meter.Mark(CoreMetrics.DatabaseRequests);
 
         // Create a connection and open it
         // We wrap it in PKConnection for tracing purposes
-        var conn = new PKConnection(new NpgsqlConnection(_connectionString), _countHolder, _logger, _metrics);
+        var conn = new PKConnection(new NpgsqlConnection(messages ? _messagesConnectionString : _connectionString), _countHolder, _logger, _metrics);
         await conn.OpenAsync();
         return conn;
     }
