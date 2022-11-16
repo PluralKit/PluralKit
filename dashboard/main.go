@@ -63,20 +63,21 @@ func notFoundHandler(rw http.ResponseWriter, r *http.Request) {
 	// lol
 	if strings.HasSuffix(r.URL.Path, ".js") {
 		data, err = fs.ReadFile("dist" + r.URL.Path)
-		rw.Header().Add("content-type", "application/javascript")
+		rw.Header().Set("content-type", "application/javascript")
 	} else if strings.HasSuffix(r.URL.Path, ".css") {
 		data, err = fs.ReadFile("dist" + r.URL.Path)
-		rw.Header().Add("content-type", "text/css")
+		rw.Header().Set("content-type", "text/css")
 	} else if strings.HasSuffix(r.URL.Path, ".map") {
 		data, err = fs.ReadFile("dist" + r.URL.Path)
 	} else {
 		data, err = fs.ReadFile("dist/index.html")
-		rw.Header().Add("content-type", "text/html")
+		rw.Header().Set("content-type", "text/html")
 		data = []byte(strings.Replace(string(data), `<!-- extra data -->`, defaultEmbed+versionJS, 1))
 	}
 
 	if err != nil {
-		panic(err)
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	rw.Write(data)
