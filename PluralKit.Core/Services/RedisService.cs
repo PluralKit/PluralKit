@@ -16,7 +16,7 @@ public class RedisService
 
     public Task SetLastMessage(ulong userId, ulong channelId, ulong mid)
         => Connection.GetDatabase().StringSetAsync(LastMessageKey(userId, channelId), mid, expiry: TimeSpan.FromMinutes(10));
-    
+
     public async Task<ulong?> GetLastMessage(ulong userId, ulong channelId)
     {
         var data = await Connection.GetDatabase().StringGetAsync(LastMessageKey(userId, channelId));
@@ -34,7 +34,7 @@ public class RedisService
 
 
     private string LoggerCleanKey(ulong userId, ulong guildId) => $"log_cleanup:{userId}:{guildId}";
-    
+
     public Task SetLogCleanup(ulong userId, ulong guildId)
         => Connection.GetDatabase().StringSetAsync(LoggerCleanKey(userId, guildId), 1, expiry: TimeSpan.FromSeconds(3));
 
