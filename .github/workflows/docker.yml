@@ -29,7 +29,5 @@ jobs:
           push: true
           tags: |
             ghcr.io/pluralkit/pluralkit:dev
-            ghcr.io/pluralkit/pluralkit:${{ env.BRANCH_NAME }}
             ghcr.io/pluralkit/pluralkit:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/pluralkit/pluralkit:${{ env.BRANCH_NAME }}
           cache-to: type=inline
