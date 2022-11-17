@@ -87,6 +87,7 @@ internal partial class Database: IDatabase
         NpgsqlConnection.GlobalTypeMapper.MapEnum<PrivacyLevel>("privacy_level");
     }
 
+    // TODO: make sure every SQL query is behind a logged query method
     public async Task<IPKConnection> Obtain()
     {
         // Mark the request (for a handle, I guess) in the metrics

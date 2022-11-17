@@ -124,9 +124,10 @@ internal class PKCommand: DbCommand, IPKCommand
                 elapsed, _ourConnection.ConnectionId);
 
             // One "BCL compatible tick" is 100 nanoseconds
-            var micros = elapsed.BclCompatibleTicks / 10;
-            _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", CommandText))
-                .Record(micros, TimeUnit.Microseconds, CommandText);
+
+            // var micros = elapsed.BclCompatibleTicks / 10;
+            // _metrics.Provider.Timer.Instance(CoreMetrics.DatabaseQuery, new MetricTags("query", CommandText))
+            //     .Record(micros, TimeUnit.Microseconds, CommandText);
         }
     }
 
