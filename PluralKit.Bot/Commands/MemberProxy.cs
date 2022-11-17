@@ -114,6 +114,10 @@ public class MemberProxy
                     throw Errors.GenericCancelled();
             }
 
+            if (requestedTag.ProxyString.Length > Limits.MaxProxyTagLength)
+                throw new PKError(
+                    $"Proxy tag too long ({requestedTag.ProxyString.Length} > {Limits.MaxProxyTagLength} characters).");
+
             if (!await WarnOnConflict(requestedTag))
                 throw Errors.GenericCancelled();
 
