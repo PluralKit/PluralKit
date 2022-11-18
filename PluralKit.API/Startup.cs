@@ -17,17 +17,9 @@ namespace PluralKit.API;
 
 public class Startup
 {
-    public Startup(IConfiguration configuration)
-    {
-        Configuration = configuration;
-    }
-
-    public IConfiguration Configuration { get; }
-
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddCors();
         services.AddControllers()
             // sorry MS, this just does *more*
             .AddNewtonsoftJson(opts =>
@@ -39,33 +31,6 @@ public class Startup
                 options.InvalidModelStateResponseFactory = context =>
                     throw Errors.GenericBadRequest
             );
-
-        services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1.0", new OpenApiInfo { Title = "PluralKit", Version = "1.0" });
-
-            c.EnableAnnotations();
-            c.AddSecurityDefinition("TokenAuth",
-                new OpenApiSecurityScheme { Name = "Authorization", Type = SecuritySchemeType.ApiKey });
-
-            // Exclude routes without a version, then fall back to group name matching (default behavior)
-            c.DocInclusionPredicate((docName, apiDesc) =>
-            {
-                if (!apiDesc.RelativePath.StartsWith("v1/")) return false;
-                return apiDesc.GroupName == docName;
-            });
-
-            // Set the comments path for the Swagger JSON and UI.
-            // https://docs.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle?view=aspnetcore-3.1&tabs=visual-studio#customize-and-extend
-            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            c.IncludeXmlComments(xmlPath);
-        });
-        services.AddSwaggerGenNewtonsoftSupport();
-
-        // metrics
-        services.AddMetricsTrackingMiddleware();
-        services.AddAppMetricsCollectors();
     }
 
     public void ConfigureContainer(ContainerBuilder builder)
@@ -77,23 +42,13 @@ public class Startup
             cfg: new LoggerConfiguration().Filter.ByExcluding(
                 exc => exc.Exception is PKError || exc.Exception.IsUserError()
         )));
-        // builder.RegisterModule(new MetricsModule("API"));
         builder.RegisterModule<DataStoreModule>();
-        builder.RegisterModule<APIModule>();
+        builder.RegisterModule(new MetricsModule());
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
-        if (env.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-
-            // Only enable Swagger stuff when ASPNETCORE_ENVIRONMENT=Development (for now)
-            app.UseSwagger();
-            app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "PluralKit (v1)"); });
-        }
-
         // add X-PluralKit-Version header
         app.Use((ctx, next) =>
         {
@@ -127,12 +82,7 @@ public class Startup
 
         app.UseMiddleware<AuthorizationTokenHandlerMiddleware>();
 
-        //app.UseHttpsRedirection();
-        // app.UseCors(opts => opts.AllowAnyMethod().AllowAnyOrigin().WithHeaders("Content-Type", "Authorization", "sentry-trace"));
-
         app.UseRouting();
-        app.UseAuthentication();
-        app.UseAuthorization();
         app.UseEndpoints(endpoints =>
         {
             // register base / legacy routes
@@ -142,8 +92,5 @@ public class Startup
             // register controllers
             endpoints.MapControllers();
         });
-
-        // metrics
-        app.UseMetricsAllMiddleware();
     }
 }

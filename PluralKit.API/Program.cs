@@ -1,7 +1,3 @@
-using App.Metrics;
-using App.Metrics.AspNetCore;
-using App.Metrics.Formatters.Prometheus;
-
 using Autofac.Extensions.DependencyInjection;
 
 using PluralKit.Core;
@@ -12,15 +8,8 @@ namespace PluralKit.API;
 
 public class Program
 {
-    public static IMetricsRoot _metrics { get; set; }
-
     public static async Task Main(string[] args)
     {
-        _metrics = AppMetrics.CreateDefaultBuilder()
-            .OutputMetrics.AsPrometheusPlainText()
-            .OutputMetrics.AsPrometheusProtobuf()
-            .Build();
-
         InitUtils.InitStatic();
         await BuildInfoService.LoadVersion();
         var host = CreateHostBuilder(args).Build();
@@ -31,18 +20,6 @@ public class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
-            .ConfigureMetrics(_metrics)
-            .UseMetricsWebTracking()
-            .UseMetricsEndpoints()
-            .UseMetrics(
-            options =>
-            {
-                options.EndpointOptions = endpointsOptions =>
-                {
-                    endpointsOptions.MetricsTextEndpointOutputFormatter = _metrics.OutputMetricsFormatters.OfType<MetricsPrometheusTextOutputFormatter>().First();
-                    endpointsOptions.MetricsEndpointOutputFormatter = _metrics.OutputMetricsFormatters.OfType<MetricsPrometheusProtobufOutputFormatter>().First();
-                };
-            })
             .UseServiceProviderFactory(new AutofacServiceProviderFactory())
             .UseSerilog()
             .ConfigureWebHostDefaults(whb => whb
