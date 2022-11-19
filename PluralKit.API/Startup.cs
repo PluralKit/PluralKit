@@ -1,11 +1,6 @@
-using System.Reflection;
-
 using Autofac;
 
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.OpenApi.Models;
 
 using Newtonsoft.Json;
 
