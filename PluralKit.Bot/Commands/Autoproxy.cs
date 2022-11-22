@@ -107,7 +107,7 @@ public class Autoproxy
             AutoproxyMode.Front => fronters.Count > 0 ? fronters[0] : null,
             AutoproxyMode.Member when settings.AutoproxyMember.HasValue => await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
             AutoproxyMode.Latch when settings.AutoproxyMember.HasValue && ctx.Config.LatchTimeout == 0 => await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
-            AutoproxyMode.Latch when settings.AutoproxyMember.HasValue => 
+            AutoproxyMode.Latch when settings.AutoproxyMember.HasValue =>
                 _clock.GetCurrentInstant() - settings.LastLatchTimestamp > latchTimeout
                     ? null
                     : await ctx.Repository.GetMember(settings.AutoproxyMember.Value),
