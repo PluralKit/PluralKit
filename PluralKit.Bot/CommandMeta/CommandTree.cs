@@ -117,6 +117,12 @@ public partial class CommandTree
             await ctx.Execute<Admin>(Admin, a => a.UpdateMemberId(ctx));
         else if (ctx.Match("ugid", "updategroupid"))
             await ctx.Execute<Admin>(Admin, a => a.UpdateGroupId(ctx));
+        else if (ctx.Match("rsid", "rerollsystemid"))
+            await ctx.Execute<Admin>(Admin, a => a.RerollSystemId(ctx));
+        else if (ctx.Match("rmid", "rerollmemberid"))
+            await ctx.Execute<Admin>(Admin, a => a.RerollMemberId(ctx));
+        else if (ctx.Match("rgid", "rerollgroupid"))
+            await ctx.Execute<Admin>(Admin, a => a.RerollGroupId(ctx));
         else if (ctx.Match("uml", "updatememberlimit"))
             await ctx.Execute<Admin>(Admin, a => a.SystemMemberLimit(ctx));
         else if (ctx.Match("ugl", "updategrouplimit"))

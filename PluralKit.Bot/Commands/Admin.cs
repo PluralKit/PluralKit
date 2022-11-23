@@ -1,5 +1,8 @@
 using System.Text.RegularExpressions;
 
+using Dapper;
+using SqlKata;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -84,6 +87,74 @@ public class Admin
             throw new PKError("ID change cancelled.");
 
         await ctx.Repository.UpdateGroup(target.Id, new GroupPatch { Hid = newHid });
+        await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
+    }
+
+    public async Task RerollSystemId(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchSystem();
+        if (target == null)
+            throw new PKError("Unknown system.");
+
+        if (!await ctx.PromptYesNo($"Reroll system ID `{target.Hid}`?", "Reroll"))
+            throw new PKError("ID change cancelled.");
+
+        var query = new Query("systems").AsUpdate(new
+        {
+            hid = new UnsafeLiteral("find_free_system_hid()"),
+        })
+        .Where("id", target.Id);
+
+        var newHid = await ctx.Database.QueryFirst<string>(query, "returning hid");
+        await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
+    }
+
+    public async Task RerollMemberId(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchMember();
+        if (target == null)
+            throw new PKError("Unknown member.");
+
+        if (!await ctx.PromptYesNo(
+            $"Reroll member ID for **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`)?",
+            "Reroll"
+        ))
+            throw new PKError("ID change cancelled.");
+
+        var query = new Query("members").AsUpdate(new
+        {
+            hid = new UnsafeLiteral("find_free_member_hid()"),
+        })
+        .Where("id", target.Id);
+
+        var newHid = await ctx.Database.QueryFirst<string>(query, "returning hid");
+        await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
+    }
+
+    public async Task RerollGroupId(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchGroup();
+        if (target == null)
+            throw new PKError("Unknown group.");
+
+        if (!await ctx.PromptYesNo($"Reroll group ID for **{target.Name}** (`{target.Hid}`)?",
+            "Change"
+        ))
+            throw new PKError("ID change cancelled.");
+
+        var query = new Query("groups").AsUpdate(new
+        {
+            hid = new UnsafeLiteral("find_free_group_hid()"),
+        })
+        .Where("id", target.Id);
+
+        var newHid = await ctx.Database.QueryFirst<string>(query, "returning hid");
         await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
