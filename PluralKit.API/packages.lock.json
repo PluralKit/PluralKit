@@ -61,63 +61,6 @@
           "Serilog.Sinks.File": "4.1.0"
         }
       },
-      "Swashbuckle.AspNetCore.Annotations": {
-        "type": "Direct",
-        "requested": "[5.6.3, )",
-        "resolved": "5.6.3",
-        "contentHash": "ucCJueBMJZ86z2w43wwdziBGdvjpkBXndSlr34Zz2dDXXfTA0kIsUbSzS/PWMCOINozJkFSWadWQ0BP+zOxQcA==",
-        "dependencies": {
-          "Swashbuckle.AspNetCore.SwaggerGen": "5.6.3"
-        }
-      },
-      "Swashbuckle.AspNetCore.Filters": {
-        "type": "Direct",
-        "requested": "[6.0.1, )",
-        "resolved": "6.0.1",
-        "contentHash": "e9n8g5FerM9LEzErUQFIP2YoRK+3LMAQdpOddJgDsyHQE60886l1GSu2UnVzdzTh0TEDHJ0yIjN6ciitjs9Wdw==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection": "2.1.0",
-          "Microsoft.OpenApi": "1.2.2",
-          "Newtonsoft.Json": "12.0.3",
-          "Scrutor": "3.0.1",
-          "Swashbuckle.AspNetCore": "5.0.0",
-          "Swashbuckle.AspNetCore.Annotations": "5.0.0"
-        }
-      },
-      "Swashbuckle.AspNetCore.Newtonsoft": {
-        "type": "Direct",
-        "requested": "[5.6.3, )",
-        "resolved": "5.6.3",
-        "contentHash": "nLVhWdyyOoapuA6NiSBPHBZcYiPUR7PaKwDfpojI0z/E/5RTkx1cLy2Ks0pSgtsAiFtwkYPAbqIEDEB+VNIjfA==",
-        "dependencies": {
-          "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "3.0.0",
-          "Swashbuckle.AspNetCore.SwaggerGen": "5.6.3"
-        }
-      },
-      "Swashbuckle.AspNetCore.Swagger": {
-        "type": "Direct",
-        "requested": "[5.6.3, )",
-        "resolved": "5.6.3",
-        "contentHash": "rn/MmLscjg6WSnTZabojx5DQYle2GjPanSPbCU3Kw8Hy72KyQR3uy8R1Aew5vpNALjfUFm2M/vwUtqdOlzw+GA==",
-        "dependencies": {
-          "Microsoft.OpenApi": "1.2.3"
-        }
-      },
-      "Swashbuckle.AspNetCore.SwaggerGen": {
-        "type": "Direct",
-        "requested": "[5.6.3, )",
-        "resolved": "5.6.3",
-        "contentHash": "CkhVeod/iLd3ikVTDOwG5sym8BE5xbqGJ15iF3cC7ZPg2kEwDQL4a88xjkzsvC9oOB2ax6B0rK0EgRK+eOBX+w==",
-        "dependencies": {
-          "Swashbuckle.AspNetCore.Swagger": "5.6.3"
-        }
-      },
-      "Swashbuckle.AspNetCore.SwaggerUI": {
-        "type": "Direct",
-        "requested": "[5.6.3, )",
-        "resolved": "5.6.3",
-        "contentHash": "BPvcPxQRMsYZ3HnYmGKRWDwX4Wo29WHh14Q6B10BB8Yfbbcza+agOC2UrBFA1EuaZuOsFLbp6E2+mqVNF/Je8A=="
-      },
       "App.Metrics": {
         "type": "Transitive",
         "resolved": "4.1.0",
@@ -264,8 +207,8 @@
       },
       "Microsoft.DotNet.PlatformAbstractions": {
         "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "9KPDwvb/hLEVXYruVHVZ8BkebC8j17DmPb56LnqRF74HqSPLjCkrlFUjOtFpQPA2DeADBRTI/e69aCfRBfrhxw==",
+        "resolved": "2.0.4",
+        "contentHash": "2HjSGp63VCLQaeGadrLYR868g25mJHr+TFF81yWCaClzjUbU2vNDx6km7SUgPnoLVksE/1e7in88eh+oPtc4aQ==",
         "dependencies": {
           "System.AppContext": "4.1.0",
           "System.Collections": "4.0.11",
@@ -276,11 +219,6 @@
           "System.Runtime.InteropServices": "4.1.0",
           "System.Runtime.InteropServices.RuntimeInformation": "4.0.0"
         }
-      },
-      "Microsoft.Extensions.ApiDescription.Server": {
-        "type": "Transitive",
-        "resolved": "3.0.0",
-        "contentHash": "LH4OE/76F6sOCslif7+Xh3fS/wUUrE5ryeXAMcoCnuwOQGT5Smw0p57IgDh/pHgHaGz/e+AmEQb7pRgb++wt0w=="
       },
       "Microsoft.Extensions.Caching.Abstractions": {
         "type": "Transitive",
@@ -374,10 +312,10 @@
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "nS2XKqi+1A1umnYNLX2Fbm/XnzCxs5i+zXVJ3VC6r9t2z0NZr9FLnJN4VQpKigdcWH/iFTbMuX6M6WQJcTjVIg==",
+        "resolved": "2.0.4",
+        "contentHash": "jnHAeijsfJFQXdXmnYK/NhQIkgBUeth//RZZkf0ldIKC+jARbf7YxbA9uTrs/EPhuQxHXaDxVuMyscgmL+UqfA==",
         "dependencies": {
-          "Microsoft.DotNet.PlatformAbstractions": "2.1.0",
+          "Microsoft.DotNet.PlatformAbstractions": "2.0.4",
           "Newtonsoft.Json": "9.0.1",
           "System.Diagnostics.Debug": "4.0.11",
           "System.Dynamic.Runtime": "4.0.11",
@@ -467,11 +405,6 @@
         "type": "Transitive",
         "resolved": "1.1.0",
         "contentHash": "aOZA3BWfz9RXjpzt0sRJJMjAscAUm3Hoa4UWAfceV9UTYxgwZ1lZt5nO2myFf+/jetYQo4uTP7zS8sJY67BBxg=="
-      },
-      "Microsoft.OpenApi": {
-        "type": "Transitive",
-        "resolved": "1.2.3",
-        "contentHash": "Nug3rO+7Kl5/SBAadzSMAVgqDlfGjJZ0GenQrLywJ84XGKO0uRqkunz5Wyl0SDwcR71bAATXvSdbdzPrYRYKGw=="
       },
       "Microsoft.Win32.Primitives": {
         "type": "Transitive",
@@ -713,15 +646,6 @@
         "resolved": "4.3.0",
         "contentHash": "VB5cn/7OzUfzdnC8tqAIMQciVLiq2epm2NrAm1E9OjNRyG4lVhfR61SMcLizejzQP8R8Uf/0l5qOIbUEi+RdEg=="
       },
-      "Scrutor": {
-        "type": "Transitive",
-        "resolved": "3.0.1",
-        "contentHash": "biheXROWXbciLzPOg/PttVH4w4Q8ADx89bQP8eKiGf1IJj0EOLYRjoctsMGQzi4mB+e4ICMqFeA8Spr0NKN4ZA==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "2.1.1",
-          "Microsoft.Extensions.DependencyModel": "2.1.0"
-        }
-      },
       "Serilog": {
         "type": "Transitive",
         "resolved": "2.10.0",
@@ -872,17 +796,6 @@
         "dependencies": {
           "Pipelines.Sockets.Unofficial": "2.2.0",
           "System.Diagnostics.PerformanceCounter": "5.0.0"
-        }
-      },
-      "Swashbuckle.AspNetCore": {
-        "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "HoJbhDNyeDqr2R1H3YhtPqGacxgZKBFBS6g5U3tlJpv80G/IHW8hHbcnHSTXZpcatnD+xh8UiUrKp4Ua857LSQ==",
-        "dependencies": {
-          "Microsoft.Extensions.ApiDescription.Server": "3.0.0",
-          "Swashbuckle.AspNetCore.Swagger": "5.0.0",
-          "Swashbuckle.AspNetCore.SwaggerGen": "5.0.0",
-          "Swashbuckle.AspNetCore.SwaggerUI": "5.0.0"
         }
       },
       "System.AppContext": {
@@ -1700,39 +1613,39 @@
       "pluralkit.core": {
         "type": "Project",
         "dependencies": {
-          "App.Metrics": "4.1.0",
-          "App.Metrics.Reporting.InfluxDB": "4.1.0",
-          "Autofac": "6.0.0",
-          "Autofac.Extensions.DependencyInjection": "7.1.0",
-          "Dapper": "2.0.35",
-          "Dapper.Contrib": "2.0.35",
-          "Google.Protobuf": "3.13.0",
-          "Microsoft.Extensions.Caching.Memory": "3.1.10",
-          "Microsoft.Extensions.Configuration": "3.1.10",
-          "Microsoft.Extensions.Configuration.Binder": "3.1.10",
-          "Microsoft.Extensions.Configuration.CommandLine": "3.1.10",
-          "Microsoft.Extensions.Configuration.EnvironmentVariables": "3.1.10",
-          "Microsoft.Extensions.Configuration.Json": "3.1.10",
-          "Microsoft.Extensions.DependencyInjection": "3.1.10",
-          "Microsoft.Extensions.Logging": "3.1.10",
-          "Newtonsoft.Json": "12.0.3",
-          "NodaTime": "3.0.3",
-          "NodaTime.Serialization.JsonNet": "3.0.0",
-          "Npgsql": "4.1.5",
-          "Npgsql.NodaTime": "4.1.5",
-          "Serilog": "2.10.0",
-          "Serilog.Extensions.Logging": "3.0.1",
-          "Serilog.Formatting.Compact": "1.1.0",
-          "Serilog.NodaTime": "3.0.0",
-          "Serilog.Sinks.Async": "1.4.1-dev-00071",
-          "Serilog.Sinks.Console": "4.0.0-dev-00834",
-          "Serilog.Sinks.Elasticsearch": "8.4.1",
-          "Serilog.Sinks.File": "4.1.0",
-          "SqlKata": "2.3.7",
-          "SqlKata.Execution": "2.3.7",
-          "StackExchange.Redis": "2.2.88",
-          "System.Interactive.Async": "5.0.0",
-          "ipnetwork2": "2.5.381"
+          "App.Metrics": "[4.1.0, )",
+          "App.Metrics.Reporting.InfluxDB": "[4.1.0, )",
+          "Autofac": "[6.0.0, )",
+          "Autofac.Extensions.DependencyInjection": "[7.1.0, )",
+          "Dapper": "[2.0.35, )",
+          "Dapper.Contrib": "[2.0.35, )",
+          "Google.Protobuf": "[3.13.0, )",
+          "Microsoft.Extensions.Caching.Memory": "[3.1.10, )",
+          "Microsoft.Extensions.Configuration": "[3.1.10, )",
+          "Microsoft.Extensions.Configuration.Binder": "[3.1.10, )",
+          "Microsoft.Extensions.Configuration.CommandLine": "[3.1.10, )",
+          "Microsoft.Extensions.Configuration.EnvironmentVariables": "[3.1.10, )",
+          "Microsoft.Extensions.Configuration.Json": "[3.1.10, )",
+          "Microsoft.Extensions.DependencyInjection": "[3.1.10, )",
+          "Microsoft.Extensions.Logging": "[3.1.10, )",
+          "Newtonsoft.Json": "[12.0.3, )",
+          "NodaTime": "[3.0.3, )",
+          "NodaTime.Serialization.JsonNet": "[3.0.0, )",
+          "Npgsql": "[4.1.5, )",
+          "Npgsql.NodaTime": "[4.1.5, )",
+          "Serilog": "[2.10.0, )",
+          "Serilog.Extensions.Logging": "[3.0.1, )",
+          "Serilog.Formatting.Compact": "[1.1.0, )",
+          "Serilog.NodaTime": "[3.0.0, )",
+          "Serilog.Sinks.Async": "[1.4.1-dev-00071, )",
+          "Serilog.Sinks.Console": "[4.0.0-dev-00834, )",
+          "Serilog.Sinks.Elasticsearch": "[8.4.1, )",
+          "Serilog.Sinks.File": "[4.1.0, )",
+          "SqlKata": "[2.3.7, )",
+          "SqlKata.Execution": "[2.3.7, )",
+          "StackExchange.Redis": "[2.2.88, )",
+          "System.Interactive.Async": "[5.0.0, )",
+          "ipnetwork2": "[2.5.381, )"
         }
       }
     }
