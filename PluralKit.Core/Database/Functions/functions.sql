@@ -14,12 +14,14 @@
         tag_enabled bool,
         system_avatar text,
         allow_autoproxy bool,
-        latch_timeout integer
+        latch_timeout integer,
+        case_sensitive_proxy_tags bool
     )
 as $$
     -- CTEs to query "static" (accessible only through args) data
     with
-        system as (select systems.*, system_config.latch_timeout, system_guild.tag as guild_tag, system_guild.tag_enabled as tag_enabled, allow_autoproxy as account_autoproxy from accounts
+        system as (select systems.*, system_config.latch_timeout, system_guild.tag as guild_tag, system_guild.tag_enabled as tag_enabled, 
+                          allow_autoproxy as account_autoproxy, system_config.case_sensitive_proxy_tags from accounts
             left join systems on systems.id = accounts.system
             left join system_config on system_config.system = accounts.system
             left join system_guild on system_guild.system = accounts.system and system_guild.guild = guild_id
@@ -40,7 +42,8 @@ as $$
         coalesce(system.tag_enabled, true)         as tag_enabled,
         system.avatar_url                          as system_avatar,
         system.account_autoproxy                   as allow_autoproxy,
-        system.latch_timeout                       as latch_timeout
+        system.latch_timeout                       as latch_timeout,
+        system.case_sensitive_proxy_tags           as case_sensitive_proxy_tags
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder

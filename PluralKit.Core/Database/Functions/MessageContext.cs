@@ -28,4 +28,5 @@ public class MessageContext
     public string? SystemAvatar { get; }
     public bool AllowAutoproxy { get; }
     public int? LatchTimeout { get; }
+    public bool CaseSensitiveProxyTags { get; }
 }
