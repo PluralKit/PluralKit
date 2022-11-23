@@ -37,6 +37,15 @@ func run_redis_query() []rstatval {
 	return values
 }
 
+func get_message_count() int {
+	var count int
+	row := messages_db.QueryRow(context.Background(), "select count(*) as count from systems")
+	if err := row.Scan(&count); err != nil {
+		panic(err)
+	}
+	return count
+}
+
 func run_data_stats_query() map[string]interface{} {
 	s := map[string]interface{}{}
 

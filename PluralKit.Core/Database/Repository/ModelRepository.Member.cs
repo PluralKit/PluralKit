@@ -89,4 +89,12 @@ public partial class ModelRepository
         if (oldMember != null)
             _ = _dispatch.Dispatch(oldMember.System, oldMember.Uuid, DispatchEvent.DELETE_MEMBER);
     }
+
+    public async Task<bool> IsMemberOwnedByAccount(MemberId id, ulong userId)
+    {
+        return await _db.QueryFirst<bool>(
+            "select true from accounts, members where members.id = @member and accounts.uid = @account and members.system = accounts.system",
+            new { member = id, account = userId }
+        );
+    }
 }

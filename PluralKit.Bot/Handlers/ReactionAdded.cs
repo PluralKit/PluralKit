@@ -91,7 +91,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             // Message deletion
             case "\u274C": // Red X
                 {
-                    var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
+                    var msg = await _repo.GetMessage(evt.MessageId);
                     if (msg != null)
                         await HandleProxyDeleteReaction(evt, msg);
 
@@ -100,7 +100,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             case "\u2753": // Red question mark
             case "\u2754": // White question mark
                 {
-                    var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
+                    var msg = await _repo.GetFullMessage(evt.MessageId);
                     if (msg != null)
                         await HandleQueryReaction(evt, msg);
 
@@ -113,7 +113,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             case "\u23F0": // Alarm clock
             case "\u2757": // Exclamation mark
                 {
-                    var msg = await _db.Execute(c => _repo.GetMessage(c, evt.MessageId));
+                    var msg = await _repo.GetFullMessage(evt.MessageId);
                     if (msg != null)
                         await HandlePingReaction(evt, msg);
                     break;
@@ -121,15 +121,15 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         }
     }
 
-    private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEvent evt, FullMessage msg)
+    private async ValueTask HandleProxyDeleteReaction(MessageReactionAddEvent evt, PKMessage msg)
     {
         if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
             return;
 
-        var system = await _repo.GetSystemByAccount(evt.UserId);
+        var isSameSystem = msg.Member != null && await _repo.IsMemberOwnedByAccount(msg.Member.Value, evt.UserId);
 
-        // Can only delete your own message
-        if (msg.System?.Id != system?.Id && msg.Message.Sender != evt.UserId) return;
+        // Can only delete your own message (same system or same Discord account)
+        if (!isSameSystem && msg.Sender != evt.UserId) return;
 
         try
         {

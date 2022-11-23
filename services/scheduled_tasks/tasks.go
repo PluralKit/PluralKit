@@ -36,14 +36,12 @@ func update_db_meta() {
 }
 
 func update_db_message_meta() {
-	// since we're doing this concurrently, it needs a separate db connection
-	tmp_db := pg_connect(get_env_var("DATA_DB_URI"))
-	defer tmp_db.Close(context.Background())
+	count := get_message_count()
 
-	key := "message"
-	q := fmt.Sprintf("update info set %s_count = (select count(*) from %s)", key, plural(key))
-	log.Println("data db query:", q)
-	run_simple_pg_query(tmp_db, q)
+	_, err := data_db.Exec(context.Background(), "update info set message_count = $1", count)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func update_stats() {

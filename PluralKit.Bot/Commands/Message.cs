@@ -55,9 +55,9 @@ public class ProxiedMessage
 
     public async Task ReproxyMessage(Context ctx)
     {
-        var msg = await GetMessageToEdit(ctx, ReproxyTimeout, true);
+        var (msg, systemId) = await GetMessageToEdit(ctx, ReproxyTimeout, true);
 
-        if (ctx.System.Id != msg.System?.Id)
+        if (ctx.System.Id != systemId)
             throw new PKError("Can't reproxy a message sent by a different system.");
 
         // Get target member ID
@@ -68,14 +68,14 @@ public class ProxiedMessage
         // Fetch members and get the ProxyMember for `target`
         List<ProxyMember> members;
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
-            members = (await _repo.GetProxyMembers(ctx.Author.Id, msg.Message.Guild!.Value)).ToList();
+            members = (await _repo.GetProxyMembers(ctx.Author.Id, msg.Guild!.Value)).ToList();
         var match = members.Find(x => x.Id == target.Id);
         if (match == null)
             throw new PKError("Could not find a member to reproxy the message with.");
 
         try
         {
-            await _proxy.ExecuteReproxy(ctx.Message, msg.Message, members, match);
+            await _proxy.ExecuteReproxy(ctx.Message, msg, members, match);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
@@ -90,15 +90,15 @@ public class ProxiedMessage
 
     public async Task EditMessage(Context ctx)
     {
-        var msg = await GetMessageToEdit(ctx, EditTimeout, false);
+        var (msg, systemId) = await GetMessageToEdit(ctx, EditTimeout, false);
 
-        if (ctx.System.Id != msg.System?.Id)
+        if (ctx.System.Id != systemId)
             throw new PKError("Can't edit a message sent by a different system.");
 
         if (!ctx.HasNext())
             throw new PKSyntaxError("You need to include the message to edit in.");
 
-        var originalMsg = await _rest.GetMessageOrNull(msg.Message.Channel, msg.Message.Mid);
+        var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
 
@@ -124,7 +124,7 @@ public class ProxiedMessage
         try
         {
             var editedMsg =
-                await _webhookExecutor.EditWebhookMessage(msg.Message.Channel, msg.Message.Mid, newContent);
+                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
@@ -132,7 +132,7 @@ public class ProxiedMessage
             if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
                 await _rest.DeleteMessage(ctx.Channel.Id, ctx.Message.Id);
 
-            await _logChannel.LogMessage(msg.Message, ctx.Message, editedMsg, originalMsg!.Content!);
+            await _logChannel.LogMessage(msg, ctx.Message, editedMsg, originalMsg!.Content!);
         }
         catch (NotFoundException)
         {
@@ -140,18 +140,18 @@ public class ProxiedMessage
         }
     }
 
-    private async Task<FullMessage> GetMessageToEdit(Context ctx, Duration timeout, bool isReproxy)
+    private async Task<(PKMessage, SystemId)> GetMessageToEdit(Context ctx, Duration timeout, bool isReproxy)
     {
         var editType = isReproxy ? "reproxy" : "edit";
         var editTypeAction = isReproxy ? "reproxied" : "edited";
 
-        FullMessage? msg = null;
+        PKMessage? msg = null;
 
         var (referencedMessage, _) = ctx.MatchMessage(false);
         if (referencedMessage != null)
         {
             await using var conn = await ctx.Database.Obtain();
-            msg = await ctx.Repository.GetMessage(conn, referencedMessage.Value);
+            msg = await ctx.Repository.GetMessage(referencedMessage.Value);
             if (msg == null)
                 throw new PKError("This is not a message proxied by PluralKit.");
         }
@@ -161,7 +161,7 @@ public class ProxiedMessage
             if (ctx.Guild == null)
                 throw new PKSyntaxError($"You must use a message link to {editType} messages in DMs.");
 
-            PKMessage? recent;
+            ulong? recent = null;
 
             if (isReproxy)
                 recent = await ctx.Repository.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
@@ -172,17 +172,21 @@ public class ProxiedMessage
                 throw new PKSyntaxError($"Could not find a recent message to {editType}.");
 
             await using var conn = await ctx.Database.Obtain();
-            msg = await ctx.Repository.GetMessage(conn, recent.Mid);
+            msg = await ctx.Repository.GetMessage(recent.Value);
             if (msg == null)
                 throw new PKSyntaxError($"Could not find a recent message to {editType}.");
         }
 
-        if (msg.Message.Channel != ctx.Channel.Id)
+        var member = await ctx.Repository.GetMember(msg.Member!.Value);
+        if (member == null)
+            throw new PKSyntaxError($"Could not find a recent message to {editType}.");
+
+        if (msg.Channel != ctx.Channel.Id)
         {
             var error =
                 "The channel where the message was sent does not exist anymore, or you are missing permissions to access it.";
 
-            var channel = await _rest.GetChannelOrNull(msg.Message.Channel);
+            var channel = await _rest.GetChannelOrNull(msg.Channel);
             if (channel == null)
                 throw new PKError(error);
 
@@ -192,16 +196,18 @@ public class ProxiedMessage
                 throw new PKError(error);
         }
 
-        var isLatestMessage = _lastMessageCache.GetLastMessage(ctx.Message.ChannelId)?.Current.Id == ctx.Message.Id
-            ? _lastMessageCache.GetLastMessage(ctx.Message.ChannelId)?.Previous?.Id == msg.Message.Mid
-            : _lastMessageCache.GetLastMessage(ctx.Message.ChannelId)?.Current.Id == msg.Message.Mid;
+        var lastMessage = _lastMessageCache.GetLastMessage(ctx.Message.ChannelId);
 
-        var msgTimestamp = DiscordUtils.SnowflakeToInstant(msg.Message.Mid);
+        var isLatestMessage = lastMessage?.Current.Id == ctx.Message.Id
+            ? lastMessage?.Previous?.Id == msg.Mid
+            : lastMessage?.Current.Id == msg.Mid;
+
+        var msgTimestamp = DiscordUtils.SnowflakeToInstant(msg.Mid);
         if (isReproxy && !isLatestMessage)
             if (SystemClock.Instance.GetCurrentInstant() - msgTimestamp > timeout)
                 throw new PKError($"The message is too old to be {editTypeAction}.");
 
-        return msg;
+        return (msg, member.System);
     }
 
     private async Task<PKMessage?> FindRecentMessage(Context ctx, Duration timeout)
@@ -229,7 +235,7 @@ public class ProxiedMessage
 
         var isDelete = ctx.Match("delete") || ctx.MatchFlag("delete");
 
-        var message = await ctx.Database.Execute(c => ctx.Repository.GetMessage(c, messageId.Value));
+        var message = await ctx.Repository.GetFullMessage(messageId.Value);
         if (message == null)
         {
             if (isDelete)

@@ -197,7 +197,7 @@ public class Checks
         if (messageId == null || channelId == null)
             throw new PKError(failedToGetMessage);
 
-        var proxiedMsg = await ctx.Database.Execute(conn => ctx.Repository.GetMessage(conn, messageId.Value));
+        var proxiedMsg = await ctx.Repository.GetMessage(messageId.Value);
         if (proxiedMsg != null)
         {
             await ctx.Reply($"{Emojis.Success} This message was proxied successfully.");
