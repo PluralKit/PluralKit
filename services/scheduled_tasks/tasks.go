@@ -4,20 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"runtime/debug"
-	"strings"
 )
 
 func task_main() {
-	defer func() {
-		if err := recover(); err != nil {
-			stack := strings.Split(string(debug.Stack()), "\n")
-			stack = stack[7:]
-			log.Println("error running tasks:", err.(error).Error())
-			fmt.Println(strings.Join(stack, "\n"))
-		}
-	}()
-
 	log.Println("running per-minute scheduled tasks")
 
 	update_db_meta()

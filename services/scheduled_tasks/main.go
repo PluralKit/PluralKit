@@ -4,10 +4,21 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
+	"strings"
 	"time"
+
+	"github.com/getsentry/sentry-go"
 )
 
 func main() {
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn: os.Getenv("SENTRY_DSN"),
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	log.Println("connecting to databases")
 	connect_dbs()
 
@@ -41,7 +52,26 @@ func withtime(name string, todo func()) func() {
 
 func doforever(dur time.Duration, todo func()) {
 	for {
-		go todo()
+		go wrapRecover(todo)
 		time.Sleep(dur)
 	}
+}
+
+func wrapRecover(todo func()) {
+	defer func() {
+		if err := recover(); err != nil {
+			if val, ok := err.(error); ok {
+				sentry.CaptureException(val)
+			} else {
+				sentry.CaptureMessage(fmt.Sprint("unknown error", err))
+			}
+
+			stack := strings.Split(string(debug.Stack()), "\n")
+			stack = stack[7:]
+			log.Println("error running tasks:", err.(error).Error())
+			fmt.Println(strings.Join(stack, "\n"))
+		}
+	}()
+
+	todo()
 }
