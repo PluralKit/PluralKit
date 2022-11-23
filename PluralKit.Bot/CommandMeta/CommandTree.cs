@@ -127,6 +127,8 @@ public partial class CommandTree
             await ctx.Execute<Admin>(Admin, a => a.SystemMemberLimit(ctx));
         else if (ctx.Match("ugl", "updategrouplimit"))
             await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
+        else if (ctx.Match("sr", "systemrecover"))
+            await ctx.Execute<Admin>(Admin, a => a.SystemRecover(ctx));
         else
             await ctx.Reply($"{Emojis.Error} Unknown command.");
     }
