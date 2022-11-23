@@ -28,28 +28,28 @@ func proxyTo(host string) *httputil.ReverseProxy {
 	return rp
 }
 
-var systemsRegex = regexp.MustCompile("systems/[^/]+")
-var membersRegex = regexp.MustCompile("members/[^/]+")
-var groupsRegex = regexp.MustCompile("groups/[^/]+")
-var switchesRegex = regexp.MustCompile("switches/[^/]+")
-var guildsRegex = regexp.MustCompile("guilds/[^/]+")
-var messagesRegex = regexp.MustCompile("messages/[^/]+")
+var systemsRegex = regexp.MustCompile("systems/[^/{}]+")
+var membersRegex = regexp.MustCompile("members/[^/{}]+")
+var groupsRegex = regexp.MustCompile("groups/[^/{}]+")
+var switchesRegex = regexp.MustCompile("switches/[^/{}]+")
+var guildsRegex = regexp.MustCompile("guilds/[^/{}]+")
+var messagesRegex = regexp.MustCompile("messages/[^/{}]+")
 
 func cleanPath(host, path string) string {
 	if host != "api.pluralkit.me" {
 		return ""
 	}
 
-	if !(strings.HasPrefix(host, "/v2") || strings.HasPrefix(host, "/private")) {
+	if !(strings.HasPrefix(path, "/v2") || strings.HasPrefix(path, "/private")) {
 		return ""
 	}
 
-	path = systemsRegex.ReplaceAllString(path, "{systemRef}")
-	path = membersRegex.ReplaceAllString(path, "{memberRef}")
-	path = groupsRegex.ReplaceAllString(path, "{groupRef}")
-	path = switchesRegex.ReplaceAllString(path, "{switchRef}")
-	path = guildsRegex.ReplaceAllString(path, "{guild_id}")
-	path = messagesRegex.ReplaceAllString(path, "{message_id}")
+	path = systemsRegex.ReplaceAllString(path, "systems/{systemRef}")
+	path = membersRegex.ReplaceAllString(path, "members/{memberRef}")
+	path = groupsRegex.ReplaceAllString(path, "groups/{groupRef}")
+	path = switchesRegex.ReplaceAllString(path, "switches/{switchRef}")
+	path = guildsRegex.ReplaceAllString(path, "guilds/{guild_id}")
+	path = messagesRegex.ReplaceAllString(path, "messages/{message_id}")
 
 	return path
 }

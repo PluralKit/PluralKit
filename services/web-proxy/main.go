@@ -64,7 +64,7 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 		// CORS headers
 		rw.Header().Add("Access-Control-Allow-Origin", "*")
-		rw.Header().Add("Access-Control-Request-Method", r.Method)
+		rw.Header().Add("Access-Control-Allow-Methods", "*")
 		rw.Header().Add("Access-Control-Allow-Credentials", "true")
 		rw.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization, sentry-trace")
 		rw.Header().Add("Access-Control-Max-Age", "86400")
@@ -98,7 +98,7 @@ func logTimeElapsed(resp *http.Response) error {
 		"route":  cleanPath(r.Host, r.URL.Path),
 	}).Observe(elapsed.Seconds())
 
-	log.Printf("[%s %s] \"%s %s%s\" %d - %vms\n", r.Header.Get("Fly-Client-IP"), r.Header.Get("User-Agent"), r.Method, r.Host, r.URL.Path, resp.StatusCode, elapsed.Milliseconds())
+	log.Printf("[%s] \"%s %s%s\" %d - %vms %s\n", r.Header.Get("Fly-Client-IP"), r.Method, r.Host, r.URL.Path, resp.StatusCode, elapsed.Milliseconds(), r.Header.Get("User-Agent"))
 
 	return nil
 }
