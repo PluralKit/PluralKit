@@ -52,6 +52,7 @@ When something goes wrong, the API will send back a 4xx HTTP status code, along 
 |30007|403|Target group is not part of your system.|
 |30008|403|Member '{memberRef}' is not part of your system.|
 |30009|403|Group '{groupRef}' is not part of your system.|
+|40001|400|Error parsing JSON model (check [`errors` key](#error-object) for details)
 |40002|400|Missing autoproxy member for member-mode autoproxy.|
 |40003|400|Duplicate members in member list.|
 |40004|400|Member list identical to current fronter list.|
