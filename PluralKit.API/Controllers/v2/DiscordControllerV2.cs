@@ -92,7 +92,9 @@ public class DiscordControllerV2: PKControllerBase
     [HttpGet("messages/{messageId}")]
     public async Task<ActionResult<JObject>> MessageGet(ulong messageId)
     {
-        var msg = await _repo.GetFullMessage(messageId);
+        var messageByOriginal = await _redis.GetOriginalMid(messageId);
+
+        var msg = await _repo.GetFullMessage(messageByOriginal ?? messageId);
         if (msg == null)
             throw Errors.MessageNotFound;
 

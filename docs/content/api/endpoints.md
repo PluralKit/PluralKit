@@ -333,4 +333,8 @@ GET `/messages/{message}`
 
 Message can be the ID of a proxied message, or the ID of the message that sent the proxy.
 
+::: warning
+Looking up messages by the original message ID only works **up to 30 minutes** after the message was sent.
+:::
+
 Returns a [message object](/api/models#message-object).

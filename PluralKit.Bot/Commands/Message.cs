@@ -164,7 +164,7 @@ public class ProxiedMessage
             ulong? recent = null;
 
             if (isReproxy)
-                recent = await ctx.Repository.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
+                recent = await ctx.Redis.GetLastMessage(ctx.Author.Id, ctx.Channel.Id);
             else
                 recent = await FindRecentMessage(ctx, timeout);
 
@@ -210,13 +210,13 @@ public class ProxiedMessage
         return (msg, member.System);
     }
 
-    private async Task<PKMessage?> FindRecentMessage(Context ctx, Duration timeout)
+    private async Task<ulong?> FindRecentMessage(Context ctx, Duration timeout)
     {
-        var lastMessage = await ctx.Repository.GetLastMessage(ctx.Guild.Id, ctx.Channel.Id, ctx.Author.Id);
+        var lastMessage = await ctx.Redis.GetLastMessage(ctx.Author.Id, ctx.Channel.Id);
         if (lastMessage == null)
             return null;
 
-        var timestamp = DiscordUtils.SnowflakeToInstant(lastMessage.Mid);
+        var timestamp = DiscordUtils.SnowflakeToInstant(lastMessage.Value);
         if (SystemClock.Instance.GetCurrentInstant() - timestamp > timeout)
             return null;
 

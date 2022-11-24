@@ -18,6 +18,7 @@ public class PKControllerBase: ControllerBase
     protected readonly ApiConfig _config;
     protected readonly IDatabase _db;
     protected readonly ModelRepository _repo;
+    protected readonly RedisService _redis;
     protected readonly DispatchService _dispatch;
 
     public PKControllerBase(IServiceProvider svc)
@@ -25,6 +26,7 @@ public class PKControllerBase: ControllerBase
         _config = svc.GetRequiredService<ApiConfig>();
         _db = svc.GetRequiredService<IDatabase>();
         _repo = svc.GetRequiredService<ModelRepository>();
+        _redis = svc.GetRequiredService<RedisService>();
         _dispatch = svc.GetRequiredService<DispatchService>();
     }
 

@@ -20,12 +20,7 @@ namespace PluralKit.API;
 [Route("private")]
 public class PrivateController: PKControllerBase
 {
-    private readonly RedisService _redis;
-
-    public PrivateController(IServiceProvider svc) : base(svc)
-    {
-        _redis = svc.GetRequiredService<RedisService>();
-    }
+    public PrivateController(IServiceProvider svc) : base(svc) { }
 
     [HttpGet("meta")]
     public async Task<ActionResult<JObject>> Meta()

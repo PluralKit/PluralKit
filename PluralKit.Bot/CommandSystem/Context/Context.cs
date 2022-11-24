@@ -40,6 +40,7 @@ public class Context
         Cache = provider.Resolve<IDiscordCache>();
         Database = provider.Resolve<IDatabase>();
         Repository = provider.Resolve<ModelRepository>();
+        Redis = provider.Resolve<RedisService>();
         _metrics = provider.Resolve<IMetrics>();
         _provider = provider;
         _commandMessageService = provider.Resolve<CommandMessageService>();
@@ -74,6 +75,7 @@ public class Context
 
     internal readonly IDatabase Database;
     internal readonly ModelRepository Repository;
+    internal readonly RedisService Redis;
 
     public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
     {
