@@ -411,6 +411,6 @@ public class Config
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = false });
 
             await ctx.Reply("Proxy tags are now case insensitive.");
-        }   
+        }
     }
 }
