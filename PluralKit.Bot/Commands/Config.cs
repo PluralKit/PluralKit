@@ -89,8 +89,8 @@ public class Config
         ));
 
         items.Add(new(
-            "Case sensitive proxy tags",
-            "If proxy tags should be case sensitive",
+            "Proxy case",
+            "Whether proxy tags are case sensitive",
             EnabledDisabled(ctx.Config.CaseSensitiveProxyTags),
             "enabled"
         ));
@@ -395,8 +395,8 @@ public class Config
     {
         if (!ctx.HasNext())
         {
-            if (ctx.Config.CaseSensitiveProxyTags) { await ctx.Reply("Proxy tags are currently case sensitive"); }
-            else { await ctx.Reply("Proxy tags are currently case insensitive"); }
+            if (ctx.Config.CaseSensitiveProxyTags) { await ctx.Reply("Proxy tags are currently case **sensitive**."); }
+            else { await ctx.Reply("Proxy tags are currently case **insensitive**."); }
             return;
         }
 
@@ -404,13 +404,13 @@ public class Config
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = true });
 
-            await ctx.Reply("Proxy tags are now case sensitive");
+            await ctx.Reply("Proxy tags are now case sensitive.");
         }
         else
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = false });
 
-            await ctx.Reply("Proxy tags are now case insensitive");
-        }
+            await ctx.Reply("Proxy tags are now case insensitive.");
+        }   
     }
 }
