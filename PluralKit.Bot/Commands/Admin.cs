@@ -1,5 +1,11 @@
 using System.Text.RegularExpressions;
 
+using Dapper;
+using SqlKata;
+
+using Myriad.Rest;
+using Myriad.Types;
+
 using PluralKit.Core;
 
 namespace PluralKit.Bot;
@@ -7,10 +13,12 @@ namespace PluralKit.Bot;
 public class Admin
 {
     private readonly BotConfig _botConfig;
+    private readonly DiscordApiClient _rest;
 
-    public Admin(BotConfig botConfig)
+    public Admin(BotConfig botConfig, DiscordApiClient rest)
     {
         _botConfig = botConfig;
+        _rest = rest;
     }
 
     public async Task UpdateSystemId(Context ctx)
@@ -87,6 +95,74 @@ public class Admin
         await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
     }
 
+    public async Task RerollSystemId(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchSystem();
+        if (target == null)
+            throw new PKError("Unknown system.");
+
+        if (!await ctx.PromptYesNo($"Reroll system ID `{target.Hid}`?", "Reroll"))
+            throw new PKError("ID change cancelled.");
+
+        var query = new Query("systems").AsUpdate(new
+        {
+            hid = new UnsafeLiteral("find_free_system_hid()"),
+        })
+        .Where("id", target.Id);
+
+        var newHid = await ctx.Database.QueryFirst<string>(query, "returning hid");
+        await ctx.Reply($"{Emojis.Success} System ID updated (`{target.Hid}` -> `{newHid}`).");
+    }
+
+    public async Task RerollMemberId(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchMember();
+        if (target == null)
+            throw new PKError("Unknown member.");
+
+        if (!await ctx.PromptYesNo(
+            $"Reroll member ID for **{target.NameFor(LookupContext.ByNonOwner)}** (`{target.Hid}`)?",
+            "Reroll"
+        ))
+            throw new PKError("ID change cancelled.");
+
+        var query = new Query("members").AsUpdate(new
+        {
+            hid = new UnsafeLiteral("find_free_member_hid()"),
+        })
+        .Where("id", target.Id);
+
+        var newHid = await ctx.Database.QueryFirst<string>(query, "returning hid");
+        await ctx.Reply($"{Emojis.Success} Member ID updated (`{target.Hid}` -> `{newHid}`).");
+    }
+
+    public async Task RerollGroupId(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var target = await ctx.MatchGroup();
+        if (target == null)
+            throw new PKError("Unknown group.");
+
+        if (!await ctx.PromptYesNo($"Reroll group ID for **{target.Name}** (`{target.Hid}`)?",
+            "Change"
+        ))
+            throw new PKError("ID change cancelled.");
+
+        var query = new Query("groups").AsUpdate(new
+        {
+            hid = new UnsafeLiteral("find_free_group_hid()"),
+        })
+        .Where("id", target.Id);
+
+        var newHid = await ctx.Database.QueryFirst<string>(query, "returning hid");
+        await ctx.Reply($"{Emojis.Success} Group ID updated (`{target.Hid}` -> `{newHid}`).");
+    }
+
     public async Task SystemMemberLimit(Context ctx)
     {
         ctx.AssertBotAdmin();
@@ -141,5 +217,53 @@ public class Admin
 
         await ctx.Repository.UpdateSystemConfig(target.Id, new SystemConfigPatch { GroupLimitOverride = newLimit });
         await ctx.Reply($"{Emojis.Success} Group limit updated.");
+    }
+
+    public async Task SystemRecover(Context ctx)
+    {
+        ctx.AssertBotAdmin();
+
+        var rerollToken = ctx.MatchFlag("rt", "reroll-token");
+
+        var systemToken = ctx.PopArgument();
+        var systemId = await ctx.Database.Execute(conn => conn.QuerySingleOrDefaultAsync<SystemId?>(
+             "select id from systems where token = @token",
+            new { token = systemToken }
+        ));
+
+        if (systemId == null)
+            throw new PKError("Could not retrieve a system with that token.");
+
+        var account = await ctx.MatchUser();
+        if (account == null)
+            throw new PKError("You must pass an account to associate the system with (either ID or @mention).");
+
+        var existingAccount = await ctx.Repository.GetSystemByAccount(account.Id);
+        if (existingAccount != null)
+            throw Errors.AccountInOtherSystem(existingAccount);
+
+        var system = await ctx.Repository.GetSystem(systemId.Value!);
+
+        if (!await ctx.PromptYesNo($"Associate account {account.NameAndMention()} with system `{system.Hid}`?", "Recover account"))
+            throw new PKError("System recovery cancelled.");
+
+        await ctx.Repository.AddAccount(system.Id, account.Id);
+        if (rerollToken)
+            await ctx.Repository.UpdateSystem(system.Id, new SystemPatch { Token = StringUtils.GenerateToken() });
+
+        if ((await ctx.BotPermissions).HasFlag(PermissionSet.ManageMessages))
+            await _rest.DeleteMessage(ctx.Message);
+
+        await ctx.Reply(null, new Embed
+        {
+            Title = "System recovered",
+            Description = $"{account.NameAndMention()} has been linked to system `{system.Hid}`.",
+            Fields = new Embed.Field[]
+            {
+                new Embed.Field("Token rerolled?", rerollToken ? "yes" : "no", true),
+                new Embed.Field("Actioned by", ctx.Author.NameAndMention(), true),
+            },
+            Color = DiscordUtils.Green,
+        });
     }
 }

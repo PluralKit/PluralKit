@@ -117,10 +117,18 @@ public partial class CommandTree
             await ctx.Execute<Admin>(Admin, a => a.UpdateMemberId(ctx));
         else if (ctx.Match("ugid", "updategroupid"))
             await ctx.Execute<Admin>(Admin, a => a.UpdateGroupId(ctx));
+        else if (ctx.Match("rsid", "rerollsystemid"))
+            await ctx.Execute<Admin>(Admin, a => a.RerollSystemId(ctx));
+        else if (ctx.Match("rmid", "rerollmemberid"))
+            await ctx.Execute<Admin>(Admin, a => a.RerollMemberId(ctx));
+        else if (ctx.Match("rgid", "rerollgroupid"))
+            await ctx.Execute<Admin>(Admin, a => a.RerollGroupId(ctx));
         else if (ctx.Match("uml", "updatememberlimit"))
             await ctx.Execute<Admin>(Admin, a => a.SystemMemberLimit(ctx));
         else if (ctx.Match("ugl", "updategrouplimit"))
             await ctx.Execute<Admin>(Admin, a => a.SystemGroupLimit(ctx));
+        else if (ctx.Match("sr", "systemrecover"))
+            await ctx.Execute<Admin>(Admin, a => a.SystemRecover(ctx));
         else
             await ctx.Reply($"{Emojis.Error} Unknown command.");
     }
@@ -511,6 +519,8 @@ public partial class CommandTree
             return ctx.Execute<Config>(null, m => m.GroupDefaultPrivacy(ctx));
         if (ctx.MatchMultiple(new[] { "show" }, new[] { "private" }) || ctx.Match("sp"))
             return ctx.Execute<Config>(null, m => m.ShowPrivateInfo(ctx));
+        if (ctx.MatchMultiple(new[] { "proxy" }, new[] { "case" }))
+            return ctx.Execute<Config>(null, m => m.CaseSensitiveProxyTags(ctx));
 
         // todo: maybe add the list of configuration keys here?
         return ctx.Reply($"{Emojis.Error} Could not find a setting with that name. Please see `pk;commands config` for the list of possible config settings.");

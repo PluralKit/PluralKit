@@ -20,17 +20,17 @@ public class ProxyMatcher
 
     public bool TryMatch(MessageContext ctx, AutoproxySettings settings, IReadOnlyCollection<ProxyMember> members, out ProxyMatch match,
                          string messageContent,
-                         bool hasAttachments, bool allowAutoproxy)
+                         bool hasAttachments, bool allowAutoproxy, bool caseSensitive)
     {
-        if (TryMatchTags(members, messageContent, hasAttachments, out match)) return true;
+        if (TryMatchTags(members, messageContent, hasAttachments, caseSensitive, out match)) return true;
         if (allowAutoproxy && TryMatchAutoproxy(ctx, settings, members, messageContent, out match)) return true;
         return false;
     }
 
     private bool TryMatchTags(IReadOnlyCollection<ProxyMember> members, string messageContent, bool hasAttachments,
-                              out ProxyMatch match)
+                              bool caseSensitive, out ProxyMatch match)
     {
-        if (!_parser.TryMatch(members, messageContent, out match)) return false;
+        if (!_parser.TryMatch(members, messageContent, caseSensitive, out match)) return false;
 
         // Edge case: If we got a match with blank inner text, we'd normally just send w/ attachments
         // However, if there are no attachments, the user probably intended something else, so we "un-match" and proceed to autoproxy

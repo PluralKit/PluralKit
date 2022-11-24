@@ -80,7 +80,7 @@ public class ProxyService
             members = (await _repo.GetProxyMembers(message.Author.Id, message.GuildId!.Value)).ToList();
 
         if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
-                allowAutoproxy)) return false;
+                allowAutoproxy, ctx.CaseSensitiveProxyTags)) return false;
 
         // this is hopefully temporary, so not putting it into a separate method
         if (message.Content != null && message.Content.Length > 2000)
@@ -210,8 +210,9 @@ public class ProxyService
                 "Proxying was disabled in this channel by a server administrator (via the proxy blacklist).");
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, msg.Guild!.Value, null);
+        var config = await _repo.GetSystemConfig(ctx.SystemId.Value);
         var prevMatched = _matcher.TryMatch(ctx, autoproxySettings, members, out var prevMatch, originalMsg.Content,
-                                            originalMsg.Attachments.Length > 0, false);
+                                            originalMsg.Attachments.Length > 0, false, ctx.CaseSensitiveProxyTags);
 
         var match = new ProxyMatch
         {
