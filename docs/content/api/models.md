@@ -49,7 +49,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |description|?string|1000-character limit|
 |created|?datetime||
-|proxy_tags|list of [ProxyTag](#proxytag-object) objects|
+|proxy_tags|array of [ProxyTag](#proxytag-object) objects|
 |keep_proxy|boolean||
 |privacy|?member privacy object||
 
@@ -86,7 +86,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|uuid||
 |timestamp|datetime||
-| members   | list of id or [Member](#member-model) | Is sometimes in plain ID list form (eg. `GET /systems/:id/switches`), sometimes includes the full Member model (eg. `GET /systems/:id/fronters`). |
+| members   | array of id or [Member](#member-model) | Is sometimes in plain ID list form (eg. `GET /systems/:id/switches`), sometimes includes the full Member model (eg. `GET /systems/:id/fronters`). |
 
 ### Message model
 
