@@ -16,7 +16,7 @@ public class MetricsModule: Module
     protected override void Load(ContainerBuilder builder)
     {
         builder.Register(c => InitMetrics(c.Resolve<CoreConfig>()))
-            .AsSelf().As<IMetrics>().SingleInstance();
+            .AsSelf().As<IMetrics>().SingleInstance().AutoActivate();
     }
 
     private IMetricsRoot InitMetrics(CoreConfig config)
