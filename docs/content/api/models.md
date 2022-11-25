@@ -86,7 +86,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |---|---|---|
 |id|uuid||
 |timestamp|datetime||
-| members   | array of id or [Member](#member-model) | Is sometimes in plain ID list form (eg. `GET /systems/:id/switches`), sometimes includes the full Member model (eg. `GET /systems/:id/fronters`). |
+| members   | array of id or [Member](#member-model) objects | Is sometimes in plain ID list form (eg. `GET /systems/:id/switches`), sometimes includes the full Member model (eg. `GET /systems/:id/fronters`). |
 
 ### Message model
 
@@ -129,7 +129,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 ### Autoproxy settings model
 |key|type|notes|
 |---|---|---|
-|autoproxy_mode|[Autoproxy mode](#autoproxy-mode-enum) enum||
+|autoproxy_mode|[Autoproxy mode](#autoproxy-mode-enum)||
 |autoproxy_member|?member id|must be `null` if autoproxy_mode is set to `front`|
 |last_latch_timestamp|?datetime|read-only|
 
