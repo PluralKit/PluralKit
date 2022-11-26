@@ -109,11 +109,11 @@
 </script>
 
 {#if !openByDefault && (settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true)}
-    <div class="mb-3">    
+    <div class="mb-3 accordion">    
     {#each list as item, index (item.uuid)}
-        <Card>
+        <Card style="border-radius: 0;">
             <h2 class="accordion-header">
-                <button class="w-100 accordion-button collapsed card-header" id={`${itemType}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
+                <button class="w-100 accordion-button collapsed bg-transparent" id={`${itemType}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
                     <CardsHeader {item} {sortBy} {searchBy}>
                         <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                             {#if isPublic || item.privacy.visibility === "public"}
@@ -131,7 +131,7 @@
                 </button>
             </h2>
             <Collapse isOpen={isOpen[item.uuid]}>
-                <CardBody>
+                <CardBody class="border-top">
                     {#if itemType === "member"}
                     <MemberBody on:update on:deletion bind:isPublic groups={groups} member={item} />
                     {:else if itemType === "group"}
@@ -175,8 +175,8 @@
 {:else}
     <div class="my-3">
     {#each list as item, index (item.id + index)}
-    <Card>
-        <a class="accordion-button collapsed" style="text-decoration: none;" href={getItemLink(item)} id={`${itemType}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
+    <Card style="border-radius: 0;">
+        <a class="accordion-button collapsed bg-transparent" style="text-decoration: none;" href={getItemLink(item)} id={`${itemType}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
             <CardsHeader {item}>
                 <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                     {#if isPublic || item.privacy.visibility === "public"}
