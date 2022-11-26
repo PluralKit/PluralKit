@@ -1,8 +1,8 @@
 <script lang="ts">
     import { tick } from 'svelte';
-    import { Modal, CardHeader, CardTitle, Image, Spinner } from 'sveltestrap';
-    import default_avatar from '../assets/default_avatar.png';
-    import resizeMedia from '../api/resize-media';
+    import { Modal, CardTitle} from 'sveltestrap';
+    import default_avatar from '../../assets/default_avatar.png';
+    import resizeMedia from '../../api/resize-media';
     import { toHTML } from 'discord-markdown';
     import twemoji from 'twemoji';
 

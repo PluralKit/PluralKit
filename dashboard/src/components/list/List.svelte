@@ -5,7 +5,7 @@
 
     import NewMember from '../member/NewMember.svelte';
     import NewGroup from '../group/NewGroup.svelte';
-    import ListPagination from '../ListPagination.svelte';
+    import ListPagination from '../common/ListPagination.svelte';
     import ListControl from './ListControl.svelte';
     import ListSearch from './ListSearch.svelte';
     import ListView from './ListView.svelte';

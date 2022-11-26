@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Card, CardBody, CardHeader, Tooltip } from 'sveltestrap';
     import FaAddressCard from 'svelte-icons/fa/FaAddressCard.svelte'
-    import CardsHeader from '../CardsHeader.svelte';
+    import CardsHeader from '../common/CardsHeader.svelte';
     import Body from './Body.svelte';
     import Privacy from './Privacy.svelte';
     import Edit from './Edit.svelte';

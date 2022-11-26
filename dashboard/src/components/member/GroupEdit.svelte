@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Row, Col, Button, Alert, ListGroup, ListGroupItem, Spinner } from 'sveltestrap';
-    import ListPagination from "../ListPagination.svelte";
+    import ListPagination from "../common/ListPagination.svelte";
     import twemoji from "twemoji";
     import Svelecte, { addFormatter } from 'svelecte';
     import { toHTML } from 'discord-markdown';

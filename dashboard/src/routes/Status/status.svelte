@@ -1,9 +1,9 @@
 <script lang="ts">
     import { Container, Row, Col, Card, CardHeader, CardTitle, CardBody, Input, Button } from 'sveltestrap';
     import FaInfoCircle from 'svelte-icons/fa/FaInfoCircle.svelte'
-    import ShardItem from '../lib/shard.svelte';
+    import ShardItem from '../../components/status/Shard.svelte';
 
-    import api from '../api';
+    import api from '../../api';
 
     let message = "Loading...";
     let shards = [];

@@ -4,9 +4,9 @@
     import { Alert, Col, Container, Row, Card, CardBody, CardHeader, CardTitle, Input, Label, Button, Accordion, AccordionHeader, AccordionItem } from 'sveltestrap';
     import FaRandom from 'svelte-icons/fa/FaRandom.svelte'
     
-    import CardsList from '../lib/list/ListView.svelte';
-    import api from '../api';
-    import { Group, Member } from '../api/types';
+    import CardsList from '../../components/list/ListView.svelte';
+    import api from '../../api';
+    import { Group, Member } from '../../api/types';
 
     export let isPublic: boolean = false;
     export let type: string = "member";

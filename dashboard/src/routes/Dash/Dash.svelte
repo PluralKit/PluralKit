@@ -1,13 +1,13 @@
 <script lang="ts">
     import { Container, Col, Row, TabContent, TabPane } from 'sveltestrap';
     import { navigate, useLocation } from "svelte-navigator";
-    import { currentUser, loggedIn } from '../stores';
+    import { currentUser, loggedIn } from '../../stores';
     
-    import SystemMain from '../lib/system/Main.svelte';
-    import List from '../lib/list/List.svelte';
+    import SystemMain from '../../components/system/Main.svelte';
+    import List from '../../components/list/List.svelte';
 
-    import { System } from '../api/types';
-    import api from '../api';
+    import { System } from '../../api/types';
+    import api from '../../api';
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();

@@ -3,11 +3,11 @@
     import { useParams, useLocation, navigate } from "svelte-navigator";
     import { onMount } from 'svelte';
     
-    import SystemMain from '../lib/system/Main.svelte';
-    import List from '../lib/list/List.svelte';
-
-    import { System } from '../api/types';
-    import api from '../api';
+    import SystemMain from '../../components/system/Main.svelte';
+    import List from '../../components/list/List.svelte';
+    
+    import { System } from '../../api/types';
+    import api from '../../api';
 
     let user: System = {};
     let settings = JSON.parse(localStorage.getItem("pk-settings"));

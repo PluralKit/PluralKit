@@ -1,16 +1,16 @@
 <script lang="ts">
     import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, CardTitle, Tooltip } from "sveltestrap";
-    import Body from '../lib/group/Body.svelte';
+    import Body from '../../../components/group/Body.svelte';
     import { useParams, Link, navigate, useLocation } from 'svelte-navigator';
     import { onMount } from 'svelte';
-    import api from "../api";
-    import { Member, Group } from "../api/types";
-    import CardsHeader from "../lib/CardsHeader.svelte";
+    import api from "../../../api";
+    import { Member, Group } from "../../../api/types";
+    import CardsHeader from "../../../components/common/CardsHeader.svelte";
     import FaUsers from 'svelte-icons/fa/FaUsers.svelte';
     import FaList from 'svelte-icons/fa/FaList.svelte';
-    import ListPagination from '../lib/ListPagination.svelte';
-    import ListView from '../lib/list/ListView.svelte';
-    import CardView from '../lib/list/CardView.svelte';
+    import ListPagination from '../../../components/common/ListPagination.svelte';
+    import ListView from '../../../components/list/ListView.svelte';
+    import CardView from '../../../components/list/CardView.svelte';
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();

@@ -9,7 +9,7 @@
 
     import MemberBody from '../member/Body.svelte';
     import GroupBody from '../group/Body.svelte';
-    import CardsHeader from '../CardsHeader.svelte';
+    import CardsHeader from '../common/CardsHeader.svelte';
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
     

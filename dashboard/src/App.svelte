@@ -1,21 +1,21 @@
 <script lang="ts">
   import { Router, Route } from "svelte-navigator";
-  import Navigation from "./lib/Navigation.svelte";
-  import Dash from "./pages/Dash.svelte";
-  import Home from "./pages/Home.svelte";
-  import Settings from './pages/Settings.svelte';
-  import Public from "./pages/Public.svelte";
-  import Main from "./pages/Profile.svelte";
-  import Status from './pages/status.svelte';
-  import Member from './pages/Member.svelte';
-  import Group from './pages/Group.svelte';
-  import PageNotFound from './pages/PageNotFound.svelte';
+  import Navigation from "./components/common/Navigation.svelte";
+  import Dash from "./routes/dash/Dash.svelte";
+  import Home from "./routes/Home.svelte";
+  import Settings from './routes/settings/Settings.svelte';
+  import Public from "./routes/Public.svelte";
+  import Main from "./routes/dash/Profile.svelte";
+  import Status from './routes/status/Status.svelte';
+  import Member from './routes/dash/Member/Member.svelte';
+  import Group from './routes/dash/Group/Group.svelte';
+  import PageNotFound from './routes/PageNotFound.svelte';
   import { Alert } from 'sveltestrap';
-import DiscordLogin from "./pages/DiscordLogin.svelte";
+import DiscordLogin from "./routes/DiscordLogin.svelte";
   import { onMount } from 'svelte';
-import BulkGroupPrivacy from "./pages/BulkGroupPrivacy.svelte";
-import BulkMemberPrivacy from "./pages/BulkMemberPrivacy.svelte";
-  import Random from './pages/Random.svelte';
+import BulkGroupPrivacy from "./routes/dash/System/BulkGroupPrivacy.svelte";
+import BulkMemberPrivacy from "./routes/dash/System/BulkMemberPrivacy.svelte";
+  import Random from './routes/dash/Random.svelte';
   
   // theme cdns (I might make some myself too)
   // if there's a style already set, retrieve it

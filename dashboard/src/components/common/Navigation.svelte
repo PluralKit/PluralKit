@@ -1,8 +1,7 @@
 <script lang="ts">
     import {Navbar, NavbarBrand, Nav, NavItem, NavLink, Collapse, NavbarToggler, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Button} from 'sveltestrap';
-    import { loggedIn } from '../stores';
+    import { loggedIn } from '../../stores';
     import { Link, navigate } from 'svelte-navigator';
-import { get } from 'svelte/store';
 
     export let style: string;
 
