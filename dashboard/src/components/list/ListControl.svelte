@@ -3,7 +3,7 @@ import { createEventDispatcher } from 'svelte';
 import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button, Tooltip, Label } from 'sveltestrap';
 import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
 import Svelecte, { addFormatter } from 'svelecte';
-import { Member, Group } from '../../api/types';
+import type { Member, Group } from '../../api/types';
 import { Link, useParams } from 'svelte-navigator';
 import moment from 'moment';
 

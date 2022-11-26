@@ -2,7 +2,7 @@
     import { tick, createEventDispatcher } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner } from "sveltestrap";
 
-    import { Member, MemberPrivacy } from '../../api/types';
+    import type { Member, MemberPrivacy } from '../../api/types';
     import api from '../../api';
 
     export let privacyOpen: boolean;

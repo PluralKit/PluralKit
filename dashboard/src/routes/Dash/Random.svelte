@@ -6,7 +6,7 @@
     
     import CardsList from '../../components/list/ListView.svelte';
     import api from '../../api';
-    import { Group, Member } from '../../api/types';
+    import type { Group, Member } from '../../api/types';
 
     export let isPublic: boolean = false;
     export let type: string = "member";

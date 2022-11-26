@@ -10,19 +10,19 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
-    "@tsconfig/svelte": "^2.0.1",
+    "@tsconfig/svelte": "^3.0.0",
     "svelte": "^3.44.0",
     "svelte-check": "^2.2.7",
     "svelte-toggle": "^3.1.0",
     "tslib": "^2.3.1",
     "typescript": "^4.4.4",
-    "vite": "^2.7.0"
+    "vite": "^3.2.4"
   },
   "dependencies": {
     "@sentry/browser": "^6.19.5",
     "@sentry/tracing": "^6.19.5",
-    "@types/twemoji": "^12.1.2",
-    "axios": "^0.24.0",
+    "@types/twemoji": "^13.1.2",
+    "axios": "^1.2.0",
     "bootstrap": "^5.1.3",
     "bootstrap-dark-5": "^1.1.3",
     "core-js-pure": "^3.23.4",
@@ -37,6 +37,6 @@
     "svelte-preprocess": "^4.10.6",
     "svelte-textarea-autoresize": "^1.0.0",
     "sveltestrap": "^5.6.3",
-    "twemoji": "^13.1.0"
+    "twemoji": "^14.0.2"
   }
 }

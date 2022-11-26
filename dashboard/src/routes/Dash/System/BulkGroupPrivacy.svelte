@@ -4,7 +4,7 @@
 	import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
 
 	import api from '../../../api';
-    import { GroupPrivacy, System } from '../../../api/types';
+    import type { GroupPrivacy, System } from '../../../api/types';
 	const user: System = JSON.parse(localStorage.getItem("pk-user"));
 
 	if (!user) navigate('/');

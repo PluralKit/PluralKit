@@ -6,7 +6,7 @@
 
     const descriptions: string[] = JSON.parse(localStorage.getItem("pk-config"))?.description_templates;
 
-    import { System } from '../../api/types';
+    import type { System } from '../../api/types';
     import api from '../../api';
 
     export let editMode: boolean;

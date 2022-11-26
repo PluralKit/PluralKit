@@ -6,7 +6,7 @@
     import resizeMedia from '../../api/resize-media';
     import twemoji from 'twemoji';
 
-    import { System } from '../../api/types';
+    import type { System } from '../../api/types';
    
     export let user: System;
     export let editMode: boolean;

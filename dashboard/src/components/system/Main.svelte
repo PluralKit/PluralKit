@@ -6,7 +6,7 @@
     import Privacy from './Privacy.svelte';
     import Edit from './Edit.svelte';
 
-    import { System } from '../../api/types';
+    import type { System } from '../../api/types';
 
     export let user: System;
     export let isPublic = true;

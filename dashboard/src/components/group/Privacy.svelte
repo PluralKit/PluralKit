@@ -2,7 +2,7 @@
     import { tick, createEventDispatcher } from "svelte";
     import { ModalBody, ModalHeader, Col, Row, Input, Label, ModalFooter, Button, Spinner, Alert } from "sveltestrap";
 
-    import { Group, GroupPrivacy } from '../../api/types';
+    import type { Group, GroupPrivacy } from '../../api/types';
     import api from '../../api';
 
     export let privacyOpen: boolean;

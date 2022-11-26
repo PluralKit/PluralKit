@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert, Spinner, Accordion, AccordionItem, CardTitle } from 'sveltestrap';
-    import { Group } from '../../api/types';
+    import type { Group } from '../../api/types';
     import api from '../../api';
     import { autoresize } from 'svelte-textarea-autoresize';
     import { createEventDispatcher } from 'svelte';

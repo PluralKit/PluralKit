@@ -7,7 +7,7 @@
     import twemoji from 'twemoji';
     import { toHTML } from 'discord-markdown';
 
-    import { System } from '../api/types';
+    import type { System } from '../api/types';
     import api from '../api';
 
     let loading = false;

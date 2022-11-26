@@ -5,7 +5,7 @@
     import { useParams, Link, navigate, useLocation } from 'svelte-navigator';
     import { onMount } from 'svelte';
     import api from "../../../api";
-    import { Member, Group } from "../../../api/types";
+    import type { Member, Group } from "../../../api/types";
     import CardsHeader from "../../../components/common/CardsHeader.svelte";
     import FaAddressCard from 'svelte-icons/fa/FaAddressCard.svelte'
     import FaList from 'svelte-icons/fa/FaList.svelte'

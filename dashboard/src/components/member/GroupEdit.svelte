@@ -9,7 +9,7 @@
     import FaFolderPlus from 'svelte-icons/fa/FaFolderPlus.svelte'
     import FaFolderMinus from 'svelte-icons/fa/FaFolderMinus.svelte'
 
-    import { Member, Group } from '../../api/types';
+    import type { Member, Group } from '../../api/types';
     import api from '../../api';
 
     export let member: Member;

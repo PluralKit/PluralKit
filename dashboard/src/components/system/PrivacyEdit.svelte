@@ -2,7 +2,7 @@
     import { Input, Row, Col, Button, Label, Alert, Spinner } from 'sveltestrap';
     import { currentUser } from '../../stores';
 
-    import { System, SystemPrivacy } from '../../api/types';
+    import type { System, SystemPrivacy } from '../../api/types';
     import api from '../../api';
 
     export let user: System;

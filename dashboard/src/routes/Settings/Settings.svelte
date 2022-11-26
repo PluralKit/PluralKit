@@ -3,7 +3,7 @@
     import Toggle from 'svelte-toggle';
     import { autoresize } from 'svelte-textarea-autoresize';
     import FaCogs from 'svelte-icons/fa/FaCogs.svelte'
-    import { Config } from '../../api/types';
+    import type { Config } from '../../api/types';
     import api from '../../api';
 
     let savedSettings = JSON.parse(localStorage.getItem("pk-settings"));

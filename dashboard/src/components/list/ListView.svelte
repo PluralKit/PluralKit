@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Card, CardHeader, CardBody, Collapse, Tooltip } from 'sveltestrap';
-    import { Member, Group } from '../../api/types';
+    import type { Member, Group } from '../../api/types';
     import { link } from 'svelte-navigator';
 
     import FaLock from 'svelte-icons/fa/FaLock.svelte';

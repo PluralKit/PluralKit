@@ -11,7 +11,7 @@
     import ListView from './ListView.svelte';
     import CardView from './CardView.svelte';
 
-    import { Member, Group } from '../../api/types';
+    import type { Member, Group } from '../../api/types';
     import api from '../../api';
 
     export let members: Member[] = [];

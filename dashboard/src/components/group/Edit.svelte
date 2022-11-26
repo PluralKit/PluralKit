@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Row, Col, Input, Button, Label, Alert, Spinner, Modal, ModalHeader, ModalBody } from 'sveltestrap';
     import { createEventDispatcher, tick } from 'svelte';
-    import { Group } from '../../api/types';
+    import type { Group } from '../../api/types';
     import api from '../../api';
     import { autoresize } from 'svelte-textarea-autoresize';
 

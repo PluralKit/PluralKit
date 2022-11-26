@@ -11,7 +11,7 @@
     import MemberEdit from './MemberEdit.svelte';
     import { Link, useLocation } from 'svelte-navigator';
 
-    import { Member, Group } from '../../api/types';
+    import type { Member, Group } from '../../api/types';
    
     export let group: Group;
     let editMode: boolean = false;

@@ -4,7 +4,7 @@
     import FaUserLock from 'svelte-icons/fa/FaUserLock.svelte';
     import PrivacyEdit from './PrivacyEdit.svelte';
 
-    import { System, SystemPrivacy } from '../../api/types';
+    import type { System, SystemPrivacy } from '../../api/types';
 
     export let user: System;
     let editMode = false;

@@ -6,7 +6,7 @@
     import SystemMain from '../../components/system/Main.svelte';
     import List from '../../components/list/List.svelte';
 
-    import { System } from '../../api/types';
+    import type { System } from '../../api/types';
     import api from '../../api';
 
     // get the state from the navigator so that we know which tab to start on

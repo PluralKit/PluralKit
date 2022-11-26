@@ -7,7 +7,7 @@
     import FaUserMinus from 'svelte-icons/fa/FaUserMinus.svelte'
     import Svelecte, { addFormatter } from 'svelecte';
 
-    import { Group, Member } from '../../api/types';
+    import type { Group, Member } from '../../api/types';
     import api from '../../api';
 
     let loading: boolean = false;

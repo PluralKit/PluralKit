@@ -12,7 +12,7 @@
     import Privacy from './Privacy.svelte';
     import ProxyTags from './ProxyTags.svelte';
 
-    import { Member, Group } from '../../api/types';
+    import type { Member, Group } from '../../api/types';
     import { Link, useLocation } from 'svelte-navigator';
 
     export let groups: Group[] = [];

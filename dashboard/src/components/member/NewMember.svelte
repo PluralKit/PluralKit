@@ -4,7 +4,7 @@
     import { autoresize } from 'svelte-textarea-autoresize';
     import moment from 'moment';
     import FaPlus from 'svelte-icons/fa/FaPlus.svelte';
-    import { Member } from '../../api/types';
+    import type { Member } from '../../api/types';
     import api from '../../api';
 
     const descriptions: string[] = JSON.parse(localStorage.getItem("pk-config"))?.description_templates;

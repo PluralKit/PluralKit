@@ -4,7 +4,7 @@
     import FaUserCircle from 'svelte-icons/fa/FaUserCircle.svelte';
     import FaUsers from 'svelte-icons/fa/FaUsers.svelte'
 
-    import { Member, Group } from '../../api/types';
+    import type { Member, Group } from '../../api/types';
     import MemberCard from '../member/CardView.svelte';
     import GroupCard from '../group/CardView.svelte';
 

@@ -2,7 +2,7 @@
     import {tick } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner, InputGroup } from "sveltestrap";
 
-    import { Member } from '../../api/types';
+    import type { Member } from '../../api/types';
     import api from '../../api';
 
     let loading: boolean;
