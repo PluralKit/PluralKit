@@ -7,80 +7,50 @@
     import NewGroup from '../group/NewGroup.svelte';
     import ListPagination from '../common/ListPagination.svelte';
     import ListControl from './ListControl.svelte';
-    import ListSearch from './ListSearch.svelte';
     import ListView from './ListView.svelte';
     import CardView from './CardView.svelte';
 
     import type { Member, Group } from '../../api/types';
     import api from '../../api';
+    import type { ListOptions, List, PageOptions } from './types';
+    import { createShortList, filterList, getPageAmount, paginateList } from './functions';
 
-    export let members: Member[] = [];
-    export let groups: Group[] = [];
-    
-    export let view: string = "list";
-
-    export let isDash = false;
-
-    let list: Member[] | Group[] = [];
-    let processedList: Member[] | Group[] = [];
-
-    $: groupList = groups && groups.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
-    $: memberList = members && members.map(function(member) { return {name: member.name, shortid: member.id, id: member.uuid, display_name: member.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
+    export let options: ListOptions;
+    export let pageOptions: PageOptions;
+    export let lists: List<Member|Group>;
+    export let otherList: List<Member|Group>;
 
     let token = localStorage.getItem("pk-token");
     let listLoading = true;
     let err: string;
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
-    
-    let pageAmount: number;
-    let currentPage: number = 1;
+    let pageAmount = 1;
 
-    let itemsPerPageValue;
-    $: {
-        if (view === "card") itemsPerPageValue = "24";
-    
-        else if (settings && settings.accessibility && settings.accessibility.expandedcards) itemsPerPageValue = "10";
-        else itemsPerPageValue = "25";
-    }
-    
-    $: itemsPerPage = parseInt(itemsPerPageValue);
-
-    $: indexOfLastItem = currentPage * itemsPerPage;
-    $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    $: pageAmount = Math.ceil(processedList.length / itemsPerPage);
-
-    $: slicedList = processedList.slice(indexOfFirstItem, indexOfLastItem);
-
-    export let isPublic: boolean;
-    export let itemType: string;
-
-    let searchValue: string = "";
-    let searchBy: string = "name";
-    let sortBy: string = "name";
+    if (pageOptions.view === "card") pageOptions.itemsPerPage = 24;
+    else if (settings && settings.accessibility && settings.accessibility.expandedcards) pageOptions.itemsPerPage = 10;
+    else pageOptions.itemsPerPage = 25;
 
     let params = useParams();
     $: id = $params.id;
 
     onMount(() => {
-        if (token || isPublic) fetchList();
+        if (token || pageOptions.isPublic) fetchList();
     });
 
     async function fetchList() {
         err = "";
         listLoading = true;
         try {
-            if (itemType === "member") { 
-                const res: Member[] = await api().systems(isPublic ? id : "@me").members.get({ auth: !isPublic });
-                members = res;
-                list = res;
+            if (pageOptions.type === "member") { 
+                const res: Member[] = await api().systems(pageOptions.isPublic ? id : "@me").members.get({ auth: !pageOptions.isPublic });
+                lists.rawList = res;
             }
-            else if (itemType === "group") {
-                const res: Group[] = await api().systems(isPublic ? id : "@me").groups.get({ auth: !isPublic, query: { with_members: !isPublic } });
-                groups = res;
-                list = res;
+            else if (pageOptions.type === "group") {
+                const res: Group[] = await api().systems(pageOptions.isPublic ? id : "@me").groups.get({ auth: !pageOptions.isPublic, query: { with_members: !pageOptions.isPublic } });
+                lists.rawList = res;
             }
-            else throw new Error(`Unknown list type ${itemType}`);
+            else throw new Error(`Unknown list type ${pageOptions.type}`);
         } catch (error) {
             console.log(error);
             err = error.message;
@@ -88,39 +58,28 @@
         listLoading = false;
     }
 
+    $: lists.shortGroups = createShortList(pageOptions.type === 'group' ? lists.rawList : otherList.rawList);
+    $: lists.shortMembers = createShortList(pageOptions.type === 'member' ? lists.rawList : otherList.rawList);
+    $: lists.processedList = filterList(lists.rawList, options, pageOptions.type);
+    $: lists.currentPage = paginateList(lists.processedList, pageOptions);
+    $: pageAmount = getPageAmount(lists.processedList, pageOptions);
+
     function addItemToList(event: any) {
-        if (itemType === "member") {
-            members.push(event.detail);
-            list = members;
-        } else if (itemType === "group") {
-            groups.push(event.detail);
-            list = groups;
-        }
+        lists.rawList.push(event.detail);
+        lists.rawList = lists.rawList;
     }
 
     function updateDelete(event: any) {
-        if (itemType === "member") {
-            members = members.filter(m => m.id !== event.detail);
-            list = members;
-        } else if (itemType === "group") {
-            groups = groups.filter(g => g.id !== event.detail);
-            list = groups;
-        }
+        lists.rawList = lists.rawList.filter(m => m.id !== event.detail);
     }
 
     function update(event: any) {
-        if (itemType === "member") {
-            members = members.map(m => m.id === event.detail.id ? m = event.detail : m);
-            list = members;
-        } else if (itemType === "group") {
-            groups = groups.map(g => g.id === event.detail.id ? g = event.detail : g);
-            list = groups;
-        }
+        lists.rawList = lists.rawList.map(m => m.id === event.detail.id ? m = event.detail : m);
     }
 
 </script>
 
-<ListControl on:viewChange {itemType} {isPublic} {memberList} {groups} {groupList} {list} bind:finalList={processedList} bind:searchValue bind:searchBy bind:sortBy bind:itemsPerPageValue bind:currentPage bind:view />
+<ListControl on:viewChange bind:options bind:lists bind:pageOptions />
 
 {#if listLoading && !err}
     <div class="mx-auto text-center">
@@ -136,26 +95,25 @@
     </Col>
 </Row>
 {:else}
-<span class="itemcounter">{processedList.length} {itemType}s ({slicedList.length} shown)</span>
-<ListSearch bind:searchBy bind:searchValue on:refresh={fetchList} />
+<span class="itemcounter">{lists.processedList.length} {pageOptions.type}s ({lists.currentPage.length} shown) <a href="#!" on:click={(e) => {e.preventDefault(); fetchList()}}>Refresh list</a></span>
 
-<ListPagination bind:currentPage {pageAmount} />
+<ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
 
-{#if !err && !isPublic}
-    {#if itemType === "member"}
+{#if !err && !pageOptions.isPublic}
+    {#if pageOptions.type === "member"}
     <NewMember on:create={addItemToList} />
-    {:else if itemType === "group"}
+    {:else if pageOptions.type === "group"}
     <NewGroup on:create={addItemToList} />
     {/if}
 {/if}
-{#if view === "card"}
-    <CardView on:update={update} list={slicedList} {groups} {members} {itemType} {sortBy} {searchBy} {isPublic} {isDash} />
-{:else if view === "tiny"}
+{#if pageOptions.view === "card"}
+    <CardView on:update={update} {otherList} {pageOptions} {lists} />
+{:else if pageOptions.view === "tiny"}
     tiny!
 {:else}
-<ListView on:update={update} on:deletion={updateDelete} list={slicedList} {groups} {members} {isPublic} {itemType} {itemsPerPage} {currentPage} {sortBy} {searchBy} fullLength={list.length} />
+<ListView on:update={update} on:deletion={updateDelete} {otherList} {lists} {pageOptions} {options} />
 {/if}
-<ListPagination bind:currentPage {pageAmount} />
+<ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
 {/if}
 
 <style>

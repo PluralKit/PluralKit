@@ -4,16 +4,19 @@
     import { Alert, Col, Container, Row, Card, CardBody, CardHeader, CardTitle, Input, Label, Button, Accordion, AccordionHeader, AccordionItem } from 'sveltestrap';
     import FaRandom from 'svelte-icons/fa/FaRandom.svelte'
     
-    import CardsList from '../../components/list/ListView.svelte';
+    import ListView from '../../components/list/ListView.svelte';
     import api from '../../api';
     import type { Group, Member } from '../../api/types';
+    import { defaultListOptions, type List as Lists, type ListOptions, type PageOptions } from '../../components/list/types';
+    import { defaultPageOptions } from '../../components/list/types';
+    import { filterList, paginateList } from '../../components/list/functions';
+    import CardView from '../../components/list/CardView.svelte';
 
     export let isPublic: boolean = false;
     export let type: string = "member";
     export let pickFromGroup: boolean = false;
 
     let list: Member[]|Group[] = [];
-    let randomList: Member[]|Group[] = [];
     
     let loading = true;
     let err: string;
@@ -21,7 +24,7 @@
     let params = useParams();
     $: id = $params.id;
     $: groupId = $params.groupId;
-
+    
     let location = useLocation();
     let searchParams = $location.search && new URLSearchParams($location.search);
 
@@ -41,10 +44,10 @@
 
     let allowDoubles = false;
     if (searchParams && searchParams.get("doubles") === "true") allowDoubles = true;
+    
+    let listView = 'list';
+    if (searchParams && searchParams.get('view')) listView = searchParams.get('view');
 
-    // just a hidden option to expand the cards by default regardless of your global settings
-    let openByDefault = false;
-    if (searchParams && searchParams.get("open") === "true") openByDefault = true;
     
     let rollCounter = 1;
 
@@ -70,7 +73,7 @@
                 list = res;
             }
             else throw new Error(`Unknown list type ${type}`);
-            randomList = randomizeList(amount, usePrivateMembers, allowDoubles);
+            lists.rawList = randomizeList(amount, usePrivateMembers, allowDoubles);
         } catch (error) {
             console.log(error);
             err = error.message;
@@ -103,14 +106,15 @@
     function rerollList() {
         let amount = parseInt(optionAmount);
         let paramArray = [];
+        if (amount > 1) paramArray.push(`view=${pageOptions.view}`);
         if (amount > 1) paramArray.push(`amount=${amount}`);
         if (optionAllowDoubles === "true") paramArray.push("doubles=true");
         if (optionUsePrivateItems === "true") paramArray.push("all=true");
-        if (openByDefault === true) paramArray.push("open=true");
         
-        randomList = randomizeList(parseInt(optionAmount), optionUsePrivateItems, optionAllowDoubles);
+        lists.rawList = randomizeList(parseInt(optionAmount), optionUsePrivateItems, optionAllowDoubles);
         navigate(`${path}${paramArray.length > 0 ? `?${paramArray.join('&')}` : ""}`);
         rollCounter ++;
+        pageOptions.currentPage = rollCounter;
     }
 
     function capitalizeFirstLetter(string: string) {
@@ -125,20 +129,6 @@
     let optionAllowDoubles = "false";
     if (allowDoubles === true) optionAllowDoubles = "true";
 
-    function getItemLink(item: Member | Group): string {
-        let url: string;
-
-        if (isPublic) url = "/dash/";
-        else url = "/profile/";
-        
-        if (type === "member") url += "m/";
-        else if (type === "group") url += "g/";
-
-        url += item.id;
-
-        return url;
-    }
-
     function getBackUrl() {
         let str: string;
         if (isPublic)  { 
@@ -150,6 +140,39 @@
 
         return str;
     }
+
+    let lists: Lists<Group> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
+    }
+
+    let nope: Lists<Member> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
+    }
+    
+    let pageOptions: PageOptions = {...defaultPageOptions,
+        isPublic: true,
+        type: type === 'group' ? 'group' : 'member',
+        isMain: false,
+        itemsPerPage: 5,
+        randomized: true,
+        view: listView === 'card' ? 'card' : 'list'
+    };
+
+    let listOptions: ListOptions = {...defaultListOptions,
+        sort: 'none',
+    };
+
+    $: lists.currentPage = lists.rawList;
 </script>
 
 <Container>
@@ -163,8 +186,8 @@
                     </div>Randomize {capitalizeFirstLetter(type)}s {isPublic && id ? `(${id})` : pickFromGroup ? `(${groupId})` : ""}</CardTitle>
                 </CardHeader>
                 <CardBody>
-                    <Row>
-                        <Col xs={12} lg={4} class="mb-2">
+                    <Row class="mb-3">
+                        <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Amount:</Label>
                             <Input bind:value={optionAmount} type="select" aria-label="amount">
                                 <option default={amount === 1}>1</option>
@@ -174,15 +197,22 @@
                                 <option default={amount === 5}>5</option>
                             </Input>
                         </Col>
-                        <Col xs={12} lg={4} class="mb-2">
+                        <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Allow duplicates:</Label>
                             <Input bind:value={optionAllowDoubles} type="select" aria-label="allow duplicates">
                                 <option value="false" default={allowDoubles === false}>no</option>
                                 <option value="true" default={allowDoubles === true}>yes</option>
                             </Input>
                         </Col>
+                        <Col xs={12} md={6} lg={4} class="mb-2">
+                            <Label>View:</Label>
+                            <Input bind:value={pageOptions.view} type="select" aria-label="amount">
+                                <option value="list">List</option>
+                                <option value="card">Cards</option>
+                            </Input>
+                        </Col>
                         {#if !isPublic}
-                        <Col xs={12} lg={4} class="mb-2">
+                        <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Use all {type}s:</Label>
                             <Input bind:value={optionUsePrivateItems} type="select" aria-label="include private members">
                                 <option value="false" default={usePrivateItems === false}>no (only public {type}s)</option>
@@ -206,7 +236,11 @@
             {:else if err}
                 <Alert color="danger">{err}</Alert>
             {:else}
-                <CardsList openByDefault={openByDefault} bind:list={randomList} isPublic={true} itemType={type} itemsPerPage={5} currentPage={rollCounter} fullLength={5 * rollCounter - (5 - randomList.length)} />
+                {#if pageOptions.view === 'card'}
+                    <CardView {lists} {pageOptions} otherList={nope} />
+                {:else}
+                    <ListView {lists} {pageOptions} otherList={nope}/>
+                {/if}
             {/if}
         </Col>
     </Row>

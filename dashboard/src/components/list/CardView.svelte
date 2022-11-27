@@ -7,25 +7,19 @@
     import type { Member, Group } from '../../api/types';
     import MemberCard from '../member/CardView.svelte';
     import GroupCard from '../group/CardView.svelte';
+    import type { PageOptions, List } from './types';
 
-    export let list: Member[]|Group[];
-    export let groups: Group[] = [];
-    export let members: Group[] = [];
-    
-    export let itemType: string;
-
-    export let searchBy = "name";
-    export let sortBy = "name";
-    export let isPublic = false;
-    export let isDash = false;
+    export let lists: List<Member|Group>;
+    export let pageOptions: PageOptions;
+    export let otherList: List<Member|Group>;
 
     let copiedItems = {};
 
     function getShortLink(id: string) {
         let url = "https://pk.mt"
 
-        if (itemType === "member") url += "/m/"
-        else if (itemType === "group") url += "/g/"
+        if (pageOptions.type === "member") url += "/m/"
+        else if (pageOptions.type === "group") url += "/g/"
 
         url += id;
 
@@ -53,12 +47,12 @@
     }
 </script>
 
-<Row>
-    {#if itemType === "member"}
-        {#each list as item (item.uuid)}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mx-auto mx-sm-0 dont-squish">
-            <MemberCard on:update member={item} {searchBy} {sortBy} {groups} {isPublic} {isDash}>
-                    <div slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${itemType}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
+<Row class="mx-4 mx-sm-5 mx-md-0">
+    {#if pageOptions.type === "member"}
+        {#each lists.currentPage as item (item.uuid)}
+        <div class="col-12 col-md-6 col-lg-4 col-xxl-3 mx-auto mx-sm-0 dont-squish">
+            <MemberCard on:update member={item} searchBy="name" sortBy="name" groups={otherList.rawList} isPublic={pageOptions.isPublic} isDash={pageOptions.isMain}>
+                    <div slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${pageOptions.type}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
                         {#if item.privacy && item.privacy.visibility === "private"}
                             <FaLock />
                         {:else}
@@ -66,14 +60,14 @@
                         {/if}
                     </div>
             </MemberCard>
-            <Tooltip placement="top" target={`${itemType}-copy-${item.uuid}`}>{copiedItems[item.uuid] ? "Copied!" : "Copy public link"}</Tooltip>
+            <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.uuid}`}>{copiedItems[item.uuid] ? "Copied!" : "Copy public link"}</Tooltip>
         </div>
         {/each}
-    {:else if itemType === "group"}
-    {#each list as item (item.uuid)}
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mx-auto mx-sm-0 dont-squish">
-            <GroupCard group={item} {searchBy} {sortBy} {members} {isPublic} {isDash}>
-                <div slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${itemType}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
+    {:else if pageOptions.type === "group"}
+    {#each lists.currentPage as item (item.uuid)}
+        <div class="col-12 col-md-6 col-lg-4 col-xxl-3 mx-auto mx-sm-0 dont-squish">
+            <GroupCard group={item} searchBy="name" sortBy="name" members={otherList.rawList} isPublic={pageOptions.isPublic} isDash={pageOptions.isMain}>
+                <div slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${pageOptions.type}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
                         {#if item.privacy && item.privacy.visibility === "private"}
                             <FaLock />
                         {:else}
@@ -81,7 +75,7 @@
                         {/if}
                     </div>
             </GroupCard>
-            <Tooltip placement="top" target={`${itemType}-copy-${item.uuid}`}>{copiedItems[item.uuid] ? "Copied!" : "Copy public link"}</Tooltip>
+            <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.uuid}`}>{copiedItems[item.uuid] ? "Copied!" : "Copy public link"}</Tooltip>
         </div>
         {/each}
     {/if}

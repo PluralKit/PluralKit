@@ -35,6 +35,10 @@
         background-color: $light-alt !important;
     }
 
+    .accordion-item {
+        color: #ffffff;
+    }
+
     // discord markdown
     .d-spoiler {
         color: $dark-alt; //overwrite

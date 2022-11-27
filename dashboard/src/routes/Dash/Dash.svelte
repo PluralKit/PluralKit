@@ -6,8 +6,9 @@
     import SystemMain from '../../components/system/Main.svelte';
     import List from '../../components/list/List.svelte';
 
-    import type { System } from '../../api/types';
+    import type { System, Member, Group } from '../../api/types';
     import api from '../../api';
+    import { defaultListOptions, defaultPageOptions, type List as Lists, type ListOptions, type PageOptions } from '../../components/list/types';
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -69,9 +70,38 @@
         }
     }
     
-    // some values that get passed from the member to the group components and vice versa
-    let members = [];
-    let groups = [];
+    let memberList: Lists<Member> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
+    }
+
+    let groupList: Lists<Group> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
+    }
+
+    let groupListOptions: ListOptions = JSON.parse(JSON.stringify(defaultListOptions));
+    let memberListOptions: ListOptions = JSON.parse(JSON.stringify(defaultListOptions));
+    
+    let memberListPageOptions: PageOptions = {...defaultPageOptions,
+        view: listView,
+        isPublic: false,
+        type: 'member'
+    };
+
+    let groupListPageOptions: PageOptions = {...defaultPageOptions,
+        view: listView,
+        isPublic: false,
+        type: 'group'
+    };
 
 </script>
 
@@ -89,11 +119,11 @@
                         <SystemMain bind:user={user} isPublic={false} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:groups={groups} bind:members={members} isPublic={false} itemType={"member"} bind:view={listView} isDash={true} />
+                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={groupList} bind:lists={memberList} bind:pageOptions={memberListPageOptions} bind:options={memberListOptions} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:members={members} bind:groups={groups} isPublic={false} itemType={"group"} bind:view={listView} isDash={true} />
-            </TabPane> 
+                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={memberList} bind:lists={groupList} bind:pageOptions={groupListPageOptions}  bind:options={groupListOptions} />
+                </TabPane> 
             </TabContent>
         </Col>
     </Row>

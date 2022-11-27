@@ -51,8 +51,8 @@
             let res = await api().groups(group.id).patch({data});
             update({...group, ...res});
             err = [];
-            success = true;
-            loading = false;
+            editMode = false;
+            return;
         } catch (error) {
             console.log(error);
             err.push(error.message);

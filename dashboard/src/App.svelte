@@ -7,8 +7,8 @@
   import Public from "./routes/Public.svelte";
   import Main from "./routes/dash/Profile.svelte";
   import Status from './routes/status/Status.svelte';
-  import Member from './routes/dash/Member/Member.svelte';
-  import Group from './routes/dash/Group/Group.svelte';
+  import Member from './routes/dash/member/Member.svelte';
+  import Group from './routes/dash/group/Group.svelte';
   import PageNotFound from './routes/PageNotFound.svelte';
   import { Alert } from 'sveltestrap';
 import DiscordLogin from "./routes/DiscordLogin.svelte";

@@ -15,7 +15,7 @@
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
     $: if (item.name) {
-        if ((searchBy === "display name" || sortBy === "display name") && item.display_name) htmlName = toHTML(item.display_name);
+        if ((searchBy === "display_name" || sortBy === "display_name") && item.display_name) htmlName = toHTML(item.display_name);
         else htmlName = toHTML(item.name);
     } else htmlName = "";
 

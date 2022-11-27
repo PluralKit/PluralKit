@@ -5,15 +5,13 @@
     
     import SystemMain from '../../components/system/Main.svelte';
     import List from '../../components/list/List.svelte';
+    import { defaultListOptions, defaultPageOptions, type List as Lists, type ListOptions, type PageOptions } from '../../components/list/types';
     
-    import type{ System } from '../../api/types';
+    import type{ Group, Member, System } from '../../api/types';
     import api from '../../api';
 
     let user: System = {};
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
-
-    let members = [];
-    let groups = [];
 
     let params = useParams();
     $: id = $params.id;
@@ -55,6 +53,40 @@
         }
     }
 
+    let memberList: Lists<Member> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
+    }
+
+    let groupList: Lists<Group> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
+    }
+
+    let groupListOptions: ListOptions = defaultListOptions;
+    let memberListOptions: ListOptions = defaultListOptions;
+    
+    let pageOptions: PageOptions = defaultPageOptions;
+    let memberListPageOptions: PageOptions = {...pageOptions, ...{
+        view: listView,
+        isPublic: true,
+        type: 'member'
+    }};
+
+    let groupListPageOptions: PageOptions = {...pageOptions, ...{
+        view: listView,
+        isPublic: true,
+        type: 'group'
+    }};
+
 </script>
 
 <!-- display the banner if there's a banner set, and if the current settings allow for it-->
@@ -75,14 +107,14 @@
             <Alert color="info" aria-hidden>You are currently <b>viewing</b> a system.</Alert>
             <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail, listView)}>
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
-                        <SystemMain bind:user isPublic={true} />
+                    <SystemMain bind:user={user} isPublic={false} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                        <List on:viewChange={(e) => navigateTo("members", e.detail)} members={members} groups={groups} isPublic={true} itemType={"member"} bind:view={listView} isDash={false}/>
+                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={groupList} bind:lists={memberList} bind:pageOptions={memberListPageOptions} bind:options={memberListOptions} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <List on:viewChange={(e) => navigateTo("groups", e.detail)} members={members} groups={groups} isPublic={true} itemType={"group"} bind:view={listView} isDash={false} />
-            </TabPane> 
+                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={memberList} bind:lists={groupList} bind:pageOptions={groupListPageOptions}  bind:options={groupListOptions} />
+                </TabPane> 
             </TabContent>
             {/if}
         </Col>

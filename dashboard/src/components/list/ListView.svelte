@@ -10,52 +10,43 @@
     import MemberBody from '../member/Body.svelte';
     import GroupBody from '../group/Body.svelte';
     import CardsHeader from '../common/CardsHeader.svelte';
+    import { defaultListOptions, type List, type ListOptions, type PageOptions } from './types';
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
     
-    export let list: Member[]|Group[];
-    export let members: Member[] = [];
-    export let groups: Group[] = [];
-    
-    export let isPublic: boolean;
-    export let itemType: string;
-    export let itemsPerPage: number;
-    export let currentPage: number;
-    export let fullLength: number;
-
-    export let openByDefault = false;
-
-    export let searchBy = "name";
-    export let sortBy = "name";
-
-    $: indexStart = itemsPerPage * (currentPage - 1);
+    export let options: ListOptions = JSON.parse(JSON.stringify(defaultListOptions));
+    export let otherList: List <Member|Group>;
+    export let lists: List<Member|Group>;
+    export let pageOptions: PageOptions;
 
     function getItemLink(item: Member | Group): string {
         let url: string;
 
-        if (!isPublic) url = "/dash/";
+        if (!pageOptions.isPublic) url = "/dash/";
         else url = "/profile/";
         
-        if (itemType === "member") url += "m/";
-        else if (itemType === "group") url += "g/";
+        if (pageOptions.type === "member") url += "m/";
+        else if (pageOptions.type === "group") url += "g/";
 
         url += item.id;
 
         return url;
     }
 
+    $: indexStart = pageOptions.itemsPerPage * (pageOptions.currentPage - 1);
+
     function skipToNextItem(event, index: number) {
         let el;
 
         if (event.key === "ArrowDown") {
-            if (index + 1 < indexStart + itemsPerPage && index + 1 < fullLength) el = document.getElementById(`${itemType}-card-${index + 1}`);
-            else el = document.getElementById(`${itemType}-card-${indexStart}`);
+            if (index + 1 < indexStart + pageOptions.itemsPerPage && index + 1 < lists.processedList.length) el = document.getElementById(`${pageOptions.type}-card-${index + 1}`);
+            else el = document.getElementById(`${pageOptions.type}-card-${indexStart}`);
         }
 
         if (event.key === "ArrowUp") {
-            if (index - 1 >= indexStart) el = document.getElementById(`${itemType}-card-${index - 1}`);
-            else if (fullLength <= indexStart + itemsPerPage) el = document.getElementById(`${itemType}-card-${fullLength - 1}`);
-            else el = document.getElementById(`${itemType}-card-${indexStart + itemsPerPage - 1}`);
+            if (index - 1 >= indexStart) el = document.getElementById(`${pageOptions.type}-card-${index - 1}`);
+            else if (lists.processedList.length <= indexStart + pageOptions.itemsPerPage) el = document.getElementById(`${pageOptions.type}-card-${lists.processedList.length - 1}`);
+            else el = document.getElementById(`${pageOptions.type}-card-${indexStart + pageOptions.itemsPerPage - 1}`);
         }
 
         if (el) {
@@ -66,7 +57,20 @@
 
     let isOpen = {};
 
-    function toggleCard(index: string) {
+    function toggleCard(index: string, count: number) {
+
+        if (pageOptions.randomized) {
+            let newIndex = index + '-' + pageOptions.currentPage + '-' + count;
+
+            isOpen[newIndex] = isOpen[newIndex] || {};
+            if (isOpen[newIndex] === true) {
+                isOpen[newIndex] = false;
+            } else {
+                isOpen[newIndex] = true;
+            }
+            return;
+        }
+
         isOpen[index] = isOpen[index] || {};
         if (isOpen[index] === true) {
             isOpen[index] = false;
@@ -78,8 +82,8 @@
     function getShortLink(id: string) {
         let url = "https://pk.mt"
 
-        if (itemType === "member") url += "/m/"
-        else if (itemType === "group") url += "/g/"
+        if (pageOptions.type === "member") url += "/m/"
+        else if (pageOptions.type === "group") url += "/g/"
 
         url += id;
 
@@ -108,18 +112,18 @@
     }
 </script>
 
-{#if !openByDefault && (settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true)}
+{#if (settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true)}
     <div class="mb-3 accordion">    
-    {#each list as item, index (item.uuid)}
+    {#each lists.currentPage as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
         <Card style="border-radius: 0;">
             <h2 class="accordion-header">
-                <button class="w-100 accordion-button collapsed bg-transparent" id={`${itemType}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
-                    <CardsHeader {item} {sortBy} {searchBy}>
-                        <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
-                            {#if isPublic || item.privacy.visibility === "public"}
-                            {#if itemType === "member"}
+                <button class="w-100 accordion-button collapsed bg-transparent" id={`${pageOptions.type}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid, index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
+                    <CardsHeader {item} sortBy={options.sort}>
+                        <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                            {#if item.privacy && item.privacy.visibility === "public"}
+                            {#if pageOptions.type === "member"}
                             <FaUserCircle />
-                            {:else if itemType === "group"}
+                            {:else if pageOptions.type === "group"}
                             <FaUsers />
                             {/if}
                             {:else}
@@ -127,32 +131,32 @@
                             {/if}
                         </div>
                     </CardsHeader>
-                    <Tooltip placement="top" target={`${itemType}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
+                    <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
                 </button>
             </h2>
-            <Collapse isOpen={isOpen[item.uuid]}>
+            <Collapse isOpen={pageOptions.randomized ? isOpen[item.uuid + '-' + pageOptions.currentPage + '-' + index] : isOpen[item.uuid]}>
                 <CardBody class="border-top">
-                    {#if itemType === "member"}
-                    <MemberBody on:update on:deletion bind:isPublic groups={groups} member={item} />
-                    {:else if itemType === "group"}
-                    <GroupBody on:update on:deletion bind:isPublic {members} group={item} />
+                    {#if pageOptions.type === "member"}
+                    <MemberBody on:update on:deletion bind:isPublic={pageOptions.isPublic} groups={otherList.rawList} member={item} />
+                    {:else if pageOptions.type === "group"}
+                    <GroupBody on:update on:deletion bind:isPublic={pageOptions.isPublic} members={otherList.rawList} group={item} />
                     {/if}
                 </CardBody>
             </Collapse>
         </Card>
     {/each}
     </div>
-{:else if openByDefault || settings.accessibility.expandedcards}
-    {#each list as item, index (item.id + index)}
+{:else if settings.accessibility.expandedcards}
+    {#each lists.currentPage as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <Card class="mb-3">
-        <div class="accordion-button collapsed p-0" id={`${itemType}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} tabindex={0}>
+        <div class="accordion-button collapsed p-0" id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} tabindex={0}>
             <CardHeader class="w-100">
-                <CardsHeader {item} {sortBy} {searchBy}>
-                    <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
-                        {#if isPublic || item.privacy.visibility === "public"}
-                        {#if itemType === "member"}
+                <CardsHeader {item} sortBy={options.sort}>
+                    <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                        {#if item.privacy && item.privacy.visibility === "public"}
+                        {#if pageOptions.type === "member"}
                         <FaUserCircle />
-                        {:else if itemType === "group"}
+                        {:else if pageOptions.type === "group"}
                         <FaUsers />
                         {/if}
                         {:else}
@@ -160,29 +164,29 @@
                         {/if}
                     </div>
                 </CardsHeader>
-                <Tooltip placement="top" target={`${itemType}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
+                <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
             </CardHeader>
         </div>
         <CardBody>
-            {#if itemType === "member"}
-            <MemberBody on:update on:deletion bind:isPublic groups={groups} member={item} />
-            {:else if itemType === "group"}
-            <GroupBody on:update on:deletion bind:isPublic {members} group={item} />
+            {#if pageOptions.type === "member"}
+            <MemberBody on:update on:deletion bind:isPublic={pageOptions.isPublic} groups={otherList.rawList} member={item} />
+            {:else if pageOptions.type === "group"}
+            <GroupBody on:update on:deletion bind:isPublic={pageOptions.isPublic}  members={otherList.rawList} group={item} />
             {/if}
         </CardBody>
     </Card>
     {/each}
 {:else}
     <div class="my-3">
-    {#each list as item, index (item.id + index)}
+    {#each lists.currentPage as item, index(pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <Card style="border-radius: 0;">
-        <a class="accordion-button collapsed bg-transparent" style="text-decoration: none;" href={getItemLink(item)} id={`${itemType}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
-            <CardsHeader {item}>
-                <div slot="icon" style="cursor: pointer;" id={`${itemType}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
-                    {#if isPublic || item.privacy.visibility === "public"}
-                    {#if itemType === "member"}
+        <a class="accordion-button collapsed bg-transparent" style="text-decoration: none;" href={getItemLink(item)} id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
+            <CardsHeader {item} sortBy={options.sort}>
+                <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                    {#if item.privacy && item.privacy.visibility === "public"}
+                    {#if pageOptions.type === "member"}
                     <FaUserCircle />
-                    {:else if itemType === "group"}
+                    {:else if pageOptions.type === "group"}
                     <FaUsers />
                     {/if}
                     {:else}
@@ -190,7 +194,7 @@
                     {/if}
                 </div>
             </CardsHeader>
-            <Tooltip placement="top" target={`${itemType}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
+            <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
         </a>
     </Card>
     {/each}

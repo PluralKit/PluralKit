@@ -8,9 +8,12 @@
     import type { Member, Group } from "../../../api/types";
     import CardsHeader from "../../../components/common/CardsHeader.svelte";
     import FaAddressCard from 'svelte-icons/fa/FaAddressCard.svelte'
-    import FaList from 'svelte-icons/fa/FaList.svelte'
     import ListPagination from '../../../components/common/ListPagination.svelte';
     import CardView from '../../../components/list/CardView.svelte';
+    import type { List as Lists, ListOptions, PageOptions } from '../../../components/list/types';
+    import { defaultListOptions, defaultPageOptions } from '../../../components/list/types';
+    import { filterList, getPageAmount, paginateList } from '../../../components/list/functions';
+    import PageControl from "../../../components/list/PageControl.svelte";
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -24,28 +27,16 @@
     let err = "";
     let groupErr = "";
     let member: Member;
-    let groups: Group[] = [];
     let systemGroups: Group[] = [];
-    let systemMembers: Member[] = [];
     let isDeleted = false;
     let notOwnSystem = false;
     let copied = false;
+    let pageAmount = 1;
 
-    const isPage = true;
     export let isPublic = true;
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
-    let currentPage = 1;
-    let itemsPerPage = listView === "card" ? 12 : settings && settings.accessibility && settings.accessibility.expandedcards ? 5 : 10;
-
-    $: indexOfLastItem = currentPage * itemsPerPage;
-    $: indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    $: pageAmount = Math.ceil(groups.length / itemsPerPage);
-
-    $: orderedGroups = groups.sort((a, b) => a.name.localeCompare(b.name));
-    $: slicedGroups = orderedGroups.slice(indexOfFirstItem, indexOfLastItem);
-
-    if (!isPublic && isPage) {
+    if (!isPublic) {
         let user = localStorage.getItem("pk-user");
         if (!user) navigate("/");
     }
@@ -69,7 +60,6 @@
                 title = isPublic ? member.name : `${member.name} (dash)`;
             }
             groupLoading = true;
-            await new Promise(resolve => setTimeout(resolve, 1000));
             fetchGroups();
         } catch (error) {
             console.log(error);
@@ -80,19 +70,12 @@
 
     async function fetchGroups() {
         try {
-            groups = await api().members($params.id).groups().get({auth: !isPublic, query: { with_members: !isPublic } });
+            lists.rawList = await api().members($params.id).groups().get({auth: !isPublic, query: { with_members: !isPublic } });
             if (!isPublic) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
                 systemGroups = await api().systems("@me").groups.get({ auth: true, query: { with_members: true } });
             }
             groupErr = "";
             groupLoading = false;
-            // we can't use with_members from a group list from a member endpoint yet, but I'm leaving this in in case we do
-            // (this is needed for editing a group member list from the member page)
-            /* if (!isPublic) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                systemMembers = await api().systems("@me").members.get({auth: true});
-            } */
         } catch (error) {
             console.log(error);
             groupErr = error.message;
@@ -100,20 +83,33 @@
         }
     }
 
-    async function updateGroups() {
-      groupLoading = true;
-      await new Promise(resolve => setTimeout(resolve, 500));
-      fetchGroups();
+    let lists: Lists<Group> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
     }
 
-    function updateDelete() {
-        isDeleted = true;
+    let nope: Lists<Member> = {
+        rawList: [],
+        processedList: [],
+        currentPage: [],
+
+        shortGroups: [],
+        shortMembers: [],
     }
+
+    let listOptions: ListOptions = {...defaultListOptions};
     
-    function deleteGroupFromList(event: any) {
-        groups = groups.filter(group => group.id !== event.detail);
-        systemGroups = systemGroups.filter(group => group.id !== event.detail);
-  }
+    let pageOptions: PageOptions = {...defaultPageOptions,
+        view: listView,
+        isPublic: isPublic,
+        type: 'group',
+        isMain: false,
+        itemsPerPage: listView === 'card' ? 24 : 25
+    };
 
     async function copyShortLink(event?) {
         if (event) {
@@ -128,6 +124,18 @@
         } catch (error) {
             console.log(error);
         }
+    }
+
+    $: lists.processedList = filterList(lists.rawList, listOptions);
+    $: lists.currentPage = paginateList(lists.processedList, pageOptions);
+    $: pageAmount = getPageAmount(lists.processedList, pageOptions);
+
+    function updateDelete(event: any) {
+        lists.rawList = lists.rawList.filter(m => m.id !== event.detail);
+    }
+
+    function update(event: any) {
+        lists.rawList = lists.rawList.map(m => m.id === event.detail.id ? m = event.detail : m);
     }
 </script>
 
@@ -164,7 +172,7 @@
                         <Tooltip placement="top" target={`member-copy-${member.id}`}>{copied ? "Copied!" : "Copy public link"}</Tooltip>
                     </CardHeader>
                     <CardBody>
-                        <Body on:deletion={updateDelete} on:updateGroups={updateGroups} bind:groups={systemGroups} bind:member={member} isPage={isPage} isPublic={isPublic}/>
+                        <Body bind:groups={systemGroups} bind:member={member} isPage={true} isPublic={isPublic}/>
                     </CardBody>
                 </Card>
             {/if}
@@ -172,23 +180,15 @@
                 <Alert color="primary"><Spinner size="sm" /> Fetching groups...</Alert>
             {:else if groupErr}
                 <Alert color="danger">{groupErr}</Alert>
-            {:else if groups && groups.length > 0}
-            <Card class="mb-2">
-                <CardHeader>
-                    <CardTitle style="margin-top: 8px; outline: none;">
-                        <div class="icon d-inline-block">
-                            <FaList />
-                        </div> Member groups
-                    </CardTitle>
-                </CardHeader>
-            </Card>
-            <ListPagination bind:currentPage bind:pageAmount />
-                {#if listView === "card"}
-                <CardView list={slicedGroups} {isPublic} itemType="group" isDash={false} />
+            {:else if lists.rawList && lists.rawList.length > 0}
+            <PageControl bind:options={listOptions} bind:pageOptions />
+            <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
+                {#if pageOptions.view === "card"}
+                <CardView {pageOptions} {lists} otherList={nope} on:update={update} />
                 {:else}
-                <ListView on:deletion={(e) => deleteGroupFromList(e)} bind:list={slicedGroups} isPublic={isPublic} itemType="group" itemsPerPage={itemsPerPage} currentPage={currentPage} fullLength={groups.length} />
-                <ListPagination bind:currentPage bind:pageAmount />
+                <ListView {pageOptions} {lists} otherList={nope} on:update={update} on:deletion={updateDelete} />
                 {/if}
+                <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
             {/if}
             {/if}
         </Col>

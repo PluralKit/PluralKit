@@ -74,7 +74,8 @@
         try {
             let res = await api().members(member.id).patch({data});
             update({...member, ...res});
-            success = true;
+            editMode = false;
+            return;
         } catch (error) {
             console.log(error);
             err.push(error.message);

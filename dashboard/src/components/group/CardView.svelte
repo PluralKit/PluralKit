@@ -95,8 +95,7 @@
             update({...group, ...res});
             group = {...group, ...res};
             err = [];
-            success = true;
-            loading = false;
+            view = 'card';
         } catch (error) {
             console.log(error);
             err.push(error.message);
@@ -106,7 +105,7 @@
     }
 </script>
 
-<Card class="mb-4 pb-3" style={`height: 27.5rem; ${group.color && `border-bottom: 4px solid #${group.color}`}`}>
+<div class="mb-4 pb-3 card" style={`height: 27.5rem; ${group.color && `border-bottom: 4px solid #${group.color}`}`}>
     <CardHeader>
         <CardTitle class="d-flex justify-content-center align-middle w-100 mb-0">
             <div class="icon d-inline-block">
@@ -133,13 +132,13 @@
         <hr style="min-height: 1px;"/>
         <Row>
             <Col xs={4} class="align-items-center justify-content-center">
-                {#if !isPublic}<Button color="link" class="mt-2" on:click={() => {view = "edit"}} id={`group-${group.uuid}-edit-button-card`}><FaEdit/></Button>{/if}
+                {#if !isPublic}<Button color="link" class="mt-2" style="height: 3.5rem;" on:click={() => {view = "edit"}} id={`group-${group.uuid}-edit-button-card`}><FaEdit/></Button>{/if}
             </Col>
             <Col xs={4} class="align-items-center justify-content-center">
-                {#if !isPublic && isDash}<Button color="link" class="mt-2 text-reset" on:click={() => {view = "groups"}} id={`group-${group.uuid}-groups-button-card`}><FaUserAlt/></Button>{/if}
+                {#if !isPublic && isDash}<Button color="link" class="mt-2 text-reset" on:click={() => {view = "groups"}} style="height: 3.5rem;" id={`group-${group.uuid}-groups-button-card`}><FaUserAlt/></Button>{/if}
             </Col>
             <Col xs={4} class="align-items-center justify-content-center">
-                <Link tabindex={-1} to={pageLink} class="text-reset"><Button color="link" class="mt-2 w-100 text-reset" id={`group-${group.uuid}-view-button-card`}><FaInfoCircle/></Button></Link> 
+                <Link tabindex={-1} to={pageLink} class="text-reset"><Button color="link" class="mt-2 w-100 text-reset" style="height: 3.5rem;" id={`group-${group.uuid}-view-button-card`}><FaInfoCircle/></Button></Link> 
             </Col>
             {#if !isPublic}<Tooltip target={`group-${group.uuid}-edit-button-card`} placement="bottom">Edit group</Tooltip>{/if}
             {#if !isPublic && isDash}<Tooltip target={`group-${group.uuid}-groups-button-card`} placement="bottom">View members</Tooltip>{/if}
@@ -160,13 +159,13 @@
             <hr style="min-height: 1px"/>
             <Row>
                 <Col xs={4} class="align-items-center justify-content-center">
-                    <Button color="link" class="mt-2" on:click={() => {view = "edit"}} id={`group-${group.uuid}-edit-button-groups`}><FaEdit/></Button>
+                    <Button color="link" class="mt-2" style="height: 3.5rem;" on:click={() => {view = "edit"}} id={`group-${group.uuid}-edit-button-groups`}><FaEdit/></Button>
                 </Col>
                 <Col xs={4} class="align-items-center justify-content-center">
-                    <Button color="link" class="mt-2 text-reset" on:click={() => {view = "card"}} id={`group-${group.uuid}-back-button-groups`}><FaTimes/></Button>
+                    <Button color="link" class="mt-2 text-reset" style="height: 3.5rem;" on:click={() => {view = "card"}} id={`group-${group.uuid}-back-button-groups`}><FaTimes/></Button>
                 </Col>
                 <Col xs={4} class="align-items-center justify-content-center">
-                    <Link tabindex={-1} to={`./m/${group.id}`} class="text-reset"><Button color="link" class="mt-2 w-100 text-reset" id={`group-${group.uuid}-view-button-groups`}><FaInfoCircle/></Button></Link> 
+                    <Link tabindex={-1} to={`./m/${group.id}`} class="text-reset"><Button color="link" class="mt-2 w-100 text-reset" style="height: 3.5rem;" id={`group-${group.uuid}-view-button-groups`}><FaInfoCircle/></Button></Link> 
                 </Col>
                 <Tooltip target={`group-${group.uuid}-edit-button-groups`} placement="bottom">Edit group</Tooltip>
                 <Tooltip target={`group-${group.uuid}-back-button-groups`} placement="bottom">Back to info</Tooltip>
@@ -194,9 +193,6 @@
                 </Col>
             </Row>
             <hr style="min-height: 1px" />
-            {#if success}
-                <Alert class="m-0 mb-2" color="success">group edited!</Alert>
-            {/if}
             {#if err}
                 {#each err as errorMessage}
                     <Alert class="m-0 mb-2" color="danger">{@html errorMessage}</Alert>
@@ -209,14 +205,14 @@
                 <Col xs={4}>
                 </Col>
                 <Col xs={4} class="align-items-center justify-content-center">
-                    <Button disabled={loading} color="link" class="mt-2 text-success" on:click={submit} id={`group-${group.uuid}-submit-button-edit`}><FaCheck/></Button>
+                    <Button disabled={loading} color="link" class="mt-2 text-success" style="height: 3.5rem;" on:click={submit} id={`group-${group.uuid}-submit-button-edit`}><FaCheck/></Button>
                 </Col>
                 <Tooltip target={`group-${group.uuid}-back-button-edit`} placement="bottom">Go back</Tooltip>
                 <Tooltip target={`group-${group.uuid}-submit-button-edit`} placement="bottom">Submit edit</Tooltip>
             </Row>
         {/if}
     </div>
-</Card>
+</div>
 
 <style>
     .hide-scrollbar::-webkit-scrollbar {
@@ -227,4 +223,13 @@
         scrollbar-width: none;
     }
 
+    .item {
+        height: auto;
+    }
+
+    @media (min-width: 768px) {
+        .item {
+            height: 30rem;
+        }
+    }
 </style>

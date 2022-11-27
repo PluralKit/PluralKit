@@ -1,40 +1,36 @@
 <script lang="ts">
 import { createEventDispatcher } from 'svelte';
-import { Card, CardHeader, CardBody, CardTitle, Alert, Accordion, AccordionItem, InputGroupText, InputGroup, Input, Row, Col, Spinner, Button, Tooltip, Label } from 'sveltestrap';
+import { Card, CardHeader, CardBody, CardTitle, InputGroupText, InputGroup, Input, Row, Col, Button, Tooltip, Label } from 'sveltestrap';
 import FaSearch from 'svelte-icons/fa/FaSearch.svelte'
+import FaQuestionCircle from 'svelte-icons/fa/FaQuestionCircle.svelte'
 import Svelecte, { addFormatter } from 'svelecte';
 import type { Member, Group } from '../../api/types';
 import { Link, useParams } from 'svelte-navigator';
-import moment from 'moment';
 
-export let list: Member[] | Group[] = [];
+import type { ListOptions, List, PageOptions, ShortList } from './types';
 
-export let itemType: string;
-export let memberList: any = [];
-export let groups: Group[] = [];
-export let groupList: any = [];
+export let options: ListOptions;
+export let lists: List<Member|Group>;
+export let pageOptions: PageOptions;
 
-export let searchBy = "name";
-export let searchValue: string;
-export let itemsPerPageValue: string;
-export let view = "list";
+let advanced = false;
 
 let itemsPerPageSelection = {
-    small: "10",
-    default: "25",
-    large: "50"
+    small: 10,
+    default: 25,
+    large: 50
 }
 
-$: { if (view === "card") itemsPerPageSelection = {
-        small: "12",
-        default: "24",
-        large: "60"
+$: { if (pageOptions.view === "card") itemsPerPageSelection = {
+        small: 12,
+        default: 24,
+        large: 60
     }
     else {
         itemsPerPageSelection = {
-            small: "10",
-            default: "25",
-            large: "50"
+            small: 10,
+            default: 25,
+            large: 50
         }
     }
 }
@@ -42,179 +38,12 @@ $: { if (view === "card") itemsPerPageSelection = {
 const dispatch = createEventDispatcher();
 
 function onViewChange(e: any) {
+    resetPage();
     dispatch("viewChange", e.target.value);
 }
 
-export let sortBy = "name";
-let sortOrder = "ascending";
-let privacyFilter = "all";
-let groupSearchMode = "include";
-let selectedGroups = [];
-
-export let currentPage: number;
-export let isPublic: boolean;
-
 let params = useParams();
 $: systemId = $params.id;
-
-$: {searchValue; privacyFilter; currentPage = 1};
-
-// converting list to any[] avoids a "this expression is not calleable" error
-$: searchedList = (list as any[]).filter((item: Member | Group) => {
-    if (!searchValue && searchBy !== "description" && searchBy !== "display name") return true;
-    
-    switch (searchBy) {
-        case "name": if (item.name.toLowerCase().includes(searchValue.toLowerCase())) return true;
-        break;
-        case "display name": if (!searchValue) {
-            if (!item.display_name) return true;
-            else return false;
-        }
-        if (item.display_name && item.display_name.toLowerCase().includes(searchValue.toLowerCase())) return true;
-        break;
-        case "description": if (!searchValue) {
-            if (!item.description) return true;
-            else return false;
-        }
-        else if (item.description && item.description.toLowerCase().includes(searchValue.toLowerCase())) return true;
-        break;
-        case "ID": if (item.id.toLowerCase().includes(searchValue.toLowerCase())) return true;
-        break;
-        default: if (item.name.toLowerCase().includes(searchValue.toLowerCase())) return true;
-        break;
-    }
-
-    return false;
-})
-
-$: filteredList = searchedList.filter((item) => {
-    if (privacyFilter === "all") return true;
-    if (privacyFilter === "public" && item.privacy.visibility === "public") return true;
-    if (privacyFilter === "private" && item.privacy.visibility === "private") return true;
-    return false;
-});
-
-let sortedList = [];
-
-$: if (filteredList) {
-    let alphabeticalList = filteredList.sort((a, b) => a.name.localeCompare(b.name));
-    switch (sortBy) {
-        case "name": sortedList = alphabeticalList;
-        break;
-        case "display name": sortedList = filteredList.sort((a, b) => {
-            if (a.display_name && b.display_name) return a.display_name.localeCompare(b.display_name);
-            else if (a.display_name && !b.display_name) return a.display_name.localeCompare(b.name);
-            else if (!a.display_name && b.display_name) return a.name.localeCompare(b.display_name);
-            else return a.name.localeCompare(b.name);
-        });
-        break;
-        case "creation date": sortedList = filteredList.sort((a, b) => {
-            if (a.created && b.created) return a.created.localeCompare(b.created);
-        });
-        break;
-        case "ID": sortedList = filteredList.sort((a, b) => a.id.localeCompare(b.id));
-        break;
-        case "avatar": sortedList = alphabeticalList.sort((a, b) => {
-                if (a.icon === null || a.avatar_url === null) {
-                    return 1;
-                };
-                if (b.icon === null || b.avatar_url === null) {
-                    return -1;
-                };
-                if (a.icon === b.icon || a.avatar_url === b.avatar_url) {
-                    return 0;
-                }
-            });
-        break;
-        case "color": sortedList = alphabeticalList.sort((a, b) => {
-                if (a.color === null) {
-                    return 1;
-                };
-                if (b.color === null) {
-                    return -1;
-                };
-                if (a.color === b.color) {
-                    return 0;
-                }
-            });
-        break;
-        case "birthday": sortedList = alphabeticalList.sort((a, b) => {
-            if (a.birthday === null) {
-                return 1;
-            }
-            if (b.birthday === null) {
-                return -1;
-            }
-            let aBirthday = moment(a.birthday.slice(5, a.birthday.length), "MM-DD", true);
-            let bBirthday = moment(b.birthday.slice(5, b.birthday.length), "MM-DD", true);
-            if (aBirthday.isBefore(bBirthday)) {
-                return -1;
-            }
-            if (aBirthday.isAfter(bBirthday)) {
-                return 1;
-            }
-            if (aBirthday === bBirthday) {
-                return 0;
-            }
-        });
-        break;
-        case "pronouns": sortedList = alphabeticalList.sort((a, b) => {
-            if (a.pronouns === null) {
-                    return 1;
-                };
-                if (b.pronouns === null) {
-                    return -1;
-                };
-                return 0;
-        })
-        break;
-        default: sortedList = filteredList.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-    }
-}
-
-let memberFilteredList = [];
-$: memberFilteredList = sortedList.filter((item: Member | Group): boolean => { 
-    if (itemType === "member") {
-        if (groupSearchMode === "none") {
-            if (groups.some(group => group.members && group.members.includes(item.uuid))) return false;
-        }
-
-        if (selectedGroups.length < 1) return true;
-
-        switch (groupSearchMode) {
-            case "include": if (selectedGroups.some(group => group.members && group.members.includes(item.uuid))) return true;
-            break;
-            case "exclude": if (selectedGroups.every(group => group.members && !group.members.includes(item.uuid))) return true;
-            break;
-            case "match": if (selectedGroups.every(group => group.members && group.members.includes(item.uuid))) return true;
-            break;
-            default: return true;
-        }
-    } else if (itemType === "group") {
-        let group = (item as Group);
-
-        if (groupSearchMode === "none") {
-            if (group.members && group.members.length > 0) return false;
-        }
-
-        if (selectedGroups.length < 1) return true;
-
-        switch (groupSearchMode) {
-            case "include": if (group.members && selectedGroups.some(member => group.members.includes(member.id))) return true;
-            break;
-            case "exclude": if (group.members && selectedGroups.every(member => !group.members.includes(member.id))) return true;
-            break;
-            case "match": if (group.members && selectedGroups.every(member => group.members.includes(member.id))) return true;
-            break;
-            default: return true;
-        }
-    }
-    return false;
-})
-
-export let finalList = [];
-$:{sortOrder; if (sortOrder === "descending") finalList = memberFilteredList.reverse(); else finalList = memberFilteredList;}
 
 function groupListRenderer(item: any) {
 return `${item.name} (<code>${item.shortid}</code>)`;
@@ -234,132 +63,303 @@ addFormatter({
 
 function getRandomizerUrl(): string {
     let str: string;
-    if (isPublic) str = `/profile/s/${systemId}/random`
+    if (pageOptions.isPublic) str = `/profile/s/${systemId}/random`
     else str = "/dash/random";
     
-    if (itemType === "group") str += "/g";
+    if (pageOptions.type === "group") str += "/g";
     return str;
 }
 
 function capitalizeFirstLetter(string: string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
+function resetPage() {
+    pageOptions.currentPage = 1;
+}
 </script>
 
 <Card class="mb-3">
 <CardHeader>
-    <CardTitle>
-        <CardTitle style="margin-top: 8px; outline: none;">
+    <CardTitle class="d-flex justify-content-between align-items-center mb-0">
+        <div>
             <div class="icon d-inline-block">
                 <FaSearch />
-            </div> Search {itemType === "member" ? "members" : "groups"}
-        </CardTitle>
+            </div> Control {pageOptions.type} list
+        </div>
+        <Button color="primary" on:click={() => advanced = !advanced}>Toggle advanced mode</Button>
     </CardTitle>
 </CardHeader>
 <CardBody>
     <Row>
-        <Col xs={12} lg={3} class="mb-2">
+        <Col xs={12} md={6} lg={4} class="mb-2">
             <InputGroup>
                 <InputGroupText>Page length</InputGroupText>
-                <Input bind:value={itemsPerPageValue} type="select" aria-label="page length">
+                <Input bind:value={pageOptions.itemsPerPage} type="select" aria-label="page length" on:change={() => resetPage()}>
                     <option>{itemsPerPageSelection.small}</option>
                     <option>{itemsPerPageSelection.default}</option>
                     <option>{itemsPerPageSelection.large}</option>
                 </Input>
             </InputGroup>
         </Col>
-        <Col xs={12} lg={3} class="mb-2">
-            <InputGroup>
-                <InputGroupText>Search by</InputGroupText>
-                <Input bind:value={searchBy} type="select" aria-label="search by">
-                    <option>name</option>
-                    <option>display name</option>
-                    <option>description</option>
-                    <option>ID</option>
-                </Input>
-            </InputGroup>
-        </Col>
-        <Col xs={12} lg={3} class="mb-2">
+        <Col xs={12} md={6} lg={4} class="mb-2">
             <InputGroup>
                 <InputGroupText>Sort by</InputGroupText>
-                <Input bind:value={sortBy} type="select" aria-label="sort by">
-                    <option>name</option>
-                    <option>display name</option>
-                    {#if !isPublic}<option>creation date</option>{/if}
-                    <option>ID</option>
-                    <option>avatar</option>
-                    <option>color</option>
-                    {#if itemType === "member"}<option>birthday</option>{/if}
-                    {#if itemType === "member"}<option>pronouns</option>{/if}
+                <Input bind:value={options.sort} type="select">
+                    <option value="name">Name</option>
+                    <option value="display_name">Display name</option>
+                    <option value="id">ID</option>
+                    {#if pageOptions.type === 'member'}
+                    <option value="pronouns">Pronouns</option>
+                    {/if}
+                    <option value="none">API response order</option>
                 </Input>
             </InputGroup>
         </Col>
-        <Col xs={12} lg={3} class="mb-2">
+        <Col xs={12} md={6} lg={4} class="mb-2">
             <InputGroup>
-                <InputGroupText>Sort order</InputGroupText>
-                <Input bind:value={sortOrder} type="select" aria-label="sort order">
-                    <option>ascending</option>
-                    <option>descending</option>
+                <InputGroupText>Order</InputGroupText>
+                <Input bind:value={options.order} type="select">
+                    <option value="ascending">Ascending</option>
+                    <option value="descending">Descending</option>
                 </Input>
             </InputGroup>
         </Col>
-        {#if !isPublic}
-        <Col xs={12} lg={3} class="mb-2">
+        <Col xs={12} md={6} lg={4} class="mb-2">
             <InputGroup>
                 <InputGroupText>Only show</InputGroupText>
-                <Input bind:value={privacyFilter} type="select" aria-label="only show">
-                    <option>all</option>
-                    <option>public</option>
-                    <option>private</option>
+                <Input bind:value={options.show} type="select" aria-label="view mode" on:change={() => resetPage()}>
+                    <option value="all">All {pageOptions.type}s</option>
+                    <option value="public">Public {pageOptions.type}s</option>
+                    <option value="private">Private {pageOptions.type}s</option>
                 </Input>
             </InputGroup>
         </Col>
-        {/if}
-        <Col xs={12} lg={3} class="mb-2">
+        <Col xs={12} md={6} lg={4} class="mb-2">
             <InputGroup>
                 <InputGroupText>View mode</InputGroupText>
-                <Input bind:value={view} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
-                    <option>list</option>
-                    <option value="card">cards</option>
+                <Input bind:value={pageOptions.view} type="select" aria-label="view mode" on:change={(e) => onViewChange(e)} >
+                    <option value="list">List</option>
+                    <option value="card">Cards</option>
                 </Input>
             </InputGroup>
         </Col>
-        <Col xs={12} lg={3} class="mb-2">
-            <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${itemType}s`}>Random {capitalizeFirstLetter(itemType)}</Button></Link>
+        <Col xs={12} md={6} lg={4} class="mb-2">
+            <Link to={getRandomizerUrl()}><Button class="w-100" color="secondary" tabindex={-1} aria-label={`randomize ${pageOptions.type}s`}>Random {capitalizeFirstLetter(pageOptions.type)}</Button></Link>
         </Col>
     </Row>
-    {#if !isPublic}
     <hr/>
-    <Label>Filter {itemType === "member" ? "member" : "group"} by {itemType === "member" ? "group" : "member"}</Label>
-    {#if itemType === "member"}
-    <Svelecte disableHighlight renderer="group-list" valueAsObject bind:value={selectedGroups} options={groupList} multiple style="margin-bottom: 0.5rem" />
-    {:else if itemType === "group"}
-    <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={selectedGroups} options={memberList} multiple style="margin-bottom: 0.5rem" />
-    {/if}
+    <CardTitle class="d-flex justify-content-between my-3 h4">
+        <div>
+            Search {pageOptions.type === "member" ? "members" : "groups"}
+        </div>
+      <div class="icon d-inline-block" id={`${pageOptions.type}-search-help`}>            
+            <FaQuestionCircle />
+     </div>
+        <Tooltip target={`${pageOptions.type}-search-help`} placement="left" >You can search by multiple fields at the same time.<br/>The toggle controls whether to <b>exclude</b> or <b>include</b> the search term.</Tooltip>
+    </CardTitle>
+        <Row>
+            <Col xs={12} class="mb-2">
+                <InputGroup class="mb-2">
+                    <InputGroupText>Name</InputGroupText>
+                    <Input 
+                        style="resize: none; overflow: hidden;" 
+                        rows={1} type="textarea" 
+                        bind:value={options.search.name} 
+                        on:keydown={() => resetPage()} 
+                        placeholder="Search by name..."/>
+                    <InputGroupText>
+                        <Input bind:checked={options.searchMode.name} type="switch"/>
+                    </InputGroupText>
+                </InputGroup> 
+            </Col>
+        </Row>
+    <details>
+        <summary><b>Toggle extra search fields</b></summary>
+        <Row class="mt-3">
+            <Col xs={12} lg={6} class="mb-2">
+                <InputGroup class="mb-2">
+                    <InputGroupText>Display Name</InputGroupText>
+                    <Input 
+                        style="resize: none; overflow: hidden;" 
+                        rows={1} type="textarea" 
+                        bind:value={options.search.display_name} 
+                        on:keydown={() => resetPage()} 
+                        placeholder="Search by display name..."/>
+                    <InputGroupText>
+                        <Input bind:checked={options.searchMode.display_name} type="switch"/>
+                    </InputGroupText>
+                </InputGroup>
+            </Col>
+            <Col xs={12} lg={6} class="mb-2">
+                <InputGroup class="mb-2">
+                    <InputGroupText>ID</InputGroupText>
+                    <Input 
+                        style="resize: none; overflow: hidden;" 
+                        rows={1} type="textarea" 
+                        bind:value={options.search.id} 
+                        on:keydown={() => resetPage()} 
+                        placeholder="Search by ID..."/>
+                        <InputGroupText>
+                            <Input bind:checked={options.searchMode.id} type="switch"/>
+                        </InputGroupText>
+                </InputGroup>
+            </Col>
+            {#if pageOptions.type === 'member'}
+            <Col xs={12} lg={6} class="mb-2">
+                <InputGroup class="mb-2">
+                    <InputGroupText>Pronouns</InputGroupText>
+                    <Input 
+                        style="resize: none; overflow: hidden;" 
+                        rows={1} type="textarea" 
+                        bind:value={options.search.pronouns} 
+                        on:keydown={() => resetPage()} 
+                        placeholder="Search by pronouns..."/>
+                        <InputGroupText>
+                            <Input bind:checked={options.searchMode.pronouns} type="switch"/>
+                        </InputGroupText>
+                </InputGroup>
+            </Col>
+            {/if}
+            <Col xs={12} lg={6} class="mb-2">
+                <InputGroup class="mb-2">
+                    <InputGroupText>Description</InputGroupText>
+                    <Input 
+                        style="resize: none;" 
+                        rows={1} type="textarea" 
+                        bind:value={options.search.description} 
+                        on:keydown={() => resetPage()} 
+                        placeholder="Search by description..."/>
+                        <InputGroupText>
+                            <Input bind:checked={options.searchMode.description} type="switch"/>
+                        </InputGroupText>
+                </InputGroup>
+            </Col>
+        </Row>
+        </details>
 
-    <div class="filter-mode-group">
-    <span class="filter-mode-label" id="m-include" on:click={() => groupSearchMode = "include"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "include" : ""} tabindex={0}>{@html groupSearchMode === "include" ? "<b>include</b>" : "include"}</span>
-     | <span class="filter-mode-label" id="m-exclude" on:click={() => groupSearchMode = "exclude"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "exclude" : ""} tabindex={0}>{@html groupSearchMode === "exclude" ? "<b>exclude</b>" : "exclude"}</span> 
-     | <span class="filter-mode-label" id="m-match" on:click={() => groupSearchMode = "match"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "match" : ""} tabindex={0}>{@html groupSearchMode === "match" ? "<b>exact match</b>" : "exact match"}</span>
-     | <span class="filter-mode-label" id="m-none" on:click={() => groupSearchMode = "none"} on:keyup={e => e.key === "Enter" ? groupSearchMode = "none" : ""} tabindex={0}>{@html groupSearchMode === "none" ? "<b>none</b>" : "none"}</span>
-    </div>
-     <Tooltip placement="bottom" target="m-include">Includes every member who's a part of any of the groups.</Tooltip>
-    <Tooltip placement="bottom" target="m-exclude">Excludes every member who's a part of any of the groups, the opposite of include.</Tooltip>
-    <Tooltip placement="bottom" target="m-match">Only includes members who are a part of every group.</Tooltip>
-    <Tooltip placement="bottom" target="m-none">Only includes members that are in no groups.</Tooltip>
-    {/if}
-</CardBody>
+{#if advanced}
+        <hr/>
+        <CardTitle class="d-flex justify-content-between my-3 h4">
+            <div>
+                Filter by {pageOptions.type === "member" ? "groups" : "members"}
+            </div>
+          <div class="icon d-inline-block" id={`${pageOptions.type}-groups-help`}>            
+                <FaQuestionCircle />
+         </div>
+            <Tooltip target={`${pageOptions.type}-groups-help`} placement="left" >Augh</Tooltip>
+        </CardTitle>
+            <Row>
+                <p><b>Include</b> {pageOptions.type === 'group' ? "groups with the following members" : "members in the following groups"}</p>
+                <Col xs={12} md={7} lg={9}  class="mb-2">
+                    {#if pageOptions.type === "member"}
+                    <Svelecte disableHighlight renderer="group-list" valueAsObject bind:value={options.groups.include.list} options={lists.shortGroups} multiple style="margin-bottom: 0.5rem" placeholder="Include..." />
+                    {:else if pageOptions.type === "group"}
+                    <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={options.groups.include.list} options={lists.shortMembers} multiple style="margin-bottom: 0.5rem" placeholder="Include..." />
+                    {/if}
+                </Col>
+                <Col xs={12} md={5} lg={3} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText class="w-75">Exact?</InputGroupText>
+                        <InputGroupText class="w-25 bg-body d-flex justify-content-center">
+                            <Input bind:checked={options.groups.include.exact} type="switch"/>
+                        </InputGroupText>
+                    </InputGroup>
+                </Col>
+            </Row>
+            <Row>
+                <p><b>Exclude</b> {pageOptions.type === 'group' ? "groups with the following members" : "members in the following groups"}</p>
+                <Col xs={12} md={7} lg={9}  class="mb-2">
+                    {#if pageOptions.type === "member"}
+                    <Svelecte disableHighlight renderer="group-list" valueAsObject bind:value={options.groups.exclude.list} options={lists.shortGroups} multiple style="margin-bottom: 0.5rem" placeholder="Exclude..." />
+                    {:else if pageOptions.type === "group"}
+                    <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={options.groups.exclude.list} options={lists.shortMembers} multiple style="margin-bottom: 0.5rem" placeholder="Exclude..." />
+                    {/if}
+                </Col>
+                <Col xs={12} md={5} lg={3} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText class="w-75">Exact?</InputGroupText>
+                        <InputGroupText class="w-25 bg-body d-flex justify-content-center">
+                            <Input bind:checked={options.groups.exclude.exact} type="switch"/>
+                        </InputGroupText>
+                    </InputGroup>
+                </Col>
+            </Row>
+            <hr/>
+            <CardTitle class="d-flex justify-content-between my-3 h4">
+                <div>
+                    Filter by fields
+                </div>
+                <div class="icon d-inline-block" id={`${pageOptions.type}-filters-help`}>            
+                    <FaQuestionCircle />
+                </div>
+                <Tooltip target={`${pageOptions.type}-filters-help`} placement="left" >I am so tired</Tooltip>
+            </CardTitle>
+            <Row class="mt-3">
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Display name</InputGroupText>
+                        <Input type="select" bind:value={options.filter.display_name} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With display name</option>
+                            <option value="exclude">Without display name</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Description</InputGroupText>
+                        <Input type="select" bind:value={options.filter.description} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With description</option>
+                            <option value="exclude">Without description</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                {#if pageOptions.type === 'member'}
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Avatar</InputGroupText>
+                        <Input type="select" bind:value={options.filter.avatar_url} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With avatar</option>
+                            <option value="exclude">Without avatar</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Birthday</InputGroupText>
+                        <Input type="select" bind:value={options.filter.birthday} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With birthday</option>
+                            <option value="exclude">Without birthday</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Pronouns</InputGroupText>
+                        <Input type="select" bind:value={options.filter.pronouns} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With pronouns</option>
+                            <option value="exclude">Without pronouns</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                {:else}
+                    <Col xs={12} md={6} lg={4} class="mb-2">
+                        <InputGroup>
+                            <InputGroupText>Icon</InputGroupText>
+                            <Input type="select" bind:value={options.filter.icon} on:change={() => resetPage()}>
+                                <option value="all">All</option>
+                                <option value="include">With icon</option>
+                                <option value="exclude">Without icon</option>
+                            </Input>
+                        </InputGroup>
+                    </Col>
+                {/if}
+            </Row>
+        {/if}
+    </CardBody>
 </Card>
-
-<style>
-    .filter-mode-label {
-        cursor: pointer;
-    }
-
-    .filter-mode-group {
-        line-height: 1.5em;
-        padding:0.375rem 0;
-        display: inline-block;
-        margin-bottom: 0.25em;
-    }
-</style>
