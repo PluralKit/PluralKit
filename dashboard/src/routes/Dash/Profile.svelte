@@ -107,7 +107,7 @@
             <Alert color="info" aria-hidden>You are currently <b>viewing</b> a system.</Alert>
             <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail, listView)}>
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
-                    <SystemMain bind:user={user} isPublic={false} />
+                    <SystemMain bind:user={user} isPublic={true} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
                     <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={groupList} bind:lists={memberList} bind:pageOptions={memberListPageOptions} bind:options={memberListOptions} />

@@ -81,13 +81,19 @@ function resetPage() {
 
 <Card class="mb-3">
 <CardHeader>
-    <CardTitle class="d-flex justify-content-between align-items-center mb-0">
-        <div>
-            <div class="icon d-inline-block">
-                <FaSearch />
-            </div> Control {pageOptions.type} list
-        </div>
-        <Button color="primary" on:click={() => advanced = !advanced}>Toggle advanced mode</Button>
+    <CardTitle class="mb-0">
+        <Row class="justify-content-between align-items-center ">
+            <Col xs={12} md={8} xl={9}>
+                <div class="icon d-inline-block">
+                    <FaSearch />
+                </div> Control {pageOptions.type} list
+            </Col>
+            {#if !pageOptions.isPublic}
+                <Col xs={12} md={4} xl={3} class="mt-2 mt-md-0">
+                    <Button class="w-100" color="primary" on:click={() => advanced = !advanced}>Toggle advanced mode</Button>
+                </Col>
+            {/if}
+        </Row>
     </CardTitle>
 </CardHeader>
 <CardBody>
