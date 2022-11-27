@@ -1,5 +1,6 @@
 import type { Group, Member } from '../../api/types';
 import type { ListOptions, PageOptions } from './types';
+import moment from 'moment';
 
 export function filterList<T extends Member|Group>(list: T[], options: ListOptions, type?: string): T[] {
     let searchedList = search(list, options);
@@ -52,17 +53,23 @@ function filter<T extends Member|Group>(list: T[], options: ListOptions): T[] {
     Object.keys(options.filter).forEach(x => {
         if (options.filter[x] === 'include') {
             newList = [...list].filter(item => item[x] && true);
-        } else if (options.filter[x] === 'exclude') {
-            newList = [...list].filter(item => !item[x] && true)
         }
     });
 
-    let anotherList = [...newList];
+    let newList2 = [...newList]
+
+    Object.keys(options.filter).forEach(x => {
+        if (options.filter[x] === 'exclude') {
+            newList2 = [...newList].filter(item => !item[x] && true)
+        }
+    });
+
+    let anotherList = [...newList2];
 
     if (options.show === 'private') {
-        anotherList = [...newList].filter(item => item.privacy && item.privacy.visibility === 'private');
+        anotherList = [...newList2].filter(item => item.privacy && item.privacy.visibility === 'private');
     } else if (options.show === 'public') {
-        anotherList = [...newList].filter(item => item.privacy && item.privacy.visibility === 'public');
+        anotherList = [...newList2].filter(item => item.privacy && item.privacy.visibility === 'public');
     }
 
     return anotherList;
@@ -87,6 +94,30 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
                 if (aa === null) return 1;
                 if (bb === null) return -1;
                 return aa.localeCompare(bb);
+            });
+        } else if (options.sort === 'birthday') {
+            newList = [...list].sort((a, b) => {
+                let aa = (a as Member).birthday;
+                let bb = (b as Member).birthday;
+                
+                if (aa === null) {
+                    return 1;
+                }
+                if (bb === null) {
+                    return -1;
+                }
+
+                let aBirthday = moment(aa.slice(5, aa.length), "MM-DD", true);
+                let bBirthday = moment(bb.slice(5, bb.length), "MM-DD", true);
+                if (aBirthday.isBefore(bBirthday)) {
+                    return -1;
+                }
+                if (aBirthday.isAfter(bBirthday)) {
+                    return 1;
+                }
+                if (aBirthday === bBirthday) {
+                    return 0;
+                }
             });
         }
     return newList;

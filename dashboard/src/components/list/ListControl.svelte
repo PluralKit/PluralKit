@@ -117,6 +117,7 @@ function resetPage() {
                     <option value="id">ID</option>
                     {#if pageOptions.type === 'member'}
                     <option value="pronouns">Pronouns</option>
+                    <option value="birthday">Birthday</option>
                     {/if}
                     <option value="none">API response order</option>
                 </Input>
@@ -253,7 +254,7 @@ function resetPage() {
           <div class="icon d-inline-block" id={`${pageOptions.type}-groups-help`}>            
                 <FaQuestionCircle />
          </div>
-            <Tooltip target={`${pageOptions.type}-groups-help`} placement="left" >Augh</Tooltip>
+            <Tooltip target={`${pageOptions.type}-groups-help`} placement="left" >You can select what groups/members to <b>include and exclude</b> here. Exact? means only items with <b>all</b> selected members/groups will be included. Excluded items take priority over included</Tooltip>
         </CardTitle>
             <Row>
                 <p><b>Include</b> {pageOptions.type === 'group' ? "groups with the following members" : "members in the following groups"}</p>
@@ -299,7 +300,7 @@ function resetPage() {
                 <div class="icon d-inline-block" id={`${pageOptions.type}-filters-help`}>            
                     <FaQuestionCircle />
                 </div>
-                <Tooltip target={`${pageOptions.type}-filters-help`} placement="left" >I am so tired</Tooltip>
+                <Tooltip target={`${pageOptions.type}-filters-help`} placement="left" >You can filter out items based on whether a certain field has been filled out or not here.</Tooltip>
             </CardTitle>
             <Row class="mt-3">
                 <Col xs={12} md={6} lg={4} class="mb-2">
