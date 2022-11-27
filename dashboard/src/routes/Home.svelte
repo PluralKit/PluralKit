@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import { Container, Card, CardHeader, CardBody, CardTitle, Col, Row, Spinner, Input, Button, Label, Alert } from 'sveltestrap';
     import FaLockOpen from 'svelte-icons/fa/FaLockOpen.svelte';
+    import FaLock from 'svelte-icons/fa/FaLock.svelte'
     import { loggedIn, currentUser } from '../stores';
     import { Link } from 'svelte-navigator';
     import twemoji from 'twemoji';
@@ -89,7 +90,11 @@
                 <CardHeader>
                     <CardTitle style="margin-top: 8px; outline: none;">
                         <div class="icon d-inline-block">
+                            {#if !isLoggedIn}
+                            <FaLock/>
+                            {:else}
                             <FaLockOpen />
+                            {/if}
                         </div>Log in {#if loading} <div style="float: right"><Spinner color="primary" /></div> {/if}
                     </CardTitle>
                 </CardHeader>
