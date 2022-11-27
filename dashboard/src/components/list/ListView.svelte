@@ -120,14 +120,14 @@
                 <button class="w-100 accordion-button collapsed bg-transparent" id={`${pageOptions.type}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid, index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
                     <CardsHeader {item} sortBy={options.sort}>
                         <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
-                            {#if item.privacy && item.privacy.visibility === "public"}
+                            {#if item.privacy && item.privacy.visibility === "private"}
                             {#if pageOptions.type === "member"}
-                            <FaUserCircle />
+                            <FaLock />
                             {:else if pageOptions.type === "group"}
                             <FaUsers />
                             {/if}
                             {:else}
-                            <FaLock />
+                            <FaUserCircle />
                             {/if}
                         </div>
                     </CardsHeader>
@@ -153,14 +153,14 @@
             <CardHeader class="w-100">
                 <CardsHeader {item} sortBy={options.sort}>
                     <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
-                        {#if item.privacy && item.privacy.visibility === "public"}
+                        {#if item.privacy && item.privacy.visibility === "private"}
                         {#if pageOptions.type === "member"}
-                        <FaUserCircle />
+                        <FaLock />
                         {:else if pageOptions.type === "group"}
                         <FaUsers />
                         {/if}
                         {:else}
-                        <FaLock />
+                        <FaUserCircle />
                         {/if}
                     </div>
                 </CardsHeader>
@@ -183,14 +183,14 @@
         <a class="accordion-button collapsed bg-transparent" style="text-decoration: none;" href={getItemLink(item)} id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
             <CardsHeader {item} sortBy={options.sort}>
                 <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
-                    {#if item.privacy && item.privacy.visibility === "public"}
+                    {#if item.privacy && item.privacy.visibility === "private"}
                     {#if pageOptions.type === "member"}
-                    <FaUserCircle />
+                    <FaLock />
                     {:else if pageOptions.type === "group"}
                     <FaUsers />
                     {/if}
                     {:else}
-                    <FaLock />
+                    <FaUserCircle />
                     {/if}
                 </div>
             </CardsHeader>
