@@ -100,24 +100,32 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
                 let aa = (a as Member).birthday;
                 let bb = (b as Member).birthday;
                 
-                if (aa === null) {
-                    return 1;
-                }
-                if (bb === null) {
-                    return -1;
-                }
+                if (aa === bb) return a.name.localeCompare(b.name);
+
+                if (aa === null) return 1;
+                if (bb === null) return -1;
 
                 let aBirthday = moment(aa.slice(5, aa.length), "MM-DD", true);
                 let bBirthday = moment(bb.slice(5, bb.length), "MM-DD", true);
-                if (aBirthday.isBefore(bBirthday)) {
-                    return -1;
-                }
-                if (aBirthday.isAfter(bBirthday)) {
-                    return 1;
-                }
-                if (aBirthday === bBirthday) {
-                    return 0;
-                }
+
+                if (aBirthday.isAfter(bBirthday)) return 1;
+                if (aBirthday.isBefore(bBirthday)) return -1;
+            });
+        } else if (options.sort === 'created') {
+            newList = [...list].sort((a, b) => {
+                let aa = a.created;
+                let bb = b.created;
+                
+                if (aa === bb) return a.name.localeCompare(b.name);
+
+                if (aa === null) return 1;
+                if (bb === null) return -1;
+
+                let aCreated = moment(aa);
+                let bCreated = moment(bb);
+
+                if (aCreated.isAfter(bCreated)) return 1;
+                if (aCreated.isBefore(bCreated)) return -1;
             });
         }
     return newList;

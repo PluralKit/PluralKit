@@ -47,7 +47,7 @@ export interface ListOptions {
 
     }
     // what it says on the tin
-    sort: 'name'|'description'|'birthday'|'pronouns'|'display_name'|'id'|'none',
+    sort: 'name'|'description'|'birthday'|'pronouns'|'display_name'|'id'|'none'|'created',
     order: "ascending"|"descending",
     show: "all"|"private"|"public",
     // so we can change the key for duplicate members on the randomize page

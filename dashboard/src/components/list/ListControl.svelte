@@ -119,6 +119,9 @@ function resetPage() {
                     <option value="pronouns">Pronouns</option>
                     <option value="birthday">Birthday</option>
                     {/if}
+                    {#if !pageOptions.isPublic}
+                    <option value="created">Creation date</option>
+                    {/if}
                     <option value="none">API response order</option>
                 </Input>
             </InputGroup>
