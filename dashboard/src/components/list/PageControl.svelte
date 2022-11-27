@@ -28,8 +28,34 @@
     }
 
     function resetPage() {
-    pageOptions.currentPage = 1;
-}
+        pageOptions.currentPage = 1;
+    }
+
+    function updateItemsPerPage(event) {
+        resetPage();
+        if (event.target?.value === 'card') {
+            switch (pageOptions.itemsPerPage) {
+                case 10: pageOptions.itemsPerPage = 12;
+                break;
+                case 25: pageOptions.itemsPerPage = 24;
+                break;
+                case 50: pageOptions.itemsPerPage = 60;
+                break;
+                default: pageOptions.itemsPerPage = 24;
+                break;
+            }
+        } else if (event.target?.value === 'list') {
+            switch (pageOptions.itemsPerPage) {
+                case 12: pageOptions.itemsPerPage = 10;
+                break;
+                case 24: pageOptions.itemsPerPage = 25;
+                break;
+                case 60: pageOptions.itemsPerPage = 50;
+                break;
+                default: pageOptions.itemsPerPage = 25
+            }
+        }
+    }
 </script>
 
 <Card class="mb-3">
@@ -54,20 +80,6 @@
                     </Input>
                 </InputGroup>
             </Col>
-            <!-- <Col xs={12} md={6} lg={4} class="mb-2">
-                <InputGroup>
-                    <InputGroupText>Sort by</InputGroupText>
-                    <Input bind:value={options.sort} type="select">
-                        <option value="name">Name</option>
-                        <option value="display_name">Display name</option>
-                        <option value="id">ID</option>
-                        {#if pageOptions.type === 'member'}
-                        <option value="pronouns">Pronouns</option>
-                        {/if}
-                        <option value="none">API response order</option>
-                    </Input>
-                </InputGroup>
-            </Col> -->
             <Col xs={12} md={6} lg={4} class="mb-2">
                 <InputGroup>
                     <InputGroupText>Order</InputGroupText>
@@ -77,20 +89,10 @@
                     </Input>
                 </InputGroup>
             </Col>
-            <!-- <Col xs={12} md={6} lg={4} class="mb-2">
-                <InputGroup>
-                    <InputGroupText>Only show</InputGroupText>
-                    <Input bind:value={options.show} type="select" aria-label="view mode" on:change={() => resetPage()}>
-                        <option value="all">All {pageOptions.type}s</option>
-                        <option value="public">Public {pageOptions.type}s</option>
-                        <option value="private">Private {pageOptions.type}s</option>
-                    </Input>
-                </InputGroup>
-            </Col> -->
             <Col xs={12} md={6} lg={4} class="mb-2">
                 <InputGroup>
                     <InputGroupText>View mode</InputGroupText>
-                    <Input bind:value={pageOptions.view} type="select" aria-label="view mode">
+                    <Input bind:value={pageOptions.view} type="select" aria-label="view mode" on:change={(e) => updateItemsPerPage(e)}>
                         <option value="list">List</option>
                         <option value="card">Cards</option>
                     </Input>

@@ -184,6 +184,7 @@
                 <Alert color="danger">{memberErr}</Alert>
             {:else if lists.rawList && lists.rawList.length > 0}
             <PageControl bind:options={listOptions} bind:pageOptions />
+            <span class="itemcounter">{lists.processedList.length} {pageOptions.type}s ({lists.currentPage.length} shown)</span>
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
                 {#if pageOptions.view === "card"}
                 <CardView {pageOptions} {lists} otherList={nope} on:update={update} />
@@ -206,6 +207,13 @@
         flex: 1;
         min-height: 100%;
         z-index: -30;
+    }
+
+    .itemcounter {
+        width: 100%;
+        text-align: center;
+        display: inline-block;
+        margin-bottom: 0.5rem;
     }
 </style>
 
