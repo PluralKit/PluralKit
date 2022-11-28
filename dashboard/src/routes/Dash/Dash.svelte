@@ -114,7 +114,7 @@
     <Row>
         <Col class="mx-auto" xs={12} lg={11} xl={10}>
             <h2 class="visually-hidden">Viewing your own system</h2>
-            <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail, listView)}>
+            <TabContent class="mt-3" on:tab={(e) => navigateTo(e.detail, e.detail === 'members' ? memberListPageOptions.view : e.detail === 'groups' ? groupListPageOptions.view : 'list')}>
                 <TabPane tabId="system" tab="System" active={tabPane === "system"}>
                         <SystemMain bind:user={user} isPublic={false} />
                 </TabPane>
@@ -122,7 +122,7 @@
                     <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={groupList} bind:lists={memberList} bind:pageOptions={memberListPageOptions} bind:options={memberListOptions} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={memberList} bind:lists={groupList} bind:pageOptions={groupListPageOptions}  bind:options={groupListOptions} />
+                    <List on:viewChange={(e) => navigateTo("groups", e.detail)} bind:otherList={memberList} bind:lists={groupList} bind:pageOptions={groupListPageOptions}  bind:options={groupListOptions} />
                 </TabPane> 
             </TabContent>
         </Col>
