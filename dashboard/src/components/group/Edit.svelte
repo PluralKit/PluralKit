@@ -128,13 +128,13 @@
 <div class="my-2">
     <b>Description:</b><br />
     {#if descriptions.length > 0 && descriptions[0].trim() != ""}
-    <Button size="sm" color="primary" on:click={() => input.description = descriptions[0]} aria-label="use template 1">Template 1</Button>
+    <Button size="sm" class="mb-2" color="primary" on:click={() => input.description = descriptions[0]} aria-label="use template 1">Template 1</Button>
     {/if}
     {#if descriptions.length > 1 && descriptions[1].trim() != ""}
-    <Button size="sm" color="primary" on:click={() => input.description = descriptions[1]} aria-label="use template 2">Template 2</Button>
+    <Button size="sm" class="mb-2" color="primary" on:click={() => input.description = descriptions[1]} aria-label="use template 2">Template 2</Button>
     {/if}
     {#if descriptions.length > 2 && descriptions[2].trim() != ""}
-    <Button size="sm" color="primary" on:click={() => input.description = descriptions[2]} aria-label="use template 3">Template 3</Button>
+    <Button size="sm" class="mb-2" color="primary" on:click={() => input.description = descriptions[2]} aria-label="use template 3">Template 3</Button>
     {/if}
     <br>
     <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autoresize placeholder={group.description} aria-label="group description"/>
