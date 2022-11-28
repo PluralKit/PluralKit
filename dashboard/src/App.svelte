@@ -6,7 +6,7 @@
   import Settings from './routes/Settings/Settings.svelte';
   import Public from "./routes/Public.svelte";
   import Main from "./routes/Dash/Profile.svelte";
-  import Status from './routes/Status/Status.svelte';
+  import Status from './routes/Status/status.svelte';
   import Member from './routes/Dash/Member/Member.svelte';
   import Group from './routes/Dash/Group/Group.svelte';
   import PageNotFound from './routes/PageNotFound.svelte';
