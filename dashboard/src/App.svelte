@@ -6,9 +6,9 @@
   import Settings from './routes/Settings/Settings.svelte';
   import Public from "./routes/Public.svelte";
   import Main from "./routes/Dash/Profile.svelte";
-  import Status from './routes/status/Status.svelte';
-  import Member from './routes/Dash/member/Member.svelte';
-  import Group from './routes/Dash/group/Group.svelte';
+  import Status from './routes/Status/Status.svelte';
+  import Member from './routes/Dash/Member/Member.svelte';
+  import Group from './routes/Dash/Group/Group.svelte';
   import PageNotFound from './routes/PageNotFound.svelte';
   import { Alert } from 'sveltestrap';
 import DiscordLogin from "./routes/DiscordLogin.svelte";
