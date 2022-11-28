@@ -123,7 +123,7 @@
                             {#if item.privacy && item.privacy.visibility === "private"}
                             <FaLock />
                             {:else if pageOptions.type === "member"}
-                            <FaLock />
+                            <FaUserCircle />
                             {:else if pageOptions.type === "group"}
                             <FaUsers />
                             {/if}
