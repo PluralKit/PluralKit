@@ -39,6 +39,28 @@ const dispatch = createEventDispatcher();
 
 function onViewChange(e: any) {
     resetPage();
+    if (e.target?.value === 'card') {
+        switch (pageOptions.itemsPerPage) {
+            case 10: pageOptions.itemsPerPage = 12;
+            break;
+            case 25: pageOptions.itemsPerPage = 24;
+            break;
+            case 50: pageOptions.itemsPerPage = 60;
+            break;
+            default: pageOptions.itemsPerPage = 24;
+            break;
+        }
+    } else if (e.target?.value === 'list') {
+        switch (pageOptions.itemsPerPage) {
+            case 12: pageOptions.itemsPerPage = 10;
+            break;
+            case 24: pageOptions.itemsPerPage = 25;
+            break;
+            case 60: pageOptions.itemsPerPage = 50;
+            break;
+            default: pageOptions.itemsPerPage = 25
+        }
+    }
     dispatch("viewChange", e.target.value);
 }
 
