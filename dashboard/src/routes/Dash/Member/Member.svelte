@@ -108,8 +108,15 @@
         isPublic: isPublic,
         type: 'group',
         isMain: false,
-        itemsPerPage: listView === 'card' ? 24 : 25
+        itemsPerPage: getDefaultItemsPerpage()
     };
+
+    function getDefaultItemsPerpage(): number {
+        if (listView === 'card') return 24;
+        else if (settings && settings.accessibility && settings.accessibility.expandedcards) 
+            return 10;
+        else return 25
+    }
 
     async function copyShortLink(event?) {
         if (event) {
