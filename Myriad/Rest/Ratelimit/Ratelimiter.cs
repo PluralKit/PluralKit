@@ -60,6 +60,9 @@ public class Ratelimiter: IDisposable
         if (!headers.HasRatelimitInfo)
             return;
 
+        if (endpoint.Contains("interactions"))
+            _logger.Information($"Discord debug: got rate limit headers for interaction endpoint: global? {headers.Global}, limit: {headers.Limit}, remaining: {headers.Remaining}, reset: {headers.Reset?.ToUnixTimeSeconds()}, reset_after: {headers.ResetAfter?.TotalSeconds}, bucket: {headers.Bucket}");
+
         // TODO: properly calculate server time?
         if (headers.Global)
         {
