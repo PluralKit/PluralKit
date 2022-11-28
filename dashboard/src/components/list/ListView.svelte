@@ -121,13 +121,11 @@
                     <CardsHeader {item} sortBy={options.sort}>
                         <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                             {#if item.privacy && item.privacy.visibility === "private"}
-                            {#if pageOptions.type === "member"}
+                            <FaLock />
+                            {:else if pageOptions.type === "member"}
                             <FaLock />
                             {:else if pageOptions.type === "group"}
                             <FaUsers />
-                            {/if}
-                            {:else}
-                            <FaUserCircle />
                             {/if}
                         </div>
                     </CardsHeader>
@@ -154,13 +152,11 @@
                 <CardsHeader {item} sortBy={options.sort}>
                     <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                         {#if item.privacy && item.privacy.visibility === "private"}
-                        {#if pageOptions.type === "member"}
                         <FaLock />
+                        {:else if pageOptions.type === "member"}
+                        <FaUserCircle/>
                         {:else if pageOptions.type === "group"}
                         <FaUsers />
-                        {/if}
-                        {:else}
-                        <FaUserCircle />
                         {/if}
                     </div>
                 </CardsHeader>
@@ -184,13 +180,11 @@
             <CardsHeader {item} sortBy={options.sort}>
                 <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                     {#if item.privacy && item.privacy.visibility === "private"}
-                    {#if pageOptions.type === "member"}
                     <FaLock />
+                    {:else if pageOptions.type === "member"}
+                    <FaUserCircle/>
                     {:else if pageOptions.type === "group"}
                     <FaUsers />
-                    {/if}
-                    {:else}
-                    <FaUserCircle />
                     {/if}
                 </div>
             </CardsHeader>
