@@ -24,7 +24,7 @@ public class InteractionCreated: IEventHandler<InteractionCreateEvent>
     {
         if (evt.Type == Interaction.InteractionType.MessageComponent)
         {
-            _logger.Information($"Discord debug: got interaction with ID {evt.Id} from custom ID {evt.Data?.CustomId}");
+            _logger.Information("Discord debug: got interaction with ID {id} from custom ID {custom_id}", evt.Id, evt.Data?.CustomId);
             var customId = evt.Data?.CustomId;
             if (customId == null) return;
 
