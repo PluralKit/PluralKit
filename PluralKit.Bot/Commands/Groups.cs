@@ -170,7 +170,7 @@ public class Groups
 
         ctx.CheckOwnGroup(target);
 
-        if (await ctx.MatchClear("this group's display name"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's display name"))
         {
             var patch = new GroupPatch { DisplayName = Partial<string>.Null() };
             await ctx.Repository.UpdateGroup(target.Id, patch);
@@ -228,7 +228,7 @@ public class Groups
 
         ctx.CheckOwnGroup(target);
 
-        if (await ctx.MatchClear("this group's description"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's description"))
         {
             var patch = new GroupPatch { Description = Partial<string>.Null() };
             await ctx.Repository.UpdateGroup(target.Id, patch);
@@ -304,7 +304,7 @@ public class Groups
             }
         }
 
-        if (await ctx.MatchClear("this group's icon"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's icon"))
             await ClearIcon();
         else if (await ctx.MatchImage() is { } img)
             await SetIcon(img);
@@ -368,7 +368,7 @@ public class Groups
             }
         }
 
-        if (await ctx.MatchClear("this group's banner image"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this group's banner image"))
             await ClearBannerImage();
         else if (await ctx.MatchImage() is { } img)
             await SetBannerImage(img);
@@ -380,7 +380,7 @@ public class Groups
     {
         var isOwnSystem = ctx.System?.Id == target.System;
         var matchedRaw = ctx.MatchRaw();
-        var matchedClear = await ctx.MatchClear();
+        var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
         {

@@ -128,7 +128,7 @@ public class Api
             return;
         }
 
-        if (await ctx.MatchClear("your system's webhook URL"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's webhook URL"))
         {
             await ctx.Repository.UpdateSystem(ctx.System.Id, new SystemPatch { WebhookUrl = null, WebhookToken = null });
 

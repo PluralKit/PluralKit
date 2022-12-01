@@ -91,7 +91,7 @@ public class MemberAvatar
                                          MemberGuildSettings? guildData)
     {
         // First, see if we need to *clear*
-        if (await ctx.MatchClear(location == AvatarLocation.Server
+        if (ctx.MatchClear() && await ctx.ConfirmClear(location == AvatarLocation.Server
                 ? "this member's server avatar"
                 : "this member's avatar"))
         {

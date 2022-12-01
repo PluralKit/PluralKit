@@ -97,7 +97,7 @@ public class MemberEdit
 
         ctx.CheckOwnMember(target);
 
-        if (await ctx.MatchClear("this member's description"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's description"))
         {
             var patch = new MemberPatch { Description = Partial<string>.Null() };
             await ctx.Repository.UpdateMember(target.Id, patch);
@@ -149,7 +149,7 @@ public class MemberEdit
 
         ctx.CheckOwnMember(target);
 
-        if (await ctx.MatchClear("this member's pronouns"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's pronouns"))
         {
             var patch = new MemberPatch { Pronouns = Partial<string>.Null() };
             await ctx.Repository.UpdateMember(target.Id, patch);
@@ -217,7 +217,7 @@ public class MemberEdit
             }
         }
 
-        if (await ctx.MatchClear("this member's banner image"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's banner image"))
             await ClearBannerImage();
         else if (await ctx.MatchImage() is { } img)
             await SetBannerImage(img);
@@ -229,7 +229,7 @@ public class MemberEdit
     {
         var isOwnSystem = ctx.System?.Id == target.System;
         var matchedRaw = ctx.MatchRaw();
-        var matchedClear = await ctx.MatchClear();
+        var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
         {
@@ -277,7 +277,7 @@ public class MemberEdit
 
     public async Task Birthday(Context ctx, PKMember target)
     {
-        if (await ctx.MatchClear("this member's birthday"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's birthday"))
         {
             ctx.CheckOwnMember(target);
 
@@ -408,7 +408,7 @@ public class MemberEdit
 
         ctx.CheckOwnMember(target);
 
-        if (await ctx.MatchClear("this member's display name"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's display name"))
         {
             var patch = new MemberPatch { DisplayName = Partial<string>.Null() };
             await ctx.Repository.UpdateMember(target.Id, patch);
@@ -468,7 +468,7 @@ public class MemberEdit
 
         ctx.CheckOwnMember(target);
 
-        if (await ctx.MatchClear("this member's server name"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's server name"))
         {
             await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, new MemberGuildPatch { DisplayName = null });
 

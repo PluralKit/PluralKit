@@ -34,7 +34,7 @@ public class MemberProxy
         }
 
         // "Sub"command: clear flag
-        if (await ctx.MatchClear())
+        if (ctx.MatchClear())
         {
             // If we already have multiple tags, this would clear everything, so prompt that
             if (target.ProxyTags.Count > 1)

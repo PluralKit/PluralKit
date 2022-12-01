@@ -23,7 +23,7 @@ public class ServerConfig
         await ctx.CheckGuildContext().CheckAuthorPermission(PermissionSet.ManageGuild, "Manage Server");
         var settings = await ctx.Repository.GetGuild(ctx.Guild.Id);
 
-        if (await ctx.MatchClear("the server log channel"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("the server log channel"))
         {
             await ctx.Repository.UpdateGuild(ctx.Guild.Id, new GuildPatch { LogChannel = null });
             await ctx.Reply($"{Emojis.Success} Proxy logging channel cleared.");

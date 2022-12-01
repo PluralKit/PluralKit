@@ -173,7 +173,7 @@ public class Config
         Duration? newTimeout;
         Duration overflow = Duration.Zero;
         if (ctx.Match("off", "stop", "cancel", "no", "disable", "remove")) newTimeout = Duration.Zero;
-        else if (await ctx.MatchClear()) newTimeout = null;
+        else if (ctx.MatchClear()) newTimeout = null;
         else
         {
             var timeoutStr = ctx.RemainderOrNull();
@@ -204,7 +204,7 @@ public class Config
     {
         if (ctx.System == null) throw Errors.NoSystemError;
 
-        if (await ctx.MatchClear())
+        if (ctx.MatchClear())
         {
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { UiTz = "UTC" });
 

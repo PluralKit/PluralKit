@@ -57,7 +57,7 @@ public class SystemEdit
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.MatchClear("your system's name"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's name"))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = null });
 
@@ -113,7 +113,7 @@ public class SystemEdit
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.MatchClear("your system's description"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's description"))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Description = null });
 
@@ -135,7 +135,7 @@ public class SystemEdit
     {
         var isOwnSystem = ctx.System?.Id == target.Id;
         var matchedRaw = ctx.MatchRaw();
-        var matchedClear = await ctx.MatchClear();
+        var matchedClear = ctx.MatchClear();
 
         if (!isOwnSystem || !(ctx.HasNext() || matchedClear))
         {
@@ -210,7 +210,7 @@ public class SystemEdit
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.MatchClear("your system's tag"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's tag"))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Tag = null });
 
@@ -337,7 +337,7 @@ public class SystemEdit
             return str;
         }
 
-        if (await ctx.MatchClear("your system's server tag"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's server tag"))
             await Clear();
         else if (ctx.Match("disable") || ctx.MatchFlag("disable"))
             await EnableDisable(false);
@@ -384,7 +384,7 @@ public class SystemEdit
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.MatchClear("your system's pronouns"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's pronouns"))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Pronouns = null });
 
@@ -463,7 +463,7 @@ public class SystemEdit
             return;
         }
 
-        if (await ctx.MatchClear("your system's icon"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's icon"))
             await ClearIcon();
         else if (await ctx.MatchImage() is { } img)
             await SetIcon(img);
@@ -501,7 +501,7 @@ public class SystemEdit
 
         ctx.CheckSystem().CheckOwnSystem(target);
 
-        if (await ctx.MatchClear("your system's banner image"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's banner image"))
         {
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { BannerImage = null });
             await ctx.Reply($"{Emojis.Success} System banner image cleared.");
