@@ -57,6 +57,13 @@ public static class MiscUtils
         // HTTP/2 streams are complicated and break sometimes.
         if (e is HttpRequestException) return false;
 
+        // This may expanded at some point.
+        return true;
+    }
+
+    public static bool ShowToUser(this Exception e)
+    {
+
         // Ignore "Database is shutting down" error
         if (e is PostgresException pe && pe.SqlState == "57P03") return false;
 
@@ -71,7 +78,10 @@ public static class MiscUtils
         if (e is NpgsqlException npe && npe.Message.Contains("The connection pool has been exhausted"))
             return false;
 
-        // This may expanded at some point.
+        // ignore "Exception while reading from stream"
+        if (e is NpgsqlException npe2 && npe2.Message.Contains("Exception while reading from stream"))
+            return false;
+
         return true;
     }
 }

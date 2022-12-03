@@ -231,6 +231,8 @@ public class Bot
             if (_config.DisableErrorReporting)
                 return;
 
+            if (!exc.ShowToUser()) return;
+
             // Once we've sent it to Sentry, report it to the user (if we have permission to)
             var reportChannel = handler.ErrorChannelFor(evt, _config.ClientId);
             if (reportChannel == null)
