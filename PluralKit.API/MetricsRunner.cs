@@ -4,7 +4,7 @@ using NodaTime;
 
 namespace PluralKit.API;
 
-public class MetricsRunner : IHostedService, IDisposable
+public class MetricsRunner: IHostedService, IDisposable
 {
     private readonly Serilog.ILogger _logger;
     private readonly IMetrics _metrics;

@@ -26,7 +26,7 @@ public class Startup
                 options.InvalidModelStateResponseFactory = context =>
                     throw Errors.GenericBadRequest
             );
-        
+
         services.AddHostedService<MetricsRunner>();
     }
 
