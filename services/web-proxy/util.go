@@ -63,3 +63,12 @@ func requireEnv(key string) string {
 		return val
 	}
 }
+
+func is_trying_to_use_v1_path_on_v2(path string) bool {
+	return strings.HasPrefix(path, "/v2/s/") ||
+		strings.HasPrefix(path, "/v2/m/") ||
+		strings.HasPrefix(path, "/v2/a/") ||
+		strings.HasPrefix(path, "/v2/msg/") ||
+		path == "/v2/s" ||
+		path == "/v2/m"
+}

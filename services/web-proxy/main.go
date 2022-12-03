@@ -74,6 +74,23 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if r.URL.Path == "/" {
+			http.Redirect(rw, r, "https://pluralkit.me", http.StatusFound)
+			return
+		}
+
+		if strings.HasPrefix(r.URL.Path, "/v1") {
+			rw.Header().Set("content-type", "application/json")
+			rw.WriteHeader(410)
+			rw.Write([]byte(`{"message":"Unsupported API version","code":0}`))
+		}
+
+		if is_trying_to_use_v1_path_on_v2(r.URL.Path) {
+			rw.WriteHeader(400)
+			rw.Write([]byte(`{"message":"Invalid path for API version","code":0}`))
+			return
+		}
+
 		if is_api_ratelimited(rw, r) {
 			return
 		}
