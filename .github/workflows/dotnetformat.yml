@@ -1,5 +1,19 @@
 name: Format check on pull request
-on: [push, pull_request]
+
+on:
+  push:
+    paths:
+    - 'Myriad/**'
+    - 'PluralKit.API/**'
+    - 'PluralKit.Bot/**'
+    - 'PluralKit.Core/**'
+  pull_request:
+    paths:
+    - 'Myriad/**'
+    - 'PluralKit.API/**'
+    - 'PluralKit.Bot/**'
+    - 'PluralKit.Core/**'
+
 jobs:
   dotnet-format:
     runs-on: ubuntu-latest
