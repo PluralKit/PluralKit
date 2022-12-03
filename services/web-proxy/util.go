@@ -40,6 +40,8 @@ func cleanPath(host, path string) string {
 		return ""
 	}
 
+	path = strings.ToLower(path)
+
 	if !(strings.HasPrefix(path, "/v2") || strings.HasPrefix(path, "/private")) {
 		return ""
 	}

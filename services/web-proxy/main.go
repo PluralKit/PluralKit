@@ -111,7 +111,7 @@ func modifyDashResponse(resp *http.Response) error {
 		(strings.HasSuffix(r.URL.Path, ".js") || strings.HasSuffix(r.URL.Path, ".css") || strings.HasSuffix(r.URL.Path, ".map"))
 
 	if is_dash_static_asset && resp.StatusCode == 200 {
-		resp.Header.Add("Cache-Control", "max-age: 604800")
+		resp.Header.Add("Cache-Control", "max-age=31536000, s-maxage=31536000, immutable")
 	}
 
 	return logTimeElapsed(resp)
