@@ -4,15 +4,15 @@ import (
 	"context"
 
 	redis "github.com/go-redis/redis/v8"
-	pgx "github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-var data_db *pgx.Conn
-var messages_db *pgx.Conn
-var stats_db *pgx.Conn
+var data_db *pgxpool.Pool
+var messages_db *pgxpool.Pool
+var stats_db *pgxpool.Pool
 var rdb *redis.Client
 
-func run_simple_pg_query(c *pgx.Conn, sql string) {
+func run_simple_pg_query(c *pgxpool.Pool, sql string) {
 	_, err := c.Exec(context.Background(), sql)
 	if err != nil {
 		panic(err)
@@ -26,8 +26,8 @@ func connect_dbs() {
 	rdb = redis_connect(get_env_var("REDIS_ADDR"))
 }
 
-func pg_connect(url string) *pgx.Conn {
-	conn, err := pgx.Connect(context.Background(), url)
+func pg_connect(url string) *pgxpool.Pool {
+	conn, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		panic(err)
 	}
