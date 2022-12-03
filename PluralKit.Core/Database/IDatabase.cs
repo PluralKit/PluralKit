@@ -17,7 +17,7 @@ public interface IDatabase
                            [CallerMemberName] string queryName = "");
 
     Task<T> QueryFirst<T>(string q, object param = null, [CallerMemberName] string queryName = "", bool messages = false);
-    Task<T> QueryFirst<T>(Query q, string extraSql = "", [CallerMemberName] string queryName = "");
+    Task<T> QueryFirst<T>(Query q, string extraSql = "", [CallerMemberName] string queryName = "", bool messages = false);
 
     Task<T> QueryFirst<T>(IPKConnection? conn, Query q, string extraSql = "",
                           [CallerMemberName] string queryName = "");

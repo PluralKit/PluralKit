@@ -1,11 +1,10 @@
-using Dapper;
+using SqlKata;
 
 namespace PluralKit.Core;
 
 public partial class ModelRepository
 {
-    public Task<Counts> GetStats()
-        => _db.Execute(conn => conn.QuerySingleAsync<Counts>("select * from info"));
+    public Task<Counts> GetStats() => _db.QueryFirst<Counts>(new Query("info"));
 
     public class Counts
     {

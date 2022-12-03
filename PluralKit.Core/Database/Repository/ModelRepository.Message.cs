@@ -23,14 +23,8 @@ public partial class ModelRepository
         return _db.ExecuteQuery(query, "on conflict do nothing", messages: true);
     }
 
-    public async Task<PKMessage?> GetMessage(ulong id)
-    {
-        return await _db.QueryFirst<PKMessage?>(
-            "select * from messages where mid = @Id",
-            new { Id = id },
-            messages: true
-        );
-    }
+    public Task<PKMessage?> GetMessage(ulong id)
+        => _db.QueryFirst<PKMessage?>(new Query("messages").Where("mid", id), messages: true);
 
     public async Task<FullMessage?> GetFullMessage(ulong id)
     {

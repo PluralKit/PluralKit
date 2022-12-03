@@ -56,10 +56,10 @@ internal partial class Database: IDatabase
             return await conn.ExecuteAsync(query.Sql + $" {extraSql}", query.NamedBindings);
     }
 
-    public async Task<T> QueryFirst<T>(Query q, string extraSql = "", [CallerMemberName] string queryName = "")
+    public async Task<T> QueryFirst<T>(Query q, string extraSql = "", [CallerMemberName] string queryName = "", bool messages = false)
     {
         var query = _compiler.Compile(q);
-        using var conn = await Obtain();
+        using var conn = await Obtain(messages);
         using (_metrics.Measure.Timer.Time(CoreMetrics.DatabaseQuery, new MetricTags("Query", queryName)))
             return await conn.QueryFirstOrDefaultAsync<T>(query.Sql + $" {extraSql}", query.NamedBindings);
     }
