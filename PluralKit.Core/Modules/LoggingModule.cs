@@ -10,6 +10,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.Elasticsearch;
+using Serilog.Sinks.Seq;
 using Serilog.Sinks.SystemConsole.Themes;
 
 using ILogger = Serilog.ILogger;
@@ -114,6 +115,15 @@ public class LoggingModule: Module
 
             logCfg.WriteTo.Elasticsearch(elasticConfig);
         }
+
+        if (config.SeqLogUrl != null)
+        {
+            logCfg.WriteTo.Seq(
+                config.SeqLogUrl,
+                restrictedToMinimumLevel: LogEventLevel.Verbose
+            );
+        }
+
 
         _fn.Invoke(logCfg);
         return Log.Logger = logCfg.CreateLogger();

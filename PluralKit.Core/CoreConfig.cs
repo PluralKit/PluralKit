@@ -14,6 +14,7 @@ public class CoreConfig
     public string InfluxDb { get; set; }
     public string LogDir { get; set; }
     public string? ElasticUrl { get; set; }
+    public string? SeqLogUrl { get; set; }
 
     public LogEventLevel ConsoleLogLevel { get; set; } = LogEventLevel.Debug;
     public LogEventLevel ElasticLogLevel { get; set; } = LogEventLevel.Information;
