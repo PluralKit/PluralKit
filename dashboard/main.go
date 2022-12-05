@@ -61,7 +61,10 @@ func notFoundHandler(rw http.ResponseWriter, r *http.Request) {
 	var err error
 
 	// lol
-	if strings.HasSuffix(r.URL.Path, ".js") {
+	if r.URL.Path == "/myriad.png" {
+		data, err = fs.ReadFile("dist/myriad.png")
+		rw.Header().Set("content-type", "image/png")
+	} else if strings.HasSuffix(r.URL.Path, ".js") {
 		data, err = fs.ReadFile("dist" + r.URL.Path)
 		rw.Header().Set("content-type", "application/javascript")
 	} else if strings.HasSuffix(r.URL.Path, ".css") {
