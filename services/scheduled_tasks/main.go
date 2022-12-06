@@ -11,7 +11,13 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+var set_guild_count = false
+
 func main() {
+	if _, ok := os.LookupEnv("SET_GUILD_COUNT"); ok {
+		set_guild_count = true
+	}
+
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn: os.Getenv("SENTRY_DSN"),
 	})

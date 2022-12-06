@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func task_main() {
@@ -11,6 +14,7 @@ func task_main() {
 
 	update_db_meta()
 	update_stats()
+	update_bot_status()
 }
 
 var table_stat_keys = []string{"system", "member", "group", "switch", "message"}
@@ -44,7 +48,7 @@ func update_db_message_meta() {
 	}
 }
 
-func update_stats() {
+func get_discord_counts() (int, int) {
 	redisStats := run_redis_query()
 
 	guild_count := 0
@@ -56,6 +60,12 @@ func update_stats() {
 		channel_count += v.ChannelCount
 	}
 
+	return guild_count, channel_count
+}
+
+func update_stats() {
+	guild_count, channel_count := get_discord_counts()
+
 	do_stats_insert("guilds", guild_count)
 	do_stats_insert("channels", channel_count)
 
@@ -63,5 +73,20 @@ func update_stats() {
 	for _, key := range table_stat_keys {
 		val := data_stats[key+"_count"].(int32)
 		do_stats_insert(plural(key), int(val))
+	}
+}
+
+func update_bot_status() {
+	if !set_guild_count {
+		return
+	}
+
+	guild_count, _ := get_discord_counts()
+	p := message.NewPrinter(language.English)
+	s := p.Sprintf("%d\n", guild_count)
+
+	cmd := rdb.Set(context.Background(), "discord_botstatus", "in "+s+" servers", 0)
+	if err := cmd.Err(); err != nil {
+		panic(err)
 	}
 }
