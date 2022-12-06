@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	redis "github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -22,8 +23,11 @@ func run_simple_pg_query(c *pgxpool.Pool, sql string) {
 func connect_dbs() {
 	data_db = pg_connect(get_env_var("DATA_DB_URI"))
 	messages_db = pg_connect(get_env_var("MESSAGES_DB_URI"))
-	stats_db = pg_connect(get_env_var("STATS_DB_URI"))
 	rdb = redis_connect(get_env_var("REDIS_ADDR"))
+
+	if uri, ok := os.LookupEnv("STATS_DB_URI"); ok {
+		stats_db = pg_connect(uri)
+	}
 }
 
 func pg_connect(url string) *pgxpool.Pool {

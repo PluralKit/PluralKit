@@ -70,6 +70,10 @@ func run_data_stats_query() map[string]interface{} {
 }
 
 func do_stats_insert(table string, value int) {
+	if stats_db == nil {
+		return
+	}
+
 	sql := fmt.Sprintf("insert into %s values (now(), $1)", table)
 	log.Println("stats db query:", sql, "value:", value)
 	_, err := stats_db.Exec(context.Background(), sql, value)
