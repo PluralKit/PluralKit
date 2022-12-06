@@ -83,9 +83,9 @@ func update_bot_status() {
 
 	guild_count, _ := get_discord_counts()
 	p := message.NewPrinter(language.English)
-	s := p.Sprintf("%d\n", guild_count)
+	s := p.Sprintf("%d", guild_count)
 
-	cmd := rdb.Set(context.Background(), "discord_botstatus", "in "+s+" servers", 0)
+	cmd := rdb.Set(context.Background(), "pluralkit:botstatus", "in "+s+" servers", 0)
 	if err := cmd.Err(); err != nil {
 		panic(err)
 	}
