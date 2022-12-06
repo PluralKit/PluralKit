@@ -36,6 +36,9 @@ public class ImportExport
         var url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
         if (url == null) throw Errors.NoImportFilePassed;
 
+        if (!Core.MiscUtils.TryMatchUri(url, out var _))
+            throw Errors.InvalidUrl;
+
         await ctx.BusyIndicator(async () =>
         {
             JObject data;

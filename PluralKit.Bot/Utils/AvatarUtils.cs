@@ -21,7 +21,7 @@ public static class AvatarUtils
         };
 
         if (!PluralKit.Core.MiscUtils.TryMatchUri(url, out var uri))
-            throw Errors.InvalidUrl(url);
+            throw Errors.InvalidUrl;
 
         url = TryRewriteCdnUrl(url);
 

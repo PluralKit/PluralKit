@@ -23,11 +23,8 @@ public static class ContextAvatarExt
             if (arg.StartsWith("<") && arg.EndsWith(">"))
                 arg = arg.Substring(1, arg.Length - 2);
 
-            if (!Uri.TryCreate(arg, UriKind.Absolute, out var uri))
-                throw Errors.InvalidUrl(arg);
-
-            if (uri.Scheme != "http" && uri.Scheme != "https")
-                throw Errors.InvalidUrl(arg);
+            if (!Core.MiscUtils.TryMatchUri(arg, out var uri))
+                throw Errors.InvalidUrl;
 
             // ToString URL-decodes, which breaks URLs to spaces; AbsoluteUri doesn't
             return new ParsedImage { Url = uri.AbsoluteUri, Source = AvatarSource.Url };

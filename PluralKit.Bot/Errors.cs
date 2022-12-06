@@ -115,7 +115,7 @@ public static class Errors
     public static PKError AvatarDimensionsTooLarge(int width, int height) => new(
         $"Image too large ({width}x{height} > {Limits.AvatarDimensionLimit}x{Limits.AvatarDimensionLimit}), try resizing the image.");
 
-    public static PKError InvalidUrl(string url) => new("The given URL is invalid.");
+    public static PKError InvalidUrl => new("The given URL is invalid.");
 
     public static PKError UrlTooLong(string url) =>
         new($"The given URL is too long ({url.Length}/{Limits.MaxUriLength} characters).");
