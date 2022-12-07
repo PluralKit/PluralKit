@@ -21,9 +21,10 @@ var limiter *redis_rate.Limiter
 // todo: be able to raise ratelimits for >1 consumers
 var token2 string
 
+// todo: this shouldn't be in this repo
 var remotes = map[string]*httputil.ReverseProxy{
-	"api.pluralkit.me":       proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:2]:8080"),
-	"dash.pluralkit.me":      proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:2]:8080"),
+	"api.pluralkit.me":       proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:5000"),
+	"dash.pluralkit.me":      proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:8080"),
 	"sentry.pluralkit.me":    proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:9000"),
 	"plausible.pluralkit.me": proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:8000"),
 }
