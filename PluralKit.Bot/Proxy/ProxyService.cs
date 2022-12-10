@@ -435,6 +435,9 @@ public class ProxyService
             await _redis.SetOriginalMid(triggerMessage.Id, proxyMessage.Id);
         }
 
+        Task UpdateMemberForSentMessage()
+            => _repo.UpdateMemberForSentMessage(sentMessage.Member!.Value);
+
         Task LogMessageToChannel() =>
             _logChannel.LogMessage(sentMessage, triggerMessage, proxyMessage).AsTask();
 
@@ -474,6 +477,7 @@ public class ProxyService
             DeleteProxyTriggerMessage(),
             SaveMessageInDatabase(),
             SaveMessageInRedis(),
+            UpdateMemberForSentMessage(),
             LogMessageToChannel(),
             SaveLatchAutoproxy(),
             DispatchWebhook()

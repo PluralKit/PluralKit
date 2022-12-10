@@ -97,4 +97,16 @@ public partial class ModelRepository
             new { member = id, account = userId }
         );
     }
+
+    public async Task UpdateMemberForSentMessage(MemberId id)
+    {
+        var query = new Query("members")
+            .AsUpdate(new {
+                last_message_timestamp = new UnsafeLiteral("now()"),
+                message_count = new UnsafeLiteral("message_count + 1")
+            })
+            .Where("id", id);
+
+        await _db.ExecuteQuery(query);
+    }
 }

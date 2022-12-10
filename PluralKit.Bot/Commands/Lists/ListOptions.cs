@@ -130,11 +130,9 @@ public static class ListOptionsExt
             SortProperty.Birthdate => input
                 .OrderByDescending(m => m.AnnualBirthday.HasValue && m.BirthdayPrivacy.CanAccess(ctx))
                 .ThenBy(m => m.BirthdayPrivacy.Get(ctx, m.AnnualBirthday), ReverseMaybe(Comparer<AnnualDate?>.Default)),
-            SortProperty.LastMessage => throw new PKError(
-                "Sorting by last message is temporarily disabled due to database issues, sorry."),
-            // SortProperty.LastMessage => input
-            //     .OrderByDescending(m => m.LastMessage.HasValue)
-            //     .ThenByDescending(m => m.LastMessage, ReverseMaybe(Comparer<ulong?>.Default)),
+            SortProperty.LastMessage => input
+                .OrderByDescending(m => m.LastMessageTimestamp.HasValue)
+                .ThenByDescending(m => m.LastMessageTimestamp!.Value, ReverseMaybe(Comparer<Instant?>.Default)),
             SortProperty.LastSwitch => input
                 .OrderByDescending(m => m.LastSwitchTime.HasValue && m.MetadataPrivacy.CanAccess(ctx))
                 .ThenByDescending(m => m.MetadataPrivacy.Get(ctx, m.LastSwitchTime), ReverseMaybe(Comparer<Instant?>.Default)),

@@ -50,6 +50,7 @@ public class PKMember
     public bool KeepProxy { get; private set; }
     public Instant Created { get; private set; }
     public int MessageCount { get; private set; }
+    public Instant? LastMessageTimestamp { get; }
     public bool AllowAutoproxy { get; private set; }
 
     public PrivacyLevel MemberVisibility { get; private set; }
