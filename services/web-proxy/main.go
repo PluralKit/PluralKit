@@ -76,7 +76,7 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 
 		if r.URL.Path == "/" {
-			http.Redirect(rw, r, "https://pluralkit.me", http.StatusFound)
+			http.Redirect(rw, r, "https://pluralkit.me/api", http.StatusFound)
 			return
 		}
 
