@@ -70,6 +70,9 @@ public static class MiscUtils
         // Ignore *other* "database is shutting down" error (57P01)
         if (e is PostgresException pe2 && pe2.SqlState == "57P01") return false;
 
+        // ignore "out of shared memory" error
+        if (e is PostgresException pe3 && pe3.SqlState == "53200") return false;
+
         // Ignore database timing out as well.
         if (e is NpgsqlException tpe && tpe.InnerException is TimeoutException)
             return false;
