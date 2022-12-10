@@ -60,7 +60,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         // Ignore reactions from bots (we can't DM them anyway)
         // note: this used to get from cache since this event does not contain Member in DMs
         // but we aren't able to get DMs from bots anyway, so it's not really needed
-        if (evt.GuildId != null && evt.Member.User.Bot) return;
+        if (evt.GuildId != null && (evt.Member?.User?.Bot ?? false)) return;
 
         var channel = await _cache.GetChannel(evt.ChannelId);
 
