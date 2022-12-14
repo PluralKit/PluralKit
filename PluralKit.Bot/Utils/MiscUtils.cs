@@ -63,15 +63,23 @@ public static class MiscUtils
 
     public static bool ShowToUser(this Exception e)
     {
+        if (e is PostgresException pe)
+        {
+            // ignore "cached plan must not change result type" error
+            if (pe.SqlState == "0A000") return false;
 
-        // Ignore "Database is shutting down" error
-        if (e is PostgresException pe && pe.SqlState == "57P03") return false;
+            // Ignore "Database is shutting down" error
+            if (pe.SqlState == "57P03") return false;
 
-        // Ignore *other* "database is shutting down" error (57P01)
-        if (e is PostgresException pe2 && pe2.SqlState == "57P01") return false;
+            // Ignore *other* "database is shutting down" error (57P01)
+            if (pe.SqlState == "57P01") return false;
 
-        // ignore "out of shared memory" error
-        if (e is PostgresException pe3 && pe3.SqlState == "53200") return false;
+            // ignore "out of shared memory" error
+            if (pe.SqlState == "53200") return false;
+
+            // ignore "too many clients already" error
+            if (pe.SqlState == "53300") return false;
+        }
 
         // Ignore database timing out as well.
         if (e is NpgsqlException tpe && tpe.InnerException is TimeoutException)
