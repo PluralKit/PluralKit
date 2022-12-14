@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 
 using Myriad.Rest.Exceptions;
@@ -39,6 +40,9 @@ public static class MiscUtils
 
         // 5xxs? also not our problem :^)
         if (e is UnknownDiscordRequestException udre && (int)udre.StatusCode >= 500) return false;
+
+        // 409s apparently happen for Discord internal issues.
+        if (e is UnknownDiscordRequestException udre2 && udre2.StatusCode == HttpStatusCode.Conflict) return false;
 
         // Webhook server errors are also *not our problem*
         // (this includes rate limit errors, WebhookRateLimited is a subclass)
