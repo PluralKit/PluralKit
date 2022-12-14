@@ -172,7 +172,7 @@ public class LoggerCleanService
     {
         // Embed *description* contains "Message sent by [mention] deleted in [channel]", contains message ID in footer per regex
         var embed = msg.Embeds?.FirstOrDefault();
-        if (embed?.Footer == null || !(embed.Description?.Contains("deleted in") ?? false)) return null;
+        if (embed?.Footer == null || !(embed.Description?.Contains("Deleted in") ?? false)) return null;
         var match = _dynoRegex.Match(embed.Footer.Text ?? "");
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
