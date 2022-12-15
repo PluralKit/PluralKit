@@ -102,8 +102,11 @@ public static class PKMemberExt
     public static Instant? CreatedFor(this PKMember member, LookupContext ctx) =>
         member.MetadataPrivacy.Get(ctx, (Instant?)member.Created);
 
-    public static int MessageCountFor(this PKMember member, LookupContext ctx) =>
-        member.MetadataPrivacy.Get(ctx, member.MessageCount);
+    public static int? MessageCountFor(this PKMember member, LookupContext ctx) =>
+        member.MetadataPrivacy.Get<int?>(ctx, member.MessageCount, fallback: null);
+
+    public static Instant? LastMessageTimestampFor(this PKMember member, LookupContext ctx) =>
+        member.MetadataPrivacy.Get(ctx, member.LastMessageTimestamp);
 
     public static JObject ToJson(this PKMember member, LookupContext ctx, bool needsLegacyProxyTags = false,
                                  string systemStr = null)
@@ -131,6 +134,9 @@ public static class PKMemberExt
         o.Add("keep_proxy", member.KeepProxy);
 
         o.Add("autoproxy_enabled", ctx == LookupContext.ByOwner ? member.AllowAutoproxy : null);
+
+        o.Add("message_count", member.MessageCountFor(ctx));
+        o.Add("last_message_timestamp", member.LastMessageTimestampFor(ctx)?.FormatExport());
 
         var tagArray = new JArray();
         foreach (var tag in member.ProxyTags)
