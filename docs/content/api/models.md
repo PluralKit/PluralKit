@@ -51,6 +51,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |created|?datetime||
 |proxy_tags|array of [ProxyTag objects](#proxytag-object)|
 |keep_proxy|boolean||
+|autoproxy_enabled|?boolean||
 |privacy|?member privacy object||
 
 * Member privacy keys: `visibility`, `name_privacy`, `description_privacy`, `birthday_privacy`, `pronoun_privacy`, `avatar_privacy`, `metadata_privacy`

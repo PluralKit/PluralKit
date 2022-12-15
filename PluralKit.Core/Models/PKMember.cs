@@ -130,6 +130,8 @@ public static class PKMemberExt
         o.Add("created", member.CreatedFor(ctx)?.FormatExport());
         o.Add("keep_proxy", member.KeepProxy);
 
+        o.Add("autoproxy_enabled", ctx == LookupContext.ByOwner ? member.AllowAutoproxy : null);
+
         var tagArray = new JArray();
         foreach (var tag in member.ProxyTags)
             tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
