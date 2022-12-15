@@ -132,7 +132,7 @@ public static class ListOptionsExt
                 .ThenBy(m => m.BirthdayPrivacy.Get(ctx, m.AnnualBirthday), ReverseMaybe(Comparer<AnnualDate?>.Default)),
             SortProperty.LastMessage => input
                 .OrderByDescending(m => m.LastMessageTimestamp.HasValue)
-                .ThenByDescending(m => m.LastMessageTimestamp!.Value, ReverseMaybe(Comparer<Instant?>.Default)),
+                .ThenByDescending(m => m.LastMessageTimestamp, ReverseMaybe(Comparer<Instant?>.Default)),
             SortProperty.LastSwitch => input
                 .OrderByDescending(m => m.LastSwitchTime.HasValue && m.MetadataPrivacy.CanAccess(ctx))
                 .ThenByDescending(m => m.MetadataPrivacy.Get(ctx, m.LastSwitchTime), ReverseMaybe(Comparer<Instant?>.Default)),
