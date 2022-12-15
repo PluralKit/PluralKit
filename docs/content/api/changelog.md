@@ -5,6 +5,8 @@ permalink: /api/changelog
 
 # Version history
 
+* 2022-12-14
+  * Added keys to member model: `autoproxy_enabled` (own-system only), `message_count` and `last_message_timestamp` (under metadata privacy)
 * 2022-01-11
   * Member / system keys in message object are now nullable.
 * 2021-11-07 (v2)
