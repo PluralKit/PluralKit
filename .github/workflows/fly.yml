@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'services/web-proxy'
+      - 'services/web-proxy/**'
 
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
