@@ -23,10 +23,9 @@ var token2 string
 
 // todo: this shouldn't be in this repo
 var remotes = map[string]*httputil.ReverseProxy{
-	"api.pluralkit.me":       proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:5000"),
-	"dash.pluralkit.me":      proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:8080"),
-	"sentry.pluralkit.me":    proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:9000"),
-	"plausible.pluralkit.me": proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:8000"),
+	"api.pluralkit.me":    proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:5000"),
+	"dash.pluralkit.me":   proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:8080"),
+	"sentry.pluralkit.me": proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:202]:9000"),
 }
 
 func init() {
@@ -48,6 +47,13 @@ func init() {
 type ProxyHandler struct{}
 
 func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	// redirect to plausible through fly-proxy
+	if r.Host == "plausible.pluralkit.me" {
+		rw.Header().Add("fly-replay", "app=pluralkit-analytics")
+		rw.WriteHeader(200)
+		return
+	}
+
 	remote, ok := remotes[r.Host]
 	if !ok {
 		// unknown domains redirect to landing page
