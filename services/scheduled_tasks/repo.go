@@ -39,7 +39,7 @@ func run_redis_query() []rstatval {
 
 func get_message_count() int {
 	var count int
-	row := messages_db.QueryRow(context.Background(), "select count(*) as count from systems")
+	row := messages_db.QueryRow(context.Background(), "select count(*) as count from messages")
 	if err := row.Scan(&count); err != nil {
 		panic(err)
 	}
