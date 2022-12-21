@@ -132,8 +132,6 @@ public class Shard
     {
         while (true)
         {
-            await _ratelimiter.Identify(_info.ShardId);
-
             _logger.Information("Shard {ShardId}: Connecting to WebSocket", _info.ShardId);
             try
             {
@@ -152,7 +150,10 @@ public class Shard
         => _conn.Disconnect(closeStatus, null);
 
     private async Task SendIdentify()
-        => await _conn.Send(new GatewayPacket
+    {
+        await _ratelimiter.Identify(_info.ShardId);
+
+        await _conn.Send(new GatewayPacket
         {
             Opcode = GatewayOpcode.Identify,
             Payload = new GatewayIdentify
@@ -171,6 +172,7 @@ public class Shard
                 Presence = _presence,
             }
         });
+    }
 
     private async Task SendResume((string SessionId, int? LastSeq) arg)
         => await _conn.Send(new GatewayPacket
