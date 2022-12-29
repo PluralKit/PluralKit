@@ -16,7 +16,7 @@ public static class MiscUtils
         try
         {
             uri = new Uri(input);
-            if (!uri.IsAbsoluteUri || uri.Scheme != "http" && uri.Scheme != "https")
+            if (!uri.IsAbsoluteUri || uri.Scheme != "https")
                 return false;
         }
         catch (UriFormatException)
