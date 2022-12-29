@@ -150,6 +150,9 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         if (authorId != null && authorId != evt.UserId)
             return;
 
+        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+            return;
+
         // todo: don't try to delete the user's own messages in DMs
         // this is hard since we don't have the message author object, but it happens infrequently enough to not really care about the 403s, I guess?
 
@@ -160,6 +163,10 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         catch (NotFoundException)
         {
             // Message was deleted by something/someone else before we got to it
+        }
+        catch (ForbiddenException)
+        {
+            // user reacted with :x: to their own message
         }
 
         // No need to delete database row here, it'll get deleted by the once-per-minute scheduled task.
