@@ -158,51 +158,21 @@ public class WebhookExecutorService
                 {
                     var json = JsonConvert.DeserializeObject<JObject>(e.FormError);
                     var error = json.Value<JObject>("username").Value<JArray>("_errors").First.Value<string>("message");
-
-                    await _rest.CreateMessage(req.ChannelId, new MessageRequest
-                    {
-                        Content = $"{Emojis.Error} Discord rejected your proxy name: {error.AsCode()}",
-                        AllowedMentions = new AllowedMentions { Parse = { } },
-                    });
-
-                    Sentry.SentrySdk.CaptureException(e);
-
-                    // this exception is ignored in the message handler lol
-                    throw new ProxyService.ProxyChecksFailedException("_internal_discord_rejected_message");
+                    throw new PKError($"Discord rejected your proxy name: {error.AsCode()}");
                 }
                 catch (Exception ex)
                 {
                     // this exception is expected, see comment above
-                    if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
-#pragma warning disable CA2200
-                        throw ex;
-#pragma warning restore CA2200
+                    if (ex.GetType() == typeof(PKError))
+                        throw;
                     else
                         // if something breaks, just ignore it and throw the original exception
                         throw e;
                 }
             }
-            catch (RequestEntityTooLargeException e)
+            catch (RequestEntityTooLargeException)
             {
-                try
-                {
-                    await _rest.CreateMessage(req.ChannelId, new MessageRequest
-                    {
-                        Content = $"{Emojis.Error} One or more of the files attached to this message were not able to be proxied because they were too large.",
-                        AllowedMentions = new AllowedMentions { Parse = { } },
-                    });
-
-                    throw new ProxyService.ProxyChecksFailedException("_internal_discord_rejected_message");
-                }
-                catch (Exception ex)
-                {
-                    if (ex.GetType() == typeof(ProxyService.ProxyChecksFailedException))
-#pragma warning disable CA2200
-                        throw ex;
-#pragma warning restore CA2200
-                    else
-                        throw e;
-                }
+                throw new PKError("One or more of the files attached to this message were not able to be proxied because they were too large.");
             }
             catch (JsonReaderException)
             {
@@ -345,4 +315,9 @@ public static class ProxyNameExt
         return proxyName;
     }
     static string Replacement(Match m) => m.Groups[1].Value + "\u200A" + m.Groups[2].Value;
+}
+
+public class DiscordRejectedMessageException: PKError
+{
+    public DiscordRejectedMessageException(string message) : base(message) { }
 }
