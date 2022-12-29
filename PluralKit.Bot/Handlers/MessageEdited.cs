@@ -4,6 +4,7 @@ using Myriad.Cache;
 using Myriad.Extensions;
 using Myriad.Gateway;
 using Myriad.Rest;
+using Myriad.Rest.Types.Requests;
 using Myriad.Types;
 
 using PluralKit.Core;
@@ -76,6 +77,14 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         }
         // Catch any failed proxy checks so they get ignored in the global error handler
         catch (ProxyService.ProxyChecksFailedException) { }
+
+        catch (PKError e)
+        {
+            // User-facing errors, print to the channel properly formatted
+            if (botPermissions.HasFlag(PermissionSet.SendMessages))
+                await _rest.CreateMessage(evt.ChannelId,
+                    new MessageRequest { Content = $"{Emojis.Error} {e.Message}" });
+        }
     }
 
     private async Task<MessageCreateEvent> GetMessageCreateEvent(MessageUpdateEvent evt, CachedMessage lastMessage,
