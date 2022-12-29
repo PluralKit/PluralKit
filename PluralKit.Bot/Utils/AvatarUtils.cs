@@ -23,6 +23,9 @@ public static class AvatarUtils
         if (!PluralKit.Core.MiscUtils.TryMatchUri(url, out var uri))
             throw Errors.InvalidUrl;
 
+        if (uri.Host.Contains("toyhou.se"))
+            throw new PKError("Due to server issues, PluralKit is unable to read images hosted on toyhou.se.");
+
         url = TryRewriteCdnUrl(url);
 
         var response = await client.GetAsync(url);
@@ -30,8 +33,16 @@ public static class AvatarUtils
             throw Errors.AvatarServerError(response.StatusCode);
         if (response.Content.Headers.ContentLength == null) // Check presence of content length
             throw Errors.AvatarNotAnImage(null);
-        if (!acceptableMimeTypes.Contains(response.Content.Headers.ContentType.MediaType)) // Check MIME type
-            throw Errors.AvatarNotAnImage(response.Content.Headers.ContentType.MediaType);
+        try
+        {
+            if (!acceptableMimeTypes.Contains(response.Content.Headers.ContentType.MediaType)) // Check MIME type
+                throw Errors.AvatarNotAnImage(response.Content.Headers.ContentType.MediaType);
+        }
+        catch (NullReferenceException)
+        {
+            throw new PKError("Could not verify avatar is an image. This can happen when the server sends a malformed response."
+                + "\nPlease join the support server for help: <https://discord.gg/PczBt78>");
+        }
 
         if (isFullSizeImage)
             // no need to do size checking on banners
