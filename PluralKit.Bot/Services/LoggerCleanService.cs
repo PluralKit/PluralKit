@@ -204,7 +204,7 @@ public class LoggerCleanService
         // Embed, title ends with "Message Deleted", contains ID plain in a field.
         var embed = msg.Embeds?.FirstOrDefault();
         if (embed == null || !(embed.Title?.EndsWith("Message Deleted") ?? false)) return null;
-        var field = embed.Fields.FirstOrDefault(f => f.Name == "Message ID");
+        var field = embed.Fields.FirstOrDefault(f => f.Name == "Message Id");
         var match = _basicRegex.Match(field.Value ?? "");
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
