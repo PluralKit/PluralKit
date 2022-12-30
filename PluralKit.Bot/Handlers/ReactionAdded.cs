@@ -71,14 +71,14 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
             // in DMs, allow deleting any PK message
             if (channel.GuildId == null)
             {
-                await HandleCommandDeleteReaction(evt, null);
+                await HandleCommandDeleteReaction(evt, null, true);
                 return;
             }
 
             var (authorId, _) = await _commandMessageService.GetCommandMessage(evt.MessageId);
             if (authorId != null)
             {
-                await HandleCommandDeleteReaction(evt, authorId.Value);
+                await HandleCommandDeleteReaction(evt, authorId.Value, false);
                 return;
             }
         }
@@ -143,14 +143,14 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         await _repo.DeleteMessage(evt.MessageId);
     }
 
-    private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, ulong? authorId)
+    private async ValueTask HandleCommandDeleteReaction(MessageReactionAddEvent evt, ulong? authorId, bool isDM)
     {
         // Can only delete your own message
         // (except in DMs, where msg will be null)
         if (authorId != null && authorId != evt.UserId)
             return;
 
-        if (!(await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages))
+        if (!((await _cache.PermissionsIn(evt.ChannelId)).HasFlag(PermissionSet.ManageMessages) || isDM))
             return;
 
         // todo: don't try to delete the user's own messages in DMs
