@@ -68,7 +68,10 @@ public class AutoproxyControllerV2: PKControllerBase
         patch.AssertIsValid();
         if (updateMember && member == null)
             patch.Errors.Add(new("autoproxy_member", "Member not found."));
-        if (updateMember && ((patch.AutoproxyMode.IsPresent && patch.AutoproxyMode.Value == AutoproxyMode.Latch) || oldData.AutoproxyMode == AutoproxyMode.Latch))
+        if (updateMember && !(
+               (patch.AutoproxyMode.IsPresent && patch.AutoproxyMode.Value == AutoproxyMode.Member)
+            || (!patch.AutoproxyMode.IsPresent && oldData.AutoproxyMode == AutoproxyMode.Member))
+        )
             patch.Errors.Add(new("autoproxy_member", "Cannot update autoproxy member if autoproxy mode is set to latch"));
         if (patch.Errors.Count > 0)
             throw new ModelParseError(patch.Errors);
