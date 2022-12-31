@@ -57,7 +57,11 @@ public class AutoproxyControllerV2: PKControllerBase
 
         PKMember? member = null;
         if (updateMember)
+        {
             member = await ResolveMember(data.Value<string>("autoproxy_member"));
+            if (member != null && ContextFor(member) != LookupContext.ByOwner)
+                throw Errors.GenericMissingPermissions;
+        }
 
         var patch = AutoproxyPatch.FromJson(data, member?.Id);
 
