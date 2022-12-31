@@ -95,9 +95,6 @@ public class ProxiedMessage
         if (ctx.System.Id != systemId)
             throw new PKError("Can't edit a message sent by a different system.");
 
-        if (!ctx.HasNext())
-            throw new PKSyntaxError("You need to include the message to edit in.");
-
         var originalMsg = await _rest.GetMessageOrNull(msg.Channel, msg.Mid);
         if (originalMsg == null)
             throw new PKError("Could not edit message.");
@@ -109,7 +106,15 @@ public class ProxiedMessage
 
         // Grab the original message content and new message content
         var originalContent = originalMsg.Content;
-        var newContent = ctx.RemainderOrNull().NormalizeLineEndSpacing();
+        var newContent = ctx.RemainderOrNull()?.NormalizeLineEndSpacing();
+
+        // Should we clear embeds?
+        var clearEmbeds = ctx.MatchFlag("clear-embed", "ce");
+        if (clearEmbeds && newContent == null)
+            newContent = originalMsg.Content!;
+
+        if (newContent == null)
+            throw new PKSyntaxError("You need to include the message to edit in.");
 
         // Append or prepend the new content to the original message content if needed.
         // If no flag is supplied, the new contents will completly overwrite the old contents
@@ -124,7 +129,7 @@ public class ProxiedMessage
         try
         {
             var editedMsg =
-                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent);
+                await _webhookExecutor.EditWebhookMessage(msg.Channel, msg.Mid, newContent, clearEmbeds);
 
             if (ctx.Guild == null)
                 await _rest.CreateReaction(ctx.Channel.Id, ctx.Message.Id, new Emoji { Name = Emojis.Success });
