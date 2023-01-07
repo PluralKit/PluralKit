@@ -88,6 +88,7 @@ public class DateUtils
         var timePatterns = new[]
         {
             "H:mm",         // 4:30
+            "HHmm",         // 2330
             "HH:mm",        // 23:30
             "H:mm:ss",      // 4:30:29
             "HH:mm:ss",     // 23:30:29
