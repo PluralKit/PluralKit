@@ -444,8 +444,8 @@
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
-        "resolved": "12.0.3",
-        "contentHash": "6mgjfnRB4jKMlzHSl+VD+oUc1IebOZabkbyWj2RiTgWwYPPuaK1H97G1sHqGwPlS5npiF5Q0OrxN1wni2n5QWg=="
+        "resolved": "13.0.1",
+        "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
       },
       "NodaTime": {
         "type": "Transitive",
@@ -1553,7 +1553,7 @@
           "Microsoft.Extensions.Configuration.Json": "[3.1.10, )",
           "Microsoft.Extensions.DependencyInjection": "[3.1.10, )",
           "Microsoft.Extensions.Logging": "[3.1.10, )",
-          "Newtonsoft.Json": "[12.0.3, )",
+          "Newtonsoft.Json": "[13.0.1, )",
           "NodaTime": "[3.0.3, )",
           "NodaTime.Serialization.JsonNet": "[3.0.0, )",
           "Npgsql": "[4.1.5, )",
