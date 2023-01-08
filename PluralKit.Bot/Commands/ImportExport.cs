@@ -33,10 +33,10 @@ public class ImportExport
 
     public async Task Import(Context ctx)
     {
-        var url = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
-        if (url == null) throw Errors.NoImportFilePassed;
+        var inputUrl = ctx.RemainderOrNull() ?? ctx.Message.Attachments.FirstOrDefault()?.Url;
+        if (inputUrl == null) throw Errors.NoImportFilePassed;
 
-        if (!Core.MiscUtils.TryMatchUri(url, out var _))
+        if (!Core.MiscUtils.TryMatchUri(inputUrl, out var url))
             throw Errors.InvalidUrl;
 
         await ctx.BusyIndicator(async () =>

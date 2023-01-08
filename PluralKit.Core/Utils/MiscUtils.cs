@@ -13,6 +13,9 @@ public static class MiscUtils
 
     public static bool TryMatchUri(string input, out Uri uri)
     {
+        if (input.StartsWith('<') && input.EndsWith('>'))
+            input = input[1..^1];
+
         try
         {
             uri = new Uri(input);
