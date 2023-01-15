@@ -52,7 +52,7 @@
     let listGroupElements: any[] = [];
     $: if (settings && settings.appearance.twemoji) {
         if (listGroupElements && listGroupElements.length > 0) {
-            listGroupElements.forEach(element => element && twemoji.parse(element));
+            listGroupElements.forEach(element => element && twemoji.parse(element), { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
         };
     }
 

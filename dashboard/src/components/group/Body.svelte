@@ -35,8 +35,8 @@
     let displayNameElement: any;
 
     $: if (settings && settings.appearance.twemoji) {
-        if (descriptionElement) twemoji.parse(descriptionElement);
-        if (displayNameElement) twemoji.parse(displayNameElement);
+        if (descriptionElement) twemoji.parse(descriptionElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (displayNameElement) twemoji.parse(displayNameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     };
 
     let created = moment(group.created).format("MMM D, YYYY");

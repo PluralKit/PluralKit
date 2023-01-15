@@ -46,9 +46,9 @@
         else htmlName = toHTML(group.name);
     }
     if (settings && settings.appearance.twemoji) {
-        if (nameElement) twemoji.parse(nameElement);
-        if (descElement) twemoji.parse(descElement);
-        if (dnElement) twemoji.parse(dnElement);
+        if (nameElement) twemoji.parse(nameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (descElement) twemoji.parse(descElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (dnElement) twemoji.parse(dnElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     }
 
     let avatarOpen = false;

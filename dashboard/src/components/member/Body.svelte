@@ -42,9 +42,9 @@
     let pronounElement: any;
 
     $: if (settings && settings.appearance.twemoji) {
-        if (descriptionElement) twemoji.parse(descriptionElement);
-        if (displayNameElement) twemoji.parse(displayNameElement);
-        if (pronounElement) twemoji.parse(pronounElement);
+        if (descriptionElement) twemoji.parse(descriptionElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (displayNameElement) twemoji.parse(displayNameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (pronounElement) twemoji.parse(pronounElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     };
 
     let bannerOpen = false;

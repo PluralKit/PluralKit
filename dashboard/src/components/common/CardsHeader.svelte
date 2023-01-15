@@ -20,7 +20,7 @@
     } else htmlName = "";
 
     $: if (settings && settings.appearance.twemoji) {
-        if (nameElement) twemoji.parse(nameElement);
+        if (nameElement) twemoji.parse(nameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     }
 
     $: icon_url = item.avatar_url ? item.avatar_url : item.icon ? item.icon : default_avatar;

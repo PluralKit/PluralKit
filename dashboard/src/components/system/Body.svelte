@@ -42,10 +42,10 @@
     let pronounElement: any;
 
     $: if (settings && settings.appearance.twemoji) {
-        if (descriptionElement) twemoji.parse(descriptionElement);
-        if (nameElement) twemoji.parse(nameElement);
-        if (tagElement) twemoji.parse(tagElement);
-        if (pronounElement) twemoji.parse(pronounElement);
+        if (descriptionElement) twemoji.parse(descriptionElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (nameElement) twemoji.parse(nameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (tagElement) twemoji.parse(tagElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
+        if (pronounElement) twemoji.parse(pronounElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     }
 
 </script>

@@ -75,7 +75,7 @@
         htmlName = toHTML(user.name);
     }
     $: if (settings && settings.appearance.twemoji) {
-        if (welcomeElement) twemoji.parse(welcomeElement);
+        if (welcomeElement) twemoji.parse(welcomeElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
     }
 
 </script>
