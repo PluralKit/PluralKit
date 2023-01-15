@@ -47,13 +47,6 @@ func init() {
 type ProxyHandler struct{}
 
 func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	// redirect to plausible through fly-proxy
-	if r.Host == "plausible.pluralkit.me" {
-		rw.Header().Add("fly-replay", "app=pluralkit-analytics")
-		rw.WriteHeader(200)
-		return
-	}
-
 	remote, ok := remotes[r.Host]
 	if !ok {
 		// unknown domains redirect to landing page

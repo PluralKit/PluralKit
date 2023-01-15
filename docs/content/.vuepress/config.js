@@ -76,7 +76,6 @@ module.exports = {
 
   plugins: [
     '@vuepress/plugin-back-to-top',
-    ["plausible-analytics", { domain: 'plausible.pluralkit.me' }],
     ["vuepress-plugin-clean-urls", { normalSuffix: "/" }],
   ],
 }
