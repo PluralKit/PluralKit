@@ -122,7 +122,7 @@ public static class ListOptionsExt
                 .OrderByDescending(m => m.MetadataPrivacy.CanAccess(ctx))
                 .ThenBy(m => m.MetadataPrivacy.Get(ctx, m.Created, default), ReverseMaybe(Comparer<Instant>.Default)),
             SortProperty.MessageCount => input
-                .OrderByDescending(m => m.MessageCount != 0 && m.MetadataPrivacy.CanAccess(ctx))
+                .OrderByDescending(m => m.MetadataPrivacy.CanAccess(ctx))
                 .ThenByDescending(m => m.MetadataPrivacy.Get(ctx, m.MessageCount, 0), ReverseMaybe(Comparer<int>.Default)),
             SortProperty.DisplayName => input
                 .OrderByDescending(m => m.DisplayName != null && m.NamePrivacy.CanAccess(ctx))
