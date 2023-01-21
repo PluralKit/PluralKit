@@ -12,7 +12,7 @@
 
     let err: string;
 
-    let input = member.proxy_tags;
+    let input = [...member.proxy_tags];
 
     async function submit() {
         err = null;
