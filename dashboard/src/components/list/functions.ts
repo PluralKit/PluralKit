@@ -126,6 +126,8 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
                 let aa = Number("0x" + a.color);
                 let bb = Number("0x" + b.color);
 
+                if (a.color === b.color) return a.name.localeCompare(b.name);
+
                 if (a.color === null) return 1;
                 if (b.color === null) return -1;
 
