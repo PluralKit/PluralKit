@@ -141,6 +141,7 @@ function resetPage() {
                     <option value="pronouns">Pronouns</option>
                     <option value="birthday">Birthday</option>
                     {/if}
+                    <option value="color">Color</option>
                     {#if !pageOptions.isPublic}
                     <option value="created">Creation date</option>
                     {/if}
@@ -391,6 +392,16 @@ function resetPage() {
                         </InputGroup>
                     </Col>
                 {/if}
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Color</InputGroupText>
+                        <Input type="select" bind:value={options.filter.color} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With color</option>
+                            <option value="exclude">Without color</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
             </Row>
         {/if}
     </CardBody>

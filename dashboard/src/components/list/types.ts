@@ -44,10 +44,11 @@ export interface ListOptions {
         display_name: "all"|"include"|"exclude",
         avatar_url: "all"|"include"|"exclude",
         icon: "all"|"include"|"exclude",
+        color: "all"|"include"|"exclude",
 
     }
     // what it says on the tin
-    sort: 'name'|'description'|'birthday'|'pronouns'|'display_name'|'id'|'none'|'created',
+    sort: 'name'|'description'|'birthday'|'pronouns'|'display_name'|'id'|'none'|'created' | 'color',
     order: "ascending"|"descending",
     show: "all"|"private"|"public",
     // so we can change the key for duplicate members on the randomize page
@@ -109,7 +110,8 @@ export const defaultListOptions: ListOptions = {
         description: 'all',
         pronouns: 'all',
         avatar_url: 'all',
-        icon: 'all'
+        icon: 'all',
+        color: 'all',
 
     },
     sort: 'name',

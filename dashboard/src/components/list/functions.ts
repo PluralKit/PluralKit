@@ -121,6 +121,22 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
 
                 return aa.localeCompare(bb);
             });
+        } else if (options.sort === 'color') {
+            newList = [...list].sort((a, b) => {
+                let aa = Number("0x" + a.color);
+                let bb = Number("0x" + b.color);
+
+                if (a.color === null) return 1;
+                if (b.color === null) return -1;
+
+                if (aa === bb) return a.name.localeCompare(b.name);
+
+                if (Number.isNaN(aa)) return 1;
+                if (Number.isNaN(bb)) return -1;
+
+                if (aa > bb) return 1;
+                if (aa < bb) return -1;
+            })
         }
     return newList;
 }
