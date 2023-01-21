@@ -103,6 +103,6 @@
     <br>
     <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autoresize placeholder={user.description}  aria-label="system description"/>
 </div>
-<span class="text-center d-block mb-2 mb-lg-1" >({input.description.length} / 1000 characters)</span>
+<span class="text-center d-block mb-2 mb-lg-1" >({input.description ? input.description.length : 0} / 1000 characters)</span>
 {#if !loading}<Button style="flex: 0" color="primary" on:click={submit} aria-label="submit edits" >Submit</Button> <Button style="flex: 0" color="secondary" on:click={() => editMode = false} aria-label="cancel edits">Back</Button>
 {:else}<Button style="flex: 0" color="primary" disabled  aria-label="submit edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel edits">Back</Button>{/if}
