@@ -1,6 +1,5 @@
 import type { Group, Member } from '../../api/types';
 import type { ListOptions, PageOptions } from './types';
-import moment from 'moment';
 
 export function filterList<T extends Member|Group>(list: T[], options: ListOptions, type?: string): T[] {
     let searchedList = search(list, options);
@@ -105,11 +104,10 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
                 if (aa === null) return 1;
                 if (bb === null) return -1;
 
-                let aBirthday = moment(aa.slice(5, aa.length), "MM-DD", true);
-                let bBirthday = moment(bb.slice(5, bb.length), "MM-DD", true);
+                let aBirthday = aa.slice(5, aa.length);
+                let bBirthday = bb.slice(5, bb.length);
 
-                if (aBirthday.isAfter(bBirthday)) return 1;
-                if (aBirthday.isBefore(bBirthday)) return -1;
+                return aBirthday.localeCompare(bBirthday);
             });
         } else if (options.sort === 'created') {
             newList = [...list].sort((a, b) => {
@@ -121,11 +119,7 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
                 if (aa === null) return 1;
                 if (bb === null) return -1;
 
-                let aCreated = moment(aa);
-                let bCreated = moment(bb);
-
-                if (aCreated.isAfter(bCreated)) return 1;
-                if (aCreated.isBefore(bCreated)) return -1;
+                return aa.localeCompare(bb);
             });
         }
     return newList;
