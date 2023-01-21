@@ -172,6 +172,7 @@
             <br>
             <textarea class="form-control" bind:value={input.description} maxlength={1000} use:autoresize />
         </div>
+        <span class="text-center d-block mb-2 mb-lg-1" >({input.description ? input.description.length : 0} / 1000 characters)</span>
         {#if !loading && input.name}<Button style="flex: 0" color="primary" on:click={submit}>Submit</Button>
         {:else if !input.name }<Button style="flex: 0" color="primary" disabled>Submit</Button>
         {:else}<Button style="flex: 0" color="primary" disabled><Spinner size="sm"/></Button>{/if}
