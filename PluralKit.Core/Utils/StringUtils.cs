@@ -52,8 +52,9 @@ public static class StringUtils
 
     public static string NormalizeLineEndSpacing(this string input) =>
         // iOS has a weird issue on embeds rendering newlines when there are spaces *just before* it
-        // so we remove 'em all :)
-        Regex.Replace(input, " *\n", "\n");
+        // so we remove 'em - except in the case where there's a blockquote line that contains only
+        // spaces (if we removed all the spaces there, the blockquote breaks horribly)
+        Regex.Replace(input, "(?<!\\>) *\n", "\n");
 
     public static IReadOnlyList<string> JoinPages(IEnumerable<string> input, int characterLimit) =>
         JoinPages(input, _ => characterLimit);
