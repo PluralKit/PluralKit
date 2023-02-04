@@ -420,8 +420,7 @@ public class ProxyService
             Sender = triggerMessage.Author.Id
         };
 
-        Task SaveMessageInDatabase()
-            => _repo.AddMessage(sentMessage);
+        Task saveMessageInDatabase = _repo.AddMessage(sentMessage);
 
         async Task SaveMessageInRedis()
         {
@@ -458,6 +457,10 @@ public class ProxyService
 
             // Wait a second or so before deleting the original message
             await Task.Delay(MessageDeletionDelay);
+
+            // Wait until the message info is done saving in the database
+            await saveMessageInDatabase;
+
             try
             {
                 await _rest.DeleteMessage(triggerMessage.ChannelId, triggerMessage.Id);
@@ -475,7 +478,7 @@ public class ProxyService
         // Run post-proxy actions (simultaneously; order doesn't matter)
         await Task.WhenAll(
             DeleteProxyTriggerMessage(),
-            SaveMessageInDatabase(),
+            saveMessageInDatabase,
             SaveMessageInRedis(),
             UpdateMemberForSentMessage(),
             LogMessageToChannel(),
