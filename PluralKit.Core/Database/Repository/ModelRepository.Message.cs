@@ -44,9 +44,6 @@ public partial class ModelRepository
 
     public async Task DeleteMessage(ulong id)
     {
-        if ((await GetMessage(id)) == null)
-            return;
-
         var query = new Query("messages").AsDelete().Where("mid", id);
         var rowCount = await _db.ExecuteQuery(query, messages: true);
         if (rowCount > 0)
@@ -55,13 +52,9 @@ public partial class ModelRepository
 
     public async Task DeleteMessagesBulk(IReadOnlyCollection<ulong> ids)
     {
-        var q = new Query("messages").Select("mid").WhereIn("mid", ids.Select(id => (long)id).ToArray());
-        var realIds = await _db.Query<long>(q);
-        if (realIds.Count() == 0) return;
-
         // Npgsql doesn't support ulongs in general - we hacked around it for plain ulongs but tbh not worth it for collections of ulong
         // Hence we map them to single longs, which *are* supported (this is ok since they're Technically (tm) stored as signed longs in the db anyway)
-        var query = new Query("messages").AsDelete().WhereIn("mid", realIds);
+        var query = new Query("messages").AsDelete().WhereIn("mid", ids.Select(id => (long)id).ToArray());
         var rowCount = await _db.ExecuteQuery(query, messages: true);
         if (rowCount > 0)
             _logger.Information("Bulk deleted messages ({FoundCount} found) from database: {MessageIds}", rowCount,
