@@ -22,7 +22,7 @@ public class LoggerCleanService
 {
     private static readonly Regex _basicRegex = new("(\\d{17,19})");
     private static readonly Regex _dynoRegex = new("Message ID: (\\d{17,19})");
-    private static readonly Regex _carlRegex = new("ID: (\\d{17,19})");
+    private static readonly Regex _carlRegex = new("Message ID: (\\d{17,19})");
     private static readonly Regex _circleRegex = new("\\(`(\\d{17,19})`\\)");
     private static readonly Regex _loggerARegex = new("Message = (\\d{17,19})");
     private static readonly Regex _loggerBRegex = new("MessageID:(\\d{17,19})");
@@ -44,7 +44,7 @@ public class LoggerCleanService
 
     private static readonly Dictionary<ulong, LoggerBot> _bots = new[]
     {
-        new LoggerBot("Carl-bot", 235148962103951360, fuzzyExtractFunc: ExtractCarlBot), // webhooks
+        new LoggerBot("Carl-bot", 235148962103951360, ExtractCarlBot), // webhooks
         new LoggerBot("Circle", 497196352866877441, fuzzyExtractFunc: ExtractCircle),
         new LoggerBot("Pancake", 239631525350604801, fuzzyExtractFunc: ExtractPancake),
         new LoggerBot("Logger", 298822483060981760, ExtractLogger), // webhook
@@ -217,22 +217,14 @@ public class LoggerCleanService
         return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
 
-    private static FuzzyExtractResult? ExtractCarlBot(Message msg)
+    private static ulong? ExtractCarlBot(Message msg)
     {
-        // Embed, title is "Message deleted in [channel], **user** ID in the footer, timestamp as, well, timestamp in embed.
-        // This is the *deletion* timestamp, which we can assume is a couple seconds at most after the message was originally sent
+        // Embed, title is "Message deleted in [channel]", description is message content followed by "Message ID: [id]"
         var embed = msg.Embeds?.FirstOrDefault();
         if (embed?.Footer == null || embed.Timestamp == null ||
             !(embed.Title?.StartsWith("Message deleted in") ?? false)) return null;
-        var match = _carlRegex.Match(embed.Footer.Text ?? "");
-        return match.Success
-            ? new FuzzyExtractResult
-            {
-                User = ulong.Parse(match.Groups[1].Value),
-                ApproxTimestamp = OffsetDateTimePattern.Rfc3339.Parse(embed.Timestamp).GetValueOrThrow()
-                    .ToInstant()
-            }
-            : null;
+        var match = _carlRegex.Match(embed.Description);
+        return match.Success ? ulong.Parse(match.Groups[1].Value) : null;
     }
 
     private static FuzzyExtractResult? ExtractCircle(Message msg)

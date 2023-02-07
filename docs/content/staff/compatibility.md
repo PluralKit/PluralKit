@@ -23,7 +23,7 @@ This requires you to have the *Manage Server* permission on the server.
 At the moment, log cleanup works with the following bots:
 - [Auttaja](https://auttaja.io/) (precise)
 - [blargbot](https://blargbot.xyz/) (precise)
-- [Carl-bot](https://carl.gg/) (fuzzy)
+- [Carl-bot](https://carl.gg/) (precise)
 - [Circle](https://circlebot.xyz/) (fuzzy)
 - [Dyno](https://dyno.gg/) (precise)
 - [GearBot](https://gearbot.rocks/) (fuzzy)
