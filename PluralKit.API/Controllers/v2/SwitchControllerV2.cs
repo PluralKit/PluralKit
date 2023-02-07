@@ -95,7 +95,7 @@ public class SwitchControllerV2: PKControllerBase
 
         foreach (var memberRef in data.Members)
         {
-            var member = await ResolveMember(memberRef);
+            var member = await ResolveMember(memberRef, cache: true);
             if (member == null)
                 throw Errors.MemberNotFoundWithRef(memberRef);
             if (member.System != system.Id)
