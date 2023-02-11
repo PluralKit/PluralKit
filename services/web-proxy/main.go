@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"strconv"
@@ -115,7 +116,19 @@ func logTimeElapsed(resp *http.Response) error {
 		"route":  cleanPath(r.Host, r.URL.Path),
 	}).Observe(elapsed.Seconds())
 
-	log.Printf("[%s] \"%s %s%s\" %d - %vms %s\n", r.Header.Get("Fly-Client-IP"), r.Method, r.Host, r.URL.Path, resp.StatusCode, elapsed.Milliseconds(), r.Header.Get("User-Agent"))
+	log, _ := json.Marshal(map[string]interface{}{
+		"remote_ip":   r.Header.Get("Fly-Client-IP"),
+		"method":      r.Method,
+		"host":        r.Host,
+		"route":       r.URL.Path,
+		"route_clean": cleanPath(r.Host, r.URL.Path),
+		"status":      resp.StatusCode,
+		"elapsed":     elapsed.Milliseconds(),
+		"user_agent":  r.Header.Get("User-Agent"),
+	})
+	fmt.Println(string(log))
+
+	// log.Printf("[%s] \"%s %s%s\" %d - %vms %s\n", r.Header.Get("Fly-Client-IP"), r.Method, r.Host, r.URL.Path, resp.StatusCode, elapsed.Milliseconds(), r.Header.Get("User-Agent"))
 
 	return nil
 }
