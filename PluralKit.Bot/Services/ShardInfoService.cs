@@ -52,12 +52,6 @@ public class ShardInfoService
 
         async Task Inner()
         {
-            if (_redis.Connection == null)
-            {
-                _logger.Warning("Redis is disabled, shard connection status will be unavailable.");
-                return;
-            }
-
             var db = _redis.Connection.GetDatabase();
             var redisInfo = await db.HashGetAsync("pluralkit::shardstatus", shard.ShardId);
 

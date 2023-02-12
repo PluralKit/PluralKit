@@ -17,6 +17,7 @@ The configuration file needs to be placed in the bot's working directory (usuall
 The configuration file is in JSON format (albeit with a `.conf` extension). The following keys are available (using `.` to indicate a nested object level), bolded key names are required:
 * **`PluralKit.Bot.Token`**: the Discord bot token to connect with
 * **`PluralKit.Database`**: the URI of the database to connect to (in [ADO.NET Npgsql format](https://www.connectionstrings.com/npgsql/))
+* **`PluralKit.RedisAddr`**: the `host:port` of a Redis database to connect to
 * `PluralKit.Bot.Prefixes`: an array of command prefixes to use (default `["pk;", "pk!"]`).
 * **`PluralKit.Bot.ClientId`**: the ID of the bot's user account, used for calculating the bot's own permissions and for the link in `pk;invite`.
 * `PluralKit.SentryUrl` *(optional)*: the [Sentry](https://sentry.io/welcome/) client key/DSN to report runtime errors to. If absent, disables Sentry integration.

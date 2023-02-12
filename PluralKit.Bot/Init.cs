@@ -53,8 +53,7 @@ public class Init
 
             // initialize Redis
             var redis = services.Resolve<RedisService>();
-            if (coreConfig.RedisAddr != null)
-                await redis.InitAsync(coreConfig);
+            await redis.InitAsync(coreConfig);
 
             var cache = services.Resolve<IDiscordCache>();
             if (cache is RedisDiscordCache)
@@ -67,16 +66,14 @@ public class Init
                 await services.Resolve<IDatabase>().ApplyMigrations();
 
                 // Clear shard status from Redis
-                if (redis.Connection != null)
-                    await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
+                await redis.Connection.GetDatabase().KeyDeleteAsync("pluralkit:shardstatus");
             }
 
             logger.Information("Initializing bot");
             var bot = services.Resolve<Bot>();
 
             // Get bot status message from Redis
-            if (redis.Connection != null)
-                bot.CustomStatusMessage = await redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
+            bot.CustomStatusMessage = await redis.Connection.GetDatabase().StringGetAsync("pluralkit:botstatus");
 
             // Init the bot instance itself, register handlers and such to the client before beginning to connect
             bot.Init();

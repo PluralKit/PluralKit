@@ -8,8 +8,7 @@ public class RedisService
 
     public async Task InitAsync(CoreConfig config)
     {
-        if (config.RedisAddr != null)
-            Connection = await ConnectionMultiplexer.ConnectAsync(config.RedisAddr);
+        Connection = await ConnectionMultiplexer.ConnectAsync(config.RedisAddr);
     }
 
     private string LastMessageKey(ulong userId, ulong channelId) => $"user_last_message:{userId}:{channelId}";
