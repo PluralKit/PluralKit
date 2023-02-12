@@ -39,7 +39,11 @@ public class GroupControllerV2: PKControllerBase
 
         if (with_members && j_groups.Count > 0)
         {
-            var q = await _repo.GetGroupMemberInfo(await groups.Select(x => x.Id).ToListAsync());
+            var q = await _repo.GetGroupMemberInfo(await groups
+                .Where(g => g.Visibility.CanAccess(ctx))
+                .Select(x => x.Id)
+                .ToListAsync());
+
 
             foreach (var row in q)
                 if (row.MemberVisibility.CanAccess(ctx))
