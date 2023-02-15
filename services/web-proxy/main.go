@@ -67,7 +67,7 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Access-Control-Allow-Origin", "*")
 		rw.Header().Add("Access-Control-Allow-Methods", "*")
 		rw.Header().Add("Access-Control-Allow-Credentials", "true")
-		rw.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization, sentry-trace")
+		rw.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization, sentry-trace", "User-Agent")
 		rw.Header().Add("Access-Control-Max-Age", "86400")
 
 		if r.Method == http.MethodOptions {
