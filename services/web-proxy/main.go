@@ -48,6 +48,12 @@ func init() {
 type ProxyHandler struct{}
 
 func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("User-Agent") == "" {
+		// please set a valid user-agent
+		rw.WriteHeader(403)
+		return
+	}
+
 	remote, ok := remotes[r.Host]
 	if !ok {
 		// unknown domains redirect to landing page
