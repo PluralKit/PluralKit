@@ -3,9 +3,11 @@ package main
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"io"
+	_fs "io/fs"
 	"net/http"
 	"strings"
 
@@ -78,12 +80,21 @@ func notFoundHandler(rw http.ResponseWriter, r *http.Request) {
 		data = []byte(strings.Replace(string(data), `<!-- extra data -->`, defaultEmbed+versionJS, 1))
 	}
 
-	if err != nil {
+	if errors.Is(err, _fs.ErrNotExist) {
+		rw.WriteHeader(http.StatusNotFound)
+	} else if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	} else {
+		// cache built+hashed dashboard js/css files forever
+		is_dash_static_asset := strings.HasPrefix(r.URL.Path, "/assets/") &&
+			(strings.HasSuffix(r.URL.Path, ".js") || strings.HasSuffix(r.URL.Path, ".css") || strings.HasSuffix(r.URL.Path, ".map"))
 
-	rw.Write(data)
+		if is_dash_static_asset {
+			rw.Header().Add("Cache-Control", "max-age=31536000, s-maxage=31536000, immutable")
+		}
+
+		rw.Write(data)
+	}
 }
 
 // explanation for createEmbed:

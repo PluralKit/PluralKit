@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "./lib/libpk",
+    "./services/api"
+]
+
+# todo: add workspace dependencies here
