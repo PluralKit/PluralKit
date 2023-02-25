@@ -3,16 +3,14 @@ name = "api"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-anyhow = "1.0.69"
+anyhow = { workspace = true } 
 axum = "0.6.4"
-fred = { version = "5.2.0", default-features = false, features = ["tracing", "pool-prefer-active"] }
+fred = { workspace = true }
 http = "0.2.8"
 hyper-reverse-proxy = "0.5.1"
 lazy_static = "1.4.0"
 libpk = { path = "../../lib/libpk" }
-tokio = { version = "1.25.0", features = ["full"] }
+tokio = { workspace = true }
 tower = "0.4.13"
-tracing = "0.1.37"
+tracing = { workspace = true }

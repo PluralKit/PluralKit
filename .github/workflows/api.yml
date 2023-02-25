@@ -1,3 +1,8 @@
+# todo: use https://github.com/jpribyl/action-docker-layer-caching
+# todo: make this generic for all Rust images in this repo
+# todo: don't use docker/build-push-action
+# todo: run builds on pull request
+
 name: Build and push API Docker image
 on:
   push:
@@ -26,7 +31,7 @@ jobs:
         with:
           # https://github.com/docker/build-push-action/issues/378
           context: .
-          file: services/api/Dockerfile
+          file: Dockerfile.rust
           push: true
           tags: |
             ghcr.io/pluralkit/api:${{ env.BRANCH_NAME }}

@@ -3,15 +3,13 @@ name = "libpk"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-anyhow = "1.0.69"
+anyhow = { workspace = true } 
 config = "0.13.3"
 gethostname = "0.4.1"
-lazy_static = "1.4.0"
-serde = "1.0.152"
-tokio = { version = "1.25.0", features = ["full"] }
-tracing = "0.1.37"
+lazy_static = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
 tracing-gelf = "0.7.1"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }

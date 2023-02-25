@@ -20,3 +20,6 @@
 **/obj
 **/target
 **/node_modules
+
+# don't clear docker cache when updating dockerfiles
+Dockerfile
