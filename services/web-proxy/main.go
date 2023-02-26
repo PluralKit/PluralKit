@@ -50,7 +50,9 @@ type ProxyHandler struct{}
 func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("User-Agent") == "" {
 		// please set a valid user-agent
-		rw.WriteHeader(403)
+		rw.Header().Set("content-type", "application/json")
+        rw.WriteHeader(400)
+        rw.Write([]byte(`{"message":"A valid User-Agent header is required.","code":0}`))
 		return
 	}
 

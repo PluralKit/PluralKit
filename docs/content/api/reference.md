@@ -21,7 +21,14 @@ For models that have them, the keys `id`, `uuid` and `created` are **not** user-
 
 Endpoints taking JSON bodies (eg. most `PATCH` and `PUT` endpoints) require the `Content-Type: application/json` header set.
 
+## User agent
+
+The API requires the `User-Agent` header to be set to a non-empty string. Not doing so will return a `400 Bad Request` with a JSON body.
+
+If you are developing an application exposed to the public, we would appreciate if your `User-Agent` uniquely identifies your application, and (if possible) provides some contact information for the developers - so that we are able to contact you if we notice your application doing something it shouldn't.
+
 ## Authentication
+
 Authentication is done with a simple "system token". You can get your system token by running `pk;token` using the
 Discord bot, either in a channel with the bot or in DMs. Then, pass this token in the `Authorization` HTTP header
 on requests that require it. Failure to do so on endpoints that require authentication will return a `401 Unauthorized`.
