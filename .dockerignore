@@ -15,6 +15,9 @@
 !PluralKit.sln
 !nuget.config
 
+# used for target binary builds
+!.docker-bin/
+
 # Re-exclude host build artifact directories
 **/bin
 **/obj
