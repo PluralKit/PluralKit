@@ -66,7 +66,7 @@ The following API libraries have been created by members of our community. Pleas
 
 - **Python:** *PluralKit.py* ([PyPI](https://pypi.org/project/pluralkit/) | [Docs](https://pluralkit.readthedocs.io/en/latest/source/quickstart.html) | [Source code](https://github.com/almonds0166/pluralkit.py))
 - **JavaScript:** *pkapi.js* ([npmjs](https://npmjs.com/package/pkapi.js) | [Docs](https://github.com/greysdawn/pk.js/wiki) | [Source code](https://github.com/greysdawn/pk.js))
-- **Golang:** *pkgo* (install: `go get github.com/starshine-sys/pkgo` | [Docs (godoc)](https://godocs.io/github.com/starshine-sys/pkgo) | [Docs (pkg.go.dev)](https://pkg.go.dev/github.com/starshine-sys/pkgo) | [Source code](https://github.com/starshine-sys/pkgo))
+- **Golang:** *pkgo* (install: `go get github.com/starshine-sys/pkgo/v2` | [Docs (godoc)](https://godocs.io/github.com/starshine-sys/pkgo/v2) | [Docs (pkg.go.dev)](https://pkg.go.dev/github.com/starshine-sys/pkgo/v2) | [Source code](https://github.com/starshine-sys/pkgo))
 - **Kotlin:** *Plural.kt* ([Maven Repository](https://maven.proxyfox.dev/dev/proxyfox/pluralkt) | [Source code](https://github.com/The-ProxyFox-Group/Plural.kt))
 
 Do let us know in the support server if you made a new library and would like to see it listed here!
