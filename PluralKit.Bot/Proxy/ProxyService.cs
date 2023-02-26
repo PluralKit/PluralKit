@@ -228,7 +228,7 @@ public class ProxyService
         var guildMember = await _rest.GetGuildMember(msg.Guild!.Value, trigger.Author.Id);
 
         // Grab user permissions
-        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, trigger.Author.Id, guildMember);
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, messageChannel, trigger.Author.Id, guildMember);
         var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
 
         // Make sure user has permissions to send messages
