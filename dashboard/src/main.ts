@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/browser";
 import { Integrations } from "@sentry/tracing";
 
 // polyfill for replaceAll
-import * as replaceAll from 'core-js-pure/es/string/virtual/replace-all.js';
+import replaceAll from 'core-js-pure/es/string/virtual/replace-all.js';
 if (!String.prototype.replaceAll)
   String.prototype.replaceAll = replaceAll;
 
