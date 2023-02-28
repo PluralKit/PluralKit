@@ -48,14 +48,6 @@ func init() {
 type ProxyHandler struct{}
 
 func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("User-Agent") == "" {
-		// please set a valid user-agent
-		rw.Header().Set("content-type", "application/json")
-        rw.WriteHeader(400)
-        rw.Write([]byte(`{"message":"A valid User-Agent header is required.","code":0}`))
-		return
-	}
-
 	remote, ok := remotes[r.Host]
 	if !ok {
 		// unknown domains redirect to landing page
@@ -65,7 +57,7 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if r.Host == "api.pluralkit.me" {
 		// root
-		if r.URL.Path == "" {
+		if r.URL.Path == "" || r.URL.Path == "/" {
 			// api root path redirects to docs
 			http.Redirect(rw, r, "https://pluralkit.me/api/", http.StatusFound)
 			return
@@ -78,13 +70,16 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization, sentry-trace, User-Agent")
 		rw.Header().Add("Access-Control-Max-Age", "86400")
 
-		if r.Method == http.MethodOptions {
-			rw.WriteHeader(200)
+		if r.Header.Get("User-Agent") == "" {
+			// please set a valid user-agent
+			rw.Header().Set("content-type", "application/json")
+			rw.WriteHeader(400)
+			rw.Write([]byte(`{"message":"A valid User-Agent header is required.","code":0}`))
 			return
 		}
 
-		if r.URL.Path == "/" {
-			http.Redirect(rw, r, "https://pluralkit.me/api", http.StatusFound)
+		if r.Method == http.MethodOptions {
+			rw.WriteHeader(200)
 			return
 		}
 
@@ -92,9 +87,11 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Set("content-type", "application/json")
 			rw.WriteHeader(410)
 			rw.Write([]byte(`{"message":"Unsupported API version","code":0}`))
+			return
 		}
 
 		if is_trying_to_use_v1_path_on_v2(r.URL.Path) {
+			rw.Header().Set("content-type", "application/json")
 			rw.WriteHeader(400)
 			rw.Write([]byte(`{"message":"Invalid path for API version","code":0}`))
 			return
