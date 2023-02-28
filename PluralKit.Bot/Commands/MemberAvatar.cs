@@ -26,6 +26,14 @@ public class MemberAvatar
             else
                 await ctx.Reply($"{Emojis.Success} Member server avatar cleared. This member now has no avatar.");
         }
+        else if (location == AvatarLocation.MemberWebhook)
+        {
+            if (mgs?.AvatarUrl != null)
+                await ctx.Reply(
+                    $"{Emojis.Success} Member proxy avatar cleared. Note that this member has a server-specific avatar set here, type `pk;member {target.Reference(ctx)} serveravatar clear` if you wish to clear that too.");
+            else
+                await ctx.Reply($"{Emojis.Success} Member proxy avatar cleared. This member will now use the main avatar for proxied messages.");
+        }
         else
         {
             if (mgs?.AvatarUrl != null)
@@ -42,9 +50,17 @@ public class MemberAvatar
         // todo: this privacy code is really confusing
         // for now, we skip privacy flag/config parsing for this, but it would be good to fix that at some point
 
-        var currentValue = location == AvatarLocation.Member ? target.AvatarUrl : guildData?.AvatarUrl;
-        var canAccess = location != AvatarLocation.Member ||
+        var currentValue = location switch
+        {
+            AvatarLocation.Server => guildData?.AvatarUrl,
+            AvatarLocation.MemberWebhook => target.WebhookAvatarUrl,
+            AvatarLocation.Member => target.AvatarUrl,
+            _ => throw new ArgumentOutOfRangeException(nameof(location))
+        };
+
+        var canAccess = location == AvatarLocation.Server ||
                         target.AvatarPrivacy.CanAccess(ctx.DirectLookupContextFor(target.System));
+
         if (string.IsNullOrEmpty(currentValue) || !canAccess)
         {
             if (location == AvatarLocation.Member)
@@ -55,13 +71,29 @@ public class MemberAvatar
                 throw new PKError("This member does not have an avatar set.");
             }
 
+            if (location == AvatarLocation.MemberWebhook)
+                throw new PKError(
+                    $"This member does not have a proxy avatar set. Type `pk;member {target.Reference(ctx)} avatar` to see their global avatar.");
+
             if (location == AvatarLocation.Server)
                 throw new PKError(
                     $"This member does not have a server avatar set. Type `pk;member {target.Reference(ctx)} avatar` to see their global avatar.");
         }
 
-        var field = location == AvatarLocation.Server ? $"server avatar (for {ctx.Guild.Name})" : "avatar";
-        var cmd = location == AvatarLocation.Server ? "serveravatar" : "avatar";
+        var field = location switch
+        {
+            AvatarLocation.Server => $"server avatar (for {ctx.Guild.Name})",
+            AvatarLocation.MemberWebhook => "proxy avatar",
+            AvatarLocation.Member => "avatar",
+            _ => "",
+        };
+        var cmd = location switch
+        {
+            AvatarLocation.Server => "serveravatar",
+            AvatarLocation.MemberWebhook => "proxyavatar",
+            AvatarLocation.Member => "avatar",
+            _ => "",
+        };
 
         var eb = new EmbedBuilder()
             .Title($"{target.NameFor(ctx)}'s {field}")
@@ -87,13 +119,26 @@ public class MemberAvatar
         await AvatarCommandTree(AvatarLocation.Member, ctx, target, guildData);
     }
 
+    public async Task WebhookAvatar(Context ctx, PKMember target)
+    {
+        var guildData = ctx.Guild != null
+            ? await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id)
+            : null;
+
+        await AvatarCommandTree(AvatarLocation.MemberWebhook, ctx, target, guildData);
+    }
+
     private async Task AvatarCommandTree(AvatarLocation location, Context ctx, PKMember target,
                                          MemberGuildSettings? guildData)
     {
         // First, see if we need to *clear*
-        if (ctx.MatchClear() && await ctx.ConfirmClear(location == AvatarLocation.Server
-                ? "this member's server avatar"
-                : "this member's avatar"))
+        if (ctx.MatchClear() && await ctx.ConfirmClear("this member's " + location switch
+        {
+            AvatarLocation.Server => "server avatar",
+            AvatarLocation.MemberWebhook => "proxy avatar",
+            AvatarLocation.Member => "avatar",
+            _ => throw new ArgumentOutOfRangeException(nameof(location))
+        }))
         {
             ctx.CheckSystem().CheckOwnMember(target);
             await AvatarClear(location, ctx, target, guildData);
@@ -121,6 +166,7 @@ public class MemberAvatar
         var typeFrag = location switch
         {
             AvatarLocation.Server => "server avatar",
+            AvatarLocation.MemberWebhook => "proxy avatar",
             AvatarLocation.Member => "avatar",
             _ => throw new ArgumentOutOfRangeException(nameof(location))
         };
@@ -131,6 +177,10 @@ public class MemberAvatar
                 $" This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).",
             AvatarLocation.Member when targetGuildData?.AvatarUrl != null =>
                 $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
+            AvatarLocation.MemberWebhook when targetGuildData?.AvatarUrl != null =>
+                $" This avatar will now be used for this member's proxied messages, instead of their main avatar.\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
+            AvatarLocation.MemberWebhook =>
+                $" This avatar will now be used for this member's proxied messages, instead of their main avatar.",
             _ => ""
         };
 
@@ -160,10 +210,12 @@ public class MemberAvatar
                 return ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, new MemberGuildPatch { AvatarUrl = url });
             case AvatarLocation.Member:
                 return ctx.Repository.UpdateMember(target.Id, new MemberPatch { AvatarUrl = url });
+            case AvatarLocation.MemberWebhook:
+                return ctx.Repository.UpdateMember(target.Id, new MemberPatch { WebhookAvatarUrl = url });
             default:
                 throw new ArgumentOutOfRangeException($"Unknown avatar location {location}");
         }
     }
 
-    private enum AvatarLocation { Member, Server }
+    private enum AvatarLocation { Member, MemberWebhook, Server }
 }

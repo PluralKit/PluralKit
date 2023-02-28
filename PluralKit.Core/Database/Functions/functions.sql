@@ -1,4 +1,4 @@
-﻿create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
+create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
     returns table (
         system_id int,
         log_channel bigint,
@@ -67,6 +67,7 @@ create function proxy_members(account_id bigint, guild_id bigint)
         name text,
 
         server_avatar text,
+        webhook_avatar text,
         avatar text,
 
         color char(6),
@@ -76,22 +77,23 @@ create function proxy_members(account_id bigint, guild_id bigint)
 as $$
     select
         -- Basic data
-        members.id                as id,
-        members.proxy_tags        as proxy_tags,
-        members.keep_proxy        as keep_proxy,
+        members.id                   as id,
+        members.proxy_tags           as proxy_tags,
+        members.keep_proxy           as keep_proxy,
 
         -- Name info
-        member_guild.display_name as server_name,
-        members.display_name      as display_name,
-        members.name              as name,
+        member_guild.display_name    as server_name,
+        members.display_name         as display_name,
+        members.name                 as name,
 
         -- Avatar info
-        member_guild.avatar_url   as server_avatar,
-        members.avatar_url        as avatar,
+        member_guild.avatar_url      as server_avatar,
+        members.webhook_avatar_url   as webhook_avatar,
+        members.avatar_url           as avatar,
 
-        members.color             as color,
+        members.color                as color,
 
-        members.allow_autoproxy   as allow_autoproxy
+        members.allow_autoproxy      as allow_autoproxy
     from accounts
         inner join systems on systems.id = accounts.system
         inner join members on members.system = systems.id

@@ -39,6 +39,7 @@ public class PKMember
     public Guid Uuid { get; private set; }
     public SystemId System { get; private set; }
     public string Color { get; private set; }
+    public string WebhookAvatarUrl { get; private set; }
     public string AvatarUrl { get; private set; }
     public string BannerImage { get; private set; }
     public string Name { get; private set; }
@@ -87,8 +88,8 @@ public static class PKMemberExt
     public static string NameFor(this PKMember member, LookupContext ctx) =>
         member.NamePrivacy.Get(ctx, member.Name, member.DisplayName ?? member.Name);
 
-    public static string AvatarFor(this PKMember member, LookupContext ctx) =>
-        member.AvatarPrivacy.Get(ctx, member.AvatarUrl.TryGetCleanCdnUrl());
+    public static string AvatarFor(this PKMember member, LookupContext ctx, bool use_webhook_avatar = false) =>
+        member.AvatarPrivacy.Get(ctx, (use_webhook_avatar ? member.WebhookAvatarUrl ?? member.AvatarUrl : member.AvatarUrl).TryGetCleanCdnUrl());
 
     public static string DescriptionFor(this PKMember member, LookupContext ctx) =>
         member.DescriptionPrivacy.Get(ctx, member.Description);
@@ -128,6 +129,7 @@ public static class PKMemberExt
         o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
         o.Add("pronouns", member.PronounsFor(ctx));
         o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
+        o.Add("webhook_avatar_url", member.AvatarFor(ctx, true).TryGetCleanCdnUrl());
         o.Add("banner", member.DescriptionPrivacy.Get(ctx, member.BannerImage).TryGetCleanCdnUrl());
         o.Add("description", member.DescriptionFor(ctx));
         o.Add("created", member.CreatedFor(ctx)?.FormatExport());

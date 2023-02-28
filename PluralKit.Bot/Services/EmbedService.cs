@@ -135,7 +135,7 @@ public class EmbedService
         // sometimes Discord will just... not return the avatar hash with webhook messages
         var avatar = proxiedMessage.Author.Avatar != null
             ? proxiedMessage.Author.AvatarUrl()
-            : member.AvatarFor(LookupContext.ByNonOwner);
+            : member.AvatarFor(LookupContext.ByNonOwner, true);
         var embed = new EmbedBuilder()
             .Author(new Embed.EmbedAuthor($"#{channelName}: {name}", IconUrl: avatar))
             .Thumbnail(new Embed.EmbedThumbnail(avatar))
@@ -175,7 +175,8 @@ public class EmbedService
 
         var guildSettings = guild != null ? await _repo.GetMemberGuild(guild.Id, member.Id) : null;
         var guildDisplayName = guildSettings?.DisplayName;
-        var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx);
+        var webhook_avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx, true) ?? member.AvatarFor(ctx, false);
+        var avatar = guildSettings?.AvatarUrl ?? member.AvatarFor(ctx, false);
 
         var groups = await _repo.GetMemberGroups(member.Id)
             .Where(g => g.Visibility.CanAccess(ctx))
@@ -183,7 +184,7 @@ public class EmbedService
             .ToListAsync();
 
         var eb = new EmbedBuilder()
-            .Author(new Embed.EmbedAuthor(name, IconUrl: avatar.TryGetCleanCdnUrl(), Url: $"https://dash.pluralkit.me/profile/m/{member.Hid}"))
+            .Author(new Embed.EmbedAuthor(name, IconUrl: webhook_avatar.TryGetCleanCdnUrl(), Url: $"https://dash.pluralkit.me/profile/m/{member.Hid}"))
             // .WithColor(member.ColorPrivacy.CanAccess(ctx) ? color : DiscordUtils.Gray)
             .Color(color)
             .Footer(new Embed.EmbedFooter(
