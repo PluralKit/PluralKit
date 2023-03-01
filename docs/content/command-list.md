@@ -65,6 +65,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;member <member> servername <new server name>` - Changes the display name of a member, only in the current server.
 - `pk;member <member> description [description]` - Changes the description of a member.
 - `pk;member <member> avatar [avatar url|@mention|upload]` - Changes the avatar of a member.
+- `pk;member <member> proxyavatar [avatar url|@mention|upload]` - Changes the avatar used for proxied messages sent by a member.
 - `pk;member <member> serveravatar [avatar url|@mention|upload]` - Changes the avatar of a member in a specific server.
 - `pk;member <name> banner [image url|upload]` - Changes the banner image of a member.
 - `pk;member <member> privacy` - Displays a members current privacy settings.

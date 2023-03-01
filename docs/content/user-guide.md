@@ -229,6 +229,13 @@ To preview the current avatar (if one is set), use the command with no arguments
     
 To clear your avatar, use the subcommand `avatar clear` (eg. `pk;member John avatar clear`).
 
+### Member proxy avatar
+If you want your member to have a different avatar for proxies messages than the one displayed on the member card, you can set a proxy avatar. To do so, use the `pk;member proxyavatar` command, in the same way as the normal avatar command above:
+
+    pk;member John avatar
+    pk;member John proxyavatar http://placebeard.it/512.jpg
+    pk;member "Craig Johnson" proxyavatar    (with an attached image)
+
 ### Member server avatar
 You can also set an avatar for a specific server. This will "override" the normal avatar, and will be used when proxying messages and looking up member cards in that server. To do so, use the `pk;member serveravatar` command, in the same way as the normal avatar command above:
 
