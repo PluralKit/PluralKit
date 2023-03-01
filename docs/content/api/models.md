@@ -46,6 +46,7 @@ Every PluralKit entity has two IDs: a short (5-character) ID and a longer UUID. 
 |birthday|?string|`YYYY-MM-DD` format, 0004 hides the year|
 |pronouns|?string|100-character-limit|
 |avatar_url|?string|256-character limit, must be a publicly-accessible URL|
+|webhook_avatar_url|?string|256-character limit, must be a publicly-accessible URL|
 |banner|?string|256-character limit, must be a publicly-accessible URL|
 |description|?string|1000-character limit|
 |created|?datetime||

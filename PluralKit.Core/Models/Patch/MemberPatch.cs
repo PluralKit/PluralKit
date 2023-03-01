@@ -12,6 +12,7 @@ public class MemberPatch: PatchObject
     public Partial<string> Name { get; set; }
     public Partial<string> Hid { get; set; }
     public Partial<string?> DisplayName { get; set; }
+    public Partial<string?> WebhookAvatarUrl { get; set; }
     public Partial<string?> AvatarUrl { get; set; }
     public Partial<string?> BannerImage { get; set; }
     public Partial<string?> Color { get; set; }
@@ -34,6 +35,7 @@ public class MemberPatch: PatchObject
         .With("name", Name)
         .With("hid", Hid)
         .With("display_name", DisplayName)
+        .With("webhook_avatar_url", WebhookAvatarUrl)
         .With("avatar_url", AvatarUrl)
         .With("banner_image", BannerImage)
         .With("color", Color)
@@ -62,6 +64,9 @@ public class MemberPatch: PatchObject
         if (AvatarUrl.Value != null)
             AssertValid(AvatarUrl.Value, "avatar_url", Limits.MaxUriLength,
                 s => MiscUtils.TryMatchUri(s, out var avatarUri));
+        if (WebhookAvatarUrl.Value != null)
+            AssertValid(WebhookAvatarUrl.Value, "webhook_avatar_url", Limits.MaxUriLength,
+                s => MiscUtils.TryMatchUri(s, out var webhookAvatarUri));
         if (BannerImage.Value != null)
             AssertValid(BannerImage.Value, "banner", Limits.MaxUriLength,
                 s => MiscUtils.TryMatchUri(s, out var bannerUri));
@@ -93,6 +98,7 @@ public class MemberPatch: PatchObject
         if (o.ContainsKey("name")) patch.Name = o.Value<string>("name");
         if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
         if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
+        if (o.ContainsKey("webhook_avatar_url")) patch.WebhookAvatarUrl = o.Value<string>("webhook_avatar_url").NullIfEmpty();
         if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
         if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
 
@@ -177,6 +183,8 @@ public class MemberPatch: PatchObject
             o.Add("display_name", DisplayName.Value);
         if (AvatarUrl.IsPresent)
             o.Add("avatar_url", AvatarUrl.Value);
+        if (WebhookAvatarUrl.IsPresent)
+            o.Add("webhook_avatar_url", WebhookAvatarUrl.Value);
         if (BannerImage.IsPresent)
             o.Add("banner", BannerImage.Value);
         if (Color.IsPresent)
