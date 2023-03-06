@@ -24,6 +24,7 @@ services:
     command: ["bin/PluralKit.API.dll"]
     environment:
       - "PluralKit:Database=Host=db;Username=postgres;Password=postgres;Database=postgres;Maximum Pool Size=1000"
+      - "PluralKit:RedisAddr=redis"
     ports:
       - "127.0.0.1:2838:5000"
     restart: unless-stopped
