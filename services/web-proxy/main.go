@@ -24,9 +24,10 @@ var token2 string
 
 // todo: this shouldn't be in this repo
 var remotes = map[string]*httputil.ReverseProxy{
-	"api.pluralkit.me":    proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:5000"),
-	"dash.pluralkit.me":   proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:8080"),
-	"sentry.pluralkit.me": proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:9000"),
+	"api.pluralkit.me":     proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:5000"),
+	"dash.pluralkit.me":    proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:8080"),
+	"sentry.pluralkit.me":  proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:9000"),
+	"grafana.pluralkit.me": proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:802]:3000"),
 }
 
 func init() {
