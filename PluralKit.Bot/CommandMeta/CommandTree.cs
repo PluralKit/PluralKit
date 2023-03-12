@@ -408,9 +408,9 @@ public partial class CommandTree
     {
         if (ctx.Match("out"))
             await ctx.Execute<Switch>(SwitchOut, m => m.SwitchOut(ctx));
-        else if (ctx.Match("move", "shift", "offset"))
+        else if (ctx.Match("move", "m", "shift", "offset"))
             await ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx));
-        else if (ctx.Match("edit", "replace"))
+        else if (ctx.Match("edit", "e", "replace"))
             if (ctx.Match("out"))
                 await ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx));
             else
