@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import { Card, CardHeader, CardTitle, Modal, Button, ListGroup, ListGroupItem, Label, Input, Alert, Tooltip, Row, Col } from 'sveltestrap';
-    import { toHTML } from 'discord-markdown';
+    import parseMarkdown from '../../api/parse-markdown';
     import twemoji from 'twemoji';
     import { Link } from 'svelte-navigator';
     import { autoresize } from 'svelte-textarea-autoresize';
@@ -16,6 +16,7 @@
     import api from '../../api';
     import default_avatar from '../../assets/default_avatar.png';
     import resizeMedia from '../../api/resize-media';
+    import AwaitHtml from '../common/AwaitHtml.svelte';
 
     export let group: Group;
     export let searchBy: string;
@@ -32,18 +33,18 @@
     let success = false;
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
-    
-    let htmlName: string;
-    $: htmlDesc = group.description && toHTML(group.description, { embed: true}) || "(no description)";
-    $: htmlDisplayName = group.display_name && toHTML(group.display_name);
+
+    let htmlNamePromise: Promise<string>;
+    $: htmlDescPromise = group.description ? parseMarkdown(group.description, { embed: true }) : Promise.resolve("(no description)");
+    $: htmlDisplayNamePromise = group.display_name ? parseMarkdown(group.display_name, { embed: true }) : undefined;
 
     let nameElement: any;
     let descElement: any;
     let dnElement: any;
 
     $: if (group.name) {
-        if ((searchBy === "display name" || sortBy === "display name") && group.display_name) htmlName = toHTML(group.display_name);
-        else htmlName = toHTML(group.name);
+        if ((searchBy === "display name" || sortBy === "display name") && group.display_name) htmlNamePromise = parseMarkdown(group.display_name);
+        else htmlNamePromise = parseMarkdown(group.name);
     }
     if (settings && settings.appearance.twemoji) {
         if (nameElement) twemoji.parse(nameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
@@ -111,7 +112,7 @@
             <div class="icon d-inline-block">
                 <slot name="icon" />
             </div>
-            <span bind:this={nameElement} style="vertical-align: middle; margin-bottom: 0;">{@html htmlName} ({group.id})</span>
+            <span bind:this={nameElement} style="vertical-align: middle; margin-bottom: 0;">{@html htmlNamePromise} ({group.id})</span>
         </CardTitle>
     </CardHeader>
     <div class="card-body d-block hide-scrollbar" style="flex: 1; overflow: auto;">
@@ -123,11 +124,11 @@
             </div>
         </Modal>
         {#if group.display_name}
-        <div class="text-center" bind:this={dnElement}><b>{@html htmlDisplayName}</b></div>
+        <div class="text-center" bind:this={dnElement}><b><AwaitHtml htmlPromise={htmlDisplayNamePromise} /></b></div>
         {/if}
         <hr style="min-height: 1px;"/>
         <div bind:this={descElement}>
-            {@html htmlDesc}
+            <AwaitHtml htmlPromise={htmlDescPromise} />
         </div>
         <hr style="min-height: 1px;"/>
         <Row>
@@ -150,7 +151,7 @@
             <hr style="min-height: 1px"/>
             <ListGroup>
                 {#each memberList as member, index (member.id)}
-                <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]}><span><b>{@html toHTML(member.name)}</b> (<code>{member.id}</code>)</span></ListGroupItem>
+                <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]}><span><b><AwaitHtml htmlPromise={parseMarkdown(member.name)} /></b> (<code>{member.id}</code>)</span></ListGroupItem>
                 {/each}
             </ListGroup>
             {:else}

@@ -1,33 +1,33 @@
 <script lang="ts">
     import { Row, Col, Modal, Image, Button } from 'sveltestrap';
     import moment from 'moment';
-    import { toHTML } from 'discord-markdown';
-    import parseTimestamps from '../../api/parse-timestamps';
+    import parseMarkdown from '../../api/parse-markdown';
     import resizeMedia from '../../api/resize-media';
     import twemoji from 'twemoji';
 
     import type { System } from '../../api/types';
-   
+    import AwaitHtml from '../common/AwaitHtml.svelte';
+
     export let user: System;
     export let editMode: boolean;
     export let isPublic: boolean;
 
-    let htmlDescription: string;
-    let htmlName: string;
-    let htmlPronouns: string;
+    let htmlDescriptionPromise: Promise<string>;
+    let htmlNamePromise: Promise<string>;
+    let htmlPronounsPromise: Promise<string>;
 
-    if (user.description) { 
-        htmlDescription = toHTML(parseTimestamps(user.description), {embed: true});
+    if (user.description) {
+        htmlDescriptionPromise = parseMarkdown(user.description, { embed: true, parseTimestamps: true });
     } else {
-        htmlDescription = "(no description)";
+        htmlDescriptionPromise = Promise.resolve("(no description)");
     }
 
     if (user.name) {
-        htmlName = toHTML(user.name);
+        htmlNamePromise = parseMarkdown(user.name);
     }
 
     if (user.pronouns) {
-        htmlPronouns = toHTML(user.pronouns);
+        htmlPronounsPromise = parseMarkdown(user.pronouns);
     }
 
     let created = moment(user.created).format("MMM D, YYYY");
@@ -58,7 +58,7 @@
     {/if}
     {#if user.name}
     <Col xs={12} lg={4} class="mb-2">
-        <span  bind:this={nameElement}><b>Name:</b> {@html htmlName}</span>
+        <span  bind:this={nameElement}><b>Name:</b> <AwaitHtml htmlPromise={htmlNamePromise} /></span>
     </Col>
     {/if}
     {#if user.tag}
@@ -68,7 +68,7 @@
     {/if}
     {#if user.pronouns}
     <Col xs={12} lg={4} class="mb-2">
-        <span bind:this={pronounElement}><b>Pronouns:</b> {@html htmlPronouns}</span>
+        <span bind:this={pronounElement}><b>Pronouns:</b> <AwaitHtml htmlPromise={htmlPronounsPromise} /></span>
     </Col>
     {/if}
     {#if user.created && !isPublic}
@@ -99,7 +99,7 @@
 </Row>
 <div class="my-2 description" bind:this={descriptionElement}>
     <b>Description:</b><br />
-    {@html htmlDescription}
+    <AwaitHtml htmlPromise={htmlDescriptionPromise} />
 </div>
 {#if (user.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img on:click={toggleBannerModal} src={resizeMedia(user.banner, [1200, 480])} alt="system banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer;"/>

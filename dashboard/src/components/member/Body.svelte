@@ -1,9 +1,8 @@
 <script lang="ts">
     import { tick } from 'svelte';
-    import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody } from 'sveltestrap';
+    import { Row, Col, Modal, Button, CardBody, ModalHeader, ModalBody } from 'sveltestrap';
     import moment from 'moment';
-    import { toHTML } from 'discord-markdown';
-    import parseTimestamps from '../../api/parse-timestamps';
+    import parseMarkdown from '../../api/parse-markdown';
     import resizeMedia from '../../api/resize-media';
     import twemoji from 'twemoji';
 
@@ -14,6 +13,7 @@
 
     import type { Member, Group } from '../../api/types';
     import { Link, useLocation } from 'svelte-navigator';
+    import AwaitHtml from '../common/AwaitHtml.svelte';
 
     export let groups: Group[] = [];
     export let member: Member;
@@ -24,16 +24,14 @@
     let editMode: boolean = false;
     let groupMode: boolean = false;
 
-    let htmlDescription: string;
-    $: if (member.description) { 
-        htmlDescription = toHTML(parseTimestamps(member.description), {embed: true});
-    } else {
-        htmlDescription = "(no description)";
+    let htmlDescriptionPromise: Promise<string> = Promise.resolve("(no description)");
+    $: if (member.description) {
+        htmlDescriptionPromise = parseMarkdown(member.description, { parseTimestamps: true, embed: true });
     }
 
-    let htmlPronouns: string;
-    $: if (member.pronouns) { 
-        htmlPronouns = toHTML(parseTimestamps(member.pronouns), {embed: true});
+    let htmlPronounsPromise: Promise<string>;
+    $: if (member.pronouns) {
+        htmlPronounsPromise = parseMarkdown(member.pronouns, { parseTimestamps: true, embed: true });
     }
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
@@ -58,12 +56,12 @@
 
     let created = moment(member.created).format("MMM D, YYYY");
     let birthday: string;
-    $: {member.birthday; 
+    $: {member.birthday;
         if (member.birthday) birthday = moment(member.birthday, "YYYY-MM-DD").format("MMM D, YYYY");
     }
 
     $: trimmedBirthday = birthday && birthday.endsWith(', 0004') ? trimmedBirthday = birthday.replace(', 0004', '') : birthday; 
-    
+
     async function focus(el) {
         await tick();
         el.focus();
@@ -115,7 +113,7 @@
         {/if}
         {#if member.pronouns}
         <Col xs={12} lg={4} class="mb-2">
-            <b>Pronouns:</b> <span bind:this={pronounElement}>{@html htmlPronouns}</span>
+            <b>Pronouns:</b> <span bind:this={pronounElement}><AwaitHtml htmlPromise={htmlPronounsPromise} /></span>
         </Col>
         {/if}
         {#if member.birthday}
@@ -172,7 +170,7 @@
     </Row>
     <div class="my-2 mb-3 description" bind:this={descriptionElement}>
         <b>Description:</b><br />
-        {@html htmlDescription && htmlDescription}
+        <AwaitHtml htmlPromise={htmlDescriptionPromise} />
     </div>
     {#if (member.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
     <img on:click={toggleBannerModal} src={resizeMedia(member.banner, [1200, 480])} alt="member banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer"/>

@@ -2,8 +2,7 @@
     import { tick } from 'svelte';
     import { Row, Col, Modal, Image, Button, CardBody, ModalHeader, ModalBody, ModalFooter, Spinner } from 'sveltestrap';
     import moment from 'moment';
-    import { toHTML } from 'discord-markdown';
-    import parseTimestamps from '../../api/parse-timestamps';
+    import parseMarkdown from '../../api/parse-markdown';
     import resizeMedia from '../../api/resize-media';
     import Edit from './Edit.svelte';
     import twemoji from 'twemoji';
@@ -12,6 +11,7 @@
     import { Link, useLocation } from 'svelte-navigator';
 
     import type { Member, Group } from '../../api/types';
+    import AwaitHtml from '../common/AwaitHtml.svelte';
    
     export let group: Group;
     let editMode: boolean = false;
@@ -21,14 +21,13 @@
     export let isMainDash = true;
     export let isPage = false;
 
-    let htmlDescription: string;
-    $: if (group.description) { 
-        htmlDescription = toHTML(parseTimestamps(group.description), {embed: true});
-    } else {
-        htmlDescription = "(no description)";
+    let htmlDescriptionPromise: Promise<string>;
+    $: if (group.description) {
+        htmlDescriptionPromise = parseMarkdown(group.description, { parseTimestamps: true, embed: true });
     }
-    let htmlDisplayName: string;
-    $: if (group.display_name) htmlDisplayName = toHTML(group.display_name)
+
+    let htmlDisplayNamePromise: Promise<string>;
+    $: if (group.display_name) htmlDisplayNamePromise = parseMarkdown(group.display_name, { parseTimestamps: true, embed: true });
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
     let descriptionElement: any;
@@ -83,7 +82,7 @@
     {/if}
     {#if group.display_name}
     <Col xs={12} lg={4} class="mb-2">
-        <b>Display Name:</b> <span bind:this={displayNameElement}>{@html htmlDisplayName}</span>
+        <b>Display Name:</b> <span bind:this={displayNameElement}><AwaitHtml htmlPromise={htmlDisplayNamePromise} /></span>
     </Col>
     {/if}
     {#if group.created && !isPublic}
@@ -122,7 +121,7 @@
 </Row>
 <div class="mt-2 mb-3 description" bind:this={descriptionElement}>
     <b>Description:</b><br />
-    {@html htmlDescription && htmlDescription}
+    <AwaitHtml htmlPromise={htmlDescriptionPromise} />
 </div>
 {#if (group.banner && ((settings && settings.appearance.banner_bottom) || !settings))}
 <img on:click={toggleBannerModal} src={resizeMedia(group.banner, [1200, 480])} alt="group banner" class="w-100 mb-3 rounded" style="max-height: 13em; object-fit: cover; cursor: pointer"/>
