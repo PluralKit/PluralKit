@@ -308,7 +308,7 @@ public partial class CommandTree
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));
         else if (ctx.Match("banner", "splash", "cover"))
             await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
-        else if (ctx.Match("group", "groups"))
+        else if (ctx.Match("group", "groups", "g"))
             if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(MemberGroupAdd,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
