@@ -1,23 +1,24 @@
 <script lang="ts">
     import { tick } from 'svelte';
     import { Modal, CardTitle} from 'sveltestrap';
+    import AwaitHtml from './AwaitHtml.svelte';
     import default_avatar from '../../assets/default_avatar.png';
     import resizeMedia from '../../api/resize-media';
-    import { toHTML } from 'discord-markdown';
+    import parseMarkdown from '../../api/parse-markdown';
     import twemoji from 'twemoji';
 
     export let item: any;
     export let searchBy: string = null;
     export let sortBy: string = null;
 
-    let htmlName: string;
-    let nameElement: any; 
+    let htmlNamePromise: Promise<string>;
+    let nameElement: any;
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
     $: if (item.name) {
-        if ((searchBy === "display_name" || sortBy === "display_name") && item.display_name) htmlName = toHTML(item.display_name);
-        else htmlName = toHTML(item.name);
-    } else htmlName = "";
+        if ((searchBy === "display_name" || sortBy === "display_name") && item.display_name) htmlNamePromise = parseMarkdown(item.display_name);
+        else htmlNamePromise = parseMarkdown(item.name);
+    }
 
     $: if (settings && settings.appearance.twemoji) {
         if (nameElement) twemoji.parse(nameElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
@@ -47,7 +48,7 @@
             <div class="icon d-inline-block">
                 <slot name="icon" />
             </div>
-            <span bind:this={nameElement} style="vertical-align: middle;">{@html htmlName} ({item.id})</span>
+            <span bind:this={nameElement} style="vertical-align: middle;"><AwaitHtml htmlPromise={htmlNamePromise} /> ({item.id})</span>
         </div>
         <div style="margin-left: auto;">
         {#if item && (item.avatar_url || item.icon)}

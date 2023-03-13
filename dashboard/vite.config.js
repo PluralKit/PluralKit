@@ -15,12 +15,15 @@ export default defineConfig({
         if (filename.length < 2) return 'index';
         else filename = filename[1];
 
-        // this is really big and makes the map size go over the sentry file cache limit
-        if (filename.includes("highlight.js")) return 'vendor-0';
+        if (filename.startsWith("/highlight.js/es/languages/")) {
+            const lang = filename.split("/").pop().split(".").shift();
+
+            return `vendor_hljs-${lang}`;
+        }
 
         return 'vendor-1';
         // return `vendor-${filename.charCodeAt(1) % 2}`;
       }
-    }  
+    }
   }
 })

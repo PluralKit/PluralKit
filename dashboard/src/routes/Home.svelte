@@ -6,10 +6,11 @@
     import { loggedIn, currentUser } from '../stores';
     import { Link } from 'svelte-navigator';
     import twemoji from 'twemoji';
-    import { toHTML } from 'discord-markdown';
+    import parseMarkdown from '../api/parse-markdown';
 
     import type { System } from '../api/types';
     import api from '../api';
+    import AwaitHtml from '../components/common/AwaitHtml.svelte';
 
     let loading = false;
     let err: string;
@@ -70,9 +71,9 @@
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
     let welcomeElement: any;
-    let htmlName: string;
+    let htmlNamePromise: Promise<string>;
     $: if (user && user.name) {
-        htmlName = toHTML(user.name);
+        htmlNamePromise = parseMarkdown(user.name);
     }
     $: if (settings && settings.appearance.twemoji) {
         if (welcomeElement) twemoji.parse(welcomeElement, { base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' });
@@ -103,7 +104,7 @@
                         verifying login...
                     {:else if isLoggedIn}
                         {#if user && user.name}
-                            <p bind:this={welcomeElement}>Welcome, <b>{@html htmlName}</b>!</p>
+                            <p bind:this={welcomeElement}>Welcome, <b><AwaitHtml htmlPromise={htmlNamePromise} /></b>!</p>
                         {:else}
                             <p>Welcome!</p>
                         {/if}
