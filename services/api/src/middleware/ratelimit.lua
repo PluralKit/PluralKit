@@ -1,12 +1,13 @@
--- Copyright (c) 2017 Pavel Pravosud
--- https://github.com/rwz/redis-gcra/blob/master/vendor/perform_gcra_ratelimit.lua
+-- this script has side-effects, so it requires replicate commands mode
+-- redis.replicate_commands()
 
 local rate_limit_key = KEYS[1]
 local burst = ARGV[1]
 local rate = ARGV[2]
 local period = ARGV[3]
--- local cost = tonumber(ARGV[4])
-local cost = 1
+
+-- we're only ever asking for 1 request at a time
+local cost = 1 --local cost = tonumber(ARGV[4])
 
 local emission_interval = period / rate
 local increment = emission_interval * cost
@@ -44,7 +45,7 @@ if remaining < 0 then
     local retry_after = diff * -1
     return {
         0, -- remaining
-        retry_after,
+        tostring(retry_after),
         reset_after,
     }
 end
@@ -54,4 +55,8 @@ if reset_after > 0 then
     redis.call("SET", rate_limit_key, new_tat, "EX", math.ceil(reset_after))
 end
 local retry_after = -1
-return {remaining, retry_after, reset_after}
+return {
+    remaining,
+    tostring(retry_after),
+    reset_after
+}

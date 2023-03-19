@@ -88,7 +88,7 @@ pub async fn do_request_ratelimited<B>(
         // local burst = ARGV[1]
         // local rate = ARGV[2]
         // local period = ARGV[3]
-        // return {remaining, retry_after, reset_after}
+        // return {remaining, tostring(retry_after), reset_after}
         let resp = redis
             .evalsha::<(i32, String, u64), String, Vec<&str>, Vec<i32>>(
                 scriptsha,
@@ -99,14 +99,21 @@ pub async fn do_request_ratelimited<B>(
 
         match resp {
             Ok((mut remaining, retry_after, reset_after)) => {
+                // redis's lua doesn't support returning floats
+                let retry_after: f64 = retry_after
+                    .parse()
+                    .expect("got something that isn't a f64 from redis");
+
                 let mut response = if remaining > 0 {
                     next.run(request).await
                 } else {
+                    println!("{}", reset_after);
                     json_err(
                         StatusCode::TOO_MANY_REQUESTS,
                         format!(
                             // todo: the retry_after is horribly wrong
-                            r#"{{"message":"429: too many requests","retry_after":{retry_after}}}"#
+                            r#"{{"message":"429: too many requests","retry_after":{},"code":0}}"#,
+                            (retry_after * 1_000_f64).ceil() as u64
                         ),
                     )
                 };
