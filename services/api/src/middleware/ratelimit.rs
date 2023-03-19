@@ -19,9 +19,6 @@ lazy_static::lazy_static! {
     static ref LUA_SCRIPT_SHA: String = sha1_hash(LUA_SCRIPT);
 }
 
-// todo lol
-const TOKEN2: &'static str = "h";
-
 // this is awful but it works
 pub fn ratelimiter<F, T>(f: F) -> FromFnLayer<F, Option<RedisPool>, T> {
     let redis = libpk::config.api.ratelimit_redis_addr.as_ref().map(|val| {
@@ -67,10 +64,15 @@ pub async fn do_request_ratelimited<B>(
         let headers = request.headers().clone();
         let source_ip = header_or_unknown(headers.get("Fly-Client-IP"));
 
+        // https://github.com/rust-lang/rust/issues/53667
         let (rl_key, rate) = if let Some(header) = request.headers().clone().get("X-PluralKit-App")
         {
-            if header == TOKEN2 {
-                ("token2", 20)
+            if let Some(token2) = &libpk::config.api.temp_token2 {
+                if header.to_str().unwrap_or("invalid") == token2 {
+                    ("token2", 20)
+                } else {
+                    (source_ip, 2)
+                }
             } else {
                 (source_ip, 2)
             }

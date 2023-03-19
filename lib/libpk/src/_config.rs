@@ -31,6 +31,9 @@ pub struct ApiConfig {
     pub ratelimit_redis_addr: Option<String>,
 
     pub remote_url: String,
+
+    #[serde(default)]
+    pub temp_token2: Option<String>,
 }
 
 fn _metrics_default() -> bool {
