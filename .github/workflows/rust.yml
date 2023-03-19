@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-      - 'rust-api'
     paths:
     - 'lib/pklib/**'
     - 'services/api/**'
@@ -46,7 +45,7 @@ jobs:
       - run: |
           for binary in "api"; do
             for tag in latest ${{ env.BRANCH_NAME }} ${{ github.sha }}; do
-              cat Dockerfile.bin | sed "s/__BINARY__/$binary/g" | docker build -t ghcr.io/pluralkit/$binary/$tag -f - .
+              cat Dockerfile.bin | sed "s/__BINARY__/$binary/g" | docker build -t ghcr.io/pluralkit/$binary:$tag -f - .
             done
             if [ "${{ github.repository }}" == "PluralKit/PluralKit" ]; then
               docker push ghcr.io/pluralkit/$binary:${{ env.BRANCH_NAME }}
