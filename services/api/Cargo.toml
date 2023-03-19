@@ -9,9 +9,9 @@ axum = "0.6.4"
 fred = { workspace = true }
 http = "0.2.8"
 hyper-reverse-proxy = "0.5.1"
-lazy_static = "1.4.0"
+lazy_static = { workspace = true }
 libpk = { path = "../../lib/libpk" }
-metrics = "0.20.1"
+metrics = { workspace = true }
 tokio = { workspace = true }
 tower = "0.4.13"
 tracing = { workspace = true }
