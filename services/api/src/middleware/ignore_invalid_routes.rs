@@ -54,7 +54,7 @@ pub async fn ignore_invalid_routes<B>(request: Request<B>, next: Next<B>) -> Res
     // but "unknown" isn't really a valid user-agent
     else if user_agent == "unknown" {
         // please set a valid user-agent
-        return StatusCode::FORBIDDEN.into_response();
+        return StatusCode::BAD_REQUEST.into_response();
     } else {
         next.run(request).await
     }
