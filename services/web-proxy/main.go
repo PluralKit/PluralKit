@@ -6,11 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strconv"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func proxyTo(host string) *httputil.ReverseProxy {
@@ -53,12 +49,6 @@ func logTimeElapsed(resp *http.Response) error {
 	startTime := r.Context().Value("req-time").(time.Time)
 
 	elapsed := time.Since(startTime)
-	metric.With(map[string]string{
-		"domain": r.Host,
-		"method": r.Method,
-		"status": strconv.Itoa(resp.StatusCode),
-		"route":  r.URL.Path,
-	}).Observe(elapsed.Seconds())
 
 	log.Printf("[%s] \"%s %s%s\" %d - %vms %s\n", r.Header.Get("Fly-Client-IP"), r.Method, r.Host, r.URL.Path, resp.StatusCode, elapsed.Milliseconds(), r.Header.Get("User-Agent"))
 
@@ -66,18 +56,5 @@ func logTimeElapsed(resp *http.Response) error {
 }
 
 func main() {
-	prometheus.MustRegister(metric)
-
-	http.Handle("/metrics", promhttp.Handler())
-	go http.ListenAndServe(":9091", nil)
-
 	http.ListenAndServe(":8080", ProxyHandler{})
 }
-
-var metric = prometheus.NewHistogramVec(
-	prometheus.HistogramOpts{
-		Name:    "pk_http_requests",
-		Buckets: []float64{.1, .25, 1, 2.5, 5, 20},
-	},
-	[]string{"domain", "method", "status", "route"},
-)
