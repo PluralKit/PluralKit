@@ -3,7 +3,7 @@ Many servers use *logger bots* for keeping track of edited and deleted messages,
 Because PluralKit deletes messages as part of proxying, this can often clutter up these logs. 
 
 ## Bots with PluralKit support
-Some moderation bots have offical PluralKit support, and properly handle excluding proxy deletes, as well as add PK-specific information to relevant log messages:
+Some moderation bots have official PluralKit support, and properly handle excluding proxy deletes, as well as add PK-specific information to relevant log messages:
 
 - [**Catalogger**](https://catalogger.starshines.xyz/docs)
 - [**Aero**](https://aero.bot/) 
