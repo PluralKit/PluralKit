@@ -39,7 +39,9 @@ pub async fn ignore_invalid_routes<B>(request: Request<B>, next: Next<B>) -> Res
             .into_response()
     }
     // we ignored v1 routes earlier, now let's ignore all non-v2 routes
-    else if !request.uri().clone().path().starts_with("/v2") {
+    else if !request.uri().clone().path().starts_with("/v2")
+        && !request.uri().clone().path().starts_with("/private")
+    {
         return (
             StatusCode::BAD_REQUEST,
             r#"{"message":"Unsupported API version","code":0}"#,
