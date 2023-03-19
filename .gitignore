@@ -26,3 +26,5 @@ pluralkit.*.conf
 # Generated
 logs/
 .version
+recipe.json
+.docker-bin/

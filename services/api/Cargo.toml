@@ -1,0 +1,17 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true } 
+axum = "0.6.4"
+fred = { workspace = true }
+http = "0.2.8"
+hyper-reverse-proxy = "0.5.1"
+lazy_static = { workspace = true }
+libpk = { path = "../../lib/libpk" }
+metrics = { workspace = true }
+tokio = { workspace = true }
+tower = "0.4.13"
+tracing = { workspace = true }

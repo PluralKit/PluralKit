@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "./lib/libpk",
+    "./services/api"
+]
+
+[workspace.dependencies]
+anyhow = "1"
+fred = { version = "5.2.0", default-features = false, features = ["tracing", "pool-prefer-active"] }
+lazy_static = "1.4.0"
+metrics = "0.20.1"
+serde = "1.0.152"
+tokio = { version = "1.25.0", features = ["full"] }
+tracing = "0.1.37"

@@ -3,19 +3,26 @@
 
 # Include project code and build files
 !PluralKit.*/
-!gateway/
-!myriad_rs/
+!services/
+!lib/
 !Myriad/
-!PluralKit.sln
-!nuget.config
 !.git
 !proto
-!scripts/run-clustered.sh
 !dashboard
-!scheduled_tasks
+
+!Cargo.toml
+!Cargo.lock
+!PluralKit.sln
+!nuget.config
+
+# used for target binary builds
+!.docker-bin/
 
 # Re-exclude host build artifact directories
 **/bin
 **/obj
 **/target
 **/node_modules
+
+# don't clear docker cache when updating dockerfiles
+Dockerfile
