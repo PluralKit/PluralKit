@@ -21,10 +21,10 @@ func proxyTo(host string) *httputil.ReverseProxy {
 
 // todo: this shouldn't be in this repo
 var remotes = map[string]*httputil.ReverseProxy{
-	"api.pluralkit.me":     proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:5000"),
-	"dash.pluralkit.me":    proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:8080"),
-	"sentry.pluralkit.me":  proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:902]:9000"),
-	"grafana.pluralkit.me": proxyTo("[fdaa:0:ae33:a7b:8dd7:0:a:802]:3000"),
+	"api.pluralkit.me":     proxyTo("pluralkit-api.flycast:5000"),
+	"dash.pluralkit.me":    proxyTo("pluralkit-compute02._peer.internal:8080"),
+	"sentry.pluralkit.me":  proxyTo("pluralkit-compute02._peer.internal:9000"),
+	"grafana.pluralkit.me": proxyTo("pluralkit-db1._peer.internal:3000"),
 }
 
 type ProxyHandler struct{}
