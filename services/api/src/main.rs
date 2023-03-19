@@ -12,6 +12,7 @@ mod util;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     libpk::init_logging("api")?;
+    libpk::init_metrics()?;
     info!("hello world");
 
     // processed upside down (???) so we have to put middleware at the end
@@ -69,8 +70,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/v2/members/:member_id/oembed.json", get(util::rproxy))
         .route("/v2/groups/:group_id/oembed.json", get(util::rproxy))
 
-        .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
         .layer(axum::middleware::from_fn(middleware::logger))
+        .layer(middleware::ratelimit::ratelimiter(middleware::ratelimit::do_request_ratelimited)) // this sucks
         .layer(axum::middleware::from_fn(middleware::ignore_invalid_routes))
         .layer(axum::middleware::from_fn(middleware::cors))
 

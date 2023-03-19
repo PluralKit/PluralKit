@@ -33,10 +33,17 @@ pub struct ApiConfig {
     pub remote_url: String,
 }
 
+fn _metrics_default() -> bool {
+    false
+}
+
 #[derive(Deserialize, Debug)]
 pub struct PKConfig {
     pub discord: DiscordConfig,
     pub api: ApiConfig,
+
+    #[serde(default = "_metrics_default")]
+    pub run_metrics_server: bool,
 
     pub(crate) gelf_log_url: Option<String>,
 }

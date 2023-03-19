@@ -1,4 +1,5 @@
 use gethostname::gethostname;
+use metrics_exporter_prometheus::PrometheusBuilder;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, EnvFilter, Registry};
 
 mod _config;
@@ -23,5 +24,14 @@ pub fn init_logging(component: &str) -> anyhow::Result<()> {
             .expect("unable to set global subscriber");
     }
 
+    Ok(())
+}
+
+pub fn init_metrics() -> anyhow::Result<()> {
+    if config.run_metrics_server {
+        // automatically spawns a http listener at :9000
+        let builder = PrometheusBuilder::new();
+        builder.install()?;
+    }
     Ok(())
 }

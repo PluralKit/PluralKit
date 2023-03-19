@@ -11,6 +11,7 @@ http = "0.2.8"
 hyper-reverse-proxy = "0.5.1"
 lazy_static = "1.4.0"
 libpk = { path = "../../lib/libpk" }
+metrics = "0.20.1"
 tokio = { workspace = true }
 tower = "0.4.13"
 tracing = { workspace = true }

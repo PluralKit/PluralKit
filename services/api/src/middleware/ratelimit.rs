@@ -8,7 +8,8 @@ use axum::{
 };
 use fred::{pool::RedisPool, prelude::LuaInterface, types::ReconnectPolicy, util::sha1_hash};
 use http::{HeaderValue, StatusCode};
-use tracing::{error, info, warn};
+use metrics::increment_counter;
+use tracing::{debug, error, info, warn};
 
 use crate::util::{header_or_unknown, json_err};
 
@@ -107,13 +108,13 @@ pub async fn do_request_ratelimited<B>(
                 let mut response = if remaining > 0 {
                     next.run(request).await
                 } else {
-                    println!("{}", reset_after);
+                    let retry_after = (retry_after * 1_000_f64).ceil() as u64;
+                    debug!("ratelimited request from {rl_key}, retry_after={retry_after}");
+                    increment_counter!("pk_http_requests_ratelimited");
                     json_err(
                         StatusCode::TOO_MANY_REQUESTS,
                         format!(
-                            // todo: the retry_after is horribly wrong
-                            r#"{{"message":"429: too many requests","retry_after":{},"code":0}}"#,
-                            (retry_after * 1_000_f64).ceil() as u64
+                            r#"{{"message":"429: too many requests","retry_after":{retry_after},"code":0}}"#,
                         ),
                     )
                 };
