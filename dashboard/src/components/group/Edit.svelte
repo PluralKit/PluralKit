@@ -144,7 +144,7 @@
 {:else}<Button style="flex: 0" color="primary" disabled aria-label="submit edits"><Spinner size="sm"/></Button> <Button style="flex: 0" color="secondary" disabled aria-label="cancel edits">Back</Button><Button style="flex: 0; float: right;" color="danger" disabled aria-label="delete group">Delete</Button>{/if}
 <Modal size="lg" isOpen={deleteOpen} toggle={toggleDeleteModal}>
     <ModalHeader toggle={toggleDeleteModal}>
-        Delete member
+        Delete group
      </ModalHeader>
          <ModalBody>
              {#if deleteErr}<Alert color="danger">{deleteErr}</Alert>{/if}

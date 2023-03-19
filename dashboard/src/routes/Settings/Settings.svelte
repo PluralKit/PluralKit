@@ -2,12 +2,15 @@
     import { Card, CardHeader, CardBody, Container, Row, Col, CardTitle, Tooltip, Button } from 'sveltestrap';
     import Toggle from 'svelte-toggle';
     import { autoresize } from 'svelte-textarea-autoresize';
+    import FaAmbulance from 'svelte-icons/fa/FaAmbulance.svelte'
     import FaCogs from 'svelte-icons/fa/FaCogs.svelte'
     import type { Config } from '../../api/types';
     import api from '../../api';
 
     let savedSettings = JSON.parse(localStorage.getItem("pk-settings"));
     let apiConfig: Config = JSON.parse(localStorage.getItem("pk-config"));
+    let token = localStorage.getItem("pk-token");
+    let showToken = false;
 
     let settings = {
         appearance: {
@@ -40,6 +43,7 @@
         else document.getElementById("app").classList.remove("dyslexic");
     }
 
+    const revealToken = () => showToken = !showToken;
 </script>
 
 <Container>
@@ -118,6 +122,36 @@
                     <textarea class="form-control" bind:value={descriptions[2]} maxlength={1000} use:autoresize placeholder={descriptions[2]} aria-label="Description template 3"/>
                     <br>
                     <Button on:click={saveDescriptionTemplates}>Save</Button>
+                </CardBody>
+            </Card>
+        </Col>
+    </Row>
+    {/if}
+    {#if token}
+    <Row>
+        <Col class="mx-auto" xs={12} lg={11} xl={10}>
+            <Card class="mb-4">
+                <CardHeader>
+                    <CardTitle style="margin-top: 8px; outline: none;">
+                        <div class="icon d-inline-block">
+                            <FaAmbulance />
+                        </div>Recovery
+                    </CardTitle>
+                </CardHeader>
+                <CardBody>
+                    <p>If you've lost access to your discord account, you can retrieve your token here.</p>
+                    <p>Send a direct message to a staff member (a helper, moderator or developer <a href="https://discord.gg/PczBt78">in the support server</a>), they can recover your system with this token.</p>
+                    <Button color="danger" on:click={() => revealToken()}>Reveal token</Button>
+                    {#if showToken}
+                        <Row>
+                            <Col xs={12} md={9}>
+                                <span class="mt-2 form-control">{token}</span>
+                            </Col>
+                            <Col xs={12} md={3}>
+                                <Button color="primary" class="w-100 mt-2" on:click={() => navigator.clipboard.writeText(token)}>Copy</Button>
+                            </Col>
+                        </Row>
+                    {/if}
                 </CardBody>
             </Card>
         </Col>

@@ -31,8 +31,9 @@ When something goes wrong, the API will send back a 4xx HTTP status code, along 
 |code|HTTP response code|meaning|
 |---|---|---|
 |0|500|Internal server error, try again later|
-|0|400|Bad Request (usually invalid JSON)|
+|0|400|Invalid JSON, or invalid request format (check `error` key in the response body)|
 |0|401|Missing or invalid Authorization header|
+|0|403|Your access to the API is blocked - please contact us in the support server|
 |20001|404|System not found.|
 |20002|404|Member not found.|
 |20003|404|Member '{memberRef}' not found.|

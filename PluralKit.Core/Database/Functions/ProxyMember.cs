@@ -23,8 +23,8 @@ public class ProxyMember
     public string Name { get; } = "";
 
     public string? ServerAvatar { get; }
+    public string? WebhookAvatar { get; }
     public string? Avatar { get; }
-
 
     public bool AllowAutoproxy { get; }
     public string? Color { get; }
@@ -42,5 +42,5 @@ public class ProxyMember
         return memberName;
     }
 
-    public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? Avatar ?? ctx.SystemAvatar;
+    public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? WebhookAvatar ?? Avatar ?? ctx.SystemAvatar;
 }

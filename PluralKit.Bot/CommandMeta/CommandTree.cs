@@ -304,9 +304,11 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberDelete, m => m.Delete(ctx, target));
         else if (ctx.Match("avatar", "profile", "picture", "icon", "image", "pfp", "pic"))
             await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.Avatar(ctx, target));
+        else if (ctx.Match("proxyavatar", "proxypfp", "webhookavatar", "webhookpfp", "pa"))
+            await ctx.Execute<MemberAvatar>(MemberAvatar, m => m.WebhookAvatar(ctx, target));
         else if (ctx.Match("banner", "splash", "cover"))
             await ctx.Execute<MemberEdit>(MemberBannerImage, m => m.BannerImage(ctx, target));
-        else if (ctx.Match("group", "groups"))
+        else if (ctx.Match("group", "groups", "g"))
             if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(MemberGroupAdd,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
@@ -406,9 +408,9 @@ public partial class CommandTree
     {
         if (ctx.Match("out"))
             await ctx.Execute<Switch>(SwitchOut, m => m.SwitchOut(ctx));
-        else if (ctx.Match("move", "shift", "offset"))
+        else if (ctx.Match("move", "m", "shift", "offset"))
             await ctx.Execute<Switch>(SwitchMove, m => m.SwitchMove(ctx));
-        else if (ctx.Match("edit", "replace"))
+        else if (ctx.Match("edit", "e", "replace"))
             if (ctx.Match("out"))
                 await ctx.Execute<Switch>(SwitchEditOut, m => m.SwitchEditOut(ctx));
             else

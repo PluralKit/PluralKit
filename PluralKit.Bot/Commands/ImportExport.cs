@@ -47,6 +47,9 @@ public class ImportExport
                 var response = await _client.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
                     throw Errors.InvalidImportFile;
+                // hacky fix for discord api returning nonsense charsets sometimes
+                response.Content.Headers.Remove("content-type");
+                response.Content.Headers.Add("content-type", "application/json; charset=UTF-8");
                 data = JsonConvert.DeserializeObject<JObject>(
                     await response.Content.ReadAsStringAsync(),
                     _settings
