@@ -62,7 +62,7 @@ pub async fn do_request_ratelimited<B>(
 ) -> Response {
     if let Some(redis) = redis {
         let headers = request.headers().clone();
-        let source_ip = header_or_unknown(headers.get("Fly-Client-IP"));
+        let source_ip = header_or_unknown(headers.get("X-PluralKit-Client-IP"));
 
         // https://github.com/rust-lang/rust/issues/53667
         let (rl_key, rate) = if let Some(header) = request.headers().clone().get("X-PluralKit-App")

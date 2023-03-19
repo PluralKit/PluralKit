@@ -37,6 +37,9 @@ func (p ProxyHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Header.Del("X-PluralKit-Client-IP")
+	r.Header.Set("X-PluralKit-Client-IP", r.Header.Get("Fly-Client-IP"))
+
 	startTime := time.Now()
 	r = r.WithContext(context.WithValue(r.Context(), "req-time", startTime))
 
