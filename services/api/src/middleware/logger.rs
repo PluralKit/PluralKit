@@ -41,10 +41,19 @@ pub async fn logger<B>(request: Request<B>, next: Next<B>) -> Response {
     let elapsed = start.elapsed().as_millis();
 
     info!(
-        "handled request for {} {} in {}ms",
-        method, endpoint, elapsed
+        "{} handled request for {} {} in {}ms",
+        response.status(),
+        method,
+        endpoint,
+        elapsed
     );
-    histogram!("pk_http_requests", (elapsed as f64) / 1_000_f64, "method" => method.to_string(), "endpoint" => endpoint.clone());
+    histogram!(
+        "pk_http_requests",
+        (elapsed as f64) / 1_000_f64,
+        "method" => method.to_string(),
+        "route" => endpoint.clone(),
+        "status" => response.status().to_string()
+    );
 
     if elapsed > MIN_LOG_TIME {
         warn!(
