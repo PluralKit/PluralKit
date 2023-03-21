@@ -5,6 +5,8 @@
     import Svelecte, { addFormatter } from 'svelecte';
     import AwaitHtml from '../common/AwaitHtml.svelte';
     import parseMarkdown from '../../api/parse-markdown';
+    import AwaitHtml from '../common/AwaitHtml.svelte';
+    import parseMarkdown from '../../api/parse-markdown';
 
     import FaFolderOpen from 'svelte-icons/fa/FaFolderOpen.svelte'
     import FaFolderPlus from 'svelte-icons/fa/FaFolderPlus.svelte'
