@@ -116,7 +116,7 @@
         {#if finalGroupsList && finalGroupsList.length > 0}
         <ListGroup>
             {#each finalGroupsList as group, index (group.id)}
-            <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]} class="d-flex justify-content-between flex-grow-1"><span><b>{group.name}</b> (<code>{group.id}</code>)</span> <span><AwaitHtml htmlPromise={parseMarkdown(group.display_name)} /></span></span></ListGroupItem>
+            <ListGroupItem class="d-flex"><span bind:this={listGroupElements[index]} class="d-flex justify-content-between flex-grow-1"><span><b>{group.name}</b> (<code>{group.id}</code>)</span> <span><AwaitHtml htmlPromise={group.display_name ? parseMarkdown(group.display_name) : Promise.resolve("")} /></span></span></ListGroupItem>
             {/each}
         </ListGroup>
         {:else}
