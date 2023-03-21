@@ -132,7 +132,7 @@ public static class PKMemberExt
         o.Add("birthday", member.BirthdayFor(ctx)?.FormatExport());
         o.Add("pronouns", member.PronounsFor(ctx));
         o.Add("avatar_url", member.AvatarFor(ctx).TryGetCleanCdnUrl());
-        o.Add("webhook_avatar_url", member.WebhookAvatarFor(ctx).TryGetCleanCdnUrl());
+        o.Add("webhook_avatar_url", member.AvatarPrivacy.Get(ctx, member.WebhookAvatarUrl?.TryGetCleanCdnUrl()));
         o.Add("banner", member.DescriptionPrivacy.Get(ctx, member.BannerImage).TryGetCleanCdnUrl());
         o.Add("description", member.DescriptionFor(ctx));
         o.Add("created", member.CreatedFor(ctx)?.FormatExport());

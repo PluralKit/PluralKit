@@ -98,8 +98,17 @@ public class MemberPatch: PatchObject
         if (o.ContainsKey("name")) patch.Name = o.Value<string>("name");
         if (o.ContainsKey("color")) patch.Color = o.Value<string>("color").NullIfEmpty()?.ToLower();
         if (o.ContainsKey("display_name")) patch.DisplayName = o.Value<string>("display_name").NullIfEmpty();
-        if (o.ContainsKey("webhook_avatar_url")) patch.WebhookAvatarUrl = o.Value<string>("webhook_avatar_url").NullIfEmpty();
         if (o.ContainsKey("avatar_url")) patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
+        if (o.ContainsKey("webhook_avatar_url"))
+        {
+            var str = o.Value<string>("webhook_avatar_url").NullIfEmpty();
+            // XXX: ignore webhook_avatar_url if it's exactly the same as avatar_url
+            // to work around some export files containing the value of avatar_url in
+            // both fields accidentally
+            if (str != null && patch.AvatarUrl.Value != str) patch.WebhookAvatarUrl = str;
+            else patch.WebhookAvatarUrl = null;
+        }
+
         if (o.ContainsKey("banner")) patch.BannerImage = o.Value<string>("banner").NullIfEmpty();
 
         if (o.ContainsKey("birthday"))
