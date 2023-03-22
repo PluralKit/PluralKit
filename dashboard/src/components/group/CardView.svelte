@@ -112,7 +112,7 @@
             <div class="icon d-inline-block">
                 <slot name="icon" />
             </div>
-            <span bind:this={nameElement} style="vertical-align: middle; margin-bottom: 0;">{@html htmlNamePromise} ({group.id})</span>
+            <span bind:this={nameElement} style="vertical-align: middle; margin-bottom: 0;"><AwaitHtml htmlPromise={htmlNamePromise} /> ({group.id})</span>
         </CardTitle>
     </CardHeader>
     <div class="card-body d-block hide-scrollbar" style="flex: 1; overflow: auto;">
