@@ -46,7 +46,7 @@ public class ServerConfig
         var channelString = ctx.PeekArgument();
         channel = await ctx.MatchChannel();
         if (channel == null || channel.GuildId != ctx.Guild.Id) throw Errors.ChannelNotFound(channelString);
-        if (channel.Type != Channel.ChannelType.GuildText)
+        if (channel.Type != Channel.ChannelType.GuildText && channel.Type != Channel.ChannelType.GuildPublicThread)
             throw new PKError("PluralKit cannot log messages to this type of channel.");
 
         var perms = await _cache.PermissionsIn(channel.Id);

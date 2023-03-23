@@ -75,7 +75,7 @@ public class LogChannelService
 
         // Find log channel and check if valid
         var logChannel = await FindLogChannel(guildId, logChannelId.Value);
-        if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText) return null;
+        if (logChannel == null || logChannel.Type != Channel.ChannelType.GuildText && logChannel.Type != Channel.ChannelType.GuildPublicThread) return null;
 
         // Check bot permissions
         var perms = await GetPermissionsInLogChannel(logChannel);
