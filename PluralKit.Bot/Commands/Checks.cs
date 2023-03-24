@@ -247,6 +247,13 @@ public class Checks
         {
             _proxy.ShouldProxy(channel, msg, context);
             _matcher.TryMatch(context, autoproxySettings, members, out var match, msg.Content, msg.Attachments.Length > 0, true, ctx.Config.CaseSensitiveProxyTags);
+            
+            var canProxy = await _proxy.CanProxy(channel, msg, context);
+            if (canProxy != null)
+            {
+                await ctx.Reply(canProxy);
+                return;
+            }
 
             await ctx.Reply("I'm not sure why this message was not proxied, sorry.");
         }

@@ -29,4 +29,5 @@ public class MessageContext
     public bool AllowAutoproxy { get; }
     public int? LatchTimeout { get; }
     public bool CaseSensitiveProxyTags { get; }
+    public bool ProxyErrorMessageEnabled { get; }
 }
