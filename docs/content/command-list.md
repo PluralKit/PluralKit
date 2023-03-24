@@ -120,7 +120,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;switch delete all` - Deletes all logged switches.
 
 ## Autoproxy commands
-*`pk;ap` or `pk;auto` are shorthand for `pk;autproxy`*
+*`pk;ap` or `pk;auto` are shorthand for `pk;autoproxy`*
 - `pk;autoproxy off` - Disables autoproxying for your system in the current server.
 - `pk;autoproxy front` - Sets your system's autoproxy in this server to proxy the first member currently registered as front.
 - `pk;autoproxy latch` - Sets your system's autoproxy in this server to proxy the last manually proxied member.
