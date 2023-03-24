@@ -6,7 +6,7 @@ PluralKit is a Discord bot meant for plural communities. It has features like me
 PluralKit has a Discord server for support, feedback, and discussion: https://discord.gg/PczBt78 
 
 # Requirements
-Running the bot requires [.NET 5](https://dotnet.microsoft.com/download) and a PostgreSQL database. It should function on any system where the prerequisites are set up (including Windows).
+Running the bot requires [.NET 5](https://dotnet.microsoft.com/download), a PostgreSQL database and a Redis server. It should function on any system where the prerequisites are set up (including Windows).
 
 Optionally, it can integrate with [Sentry](https://sentry.io/welcome/) for error reporting and [InfluxDB](https://www.influxdata.com/products/influxdb-overview/) for aggregate statistics.
 
