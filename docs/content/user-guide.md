@@ -205,7 +205,7 @@ In such cases you can set the member's *display name*. Which will, well, display
 a display name using the `pk;member displayname` command, like so:
 
     pk;member Joanne displayname Jo
-    pk;m Skyler displayname Sky (they/them)
+    pk;m Skyler displayname Sky (he/him)
 
 To remove a display name, just use the same command with no last parameter, eg:
 
