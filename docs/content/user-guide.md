@@ -315,7 +315,7 @@ For example, if you want square brackets, the proxy example must be `[text]`. If
 
 You can now type a message enclosed in / prefixed by your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
 
-*⚠️ If you use `pk;member proxy` withoug "add", it will **replace** the proxy tag(s) for that member. `@PluralKit` will respond with a warning about this, and won't do it unless you click the `Replace` button on that message.*
+*⚠️ If you use `pk;member proxy` without "add", it will **replace** the proxy tag(s) for that member. `@PluralKit` will respond with a warning about this, and won't do it unless you click the `Replace` button on that message.*
 
 *⚠️ Currently, you can't use `<angle brackets>` as proxy tags, due to a bug where custom server emojis will (wrongly) be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)).*
 
