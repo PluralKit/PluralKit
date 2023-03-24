@@ -35,9 +35,9 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Non `pk;` commands
 
-- `\` disable autoproxying for this message only
-- `\\` clear latch status without disabling autoproxy
-- `[tag]` e.g. `S: message` if autoproxy is on, proxy this message, based on configured `member proxy` tags
+- `\` as a one-off exception, don't proxy this message, without changing latch/switch/autoproxy
+- `\\` don't proxy this message, and clear latch status, without disabling autoproxy
+- `[tag]` e.g. `S: message` if `pk;system proxy` is on, proxy this message, based on configured `pk;member proxy` tags
 
 ## System commands
 *To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
