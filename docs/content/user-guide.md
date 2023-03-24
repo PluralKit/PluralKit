@@ -9,16 +9,14 @@ sidebarDepth: 1
 
 # User Guide
 
-## Adding the bot to your server
-If you want to use PluralKit on a Discord server, you must first *add* it to the server in question. For this, you'll need the *Manage Server* permission on there.
+*:information_source: You can have a space after `pk;`; e.g. `pk;system` and `pk; system` will do the same thing.*
 
-Use this link to add the bot to your server:
+## Adding the bot to your server
+If you want to use PluralKit on a Discord server, someone with *Manage Server* permission must first *add* it to the server in question, using this link:
 
 [https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904](https://discord.com/oauth2/authorize?client_id=466378653216014359&scope=bot&permissions=536995904)
 
-Once you go through the wizard, the bot account will automatically join the server you've chosen. Please ensure the bot has the *Read Messages*, *Send Messages*, *Manage Messages*, *Attach Files* and *Manage Webhooks* permission in the channels you want it to work in. 
-
-*:information_source: You can have a space after `pk;`; e.g. `pk;system` and `pk; system` will do the same thing.*
+Once the server manager goes through the setup wizard, the bot account will automatically join the server. Please ensure the bot has the *Read Messages*, *Send Messages*, *Manage Messages*, *Attach Files* and *Manage Webhooks* permission in the channels you want it to work in. 
 
 ## System management
 In order to do most things with the PluralKit bot, you'll need to have a system registered with it. A *system* is a collection of *system members* that may be used by one or more *Discord accounts*.
