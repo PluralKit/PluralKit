@@ -773,7 +773,7 @@ To update a member's privacy you can use the command:
 
     pk;member <member> privacy <subject> <level>
 
-* `<member>` is the name or the id of a member in your system
+* `<member>` is the name or the ID of a member in your system
 * `<subject>` is one of:
   * `name`
   * `description`
