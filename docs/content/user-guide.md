@@ -121,7 +121,7 @@ If you'd like, you can set a *system time zone*, and as such every date and time
     pk;config timezone DE
     pk;config timezone 🇬🇧
 
-You can specify time zones in various ways. In regions with large amounts of time zones (eg. the Americas, Europe, etc),
+You can specify time zones in various ways. In regions with large amounts of time zones (e.g. the Americas, Europe, etc),
 specifying an exact time zone code is the best way. To get your local time zone code, visit [this site](https://xske.github.io/tz).
 You can see the full list [here, on Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (see the column *TZ database name*).
 You can also search by country code, either by giving the two-character [*ISO-3166-1 alpha-2* country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) (e.g. `GB` or `DE`), or just by a country flag emoji (e.g. `:flag_gb:` 🇬🇧 or `:flag_de:` 🇩🇪).
@@ -227,7 +227,7 @@ In the same way as a system can have a description, so can a member. You can set
     pk;member Joanne description Joanne is a very cool person, and you should give them hugs.
     
 As with system descriptions, the member description has a 1000 character length limit. 
-To clear a member description, use the command with no additional parameters (eg. `pk;member Joanne description`).
+To clear a member description, use the command with no additional parameters (e.g. `pk;member Joanne description`).
 
 ### Member color
 A system member can have an associated color value.
@@ -238,7 +238,7 @@ To set a member color, use the `pk;member color` command with [a hexadecimal col
     pk;member Jo color #ff0000
     pk;m Skyler color #87ceeb
 
-To clear a member color, use the command with no color code argument (eg. `pk;member Joanne color`).
+To clear a member color, use the command with no color code argument (e.g. `pk;member Joanne color`).
 
 ### Member avatar
 If you want your member to have an associated avatar to display on the member information card and on proxied messages, you can set the member avatar. To do so, use the `pk;member avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
@@ -250,7 +250,7 @@ To preview the current avatar (if one is set), use the command with no arguments
 
     pk;member Joanne avatar
     
-To clear your avatar, use the subcommand `avatar clear` (eg. `pk;member Joanne avatar clear`).
+To clear your avatar, use the subcommand `avatar clear` (e.g. `pk;member Joanne avatar clear`).
 
 #### Member proxy avatar
 If you want your member to have a different avatar for proxies messages than the one displayed on the member card, you can set a proxy avatar. To do so, use the `pk;member proxyavatar` command, in the same way as the normal avatar command above:
@@ -274,7 +274,7 @@ If you want to list a member's preferred pronouns, you can use the pronouns fiel
     pk;m "Craig Johnson" pronouns anything goes, really
     pk;m Skyler pronouns xe/xir, he/him, or they/them
 
-To remove a member's pronouns, use the command with no pronoun argument (eg. `pk;member Jo pronouns`).
+To remove a member's pronouns, use the command with no pronoun argument (e.g. `pk;member Jo pronouns`).
 
 ### Member birthdate 
 If you want to list a member's birthdate on their information card, you can set their birthdate through PluralKit using the `pk;member birthdate` command. Please use [ISO-8601 format](https://xkcd.com/1179/) (`YYYY-MM-DD`) for best results, like so:
@@ -287,7 +287,7 @@ You can also set a birthdate without a year, either in `MM-DD` format or `Month 
     pk;member Joanne birthdate 07-24
     pk;m "Craig Johnson" birthdate Feb 28
     
-To clear a birthdate, use the command with no birthday argument (eg. `pk;member Joanne birthdate`).
+To clear a birthdate, use the command with no birthday argument (e.g. `pk;member Joanne birthdate`).
 
 ### Deleting members
 If you want to delete a member, use the `pk;member delete` command, like so:
@@ -453,7 +453,7 @@ been sent from your own account.
 ### Anyone's messages
 
 #### Querying message information
-If you want information about a proxied message (eg. for moderation reasons), you can query the message for its sender account, system, member, etc.
+If you want information about a proxied message (e.g. for moderation reasons), you can query the message for its sender account, system, member, etc.
 
 You can
 * react to the message itself with the `:grey_question:` :grey_question: or `:question:` :question: emoji, which will DM you information about the message in question,
@@ -779,7 +779,7 @@ For example:
     pk;m Skyler privacy all private
 
 ## Importing and exporting data
-If you're a user of another proxy bot (eg. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands.
+If you're a user of another proxy bot (e.g. Tupperbox), or you want to import a saved system backup, you can use the importing and exporting commands.
 
 ### Importing from Tupperbox
 If you're a user of the *other proxying bot* Tupperbox, you can import system and member information from there. This is a fairly simple process:
