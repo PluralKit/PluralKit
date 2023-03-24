@@ -31,7 +31,7 @@ Some arguments indicate the use of specific Discord features. These include:
 :::
 
 # Commands
-*Space is allowed after `pk;`; e.g. `pk;system` and `pk; system` have the same effect.
+*Space is allowed after `pk;`; e.g. `pk;system` and `pk; system` have the same effect.*
 
 ## System commands
 *To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
