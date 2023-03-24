@@ -415,7 +415,7 @@ Since the messages will be posted by PluralKit's webhook, there's no way to edit
 #### Editing messages
 To edit a PluralKit-proxied message, reply to it with the command `pk;edit` (or as shorthand, `pk;e`) with the replacement text.
 
-If you want to edit your last message, you can leave out the reply.
+If you want to edit your last message in this channel, you can leave out the reply.
 
 For example:
 
@@ -427,7 +427,7 @@ For example:
 #### Reproxying messages
 If you are using [autoproxy](#autoproxy) and accidentally used the wrong proxy tag or forgot about your latch/switch status, reply to it with the command `pk;reproxy <member name>` (or as shorthand, `pk;rp`).
 
-If you want to reproxy your last message, you can leave out the reply.
+If you want to reproxy your last message in this channel, you can leave out the reply.
 
 For example:
 
@@ -447,8 +447,7 @@ to:
 *⚠️ This only works on your last message, or a message sent within the last 1 minute.*
 
 #### Deleting messages
-To delete a PluralKit-proxied message, you can react to it with the `:x:` :x: emoji. Note that this only works if the message has
-been sent from your own account.
+To delete a PluralKit-proxied message, react to it with the `:x:` :x: emoji.
 
 ### Anyone's messages
 
