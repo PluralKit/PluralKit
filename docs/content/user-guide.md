@@ -300,10 +300,12 @@ If you'd like to proxy a member in multiple ways (for example, a name or a nickn
 When proxying, you may then use any of the tags to proxy for that specific member.
 
 To add a proxy tag to a member, use the `pk;member proxy add` command:
+
     pk;member John proxy add {text}
     pk;member Craig proxy add C:text
     
 To remove a proxy tag from a member, use the `pk;member proxy remove` command:
+
     pk;member John proxy remove {text}
     pk;member Craig proxy remove C:text
 
