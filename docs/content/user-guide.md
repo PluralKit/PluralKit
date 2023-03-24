@@ -329,7 +329,7 @@ To add a proxy tag to a member, use the `pk;member proxy add` command:
 
     pk;member Alice proxy add A:text
     pk;m Joanne proxy add J:text
-    pk;m Craig proxy add C:text
+    pk;m "Craig Johnson" proxy add C:text
     pk;m Unknown proxy add ?text?
     pk;m Unknown proxy add 🤷text
 
