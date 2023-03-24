@@ -31,6 +31,8 @@ Some arguments indicate the use of specific Discord features. These include:
 :::
 
 # Commands
+*Space is allowed after `pk;`; e.g. `pk;system` and `pk; system` have the same effect.
+
 ## System commands
 *To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
 *`pk;s` is shorthand for `pk;system`*
@@ -59,7 +61,7 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Member commands
 *Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
-*`pk;b` is shorthand for `pk;member`*
+*`pk;m` is shorthand for `pk;member`*
 - `pk;member <member>` - Shows information about a member.
 - `pk;member new <name>` - Creates a new system member.
 - `pk;member <member> rename <new name>` - Changes the name of a member.
