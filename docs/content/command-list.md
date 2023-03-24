@@ -33,6 +33,12 @@ Some arguments indicate the use of specific Discord features. These include:
 # User commands
 *Space is allowed after `pk;`; e.g. `pk;system` and `pk; system` have the same effect.*
 
+## Non `pk;` commands
+
+- `\` disable autoproxying for this message only
+- `\\` clear latch status without disabling autoproxy
+- `[tag]` e.g. `S: message` if autoproxy is on, proxy this message, based on configured `member proxy` tags
+
 ## System commands
 *To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
 *`pk;s` is shorthand for `pk;system`*
