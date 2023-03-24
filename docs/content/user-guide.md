@@ -142,6 +142,7 @@ You can't do much with PluralKit without having registered members with your sys
 
     pk;member new John
     pk;member new Craig Smith
+    pk;member new Alice
     
 As the one exception to the rule above, if the name consists of multiple words you must *not* enclose it in double quotes.
 
@@ -284,8 +285,9 @@ which member to proxy as. Common proxy tags include `[square brackets]`, `{curly
 To set a proxy tag, use the `pk;member proxy` command on the member in question. You'll need to provide a "proxy example", containing the word `text`.
 For example, if you want square brackets, the proxy example must be `[text]`. If you want a letter prefix, make it something like `A:text`. For example:
 
-    pk;member John proxy [text]
+    pk;member Alice proxy A:text
     pk;member "Craig Johnson" proxy {text}
+    pk;member John proxy [text]
     pk;member John proxy J:text
     
 You can have any proxy tags you want, including one containing emojis.
@@ -371,7 +373,26 @@ In other words, it means proxy tags become "sticky". This will carry over across
 To enable latch-mode autoproxying for a given server, use the following command:
 
     pk;autoproxy latch
-    
+
+To set the latched member, use their proxy tags. To disable autoproxy for a single message, start a message with one backslash (`\`). To clear the current latched member, start a message with two backslashes (`\\`).
+
+For example, using [Alice and John in the example above](#setting-up-proxy-tags):
+
+    pk;autoproxy latch
+    I haven't used a tag yet, so this message comes from @Craig#5432
+    A: hello, this is Alice via autoproxy (using an explicit prefix tag)
+    this is still Alice (using latch without tag)
+    \I'm sending this message one-off as @Craig#5432
+    but I'm still latched! (this also is sent from Alice via autoproxy)
+    [hello, this is John, using autoproxy and a surround tag]
+    still John on latch!
+    J: I could use my prefix or surround tags if I want, but don't have to
+    because the last time I used a tag, I used mine (John's)
+    \\now I'm clearing latch; this is from @Craig#5432
+    and still from @Craig#5432 because latch is cleared
+    A: but autoproxy is still on
+    so now I'm back to Alice
+
 #### Member mode 
 This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
 
