@@ -364,7 +364,7 @@ use a different proxy bot there), you can use the commands:
     pk;system proxy off
     pk;s proxy on
 
-## Results so far
+### Results so far
 
 Using the examples so far (ignoring the remove commands), if you run `pk;system list @Craig#5432`, PluralKit will now output something like this:
 
