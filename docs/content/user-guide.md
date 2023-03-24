@@ -305,6 +305,10 @@ For example, if you want square brackets, the proxy example must be `[text]`. If
     pk;member Jo proxy [text]
     pk;member Skyler proxy S:text
 
+You can now type a message enclosed in / prefixed by your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
+
+⚠️ Currently, you can't use `<angle brackets>` as proxy tags, due to a bug where custom server emojis will (wrongly) be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)).
+
 ### Using multiple distinct proxy tag pairs
 If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc), you can add multiple tag pairs.
 When proxying, you may then use any of the tags to proxy for that specific member.
@@ -320,11 +324,6 @@ To add a proxy tag to a member, use the `pk;member proxy add` command:
 To make proxy tags case-insensitive, use:
 
     pk;config proxy case off
-
-You can now type a message enclosed in / prefixed by your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
-
-**NB:** If you want `<angle brackets>` as proxy tags, there is currently a bug where custom server emojis will (wrongly)
-be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)). The current workaround is to use different proxy tags.
 
 ### Removing tags
     
@@ -373,7 +372,7 @@ and `pk;system list full @Craig#5432` will output something like this:
 
     Joanne
     ID: qazws
-    Display name: Jo
+    Display name: AdminJo
     Pronouns: she/them
     Birthdate: 1996-07-24 
     Proxy tags: tags [text], J:text
