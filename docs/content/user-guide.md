@@ -312,15 +312,18 @@ For example, if you want square brackets, the proxy example must be `[text]`. If
     pk;m "Craig Johnson" proxy {text}
     pk;m Jo proxy [text]
     pk;m Skyler proxy S:text
-
+    pk;m Unknown proxy 🤷🤷text
+    
 You can now type a message enclosed in / prefixed by your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
+
+*:information_source: Prefix tags don't have to use `:`. And you can have endfix-only tags if you want. `Unknown` in this example uses both. Just make sure that the tag isn't something you'll use in regular messages without intending to proxy as that member, like how `Unknown` uses a double shrug emoji for tag, rather than a single shrug that someone else might type.*
 
 *:warning: If you use `pk;member proxy` without "add", it will **replace** the proxy tag(s) for that member. PluralKit will respond with a warning about this, and won't do it unless you click the `Replace` button on that message.*
 
 *:warning: Currently, you can't use `<angle brackets>` as proxy tags, due to a bug where custom server emojis will (wrongly) be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)).*
 
 ### Using multiple distinct proxy tag pairs
-If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc), you can add multiple tag pairs.
+If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc.), you can add multiple tags.
 When proxying, you may then use any of the tags to proxy for that specific member.
 
 To add a proxy tag to a member, use the `pk;member proxy add` command:
@@ -329,7 +332,7 @@ To add a proxy tag to a member, use the `pk;member proxy add` command:
     pk;m Joanne proxy add J:text
     pk;m "Craig Johnson" proxy add C:text
     pk;m Unknown proxy add ?text?
-    pk;m Unknown proxy add 🤷text
+    pk;m Unknown proxy add text🤷🤷
 
 To make proxy tags case-insensitive, use:
 
@@ -351,8 +354,8 @@ Turning the option off is similar - replace "on" with "off" in the command. The 
 a member with multiple proxy tags, the proxy tag used to trigger a given proxy will be included.
 
 The practical effect of this is:
-* **Keep proxy tags on:** `[Message goes here]` -> [Message goes here]
-* **Keep proxy tags off:** `[Message goes here]` -> Message goes here 
+* **Keep proxy tags on:** `[Message goes here]` typed -> `[Message goes here]` displayed
+* **Keep proxy tags off:** `[Message goes here]` typed -> `Message goes here` displayed
 
 ### Disabling proxying on a per-server basis
 If you need to disable or re-enable proxying messages for your system entirely in a specific server (for example, if you'd like to
@@ -370,7 +373,7 @@ Using the examples so far (ignoring the remove commands), if you run `pk;system 
     [bjeoi] Craig Johnson ({text}, C:text)
     [qazws] Joanne (tags [text], J:text)
     [wefje] Skyler (S:text)
-    [nxzpa] Unknown (?text?, 🤷text)
+    [nxzpa] Unknown (?text?, 🤷🤷text, text🤷🤷)
     Sorting by name. 5 results.
 
 and `pk;system list full @Craig#5432` will output something like this:
@@ -402,7 +405,7 @@ and `pk;system list full @Craig#5432` will output something like this:
 
     Unknown
     ID: nxzpa
-    Proxy tags: ?text?, 🤷text
+    Proxy tags: ?text?, 🤷🤷text, text🤷🤷
 
     Sorting by name. 5 results.
 
@@ -561,7 +564,7 @@ For example, using [the setup example above](#setting-up-proxy-tags), `@Craig#54
     because the last time I used a tag, I used mine (Jo's)
     \\now I'm clearing latch; this is from @Craig#5432
     and now new messages will be from @Craig#5432 because latch is cleared
-    🤷 but autoproxy is still on
+    but autoproxy is still on🤷🤷
     so this is Unknown
 
 and the result will look like this:
