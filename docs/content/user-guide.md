@@ -556,7 +556,7 @@ For example, using [the setup example above](#setting-up-proxy-tags), `@Craig#54
     this is still Alice (using latch without tag)
     \I'm sending this message one-off as @Craig#5432, without proxy
     but I'm still latched! (this also is sent from Alice via autoproxy)
-    [hello, this is Joanne, using autoproxy and a surround tag]
+    [hello, this is Joanne, using autoproxy and a surround tag; notice that I have `keepproxy on`]
     still Jo on latch!
     j: I could use my prefix or surround tags if I want, but don't have to
     because the last time I used a tag, I used mine (Jo's)
@@ -573,9 +573,9 @@ and the result will look like this:
     Alice: this is still Alice (using latch without tag)
     @Craig#5432: I'm sending this message one-off as @Craig#5432, without proxy
     Alice: but I'm still latched! (this also is sent from Alice via autoproxy)
-    AdminJo: hello, this is Joanne, using autoproxy and a surround tag
+    AdminJo: [hello, this is Joanne, using autoproxy and a surround tag; notice that I have `keepproxy on`]
     AdminJo: still Jo on latch!
-    AdminJo: I could use my prefix or surround tags if I want, but don't have to
+    AdminJo: j: I could use my prefix or surround tags if I want, but don't have to
     AdminJo: because the last time I used a tag, I used mine (Jo's)
     @Craig#5432: now I'm clearing latch; this is from @Craig#5432
     @Craig#5432: and now new messages will be from @Craig#5432 because latch is cleared
