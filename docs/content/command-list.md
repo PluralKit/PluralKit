@@ -30,7 +30,7 @@ Some arguments indicate the use of specific Discord features. These include:
 ![Upload example](./assets/upload_arg.png)
 :::
 
-# Commands
+# User commands
 *Space is allowed after `pk;`; e.g. `pk;system` and `pk; system` have the same effect.*
 
 ## System commands
@@ -128,18 +128,6 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;config autoproxy account [on|off]` - Toggles autoproxy globally for the current account.
 - `pk;config proxy case [on|off]` - Toggles case sensitive proxy tags for your system.
 
-## Server owner commands
-*All commands here require Manage Server permission.*
-- `pk;log channel` - Shows the currently set log channel
-- `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
-- `pk;log channel -clear` - Clears the currently set log channel.
-- `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
-- `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
-- `pk;log show` - Displays the current list of channels where logging is disabled.
-- `pk;logclean <on|off>` - Enables or disables [log cleanup](/staff/compatibility/#log-cleanup).
-- `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
-- `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
-
 ## Utility
 - `pk;message <message id|message link|reply>` or `pk;msg` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Sends the bot invite link for PluralKit.
@@ -152,12 +140,6 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;link <account>` - Links your system to a different account.
 - `pk;unlink [account]` - Unlinks an account from your system.
 
-## API
-*(for using the [PluralKit API](/api), useful for developers)*
-- `pk;token` - DMs you a token for using the PluralKit API.
-- `pk;token refresh` - Refreshes your API token and invalidates the old one.
-- `pk;s webhook [url]` - Shows or updates the [dispatch webhook](/api/dispatch) URL for your system.
-
 ## Help
 - `pk;help` or `pk;h` - Displays a basic help message describing how to use the bot.
 - `pk;help proxy` - Directs you to [this page](/guide/#proxying).
@@ -165,3 +147,21 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;member help` - Lists member-related commands.
 - `pk;switch help` - Lists switch-related commands.
 - `pk;commands` or `pk;c` or `pk;cmd` - Shows inline command documentation, or directs you to this page.
+
+# Server owner commands
+*All commands here require Manage Server permission.*
+- `pk;log channel` - Shows the currently set log channel
+- `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
+- `pk;log channel -clear` - Clears the currently set log channel.
+- `pk;log disable <#channel> [#channel...]` - Disables logging messages posted in the given channel(s) (useful for staff channels and such).
+- `pk;log enable <#channel> [#channel...]` - Re-enables logging messages posted in the given channel(s).
+- `pk;log show` - Displays the current list of channels where logging is disabled.
+- `pk;logclean <on|off>` - Enables or disables [log cleanup](/staff/compatibility/#log-cleanup).
+- `pk;blacklist add <#channel> [#channel...]` - Adds the given channel(s) to the proxy blacklist (proxying will be disabled here)
+- `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
+
+# API commands
+*(for using the [PluralKit API](/api), useful for developers)*
+- `pk;token` - DMs you a token for using the PluralKit API.
+- `pk;token refresh` - Refreshes your API token and invalidates the old one.
+- `pk;s webhook [url]` - Shows or updates the [dispatch webhook](/api/dispatch) URL for your system.
