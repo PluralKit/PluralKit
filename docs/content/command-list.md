@@ -33,6 +33,7 @@ Some arguments indicate the use of specific Discord features. These include:
 # Commands
 ## System commands
 *To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
+*`pk;s` is shorthand for `pk;system`*
 - `pk;system [system]` - Shows information about a system.
 - `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system [system] rename [new name]` - Changes the name of your system.
@@ -58,6 +59,7 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Member commands
 *Replace `<member>` with a member's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+*`pk;b` is shorthand for `pk;member`*
 - `pk;member <member>` - Shows information about a member.
 - `pk;member new <name>` - Creates a new system member.
 - `pk;member <member> rename <new name>` - Changes the name of a member.
@@ -83,6 +85,7 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Group commands
 *Replace `<group>` with a group's name, 5-character ID or display name. For most commands, adding `-clear` will clear/delete the field.*
+*`pk;g` is shorthand for `pk;group`*
 - `pk;group <group>` - Shows information about a group.
 - `pk;group new <name>` - Creates a new group.
 - `pk;group list` - Lists all groups in your system.
@@ -100,20 +103,23 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;group <group> id` - Prints a group's id. 
 
 ## Switching commands
+*`pk;sw` is shorthand for `pk;switch`*
 - `pk;switch [member...]` - Registers a switch with the given members.
 - `pk;switch out` - Registers a 'switch-out' - a switch with no associated members.
-- `pk;switch edit <member...|out>` - Edits the members in the latest switch. 
+- `pk;switch edit <member...|out>` - Edits the members in the latest switch. Only works within 10 minutes of the edited message.
 - `pk;switch move <time>` - Moves the latest switch backwards in time.
 - `pk;switch delete` - Deletes the latest switch.
 - `pk;switch delete all` - Deletes all logged switches.
 
 ## Autoproxy commands
+*`pk;ap` or `pk;auto` are shorthand for `pk;autproxy`*
 - `pk;autoproxy off` - Disables autoproxying for your system in the current server.
 - `pk;autoproxy front` - Sets your system's autoproxy in this server to proxy the first member currently registered as front.
 - `pk;autoproxy latch` - Sets your system's autoproxy in this server to proxy the last manually proxied member.
 - `pk;autoproxy \<member>` - Sets your system's autoproxy in this server to proxy a specific member.
 
 ## Config commands
+*`pk;cfg` is shorthand for `pk;config`*
 - `pk;config timezone [location]` - Changes the time zone of your system.
 - `pk;config ping <enable|disable>` - Changes your system's ping preferences.
 - `pk;config autoproxy timeout [<duration>|off|reset]` - Sets the latch timeout duration for your system.
@@ -121,7 +127,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;config proxy case [on|off]` - Toggles case sensitive proxy tags for your system.
 
 ## Server owner commands
-*(all commands here require Manage Server permission)*
+*All commands here require Manage Server permission.*
 - `pk;log channel` - Shows the currently set log channel
 - `pk;log channel <channel>` - Sets the given channel to log all proxied messages.
 - `pk;log channel -clear` - Clears the currently set log channel.
@@ -133,14 +139,14 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;blacklist remove <#channel> [#channel...]` - Removes the given channel(s) from the proxy blacklist.
 
 ## Utility
-- `pk;message <message id|message link|reply>` - Looks up information about a proxied message by its message ID or link.
+- `pk;message <message id|message link|reply>` or `pk;msg` - Looks up information about a proxied message by its message ID or link.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
 - `pk;debug permissions [server id]` - [Checks the given server's permission setup](/staff/permissions/#permission-checker-command) to check if it's compatible with PluralKit.
 - `pk;debug proxying <message link|reply>` - Checks why your message has not been proxied.
-- `pk;edit [message link|reply] <new content>` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
-- `pk;reproxy [message link|reply] <member name|ID>` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel.
+- `pk;edit [message link|reply] <new content>` or `pk;e` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
+- `pk;reproxy [message link|reply] <member name|ID>` or `pk;rp` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel. Only works on the last message, or within 1 minute of the reproxied message. Doesn't work on a non-proxied message.
 - `pk;link <account>` - Links your system to a different account.
 - `pk;unlink [account]` - Unlinks an account from your system.
 
@@ -151,9 +157,9 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;s webhook [url]` - Shows or updates the [dispatch webhook](/api/dispatch) URL for your system.
 
 ## Help
-- `pk;help` - Displays a basic help message describing how to use the bot.
+- `pk;help` or `pk;h` - Displays a basic help message describing how to use the bot.
 - `pk;help proxy` - Directs you to [this page](/guide/#proxying).
 - `pk;system help` - Lists system-related commands.
 - `pk;member help` - Lists member-related commands.
 - `pk;switch help` - Lists switch-related commands.
-- `pk;commands` - Shows inline command documentation, or directs you to this page.
+- `pk;commands` or `pk;c` or `pk;cmd` - Shows inline command documentation, or directs you to this page.
