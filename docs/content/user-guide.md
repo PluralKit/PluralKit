@@ -141,7 +141,7 @@ In order to do most things related to PluralKit, you need to work with *system m
 
 Most member commands follow the format of `pk;member MemberName verb Parameter`. Note that if a member's name has multiple words, you'll need to enclose it in "double quotes" throughout the commands below (_except_ for `pk;member new`).
 
-*:information_source: For all memer commands, you can use either the member name or display name, but not the proxy tag.*
+*:information_source: For all member commands, you can use either the member name or display name, but not the proxy tag.*
 
 ### Creating a member
 You can't do much with PluralKit without having registered members with your system, but doing so is quite simple - just use the `pk;member new` command followed by the member's name, like so:
