@@ -21,6 +21,8 @@ Once you go through the wizard, the bot account will automatically join the serv
 ## System management
 In order to do most things with the PluralKit bot, you'll need to have a system registered with it. A *system* is a collection of *system members* that may be used by one or more *Discord accounts*.
 
+These examples are for the user `@Craig#5432`, who has headmates Alice, Craig Johnson (formerly Craig Smith), Joanne (formerly John, aka Jo), Skyler, and Unknown.
+
 ### Creating a system
 If you do not already have a system registered, use the following command to create one:
 
@@ -34,7 +36,7 @@ Optionally, you can attach a *system name*, which will be displayed in various i
 To view information about your own system, simply type:
 
     pk;system
-    
+
 To view information about *a different* system, there are a number of ways to do so. You can either look up a system by @mention, by account ID, or by system ID. For example:
 
     pk;system @Craig#5432
@@ -67,19 +69,17 @@ a system tag. Note that emojis *are* supported! To set one, use the `pk;system t
     pk;system tag | The Boys
     pk;system tag (Test System)
     pk;system tag 🛰️
-    
+
 If you want to remove your system tag, just type `pk;system tag` with no extra parameters.
 
 **NB:** When proxying, the *total webhook username* must be 32 characters or below. As such, if you have a long system name, your tag might be enough
 to bump it over that limit. PluralKit will warn you if you have a member name/tag combination that will bring the combined username above the limit.
 You can either make the member name or the system tag shorter to solve this. 
     
-### System server tags
+#### System server tags
 If you'd like to set a system tag (as above), but only for a specific server, you can set the *system server tag*. This will override the global system tag, but only in the server you set it in. For example:
 
-```
-pk;system servertag 🛰️
-```
+    pk;system servertag 🛰️
 
 The server tag applies to the same server you run the command in, so this command doesn't function in DMs.
 
@@ -110,19 +110,19 @@ You may not remove the only account linked to a system, as that would leave the 
 ### Setting a system time zone
 PluralKit defaults to showing dates and times in [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). 
 If you'd like, you can set a *system time zone*, and as such every date and time displayed in PluralKit
-(on behalf of your system) will be in the system time zone. To do so, use the `pk;system timezone` command, like so:
+(on behalf of your system) will be in the system time zone. To do so, use the `pk;config timezone` command with a time zone name, time zone code, country code, or country emoji, like so:
 
-    pk;system timezone Europe/Copenhagen
-    pk;system timezone America/New_York
-    pk;system timezone DE
-    pk;system timezone 🇬🇧
+    pk;config timezone Europe/Copenhagen
+    pk;config timezone America/New_York
+    pk;config timezone DE
+    pk;config timezone 🇬🇧
     
 You can specify time zones in various ways. In regions with large amounts of time zones (eg. the Americas, Europe, etc),
 specifying an exact time zone code is the best way. To get your local time zone code, visit [this site](https://xske.github.io/tz).
 You can see the full list [here, on Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (see the column *TZ database name*).
 You can also search by country code, either by giving the two-character [*ISO-3166-1 alpha-2* country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) (e.g. `GB` or `DE`), or just by a country flag emoji (e.g. `:flag_gb:` 🇬🇧 or `:flag_de:` 🇩🇪).
 
-To clear a time zone, type `pk;system timezone` without any parameters. 
+To clear a time zone, type `pk;config timezone` without any parameters. 
 
 ### Deleting a system
 If you want to delete your own system, simply use the command:
@@ -135,7 +135,7 @@ You will need to verify by typing the system's ID when the bot prompts you to - 
 
 In order to do most things related to PluralKit, you need to work with *system members*.
 
-Most member commands follow the format of `pk;member MemberName verb Parameter`. Note that if a member's name has multiple words, you'll need to enclose it in "double quotes" throughout the commands below.
+Most member commands follow the format of `pk;member MemberName verb Parameter`. Note that if a member's name has multiple words, you'll need to enclose it in "double quotes" throughout the commands below (_except_ for `pk;member new`).
 
 ### Creating a member
 You can't do much with PluralKit without having registered members with your system, but doing so is quite simple - just use the `pk;member new` command followed by the member's name, like so:
@@ -143,8 +143,14 @@ You can't do much with PluralKit without having registered members with your sys
     pk;member new John
     pk;member new Craig Smith
     pk;member new Alice
-    
-As the one exception to the rule above, if the name consists of multiple words you must *not* enclose it in double quotes.
+    pk;member new Unknown
+    pk;member new Skyler
+
+`@PluralKit` will respond with a confirmation and the member ID code, like so:
+
+    PluralKit: ✅ Member "John" (qazws) registered! 
+
+⚠️ As the one exception to the rule above, if the name consists of multiple words you must *not* enclose it in double quotes.
 
 ### Looking up member info
 To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5-character *member ID*, or by their *display name*, like so:
@@ -161,7 +167,15 @@ To list all the members in a system, use the `pk;system list` command. This will
     pk;system list
     pk;system @Craig#5432 list
     pk;system qazws list
-    
+
+If you run `pk;system info @Craig#5432` after the example setup so far, `@PluralKit` will output something like this:
+
+    My System Name
+    | Tag | Linked accounts       | Members (5) |
+    |-----|-----------------------|-------------|
+    |  🛰️  | Craig#5432 (@Craig 🛰️) | (see pk;system abcde list or pk;system abcde list full) |        
+    System ID: abcde | Created on 2023-03-16 00:01:52 GMT
+        
 If you want a more detailed list, with fields such as pronouns and description, add the word `full` to the end of the command, like so:
 
     pk;system list full
@@ -173,7 +187,7 @@ If you want to change the name of a member, you can use the `pk;member rename` c
 
     pk;member John rename Joanne
     pk;member "Craig Smith" rename "Craig Johnson"
-    
+
 ### Member display names
 Normally, when proxying a member, the name displayed in the proxied message will be the member's name. However, in some cases
 you may want to display a different name. For example, you may want to include a member's pronouns inside the proxied name,
@@ -182,95 +196,95 @@ indicate a subsystem, include emojis or symbols that don't play nice with the co
 In such cases you can set the member's *display name*. Which will, well, display that name instead. You can set
 a display name using the `pk;member displayname` command, like so:
 
-    pk;member John displayname Jonathan
-    pk;member Robert displayname Bob (he/him)
-    
+    pk;member Joanne displayname Jo
+    pk;member Skyler displayname Sky (they/them)
+
 To remove a display name, just use the same command with no last parameter, eg:
 
-    pk;member John displayname
-    
+    pk;member Joanne displayname
+
 This will remove the display name, and thus the member will be proxied with their canonical name.
 
-### Member server display names
+#### Member server display names
 If you'd like to set a display name (as above), but only for a specific server, you can set the member's *server display name*.
 This functions just like global display names, but only in the same server you set them in. For example:
 
-    pk;member John servername AdminJohn
+    pk;member Joanne servername AdminJo
     
 The server name applies to the same server you run the command in, so naturally this command doesn't function in DMs (as you cannot proxy in DMs).
     
 ### Member description
 In the same way as a system can have a description, so can a member. You can set a description using the `pk;member description` command, like so:
 
-    pk;member John description John is a very cool person, and you should give him hugs.
+    pk;member Joanne description Joanne is a very cool person, and you should give them hugs.
     
 As with system descriptions, the member description has a 1000 character length limit. 
-To clear a member description, use the command with no additional parameters (eg. `pk;member John description`).
+To clear a member description, use the command with no additional parameters (eg. `pk;member Joanne description`).
 
 ### Member color
 A system member can have an associated color value.
 This color is *not* displayed as a name color on proxied messages due to a Discord limitation,
 but it's shown in member cards, and it can be used in third-party apps, too.
-To set a member color, use the `pk;member color` command with [a hexadecimal color code](https://htmlcolorcodes.com/), like so:
+To set a member color, use the `pk;member color` command with [a hexadecimal color code](https://htmlcolorcodes.com/), like so, using either the member name or display name:
 
-    pk;member John color #ff0000
-    pk;member John color #87ceeb
-    
-To clear a member color, use the command with no color code argument (eg. `pk;member John color`).
+    pk;member Jo color #ff0000
+    pk;member Skyler color #87ceeb
+
+To clear a member color, use the command with no color code argument (eg. `pk;member Joanne color`).
 
 ### Member avatar
 If you want your member to have an associated avatar to display on the member information card and on proxied messages, you can set the member avatar. To do so, use the `pk;member avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
 
-    pk;member John avatar http://placebeard.it/512.jpg
+    pk;member Jo avatar http://placebeard.it/512.jpg
     pk;member "Craig Johnson" avatar   (with an attached image)
     
 To preview the current avatar (if one is set), use the command with no arguments:
 
-    pk;member John avatar
+    pk;member Joanne avatar
     
-To clear your avatar, use the subcommand `avatar clear` (eg. `pk;member John avatar clear`).
+To clear your avatar, use the subcommand `avatar clear` (eg. `pk;member Joanne avatar clear`).
 
-### Member proxy avatar
+#### Member proxy avatar
 If you want your member to have a different avatar for proxies messages than the one displayed on the member card, you can set a proxy avatar. To do so, use the `pk;member proxyavatar` command, in the same way as the normal avatar command above:
 
-    pk;member John avatar
-    pk;member John proxyavatar http://placebeard.it/512.jpg
+    pk;member Joanne avatar
+    pk;member Joanne proxyavatar http://placebeard.it/512.jpg
     pk;member "Craig Johnson" proxyavatar    (with an attached image)
 
-### Member server avatar
+#### Member server avatar
 You can also set an avatar for a specific server. This will "override" the normal avatar, and will be used when proxying messages and looking up member cards in that server. To do so, use the `pk;member serveravatar` command, in the same way as the normal avatar command above:
 
-    pk;member John serveravatar
-    pk;member John serveravatar http://placebeard.it/512.jpg
+    pk;member Joanne serveravatar
+    pk;member Joanne serveravatar http://placebeard.it/512.jpg
     pk;member "Craig Johnson" serveravatar   (with an attached image)
-    pk;member John serveravatar clear
+    pk;member Joanne serveravatar clear
 
 ### Member pronouns
 If you want to list a member's preferred pronouns, you can use the pronouns field on a member profile. This is a free text field, so you can put whatever you'd like in there (with a 100 character limit), like so:
 
-    pk;member John pronouns he/him
+    pk;member Joanne pronouns she/them
     pk;member "Craig Johnson" pronouns anything goes, really
     pk;member Skyler pronouns xe/xir or they/them
 
-To remove a member's pronouns, use the command with no pronoun argument (eg. `pk;member John pronouns`).
+To remove a member's pronouns, use the command with no pronoun argument (eg. `pk;member Jo pronouns`).
 
 ### Member birthdate 
 If you want to list a member's birthdate on their information card, you can set their birthdate through PluralKit using the `pk;member birthdate` command. Please use [ISO-8601 format](https://xkcd.com/1179/) (`YYYY-MM-DD`) for best results, like so:
 
-    pk;member John birthdate 1996-07-24
+    pk;member Jo birthdate 1996-07-24
     pk;member "Craig Johnson" birthdate 2004-02-28
-    
+
 You can also set a birthdate without a year, either in `MM-DD` format or `Month Day` format, like so:
 
-    pk;member John birthdate 07-24
+    pk;member Joanne birthdate 07-24
     pk;member "Craig Johnson" birthdate Feb 28
     
-To clear a birthdate, use the command with no birthday argument (eg. `pk;member John birthdate`).
+To clear a birthdate, use the command with no birthday argument (eg. `pk;member Joanne birthdate`).
 
 ### Deleting members
 If you want to delete a member, use the `pk;member delete` command, like so:
 
-    pk;member John delete
+    pk;member Joanne delete
     
 You'll need to confirm the deletion by replying with the member's ID when the bot asks you to - this is to avoid accidental deletion.
 
@@ -287,15 +301,9 @@ To set a proxy tag, use the `pk;member proxy` command on the member in question.
 For example, if you want square brackets, the proxy example must be `[text]`. If you want a letter or emoji prefix, make it something like `A:text` or `🏳️‍🌈:text`. For example:
 
     pk;member Alice proxy ✨:text
-    pk;member Alice proxy A:text
     pk;member "Craig Johnson" proxy {text}
-    pk;member John proxy [text]
-    pk;member John proxy J:text
-
-You can now type a message enclosed in your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
-
-**NB:** If you want `<angle brackets>` as proxy tags, there is currently a bug where custom server emojis will (wrongly)
-be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)). The current workaround is to use different proxy tags.
+    pk;member Jo proxy [text]
+    pk;member Skyler proxy S:text
 
 ### Using multiple distinct proxy tag pairs
 If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc), you can add multiple tag pairs.
@@ -303,18 +311,32 @@ When proxying, you may then use any of the tags to proxy for that specific membe
 
 To add a proxy tag to a member, use the `pk;member proxy add` command:
 
-    pk;member John proxy add {text}
+    pk;member Alice proxy add A:text
+    pk;member Joanne proxy add J:text
     pk;member Craig proxy add C:text
+    pk;member Unknown proxy add ?text?
+    pk;member Unknown proxy add 🤷text
+
+To make proxy tags case-insensitive, use:
+
+    pk;config proxy case off
+
+You can now type a message enclosed in / prefixed by your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
+
+**NB:** If you want `<angle brackets>` as proxy tags, there is currently a bug where custom server emojis will (wrongly)
+be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)). The current workaround is to use different proxy tags.
+
+### Removing tags
     
 To remove a proxy tag from a member, use the `pk;member proxy remove` command:
 
-    pk;member John proxy remove {text}
-    pk;member Craig proxy remove C:text
+    pk;member Joanne proxy remove [text]
+    pk;member "Craig Johnson" proxy remove C:text
 
 ### Keeping your proxy tags
 If you'd like your proxied messages to include the proxy tags, you can enable the "keep proxy tags" option for a given member, like so:
 
-    pk;member John keepproxy on
+    pk;member Joanne keepproxy on
 
 Turning the option off is similar - replace "on" with "off" in the command. The default value for every member is off. When proxying
 a member with multiple proxy tags, the proxy tag used to trigger a given proxy will be included.
@@ -322,6 +344,54 @@ a member with multiple proxy tags, the proxy tag used to trigger a given proxy w
 The practical effect of this is:
 * **Keep proxy tags on:** `[Message goes here]` -> [Message goes here]
 * **Keep proxy tags off:** `[Message goes here]` -> Message goes here 
+
+## Results so far
+
+Using the examples so far (ignoring the remove commands), if you run `pk;system list @Craig#5432`, `@PluralKit` will now output something like this:
+
+    Members of My System Name (abcde)
+    [eafas] Alice (✨:text, A:text)
+    [bjeoi] Craig Johnson ({text}, C:text)
+    [qazws] Joanne (tags [text], J:text)
+    [wefje] Skyler (S:text)
+    [nxzpa] Unknown (?text?, 🤷text)
+    Sorting by name. 4 results.
+
+and `pk;system list full @Craig#5432` will output something like this:
+
+    Members of My System Name (abcde)
+
+    Alice
+    ID: eafas
+    Proxy tags: ✨:text, A:text
+
+    Craig Johnson
+    ID: bjfeoi
+    Pronouns: anything goes, really
+    Birthdate: 2004-02-28
+    Proxy tags: {text}, C:text
+
+    Joanne
+    ID: qazws
+    Display name: Jo
+    Pronouns: she/them
+    Birthdate: 1996-07-24 
+    Proxy tags: tags [text], J:text
+
+    Skyler
+    ID: wefje
+    Display name: Sky (he/him)
+    Pronouns xe/xir or they/them
+    Proxy tags: S:text
+
+    Unknown
+    ID: nxzpa
+    Proxy tags: ?text?, 🤷text
+
+    Sorting by name. 5 results.
+
+
+## Interacting with proxied messages
 
 ### Querying message information
 If you want information about a proxied message (eg. for moderation reasons), you can query the message for its sender account, system, member, etc.
@@ -361,13 +431,13 @@ To disable autoproxy for a single message, add a backslash (`\`) to the beginnin
 :::
 
 #### Front mode
-This autoproxy mode will proxy messages as the current *first* fronter of the system. If you register a switch with `Alice` and `Bob`, messages without proxy tags will be autoproxied as `Alice`.
+This autoproxy mode will proxy messages as the current *first* fronter of the system. If you register a switch with `Alice` and `Skyler`, messages without proxy tags will be autoproxied as `Alice`.
 To enable front-mode autoproxying for a given server, use the following command:
 
     pk;autoproxy front
     
 #### Latch mode
-This autoproxy mode will essentially "continue" previous proxy tags. If you proxy a message with `Alice`'s proxy tags, messages posted afterwards will be proxied as Alice. Proxying again with someone else's proxy tags, say, `Bob`, will cause messages *from then on* to be proxied as Bob.
+This autoproxy mode will essentially "continue" previous proxy tags. If you proxy a message with `Alice`'s proxy tags, messages posted afterwards will be proxied as Alice. Proxying again with someone else's proxy tags, say, `Skyler`, will cause messages *from then on* to be proxied as Skyler.
 In other words, it means proxy tags become "sticky". This will carry over across all channels in the same server.
 
 To enable latch-mode autoproxying for a given server, use the following command:
@@ -375,23 +445,6 @@ To enable latch-mode autoproxying for a given server, use the following command:
     pk;autoproxy latch
 
 To set the latched member, use their proxy tags. To disable autoproxy for a single message, start a message with one backslash (`\`). To clear the current latched member, start a message with two backslashes (`\\`).
-
-For example, using [Alice and John in the setup example above](#setting-up-proxy-tags):
-
-    pk;autoproxy latch
-    I haven't used a tag yet, so this message comes from @Craig#5432
-    ✨: hello, this is Alice via autoproxy (using an explicit prefix tag)
-    this is still Alice (using latch without tag)
-    \I'm sending this message one-off as @Craig#5432, without proxy
-    but I'm still latched! (this also is sent from Alice via autoproxy)
-    [hello, this is John, using autoproxy and a surround tag]
-    still John on latch!
-    J: I could use my prefix or surround tags if I want, but don't have to
-    because the last time I used a tag, I used mine (John's)
-    \\now I'm clearing latch; this is from @Craig#5432
-    and now new messages will be from @Craig#5432 because latch is cleared
-    A: but autoproxy is still on
-    so now I'm back to Alice
 
 #### Member mode 
 This autoproxy mode will autoproxy for a specific selected member, irrelevant of past proxies or fronters.
@@ -440,6 +493,41 @@ To re-enable autoproxy for the current account, use the following command:
 This subcommand can also be run in DMs.
 :::
 
+### Example usage
+
+For example, using [the setup example above](#setting-up-proxy-tags), `@Craig#5432` can type this:
+
+    pk;autoproxy latch
+    I haven't used a tag yet, so this message comes from @Craig#5432
+    ✨: hello, this is Alice via autoproxy (using an explicit prefix tag)
+    this is still Alice (using latch without tag)
+    \I'm sending this message one-off as @Craig#5432, without proxy
+    but I'm still latched! (this also is sent from Alice via autoproxy)
+    [hello, this is Joanne, using autoproxy and a surround tag]
+    still Jo on latch!
+    J: I could use my prefix or surround tags if I want, but don't have to
+    because the last time I used a tag, I used mine (Jo's)
+    \\now I'm clearing latch; this is from @Craig#5432
+    and now new messages will be from @Craig#5432 because latch is cleared
+    🤷 but autoproxy is still on
+    so this is Unknown
+
+and the result will look like this:
+
+    @Craig#5432: pk;autoproxy latch
+    @Craig#5432: I haven't used a tag yet, so this message comes from @Craig#5432
+    Alice: hello, this is Alice via autoproxy (using an explicit prefix tag)
+    Alice: this is still Alice (using latch without tag)
+    @Craig#5432: I'm sending this message one-off as @Craig#5432, without proxy
+    Alice: but I'm still latched! (this also is sent from Alice via autoproxy)
+    Jo: hello, this is Joanne, using autoproxy and a surround tag
+    Jo: still Jo on latch!
+    Jo: I could use my prefix or surround tags if I want, but don't have to
+    Jo: because the last time I used a tag, I used mine (Jo's)
+    @Craig#5432: now I'm clearing latch; this is from @Craig#5432
+    @Craig#5432: and now new messages will be from @Craig#5432 because latch is cleared
+    Unknown: but autoproxy is still on
+    Unknown: so this is Unknown
 
 ## Managing switches
 PluralKit allows you to log member switches through the bot.
@@ -449,8 +537,8 @@ You can then view the list of switches and fronters over time, and get statistic
 ### Logging switches
 To log a switch, use the `pk;switch` command with one or more members. For example:
 
-    pk;switch John
-    pk;switch "Craig Johnson" John
+    pk;switch Joanne
+    pk;switch "Craig Johnson" Joanne
     
 Note that the order of members are preserved (this is useful for indicating who's "more" at front, if applicable).
 If you want to specify a member with multiple words in their name, remember to encase the name in "double quotes".
@@ -534,15 +622,15 @@ This will create a new group. Groups all have a 5-letter ID, similar to systems 
 ### Adding and removing members to groups
 To add a member to a group, use the `pk;group <group> add` command, eg:
 
-    pk;group MyGroup add Craig
+    pk;group MyGroup add "Craig Johnson"
     
 You can add multiple members to a group by separating them with spaces, eg:
 
-    pk;group MyGroup add Bob John Charlie
+    pk;group MyGroup add Joanne Skyler Alice
 
 Similarly, you can remove members from a group, eg:
 
-    pk;group MyGroup remove Bob Craig
+    pk;group MyGroup remove Skyler
     
 ### Listing members in a group
 To list all the members in a group, use the `pk;group <group> list` command.
@@ -628,9 +716,9 @@ where `<member>` is the name or the id of a member in your system, `<subject>` i
 
 For example:
 
-    pk;member John privacy visibility private
+    pk;member Joanne privacy visibility private
     pk;member "Craig Johnson" privacy description public
-    pk;member Robert privacy birthday public
+    pk;member Alice privacy birthday public
     pk;member Skyler privacy all private
 
 ## Importing and exporting data
