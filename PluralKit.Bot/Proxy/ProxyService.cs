@@ -87,7 +87,7 @@ public class ProxyService
         {
             if (ctx.ProxyErrorMessageEnabled)
                 throw new PKError(canProxy);
-            
+
             return false;
         }
 
