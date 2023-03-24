@@ -59,8 +59,8 @@ If you'd like to remove your system description, just type `pk;system descriptio
 ### System avatars
 If you'd like your system to have an associated "system avatar", displayed on your system information card, you can add a system avatar. To do so, use the `pk;system avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
 
-    pk;s avatar http://placebeard.it/512.jpg
-    pk;system avatar [with attached image]
+    pk;system avatar http://placebeard.it/512.jpg
+    pk;s avatar [with attached image]
     
 To clear your avatar, simply type `pk;system avatar` with no attachment or link.
 
@@ -725,7 +725,7 @@ There are various reasons you may not want information about your system or your
 ### System privacy
 At the moment, there are four aspects of system privacy that can be configured.
 
-- System description
+- Description *(of system)*
 - Current fronter
 - Front history
 - Member list
@@ -736,7 +736,9 @@ To update your system privacy settings, use the following commands:
 
     pk;system privacy <subject> <level>
     
-where `<subject>` is either `description`, `fronter`, `fronthistory` or `list`, corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.
+*  `<subject>` is either `description`, `fronter`, `fronthistory` or `list`, corresponding to the options above
+  *  (or `all` in order to change all subjects at once)
+* `<level>` is either `public` or `private`
 
 For example:
 
@@ -747,14 +749,14 @@ For example:
 When the **member list** is **private**, other users will not be able to view the full member list of your system, but they can still query individual members given their 5-letter ID. If **current fronter** is private, but **front history** isn't, someone can still see the current fronter by looking at the history (this combination doesn't make much sense).
 
 ### Member privacy
-There are also seven options for configuring member privacy;
+There are also seven options for configuring member privacy:
 
 - Name
-- Description
+- Description *(of member)*
 - Avatar
 - Birthday
 - Pronouns
-- Metadata *(message count, creation date, etc)*
+- Metadata *(message count, creation date, last message information, etc)*
 - Visibility *(whether the member shows up in member lists)*
 
 As with system privacy, each can be set to **public** or **private**. The same rules apply for how they are shown, too. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
@@ -767,8 +769,10 @@ To update a member's privacy you can use the command:
 
     pk;member <member> privacy <subject> <level>
 
-where `<member>` is the name or the id of a member in your system, `<subject>` is either `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, or `visiblity` corresponding to the options above, and `<level>` is either `public` or `private`. `<subject>` can also be `all` in order to change all subjects at once.  
-`metadata` will affect the message count, the date created, the last fronted, and the last message information.
+* `<member>` is the name or the id of a member in your system
+* `<subject>` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, or `visiblity` corresponding to the options above
+  * (or `all` to change all subjects at once)
+* `<level>` is either `public` or `private`
 
 For example:
 
