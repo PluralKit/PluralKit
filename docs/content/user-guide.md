@@ -371,7 +371,7 @@ Using the examples so far (ignoring the remove commands), if you run `pk;system 
     [qazws] Joanne (tags [text], J:text)
     [wefje] Skyler (S:text)
     [nxzpa] Unknown (?text?, 🤷text)
-    Sorting by name. 4 results.
+    Sorting by name. 5 results.
 
 and `pk;system list full @Craig#5432` will output something like this:
 
