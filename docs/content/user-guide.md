@@ -738,8 +738,12 @@ To update your system privacy settings, use the following commands:
 
     pk;system privacy <subject> <level>
     
-*  `<subject>` is either `description`, `fronter`, `fronthistory` or `list`, corresponding to the options above
-  *  (or `all` in order to change all subjects at once)
+* `<subject>` is one of:
+  * `description`
+  * `fronter`
+  * `fronthistory`
+  * `list`
+  * `all` (to change all subjects at once)
 * `<level>` is either `public` or `private`
 
 For example:
@@ -772,8 +776,15 @@ To update a member's privacy you can use the command:
     pk;member <member> privacy <subject> <level>
 
 * `<member>` is the name or the id of a member in your system
-* `<subject>` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, or `visiblity` corresponding to the options above
-  * (or `all` to change all subjects at once)
+* `<subject>` is one of:
+  * `name`
+  * `description`
+  * `avatar`
+  * `birthday`
+  * `pronouns`
+  * `metadata`
+  * `visiblity`
+  * `all` (to change all subjects at once)
 * `<level>` is either `public` or `private`
 
 For example:
