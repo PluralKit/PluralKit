@@ -130,15 +130,15 @@ Some arguments indicate the use of specific Discord features. These include:
 
 ## Utility
 - `pk;message <message id|message link|reply>` or `pk;msg` - Looks up information about a proxied message by its message ID or link.
+- `pk;edit [message link|reply] <new content>` or `pk;e` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
+- `pk;reproxy [message link|reply] <member name|ID>` or `pk;rp` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel. Only works on the last message, or within 1 minute of the reproxied message. Doesn't work on a non-proxied message.
+- `pk;link <account>` - Links your system to a different account.
+- `pk;unlink [account]` - Unlinks an account from your system.
 - `pk;invite` - Sends the bot invite link for PluralKit.
 - `pk;import` - Imports a data file from PluralKit or Tupperbox.
 - `pk;export` - Exports a data file containing your system information.
 - `pk;debug permissions [server id]` - [Checks the given server's permission setup](/staff/permissions/#permission-checker-command) to check if it's compatible with PluralKit.
 - `pk;debug proxying <message link|reply>` - Checks why your message has not been proxied.
-- `pk;edit [message link|reply] <new content>` or `pk;e` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
-- `pk;reproxy [message link|reply] <member name|ID>` or `pk;rp` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel. Only works on the last message, or within 1 minute of the reproxied message. Doesn't work on a non-proxied message.
-- `pk;link <account>` - Links your system to a different account.
-- `pk;unlink [account]` - Unlinks an account from your system.
 
 ## Help
 - `pk;help` or `pk;h` - Displays a basic help message describing how to use the bot.
