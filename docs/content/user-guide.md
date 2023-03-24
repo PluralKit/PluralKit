@@ -449,6 +449,8 @@ to:
 
 *:warning: This only works on your last message, or a message sent within the last 1 minute.*
 
+*:warning: This does not work on a message you sent as your actual user account (i.e. one you didn't proxy).*
+
 #### Deleting messages
 To delete a PluralKit-proxied message, react to it with the `:x:` :x: emoji.
 
