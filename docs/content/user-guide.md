@@ -120,7 +120,7 @@ If you'd like, you can set a *system time zone*, and as such every date and time
 You can specify time zones in various ways. In regions with large amounts of time zones (eg. the Americas, Europe, etc),
 specifying an exact time zone code is the best way. To get your local time zone code, visit [this site](https://xske.github.io/tz).
 You can see the full list [here, on Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (see the column *TZ database name*).
-You can also search by country code, either by giving the two-character [*ISO-3166-1 alpha-2* country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) (eg. `GB` or `DE`), or just by a country flag emoji.
+You can also search by country code, either by giving the two-character [*ISO-3166-1 alpha-2* country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) (e.g. `GB` or `DE`), or just by a country flag emoji (e.g. `:flag_gb:` 🇬🇧 or `:flag_de:` 🇩🇪).
 
 To clear a time zone, type `pk;system timezone` without any parameters. 
 
@@ -283,14 +283,14 @@ You'll need to register a set of *proxy tags*, which are prefixes and/or suffixe
 which member to proxy as. Common proxy tags include `[square brackets]`, `{curly braces}` or `A:letter prefixes`.
 
 To set a proxy tag, use the `pk;member proxy` command on the member in question. You'll need to provide a "proxy example", containing the word `text`.
-For example, if you want square brackets, the proxy example must be `[text]`. If you want a letter prefix, make it something like `A:text`. For example:
 
+For example, if you want square brackets, the proxy example must be `[text]`. If you want a letter or emoji prefix, make it something like `A:text` or `🏳️‍🌈:text`. For example:
+
+    pk;member Alice proxy ✨:text
     pk;member Alice proxy A:text
     pk;member "Craig Johnson" proxy {text}
     pk;member John proxy [text]
     pk;member John proxy J:text
-    
-You can have any proxy tags you want, including one containing emojis.
 
 You can now type a message enclosed in your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
 
@@ -376,20 +376,20 @@ To enable latch-mode autoproxying for a given server, use the following command:
 
 To set the latched member, use their proxy tags. To disable autoproxy for a single message, start a message with one backslash (`\`). To clear the current latched member, start a message with two backslashes (`\\`).
 
-For example, using [Alice and John in the example above](#setting-up-proxy-tags):
+For example, using [Alice and John in the setup example above](#setting-up-proxy-tags):
 
     pk;autoproxy latch
     I haven't used a tag yet, so this message comes from @Craig#5432
-    A: hello, this is Alice via autoproxy (using an explicit prefix tag)
+    ✨: hello, this is Alice via autoproxy (using an explicit prefix tag)
     this is still Alice (using latch without tag)
-    \I'm sending this message one-off as @Craig#5432
+    \I'm sending this message one-off as @Craig#5432, without proxy
     but I'm still latched! (this also is sent from Alice via autoproxy)
     [hello, this is John, using autoproxy and a surround tag]
     still John on latch!
     J: I could use my prefix or surround tags if I want, but don't have to
     because the last time I used a tag, I used mine (John's)
     \\now I'm clearing latch; this is from @Craig#5432
-    and still from @Craig#5432 because latch is cleared
+    and now new messages will be from @Craig#5432 because latch is cleared
     A: but autoproxy is still on
     so now I'm back to Alice
 
