@@ -18,7 +18,7 @@ Use this link to add the bot to your server:
 
 Once you go through the wizard, the bot account will automatically join the server you've chosen. Please ensure the bot has the *Read Messages*, *Send Messages*, *Manage Messages*, *Attach Files* and *Manage Webhooks* permission in the channels you want it to work in. 
 
-*ℹ️ You can have a space after `pk;`; e.g. `pk;system` and `pk; system` will do the same thing.*
+*:information_source: You can have a space after `pk;`; e.g. `pk;system` and `pk; system` will do the same thing.*
 
 ## System management
 In order to do most things with the PluralKit bot, you'll need to have a system registered with it. A *system* is a collection of *system members* that may be used by one or more *Discord accounts*.
@@ -34,7 +34,7 @@ Optionally, you can attach a *system name*, which will be displayed in various i
 
     pk;system new My System Name
 
-*ℹ️ You can also use `pk;s` as shorthand for `pk;system`.*
+*:information_source: You can also use `pk;s` as shorthand for `pk;system`.*
 
 ### Viewing information about a system
 To view information about your own system, simply type:
@@ -141,6 +141,8 @@ In order to do most things related to PluralKit, you need to work with *system m
 
 Most member commands follow the format of `pk;member MemberName verb Parameter`. Note that if a member's name has multiple words, you'll need to enclose it in "double quotes" throughout the commands below (_except_ for `pk;member new`).
 
+*:information_source: For all memer commands, you can use either the member name or display name, but not the proxy tag.*
+
 ### Creating a member
 You can't do much with PluralKit without having registered members with your system, but doing so is quite simple - just use the `pk;member new` command followed by the member's name, like so:
 
@@ -150,13 +152,13 @@ You can't do much with PluralKit without having registered members with your sys
     pk;member new Unknown
     pk;member new Skyler
 
-`@PluralKit` will respond with a confirmation and the member ID code, like so:
+PluralKit will respond with a confirmation and the member ID code, like so:
 
     PluralKit: ✅ Member "John" (qazws) registered! 
 
-*⚠️ As the one exception to the rule above, if the name consists of multiple words you must *not* enclose it in double quotes.*
+*:warning: As the one exception to the rule above, if the name consists of multiple words you must *not* enclose it in double quotes.*
 
-*ℹ️ You can also use `pk;m` as shorthand for `pk;member`.*
+*:information_source: You can also use `pk;m` as shorthand for `pk;member`.*
 
 ### Looking up member info
 To view information about a member, there are a couple ways to do it. Either you can address a member by their name (if they're in your own system), by their 5-character *member ID*, or by their *display name*, like so:
@@ -174,9 +176,9 @@ To list all the members in a system, use the `pk;system list` command. This will
     pk;system @Craig#5432 list
     pk;system qazws list
 
-*ℹ️ You can also use `l` as shorthand for `list`.*
+*:information_source: You can also use `l` as shorthand for `list`.*
 
-If you run `pk;system info @Craig#5432` after the example setup so far, `@PluralKit` will output something like this:
+If you run `pk;system info @Craig#5432` after the example setup so far, PluralKit will output something like this:
 
     My System Name
     | Tag | Linked accounts       | Members (5) |
@@ -233,7 +235,7 @@ To clear a member description, use the command with no additional parameters (e.
 A system member can have an associated color value.
 This color is *not* displayed as a name color on proxied messages due to a Discord limitation,
 but it's shown in member cards, and it can be used in third-party apps, too.
-To set a member color, use the `pk;member color` command with [a hexadecimal color code](https://htmlcolorcodes.com/), like so, using either the member name or display name:
+To set a member color, use the `pk;member color` command with [a hexadecimal color code](https://htmlcolorcodes.com/), like so:
 
     pk;member Jo color #ff0000
     pk;m Skyler color #87ceeb
@@ -315,9 +317,9 @@ For example, if you want square brackets, the proxy example must be `[text]`. If
 
 You can now type a message enclosed in / prefixed by your proxy tags, and it'll be deleted by PluralKit and reposted with the appropriate member name and avatar (if set).
 
-*⚠️ If you use `pk;member proxy` without "add", it will **replace** the proxy tag(s) for that member. `@PluralKit` will respond with a warning about this, and won't do it unless you click the `Replace` button on that message.*
+*:warning: If you use `pk;member proxy` without "add", it will **replace** the proxy tag(s) for that member. PluralKit will respond with a warning about this, and won't do it unless you click the `Replace` button on that message.*
 
-*⚠️ Currently, you can't use `<angle brackets>` as proxy tags, due to a bug where custom server emojis will (wrongly) be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)).*
+*:warning: Currently, you can't use `<angle brackets>` as proxy tags, due to a bug where custom server emojis will (wrongly) be interpreted as proxying with that member (see [issue #37](https://github.com/PluralKit/PluralKit/issues/37)).*
 
 ### Using multiple distinct proxy tag pairs
 If you'd like to proxy a member in multiple ways (for example, a name or a nickname, uppercase and lowercase variants, etc), you can add multiple tag pairs.
@@ -363,7 +365,7 @@ use a different proxy bot there), you can use the commands:
 
 ## Results so far
 
-Using the examples so far (ignoring the remove commands), if you run `pk;system list @Craig#5432`, `@PluralKit` will now output something like this:
+Using the examples so far (ignoring the remove commands), if you run `pk;system list @Craig#5432`, PluralKit will now output something like this:
 
     Members of My System Name (abcde)
     [eafas] Alice (✨:text, A:text)
@@ -422,7 +424,7 @@ For example:
     Helo, friends!
     pk;e Hello, friends!
 
-*⚠️ This only works if you make the edit within 10 minutes of the original message.*
+*:warning: This only works if you make the edit within 10 minutes of the original message.*
 
 #### Reproxying messages
 If you are using [autoproxy](#autoproxy) and accidentally used the wrong proxy tag or forgot about your latch/switch status, reply to it with the command `pk;reproxy <member name>` (or as shorthand, `pk;rp`).
@@ -442,9 +444,9 @@ to:
 
     Sky (he/him): Hi, this is Sky.
 
-*⚠️ You must use the full member name, *not* their member tag.*
+*:warning: You must use the full member name, *not* their member tag.*
 
-*⚠️ This only works on your last message, or a message sent within the last 1 minute.*
+*:warning: This only works on your last message, or a message sent within the last 1 minute.*
 
 #### Deleting messages
 To delete a PluralKit-proxied message, react to it with the `:x:` :x: emoji.
@@ -475,7 +477,7 @@ To disable autoproxying for the current server, use the command:
 
     pk;autoproxy off
 
-*ℹ️ You can also use `pk;ap` or `pk;auto` as shorthand for `pk;autoproxy`.*
+*:information_source: You can also use `pk;ap` or `pk;auto` as shorthand for `pk;autoproxy`.*
 
 ::: tip
 To disable autoproxy for a single message, add a backslash (`\`) to the beginning of your message.
@@ -595,7 +597,7 @@ To log a switch, use the `pk;switch` command with one or more members. For examp
 Note that the order of members are preserved (this is useful for indicating who's "more" at front, if applicable).
 If you want to specify a member with multiple words in their name, remember to encase the name in "double quotes".
 
-*ℹ️ You can also use `pk;sw` as shorthand for `pk;switch`.*
+*:information_source: You can also use `pk;sw` as shorthand for `pk;switch`.*
 
 ### Switching out
 If you want to log a switch with *no* members, you can log a switch-out as follows:
@@ -673,7 +675,7 @@ To create a new group, use the `pk;group new` command:
     
 This will create a new group. Groups all have a 5-letter ID, similar to systems and members.
 
-*ℹ️ You can also use `pk;g` as shorthand for `pk;group`.*
+*:information_source: You can also use `pk;g` as shorthand for `pk;group`.*
 
 ### Adding and removing members to groups
 To add a member to a group, use the `pk;group <group> add` command, eg:
