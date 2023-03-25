@@ -82,9 +82,14 @@ public class ProxyService
         if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy, ctx.CaseSensitiveProxyTags)) return false;
 
-        // this is hopefully temporary, so not putting it into a separate method
-        if (message.Content != null && message.Content.Length > 2000)
-            throw new PKError("PluralKit cannot proxy messages over 2000 characters in length.");
+        var canProxy = await CanProxy(channel, message, ctx);
+        if (canProxy != null)
+        {
+            if (ctx.ProxyErrorMessageEnabled)
+                throw new PKError(canProxy);
+
+            return false;
+        }
 
         // Permission check after proxy match so we don't get spammed when not actually proxying
         if (!CheckBotPermissionsOrError(botPermissions, rootChannel.Id))
@@ -102,6 +107,29 @@ public class ProxyService
         // Everything's in order, we can execute the proxy!
         await ExecuteProxy(message, ctx, autoproxySettings, match, allowEveryone, allowEmbeds);
         return true;
+    }
+
+    public async Task<string> CanProxy(Channel channel, Message msg, MessageContext ctx)
+    {
+        // Check if the message does not go over any Discord Nitro limits
+        if (msg.Content != null && msg.Content.Length > 2000)
+        {
+            return "PluralKit cannot proxy messages over 2000 characters in length.";
+        }
+
+        var guild = await _cache.GetGuild(channel.GuildId.Value);
+        var fileSizeLimit = guild.FileSizeLimit();
+        var bytesThreshold = fileSizeLimit * 1024 * 1024;
+
+        foreach (var attachment in msg.Attachments)
+        {
+            if (attachment.Size > bytesThreshold)
+            {
+                return $"PluralKit cannot proxy attachments over {fileSizeLimit} megabytes in this server (as webhooks aren't considered as having Discord Nitro) :(";
+            }
+        }
+
+        return null;
     }
 
     public bool ShouldProxy(Channel channel, Message msg, MessageContext ctx)

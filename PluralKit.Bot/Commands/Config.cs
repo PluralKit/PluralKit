@@ -95,6 +95,13 @@ public class Config
             "enabled"
         ));
 
+        items.Add(new(
+            "Proxy error",
+            "Whether to send an error message when proxying fails.",
+            EnabledDisabled(ctx.Config.ProxyErrorMessageEnabled),
+            "enabled"
+        ));
+
         await ctx.Paginate<PaginatedConfigItem>(
             items.ToAsyncEnumerable(),
             items.Count,
@@ -411,6 +418,29 @@ public class Config
             await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { CaseSensitiveProxyTags = false });
 
             await ctx.Reply("Proxy tags are now case insensitive.");
+        }
+    }
+
+    public async Task ProxyErrorMessageEnabled(Context ctx)
+    {
+        if (!ctx.HasNext())
+        {
+            if (ctx.Config.ProxyErrorMessageEnabled) { await ctx.Reply("Proxy error messages are currently **enabled**."); }
+            else { await ctx.Reply("Proxy error messages are currently **disabled**. Messages that fail to proxy (due to message or attachment size) will not throw an error message."); }
+            return;
+        }
+
+        if (ctx.MatchToggle(true))
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxyErrorMessageEnabled = true });
+
+            await ctx.Reply("Proxy error messages are now enabled.");
+        }
+        else
+        {
+            await ctx.Repository.UpdateSystemConfig(ctx.System.Id, new() { ProxyErrorMessageEnabled = false });
+
+            await ctx.Reply("Proxy error messages are now disabled. Messages that fail to proxy (due to message or attachment size) will not throw an error message.");
         }
     }
 }
