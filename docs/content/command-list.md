@@ -53,6 +53,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;system [system] description [description]` - Changes the description of your system.
 - `pk;system [system] avatar [avatar url|@mention|upload]` - Changes the avatar of your system.
 - `pk;system [system] banner [image url|upload]` - Changes your system's banner image.
+- `pk;system [system] color [color]` - Changes your system's color.
 - `pk;system [system] privacy` - Displays your system's current privacy settings.
 - `pk;system [system] privacy <subject> <public|private>` - Changes your systems privacy settings.
 - `pk;system [system] tag [tag]` - Changes the system tag of your system.
@@ -109,6 +110,8 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;group <group> remove <member> [member 2] [member 3...]` - Removes one or more members from a group.
 - `pk;group <group> privacy <name|description|icon|visibility|metadata|all> <public|private>` - Changes a group's privacy settings.
 - `pk;group <group> icon [icon url|@mention|upload]` - Shows or changes a group's icon.
+- `pk;group <group> color [color]` - Shows or changes a group's color.
+- `pk;group <group> random` - Shows a random member from a group.
 - `pk;group <group> banner [image url|upload]` - Shows or changes a group's banner image.
 - `pk;group <group> delete` - Deletes a group.
 - `pk;group <group> id` - Prints a group's id. 
@@ -133,6 +136,9 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;config autoproxy timeout [<duration>|off|reset]` - Sets the latch timeout duration for your system.
 - `pk;config autoproxy account [on|off]` - Toggles autoproxy globally for the current account.
 - `pk;config proxy case [on|off]` - Toggles case sensitive proxy tags for your system.
+- `pk;config private member [on|off]` - Toggles whether member privacy is automatically set to private for new members.
+- `pk;config private group [on|off]` - Toggles whether group privacy is automatically set to private for new groups.
+- `pk;config show private [on|off]` - Toggles whether private information is shown to linked accounts by default.
 
 ## Server owner commands
 *(all commands here require Manage Server permission)*
@@ -157,6 +163,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;reproxy [message link|reply] <member name|ID>` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel. Only works on the last message, or within 1 minute of the proxied message being sent. Doesn't work on a non-proxied message.
 - `pk;link <account>` - Links your system to a different account.
 - `pk;unlink [account]` - Unlinks an account from your system.
+- `pk;random [-group]` - Shows the card of a random member or group from your system.
 
 ## API
 *(for using the [PluralKit API](/api), useful for developers)*

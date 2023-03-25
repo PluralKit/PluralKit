@@ -189,6 +189,7 @@ public partial class CommandTree
             }
 
             // hacky, but we need to CheckSystem(target) which throws a PKError
+            // normally PKErrors are only handled in ctx.Execute
             try
             {
                 await HandleSystemCommandTargeted(ctx, target ?? ctx.System);
