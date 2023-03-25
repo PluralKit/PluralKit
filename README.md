@@ -72,7 +72,7 @@ If you run the bot manually you can run the worker as such:
 If you have an instance of the Python version of the bot (from the `legacy` branch), you may need to take extra database migration steps.
 For more information, see [LEGACYMIGRATE.md](./LEGACYMIGRATE.md).
 
-# Documentation
+# User documentation
 See [the docs/ directory](./docs/README.md)
 
 # License

@@ -30,7 +30,21 @@ Some arguments indicate the use of specific Discord features. These include:
 ![Upload example](./assets/upload_arg.png)
 :::
 
+
+# Non-prefixed commands
+
+Some bot commands do not use the `pk;` prefix:
+
+- `[tag]` e.g. `S: message` - if `pk;system proxy` is on, proxy this message, based on configured member proxy tags
+- `\` - if autoproxy is enabled: as a one-off exception, don't proxy this message, without changing latch/switch/autoproxy
+- `\\` - if autoproxy latch is enabled: don't proxy this message, and clear latch status, without disabling autoproxy
+
 # Commands
+
+::: tip
+You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the same thing.
+:::
+
 ## System commands
 *To target a specific system, replace `[system]` with that system's 5-character ID, a Discord account ID, or a @mention - note that system names can not be used here. If no system ID is specified, defaults to targeting your own system. For most commands, adding `-clear` will clear/delete the field.*
 - `pk;system [system]` - Shows information about a system.
@@ -140,7 +154,7 @@ Some arguments indicate the use of specific Discord features. These include:
 - `pk;debug permissions [server id]` - [Checks the given server's permission setup](/staff/permissions/#permission-checker-command) to check if it's compatible with PluralKit.
 - `pk;debug proxying <message link|reply>` - Checks why your message has not been proxied.
 - `pk;edit [message link|reply] <new content>` - Edits a proxied message. Without an explicit message target, will target the last message proxied by your system in the current channel. **Does not support message IDs!**
-- `pk;reproxy [message link|reply] <member name|ID>` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel.
+- `pk;reproxy [message link|reply] <member name|ID>` - Reproxies a message using a different member. Without an explicit message target, will target the last message proxied by your system in the current channel. Only works on the last message, or within 1 minute of the proxied message being sent. Doesn't work on a non-proxied message.
 - `pk;link <account>` - Links your system to a different account.
 - `pk;unlink [account]` - Unlinks an account from your system.
 
