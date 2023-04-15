@@ -11,7 +11,7 @@ public static class GuildExtensions
             default:
             case PremiumTier.NONE:
             case PremiumTier.TIER_1:
-                return 8;
+                return 25;
             case PremiumTier.TIER_2:
                 return 50;
             case PremiumTier.TIER_3:
