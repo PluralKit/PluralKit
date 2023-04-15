@@ -217,7 +217,8 @@ public class ProxyService
             FileSizeLimit = guild.FileSizeLimit(),
             Embeds = embeds.ToArray(),
             Stickers = trigger.StickerItems,
-            AllowEveryone = allowEveryone
+            AllowEveryone = allowEveryone,
+            Flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
         });
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }

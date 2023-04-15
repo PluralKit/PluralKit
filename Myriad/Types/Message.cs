@@ -14,7 +14,8 @@ public record Message
         SuppressEmbeds = 1 << 2,
         SourceMessageDeleted = 1 << 3,
         Urgent = 1 << 4,
-        Ephemeral = 1 << 6
+        Ephemeral = 1 << 6,
+        VoiceMessage = 1 << 13,
     }
 
     public enum MessageType
@@ -64,7 +65,7 @@ public record Message
     public ulong? ApplicationId { get; init; }
     public MessageType Type { get; init; }
     public Reference? MessageReference { get; set; }
-    // public MessageFlags Flags { get; init; }
+    public MessageFlags Flags { get; init; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public Optional<Message?> ReferencedMessage { get; init; }
@@ -83,6 +84,8 @@ public record Message
         public int Size { get; init; }
         public string Url { get; init; }
         public string ProxyUrl { get; init; }
+        public string? Waveform { get; init; }
+        public float? DurationSecs { get; init; }
         // public int? Width { get; init; }
         // public int? Height { get; init; }
     }

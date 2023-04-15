@@ -562,7 +562,7 @@ public class SystemEdit
                 var dm = await _dmCache.GetOrCreateDmChannel(ctx.Author.Id);
                 var msg = await ctx.Rest.CreateMessage(dm,
                     new MessageRequest { Content = $"{Emojis.Success} System deleted. If you want to set up your PluralKit system again, you can import the file below with `pk;import`." },
-                    new[] { new MultipartFile("system.json", stream, null) });
+                    new[] { new MultipartFile("system.json", stream, null, null, null) });
                 await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
 
                 // If the original message wasn't posted in DMs, send a public reminder

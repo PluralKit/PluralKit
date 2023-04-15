@@ -43,6 +43,7 @@ public record ProxyRequest
     public Embed[] Embeds { get; init; }
     public Sticker[] Stickers { get; init; }
     public bool AllowEveryone { get; init; }
+    public Message.MessageFlags? Flags { get; init; }
 }
 
 public class WebhookExecutorService
@@ -129,6 +130,7 @@ public class WebhookExecutorService
             AvatarUrl = !string.IsNullOrWhiteSpace(req.AvatarUrl) ? req.AvatarUrl : null,
             Embeds = req.Embeds,
             Stickers = req.Stickers,
+            Flags = req.Flags,
         };
 
         MultipartFile[] files = null;
@@ -144,7 +146,9 @@ public class WebhookExecutorService
             {
                 Id = (ulong)Array.IndexOf(files, f),
                 Description = f.Description,
-                Filename = f.Filename
+                Filename = f.Filename,
+                Waveform = f.Waveform,
+                DurationSecs = f.DurationSecs
             }).ToArray();
         }
 
@@ -226,7 +230,8 @@ public class WebhookExecutorService
                 {
                     Id = (ulong)Array.IndexOf(files, f),
                     Description = f.Description,
-                    Filename = f.Filename
+                    Filename = f.Filename,
+                    Waveform = f.Waveform
                 }).ToArray()
             };
             await _rest.ExecuteWebhook(webhook.Id, webhook.Token!, req, files, threadId);
@@ -240,7 +245,7 @@ public class WebhookExecutorService
             var attachmentResponse =
                 await _client.GetAsync(attachment.Url, HttpCompletionOption.ResponseHeadersRead);
             return new MultipartFile(attachment.Filename, await attachmentResponse.Content.ReadAsStreamAsync(),
-                attachment.Description);
+                attachment.Description, attachment.Waveform, attachment.DurationSecs);
         }
 
         return await Task.WhenAll(attachments.Select(GetStream));

@@ -150,7 +150,7 @@ public class BaseRestClient: IAsyncDisposable
         if (files != null)
             for (var i = 0; i < files.Length; i++)
             {
-                var (filename, stream, _) = files[i];
+                var (filename, stream, _, _, _) = files[i];
                 mfd.Add(new StreamContent(stream), $"files[{i}]", filename);
             }
 

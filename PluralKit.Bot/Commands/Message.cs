@@ -285,7 +285,7 @@ public class ProxiedMessage
                     {
                         Content = $"{Emojis.Warn} Message contains codeblocks, raw source sent as an attachment."
                     },
-                    new[] { new MultipartFile("message.txt", stream, null) });
+                    new[] { new MultipartFile("message.txt", stream, null, null, null) });
             }
 
             return;

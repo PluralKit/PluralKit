@@ -121,7 +121,7 @@ public class ImportExport
 
             var msg = await ctx.Rest.CreateMessage(dm,
                 new MessageRequest { Content = $"{Emojis.Success} Here you go!" },
-                new[] { new MultipartFile("system.json", stream, null) });
+                new[] { new MultipartFile("system.json", stream, null, null, null) });
             await ctx.Rest.CreateMessage(dm, new MessageRequest { Content = $"<{msg.Attachments[0].Url}>" });
 
             // If the original message wasn't posted in DMs, send a public reminder
