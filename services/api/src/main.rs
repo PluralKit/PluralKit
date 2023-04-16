@@ -59,6 +59,9 @@ async fn main() -> anyhow::Result<()> {
         .route("/v2/members/:member_id/guilds/:guild_id", get(util::rproxy))
         .route("/v2/members/:member_id/guilds/:guild_id", patch(util::rproxy))
 
+        .route("/v2/systems/:system_id/autoproxy", get(util::rproxy))
+        .route("/v2/systems/:system_id/autoproxy", patch(util::rproxy))
+
         .route("/v2/messages/:message_id", get(util::rproxy))
 
         .route("/private/meta", get(util::rproxy))
