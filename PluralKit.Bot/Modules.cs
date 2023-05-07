@@ -104,6 +104,10 @@ public class BotModule: Module
         builder.RegisterType<SystemLink>().AsSelf();
         builder.RegisterType<SystemList>().AsSelf();
 
+        // Application commands
+        builder.RegisterType<ApplicationCommandTree>().AsSelf();
+        builder.RegisterType<ApplicationCommandProxiedMessage>().AsSelf();
+
         // Bot core
         builder.RegisterType<Bot>().AsSelf().SingleInstance();
         builder.RegisterType<MessageCreated>().As<IEventHandler<MessageCreateEvent>>();

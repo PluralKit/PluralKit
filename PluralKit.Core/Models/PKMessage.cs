@@ -14,6 +14,12 @@ public class PKMessage
     public ulong? OriginalMid { get; set; }
 }
 
+public static class PKMessageExt
+{
+    public static string JumpLink(this PKMessage msg) =>
+        $"https://discord.com/channels/{msg.Guild!.Value}/{msg.Channel}/{msg.Mid}";
+}
+
 public class FullMessage
 {
     public PKMessage Message;
