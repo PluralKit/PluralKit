@@ -226,5 +226,6 @@ public static class DiscordUtils
             Channel.ChannelType.GuildNews or
             Channel.ChannelType.GuildPublicThread or
             Channel.ChannelType.GuildPrivateThread or
-            Channel.ChannelType.GuildNewsThread;
+            Channel.ChannelType.GuildNewsThread or
+            Channel.ChannelType.GuildStageVoice;
 }
