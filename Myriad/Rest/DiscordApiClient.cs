@@ -90,6 +90,11 @@ public class DiscordApiClient
         _client.Delete($"/channels/{channelId}/messages/{messageId}/reactions/{EncodeEmoji(emoji)}",
             ("DeleteAllReactionsForEmoji", channelId));
 
+    public Task<ApplicationCommand[]?> ReplaceGlobalApplicationCommands(ulong applicationId,
+                                                                 List<ApplicationCommandRequest> requests) =>
+        _client.Put<ApplicationCommand[]>($"/applications/{applicationId}/commands",
+            ("ReplaceGlobalApplicationCommands", applicationId), requests);
+
     public Task<ApplicationCommand> CreateGlobalApplicationCommand(ulong applicationId,
                                                                    ApplicationCommandRequest request) =>
         _client.Post<ApplicationCommand>($"/applications/{applicationId}/commands",

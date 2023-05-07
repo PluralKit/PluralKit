@@ -53,6 +53,23 @@ public static class BotMetrics
         Context = "Bot"
     };
 
+    public static MeterOptions ApplicationCommandsRun => new()
+    {
+        Name = "Application commands run",
+        MeasurementUnit = Unit.Commands,
+        RateUnit = TimeUnit.Seconds,
+        Context = "Bot"
+    };
+
+    public static TimerOptions ApplicationCommandTime => new()
+    {
+        Name = "Application command run time",
+        MeasurementUnit = Unit.Commands,
+        RateUnit = TimeUnit.Seconds,
+        DurationUnit = TimeUnit.Seconds,
+        Context = "Bot"
+    };
+
     public static MeterOptions WebhookCacheMisses => new()
     {
         Name = "Webhook cache misses",
