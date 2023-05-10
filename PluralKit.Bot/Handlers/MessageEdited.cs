@@ -55,6 +55,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         var channel = await _cache.GetChannel(evt.ChannelId);
         if (!DiscordUtils.IsValidGuildChannel(channel))
             return;
+        var rootChannel = await _cache.GetRootChannel(channel.Id);
         var guild = await _cache.GetGuild(channel.GuildId!.Value);
         var lastMessage = _lastMessageCache.GetLastMessage(evt.ChannelId)?.Current;
 
@@ -65,7 +66,7 @@ public class MessageEdited: IEventHandler<MessageUpdateEvent>
         // Just run the normal message handling code, with a flag to disable autoproxying
         MessageContext ctx;
         using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-            ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, evt.ChannelId);
+            ctx = await _repo.GetMessageContext(evt.Author.Value!.Id, channel.GuildId!.Value, rootChannel.Id, evt.ChannelId);
 
         var equivalentEvt = await GetMessageCreateEvent(evt, lastMessage, channel);
         var botPermissions = await _cache.PermissionsIn(channel.Id);

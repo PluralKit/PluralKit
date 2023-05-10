@@ -63,11 +63,12 @@ public class LogChannelService
             return null;
 
         var guildId = proxiedMessage.Guild ?? trigger.GuildId.Value;
+        var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
 
         // get log channel info from the database
         var guild = await _repo.GetGuild(guildId);
         var logChannelId = guild.LogChannel;
-        var isBlacklisted = guild.LogBlacklist.Any(x => x == trigger.ChannelId);
+        var isBlacklisted = guild.LogBlacklist.Any(x => x == trigger.ChannelId || x == rootChannel.Id);
 
         // if (ctx.SystemId == null ||
         // removed the above, there shouldn't be a way to get to this code path if you don't have a system registered

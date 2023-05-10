@@ -1,4 +1,4 @@
-create function message_context(account_id bigint, guild_id bigint, channel_id bigint)
+create function message_context(account_id bigint, guild_id bigint, channel_id bigint, thread_id bigint)
     returns table (
         system_id int,
         log_channel bigint,
@@ -29,23 +29,25 @@ as $$
             where accounts.uid = account_id),
         guild as (select * from servers where id = guild_id)
     select
-        system.id                                  as system_id,
+        system.id                                    as system_id,
         guild.log_channel,
-        (channel_id = any (guild.blacklist))       as in_blacklist,
-        (channel_id = any (guild.log_blacklist))   as in_log_blacklist,
+        ((channel_id = any (guild.blacklist))
+         or (thread_id = any (guild.blacklist)))     as in_blacklist,
+        ((channel_id = any (guild.log_blacklist))
+         or (thread_id = any (guild.log_blacklist))) as in_log_blacklist,
         coalesce(guild.log_cleanup_enabled, false),
-        coalesce(system_guild.proxy_enabled, true) as proxy_enabled,
-        system_last_switch.switch                  as last_switch,
-        system_last_switch.members                 as last_switch_members,
-        system_last_switch.timestamp               as last_switch_timestamp,
-        system.tag                                 as system_tag,
-        system.guild_tag                           as system_guild_tag,
-        coalesce(system.tag_enabled, true)         as tag_enabled,
-        system.avatar_url                          as system_avatar,
-        system.account_autoproxy                   as allow_autoproxy,
-        system.latch_timeout                       as latch_timeout,
-        system.case_sensitive_proxy_tags           as case_sensitive_proxy_tags,
-        system.proxy_error_message_enabled         as proxy_error_message_enabled
+        coalesce(system_guild.proxy_enabled, true)   as proxy_enabled,
+        system_last_switch.switch                    as last_switch,
+        system_last_switch.members                   as last_switch_members,
+        system_last_switch.timestamp                 as last_switch_timestamp,
+        system.tag                                   as system_tag,
+        system.guild_tag                             as system_guild_tag,
+        coalesce(system.tag_enabled, true)           as tag_enabled,
+        system.avatar_url                            as system_avatar,
+        system.account_autoproxy                     as allow_autoproxy,
+        system.latch_timeout                         as latch_timeout,
+        system.case_sensitive_proxy_tags             as case_sensitive_proxy_tags,
+        system.proxy_error_message_enabled           as proxy_error_message_enabled
     -- We need a "from" clause, so we just use some bogus data that's always present
     -- This ensure we always have exactly one row going forward, so we can left join afterwards and still get data
     from (select 1) as _placeholder

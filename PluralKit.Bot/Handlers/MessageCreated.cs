@@ -159,7 +159,7 @@ public class MessageCreated: IEventHandler<MessageCreateEvent>
         // Get message context from DB (tracking w/ metrics)
         MessageContext ctx;
         using (_metrics.Measure.Timer.Time(BotMetrics.MessageContextQueryTime))
-            ctx = await _repo.GetMessageContext(evt.Author.Id, evt.GuildId ?? default, rootChannel);
+            ctx = await _repo.GetMessageContext(evt.Author.Id, evt.GuildId ?? default, rootChannel, channel.Id != rootChannel ? channel.Id : default);
 
         try
         {

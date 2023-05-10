@@ -229,9 +229,12 @@ public class ProxyService
         if (originalMsg == null)
             throw new PKError("Could not reproxy message.");
 
+        var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
+        var rootChannel = messageChannel.IsThread() ? await _rest.GetChannelOrNull(messageChannel.ParentId!.Value) : messageChannel;
+
         // Get a MessageContext for the original message
         MessageContext ctx =
-            await _repo.GetMessageContext(msg.Sender, msg.Guild!.Value, msg.Channel);
+            await _repo.GetMessageContext(msg.Sender, msg.Guild!.Value, rootChannel.Id, msg.Channel);
 
         // Make sure proxying is enabled here
         if (ctx.InBlacklist)
@@ -250,8 +253,6 @@ public class ProxyService
             ProxyTags = member.ProxyTags.FirstOrDefault(),
         };
 
-        var messageChannel = await _rest.GetChannelOrNull(msg.Channel!);
-        var rootChannel = messageChannel.IsThread() ? await _rest.GetChannelOrNull(messageChannel.ParentId!.Value) : messageChannel;
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _rest.GetGuildOrNull(msg.Guild!.Value);
         var guildMember = await _rest.GetGuildMember(msg.Guild!.Value, trigger.Author.Id);

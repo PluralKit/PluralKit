@@ -17,6 +17,7 @@ public class Checks
     private readonly ProxyMatcher _matcher;
     private readonly ProxyService _proxy;
     private readonly DiscordApiClient _rest;
+    private readonly IDiscordCache _cache;
 
     private readonly PermissionSet[] requiredPermissions =
     {
@@ -26,12 +27,13 @@ public class Checks
     };
 
     // todo: make sure everything uses the minimum amount of REST calls necessary
-    public Checks(DiscordApiClient rest, BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher)
+    public Checks(DiscordApiClient rest, BotConfig botConfig, ProxyService proxy, ProxyMatcher matcher, IDiscordCache cache)
     {
         _rest = rest;
         _botConfig = botConfig;
         _proxy = proxy;
         _matcher = matcher;
+        _cache = cache;
     }
 
     public async Task PermCheckGuild(Context ctx)
@@ -230,11 +232,12 @@ public class Checks
         if (channel == null)
             throw new PKError("Unable to get the channel associated with this message.");
 
+        var rootChannel = await _cache.GetRootChannel(channel.Id);
         if (channel.GuildId == null)
             throw new PKError("PluralKit is not able to proxy messages in DMs.");
 
         // using channel.GuildId here since _rest.GetMessage() doesn't return the GuildId
-        var context = await ctx.Repository.GetMessageContext(msg.Author.Id, channel.GuildId.Value, msg.ChannelId);
+        var context = await ctx.Repository.GetMessageContext(msg.Author.Id, channel.GuildId.Value, rootChannel.Id, msg.ChannelId);
         var members = (await ctx.Repository.GetProxyMembers(msg.Author.Id, channel.GuildId.Value)).ToList();
 
         // for now this is just server
