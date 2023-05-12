@@ -84,8 +84,12 @@ public class EmbedService
             var switchMembers =
                 await _db.Execute(conn => _repo.GetSwitchMembers(conn, latestSwitch.Id)).ToListAsync();
             if (switchMembers.Count > 0)
-                eb.Field(new Embed.Field("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None),
-                    string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)))));
+            {
+                var memberStr = string.Join(", ", switchMembers.Select(m => m.NameFor(ctx)));
+                if (memberStr.Length > 200)
+                    memberStr = $"[too many to show, see `pk;system {system.Hid} fronters`]";
+                eb.Field(new Embed.Field("Fronter".ToQuantity(switchMembers.Count, ShowQuantityAs.None), memberStr));
+            }
         }
 
         if (system.Tag != null)
@@ -309,10 +313,28 @@ public class EmbedService
     {
         var members = await _db.Execute(c => _repo.GetSwitchMembers(c, sw.Id).ToListAsync().AsTask());
         var timeSinceSwitch = SystemClock.Instance.GetCurrentInstant() - sw.Timestamp;
+        var memberStr = "*(no fronter)*";
+        if (members.Count > 0)
+        {
+            memberStr = "";
+            foreach (var item in members.Select((value, i) => new { i, value }))
+            {
+                memberStr += item.i == 0 ? "" : ", ";
+                // field limit is 1024, capping after 900 gives us plenty of room
+                // for the remaining count message
+                if (memberStr.Length < 900)
+                    memberStr += item.value.NameFor(ctx);
+                else
+                {
+                    memberStr += $"*({members.Count - item.i} not shown)*";
+                    break;
+                }
+            }
+        }
+
         return new EmbedBuilder()
             .Color(members.FirstOrDefault()?.Color?.ToDiscordColor() ?? DiscordUtils.Gray)
-            .Field(new Embed.Field($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}",
-                members.Count > 0 ? string.Join(", ", members.Select(m => m.NameFor(ctx))) : "*(no fronter)*"))
+            .Field(new Embed.Field($"Current {"fronter".ToQuantity(members.Count, ShowQuantityAs.None)}", memberStr))
             .Field(new Embed.Field("Since",
                 $"{sw.Timestamp.FormatZoned(zone)} ({timeSinceSwitch.FormatDuration()} ago)"))
             .Build();
