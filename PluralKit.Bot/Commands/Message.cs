@@ -18,6 +18,8 @@ using NodaTime;
 using App.Metrics;
 
 using PluralKit.Core;
+using Myriad.Gateway;
+using Myriad.Utils;
 
 namespace PluralKit.Bot;
 
