@@ -6,6 +6,7 @@ using Myriad.Builders;
 using Myriad.Rest;
 using Myriad.Rest.Types.Requests;
 using Myriad.Types;
+using Myriad.Gateway;
 
 using NodaTime;
 
@@ -37,6 +38,46 @@ public class ErrorMessageService
     // private readonly ConcurrentDictionary<ulong, Instant> _lastErrorInChannel = new ConcurrentDictionary<ulong, Instant>();
     private Instant lastErrorTime { get; set; }
 
+    public async Task InteractionRespondWithErrorMessage(InteractionCreateEvent evt, string errorId)
+    {
+        var now = SystemClock.Instance.GetCurrentInstant();
+        if (!ShouldSendErrorMessage(null, now))
+        {
+            _logger.Warning("Rate limited sending error interaction response for id {InteractionId} with error code {ErrorId}",
+                evt.Id, errorId);
+            _metrics.Measure.Meter.Mark(BotMetrics.ErrorMessagesSent, "throttled");
+            return;
+        }
+
+        var embed = CreateErrorEmbed(errorId, now);
+
+        try
+        {
+            var interactionData = new InteractionApplicationCommandCallbackData
+            {
+                Content = $"> **Error code:** `{errorId}`",
+                Embeds = new[] { embed },
+                Flags = Message.MessageFlags.Ephemeral
+            };
+
+            await _rest.CreateInteractionResponse(evt.Id, evt.Token,
+                new InteractionResponse
+                {
+                    Type = InteractionResponse.ResponseType.ChannelMessageWithSource,
+                    Data = interactionData,
+                });
+
+            _logger.Information("Sent error message interaction response for id {InteractionId} with error code {ErrorId}", evt.Id, errorId);
+            _metrics.Measure.Meter.Mark(BotMetrics.ErrorMessagesSent, "sent");
+        }
+        catch (Exception e)
+        {
+            _logger.Error(e, "Error sending error interaction response for id {InteractionId}", evt.Id);
+            _metrics.Measure.Meter.Mark(BotMetrics.ErrorMessagesSent, "failed");
+            throw;
+        }
+    }
+
     public async Task SendErrorMessage(ulong channelId, string errorId)
     {
         var now = SystemClock.Instance.GetCurrentInstant();
@@ -48,21 +89,12 @@ public class ErrorMessageService
             return;
         }
 
-        var channelInfo = _botConfig.IsBetaBot
-            ? "**#beta-testing** on **[the support server *(click to join)*](https://discord.gg/THvbH59btW)**"
-            : "**#bug-reports-and-errors** on **[the support server *(click to join)*](https://discord.gg/PczBt78)**";
-
-        var embed = new EmbedBuilder()
-            .Color(0xE74C3C)
-            .Title("Internal error occurred")
-            .Description($"For support, please send the error code above in {channelInfo} with a description of what you were doing at the time.")
-            .Footer(new Embed.EmbedFooter(errorId))
-            .Timestamp(now.ToDateTimeOffset().ToString("O"));
+        var embed = CreateErrorEmbed(errorId, now);
 
         try
         {
             await _rest.CreateMessage(channelId,
-                new MessageRequest { Content = $"> **Error code:** `{errorId}`", Embeds = new[] { embed.Build() } });
+                new MessageRequest { Content = $"> **Error code:** `{errorId}`", Embeds = new[] { embed } });
 
             _logger.Information("Sent error message to {ChannelId} with error code {ErrorId}", channelId, errorId);
             _metrics.Measure.Meter.Mark(BotMetrics.ErrorMessagesSent, "sent");
@@ -75,7 +107,22 @@ public class ErrorMessageService
         }
     }
 
-    private bool ShouldSendErrorMessage(ulong channelId, Instant now)
+    private Embed CreateErrorEmbed(string errorId, Instant now)
+    {
+        var channelInfo = _botConfig.IsBetaBot
+               ? "**#beta-testing** on **[the support server *(click to join)*](https://discord.gg/THvbH59btW)**"
+               : "**#bug-reports-and-errors** on **[the support server *(click to join)*](https://discord.gg/PczBt78)**";
+
+        return new EmbedBuilder()
+            .Color(0xE74C3C)
+            .Title("Internal error occurred")
+            .Description($"For support, please send the error code above in {channelInfo} with a description of what you were doing at the time.")
+            .Footer(new Embed.EmbedFooter(errorId))
+            .Timestamp(now.ToDateTimeOffset().ToString("O"))
+            .Build();
+    }
+
+    private bool ShouldSendErrorMessage(ulong? channelId, Instant now)
     {
         // if (_lastErrorInChannel.TryGetValue(channelId, out var lastErrorTime))
 

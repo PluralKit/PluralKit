@@ -236,7 +236,11 @@ public class Bot
             // Once we've sent it to Sentry, report it to the user (if we have permission to)
             var reportChannel = handler.ErrorChannelFor(evt, _config.ClientId);
             if (reportChannel == null)
+            {
+                if (evt is InteractionCreateEvent ice && ice.Type == Interaction.InteractionType.ApplicationCommand)
+                    await _errorMessageService.InteractionRespondWithErrorMessage(ice, sentryEvent.EventId.ToString());
                 return;
+            }
 
             var botPerms = await _cache.PermissionsIn(reportChannel.Value);
             if (botPerms.HasFlag(PermissionSet.SendMessages | PermissionSet.EmbedLinks))
