@@ -57,6 +57,7 @@ export interface Member {
     birthday?: string;
     pronouns?: string;
     avatar_url?: string;
+    webhook_avatar_url?: string;
     banner?: string;
     description?: string;
     created?: string;

@@ -47,7 +47,10 @@
 
     let bannerOpen = false;
     const toggleBannerModal = () => (bannerOpen = !bannerOpen);
-
+    
+    let proxyAvatarOpen = false;
+    const toggleProxyAvatarModal = () => (proxyAvatarOpen = !proxyAvatarOpen);
+    
     let privacyOpen = false;
     const togglePrivacyModal = () => (privacyOpen = !privacyOpen);
 
@@ -129,6 +132,16 @@
         {#if member.color}
         <Col xs={12} lg={4} class="mb-2">
             <b>Color:</b> {member.color}
+        </Col>
+        {/if}
+        {#if member.webhook_avatar_url}
+        <Col xs={12} lg={4} class="mb-2">
+            <b>Proxy Avatar:</b> <Button size="sm" color="secondary" on:click={toggleProxyAvatarModal} aria-label="view member proxy avatar">View</Button>
+            <Modal isOpen={proxyAvatarOpen} toggle={toggleProxyAvatarModal}>
+                <div slot="external" on:click={toggleProxyAvatarModal} style="height: 100%; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; display: flex;">
+                    <img class="img-thumbnail d-block m-auto" src={member.webhook_avatar_url} tabindex={0} alt={`Member ${member.name} proxy avatar (full size)`} use:focus/>
+                </div>
+            </Modal>
         </Col>
         {/if}
         {#if member.banner}

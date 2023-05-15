@@ -154,6 +154,10 @@
         <Input bind:value={input.avatar_url} maxlength={256} type="url" placeholder={member.avatar_url} aria-label="member avatar url"/>
     </Col>
     <Col xs={12} lg={4} class="mb-2">
+        <Label>Proxy avatar url:</Label>
+        <Input bind:value={input.webhook_avatar_url} maxlength={256} type="url" placeholder={member.webhook_avatar_url} aria-label="member proxy avatar url"/>
+    </Col>
+    <Col xs={12} lg={4} class="mb-2">
         <Label>Banner url:</Label>
         <Input bind:value={input.banner} maxlength={256} type="url" placeholder={member.banner} aria-label="member banner url"/>
     </Col>
