@@ -1,7 +1,6 @@
 name: Build and push Docker image
 on:
   push:
-    branches: [main]
     paths:
     - 'Myriad/**'
     - 'PluralKit.API/**'
@@ -21,15 +20,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.CR_PAT }}
       - uses: actions/checkout@v2
-      - run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      - run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" | sed 's|/|-|g' >> $GITHUB_ENV
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ env.BRANCH_NAME }}
+            type=raw,value=${{ github.sha }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+          flavor: |
+            latest=false
+
       - uses: docker/build-push-action@v2
         with:
           # https://github.com/docker/build-push-action/issues/378
           context: .
           push: true
-          tags: |
-            ghcr.io/pluralkit/pluralkit:${{ env.BRANCH_NAME }}
-            ghcr.io/pluralkit/pluralkit:${{ github.sha }}
-            ghcr.io/pluralkit/pluralkit:latest
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=registry,ref=ghcr.io/pluralkit/pluralkit:${{ env.BRANCH_NAME }}
           cache-to: type=inline
