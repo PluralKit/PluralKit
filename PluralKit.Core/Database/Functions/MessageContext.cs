@@ -26,6 +26,7 @@ public class MessageContext
     public string? SystemGuildTag { get; }
     public bool TagEnabled { get; }
     public string? SystemAvatar { get; }
+    public string? SystemGuildAvatar { get; }
     public bool AllowAutoproxy { get; }
     public int? LatchTimeout { get; }
     public bool CaseSensitiveProxyTags { get; }

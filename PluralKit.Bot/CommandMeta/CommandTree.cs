@@ -220,6 +220,9 @@ public partial class CommandTree
     {
         if (ctx.Match("name", "rename", "changename", "rn"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemRename, m => m.Name(ctx, target));
+        else if (ctx.Match("servername", "sn", "sname", "snick", "snickname", "servernick", "servernickname",
+                     "serverdisplayname", "guildname", "guildnick", "guildnickname", "serverdn"))
+            await ctx.Execute<SystemEdit>(SystemServerName, m => m.ServerName(ctx, target));
         else if (ctx.Match("tag", "t"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemTag, m => m.Tag(ctx, target));
         else if (ctx.Match("servertag", "st", "stag", "deer"))
@@ -234,6 +237,9 @@ public partial class CommandTree
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemBannerImage, m => m.BannerImage(ctx, target));
         else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
             await ctx.CheckSystem(target).Execute<SystemEdit>(SystemAvatar, m => m.Avatar(ctx, target));
+        else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
+                     "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
+            await ctx.CheckSystem(target).Execute<SystemEdit>(SystemServerAvatar, m => m.ServerAvatar(ctx, target));
         else if (ctx.Match("list", "l", "members", "ls"))
             await ctx.CheckSystem(target).Execute<SystemList>(SystemList, m => m.MemberList(ctx, target));
         else if (ctx.Match("find", "search", "query", "fd", "s"))
@@ -319,7 +325,7 @@ public partial class CommandTree
             else
                 await ctx.Execute<GroupMember>(MemberGroups, m => m.ListMemberGroups(ctx, target));
         else if (ctx.Match("serveravatar", "sa", "servericon", "serverimage", "serverpfp", "serverpic", "savatar", "spic",
-                     "guildavatar", "guildpic", "guildicon", "sicon"))
+                     "guildavatar", "guildpic", "guildicon", "sicon", "spfp"))
             await ctx.Execute<MemberAvatar>(MemberServerAvatar, m => m.ServerAvatar(ctx, target));
         else if (ctx.Match("displayname", "dn", "dname", "nick", "nickname", "dispname"))
             await ctx.Execute<MemberEdit>(MemberDisplayName, m => m.DisplayName(ctx, target));

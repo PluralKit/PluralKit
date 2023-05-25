@@ -5,12 +5,14 @@ public partial class CommandTree
     public static Command SystemInfo = new Command("system", "system [system]", "Looks up information about a system");
     public static Command SystemNew = new Command("system new", "system new [name]", "Creates a new system");
     public static Command SystemRename = new Command("system name", "system [system] rename [name]", "Renames your system");
+    public static Command SystemServerName = new Command("system servername", "system [system] servername [name]", "Changes your system displayname for this server");
     public static Command SystemDesc = new Command("system description", "system [system] description [description]", "Changes your system's description");
     public static Command SystemColor = new Command("system color", "system [system] color [color]", "Changes your system's color");
     public static Command SystemTag = new Command("system tag", "system [system] tag [tag]", "Changes your system's tag");
     public static Command SystemPronouns = new Command("system pronouns", "system [system] pronouns [pronouns]", "Changes your system's pronouns");
     public static Command SystemServerTag = new Command("system servertag", "system [system] servertag [tag|enable|disable]", "Changes your system's tag in the current server");
     public static Command SystemAvatar = new Command("system icon", "system [system] icon [url|@mention]", "Changes your system's icon");
+    public static Command SystemServerAvatar = new Command("system serveravatar", "system [system] serveravatar [tag]", "Changes your system's icon in the current server");
     public static Command SystemBannerImage = new Command("system banner", "system [system] banner [url]", "Set the system's banner image");
     public static Command SystemDelete = new Command("system delete", "system [system] delete", "Deletes your system");
     public static Command SystemProxy = new Command("system proxy", "system proxy [server id] [on|off]", "Enables or disables message proxying in a specific server");
@@ -107,7 +109,7 @@ public partial class CommandTree
 
     public static Command[] SystemCommands =
     {
-        SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor,
+        SystemInfo, SystemNew, SystemRename, SystemServerName, SystemTag, SystemDesc, SystemAvatar, SystemServerAvatar, SystemBannerImage, SystemColor,
         SystemDelete, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
     };
 
