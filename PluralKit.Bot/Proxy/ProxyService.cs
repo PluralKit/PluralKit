@@ -281,7 +281,8 @@ public class ProxyService
             FileSizeLimit = guild.FileSizeLimit(),
             Embeds = mangledEmbeds,
             Stickers = originalMsg.StickerItems!,
-            AllowEveryone = allowEveryone
+            AllowEveryone = allowEveryone,
+            Flags = originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
         });
 
 
