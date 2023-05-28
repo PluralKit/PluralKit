@@ -39,7 +39,8 @@ public static class PermissionExtensions
         PermissionsFor(cache, channelId, member.User.Id, member);
 
     public static async Task<PermissionSet> PermissionsFor(this IDiscordCache cache, ulong channelId, ulong userId,
-                                                           GuildMemberPartial? member, bool isWebhook = false)
+                                                           GuildMemberPartial? member, bool isWebhook = false,
+                                                           bool isThread = false)
     {
         if (!(await cache.TryGetChannel(channelId) is Channel channel))
             // todo: handle channel not found better
@@ -55,7 +56,7 @@ public static class PermissionExtensions
         if (isWebhook)
             return EveryonePermissions(guild);
 
-        return PermissionsFor(guild, rootChannel, userId, member);
+        return PermissionsFor(guild, rootChannel, userId, member, isThread: isThread);
     }
 
     public static PermissionSet EveryonePermissions(this Guild guild) =>
@@ -78,11 +79,11 @@ public static class PermissionExtensions
         return perms;
     }
 
-    public static PermissionSet PermissionsFor(Guild guild, Channel channel, MessageCreateEvent msg) =>
-        PermissionsFor(guild, channel, msg.Author.Id, msg.Member);
+    public static PermissionSet PermissionsFor(Guild guild, Channel channel, MessageCreateEvent msg, bool isThread = false) =>
+        PermissionsFor(guild, channel, msg.Author.Id, msg.Member, isThread: isThread);
 
     public static PermissionSet PermissionsFor(Guild guild, Channel channel, ulong userId,
-                                               GuildMemberPartial? member)
+                                               GuildMemberPartial? member, bool isThread = false)
     {
         if (channel.Type == Channel.ChannelType.Dm)
             return PermissionSet.Dm;
@@ -100,7 +101,7 @@ public static class PermissionExtensions
         if ((perms & PermissionSet.ViewChannel) == 0)
             perms &= ~NeedsViewChannel;
 
-        if ((perms & PermissionSet.SendMessages) == 0)
+        if ((perms & PermissionSet.SendMessages) == 0 && (!isThread || (perms & PermissionSet.SendMessagesInThreads) == 0))
             perms &= ~NeedsSendMessages;
 
         return perms;

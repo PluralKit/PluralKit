@@ -100,7 +100,7 @@ public class ProxyService
 
         // Check if the sender account can mention everyone/here + embed links
         // we need to "mirror" these permissions when proxying to prevent exploits
-        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message);
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, rootChannel, message, isThread: rootChannel.Id != channel.Id);
         var allowEveryone = senderPermissions.HasFlag(PermissionSet.MentionEveryone);
         var allowEmbeds = senderPermissions.HasFlag(PermissionSet.EmbedLinks);
 

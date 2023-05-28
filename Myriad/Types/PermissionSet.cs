@@ -34,6 +34,7 @@ public enum PermissionSet: ulong
     ManageRoles = 0x10000000,
     ManageWebhooks = 0x20000000,
     ManageEmojis = 0x40000000,
+    SendMessagesInThreads = 0x04000000000,
 
     // Special:
     None = 0,
