@@ -68,7 +68,7 @@ public class EmbedService
         }
 
         var eb = new EmbedBuilder()
-            .Title(system.Name)
+            .Title(system.NameFor(ctx))
             .Thumbnail(new Embed.EmbedThumbnail(system.AvatarUrl.TryGetCleanCdnUrl()))
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.Hid} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
@@ -106,6 +106,20 @@ public class EmbedService
             if (!guildSettings.TagEnabled)
                 eb.Field(new Embed.Field($"Tag (in server '{cctx.Guild.Name}')",
                     "*(tag is disabled in this server)*"));
+
+            if (guildSettings.DisplayName != null)
+                eb.Title(guildSettings.DisplayName);
+
+            if (guildSettings.AvatarUrl.TryGetCleanCdnUrl() != null)
+            {
+                eb.Thumbnail(new Embed.EmbedThumbnail(guildSettings.AvatarUrl.TryGetCleanCdnUrl()));
+                var sysDesc = "*(this system has a server-specific avatar set";
+                if (system.AvatarUrl.TryGetCleanCdnUrl() != null)
+                    sysDesc += $"; [click here]({system.AvatarUrl.TryGetCleanCdnUrl()}) to see their global avatar)*";
+                else
+                    sysDesc += ")*";
+                eb.Description(sysDesc);
+            }
         }
 
         if (system.PronounPrivacy.CanAccess(ctx) && system.Pronouns != null)
@@ -162,7 +176,13 @@ public class EmbedService
         // string FormatTimestamp(Instant timestamp) => DateTimeFormats.ZonedDateTimeFormat.Format(timestamp.InZone(system.Zone));
 
         var name = member.NameFor(ctx);
-        if (system.Name != null) name = $"{name} ({system.Name})";
+        var systemGuildSettings = guild != null ? await _repo.GetSystemGuild(guild.Id, system.Id) : null;
+        if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
+            name = $"{name} ({systemGuildSettings.DisplayName})";
+        else if (system.NameFor(ctx) != null) 
+            name = $"{name} ({system.NameFor(ctx)})";
+        else
+            name = $"{name} ({system.Name})";
 
         uint color;
         try
@@ -256,8 +276,13 @@ public class EmbedService
 
         var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
 
-        var nameField = target.NamePrivacy.Get(pctx, target.Name, target.DisplayName ?? target.Name);
-        if (system.Name != null)
+        var nameField = target.NameFor(ctx);
+        var systemGuildSettings = ctx.Guild != null ? await _repo.GetSystemGuild(ctx.Guild.Id, system.Id) : null;
+        if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
+            nameField = $"{nameField} ({systemGuildSettings.DisplayName})";
+        else if (system.NameFor(ctx) != null) 
+            nameField = $"{nameField} ({system.NameFor(ctx)})";
+        else
             nameField = $"{nameField} ({system.Name})";
 
         uint color;

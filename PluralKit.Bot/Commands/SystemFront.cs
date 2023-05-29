@@ -38,9 +38,16 @@ public class SystemFront
             .Scan(new FrontHistoryEntry(null, null),
                 (lastEntry, newSwitch) => new FrontHistoryEntry(lastEntry.ThisSwitch?.Timestamp, newSwitch));
 
-        var embedTitle = system.Name != null
-            ? $"Front history of {system.Name} (`{system.Hid}`)"
+        var embedTitle = system.NameFor(ctx) != null
+            ? $"Front history of {system.NameFor(ctx)} (`{system.Hid}`)"
             : $"Front history of `{system.Hid}`";
+
+        if (ctx.Guild != null)
+        {
+            var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, system.Id);
+            if (guildSettings.DisplayName != null)
+                embedTitle = $"Front history of {guildSettings.DisplayName} (`{system.Hid}`)";
+        }
 
         var showMemberId = ctx.MatchFlag("with-id", "wid");
 
@@ -121,10 +128,13 @@ public class SystemFront
         if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
         var title = new StringBuilder("Frontpercent of ");
+        var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, system.Id);
         if (group != null)
             title.Append($"{group.NameFor(ctx)} (`{group.Hid}`)");
-        else if (system.Name != null)
-            title.Append($"{system.Name} (`{system.Hid}`)");
+        else if (guildSettings.DisplayName != null)
+            title.Append($"{guildSettings.DisplayName} (`{system.Hid}`)");
+        else if (system.NameFor(ctx) != null)
+            title.Append($"{system.NameFor(ctx)} (`{system.Hid}`)");
         else
             title.Append($"`{system.Hid}`");
 

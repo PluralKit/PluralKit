@@ -59,6 +59,10 @@ public static class PKSystemExt
     public static string DescriptionFor(this PKSystem system, LookupContext ctx) =>
         system.DescriptionPrivacy.Get(ctx, system.Description);
 
+    public static string NameFor(this PKSystem system, LookupContext ctx) =>
+        system.Name;
+        //system.NamePrivacy.Get(ctx, system.Name);
+
     public static JObject ToJson(this PKSystem system, LookupContext ctx)
     {
         var o = new JObject();
