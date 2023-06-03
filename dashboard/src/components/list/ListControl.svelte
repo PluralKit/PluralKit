@@ -143,9 +143,7 @@ function resetPage() {
                     <option value="birthday">Birthday</option>
                     {/if}
                     <option value="color">Color</option>
-                    {#if !pageOptions.isPublic}
                     <option value="created">Creation date</option>
-                    {/if}
                     <option value="none">API response order</option>
                 </Input>
             </InputGroup>

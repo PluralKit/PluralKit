@@ -85,7 +85,7 @@
         <b>Display Name:</b> <span bind:this={displayNameElement}><AwaitHtml htmlPromise={htmlDisplayNamePromise} /></span>
     </Col>
     {/if}
-    {#if group.created && !isPublic}
+    {#if group.created}
     <Col xs={12} lg={4} class="mb-2">
         <b>Created:</b> {created}
     </Col>
