@@ -52,7 +52,7 @@
         listLoading = false;
     }
 
-    $: processedMembers = filterList(members, options, "member")
+    $: processedMembers = filterList(members, groups, options, "member")
     $: currentMembers = paginateList(processedMembers, pageOptions)
     $: shortMembers = createShortList(members)
     $: pageAmount = getPageAmount(processedMembers, pageOptions)

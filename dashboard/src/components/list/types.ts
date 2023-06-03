@@ -31,7 +31,7 @@ export interface ListOptions {
                 exact: boolean, // only exclude members who are in ALL groups
                 list: []
             },
-        none: boolean
+        filter: "all"|"include"|"exclude",
     },
     // filter members based on whether fields have a value set or not
     // if set to true: only include items with a value
@@ -87,7 +87,7 @@ export interface List<T extends Member|Group> {
 export const defaultListOptions: ListOptions = {
     search: {},
     groups: {
-        none: false,
+        filter: "all",
         include: {
             exact: false,
             list: []

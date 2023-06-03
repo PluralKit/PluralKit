@@ -1,11 +1,11 @@
 import type { Group, Member } from '../../api/types';
 import type { ListOptions, PageOptions } from './types';
 
-export function filterList<T extends Member|Group>(list: T[], options: ListOptions, type?: string): T[] {
+export function filterList(list: Group[]|Member[], groups: Group[], options: ListOptions, type?: string): Group[]|Member[] {
     let searchedList = search(list, options);
     let groupedList = [...searchedList];
     if (type)
-        groupedList = group(searchedList, options, type);
+        groupedList = group(searchedList, groups, options, type);
     let filteredList = filter(groupedList, options);
     let sortedList = sort(filteredList, options);
     let orderedList = reorder(sortedList, options);
@@ -143,8 +143,29 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
     return newList;
 }
 
-function group<T extends Member|Group>(list: T[], options: ListOptions, type?: string): T[] {
-    let groupIncludedList = [...list];
+function group<T extends Member|Group>(members: Member[], groups: Group[], options: ListOptions, type?: string): Group[]|Member[] {
+    let list = type === "member" ? [...members] : [...groups] || []
+    let groupFilterList = [...list]
+
+    if (options.groups.filter === "include")
+        if (type === "member") {
+            groupFilterList = [...list].filter(m => 
+                groups.some(g => (g as Group).members.includes(m.uuid))
+            );
+        } else if (type === "group") {
+            groupFilterList = [...list].filter((g: Group) => g.members && g.members.length > 0)
+        }
+    
+    if (options.groups.filter === "exclude")
+        if (type === "member") {
+            groupFilterList = [...list].filter(m => 
+                !groups.some(g => (g as Group).members.includes(m.uuid))
+            );
+        } else if (type === "group") {
+            groupFilterList = [...list].filter((g: Group) => !g.members || g.members.length < 1)
+        }
+    
+    let groupIncludedList = [...groupFilterList];
 
     if (options.groups.include.list.length > 0) {
         // include has items! check the type and whether to match exactly

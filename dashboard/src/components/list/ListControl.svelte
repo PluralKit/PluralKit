@@ -403,6 +403,29 @@ function resetPage() {
                         </Input>
                     </InputGroup>
                 </Col>
+                {#if pageOptions.type === 'member'}
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Groups</InputGroupText>
+                        <Input type="select" bind:value={options.groups.filter} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With groups</option>
+                            <option value="exclude">Without groups</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                {:else}
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
+                        <InputGroupText>Members</InputGroupText>
+                        <Input type="select" bind:value={options.groups.filter} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With members</option>
+                            <option value="exclude">Without members</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                {/if}
             </Row>
         {/if}
     </CardBody>
