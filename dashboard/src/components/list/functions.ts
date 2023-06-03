@@ -3,6 +3,7 @@ import type { ListOptions, PageOptions } from './types';
 
 export function filterList(list: Group[]|Member[], groups: Group[], options: ListOptions, type?: string): Group[]|Member[] {
     let searchedList = search(list, options);
+    
     let groupedList = [...searchedList];
     if (type)
         groupedList = group(searchedList, groups, options, type);
@@ -143,8 +144,7 @@ function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {
     return newList;
 }
 
-function group<T extends Member|Group>(members: Member[], groups: Group[], options: ListOptions, type?: string): Group[]|Member[] {
-    let list = type === "member" ? [...members] : [...groups] || []
+function group(list: Member[]|Group[], groups: Group[], options: ListOptions, type?: string): Group[]|Member[] {
     let groupFilterList = [...list]
 
     if (options.groups.filter === "include")
