@@ -139,7 +139,14 @@
             </Col>
             <Col xs={12} lg={4} class="mb-2">
                 <Label>Color:</Label>
-                <Input bind:value={input.color} type="text" placeholder={input.color}/>
+                <Row>
+                    <Col xs={9}>
+                        <Input type="text" bind:value={input.color} aria-label="member color value"/>
+                    </Col>
+                    <Col>
+                        <Input class="p-0 w-100" on:change={(e) => input.color = e.target.value.slice(1, 7)} type="color" aria-label="color picker" />
+                    </Col>
+                </Row>
             </Col>
             <Col xs={12} lg={4} class="mb-2">
                 <Label>Avatar url:</Label>
