@@ -146,6 +146,10 @@
                 <Input bind:value={input.avatar_url} maxlength={256} type="url" placeholder={input.avatar_url}/>
             </Col>
             <Col xs={12} lg={4} class="mb-2">
+                <Label>Proxy Avatar url:</Label>
+                <Input bind:value={input.webhook_avatar_url} maxlength={256} type="url" placeholder={input.webhook_avatar_url}/>
+            </Col>
+            <Col xs={12} lg={4} class="mb-2">
                 <Label>Banner url:</Label>
                 <Input bind:value={input.banner} maxlength={256} type="url" placeholder={input.banner}/>
             </Col>
