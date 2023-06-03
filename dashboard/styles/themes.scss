@@ -7,3 +7,11 @@ $primary-alt: #da9317;
 // dark mode. dark.scss extends nightshade
 @import "bootstrap-nightshade.scss";
 @import "dark.scss";
+
+code {
+    color: #000000;
+}
+
+html.dark code {
+    color: #ffffff;
+}
