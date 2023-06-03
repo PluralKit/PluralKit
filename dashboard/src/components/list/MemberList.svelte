@@ -76,7 +76,7 @@
     </Col>
 </Row>
 {:else}
-<span class="itemcounter">{members.length} {pageOptions.type}s ({currentMembers.length} shown) <a href="#!" on:click={(e) => {e.preventDefault(); fetchList()}}>Refresh list</a></span>
+<span class="itemcounter">{processedMembers.length} {pageOptions.type}s ({currentMembers.length} shown) <a href="#!" on:click={(e) => {e.preventDefault(); fetchList()}}>Refresh list</a></span>
 
 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
 
