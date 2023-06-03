@@ -7,11 +7,10 @@
     import type { Member, Group } from '../../api/types';
     import MemberCard from '../member/CardView.svelte';
     import GroupCard from '../group/CardView.svelte';
-    import type { PageOptions, List } from './types';
+    import type { PageOptions } from './types';
 
-    export let lists: List<Member|Group>;
     export let pageOptions: PageOptions;
-    export let otherList: List<Member|Group>;
+    export let currentList: Member[]|Group[];
 
     let copiedItems = {};
 
@@ -49,31 +48,31 @@
 
 <Row class="mx-4 mx-sm-5 mx-md-0">
     {#if pageOptions.type === "member"}
-        {#each lists.currentPage as item (item.uuid)}
+        {#each currentList as item (item.uuid)}
         <div class="col-12 col-md-6 col-lg-4 col-xxl-3 mx-auto mx-sm-0 dont-squish">
-            <MemberCard on:update member={item} searchBy="name" sortBy="name" groups={otherList.rawList} isPublic={pageOptions.isPublic} isDash={pageOptions.isMain}>
-                    <div slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${pageOptions.type}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
+            <MemberCard on:update member={item} searchBy="name" sortBy="name" isPublic={pageOptions.isPublic} isDash={pageOptions.isMain}>
+                    <button class="button-reset" slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${pageOptions.type}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
                         {#if item.privacy && item.privacy.visibility === "private"}
                             <FaLock />
                         {:else}
                             <FaUserCircle />
                         {/if}
-                    </div>
+                    </button>
             </MemberCard>
             <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.uuid}`}>{copiedItems[item.uuid] ? "Copied!" : "Copy public link"}</Tooltip>
         </div>
         {/each}
     {:else if pageOptions.type === "group"}
-    {#each lists.currentPage as item (item.uuid)}
+    {#each currentList as item (item.uuid)}
         <div class="col-12 col-md-6 col-lg-4 col-xxl-3 mx-auto mx-sm-0 dont-squish">
-            <GroupCard group={item} searchBy="name" sortBy="name" members={otherList.rawList} isPublic={pageOptions.isPublic} isDash={pageOptions.isMain}>
-                <div slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${pageOptions.type}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
-                        {#if item.privacy && item.privacy.visibility === "private"}
-                            <FaLock />
-                        {:else}
-                            <FaUsers />
-                        {/if}
-                    </div>
+            <GroupCard group={item} searchBy="name" sortBy="name" isPublic={pageOptions.isPublic} isDash={pageOptions.isMain}>
+                <button class="button-reset" slot="icon" style="width: auto; height: 1em; cursor: pointer;" id={`${pageOptions.type}-copy-${item.uuid}`} on:click|stopPropagation={() => copyShortLink(item.uuid, item.id)} on:keydown={(e) => copyShortLink(item.uuid, item.id, e)} tabindex={0} >
+                    {#if item.privacy && item.privacy.visibility === "private"}
+                        <FaLock />
+                    {:else}
+                        <FaUsers />
+                    {/if}
+                </button>
             </GroupCard>
             <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.uuid}`}>{copiedItems[item.uuid] ? "Copied!" : "Copy public link"}</Tooltip>
         </div>
@@ -86,5 +85,15 @@
         .dont-squish {
             max-width: 24rem;
         }
+    }
+
+    .button-reset {
+        background: none;
+        color: inherit;
+        border: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        outline: inherit;
     }
 </style>

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { getContext } from 'svelte';
+    import type { Writable } from 'svelte/store';
     import { Row, Col, Button, Alert, ListGroup, ListGroupItem, Spinner } from 'sveltestrap';
     import ListPagination from "../common/ListPagination.svelte";
     import twemoji from "twemoji";
@@ -14,7 +16,9 @@
     let err: string;
     export let group: Group;
     export let memberMode: boolean = true;
-    export let members: Member[];
+
+    $: groups = getContext<Writable<Group[]>>("groups")
+    $: members = getContext<Writable<Member[]>>("members")
 
     let membersInGroup: Member[];
     let membersNotInGroup: Member[];
@@ -28,18 +32,13 @@
 
     let smallPages = true;
 
-    updateMemberList();
 
-    function updateMemberList() {
-        membersInGroup = members.filter(member => group.members.includes(member.uuid));
-        membersInGroup = membersInGroup.sort((a, b) => a.name.localeCompare(b.name));
+    $: membersInGroup = $members.filter(member => group.members.includes(member.uuid)).sort((a, b) => a.name.localeCompare(b.name));;
 
-        membersNotInGroup = members.filter(member => !group.members.includes(member.uuid));
-        membersNotInGroup = membersNotInGroup.sort((a, b) => a.name.localeCompare(b.name));
+    $: membersNotInGroup = $members.filter(member => !group.members.includes(member.uuid)).sort((a, b) => a.name.localeCompare(b.name));
 
-        membersInGroupSelection = membersInGroup.map(function(member) { return {name: member.name, shortid: member.id, id: member.uuid, display_name: member.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
-        membersNotInGroupSelection = membersNotInGroup.map(function(member) { return {name: member.name, shortid: member.id, id: member.uuid, display_name: member.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
-    }
+    $: membersInGroupSelection = membersInGroup.map(function(member) { return {name: member.name, shortid: member.id, id: member.uuid, display_name: member.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
+    $: membersNotInGroupSelection = membersNotInGroup.map(function(member) { return {name: member.name, shortid: member.id, id: member.uuid, display_name: member.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
 
     $: indexOfLastItem = currentPage * 10;
     $: indexOfFirstItem = indexOfLastItem - 10;
@@ -69,7 +68,13 @@ function memberListRenderer(item: any) {
             loading = true;
             await api().groups(group.id).members.add.post({data});
             data.forEach(member => group.members.push(member));
-            updateMemberList();
+            $groups.forEach(g => {
+                if (g.uuid === group.uuid) {
+                    g.members = group.members
+                }
+            })
+            groups.set($groups)
+
             err = null;
             membersToBeAdded = [];
             loading = false;
@@ -86,7 +91,13 @@ function memberListRenderer(item: any) {
             loading = true;
             await api().groups(group.id).members.remove.post({data});
             group.members = group.members.filter(m => !data.includes(m));
-            updateMemberList();
+            $groups.forEach(g => {
+                if (g.uuid === group.uuid) {
+                    g.members = group.members
+                }
+            })
+            groups.set($groups)
+
             err = null;
             membersToBeRemoved = [];
             loading = false;

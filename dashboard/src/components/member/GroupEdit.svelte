@@ -12,12 +12,16 @@
 
     import type { Member, Group } from '../../api/types';
     import api from '../../api';
+    import type { Writable } from 'svelte/store';
+    import { getContext } from 'svelte';
 
     export let member: Member;
-    export let groups: Group[] = [];
     let loading: boolean = false;
     let err: string;
     export let groupMode: boolean = true;
+
+    $: groups = getContext<Writable<Group[]>>("groups")
+    $: members = getContext<Writable<Member[]>>("members")
 
     let groupsWithMember: Group[];
     let groupsWithoutMember: Group[];
@@ -30,18 +34,13 @@
     let currentPage = 1;
     let smallPages = true;
 
-    updateGroupLists();
 
-    function updateGroupLists() {
-        groupsWithMember = groups.filter(group => group.members && group.members.includes(member.uuid));
-        groupsWithMember.sort((a, b) => a.name.localeCompare(b.name));
+    $: groupsWithMember = $groups.filter(group => group.members && group.members.includes(member.uuid)).sort((a, b) => a.name.localeCompare(b.name));;
 
-        groupsWithoutMember = groups.filter(group => group.members && !group.members.includes(member.uuid));
-        groupsWithoutMember.sort((a, b) => a.name.localeCompare(b.name));
+    $: groupsWithoutMember = $groups.filter(group => group.members && !group.members.includes(member.uuid)).sort((a, b) => a.name.localeCompare(b.name));
 
-        groupsWithMemberSelection = groupsWithMember.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
-        groupsWithoutMemberSelection = groupsWithoutMember.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
-    }
+    $: groupsWithMemberSelection = groupsWithMember.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
+    $: groupsWithoutMemberSelection = groupsWithoutMember.map(function(group) { return {name: group.name, shortid: group.id, id: group.uuid, members: group.members, display_name: group.display_name}; }).sort((a, b) => a.name.localeCompare(b.name));
 
     $: indexOfLastItem = currentPage * 10;
     $: indexOfFirstItem = indexOfLastItem - 10;
@@ -70,8 +69,9 @@
         try {
             loading = true;
             await api().members(member.id).groups.add.post({data});
-            groups.forEach(group =>  data.includes(group.uuid) && group.members.push(member.uuid));
-            updateGroupLists();
+            $groups.forEach(group =>  data.includes(group.uuid) && group.members.push(member.uuid));
+            groups.set($groups)
+            
             err = null;
             groupsToBeAdded = [];
             loading = false;
@@ -87,8 +87,9 @@
         try {
             loading = true;
             await api().members(member.id).groups.remove.post({data});
-            groups.forEach(group => {if (data.includes(group.uuid)) group.members = group.members.filter(m => m !== member.uuid)});
-            updateGroupLists();
+            $groups.forEach(group => {if (data.includes(group.uuid)) group.members = group.members.filter(m => m !== member.uuid)});
+            groups.set($groups)
+
             err = null;
             groupsToBeRemoved = [];
             loading = false;

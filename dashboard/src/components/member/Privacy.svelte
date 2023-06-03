@@ -1,13 +1,16 @@
 <script lang="ts">
-    import { tick, createEventDispatcher } from "svelte";
+    import { tick, getContext } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner } from "sveltestrap";
 
     import type { Member, MemberPrivacy } from '../../api/types';
     import api from '../../api';
+    import type { Writable } from "svelte/store";
 
     export let privacyOpen: boolean;
     export let member: Member;
     const togglePrivacyModal = () => (privacyOpen = !privacyOpen);
+    
+    $: members = getContext<Writable<Member[]>>("members")
     
     let err: string;
     let loading = false;
@@ -17,12 +20,6 @@
 		const target = e.target as HTMLInputElement;
 		Object.keys(privacy).forEach(x => privacy[x] = target.value);
 	}
-
-    const dispatch = createEventDispatcher();
-
-    function update(member) {
-        dispatch('update', member);
-    }
 
     // I can't use the hacked together Required<T> type from the bulk privacy here
     // that breaks updating the displayed privacy after submitting
@@ -44,7 +41,15 @@
 		const data: Member = {privacy: privacy};
 		try {
 			let res = await api().members(member.id).patch({data});
-            update({...member, ...res});
+            const newMember = {...member, ...res}
+            const newList = $members.map((m: Member) => {
+                if (member.uuid === m.uuid) {
+                    m = newMember
+                }
+                return m
+            })
+            members.set(newList)
+
             success = true;
 		} catch (error) {
 			console.log(error);

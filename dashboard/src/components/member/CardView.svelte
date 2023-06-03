@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { getContext } from 'svelte';
     import { Card, CardHeader, CardTitle, Modal, Button, ListGroup, ListGroupItem, Input, Alert, Label, Spinner, Row, Col, Tooltip } from 'sveltestrap';
     import AwaitHtml from '../common/AwaitHtml.svelte';
     import parseMarkdown from '../../api/parse-markdown';
@@ -17,12 +17,11 @@
     import api from '../../api';
     import default_avatar from '../../assets/default_avatar.png';
     import resizeMedia from '../../api/resize-media';
-
+    import type { Writable } from 'svelte/store';
 
     export let member: Member;
     export let searchBy: string;
     export let sortBy: string;
-    export let groups: Group[];
     export let isPublic = false;
     export let isDash = false;
 
@@ -65,12 +64,6 @@
     let altText = `member ${member.name} avatar`;
     
     let pageLink = isPublic ? `/profile/m/${member.id}` : `/dash/m/${member.id}`;
-    
-    const dispatch = createEventDispatcher();
-
-    function update(member: Member) {
-        dispatch('update', member);
-    }
 
     async function submit() {
         let data = input;
@@ -93,7 +86,16 @@
         loading = true;
         try {
             let res = await api().members(member.id).patch({data});
-            update({...member, ...res});
+            const newMember = {...member, ...res}
+            const newList = $members.map((m: Member) => {
+                if (member.uuid === m.uuid) {
+                    m = newMember
+                }
+                return m
+            })
+
+            members.set(newList)
+
             view = 'card';
         } catch (error) {
             console.log(error);
@@ -103,7 +105,9 @@
         loading = false;
     }
 
-    $: groupList = groups && groups.filter(g => g.members && g.members.includes(member.uuid)).sort((a, b) => a.name.localeCompare(b.name)) || [];
+    $: members = getContext<Writable<Member[]>>("members")
+    $: groups = getContext<Writable<Group[]>>("groups")
+    $: groupList = $groups && $groups.filter(g => g.members && g.members.includes(member.uuid)).sort((a, b) => a.name.localeCompare(b.name)) || [];
     let listGroupElements = [];
 
     $: if (view !== "edit") {

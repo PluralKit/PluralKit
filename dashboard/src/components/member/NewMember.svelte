@@ -1,11 +1,12 @@
 <script lang="ts">
     import { Accordion, AccordionItem, Row, Col, Input, Button, Label, Alert, Spinner, CardTitle, InputGroup } from 'sveltestrap';
-    import { createEventDispatcher } from 'svelte';
+    import { getContext } from 'svelte';
     import { autoresize } from 'svelte-textarea-autoresize';
     import moment from 'moment';
     import FaPlus from 'svelte-icons/fa/FaPlus.svelte';
     import type { Member } from '../../api/types';
     import api from '../../api';
+    import type { Writable } from 'svelte/store';
 
     const descriptions: string[] = JSON.parse(localStorage.getItem("pk-config"))?.description_templates;
 
@@ -36,11 +37,7 @@
     // creating a deep copy here so that defaultMember doesn't get updated too
     let input: Member = JSON.parse(JSON.stringify(defaultMember));
 
-    const dispatch = createEventDispatcher();
-
-    function create(data: Member) {
-        dispatch('create', data);
-    }
+    $: members = getContext<Writable<Member[]>>("members")
 
     async function submit() {
         let data = input;
@@ -92,7 +89,9 @@
         loading = true;
         try {
             let res = await api().members().post({data});
-            create(res);
+            $members.push(res)
+            members.set($members)
+
             input = JSON.parse(JSON.stringify(defaultMember));
             message = `Member ${data.name} successfully created!`
             err = [];
@@ -128,11 +127,11 @@
             </Col>
             <Col xs={12} lg={4} class="mb-2">
                 <Label>Display name:</Label>
-                <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} type="text" placeholder={input.display_name} />
+                <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} placeholder={input.display_name} />
             </Col>
             <Col xs={12} lg={4} class="mb-2">
                 <Label>Pronouns:</Label>
-                <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.pronouns} maxlength={100} type="text" placeholder={input.pronouns} />
+                <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.pronouns} maxlength={100} placeholder={input.pronouns} />
             </Col>
             <Col xs={12} lg={4} class="mb-2">
                 <Label>Birthday:</Label>
@@ -166,49 +165,49 @@
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Description:</Label>
                 <Input type="select" bind:value={input.privacy.description_privacy}>
-                    <option default>public</option>
+                    <option>public</option>
                     <option>private</option>
                 </Input>
             </Col>
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Name:</Label>
                 <Input type="select" bind:value={input.privacy.name_privacy}>
-                    <option default>public</option>
+                    <option>public</option>
                     <option>private</option>
                 </Input>
             </Col>
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Avatar:</Label>
                 <Input type="select" bind:value={input.privacy.avatar_privacy}>
-                    <option default>public</option>
+                    <option>public</option>
                     <option>private</option>
                 </Input>
             </Col>
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Birthday:</Label>
                 <Input type="select" bind:value={input.privacy.birthday_privacy}>
-                    <option default>public</option>
+                    <option>public</option>
                     <option>private</option>
                 </Input>
             </Col>
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Pronouns:</Label>
                 <Input type="select" bind:value={input.privacy.pronoun_privacy}>
-                    <option default>public</option>
+                    <option>public</option>
                     <option>private</option>
                 </Input>
             </Col>
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Visibility:</Label>
                 <Input type="select" bind:value={input.privacy.visibility}>
-                    <option default>public</option>
+                    <option>public</option>
                     <option>private</option>
                 </Input>
             </Col>
             <Col xs={12} lg={4} class="mb-3">
                 <Label>Metadata:</Label>
                 <Input type="select" bind:value={input.privacy.metadata_privacy}>
-                    <option default>public</option>
+                    <option>public</option>
                     <option>private</option>
                 </Input>
             </Col>

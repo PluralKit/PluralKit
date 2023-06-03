@@ -10,8 +10,9 @@ import { Link, useParams } from 'svelte-navigator';
 import type { ListOptions, List, PageOptions, ShortList } from './types';
 
 export let options: ListOptions;
-export let lists: List<Member|Group>;
 export let pageOptions: PageOptions;
+export let shortGroups: any[] = []
+export let shortMembers: any[] = []
 
 let advanced = false;
 
@@ -286,9 +287,9 @@ function resetPage() {
                 <p><b>Include</b> {pageOptions.type === 'group' ? "groups with the following members" : "members in the following groups"}</p>
                 <Col xs={12} md={7} lg={9}  class="mb-2">
                     {#if pageOptions.type === "member"}
-                    <Svelecte disableHighlight renderer="group-list" valueAsObject bind:value={options.groups.include.list} options={lists.shortGroups} multiple style="margin-bottom: 0.5rem" placeholder="Include..." />
+                    <Svelecte disableHighlight renderer="group-list" valueAsObject bind:value={options.groups.include.list} options={shortGroups} multiple style="margin-bottom: 0.5rem" placeholder="Include..." />
                     {:else if pageOptions.type === "group"}
-                    <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={options.groups.include.list} options={lists.shortMembers} multiple style="margin-bottom: 0.5rem" placeholder="Include..." />
+                    <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={options.groups.include.list} options={shortMembers} multiple style="margin-bottom: 0.5rem" placeholder="Include..." />
                     {/if}
                 </Col>
                 <Col xs={12} md={5} lg={3} class="mb-2">
@@ -304,9 +305,9 @@ function resetPage() {
                 <p><b>Exclude</b> {pageOptions.type === 'group' ? "groups with the following members" : "members in the following groups"}</p>
                 <Col xs={12} md={7} lg={9}  class="mb-2">
                     {#if pageOptions.type === "member"}
-                    <Svelecte disableHighlight renderer="group-list" valueAsObject bind:value={options.groups.exclude.list} options={lists.shortGroups} multiple style="margin-bottom: 0.5rem" placeholder="Exclude..." />
+                    <Svelecte disableHighlight renderer="group-list" valueAsObject bind:value={options.groups.exclude.list} options={shortGroups} multiple style="margin-bottom: 0.5rem" placeholder="Exclude..." />
                     {:else if pageOptions.type === "group"}
-                    <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={options.groups.exclude.list} options={lists.shortMembers} multiple style="margin-bottom: 0.5rem" placeholder="Exclude..." />
+                    <Svelecte disableHighlight renderer="member-list" valueAsObject bind:value={options.groups.exclude.list} options={shortMembers} multiple style="margin-bottom: 0.5rem" placeholder="Exclude..." />
                     {/if}
                 </Col>
                 <Col xs={12} md={5} lg={3} class="mb-2">

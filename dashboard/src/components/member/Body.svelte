@@ -198,8 +198,8 @@
     <Link to={getSystemPageUrl()}><Button style="flex: 0; {!isPublic && "float: right;"}" color="primary" tabindex={-1} aria-label="view member's system">View system</Button></Link>
     {/if}
     {:else if editMode}
-        <Edit on:update on:deletion bind:member bind:editMode />
+        <Edit {member} bind:editMode />
     {:else if groupMode}
-        <GroupEdit on:updateMemberGroups bind:member bind:groups bind:groupMode />
+        <GroupEdit {member} bind:groupMode />
     {/if}
     </CardBody>

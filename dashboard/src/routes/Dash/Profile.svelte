@@ -1,20 +1,22 @@
 <script lang="ts">
     import { Container, Col, Row, TabContent, TabPane, Alert, Spinner } from 'sveltestrap';
     import { useParams, useLocation, navigate } from "svelte-navigator";
-    import { onMount } from 'svelte';
+    import { onMount, setContext } from 'svelte';
     
     import SystemMain from '../../components/system/Main.svelte';
-    import List from '../../components/list/List.svelte';
+    import MemberList from '../../components/list/MemberList.svelte';
+    import GroupList from '../../components/list/GroupList.svelte';
     import { defaultListOptions, defaultPageOptions, type List as Lists, type ListOptions, type PageOptions } from '../../components/list/types';
     
     import type{ Group, Member, System } from '../../api/types';
     import api from '../../api';
+    import { writable } from 'svelte/store';
 
     let user: System = {};
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
 
     let params = useParams();
-    $: id = $params.id;
+    $: systemId = $params.id;
     
     let location = useLocation();
     let urlParams = $location.search && new URLSearchParams($location.search);
@@ -24,7 +26,7 @@
 
     // change the URL when changing tabs
     function navigateTo(tab: string|number, view: string) {
-        let url = `./${id}`;
+        let url = `./${systemId}`;
         if (tab || view) url += "?";
         if (tab) url += `tab=${tab}`
         if (tab && view) url += "&";
@@ -40,11 +42,12 @@
 
     onMount(() => {
         getSystem();
+        fetchLists();
     })
 
     async function getSystem() {
         try {
-            let res: System = await api().systems(id).get();
+            let res: System = await api().systems(systemId).get();
             user = res;
             title = user.name ? user.name : "system";
         } catch (error) {
@@ -53,22 +56,41 @@
         }
     }
 
-    let memberList: Lists<Member> = {
-        rawList: [],
-        processedList: [],
-        currentPage: [],
+    // context stores for each list
+    let memberStore = writable<Member[]>([]);
+    let groupStore = writable<Group[]>([]);
 
-        shortGroups: [],
-        shortMembers: [],
-    }
+    // state handling
+    let errs: Record<string, string> = {};
+    let loading: Record<string, boolean> = {};
+    
+    setContext("members", memberStore);
+    setContext("groups", groupStore);
 
-    let groupList: Lists<Group> = {
-        rawList: [],
-        processedList: [],
-        currentPage: [],
+    // fetch both lists, and store them inside a context store
+    async function fetchLists() {
+        loading.members = true;
+        loading.groups = true;
 
-        shortGroups: [],
-        shortMembers: [],
+        try {
+            const res = await api().systems(systemId).members.get();
+            memberStore.set(res)
+            loading.members = false;
+
+        } catch (error) {
+            console.error(error);
+            errs.members = error.message;
+        }
+
+        try {
+            const res = await api().systems(systemId).groups.get();
+            groupStore.set(res)
+            loading.groups = false;
+
+        } catch (error) {
+            console.error(error);
+            errs.groups = error.message;
+        }
     }
 
     let groupListOptions: ListOptions = defaultListOptions;
@@ -110,10 +132,10 @@
                     <SystemMain bind:user={user} isPublic={true} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={groupList} bind:lists={memberList} bind:pageOptions={memberListPageOptions} bind:options={memberListOptions} />
+                    <MemberList on:viewChange={(e) => navigateTo("members", e.detail)} bind:listLoading={loading.members} pageOptions={memberListPageOptions} options={memberListOptions} {systemId} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <List on:viewChange={(e) => navigateTo("members", e.detail)} bind:otherList={memberList} bind:lists={groupList} bind:pageOptions={groupListPageOptions}  bind:options={groupListOptions} />
+                    <GroupList on:viewChange={(e) => navigateTo("groups", e.detail)} bind:listLoading={loading.groups} pageOptions={groupListPageOptions}  options={groupListOptions} {systemId} />
                 </TabPane> 
             </TabContent>
             {/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
-    import { Card, CardHeader, CardTitle, Modal, Button, ListGroup, ListGroupItem, Label, Input, Alert, Tooltip, Row, Col } from 'sveltestrap';
+    import { getContext } from 'svelte';
+    import { CardHeader, CardTitle, Modal, Button, ListGroup, ListGroupItem, Label, Input, Alert, Tooltip, Row, Col } from 'sveltestrap';
     import parseMarkdown from '../../api/parse-markdown';
     import twemoji from 'twemoji';
     import { Link } from 'svelte-navigator';
@@ -12,16 +12,16 @@
     import FaTimes from 'svelte-icons/fa/FaTimes.svelte'
     import FaCheck from 'svelte-icons/fa/FaCheck.svelte'
 
-    import type { Group, Member} from '../../api/types';
+    import type { Group, Member } from '../../api/types';
     import api from '../../api';
     import default_avatar from '../../assets/default_avatar.png';
     import resizeMedia from '../../api/resize-media';
     import AwaitHtml from '../common/AwaitHtml.svelte';
+    import type { Writable } from 'svelte/store';
 
     export let group: Group;
     export let searchBy: string;
     export let sortBy: string;
-    export let members: Member[];
     export let isPublic = false;
     export let isDash = false;
 
@@ -60,16 +60,13 @@
 
     let altText = `member ${group.name} avatar`;
 
-    $: memberList = members && members.filter(m => group.members && group.members.includes(m.uuid) && true).sort((a, b) => a.name.localeCompare(b.name)) || [];
+    $: members = getContext<Writable<Member[]>>("members")
+    $: memberList = $members && $members.filter(m => group.members && group.members.includes(m.uuid) && true).sort((a, b) => a.name.localeCompare(b.name)) || [];
+    
+    $: groups = getContext<Writable<Member[]>>("groups")
     let listGroupElements = [];
     
     let pageLink = isPublic ? `/profile/g/${group.id}` : `/dash/g/${group.id}`;
-
-    const dispatch = createEventDispatcher();
-
-    function update(group: Group) {
-        dispatch('update', group);
-    }
 
     async function submit() {
         let data = input;
@@ -93,9 +90,17 @@
         loading = true;
         try {
             let res = await api().groups(group.id).patch({data});
-            update({...group, ...res});
-            group = {...group, ...res};
+            const newgroup = {...group, ...res};
+            const newList = $groups.map((g: Group) => {
+                if (group.uuid === g.uuid) {
+                    g = newgroup
+                }
+                return g
+            })
+            groups.set(newList)
+
             err = [];
+            loading = false;
             view = 'card';
         } catch (error) {
             console.log(error);
@@ -179,7 +184,7 @@
             <Input bind:value={input.icon} maxlength={256} type="url" placeholder={group.icon} aria-label="group avatar url"/>
             <hr style="min-height: 1px" />
             <Label>Display name:</Label>
-            <textarea class="form-control mb-2" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} type="text" placeholder={group.display_name} aria-label="group display name" />
+            <textarea class="form-control mb-2" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} placeholder={group.display_name} aria-label="group display name" />
             <hr style="min-height: 1px" />
             <Label>Description:</Label>
             <textarea class="form-control" style="resize: none; overflow: hidden;" bind:value={input.description} maxlength={1000} use:autoresize placeholder={group.description} aria-label="group description"/>

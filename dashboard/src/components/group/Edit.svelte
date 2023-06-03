@@ -1,6 +1,7 @@
 <script lang="ts">
+    import type { Writable } from 'svelte/store';
     import { Row, Col, Input, Button, Label, Alert, Spinner, Modal, ModalHeader, ModalBody } from 'sveltestrap';
-    import { createEventDispatcher, tick } from 'svelte';
+    import { getContext, tick } from 'svelte';
     import type { Group } from '../../api/types';
     import api from '../../api';
     import { autoresize } from 'svelte-textarea-autoresize';
@@ -13,19 +14,11 @@
     export let group: Group;
     export let editMode: boolean;
 
+    $: groups = getContext<Writable<Group[]>>("groups")
+
     let err: string[] = [];
 
-    let input: Group = group;
-
-    const dispatch = createEventDispatcher();
-
-    function deletion() {
-        dispatch('deletion', group.id);
-    }
-
-    function update(group: Group) {
-        dispatch('update', group);
-    }
+    let input: Group = JSON.parse(JSON.stringify(group));
 
     async function submit() {
         let data = input;
@@ -49,7 +42,15 @@
         loading = true;
         try {
             let res = await api().groups(group.id).patch({data});
-            update({...group, ...res});
+            const newgroup = {...group, ...res};
+            const newList = $groups.map((g: Group) => {
+                if (group.uuid === g.uuid) {
+                    g = newgroup
+                }
+                return g
+            })
+            groups.set(newList);
+            
             err = [];
             editMode = false;
             return;
@@ -85,7 +86,10 @@
             deleteErr = null;
             toggleDeleteModal();
             loading = false;
-            deletion();
+            
+            const newList = $groups.filter((g: Group) => group.uuid !== g.uuid)
+            groups.set(newList);
+
         } catch (error) {
             loading = false;
         }
@@ -110,7 +114,7 @@
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Display name:</Label>
-        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} type="text" placeholder={group.display_name} aria-label="group display name"/>
+        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} placeholder={group.display_name} aria-label="group display name"/>
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Color:</Label>

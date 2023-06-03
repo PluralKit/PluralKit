@@ -142,9 +142,9 @@
 <Link to={getGroupPageUrl(true)}><button class="link-button button-right btn btn-secondary" style={isPublic ? "float: none !important; margin-left: 0;" : ""} tabindex={-1} aria-label="randomize group members">Randomize group</button></Link>
 
 {:else if editMode}
-<Edit on:update on:deletion bind:group bind:editMode />
+<Edit {group} bind:editMode />
 {:else if memberMode}
-    <MemberEdit on:updateGroupMembers bind:group bind:memberMode bind:members />
+    <MemberEdit {group} bind:memberMode />
 {/if}
 </CardBody>
 

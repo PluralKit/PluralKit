@@ -1,6 +1,7 @@
 <script lang="ts">
+    import type { Writable } from 'svelte/store';
     import { Row, Col, Input, Button, Label, Alert, Spinner, Modal, ModalHeader, ModalBody } from 'sveltestrap';
-    import { createEventDispatcher, tick } from 'svelte';
+    import { getContext, tick } from 'svelte';
     import { autoresize } from 'svelte-textarea-autoresize';
     import moment from 'moment';
 
@@ -12,21 +13,12 @@
     let loading: boolean = false;
     export let member: Member;
     export let editMode: boolean;
+    $: members = getContext<Writable<Member[]>>("members")
 
     let err: string[] = [];
     let success = false;
 
     let input: Member = JSON.parse(JSON.stringify(member));
-
-    const dispatch = createEventDispatcher();
-    
-    function deletion() {
-        dispatch('deletion', member.id);
-    }
-
-    function update(member: Member) {
-        dispatch('update', member);
-    }
 
     async function submit() {
         let data = input;
@@ -73,7 +65,15 @@
         loading = true;
         try {
             let res = await api().members(member.id).patch({data});
-            update({...member, ...res});
+            const newMember = {...member, ...res}
+            const newList = $members.map((m: Member) => {
+                if (member.uuid === m.uuid) {
+                    m = newMember
+                }
+                return m
+            })
+
+            members.set(newList)
             editMode = false;
             return;
         } catch (error) {
@@ -108,7 +108,9 @@
             deleteErr = null;
             toggleDeleteModal();
             loading = false;
-            deletion();
+            
+            const newList = $members.filter((m: Member) => member.uuid !== m.uuid)
+            members.set(newList);
         } catch (error) {
             console.log(error);
             deleteErr = error.message;
@@ -135,11 +137,11 @@
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Display name:</Label>
-        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} type="text" placeholder={member.display_name} aria-label="member display name" />
+        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.display_name} maxlength={100} placeholder={member.display_name} aria-label="member display name" />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Pronouns:</Label>
-        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.pronouns} maxlength={100} type="text" placeholder={member.pronouns} aria-label="member pronouns" />
+        <textarea class="form-control" style="resize: none; height: 1em" bind:value={input.pronouns} maxlength={100} placeholder={member.pronouns} aria-label="member pronouns" />
     </Col>
     <Col xs={12} lg={4} class="mb-2">
         <Label>Birthday:</Label>

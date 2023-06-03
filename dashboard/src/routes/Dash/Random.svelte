@@ -9,7 +9,6 @@
     import type { Group, Member } from '../../api/types';
     import { defaultListOptions, type List as Lists, type ListOptions, type PageOptions } from '../../components/list/types';
     import { defaultPageOptions } from '../../components/list/types';
-    import { filterList, paginateList } from '../../components/list/functions';
     import CardView from '../../components/list/CardView.svelte';
 
     export let isPublic: boolean = false;
@@ -34,7 +33,7 @@
 
     if (searchParams && searchParams.get("amount")) {
         amount = parseInt(searchParams.get("amount"));
-        if (amount === NaN) amount = 1;
+        if (isNaN(amount)) amount = 1;
         else if (amount > 5) amount = 5;
     }
 
@@ -190,18 +189,18 @@
                         <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Amount:</Label>
                             <Input bind:value={optionAmount} type="select" aria-label="amount">
-                                <option default={amount === 1}>1</option>
-                                <option default={amount === 2}>2</option>
-                                <option default={amount === 3}>3</option>
-                                <option default={amount === 4}>4</option>
-                                <option default={amount === 5}>5</option>
+                                <option>1</option>
+                                <option>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
                             </Input>
                         </Col>
                         <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Allow duplicates:</Label>
                             <Input bind:value={optionAllowDoubles} type="select" aria-label="allow duplicates">
-                                <option value="false" default={allowDoubles === false}>no</option>
-                                <option value="true" default={allowDoubles === true}>yes</option>
+                                <option value="false">no</option>
+                                <option value="true">yes</option>
                             </Input>
                         </Col>
                         <Col xs={12} md={6} lg={4} class="mb-2">
@@ -215,8 +214,8 @@
                         <Col xs={12} md={6} lg={4} class="mb-2">
                             <Label>Use all {type}s:</Label>
                             <Input bind:value={optionUsePrivateItems} type="select" aria-label="include private members">
-                                <option value="false" default={usePrivateItems === false}>no (only public {type}s)</option>
-                                <option value="true" default={usePrivateItems === true}>yes (include private {type}s)</option>
+                                <option value="false">no (only public {type}s)</option>
+                                <option value="true">yes (include private {type}s)</option>
                             </Input>
                         </Col>
                         {/if}
@@ -237,9 +236,9 @@
                 <Alert color="danger">{err}</Alert>
             {:else}
                 {#if pageOptions.view === 'card'}
-                    <CardView {lists} {pageOptions} otherList={nope} />
+                    <CardView {pageOptions} currentList={lists.currentPage}/>
                 {:else}
-                    <ListView {lists} {pageOptions} otherList={nope}/>
+                    <ListView {pageOptions} currentList={lists.currentPage} fullListLength={1} />
                 {/if}
             {/if}
         </Col>

@@ -1,13 +1,16 @@
 <script lang="ts">
-    import { tick, createEventDispatcher } from "svelte";
+    import { tick, getContext } from "svelte";
     import { ModalBody, ModalHeader, Col, Row, Input, Label, ModalFooter, Button, Spinner, Alert } from "sveltestrap";
 
     import type { Group, GroupPrivacy } from '../../api/types';
     import api from '../../api';
+    import type { Writable } from "svelte/store";
 
     export let privacyOpen: boolean;
     export let group: Group;
     const togglePrivacyModal = () => (privacyOpen = !privacyOpen);
+
+    $: groups = getContext<Writable<Group[]>>("groups")
 
     let err: string;
     let loading = false;
@@ -17,12 +20,6 @@
 		const target = e.target as HTMLInputElement;
 		Object.keys(privacy).forEach(x => privacy[x] = target.value);
 	}
-
-    const dispatch = createEventDispatcher();
-
-    function update(group) {
-        dispatch('update', group);
-    }
 
     // I can't use the hacked together Required<T> type from the bulk privacy here
     // that breaks updating the displayed privacy after submitting
@@ -43,7 +40,15 @@
 		const data: Group = {privacy: privacy};
 		try {
 			let res = await api().groups(group.id).patch({data});
-            group = {...group, ...res};
+            const newgroup = {...group, ...res};
+            const newList = $groups.map((g: Group) => {
+                if (group.uuid === g.uuid) {
+                    g = newgroup
+                }
+                return g
+            })
+            groups.set(newList);
+
             success = true;
 		} catch (error) {
 			console.log(error);

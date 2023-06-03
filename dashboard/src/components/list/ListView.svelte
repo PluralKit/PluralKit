@@ -10,13 +10,13 @@
     import MemberBody from '../member/Body.svelte';
     import GroupBody from '../group/Body.svelte';
     import CardsHeader from '../common/CardsHeader.svelte';
-    import { defaultListOptions, type List, type ListOptions, type PageOptions } from './types';
+    import { defaultListOptions, type ListOptions, type PageOptions } from './types';
 
     let settings = JSON.parse(localStorage.getItem("pk-settings"));
     
     export let options: ListOptions = JSON.parse(JSON.stringify(defaultListOptions));
-    export let otherList: List <Member|Group>;
-    export let lists: List<Member|Group>;
+    export let fullListLength: number;
+    export let currentList: Member[]|Group[];
     export let pageOptions: PageOptions;
 
     function getItemLink(item: Member | Group): string {
@@ -39,13 +39,13 @@
         let el;
 
         if (event.key === "ArrowDown") {
-            if (index + 1 < indexStart + pageOptions.itemsPerPage && index + 1 < lists.processedList.length) el = document.getElementById(`${pageOptions.type}-card-${index + 1}`);
+            if (index + 1 < indexStart + pageOptions.itemsPerPage && index + 1 < fullListLength) el = document.getElementById(`${pageOptions.type}-card-${index + 1}`);
             else el = document.getElementById(`${pageOptions.type}-card-${indexStart}`);
         }
 
         if (event.key === "ArrowUp") {
             if (index - 1 >= indexStart) el = document.getElementById(`${pageOptions.type}-card-${index - 1}`);
-            else if (lists.processedList.length <= indexStart + pageOptions.itemsPerPage) el = document.getElementById(`${pageOptions.type}-card-${lists.processedList.length - 1}`);
+            else if (fullListLength <= indexStart + pageOptions.itemsPerPage) el = document.getElementById(`${pageOptions.type}-card-${fullListLength - 1}`);
             else el = document.getElementById(`${pageOptions.type}-card-${indexStart + pageOptions.itemsPerPage - 1}`);
         }
 
@@ -114,12 +114,12 @@
 
 {#if (settings && settings.accessibility ? (!settings.accessibility.expandedcards && !settings.accessibility.pagelinks) : true)}
     <div class="mb-3 accordion">    
-    {#each lists.currentPage as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
+    {#each currentList as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
         <Card style="border-radius: 0;">
             <h2 class="accordion-header">
                 <button class="w-100 accordion-button collapsed bg-transparent" id={`${pageOptions.type}-card-${indexStart + index}`} on:click={() => toggleCard(item.uuid, index)} on:keydown={(e) => skipToNextItem(e, indexStart + index)}>
                     <CardsHeader {item} sortBy={options.sort}>
-                        <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                        <button class="button-reset" slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                             {#if item.privacy && item.privacy.visibility === "private"}
                             <FaLock />
                             {:else if pageOptions.type === "member"}
@@ -127,7 +127,7 @@
                             {:else if pageOptions.type === "group"}
                             <FaUsers />
                             {/if}
-                        </div>
+                        </button>
                     </CardsHeader>
                     <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
                 </button>
@@ -135,9 +135,9 @@
             <Collapse isOpen={pageOptions.randomized ? isOpen[item.uuid + '-' + pageOptions.currentPage + '-' + index] : isOpen[item.uuid]}>
                 <CardBody class="border-top">
                     {#if pageOptions.type === "member"}
-                    <MemberBody on:update on:deletion bind:isPublic={pageOptions.isPublic} groups={otherList.rawList} member={item} />
+                    <MemberBody isPublic={pageOptions.isPublic} member={item} />
                     {:else if pageOptions.type === "group"}
-                    <GroupBody on:update on:deletion bind:isPublic={pageOptions.isPublic} members={otherList.rawList} group={item} />
+                    <GroupBody isPublic={pageOptions.isPublic} group={item} />
                     {/if}
                 </CardBody>
             </Collapse>
@@ -145,12 +145,12 @@
     {/each}
     </div>
 {:else if settings.accessibility.expandedcards}
-    {#each lists.currentPage as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
+    {#each currentList as item, index (pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <Card class="mb-3">
-        <div class="accordion-button collapsed p-0" id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} tabindex={0}>
-            <CardHeader class="w-100">
+        <button class="accordion-button collapsed p-0" id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} tabindex={0}>
+            <CardHeader>
                 <CardsHeader {item} sortBy={options.sort}>
-                    <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                    <button class="button-reset" slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                         {#if item.privacy && item.privacy.visibility === "private"}
                         <FaLock />
                         {:else if pageOptions.type === "member"}
@@ -158,27 +158,27 @@
                         {:else if pageOptions.type === "group"}
                         <FaUsers />
                         {/if}
-                    </div>
+                    </button>
                 </CardsHeader>
                 <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
             </CardHeader>
-        </div>
+        </button>
         <CardBody>
             {#if pageOptions.type === "member"}
-            <MemberBody on:update on:deletion bind:isPublic={pageOptions.isPublic} groups={otherList.rawList} member={item} />
+            <MemberBody isPublic={pageOptions.isPublic} member={item} />
             {:else if pageOptions.type === "group"}
-            <GroupBody on:update on:deletion bind:isPublic={pageOptions.isPublic}  members={otherList.rawList} group={item} />
+            <GroupBody isPublic={pageOptions.isPublic} group={item} />
             {/if}
         </CardBody>
     </Card>
     {/each}
 {:else}
     <div class="my-3">
-    {#each lists.currentPage as item, index(pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
+    {#each currentList as item, index(pageOptions.randomized ? item.uuid + '-' + index : item.uuid)}
     <Card style="border-radius: 0;">
         <a class="accordion-button collapsed bg-transparent" style="text-decoration: none;" href={getItemLink(item)} id={`${pageOptions.type}-card-${indexStart + index}`} on:keydown={(e) => skipToNextItem(e, indexStart + index)} use:link >
             <CardsHeader {item} sortBy={options.sort}>
-                <div slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
+                <button class="button-reset" slot="icon" style="cursor: pointer;" id={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`} on:click|stopPropagation={() => copyShortLink(indexStart + index, item.id)} on:keydown|stopPropagation={(e) => copyShortLink(indexStart + index, item.id, e)} tabindex={0} >
                     {#if item.privacy && item.privacy.visibility === "private"}
                     <FaLock />
                     {:else if pageOptions.type === "member"}
@@ -186,7 +186,7 @@
                     {:else if pageOptions.type === "group"}
                     <FaUsers />
                     {/if}
-                </div>
+                </button>
             </CardsHeader>
             <Tooltip placement="top" target={`${pageOptions.type}-copy-${item.id}-${indexStart + index}`}>{copiedArray[indexStart + index] ? "Copied!" : "Copy public link"}</Tooltip>
         </a>
@@ -194,3 +194,15 @@
     {/each}
     </div>
 {/if}
+
+<style lang="scss">
+    .button-reset {
+        background: none;
+        color: inherit;
+        border: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        outline: inherit;
+    }
+</style>

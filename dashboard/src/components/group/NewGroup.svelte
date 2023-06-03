@@ -3,8 +3,9 @@
     import type { Group } from '../../api/types';
     import api from '../../api';
     import { autoresize } from 'svelte-textarea-autoresize';
-    import { createEventDispatcher } from 'svelte';
+    import { getContext } from 'svelte';
     import FaPlus from 'svelte-icons/fa/FaPlus.svelte';
+    import type { Writable } from 'svelte/store';
 
     const descriptions: string[] = JSON.parse(localStorage.getItem("pk-config"))?.description_templates;
 
@@ -24,11 +25,7 @@
         }
     }
 
-    const dispatch = createEventDispatcher();
-
-    function create(data: Group) {
-        dispatch('create', data);
-    }
+    $: groups = getContext<Writable<Group[]>>("groups");
 
     let input: Group = JSON.parse(JSON.stringify(defaultGroup));
 
@@ -55,7 +52,10 @@
         try {
             let res: Group = await api().groups().post({data});
             res.members = [];
-            create(res);
+            
+            $groups.push(res)
+            groups.set($groups)
+
             input = JSON.parse(JSON.stringify(defaultGroup));
             message = `Group ${data.name} successfully created!`
             err = [];

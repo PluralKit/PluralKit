@@ -2,7 +2,7 @@
     import { Container, Row, Col, Alert, Spinner, Card, CardHeader, CardBody, CardTitle, Tooltip } from "sveltestrap";
     import Body from '../../../components/group/Body.svelte';
     import { useParams, Link, navigate, useLocation } from 'svelte-navigator';
-    import { onMount } from 'svelte';
+    import { onMount, setContext } from 'svelte';
     import api from "../../../api";
     import type { Member, Group } from "../../../api/types";
     import CardsHeader from "../../../components/common/CardsHeader.svelte";
@@ -14,6 +14,7 @@
     import { defaultListOptions, defaultPageOptions } from '../../../components/list/types';
     import { filterList, paginateList, getPageAmount } from '../../../components/list/functions';
     import PageControl from "../../../components/list/PageControl.svelte";
+    import { writable, type Writable } from "svelte/store";
 
     // get the state from the navigator so that we know which tab to start on
     let location = useLocation();
@@ -26,8 +27,6 @@
     let params = useParams();
     let err = "";
     let memberErr = "";
-    let group: Group;
-    let systemMembers: Group[] = [];
     let isDeleted = false;
     let notOwnSystem = false;
     let copied = false;
@@ -41,15 +40,23 @@
         if (!user) navigate("/");
     }
 
-    onMount(() => {
-        fetchGroup();
+    onMount(async () => {
+        await fetchGroup();
     });
+
+    let membersStore: Writable<Member[]> = writable([])
+    let groupsStore: Writable<Group[]> = writable([])
+    $: members = setContext<Writable<Member[]>>("members", membersStore)
+    $: groups = setContext<Writable<Group[]>>("groups", groupsStore)
+    $: group = $groups.filter(g => g.id === $params.id)[0] || {}
 
     let title = isPublic ? "group" : "group (dash)";
 
     async function fetchGroup() {
         try {
-            group = await api().groups($params.id).get({auth: !isPublic});
+            const res = await api().groups($params.id).get({auth: !isPublic});
+            $groups = [res]
+            group = $groups.filter(g => g.id === $params.id)[0];
             if (!isPublic && !group.privacy) {
                 notOwnSystem = true;
                 throw new Error("Group is not from own system.");
@@ -70,10 +77,17 @@
 
     async function fetchMembers() {
         try {
-            lists.rawList = await api().groups($params.id).members().get({auth: !isPublic});
-            group.members = lists.rawList.map(function(member) {return member.uuid});
-            if (!isPublic) {
-                systemMembers = await api().systems("@me").members.get({ auth: true });
+            if (isPublic) {
+                const groupMembers: Member[] = await api().groups($params.id).members().get({auth: !isPublic});
+                group.members = groupMembers.map((m: Member) => m.uuid);
+                members.set(groupMembers);
+            } else {
+                const systemGroups: Group[] = await api().systems("@me").groups.get({ auth: true, query: { with_members: true } });
+                group.members = systemGroups.filter((g: Group) => g.id === $params.id).map((m: Member) => m.uuid);
+                groups.set(systemGroups);
+
+                const systemMembers = await api().systems("@me").members.get({ auth: true });
+                members.set(systemMembers);
             }
             memberErr = "";
             memberLoading = false;
@@ -82,24 +96,6 @@
             memberErr = error.message;
             memberLoading = false;
         }
-    }
-
-    let lists: Lists<Member> = {
-        rawList: [],
-        processedList: [],
-        currentPage: [],
-
-        shortGroups: [],
-        shortMembers: [],
-    }
-
-    let nope: Lists<Group> = {
-        rawList: [],
-        processedList: [],
-        currentPage: [],
-
-        shortGroups: [],
-        shortMembers: [],
     }
 
     let listOptions: ListOptions = {...defaultListOptions};
@@ -134,18 +130,11 @@
         }
     }
 
-    $: lists.processedList = filterList(lists.rawList, listOptions);
-    $: lists.currentPage = paginateList(lists.processedList, pageOptions);
-    $: pageAmount = getPageAmount(lists.processedList, pageOptions);
+    $: groupMembers = $members.filter(m => group.members.includes(m.uuid));
+    $: processedList = filterList(groupMembers, listOptions);
+    $: currentPage = paginateList(processedList, pageOptions);
+    $: pageAmount = getPageAmount(processedList, pageOptions);
 
-    
-    function updateDelete(event: any) {
-        lists.rawList = lists.rawList.filter(m => m.id !== event.detail);
-    }
-
-    function update(event: any) {
-        lists.rawList = lists.rawList.map(m => m.id === event.detail.id ? m = event.detail : m);
-    }
 </script>
 
 {#if settings && settings.appearance.color_background && !notOwnSystem}
@@ -173,7 +162,7 @@
             {:else if group && group.id}
                 <Card class="mb-4">
                     <CardHeader>
-                        <CardsHeader bind:item={group}>
+                        <CardsHeader item={group}>
                             <div slot="icon" style="cursor: pointer;" id={`group-copy-${group.id}`} on:click|stopPropagation={() => copyShortLink()} on:keydown={(e) => copyShortLink(e)} tabindex={0} >
                                 <FaUsers slot="icon" />
                             </div>
@@ -181,7 +170,7 @@
                         <Tooltip placement="top" target={`group-copy-${group.id}`}>{copied ? "Copied!" : "Copy public link"}</Tooltip>
                     </CardHeader>
                     <CardBody>
-                        <Body bind:members={systemMembers} bind:group={group} isPage={true} isPublic={isPublic}/>
+                        <Body {group} isPage={true} isPublic={isPublic}/>
                     </CardBody>
                 </Card>
             {/if}
@@ -189,14 +178,14 @@
                 <Alert color="primary"><Spinner size="sm" /> Fetching members...</Alert>
             {:else if memberErr}
                 <Alert color="danger">{memberErr}</Alert>
-            {:else if lists.rawList && lists.rawList.length > 0}
+            {:else if groupMembers && groupMembers.length > 0}
             <PageControl bind:options={listOptions} bind:pageOptions />
-            <span class="itemcounter">{lists.processedList.length} {pageOptions.type}s ({lists.currentPage.length} shown)</span>
+            <span class="itemcounter">{processedList.length} {pageOptions.type}s ({currentPage.length} shown)</span>
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
                 {#if pageOptions.view === "card"}
-                <CardView {pageOptions} {lists} otherList={nope} on:update={update} />
+                <CardView {pageOptions} currentList={currentPage} />
                 {:else}
-                <ListView {pageOptions} {lists} otherList={nope} on:update={update} on:deletion={updateDelete} />
+                <ListView {pageOptions} currentList={currentPage} fullListLength={groupMembers.length}/>
                 {/if}
                 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
             {/if}
