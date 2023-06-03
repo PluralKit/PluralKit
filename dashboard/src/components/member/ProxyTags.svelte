@@ -1,9 +1,10 @@
 <script lang="ts">
-    import {tick } from "svelte";
+    import {tick, getContext } from "svelte";
     import { Col, Row, Input, Label, Button, Alert, Spinner, InputGroup } from "sveltestrap";
 
     import type { Member } from '../../api/types';
     import api from '../../api';
+    import type { Writable } from "svelte/store";
 
     let loading: boolean;
     export let proxyOpen: boolean;
@@ -11,6 +12,7 @@
     const toggleProxyModal = () => (proxyOpen = !proxyOpen);
 
     let err: string;
+    $: members = getContext<Writable<Member[]>>("members");
 
     let input = [...member.proxy_tags];
 
@@ -26,7 +28,16 @@
 
         try {
             let res = await api().members(member.id).patch({data});
-            member = res;
+            const newMember = {...member, ...res}
+            const newList = $members.map((m: Member) => {
+                if (member.uuid === m.uuid) {
+                    m = newMember
+                }
+                return m
+            })
+
+            members.set(newList);
+
             err = null;
             loading = false;
             toggleProxyModal();
