@@ -76,7 +76,7 @@
     </Col>
 </Row>
 {:else}
-<span class="itemcounter">{members.length} {pageOptions.type}s ({currentGroups.length} shown) <a href="#!" on:click={(e) => {e.preventDefault(); fetchList()}}>Refresh list</a></span>
+<span class="itemcounter">{groups.length} {pageOptions.type}s ({currentGroups.length} shown) <a href="#!" on:click={(e) => {e.preventDefault(); fetchList()}}>Refresh list</a></span>
 
 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
 
@@ -88,7 +88,7 @@
 {:else if pageOptions.view === "tiny"}
     tiny!
 {:else}
-<ListView currentList={currentGroups} {pageOptions} {options} fullListLength={members.length} />
+<ListView currentList={currentGroups} {pageOptions} {options} fullListLength={groups.length} />
 {/if}
 <ListPagination bind:currentPage={pageOptions.currentPage} {pageAmount} />
 {/if}
