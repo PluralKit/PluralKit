@@ -131,7 +131,7 @@
     }
 
     $: groupMembers = $members.filter(m => group.members.includes(m.uuid));
-    $: processedList = filterList(groupMembers, listOptions);
+    $: processedList = filterList(groupMembers, $groups, listOptions);
     $: currentPage = paginateList(processedList, pageOptions);
     $: pageAmount = getPageAmount(processedList, pageOptions);
 

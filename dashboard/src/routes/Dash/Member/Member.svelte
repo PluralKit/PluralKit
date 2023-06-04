@@ -134,7 +134,7 @@
     }
 
     $: memberGroups = $groups.filter(g => g.members.includes(member.uuid));
-    $: processedList = filterList(memberGroups, listOptions);
+    $: processedList = filterList(memberGroups, $groups,listOptions);
     $: currentPage = paginateList(processedList, pageOptions);
     $: pageAmount = getPageAmount(processedList, pageOptions);
 </script>
