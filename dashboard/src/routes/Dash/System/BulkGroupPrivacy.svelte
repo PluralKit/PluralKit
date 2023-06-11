@@ -31,7 +31,7 @@
 		icon_privacy: "Icon",
 		list_privacy: "Member list",
 		metadata_privacy: "Metadata",
-		visibility: "Visbility",
+		visibility: "Visibility",
 	};
 
 	async function submit() {
