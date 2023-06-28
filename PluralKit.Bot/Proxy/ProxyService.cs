@@ -386,7 +386,7 @@ public class ProxyService
             content.Append($"*[(click to see attachment)]({jumpLink})*");
         }
 
-        var username = nickname ?? repliedTo.Author.Username;
+        var username = nickname ?? repliedTo.Author.GlobalName ?? repliedTo.Author.Username;
         var avatarUrl = avatar != null
             ? $"https://cdn.discordapp.com/guilds/{trigger.GuildId}/users/{repliedTo.Author.Id}/avatars/{avatar}.png"
             : $"https://cdn.discordapp.com/avatars/{repliedTo.Author.Id}/{repliedTo.Author.Avatar}.png";

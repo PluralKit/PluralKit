@@ -35,7 +35,7 @@ public static class DiscordUtils
     private static readonly Regex UNBROKEN_LINK_REGEX = new("<?(https?:\\/\\/[^\\s<]+[^<.,:;\"')\\]\\s])>?");
 
     public static string NameAndMention(this User user) =>
-        $"{user.Username}#{user.Discriminator} ({user.Mention()})";
+        $"{user.Username}{(user.Discriminator == "0" ? "" : $"#{user.Discriminator}")} ({user.Mention()})";
 
     public static Instant SnowflakeToInstant(ulong snowflake) =>
         Instant.FromUtc(2015, 1, 1, 0, 0, 0) + Duration.FromMilliseconds(snowflake >> 22);
