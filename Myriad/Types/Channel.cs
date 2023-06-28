@@ -14,7 +14,10 @@ public record Channel
         GuildNewsThread = 10,
         GuildPublicThread = 11,
         GuildPrivateThread = 12,
-        GuildStageVoice = 13
+        GuildStageVoice = 13,
+        GuildDirectory = 14,
+        GuildForum = 15,
+        GuildMedia = 16,
     }
 
     public ulong Id { get; init; }

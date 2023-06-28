@@ -57,7 +57,9 @@ public class ProxyService
     public async Task<bool> HandleIncomingMessage(MessageCreateEvent message, MessageContext ctx,
                                 Guild guild, Channel channel, bool allowAutoproxy, PermissionSet botPermissions)
     {
-        if (!ShouldProxy(channel, message, ctx))
+        var rootChannel = await _cache.GetRootChannel(message.ChannelId);
+
+        if (!ShouldProxy(channel, rootChannel, message, ctx))
             return false;
 
         var autoproxySettings = await _repo.GetAutoproxySettings(ctx.SystemId.Value, guild.Id, null);
@@ -72,8 +74,6 @@ public class ProxyService
             return false;
         }
 
-        var rootChannel = await _cache.GetRootChannel(message.ChannelId);
-
         List<ProxyMember> members;
         // Fetch members and try to match to a specific member
         using (_metrics.Measure.Timer.Time(BotMetrics.ProxyMembersQueryTime))
@@ -82,7 +82,7 @@ public class ProxyService
         if (!_matcher.TryMatch(ctx, autoproxySettings, members, out var match, message.Content, message.Attachments.Length > 0,
                 allowAutoproxy, ctx.CaseSensitiveProxyTags)) return false;
 
-        var canProxy = await CanProxy(channel, message, ctx);
+        var canProxy = await CanProxy(channel, rootChannel, message, ctx);
         if (canProxy != null)
         {
             if (ctx.ProxyErrorMessageEnabled)
@@ -109,8 +109,32 @@ public class ProxyService
         return true;
     }
 
-    public async Task<string> CanProxy(Channel channel, Message msg, MessageContext ctx)
+#pragma warning disable CA1822 // Mark members as static
+    internal bool CanProxyInChannel(Channel ch, bool isRootChannel = false)
+#pragma warning restore CA1822 // Mark members as static
     {
+        // this is explicitly selecting known channel types so that when Discord add new
+        // ones, users don't get flooded with error codes if that new channel type doesn't
+        // support a feature we need for proxying
+        return ch.Type switch
+        {
+            Channel.ChannelType.GuildText => true,
+            Channel.ChannelType.GuildPublicThread => true,
+            Channel.ChannelType.GuildPrivateThread => true,
+            Channel.ChannelType.GuildNews => true,
+            Channel.ChannelType.GuildNewsThread => true,
+            Channel.ChannelType.GuildVoice => true,
+            Channel.ChannelType.GuildStageVoice => true,
+            Channel.ChannelType.GuildForum => isRootChannel,
+            _ => false,
+        };
+    }
+
+    public async Task<string> CanProxy(Channel channel, Channel rootChannel, Message msg, MessageContext ctx)
+    {
+        if (!(CanProxyInChannel(channel) && CanProxyInChannel(rootChannel, true)))
+            return $"PluralKit cannot proxy messages in this type of channel.";
+
         // Check if the message does not go over any Discord Nitro limits
         if (msg.Content != null && msg.Content.Length > 2000)
         {
@@ -132,7 +156,7 @@ public class ProxyService
         return null;
     }
 
-    public bool ShouldProxy(Channel channel, Message msg, MessageContext ctx)
+    public bool ShouldProxy(Channel channel, Channel rootChannel, Message msg, MessageContext ctx)
     {
         // Make sure author has a system
         if (ctx.SystemId == null)

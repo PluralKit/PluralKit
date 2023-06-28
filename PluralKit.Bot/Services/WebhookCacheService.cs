@@ -105,7 +105,14 @@ public class WebhookCacheService
     {
         try
         {
-            return await _rest.GetChannelWebhooks(channelId);
+            var webhooks = await _rest.GetChannelWebhooks(channelId);
+            if (webhooks != null)
+                return webhooks;
+
+            // Getting a 404 / null response from the above generally means the channel type does
+            // not support webhooks - this is detected elsewhere for proxying purposes, let's just
+            // return an empty array here
+            return new Webhook[0];
         }
         catch (HttpRequestException e)
         {
