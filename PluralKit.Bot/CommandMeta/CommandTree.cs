@@ -313,7 +313,7 @@ public partial class CommandTree
             if (ctx.Match("add", "a"))
                 await ctx.Execute<GroupMember>(MemberGroupAdd,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Add));
-            else if (ctx.Match("remove", "rem"))
+            else if (ctx.Match("remove", "rem", "r"))
                 await ctx.Execute<GroupMember>(MemberGroupRemove,
                     m => m.AddRemoveGroups(ctx, target, Groups.AddRemoveOperation.Remove));
             else
@@ -382,7 +382,7 @@ public partial class CommandTree
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
             else if (ctx.Match("private", "priv"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
-            else if (ctx.Match("delete", "remove", "destroy", "erase", "yeet"))
+            else if (ctx.Match("delete", "destroy", "erase", "yeet"))
                 await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
             else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))
                 await ctx.Execute<Groups>(GroupIcon, g => g.GroupIcon(ctx, target));
