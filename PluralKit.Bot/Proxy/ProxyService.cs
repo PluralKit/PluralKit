@@ -35,6 +35,8 @@ public class ProxyService
     private readonly WebhookExecutorService _webhookExecutor;
     private readonly NodaTime.IClock _clock;
 
+    private static readonly string URL_REGEX = @"(http|https)(:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})?\.?([a-zA-Z0-9()]{1,6})?\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$";
+
     public ProxyService(LogChannelService logChannel, ILogger logger, WebhookExecutorService webhookExecutor,
             DispatchService dispatch, IDatabase db, RedisService redis, ProxyMatcher matcher, IMetrics metrics, ModelRepository repo,
                       NodaTime.IClock clock, IDiscordCache cache, DiscordApiClient rest, LastMessageCacheService lastMessage)
@@ -384,12 +386,16 @@ public class ProxyService
                         msg += mentionTail + ">";
                 }
 
-                var endsWithUrl = Regex.IsMatch(msg,
-                    @"(http|https)(:\/\/)?(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256})?\.?([a-zA-Z0-9()]{1,6})?\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$");
+                var endsWithUrl = Regex.IsMatch(msg, URL_REGEX);
                 if (endsWithUrl)
                 {
-                    var urlTail = repliedTo.Content.Substring(100).Split(" ")[0];
-                    msg += urlTail + " ";
+                    msg += repliedTo.Content.Substring(100).Split(" ")[0];
+
+                    // replace the entire URL with a placeholder if it's *too* long
+                    if (msg.Length > 300)
+                        msg = Regex.Replace(msg, URL_REGEX, $"*[(very long link removed, click to see original message)]({jumpLink})*");
+
+                    msg += " ";
                 }
 
                 var spoilersInOriginalString = Regex.Matches(repliedTo.Content, @"\|\|").Count;
