@@ -891,8 +891,8 @@
       },
       "SixLabors.ImageSharp": {
         "type": "Transitive",
-        "resolved": "1.0.2",
-        "contentHash": "iZJ37Iss3pUkFl961x1aka85QuvgY9oNZabHijzVnHs4QTz6EMNx3zjJDyvK/0+Ryj6JPv/PC7GVIJXLHtu2nQ=="
+        "resolved": "3.0.1",
+        "contentHash": "o0v/J6SJwp3RFrzR29beGx0cK7xcMRgOyIuw8ZNLQyNnBhiyL/vIQKn7cfycthcWUPG3XezUjFwBWzkcUUDFbg=="
       },
       "SqlKata": {
         "type": "Transitive",
@@ -1810,7 +1810,7 @@
           "Myriad": "[1.0.0, )",
           "PluralKit.Core": "[1.0.0, )",
           "Sentry": "[3.11.1, )",
-          "SixLabors.ImageSharp": "[1.0.2, )"
+          "SixLabors.ImageSharp": "[3.0.1, )"
         }
       },
       "pluralkit.core": {
