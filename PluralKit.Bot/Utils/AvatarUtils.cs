@@ -16,8 +16,7 @@ public static class AvatarUtils
         // List of MIME types we consider acceptable
         var acceptableMimeTypes = new[]
         {
-            "image/jpeg", "image/gif", "image/png"
-            // TODO: add image/webp once ImageSharp supports this
+            "image/jpeg", "image/gif", "image/png", "image/webp"
         };
 
         if (!PluralKit.Core.MiscUtils.TryMatchUri(url, out var uri))
