@@ -13,8 +13,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Myriad\Myriad.csproj"/>
-        <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj"/>
+        <ProjectReference Include="..\Myriad\Myriad.csproj" />
+        <ProjectReference Include="..\PluralKit.Core\PluralKit.Core.csproj" />
     </ItemGroup>
 
     <PropertyGroup>
@@ -22,15 +22,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Google.Protobuf" Version="3.13.0"/>
+        <PackageReference Include="Google.Protobuf" Version="3.13.0" />
         <PackageReference Include="Grpc.Net.ClientFactory" Version="2.32.0" />
         <PackageReference Include="Grpc.Tools" Version="2.47.0" PrivateAssets="all" />
-        <PackageReference Include="Humanizer.Core" Version="2.8.26"/>
-        <PackageReference Include="Sentry" Version="3.11.1"/>
-        <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2"/>
+        <PackageReference Include="Humanizer.Core" Version="2.8.26" />
+        <PackageReference Include="Sentry" Version="3.11.1" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="../proto/state.proto" GrpcServices="Client" Link="Protos/state.proto"/>
+        <Protobuf Include="../proto/state.proto" GrpcServices="Client" Link="Protos/state.proto" />
     </ItemGroup>
 </Project>
