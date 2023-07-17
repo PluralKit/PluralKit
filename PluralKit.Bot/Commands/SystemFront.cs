@@ -28,6 +28,12 @@ public class SystemFront
 
     public async Task SystemFrontHistory(Context ctx, PKSystem system)
     {
+        if (ctx.MatchFlag("clear", "c") || ctx.PeekArgument() == "clear")
+        {
+            await new Switch().SwitchDelete(ctx);
+            return;
+        }
+
         if (system == null) throw Errors.NoSystemError;
         ctx.CheckSystemPrivacy(system.Id, system.FrontHistoryPrivacy);
 

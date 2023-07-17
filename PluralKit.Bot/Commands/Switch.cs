@@ -163,7 +163,7 @@ public class Switch
     {
         ctx.CheckSystem();
 
-        if (ctx.Match("all", "clear") || ctx.MatchFlag("all", "clear"))
+        if (ctx.Match("all", "clear") || ctx.MatchFlag("all", "clear", "c"))
         {
             // Subcommand: "delete all"
             var purgeMsg =
