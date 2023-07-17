@@ -22,7 +22,7 @@ public partial class CommandTree
     public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
     public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
     public static Command SystemId = new Command("system id", "system [system] id", "Prints your system's id.");
-    public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
+    public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <name|avatar|description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
     public static Command ConfigTimezone = new Command("config timezone", "config timezone [timezone]", "Changes your system's time zone");
     public static Command ConfigPing = new Command("config ping", "config ping [on|off]", "Changes your system's ping preferences");
     public static Command ConfigAutoproxyAccount = new Command("config autoproxy account", "config autoproxy account [on|off]", "Toggles autoproxy globally for the current account");

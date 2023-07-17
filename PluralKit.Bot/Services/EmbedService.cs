@@ -69,11 +69,14 @@ public class EmbedService
 
         var eb = new EmbedBuilder()
             .Title(system.NameFor(ctx))
-            .Thumbnail(new Embed.EmbedThumbnail(system.AvatarUrl.TryGetCleanCdnUrl()))
             .Footer(new Embed.EmbedFooter(
                 $"System ID: {system.Hid} | Created on {system.Created.FormatZoned(cctx.Zone)}"))
             .Color(color)
             .Url($"https://dash.pluralkit.me/profile/s/{system.Hid}");
+
+        var avatar = system.AvatarFor(ctx);
+        if (avatar != null)
+            eb.Thumbnail(new Embed.EmbedThumbnail(avatar));
 
         if (system.DescriptionPrivacy.CanAccess(ctx))
             eb.Image(new Embed.EmbedImage(system.BannerImage));
@@ -110,11 +113,12 @@ public class EmbedService
             if (guildSettings.DisplayName != null)
                 eb.Title(guildSettings.DisplayName);
 
-            if (guildSettings.AvatarUrl.TryGetCleanCdnUrl() != null)
+            var guildAvatar = guildSettings.AvatarUrl.TryGetCleanCdnUrl();
+            if (guildAvatar != null)
             {
-                eb.Thumbnail(new Embed.EmbedThumbnail(guildSettings.AvatarUrl.TryGetCleanCdnUrl()));
+                eb.Thumbnail(new Embed.EmbedThumbnail(guildAvatar));
                 var sysDesc = "*(this system has a server-specific avatar set";
-                if (system.AvatarUrl.TryGetCleanCdnUrl() != null)
+                if (avatar != null)
                     sysDesc += $"; [click here]({system.AvatarUrl.TryGetCleanCdnUrl()}) to see their global avatar)*";
                 else
                     sysDesc += ")*";
@@ -179,10 +183,10 @@ public class EmbedService
         var systemGuildSettings = guild != null ? await _repo.GetSystemGuild(guild.Id, system.Id) : null;
         if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
             name = $"{name} ({systemGuildSettings.DisplayName})";
-        else if (system.NameFor(ctx) != null) 
+        else if (system.NameFor(ctx) != null)
             name = $"{name} ({system.NameFor(ctx)})";
         else
-            name = $"{name} ({system.Name})";
+            name = $"{name}";
 
         uint color;
         try
@@ -280,7 +284,7 @@ public class EmbedService
         var systemGuildSettings = ctx.Guild != null ? await _repo.GetSystemGuild(ctx.Guild.Id, system.Id) : null;
         if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
             nameField = $"{nameField} ({systemGuildSettings.DisplayName})";
-        else if (system.NameFor(ctx) != null) 
+        else if (system.NameFor(ctx) != null)
             nameField = $"{nameField} ({system.NameFor(ctx)})";
         else
             nameField = $"{nameField} ({system.Name})";
@@ -420,7 +424,7 @@ public class EmbedService
             .Field(new Embed.Field("System",
                 msg.System == null
                     ? "*(deleted or unknown system)*"
-                    : msg.System.Name != null ? $"{msg.System.Name} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`"
+                    : msg.System.NameFor(ctx) != null ? $"{msg.System.NameFor(ctx)} (`{msg.System.Hid}`)" : $"`{msg.System.Hid}`"
             , true))
             .Field(new Embed.Field("Member",
                 msg.Member == null

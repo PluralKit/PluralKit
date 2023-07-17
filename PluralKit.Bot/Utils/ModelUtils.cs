@@ -11,8 +11,8 @@ public static class ModelUtils
 
     public static string NameFor(this PKGroup group, Context ctx) =>
         group.NameFor(ctx.LookupContextFor(group.System));
-    
-    public static string NameFor(this PKSystem system, Context ctx) => 
+
+    public static string NameFor(this PKSystem system, Context ctx) =>
         system.NameFor(ctx.LookupContextFor(system.Id));
 
     public static string AvatarFor(this PKMember member, Context ctx) =>

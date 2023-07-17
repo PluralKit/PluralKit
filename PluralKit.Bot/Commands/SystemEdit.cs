@@ -28,6 +28,7 @@ public class SystemEdit
 
     public async Task Name(Context ctx, PKSystem target)
     {
+        ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
         var isOwnSystem = target.Id == ctx.System?.Id;
 
         var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name set.";
@@ -83,7 +84,7 @@ public class SystemEdit
         var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name specific to this server.";
         if (isOwnSystem)
             noNameSetMessage += " Type `pk;system servername <name>` to set one.";
-        
+
         var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
 
         if (ctx.MatchRaw())
@@ -111,7 +112,7 @@ public class SystemEdit
 
         if (ctx.MatchClear() && await ctx.ConfirmClear("your system's name for this server"))
         {
-            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id,  new SystemGuildPatch { DisplayName = null });
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { DisplayName = null });
 
             await ctx.Reply($"{Emojis.Success} System name for this server cleared.");
         }
@@ -562,9 +563,9 @@ public class SystemEdit
 
         async Task ShowIcon()
         {
-            
+
             var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
-            
+
             if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
             {
                 var eb = new EmbedBuilder()
@@ -586,7 +587,7 @@ public class SystemEdit
             await ShowIcon();
             return;
         }
-        
+
         if (ctx.MatchClear() && await ctx.ConfirmClear("your system's icon for this server"))
             await ClearIcon();
         else if (await ctx.MatchImage() is { } img)
@@ -754,6 +755,8 @@ public class SystemEdit
         {
             var eb = new EmbedBuilder()
                 .Title("Current privacy settings for your system")
+                .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
+                .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
@@ -761,7 +764,7 @@ public class SystemEdit
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
         }
 
@@ -778,6 +781,8 @@ public class SystemEdit
 
             var subjectStr = subject switch
             {
+                SystemPrivacySubject.Name => "name",
+                SystemPrivacySubject.Avatar => "avatar",
                 SystemPrivacySubject.Description => "description",
                 SystemPrivacySubject.Pronouns => "pronouns",
                 SystemPrivacySubject.Front => "front",

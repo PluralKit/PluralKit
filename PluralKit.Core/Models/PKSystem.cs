@@ -46,6 +46,8 @@ public class PKSystem
     public string WebhookUrl { get; }
     public string WebhookToken { get; }
     public Instant Created { get; }
+    public PrivacyLevel NamePrivacy { get; }
+    public PrivacyLevel AvatarPrivacy { get; }
     public PrivacyLevel DescriptionPrivacy { get; }
     public PrivacyLevel MemberListPrivacy { get; }
     public PrivacyLevel FrontPrivacy { get; }
@@ -60,8 +62,10 @@ public static class PKSystemExt
         system.DescriptionPrivacy.Get(ctx, system.Description);
 
     public static string NameFor(this PKSystem system, LookupContext ctx) =>
-        system.Name;
-        //system.NamePrivacy.Get(ctx, system.Name);
+        system.NamePrivacy.Get(ctx, system.Name);
+
+    public static string AvatarFor(this PKSystem system, LookupContext ctx) =>
+        system.AvatarPrivacy.Get(ctx, system.AvatarUrl.TryGetCleanCdnUrl());
 
     public static JObject ToJson(this PKSystem system, LookupContext ctx)
     {
@@ -69,12 +73,12 @@ public static class PKSystemExt
         o.Add("id", system.Hid);
         o.Add("uuid", system.Uuid.ToString());
 
-        o.Add("name", system.Name);
+        o.Add("name", system.NameFor(ctx));
         o.Add("description", system.DescriptionFor(ctx));
         o.Add("tag", system.Tag);
         o.Add("pronouns", system.PronounPrivacy.Get(ctx, system.Pronouns));
 
-        o.Add("avatar_url", system.AvatarUrl.TryGetCleanCdnUrl());
+        o.Add("avatar_url", system.AvatarFor(ctx));
         o.Add("banner", system.DescriptionPrivacy.Get(ctx, system.BannerImage).TryGetCleanCdnUrl());
         o.Add("color", system.Color);
         o.Add("created", system.Created.FormatExport());
@@ -87,6 +91,8 @@ public static class PKSystemExt
 
             var p = new JObject();
 
+            p.Add("name_privacy", system.NamePrivacy.ToJsonString());
+            p.Add("avatar_privacy", system.AvatarPrivacy.ToJsonString());
             p.Add("description_privacy", system.DescriptionPrivacy.ToJsonString());
             p.Add("pronoun_privacy", system.PronounPrivacy.ToJsonString());
             p.Add("member_list_privacy", system.MemberListPrivacy.ToJsonString());
