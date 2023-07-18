@@ -40,6 +40,18 @@ To view information about *a different* system, there are a number of ways to do
     pk;system @Craig#5432
     pk;system 466378653216014359
     pk;system abcde
+
+### System renaming
+If you want to change the name of your system, you can use the `pk;system rename` command, like so:
+
+    pk;system rename New System Name
+
+### System server names
+If you'd like to set a name for your system, but only for a specific server, you can set the member's *servery display name*. This shows up in replacement of the server name in the server you set it in. For example:
+
+    pk;system servername Name For This Server
+
+To clear your system servername for a server, simply run `pk;system servername clear` in  in the server in question. The servername cannot be run in DMs, it only applies to servers.
     
 ### System description
 If you'd like to add a small blurb to your system information card, you can add a *system description*. To do so, use the `pk;system description` command, as follows:
@@ -51,12 +63,20 @@ There's a 1000 character length limit on your system description - which is quit
 If you'd like to remove your system description, just type `pk;system description` without any further parameters.
 
 ### System avatars
-If you'd like your system to have an associated "system avatar", displayed on your system information card, you can add a system avatar. To do so, use the `pk;system avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
+If you'd like your system to have an associated "system avatar", displayed on your system information card, you can add a system avatar. Your system avatar will also show up as the avatar on members who do not have their own when proxying. To do so, use the `pk;system avatar` command. You can either supply it with an direct URL to an image, or attach an image directly. For example.
 
     pk;system avatar http://placebeard.it/512.jpg
     pk;system avatar [with attached image]
     
 To clear your avatar, simply type `pk;system avatar` with no attachment or link.
+
+### System server avatars
+If you'd like your system to have an avatar (as above), but only for a specific server, you can set the *system server avatar*. This will override the global system avatar, but only in the server you set it in. For example:
+
+    pk;system serveravatar http://placebeard.it/512.jpg
+    pk;system serveravatar [with attached image]
+
+To clear your system serveravatar for a server, simply type `pk;system serveravatar clear` with no attachment or link in the server in question. The serveravatar command cannot be run in DMs, it only functions in servers.
 
 ### System tags
 Your system tag is a little snippet of text that'll be added to the end of all proxied messages.
@@ -645,6 +665,8 @@ At the moment, there are a few aspects of system privacy that can be configured.
 - Group list
 - Current fronter
 - Front history
+- System name
+- System avatar
 
 Each of these can be set to **public** or **private**. When set to **public**, anyone who queries your system (by account or system ID, or through the API), will see this information. When set to **private**, the information will only be shown when *you yourself* query the information. The cards will still be displayed in the channel the commands are run in, so it's still your responsibility not to pull up information in servers where you don't want it displayed.
 
@@ -659,6 +681,8 @@ To update your system privacy settings, use the following commands:
   * `groups`
   * `fronter`
   * `fronthistory`
+  * `name`
+  * `avatar`
   * `all` (to change all subjects at once)
 
 * `level` is either `public` or `private`

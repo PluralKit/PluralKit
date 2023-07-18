@@ -50,8 +50,10 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;system [system]` - Shows information about a system.
 - `pk;system new [name]` - Creates a new system registered to your account.
 - `pk;system [system] rename [new name]` - Changes the name of your system.
+- `pk;system [system] servername [servername]` - Changes the name of your system in the current server.
 - `pk;system [system] description [description]` - Changes the description of your system.
 - `pk;system [system] avatar [avatar url|@mention|upload]` - Changes the avatar of your system.
+- `pk;system [system] serveravatar [avatar url|@mention|upload]` - Changes the avatar of your system in the current server.
 - `pk;system [system] banner [image url|upload]` - Changes your system's banner image.
 - `pk;system [system] color [color]` - Changes your system's color.
 - `pk;system [system] privacy` - Displays your system's current privacy settings.
