@@ -47,7 +47,7 @@ If you want to change the name of your system, you can use the `pk;system rename
     pk;system rename New System Name
 
 ### System server names
-If you'd like to set a name for your system, but only for a specific server, you can set the member's *servery display name*. This shows up in replacement of the server name in the server you set it in. For example:
+If you'd like to set a name for your system, but only for a specific server, you can set the system's *server display name*. This shows up in replacement of the server name in the server you set it in. For example:
 
     pk;system servername Name For This Server
 
