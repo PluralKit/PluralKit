@@ -150,12 +150,17 @@ public class MemberAvatar
         {
             MemberAvatarLocation.Server =>
                 $" This avatar will now be used when proxying in this server (**{ctx.Guild.Name}**).",
-            MemberAvatarLocation.Member when targetGuildData?.AvatarUrl != null =>
-                $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
             MemberAvatarLocation.MemberWebhook when targetGuildData?.AvatarUrl != null =>
                 $" This avatar will now be used for this member's proxied messages, instead of their main avatar.\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
             MemberAvatarLocation.MemberWebhook =>
                 $" This avatar will now be used for this member's proxied messages, instead of their main avatar.",
+            MemberAvatarLocation.Member when (targetGuildData?.AvatarUrl != null && target.WebhookAvatarUrl != null) =>
+                $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here." +
+                $"\n{Emojis.Note} Note that this member *also* has a webhook avatar, and thus the global avatar will also have no effect on proxied messages in servers without server-specific avatars.",
+            MemberAvatarLocation.Member when targetGuildData?.AvatarUrl != null =>
+                $"\n{Emojis.Note} Note that this member *also* has a server-specific avatar set in this server (**{ctx.Guild.Name}**), and thus changing the global avatar will have no effect here.",
+            MemberAvatarLocation.Member when target.WebhookAvatarUrl != null =>
+                $"\n{Emojis.Note} Note that this member *also* has a webhook avatar set, and thus changing the global avatar will have no effect on proxied messages.",
             _ => ""
         };
 
