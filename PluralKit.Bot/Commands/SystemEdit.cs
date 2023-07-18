@@ -79,6 +79,8 @@ public class SystemEdit
 
     public async Task ServerName(Context ctx, PKSystem target)
     {
+        ctx.CheckGuildContext();
+
         var isOwnSystem = target.Id == ctx.System?.Id;
 
         var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name specific to this server.";
@@ -581,6 +583,8 @@ public class SystemEdit
                     "This system does not have a icon specific to this server. Set one by attaching an image to this command, or by passing an image URL or @mention.");
             }
         }
+
+        ctx.CheckGuildContext();
 
         if (target != null && target?.Id != ctx.System?.Id)
         {
