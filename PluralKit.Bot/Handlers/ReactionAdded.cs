@@ -86,7 +86,7 @@ public class ReactionAdded: IEventHandler<MessageReactionAddEvent>
         // Proxied messages only exist in guild text channels, so skip checking if we're elsewhere
         if (!DiscordUtils.IsValidGuildChannel(channel)) return;
 
-        switch (evt.Emoji.Name)
+        switch (evt.Emoji.Name.Split("\U0000fe0f", 2)[0])
         {
             // Message deletion
             case "\u274C": // Red X
