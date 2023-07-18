@@ -70,7 +70,7 @@ a system tag. Note that emojis *are* supported! To set one, use the `pk;system t
     
 If you want to remove your system tag, just type `pk;system tag` with no extra parameters.
 
-**NB:** When proxying, the *total webhook username* must be 32 characters or below. As such, if you have a long system name, your tag might be enough
+**NB:** When proxying, the *total webhook username* must be 80 characters or below. As such, if you have a long system name, your tag might be enough
 to bump it over that limit. PluralKit will warn you if you have a member name/tag combination that will bring the combined username above the limit.
 You can either make the member name or the system tag shorter to solve this. 
     
