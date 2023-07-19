@@ -146,7 +146,7 @@ public static class ContextListExt
                     ret += $"({m.DisplayName})";
                 else if (opts.IncludeBirthday && m.BirthdayFor(lookupCtx) is { } birthday)
                     ret += $"(birthday: {m.BirthdayString})";
-                else if (m.HasProxyTags)
+                else if (m.HasProxyTags && m.ProxyPrivacy.CanAccess(lookupCtx))
                 {
                     var proxyTagsString = m.ProxyTagsString();
                     if (proxyTagsString.Length > 100) // arbitrary threshold for now, tweak?
@@ -173,7 +173,7 @@ public static class ContextListExt
                 if (m.BirthdayFor(lookupCtx) != null)
                     profile.Append($"\n**Birthdate**: {m.BirthdayString}");
 
-                if (m.ProxyTags.Count > 0)
+                if (m.ProxyTags.Count > 0 && m.ProxyPrivacy.CanAccess(lookupCtx))
                     profile.Append($"\n**Proxy tags**: {m.ProxyTagsString()}");
 
                 if ((opts.IncludeMessageCount || opts.SortProperty == SortProperty.MessageCount) &&

@@ -242,7 +242,7 @@ public class EmbedService
             eb.Field(new Embed.Field("Pronouns", pronouns.Truncate(1024), true));
         if (member.MessageCountFor(ctx) is { } count && count > 0)
             eb.Field(new Embed.Field("Message Count", member.MessageCount.ToString(), true));
-        if (member.HasProxyTags)
+        if (member.HasProxyTags && member.ProxyPrivacy.CanAccess(ctx))
             eb.Field(new Embed.Field("Proxy Tags", member.ProxyTagsString("\n").Truncate(1024), true));
         // --- For when this gets added to the member object itself or however they get added
         // if (member.LastMessage != null && member.MetadataPrivacy.CanAccess(ctx)) eb.AddField("Last message:" FormatTimestamp(DiscordUtils.SnowflakeToInstant(m.LastMessage.Value)));

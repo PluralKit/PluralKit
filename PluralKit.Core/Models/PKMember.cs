@@ -60,8 +60,8 @@ public class PKMember
     public PrivacyLevel NamePrivacy { get; private set; } //ignore setting if no display name is set
     public PrivacyLevel BirthdayPrivacy { get; private set; }
     public PrivacyLevel PronounPrivacy { get; private set; }
-
     public PrivacyLevel MetadataPrivacy { get; private set; }
+    public PrivacyLevel ProxyPrivacy { get; private set; }
     // public PrivacyLevel ColorPrivacy { get; private set; }
 
     /// Returns a formatted string representing the member's birthday, taking into account that a year of "0001" or "0004" is hidden
@@ -144,8 +144,11 @@ public static class PKMemberExt
         o.Add("last_message_timestamp", member.LastMessageTimestampFor(ctx)?.FormatExport());
 
         var tagArray = new JArray();
-        foreach (var tag in member.ProxyTags)
-            tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
+        if (member.ProxyPrivacy.CanAccess(ctx))
+        {
+            foreach (var tag in member.ProxyTags)
+                tagArray.Add(new JObject { { "prefix", tag.Prefix }, { "suffix", tag.Suffix } });
+        }
         o.Add("proxy_tags", tagArray);
 
         if (includePrivacy)
@@ -159,6 +162,7 @@ public static class PKMemberExt
             p.Add("pronoun_privacy", member.PronounPrivacy.ToJsonString());
             p.Add("avatar_privacy", member.AvatarPrivacy.ToJsonString());
             p.Add("metadata_privacy", member.MetadataPrivacy.ToJsonString());
+            p.Add("proxy_privacy", member.ProxyPrivacy.ToJsonString());
 
             o.Add("privacy", p);
         }

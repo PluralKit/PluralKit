@@ -574,11 +574,12 @@ public class MemberEdit
                 .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Birthday", target.BirthdayPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
+                .Field(new Embed.Field("Proxy Tags", target.ProxyPrivacy.Explanation()))
                 .Field(new Embed.Field("Meta (creation date, message count, last front, last message)",
                     target.MetadataPrivacy.Explanation()))
                 .Field(new Embed.Field("Visibility", target.MemberVisibility.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
+                    "To edit privacy settings, use the command:\n`pk;member <member> privacy <subject> <level>`\n\n- `subject` is one of `name`, `description`, `avatar`, `birthday`, `pronouns`, `proxies`, `metadata`, `visibility`, or `all`\n- `level` is either `public` or `private`.")
                 .Build());
             return;
         }
@@ -611,6 +612,7 @@ public class MemberEdit
                 MemberPrivacySubject.Avatar => "avatar privacy",
                 MemberPrivacySubject.Pronouns => "pronoun privacy",
                 MemberPrivacySubject.Birthday => "birthday privacy",
+                MemberPrivacySubject.Proxy => "proxy tag privacy",
                 MemberPrivacySubject.Metadata => "metadata privacy",
                 MemberPrivacySubject.Visibility => "visibility",
                 _ => throw new ArgumentOutOfRangeException($"Unknown privacy subject {subject}")
@@ -628,6 +630,8 @@ public class MemberEdit
                     "This member's birthday is now hidden from other systems.",
                 (MemberPrivacySubject.Pronouns, PrivacyLevel.Private) =>
                     "This member's pronouns are now hidden from other systems.",
+                (MemberPrivacySubject.Proxy, PrivacyLevel.Private) =>
+                    "This member's proxy tags are now hidden from other systems.",
                 (MemberPrivacySubject.Metadata, PrivacyLevel.Private) =>
                     "This member's metadata (eg. created timestamp, message count, etc) is now hidden from other systems.",
                 (MemberPrivacySubject.Visibility, PrivacyLevel.Private) =>
@@ -642,7 +646,9 @@ public class MemberEdit
                 (MemberPrivacySubject.Birthday, PrivacyLevel.Public) =>
                     "This member's birthday is no longer hidden from other systems.",
                 (MemberPrivacySubject.Pronouns, PrivacyLevel.Public) =>
-                    "This member's pronouns are no longer hidden other systems.",
+                    "This member's pronouns are no longer hidden from other systems.",
+                (MemberPrivacySubject.Proxy, PrivacyLevel.Public) =>
+                    "This member's proxy tags are no longer hidden from other systems.",
                 (MemberPrivacySubject.Metadata, PrivacyLevel.Public) =>
                     "This member's metadata (eg. created timestamp, message count, etc) is no longer hidden from other systems.",
                 (MemberPrivacySubject.Visibility, PrivacyLevel.Public) =>
