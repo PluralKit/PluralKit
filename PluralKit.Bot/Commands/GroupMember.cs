@@ -131,10 +131,23 @@ public class GroupMember
         opts.GroupFilter = target.Id;
 
         var title = new StringBuilder($"Members of {target.DisplayName ?? target.Name} (`{target.Hid}`) in ");
-        if (targetSystem.Name != null)
-            title.Append($"{targetSystem.Name} (`{targetSystem.Hid}`)");
+        if (ctx.Guild != null)
+        {
+            var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, targetSystem.Id);
+            if (guildSettings.DisplayName != null)
+                title.Append($"{guildSettings.DisplayName} (`{targetSystem.Hid}`)");
+            else if (targetSystem.NameFor(ctx) != null)
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+            else
+                title.Append($"`{targetSystem.Hid}`");
+        }
         else
-            title.Append($"`{targetSystem.Hid}`");
+        {
+            if (targetSystem.NameFor(ctx) != null)
+                title.Append($"{targetSystem.NameFor(ctx)} (`{targetSystem.Hid}`)");
+            else
+                title.Append($"`{targetSystem.Hid}`");
+        }
         if (opts.Search != null)
             title.Append($" matching **{opts.Search.Truncate(100)}**");
 

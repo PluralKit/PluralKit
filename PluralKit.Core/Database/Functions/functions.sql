@@ -13,6 +13,7 @@ create function message_context(account_id bigint, guild_id bigint, channel_id b
         system_guild_tag text,
         tag_enabled bool,
         system_avatar text,
+        system_guild_avatar text,
         allow_autoproxy bool,
         latch_timeout integer,
         case_sensitive_proxy_tags bool,
@@ -22,6 +23,7 @@ as $$
     -- CTEs to query "static" (accessible only through args) data
     with
         system as (select systems.*, system_config.latch_timeout, system_guild.tag as guild_tag, system_guild.tag_enabled as tag_enabled, 
+                          system_guild.avatar_url as guild_avatar,
                           allow_autoproxy as account_autoproxy, system_config.case_sensitive_proxy_tags, system_config.proxy_error_message_enabled from accounts
             left join systems on systems.id = accounts.system
             left join system_config on system_config.system = accounts.system
@@ -44,6 +46,7 @@ as $$
         system.guild_tag                             as system_guild_tag,
         coalesce(system.tag_enabled, true)           as tag_enabled,
         system.avatar_url                            as system_avatar,
+        system.guild_avatar                          as system_guild_avatar,
         system.account_autoproxy                     as allow_autoproxy,
         system.latch_timeout                         as latch_timeout,
         system.case_sensitive_proxy_tags             as case_sensitive_proxy_tags,

@@ -28,6 +28,7 @@ public class SystemEdit
 
     public async Task Name(Context ctx, PKSystem target)
     {
+        ctx.CheckSystemPrivacy(target.Id, target.NamePrivacy);
         var isOwnSystem = target.Id == ctx.System?.Id;
 
         var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name set.";
@@ -73,6 +74,60 @@ public class SystemEdit
             await ctx.Repository.UpdateSystem(target.Id, new SystemPatch { Name = newSystemName });
 
             await ctx.Reply($"{Emojis.Success} System name changed (using {newSystemName.Length}/{Limits.MaxSystemNameLength} characters).");
+        }
+    }
+
+    public async Task ServerName(Context ctx, PKSystem target)
+    {
+        ctx.CheckGuildContext();
+
+        var isOwnSystem = target.Id == ctx.System?.Id;
+
+        var noNameSetMessage = $"{(isOwnSystem ? "Your" : "This")} system does not have a name specific to this server.";
+        if (isOwnSystem)
+            noNameSetMessage += " Type `pk;system servername <name>` to set one.";
+
+        var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
+
+        if (ctx.MatchRaw())
+        {
+            if (settings.DisplayName != null)
+                await ctx.Reply($"```\n{settings.DisplayName}\n```");
+            else
+                await ctx.Reply(noNameSetMessage);
+            return;
+        }
+
+        if (!ctx.HasNext(false))
+        {
+            if (settings.DisplayName != null)
+                await ctx.Reply(
+                    $"{(isOwnSystem ? "Your" : "This")} system's name for this server is currently **{settings.DisplayName}**."
+                    + (isOwnSystem ? " Type `pk;system servername -clear` to clear it." : "")
+                    + $" Using {settings.DisplayName.Length}/{Limits.MaxSystemNameLength} characters.");
+            else
+                await ctx.Reply(noNameSetMessage);
+            return;
+        }
+
+        ctx.CheckSystem().CheckOwnSystem(target);
+
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's name for this server"))
+        {
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { DisplayName = null });
+
+            await ctx.Reply($"{Emojis.Success} System name for this server cleared.");
+        }
+        else
+        {
+            var newSystemGuildName = ctx.RemainderOrNull(false).NormalizeLineEndSpacing();
+
+            if (newSystemGuildName.Length > Limits.MaxSystemNameLength)
+                throw Errors.StringTooLongError("System name for this server", newSystemGuildName.Length, Limits.MaxSystemNameLength);
+
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { DisplayName = newSystemGuildName });
+
+            await ctx.Reply($"{Emojis.Success} System name for this server changed (using {newSystemGuildName.Length}/{Limits.MaxSystemNameLength} characters).");
         }
     }
 
@@ -471,6 +526,80 @@ public class SystemEdit
             await ShowIcon();
     }
 
+    public async Task ServerAvatar(Context ctx, PKSystem target)
+    {
+
+        async Task ClearIcon()
+        {
+            ctx.CheckOwnSystem(target);
+
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = null });
+            await ctx.Reply($"{Emojis.Success} System server avatar cleared.");
+        }
+
+        async Task SetIcon(ParsedImage img)
+        {
+            ctx.CheckOwnSystem(target);
+
+            await AvatarUtils.VerifyAvatarOrThrow(_client, img.Url);
+
+            await ctx.Repository.UpdateSystemGuild(target.Id, ctx.Guild.Id, new SystemGuildPatch { AvatarUrl = img.Url });
+
+            var msg = img.Source switch
+            {
+                AvatarSource.User =>
+                    $"{Emojis.Success} System icon for this server changed to {img.SourceUser?.Username}'s avatar! It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If {img.SourceUser?.Username} changes their avatar, the system icon for this server will need to be re-set.",
+                AvatarSource.Url =>
+                    $"{Emojis.Success} System icon for this server changed to the image at the given URL. It will now be used for anything that uses system avatar in this server.",
+                AvatarSource.Attachment =>
+                    $"{Emojis.Success} System icon for this server changed to attached image. It will now be used for anything that uses system avatar in this server.\n{Emojis.Warn} If you delete the message containing the attachment, the system icon for this server will stop working.",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            // The attachment's already right there, no need to preview it.
+            var hasEmbed = img.Source != AvatarSource.Attachment;
+            await (hasEmbed
+                ? ctx.Reply(msg, new EmbedBuilder().Image(new Embed.EmbedImage(img.Url)).Build())
+                : ctx.Reply(msg));
+        }
+
+        async Task ShowIcon()
+        {
+
+            var settings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id);
+
+            if ((settings.AvatarUrl?.Trim() ?? "").Length > 0)
+            {
+                var eb = new EmbedBuilder()
+                    .Title("System server icon")
+                    .Image(new Embed.EmbedImage(settings.AvatarUrl.TryGetCleanCdnUrl()));
+                if (target.Id == ctx.System?.Id)
+                    eb.Description("To clear, use `pk;system servericon clear`.");
+                await ctx.Reply(embed: eb.Build());
+            }
+            else
+            {
+                throw new PKSyntaxError(
+                    "This system does not have a icon specific to this server. Set one by attaching an image to this command, or by passing an image URL or @mention.");
+            }
+        }
+
+        ctx.CheckGuildContext();
+
+        if (target != null && target?.Id != ctx.System?.Id)
+        {
+            await ShowIcon();
+            return;
+        }
+
+        if (ctx.MatchClear() && await ctx.ConfirmClear("your system's icon for this server"))
+            await ClearIcon();
+        else if (await ctx.MatchImage() is { } img)
+            await SetIcon(img);
+        else
+            await ShowIcon();
+    }
+
     public async Task BannerImage(Context ctx, PKSystem target)
     {
         ctx.CheckSystemPrivacy(target.Id, target.DescriptionPrivacy);
@@ -630,6 +759,8 @@ public class SystemEdit
         {
             var eb = new EmbedBuilder()
                 .Title("Current privacy settings for your system")
+                .Field(new Embed.Field("Name", target.NamePrivacy.Explanation()))
+                .Field(new Embed.Field("Avatar", target.AvatarPrivacy.Explanation()))
                 .Field(new Embed.Field("Description", target.DescriptionPrivacy.Explanation()))
                 .Field(new Embed.Field("Pronouns", target.PronounPrivacy.Explanation()))
                 .Field(new Embed.Field("Member list", target.MemberListPrivacy.Explanation()))
@@ -637,7 +768,7 @@ public class SystemEdit
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
             return ctx.Reply(embed: eb.Build());
         }
 
@@ -654,6 +785,8 @@ public class SystemEdit
 
             var subjectStr = subject switch
             {
+                SystemPrivacySubject.Name => "name",
+                SystemPrivacySubject.Avatar => "avatar",
                 SystemPrivacySubject.Description => "description",
                 SystemPrivacySubject.Pronouns => "pronouns",
                 SystemPrivacySubject.Front => "front",

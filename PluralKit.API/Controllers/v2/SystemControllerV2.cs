@@ -27,7 +27,7 @@ public class SystemControllerV2: PKControllerBase
         if (system == null)
             throw Errors.SystemNotFound;
 
-        return Ok(APIJsonExt.EmbedJson(system.Name ?? $"System with ID `{system.Hid}`", "System"));
+        return Ok(APIJsonExt.EmbedJson(system.NameFor(ContextFor(system)) ?? $"System with ID `{system.Hid}`", "System"));
     }
 
     [HttpPatch("{systemRef}")]

@@ -42,5 +42,5 @@ public class ProxyMember
         return memberName;
     }
 
-    public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? WebhookAvatar ?? Avatar ?? ctx.SystemAvatar;
+    public string? ProxyAvatar(MessageContext ctx) => ServerAvatar ?? WebhookAvatar ?? Avatar ?? ctx.SystemGuildAvatar ?? ctx.SystemAvatar;
 }

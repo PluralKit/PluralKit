@@ -5,12 +5,14 @@ public partial class CommandTree
     public static Command SystemInfo = new Command("system", "system [system]", "Looks up information about a system");
     public static Command SystemNew = new Command("system new", "system new [name]", "Creates a new system");
     public static Command SystemRename = new Command("system name", "system [system] rename [name]", "Renames your system");
+    public static Command SystemServerName = new Command("system servername", "system [system] servername [name]", "Changes your system displayname for this server");
     public static Command SystemDesc = new Command("system description", "system [system] description [description]", "Changes your system's description");
     public static Command SystemColor = new Command("system color", "system [system] color [color]", "Changes your system's color");
     public static Command SystemTag = new Command("system tag", "system [system] tag [tag]", "Changes your system's tag");
     public static Command SystemPronouns = new Command("system pronouns", "system [system] pronouns [pronouns]", "Changes your system's pronouns");
     public static Command SystemServerTag = new Command("system servertag", "system [system] servertag [tag|enable|disable]", "Changes your system's tag in the current server");
     public static Command SystemAvatar = new Command("system icon", "system [system] icon [url|@mention]", "Changes your system's icon");
+    public static Command SystemServerAvatar = new Command("system serveravatar", "system [system] serveravatar [tag]", "Changes your system's icon in the current server");
     public static Command SystemBannerImage = new Command("system banner", "system [system] banner [url]", "Set the system's banner image");
     public static Command SystemDelete = new Command("system delete", "system [system] delete", "Deletes your system");
     public static Command SystemProxy = new Command("system proxy", "system proxy [server id] [on|off]", "Enables or disables message proxying in a specific server");
@@ -20,7 +22,7 @@ public partial class CommandTree
     public static Command SystemFrontHistory = new Command("system fronthistory", "system [system] fronthistory", "Shows a system's front history");
     public static Command SystemFrontPercent = new Command("system frontpercent", "system [system] frontpercent [timespan]", "Shows a system's front breakdown");
     public static Command SystemId = new Command("system id", "system [system] id", "Prints your system's id.");
-    public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
+    public static Command SystemPrivacy = new Command("system privacy", "system [system] privacy <name|avatar|description|members|fronter|fronthistory|all> <public|private>", "Changes your system's privacy settings");
     public static Command ConfigTimezone = new Command("config timezone", "config timezone [timezone]", "Changes your system's time zone");
     public static Command ConfigPing = new Command("config ping", "config ping [on|off]", "Changes your system's ping preferences");
     public static Command ConfigAutoproxyAccount = new Command("config autoproxy account", "config autoproxy account [on|off]", "Toggles autoproxy globally for the current account");
@@ -107,7 +109,7 @@ public partial class CommandTree
 
     public static Command[] SystemCommands =
     {
-        SystemInfo, SystemNew, SystemRename, SystemTag, SystemDesc, SystemAvatar, SystemBannerImage, SystemColor,
+        SystemInfo, SystemNew, SystemRename, SystemServerName, SystemTag, SystemDesc, SystemAvatar, SystemServerAvatar, SystemBannerImage, SystemColor,
         SystemDelete, SystemList, SystemFronter, SystemFrontHistory, SystemFrontPercent, SystemPrivacy, SystemProxy
     };
 

@@ -18,6 +18,8 @@ public class SystemPatch: PatchObject
     public Partial<string?> Token { get; set; }
     public Partial<string?> WebhookUrl { get; set; }
     public Partial<string?> WebhookToken { get; set; }
+    public Partial<PrivacyLevel> NamePrivacy { get; set; }
+    public Partial<PrivacyLevel> AvatarPrivacy { get; set; }
     public Partial<PrivacyLevel> DescriptionPrivacy { get; set; }
     public Partial<PrivacyLevel> MemberListPrivacy { get; set; }
     public Partial<PrivacyLevel> GroupListPrivacy { get; set; }
@@ -37,6 +39,8 @@ public class SystemPatch: PatchObject
         .With("token", Token)
         .With("webhook_url", WebhookUrl)
         .With("webhook_token", WebhookToken)
+        .With("name_privacy", NamePrivacy)
+        .With("avatar_privacy", AvatarPrivacy)
         .With("description_privacy", DescriptionPrivacy)
         .With("member_list_privacy", MemberListPrivacy)
         .With("group_list_privacy", GroupListPrivacy)
@@ -93,6 +97,12 @@ public class SystemPatch: PatchObject
         {
             var privacy = o.Value<JObject>("privacy");
 
+            if (privacy.ContainsKey("name_privacy"))
+                patch.NamePrivacy = patch.ParsePrivacy(privacy, "name_privacy");
+
+            if (privacy.ContainsKey("avatar_privacy"))
+                patch.AvatarPrivacy = patch.ParsePrivacy(privacy, "avatar_privacy");
+
             if (privacy.ContainsKey("description_privacy"))
                 patch.DescriptionPrivacy = patch.ParsePrivacy(privacy, "description_privacy");
 
@@ -137,7 +147,9 @@ public class SystemPatch: PatchObject
             o.Add("color", Color.Value);
 
         if (
-            DescriptionPrivacy.IsPresent
+            NamePrivacy.IsPresent
+            || AvatarPrivacy.IsPresent
+            || DescriptionPrivacy.IsPresent
             || PronounPrivacy.IsPresent
             || MemberListPrivacy.IsPresent
             || GroupListPrivacy.IsPresent
@@ -146,6 +158,12 @@ public class SystemPatch: PatchObject
         )
         {
             var p = new JObject();
+
+            if (NamePrivacy.IsPresent)
+                p.Add("name_privacy", NamePrivacy.Value.ToJsonString());
+
+            if (AvatarPrivacy.IsPresent)
+                p.Add("avatar_privacy", AvatarPrivacy.Value.ToJsonString());
 
             if (DescriptionPrivacy.IsPresent)
                 p.Add("description_privacy", DescriptionPrivacy.Value.ToJsonString());

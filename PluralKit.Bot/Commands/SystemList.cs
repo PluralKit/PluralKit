@@ -21,18 +21,21 @@ public class SystemList
         await ctx.RenderMemberList(
             ctx.LookupContextFor(target.Id),
             target.Id,
-            GetEmbedTitle(target, opts),
+            await GetEmbedTitle(target, opts, ctx),
             target.Color,
             opts
         );
     }
 
-    private string GetEmbedTitle(PKSystem target, ListOptions opts)
+    private async Task<string> GetEmbedTitle(PKSystem target, ListOptions opts, Context ctx)
     {
         var title = new StringBuilder("Members of ");
 
-        if (target.Name != null)
-            title.Append($"{target.Name} (`{target.Hid}`)");
+        var systemGuildSettings = ctx.Guild != null ? await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id) : null;
+        if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
+            title.Append($"{systemGuildSettings.DisplayName}  (`{target.Hid}`)");
+        else if (target.NameFor(ctx) != null)
+            title.Append($"{target.NameFor(ctx)} (`{target.Hid}`)");
         else
             title.Append($"`{target.Hid}`");
 
