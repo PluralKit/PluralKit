@@ -358,6 +358,13 @@ The practical effect of this is:
 * **Keep proxy tags on:** `[Message goes here]` typed -> `[Message goes here]` displayed
 * **Keep proxy tags off:** `[Message goes here]` typed -> `Message goes here` displayed
 
+### Sending text-to-speech messages
+If you'd like your proxied messages to be sent as text-to-speech messages (read off out loud to anyone who has the channel focused) you can enable the text-to-speech option for a given member, like so:
+
+    pk;member John text-to-speech on
+
+Turning the option off is similar - replace "on" with "off" in the command. The default value for every member is off. If you are not allowed to send text-to-speech messages in a server, this feature will not work.
+
 ### Disabling proxying on a per-server basis
 If you need to disable or re-enable proxying messages for your system entirely in a specific server (for example, if you'd like to
 use a different proxy bot there), you can use the commands:

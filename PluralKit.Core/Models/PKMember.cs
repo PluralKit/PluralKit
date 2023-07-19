@@ -49,6 +49,7 @@ public class PKMember
     public string Description { get; private set; }
     public ICollection<ProxyTag> ProxyTags { get; private set; }
     public bool KeepProxy { get; private set; }
+    public bool Tts { get; private set; }
     public Instant Created { get; private set; }
     public int MessageCount { get; private set; }
     public Instant? LastMessageTimestamp { get; private set; }
@@ -137,6 +138,7 @@ public static class PKMemberExt
         o.Add("description", member.DescriptionFor(ctx));
         o.Add("created", member.CreatedFor(ctx)?.FormatExport());
         o.Add("keep_proxy", member.KeepProxy);
+        o.Add("tts", member.Tts);
 
         o.Add("autoproxy_enabled", ctx == LookupContext.ByOwner ? member.AllowAutoproxy : null);
 

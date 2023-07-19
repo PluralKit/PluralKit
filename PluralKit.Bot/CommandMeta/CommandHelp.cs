@@ -54,6 +54,7 @@ public partial class CommandTree
     public static Command MemberServerName = new Command("member servername", "member <member> servername [server name]", "Changes a member's display name in the current server");
     public static Command MemberAutoproxy = new Command("member autoproxy", "member <member> autoproxy [on|off]", "Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.");
     public static Command MemberKeepProxy = new Command("member keepproxy", "member <member> keepproxy [on|off]", "Sets whether to include a member's proxy tags when proxying");
+    public static Command MemberTts = new Command("member text-to-speech", "member <member> text-to-speech [on|off]", "Sets whether to send a member's messages as text-to-speech messages.");
     public static Command MemberRandom = new Command("system random", "system [system] random", "Shows the info card of a randomly selected member in a system.");
     public static Command MemberId = new Command("member id", "member [member] id", "Prints a member's id.");
     public static Command MemberPrivacy = new Command("member privacy", "member <member> privacy <name|description|birthday|pronouns|metadata|visibility|all> <public|private>", "Changes a members's privacy settings");
@@ -116,7 +117,7 @@ public partial class CommandTree
     public static Command[] MemberCommands =
     {
         MemberInfo, MemberNew, MemberRename, MemberDisplayName, MemberServerName, MemberDesc, MemberPronouns,
-        MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberGroups, MemberGroupAdd,
+        MemberColor, MemberBirthday, MemberProxy, MemberAutoproxy, MemberKeepProxy, MemberTts, MemberGroups, MemberGroupAdd,
         MemberGroupRemove, MemberDelete, MemberAvatar, MemberServerAvatar, MemberBannerImage, MemberPrivacy,
         MemberRandom
     };

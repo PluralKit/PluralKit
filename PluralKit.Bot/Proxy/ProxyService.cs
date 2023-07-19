@@ -230,6 +230,11 @@ public class ProxyService
         var rootChannel = await _cache.GetRootChannel(trigger.ChannelId);
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _cache.GetGuild(trigger.GuildId.Value);
+        var guildMember = await _rest.GetGuildMember(trigger.GuildId!.Value, trigger.Author.Id);
+
+        //If the member is a text-to-speech member and the user can send text-to-speech messages in that channel, turn text-to-speech on
+        var senderPermissions = PermissionExtensions.PermissionsFor(guild, messageChannel, trigger.Author.Id, guildMember);
+        var tts = match.Member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
 
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
@@ -245,6 +250,7 @@ public class ProxyService
             Stickers = trigger.StickerItems,
             AllowEveryone = allowEveryone,
             Flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
+            Tts = tts,
         });
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
@@ -291,6 +297,9 @@ public class ProxyService
         if (!senderPermissions.HasFlag(PermissionSet.SendMessages))
             throw new PKError("You don't have permission to send messages in the channel that message is in.");
 
+        //If the member is a text-to-speech member and the user can send text-to-speech messages in that channel, turn text-to-speech on
+        var tts = member.Tts && senderPermissions.HasFlag(PermissionSet.SendTtsMessages);
+
         // Mangle embeds (for reply embed color changing)
         var mangledEmbeds = originalMsg.Embeds!.Select(embed => MangleReproxyEmbed(embed, member)).Where(embed => embed != null).ToArray();
 
@@ -309,6 +318,7 @@ public class ProxyService
             Stickers = originalMsg.StickerItems!,
             AllowEveryone = allowEveryone,
             Flags = originalMsg.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
+            Tts = tts,
         });
 
 
