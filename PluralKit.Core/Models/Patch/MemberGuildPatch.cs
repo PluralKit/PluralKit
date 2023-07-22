@@ -10,10 +10,12 @@ public class MemberGuildPatch: PatchObject
 {
     public Partial<string?> DisplayName { get; set; }
     public Partial<string?> AvatarUrl { get; set; }
+    public Partial<bool?> KeepProxy { get; set; }
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("display_name", DisplayName)
         .With("avatar_url", AvatarUrl)
+        .With("keep_proxy", KeepProxy)
     );
 
     public new void AssertIsValid()
@@ -36,6 +38,9 @@ public class MemberGuildPatch: PatchObject
         if (o.ContainsKey("avatar_url"))
             patch.AvatarUrl = o.Value<string>("avatar_url").NullIfEmpty();
 
+        if (o.ContainsKey("keep_proxy"))
+            patch.KeepProxy = o.Value<bool>("keep_proxy");
+
         return patch;
     }
 
@@ -50,6 +55,9 @@ public class MemberGuildPatch: PatchObject
 
         if (AvatarUrl.IsPresent)
             o.Add("avatar_url", AvatarUrl.Value);
+
+        if (KeepProxy.IsPresent)
+            o.Add("keep_proxy", KeepProxy.Value);
 
         return o;
     }

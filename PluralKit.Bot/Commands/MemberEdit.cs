@@ -494,6 +494,7 @@ public class MemberEdit
     public async Task KeepProxy(Context ctx, PKMember target)
     {
         ctx.CheckSystem().CheckOwnMember(target);
+        var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
 
         bool newValue;
         if (ctx.Match("on", "enabled", "true", "yes"))
@@ -510,12 +511,19 @@ public class MemberEdit
         }
         else
         {
+            string keepProxyStatusMessage = "";
+
             if (target.KeepProxy)
-                await ctx.Reply(
-                    "This member has keepproxy **enabled**, which means proxy tags will be **included** in the resulting message when proxying.");
+                keepProxyStatusMessage += "This member has keepproxy **enabled**. Proxy tags will be **included** in the resulting message when proxying.";
             else
-                await ctx.Reply(
-                    "This member has keepproxy **disabled**, which means proxy tags will **not** be included in the resulting message when proxying.");
+                keepProxyStatusMessage += "This member has keepproxy **disabled**. Proxy tags will **not** be included in the resulting message when proxying.";
+
+            if (memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
+                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy.";
+            else if (memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
+                keepProxyStatusMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy.";
+
+            await ctx.Reply(keepProxyStatusMessage);
             return;
         }
 
@@ -524,12 +532,87 @@ public class MemberEdit
         var patch = new MemberPatch { KeepProxy = Partial<bool>.Present(newValue) };
         await ctx.Repository.UpdateMember(target.Id, patch);
 
+        string keepProxyUpdateMessage = "";
+
         if (newValue)
-            await ctx.Reply(
-                $"{Emojis.Success} Member proxy tags will now be included in the resulting message when proxying.");
+            keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **enabled**. Member proxy tags will be **included** in the resulting message when proxying.";
         else
-            await ctx.Reply(
-                $"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
+            keepProxyUpdateMessage += $"{Emojis.Success} this member now has keepproxy **disabled**. Member proxy tags will be **included** in the resulting message when proxying.";
+
+        if (memberGuildConfig.KeepProxy.HasValue && memberGuildConfig.KeepProxy.Value)
+            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **enabled in this server**, which means proxy tags will **always** be included when proxying in this server, regardless of the global keepproxy.";
+        else if (memberGuildConfig.KeepProxy.HasValue && !memberGuildConfig.KeepProxy.Value)
+            keepProxyUpdateMessage += $"\n{Emojis.Warn} This member has keepproxy **disabled in this server**, which means proxy tags will **never** be included when proxying in this server, regardless of the global keepproxy.";
+
+        await ctx.Reply(keepProxyUpdateMessage);
+    }
+
+    public async Task ServerKeepProxy(Context ctx, PKMember target)
+    {
+        ctx.CheckGuildContext();
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        var memberGuildConfig = await ctx.Repository.GetMemberGuild(ctx.Guild.Id, target.Id);
+
+        bool? newValue;
+        if (ctx.Match("on", "enabled", "true", "yes"))
+        {
+            newValue = true;
+        }
+        else if (ctx.Match("off", "disabled", "false", "no"))
+        {
+            newValue = false;
+        }
+        else if (ctx.MatchClear())
+        {
+            newValue = null;
+        }
+        else if (ctx.HasNext())
+        {
+            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+        }
+        else
+        {
+            if (memberGuildConfig.KeepProxy.HasValue)
+                if (memberGuildConfig.KeepProxy.Value)
+                    await ctx.Reply(
+                        "This member has keepproxy **enabled** in the current server, which means proxy tags will be **included** in the resulting message when proxying.");
+                else
+                    await ctx.Reply(
+                        "This member has keepproxy **disabled** in the current server, which means proxy tags will **not** be included in the resulting message when proxying.");
+            else
+            {
+                var noServerKeepProxySetMessage = "This member does not have a server keepproxy override set.";
+                if (target.KeepProxy)
+                    noServerKeepProxySetMessage += " The global keepproxy is **enabled**, which means proxy tags will be **included** when proxying.";
+                else
+                    noServerKeepProxySetMessage += " The global keepproxy is **disabled**, which means proxy tags will **not** be included when proxying.";
+
+                await ctx.Reply(noServerKeepProxySetMessage);
+            }
+            return;
+        }
+
+        var patch = new MemberGuildPatch { KeepProxy = Partial<bool?>.Present(newValue) };
+        await ctx.Repository.UpdateMemberGuild(target.Id, ctx.Guild.Id, patch);
+
+        if (newValue.HasValue)
+            if (newValue.Value)
+                await ctx.Reply(
+                    $"{Emojis.Success} Member proxy tags will now be **included** in the resulting message when proxying **in the current server**.");
+            else
+                await ctx.Reply(
+                    $"{Emojis.Success} Member proxy tags will now **not** be included in the resulting message when proxying **in the current server**.");
+        else {
+            var serverKeepProxyClearedMessage = $"{Emojis.Success} Cleared server keepproxy settings for this member.";
+            
+            if (target.KeepProxy)
+                serverKeepProxyClearedMessage += " Member proxy tags will now be **included** in the resulting message when proxying.";
+            else
+                serverKeepProxyClearedMessage += " Member proxy tags will now **not** be included in the resulting message when proxying.";
+            
+            await ctx.Reply(serverKeepProxyClearedMessage);
+        }
     }
 
     public async Task MemberAutoproxy(Context ctx, PKMember target)

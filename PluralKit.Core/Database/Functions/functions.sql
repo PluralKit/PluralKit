@@ -68,6 +68,7 @@ create function proxy_members(account_id bigint, guild_id bigint)
         id int,
         proxy_tags proxy_tag[],
         keep_proxy bool,
+        server_keep_proxy bool,
 
         server_name text,
         display_name text,
@@ -87,6 +88,7 @@ as $$
         members.id                   as id,
         members.proxy_tags           as proxy_tags,
         members.keep_proxy           as keep_proxy,
+        member_guild.keep_proxy     as server_keep_proxy,
 
         -- Name info
         member_guild.display_name    as server_name,
