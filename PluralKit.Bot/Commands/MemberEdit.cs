@@ -603,14 +603,15 @@ public class MemberEdit
             else
                 await ctx.Reply(
                     $"{Emojis.Success} Member proxy tags will now **not** be included in the resulting message when proxying **in the current server**.");
-        else {
+        else
+        {
             var serverKeepProxyClearedMessage = $"{Emojis.Success} Cleared server keepproxy settings for this member.";
-            
+
             if (target.KeepProxy)
                 serverKeepProxyClearedMessage += " Member proxy tags will now be **included** in the resulting message when proxying.";
             else
                 serverKeepProxyClearedMessage += " Member proxy tags will now **not** be included in the resulting message when proxying.";
-            
+
             await ctx.Reply(serverKeepProxyClearedMessage);
         }
     }
