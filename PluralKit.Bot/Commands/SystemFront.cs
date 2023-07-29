@@ -134,10 +134,12 @@ public class SystemFront
         if (rangeStart.Value.ToInstant() > now) throw Errors.FrontPercentTimeInFuture;
 
         var title = new StringBuilder("Frontpercent of ");
-        var guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, system.Id);
+        SystemGuildSettings guildSettings = null;
+        if (ctx.Guild != null)
+            guildSettings = await ctx.Repository.GetSystemGuild(ctx.Guild.Id, system.Id);
         if (group != null)
             title.Append($"{group.NameFor(ctx)} (`{group.Hid}`)");
-        else if (guildSettings.DisplayName != null)
+        else if (ctx.Guild != null && guildSettings.DisplayName != null)
             title.Append($"{guildSettings.DisplayName} (`{system.Hid}`)");
         else if (system.NameFor(ctx) != null)
             title.Append($"{system.NameFor(ctx)} (`{system.Hid}`)");
