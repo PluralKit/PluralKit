@@ -231,6 +231,10 @@ public class ProxyService
         var threadId = messageChannel.IsThread() ? messageChannel.Id : (ulong?)null;
         var guild = await _cache.GetGuild(trigger.GuildId.Value);
 
+        //We suppress notifications so that people don't get double push notifications. Pings and unreads are not suppressed.
+        Message.MessageFlags flags = Message.MessageFlags.SuppressNotifications;
+        flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? flags | Message.MessageFlags.VoiceMessage : flags;
+
         var proxyMessage = await _webhookExecutor.ExecuteWebhook(new ProxyRequest
         {
             GuildId = trigger.GuildId!.Value,
@@ -244,7 +248,7 @@ public class ProxyService
             Embeds = embeds.ToArray(),
             Stickers = trigger.StickerItems,
             AllowEveryone = allowEveryone,
-            Flags = trigger.Flags.HasFlag(Message.MessageFlags.VoiceMessage) ? Message.MessageFlags.VoiceMessage : null,
+            Flags = flags,
         });
         await HandleProxyExecutedActions(ctx, autoproxySettings, trigger, proxyMessage, match);
     }
