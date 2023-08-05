@@ -38,6 +38,7 @@ public class LoggerCleanService
     private static readonly Regex _GearBotRegex = new("\\(``(\\d{17,19})``\\) in <#\\d{17,19}> has been removed.");
     private static readonly Regex _GiselleRegex = new("\\*\\*Message ID\\*\\*: `(\\d{17,19})`");
     private static readonly Regex _ProBotRegex = new("\\*\\*Message sent by <@(\\d{17,19})> deleted in <#\\d{17,19}>.\\*\\*");
+    private static readonly Regex _DozerRegex = new("Message ID: (\\d{17,19}) - (\\d{17,19})\nUserID: (\\d{17,19})");
 
     private static readonly Regex _VortexRegex =
         new("`\\[(\\d\\d:\\d\\d:\\d\\d)\\]` .* \\(ID:(\\d{17,19})\\).* <#\\d{17,19}>:");
@@ -71,6 +72,7 @@ public class LoggerCleanService
         new LoggerBot("Vortex", 240254129333731328, fuzzyExtractFunc: ExtractVortex),
         new LoggerBot("ProBot", 282859044593598464, fuzzyExtractFunc: ExtractProBot), // webhook
         new LoggerBot("ProBot Prime", 567703512763334685, fuzzyExtractFunc: ExtractProBot), // webhook (?)
+        new LoggerBot("Dozer", 356535250932858885, ExtractDozer),
     }.ToDictionary(b => b.Id);
 
     private static Dictionary<ulong, LoggerBot> _botsByApplicationId
@@ -362,6 +364,13 @@ public class LoggerCleanService
                     .Parse(msg.Embeds[0].Timestamp).GetValueOrThrow().ToInstant()
             }
             : null;
+    }
+    
+    private static ulong? ExtractDozer(Message msg)
+    {
+        var embed = msg.Embeds?.FirstOrDefault();
+        var match = _DozerRegex.Match(embed?.Footer.Text);
+        return match.Success ? ulong.Parse(match.Groups[2].Value) : null;
     }
 
     public class LoggerBot
