@@ -25,6 +25,7 @@ At the moment, log cleanup works with the following bots:
 - [blargbot](https://blargbot.xyz/) (precise)
 - [Carl-bot](https://carl.gg/) (precise)
 - [Circle](https://circlebot.xyz/) (fuzzy)
+- [Dozer](https://github.com/frcdiscord/dozer) (precise)
 - [Dyno](https://dyno.gg/) (precise)
 - [GearBot](https://gearbot.rocks/) (fuzzy)
 - [GenericBot](https://github.com/galenguyer/GenericBot) (precise)
