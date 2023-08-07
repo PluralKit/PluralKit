@@ -34,6 +34,7 @@ At the moment, log cleanup works with the following bots:
 - [Mantaro](https://mantaro.site/) (precise)
 - [Pancake](https://pancake.gg/) (fuzzy)
 - [SafetyAtLast](https://www.safetyatlast.net/) (fuzzy)
+- [Skyra](https://www.skyra.pw/) (precise)
 - [UnbelievaBoat](https://unbelievaboat.com/) (precise)
 - Vanessa (fuzzy)
 - [Vortex](https://github.com/jagrosh/Vortex/wiki) (fuzzy)
