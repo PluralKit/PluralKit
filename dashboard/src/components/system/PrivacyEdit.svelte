@@ -25,7 +25,9 @@
         front_privacy: "Front",
         front_history_privacy: "Front history",
         group_list_privacy: "Group list",
-        pronoun_privacy: "Pronouns"
+        pronoun_privacy: "Pronouns",
+        avatar_privacy: "Avatar",
+        name_privacy: "Name"
 	};
 
     async function submit() {

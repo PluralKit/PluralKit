@@ -23,6 +23,7 @@
 		pronoun_privacy: "no change",
 		visibility: "no change",
 		metadata_privacy: "no change",
+		proxy_privacy: "no change",
 	};
 
 	const privacyNames: { [P in keyof MemberPrivacy]-?: string; } = {
@@ -33,6 +34,7 @@
 		name_privacy: "Name",
 		pronoun_privacy: "Pronouns",
 		visibility: "Visibility",
+		proxy_privacy: "Proxy Tags"
 	};
 
 	async function submit() {
