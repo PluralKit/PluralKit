@@ -11,5 +11,6 @@ public record ExecuteWebhookRequest
     public Sticker[] Stickers { get; init; }
     public Message.Attachment[] Attachments { get; set; }
     public AllowedMentions? AllowedMentions { get; init; }
+    public bool? Tts { get; init; }
     public Message.MessageFlags? Flags { get; set; }
 }

@@ -532,6 +532,47 @@ public class MemberEdit
                 $"{Emojis.Success} Member proxy tags will now not be included in the resulting message when proxying.");
     }
 
+    public async Task Tts(Context ctx, PKMember target)
+    {
+        ctx.CheckSystem().CheckOwnMember(target);
+
+        bool newValue;
+        if (ctx.Match("on", "enabled", "true", "yes"))
+        {
+            newValue = true;
+        }
+        else if (ctx.Match("off", "disabled", "false", "no"))
+        {
+            newValue = false;
+        }
+        else if (ctx.HasNext())
+        {
+            throw new PKSyntaxError("You must pass either \"on\" or \"off\".");
+        }
+        else
+        {
+            if (target.Tts)
+                await ctx.Reply(
+                    "This member has text-to-speech **enabled**, which means their messages **will be** sent as text-to-speech messages.");
+            else
+                await ctx.Reply(
+                    "This member has text-to-speech **disabled**, which means their messages **will not** be sent as text-to-speech messages.");
+            return;
+        }
+
+        ;
+
+        var patch = new MemberPatch { Tts = Partial<bool>.Present(newValue) };
+        await ctx.Repository.UpdateMember(target.Id, patch);
+
+        if (newValue)
+            await ctx.Reply(
+                $"{Emojis.Success} Member's messages will now be sent as text-to-speech messages.");
+        else
+            await ctx.Reply(
+                $"{Emojis.Success} Member messages will no longer be sent as text-to-speech messages.");
+    }
+
     public async Task MemberAutoproxy(Context ctx, PKMember target)
     {
         if (ctx.System == null) throw Errors.NoSystemError;

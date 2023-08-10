@@ -61,10 +61,11 @@ export interface Member {
     banner?: string;
     description?: string;
     created?: string;
-    keep_proxy?: boolean
+    keep_proxy?: boolean;
+    tts?: boolean;
     system?: string;
     proxy_tags?: Array<proxytag>;
-    privacy?: MemberPrivacy
+    privacy?: MemberPrivacy;
 }
 
 export interface GroupPrivacy {

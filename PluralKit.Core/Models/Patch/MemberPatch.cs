@@ -21,6 +21,7 @@ public class MemberPatch: PatchObject
     public Partial<string?> Description { get; set; }
     public Partial<ProxyTag[]> ProxyTags { get; set; }
     public Partial<bool> KeepProxy { get; set; }
+    public Partial<bool> Tts { get; set; }
     public Partial<int> MessageCount { get; set; }
     public Partial<bool> AllowAutoproxy { get; set; }
     public Partial<PrivacyLevel> Visibility { get; set; }
@@ -46,6 +47,7 @@ public class MemberPatch: PatchObject
         .With("description", Description)
         .With("proxy_tags", ProxyTags)
         .With("keep_proxy", KeepProxy)
+        .With("tts", Tts)
         .With("message_count", MessageCount)
         .With("allow_autoproxy", AllowAutoproxy)
         .With("member_visibility", Visibility)
@@ -126,6 +128,7 @@ public class MemberPatch: PatchObject
         if (o.ContainsKey("pronouns")) patch.Pronouns = o.Value<string>("pronouns").NullIfEmpty();
         if (o.ContainsKey("description")) patch.Description = o.Value<string>("description").NullIfEmpty();
         if (o.ContainsKey("keep_proxy")) patch.KeepProxy = o.Value<bool>("keep_proxy");
+        if (o.ContainsKey("tts")) patch.Tts = o.Value<bool>("tts");
 
         if (isImport)
         {
@@ -222,6 +225,9 @@ public class MemberPatch: PatchObject
 
         if (KeepProxy.IsPresent)
             o.Add("keep_proxy", KeepProxy.Value);
+
+        if (Tts.IsPresent)
+            o.Add("tts", Tts.Value);
 
         if (
             Visibility.IsPresent

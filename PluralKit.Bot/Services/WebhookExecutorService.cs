@@ -44,6 +44,7 @@ public record ProxyRequest
     public Sticker[] Stickers { get; init; }
     public bool AllowEveryone { get; init; }
     public Message.MessageFlags? Flags { get; init; }
+    public bool Tts { get; init; }
 }
 
 public class WebhookExecutorService
@@ -131,6 +132,7 @@ public class WebhookExecutorService
             Embeds = req.Embeds,
             Stickers = req.Stickers,
             Flags = req.Flags,
+            Tts = req.Tts,
         };
 
         MultipartFile[] files = null;
