@@ -18,6 +18,7 @@ public class ProxyMember
     public IReadOnlyCollection<ProxyTag> ProxyTags { get; } = new ProxyTag[0];
     public bool KeepProxy { get; }
     public bool Tts { get; }
+    public bool? ServerKeepProxy { get; }
 
     public string? ServerName { get; }
     public string? DisplayName { get; }

@@ -9,6 +9,7 @@ public class MemberGuildSettings
     public ulong Guild { get; }
     public string? DisplayName { get; }
     public string? AvatarUrl { get; }
+    public bool? KeepProxy { get; }
 }
 
 public static class MemberGuildExt
@@ -19,6 +20,7 @@ public static class MemberGuildExt
 
         o.Add("display_name", settings.DisplayName);
         o.Add("avatar_url", settings.AvatarUrl);
+        o.Add("keep_proxy", settings.KeepProxy);
 
         return o;
     }
