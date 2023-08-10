@@ -29,7 +29,9 @@ public class MemberPatch: PatchObject
     public Partial<PrivacyLevel> PronounPrivacy { get; set; }
     public Partial<PrivacyLevel> BirthdayPrivacy { get; set; }
     public Partial<PrivacyLevel> AvatarPrivacy { get; set; }
+    public Partial<PrivacyLevel> ProxyPrivacy { get; set; }
     public Partial<PrivacyLevel> MetadataPrivacy { get; set; }
+
 
     public override Query Apply(Query q) => q.ApplyPatch(wrapper => wrapper
         .With("name", Name)
@@ -52,6 +54,7 @@ public class MemberPatch: PatchObject
         .With("pronoun_privacy", PronounPrivacy)
         .With("birthday_privacy", BirthdayPrivacy)
         .With("avatar_privacy", AvatarPrivacy)
+        .With("proxy_privacy", ProxyPrivacy)
         .With("metadata_privacy", MetadataPrivacy)
     );
 
@@ -140,6 +143,8 @@ public class MemberPatch: PatchObject
                 patch.BirthdayPrivacy = patch.ParsePrivacy(o, "birthday_privacy");
             if (o.ContainsKey("pronoun_privacy"))
                 patch.PronounPrivacy = patch.ParsePrivacy(o, "pronoun_privacy");
+            if (o.ContainsKey("proxy_privacy"))
+                patch.ProxyPrivacy = patch.ParsePrivacy(o, "proxy_privacy");
             if (o.ContainsKey("metadata_privacy"))
                 patch.MetadataPrivacy = patch.ParsePrivacy(o, "metadata_privacy");
         }
@@ -172,6 +177,9 @@ public class MemberPatch: PatchObject
 
             if (privacy.ContainsKey("pronoun_privacy"))
                 patch.PronounPrivacy = patch.ParsePrivacy(privacy, "pronoun_privacy");
+
+            if (privacy.ContainsKey("proxy_privacy"))
+                patch.ProxyPrivacy = patch.ParsePrivacy(privacy, "proxy_privacy");
 
             if (privacy.ContainsKey("metadata_privacy"))
                 patch.MetadataPrivacy = patch.ParsePrivacy(privacy, "metadata_privacy");
@@ -222,6 +230,7 @@ public class MemberPatch: PatchObject
             || PronounPrivacy.IsPresent
             || BirthdayPrivacy.IsPresent
             || AvatarPrivacy.IsPresent
+            || ProxyPrivacy.IsPresent
             || MetadataPrivacy.IsPresent
         )
         {
@@ -244,6 +253,9 @@ public class MemberPatch: PatchObject
 
             if (AvatarPrivacy.IsPresent)
                 p.Add("avatar_privacy", AvatarPrivacy.Value.ToJsonString());
+
+            if (ProxyPrivacy.IsPresent)
+                p.Add("proxy_privacy", ProxyPrivacy.Value.ToJsonString());
 
             if (MetadataPrivacy.IsPresent)
                 p.Add("metadata_privacy", MetadataPrivacy.Value.ToJsonString());
