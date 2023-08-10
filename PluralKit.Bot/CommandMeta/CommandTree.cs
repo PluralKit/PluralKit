@@ -339,7 +339,7 @@ public partial class CommandTree
         else if (ctx.Match("texttospeech", "text-to-speech", "tts"))
             await ctx.Execute<MemberEdit>(MemberTts, m => m.Tts(ctx, target));
         else if (ctx.Match("serverkeepproxy", "servershowtags", "guildshowtags", "guildkeeptags", "serverkeeptags", "skp"))
-            await ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ServerKeepProxy(ctx, target));    
+            await ctx.Execute<MemberEdit>(MemberServerKeepProxy, m => m.ServerKeepProxy(ctx, target));
         else if (ctx.Match("id"))
             await ctx.Execute<Member>(MemberId, m => m.DisplayId(ctx, target));
         else if (ctx.Match("privacy"))
