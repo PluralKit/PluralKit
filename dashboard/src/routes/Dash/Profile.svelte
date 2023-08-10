@@ -47,7 +47,7 @@
 
     async function getSystem() {
         try {
-            let res: System = await api().systems(systemId).get();
+            let res: System = await api().systems(systemId).get({ auth: false });
             user = res;
             title = user.name ? user.name : "system";
         } catch (error) {
@@ -73,7 +73,7 @@
         loading.groups = true;
 
         try {
-            const res = await api().systems(systemId).members.get();
+            const res = await api().systems(systemId).members.get({ auth: false });
             memberStore.set(res)
             loading.members = false;
 
@@ -83,7 +83,7 @@
         }
 
         try {
-            const res = await api().systems(systemId).groups.get();
+            const res = await api().systems(systemId).groups.get({ auth: false });
             groupStore.set(res)
             loading.groups = false;
 
