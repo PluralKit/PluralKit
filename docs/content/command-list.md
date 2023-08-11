@@ -92,7 +92,7 @@ You can have a space after `pk;`, e.g. `pk;system` and `pk; system` will do the 
 - `pk;member <member> proxy remove [tags]` - Removes a proxy tag from a member.
 - `pk;member <member> autoproxy [on|off]` - Sets whether a member will be autoproxied when autoproxy is set to latch or front mode.
 - `pk;member <member> keepproxy [on|off]` - Sets whether to include a member's proxy tags in the proxied message.
-- `pk;member <member> serverkeepproxy [on|off]` - Sets whether to include a member's proxy tag in the proxied message in a specific server.
+- `pk;member <member> serverkeepproxy [on|off|clear]` - Sets whether to include a member's proxy tag in the proxied message in a specific server.
 - `pk;member <member> tts [on|off]` - Sets whether to send a member's messages as text-to-speech messages.
 - `pk;member <member> pronouns [pronouns]` - Changes the pronouns of a member.
 - `pk;member <member> color [color]` - Changes the color of a member.
