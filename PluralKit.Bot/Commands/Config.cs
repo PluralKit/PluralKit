@@ -2,6 +2,8 @@ using System.Text;
 
 using Humanizer;
 
+using Myriad.Types;
+
 using NodaTime;
 using NodaTime.Text;
 using NodaTime.TimeZones;
@@ -11,6 +13,13 @@ using PluralKit.Core;
 namespace PluralKit.Bot;
 public class Config
 {
+    private readonly EmbedService _embeds;
+
+    public Config(EmbedService embeds)
+    {
+        _embeds = embeds;
+    }
+
     private record PaginatedConfigItem(string Key, string Description, string? CurrentValue, string DefaultValue);
 
     public async Task ShowConfig(Context ctx)
@@ -97,9 +106,23 @@ public class Config
 
         items.Add(new(
             "Proxy error",
-            "Whether to send an error message when proxying fails.",
+            "Whether to send an error message when proxying fails",
             EnabledDisabled(ctx.Config.ProxyErrorMessageEnabled),
             "enabled"
+        ));
+
+        items.Add(new(
+            "Trusted users",
+            "Discord accounts designated as trusted",
+            ctx.Config.Trusted.Users.Any() ? $"{ctx.Config.Trusted.Users.Count()}: query directly to see" : "none",
+            "none"
+        ));
+
+        items.Add(new(
+            "Trusted servers",
+            "Discord servers designated as trusted",
+            ctx.Config.Trusted.Guilds.Any() ? $"{ctx.Config.Trusted.Guilds.Count()}: query directly to see" : "none",
+            "none"
         ));
 
         await ctx.Paginate<PaginatedConfigItem>(
@@ -442,5 +465,53 @@ public class Config
 
             await ctx.Reply("Proxy error messages are now disabled. Messages that fail to proxy (due to message or attachment size) will not throw an error message.");
         }
+    }
+
+    public async Task Trusted(Context ctx)
+    {
+        if (ctx.Match("user", "users", "u"))
+        {
+            if (ctx.Match("add", "a", "authorize", "auth"))
+            {
+                var account = await ctx.MatchUser();
+                if (await ctx.CheckTrustedUser(accountId: account.Id))
+                    throw Errors.AccountAlreadyTrusted;
+                await ctx.Repository.AddTrustedUser(ctx.System.Id, account.Id);
+                await ctx.Reply($"{Emojis.Success} Account is now trusted. It will be able to access your information with privacy level `trusted`.");
+                return;
+            }
+            if (ctx.Match("remove", "rem", "r", "deauthorize", "unauthorize", "deauth", "unauth"))
+            {
+                var account = await ctx.MatchUser();
+                if (!await ctx.CheckTrustedUser(accountId: account.Id))
+                    throw Errors.AccountNotTrusted;
+                await ctx.Repository.RemoveTrustedUser(ctx.System.Id, account.Id);
+                await ctx.Reply($"{Emojis.Success} Account is no longer trusted. It will **no longer** be able to access your information with privacy level `trusted`.");
+                return;
+            }
+        }
+        else if (ctx.Match("server", "servers", "guild", "guilds", "g"))
+        {
+            if (ctx.Match("add", "a", "authorize", "auth"))
+            {
+                var guild = await ctx.FindGuildTarget();
+                if (await ctx.CheckTrustedGuild(guildId: guild.Id))
+                    throw Errors.GuildAlreadyTrusted;
+                await ctx.Repository.AddTrustedGuild(ctx.System.Id, guild.Id);
+                await ctx.Reply($"{Emojis.Success} Server is now trusted. Commands run in server {guild.Name} will be able to access your information with privacy level `trusted`.");
+                return;
+            }
+            if (ctx.Match("remove", "rem", "r", "deauthorize", "unauthorize", "deauth", "unauth"))
+            {
+                var guild = await ctx.FindGuildTarget();
+                if (!await ctx.CheckTrustedGuild(guildId: guild.Id))
+                    throw Errors.GuildNotTrusted;
+                await ctx.Repository.RemoveTrustedGuild(ctx.System.Id, guild.Id);
+                await ctx.Reply($"{Emojis.Success} Server is no longer trusted. Commands run in server {guild.Name} will be able to access your information with privacy level `trusted`.");
+                return;
+            }
+        }
+
+        await ctx.Reply(embeds: await _embeds.CreateTrustedEmbeds(ctx, ctx.Config.Trusted));
     }
 }

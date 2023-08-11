@@ -21,6 +21,8 @@ public class SystemConfig
 
     public bool CaseSensitiveProxyTags { get; set; }
     public bool ProxyErrorMessageEnabled { get; }
+
+    public (IEnumerable<ulong> Users, IEnumerable<ulong> Guilds) Trusted { get; set; }
 }
 
 public static class SystemConfigExt
@@ -39,6 +41,11 @@ public static class SystemConfigExt
         o.Add("group_limit", cfg.GroupLimitOverride ?? Limits.MaxGroupCount);
         o.Add("case_sensitive_proxy_tags", cfg.CaseSensitiveProxyTags);
         o.Add("proxy_error_message_enabled", cfg.ProxyErrorMessageEnabled);
+
+        var t = new JObject();
+        t.Add("users", JArray.FromObject(cfg.Trusted.Users));
+        t.Add("guilds", JArray.FromObject(cfg.Trusted.Guilds));
+        o.Add("trusted", t);
 
         o.Add("description_templates", JArray.FromObject(cfg.DescriptionTemplates));
 

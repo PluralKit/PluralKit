@@ -58,6 +58,18 @@ public static class CacheExtensions
         return restChannel;
     }
 
+    public static async ValueTask<Guild?> GetOrFetchGuild(this IDiscordCache cache, DiscordApiClient rest,
+                                                              ulong guildId)
+    {
+        if (await cache.TryGetGuild(guildId) is { } cacheGuild)
+            return cacheGuild;
+
+        var restGuild = await rest.GetGuild(guildId);
+        if (restGuild != null)
+            await cache.SaveGuild(restGuild);
+        return restGuild;
+    }
+
     public static async Task<Channel> GetRootChannel(this IDiscordCache cache, ulong channelOrThread)
     {
         var channel = await cache.GetChannel(channelOrThread);

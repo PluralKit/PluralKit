@@ -61,6 +61,11 @@ public static class Errors
     public static PKError AccountAlreadyLinked => new("That account is already linked to your system.");
     public static PKError AccountNotLinked => new("That account isn't linked to your system.");
 
+    public static PKError AccountAlreadyTrusted => new("That account is already trusted by your system.");
+    public static PKError AccountNotTrusted => new("That account isn't trusted by your system.");
+    public static PKError GuildAlreadyTrusted => new("That server is already trusted by your system.");
+    public static PKError GuildNotTrusted => new("That server isn't trusted by your system.");
+
     public static PKError UnlinkingLastAccount => new(
         "Since this is the only account linked to this system, you cannot unlink it (as that would leave your system account-less). If you would like to delete your system, use `pk;system delete`.");
 
@@ -154,6 +159,9 @@ public static class Errors
 
     public static PKError GuildNotFound(ulong guildId) => new(
         $"Guild with ID `{guildId}` not found, or I cannot access it. Note that you must be a member of the guild you are querying.");
+
+    public static PKError NoGuild() =>
+        new("You must run this command in a server or pass a server ID.");
 
     public static PKError DisplayNameTooLong(string displayName, int maxLength) => new(
         $"Display name too long ({displayName.Length} > {maxLength} characters). Use a shorter display name, or shorten your system tag.");

@@ -4,5 +4,6 @@ public enum LookupContext
 {
     ByOwner,
     ByNonOwner,
+    ByTrusted,
     API
 }

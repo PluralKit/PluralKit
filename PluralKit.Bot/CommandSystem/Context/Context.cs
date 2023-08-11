@@ -77,7 +77,7 @@ public class Context
     internal readonly ModelRepository Repository;
     internal readonly RedisService Redis;
 
-    public async Task<Message> Reply(string text = null, Embed embed = null, AllowedMentions? mentions = null)
+    public async Task<Message> Reply(string text = null, Embed embed = null, Embed[] embeds = null, AllowedMentions? mentions = null)
     {
         var botPerms = await BotPermissions;
 
@@ -85,13 +85,15 @@ public class Context
             // Will be "swallowed" during the error handler anyway, this message is never shown.
             throw new PKError("PluralKit does not have permission to send messages in this channel.");
 
-        if (embed != null && !botPerms.HasFlag(PermissionSet.EmbedLinks))
+        if ((embed != null || embeds != null) && !botPerms.HasFlag(PermissionSet.EmbedLinks))
             throw new PKError("PluralKit does not have permission to send embeds in this channel. Please ensure I have the **Embed Links** permission enabled.");
+
+        var embedArr = embeds ?? (embed != null ? new[] { embed } : null);
 
         var msg = await Rest.CreateMessage(Channel.Id, new MessageRequest
         {
             Content = text,
-            Embeds = embed != null ? new[] { embed } : null,
+            Embeds = embedArr,
             // Default to an empty allowed mentions object instead of null (which means no mentions allowed)
             AllowedMentions = mentions ?? new AllowedMentions()
         });

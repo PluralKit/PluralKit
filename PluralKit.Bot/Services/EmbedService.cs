@@ -522,4 +522,49 @@ public class EmbedService
 
         return Task.FromResult(eb.Build());
     }
+
+    public async Task<Embed[]> CreateTrustedEmbeds(Context ctx, (IEnumerable<ulong> users, IEnumerable<ulong> guilds) trusted)
+    {
+        var color = ctx.System.Color;
+        uint? embedColor;
+        try
+        {
+            embedColor = color?.ToDiscordColor();
+        }
+        catch (ArgumentException)
+        {
+            embedColor = null;
+        }
+
+        var usersEmbed = new EmbedBuilder()
+            .Title("Trusted users for your system")
+            .Color(embedColor)
+            .Footer(new Embed.EmbedFooter($"Showing trusted users for the system {ctx.System.NameFor(LookupContext.ByOwner)}")); //todo accept flags
+        var guildsEmbed = new EmbedBuilder()
+            .Title("Trusted servers for your system")
+            .Color(embedColor)
+            .Footer(new Embed.EmbedFooter(
+                $"Showing trusted servers for the system {ctx.System.NameFor(LookupContext.ByOwner)}"));
+
+        if (trusted.users.Any())
+        {
+            var users = (await GetUsers(trusted.users)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
+            usersEmbed.Description(string.Join("\n", users).Truncate(4000));
+        }
+        else
+        {
+            usersEmbed.Description("*(none)*");
+        }
+        if (trusted.guilds.Any())
+        {
+            var guilds = (trusted.guilds).Select(x => $"https://discord.com/channels/{x}/1 ([link](<https://discord.com/channels/{x}>))");
+            guildsEmbed.Description(string.Join("\n", guilds).Truncate(4000));
+        }
+        else
+        {
+            guildsEmbed.Description("*(none)*");
+        }
+
+        return new[] { usersEmbed.Build(), guildsEmbed.Build() };
+    }
 }

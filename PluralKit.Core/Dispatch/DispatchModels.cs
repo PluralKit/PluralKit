@@ -28,7 +28,11 @@ public enum DispatchEvent
     UPDATE_SWITCH,
     DELETE_SWITCH,
     DELETE_ALL_SWITCHES,
-    SUCCESSFUL_IMPORT
+    SUCCESSFUL_IMPORT,
+    ADD_TRUSTED_USER, //todo make less specific?
+    REMOVE_TRUSTED_USER,
+    ADD_TRUSTED_GUILD,
+    REMOVE_TRUSTED_GUILD
 }
 
 public struct UpdateDispatchData

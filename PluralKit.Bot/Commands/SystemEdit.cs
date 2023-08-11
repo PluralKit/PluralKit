@@ -720,7 +720,7 @@ public class SystemEdit
         ctx.CheckSystem();
 
         var guild = await ctx.MatchGuild() ?? ctx.Guild ??
-            throw new PKError("You must run this command in a server or pass a server ID.");
+            throw Errors.NoGuild();
 
         var gs = await ctx.Repository.GetSystemGuild(guild.Id, ctx.System.Id);
 
