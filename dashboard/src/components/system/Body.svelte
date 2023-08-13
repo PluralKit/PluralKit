@@ -23,11 +23,11 @@
     }
 
     if (user.name) {
-        htmlNamePromise = parseMarkdown(user.name);
+        htmlNamePromise = parseMarkdown(user.name, { embed: true, parseTimestamps: true });
     }
 
     if (user.pronouns) {
-        htmlPronounsPromise = parseMarkdown(user.pronouns);
+        htmlPronounsPromise = parseMarkdown(user.pronouns, { embed: true, parseTimestamps: true });
     }
 
     let created = moment(user.created).format("MMM D, YYYY");
