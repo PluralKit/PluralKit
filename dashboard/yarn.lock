@@ -346,9 +346,9 @@ detect-indent@^6.0.0:
   resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-6.1.0.tgz#592485ebbbf6b3b1ab2be175c8393d04ca0d57e6"
   integrity sha512-reYkTUJAZb9gUuZ2RvVCNhVHdg62RHnJ7WJl8ftMi4diZ6NWlciOzQN88pUhSELEwflJht4oQDv0F0BMlwaYtA==
 
-"discord-markdown@https://github.com/repository/discord-markdown#b9608feef6856c9baa68f96c932a25c1d2bc55c2":
+"discord-markdown@https://github.com/Draconizations/discord-markdown#fe852ba7bf2f56744a632207a314d749aa12dd65":
   version "2.5.1"
-  resolved "https://github.com/repository/discord-markdown#b9608feef6856c9baa68f96c932a25c1d2bc55c2"
+  resolved "https://github.com/Draconizations/discord-markdown#fe852ba7bf2f56744a632207a314d749aa12dd65"
   dependencies:
     base-64 "^1.0.0"
     simple-markdown "^0.7.3"
