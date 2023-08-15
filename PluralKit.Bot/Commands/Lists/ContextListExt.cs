@@ -50,7 +50,7 @@ public static class ContextListExt
         if (ctx.MatchFlag("r", "rev", "reverse"))
             p.Reverse = true;
 
-        // Privacy filter (default is public only)
+        // Privacy filter (default is public only) todo account for trusted
         if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null;
         if (ctx.MatchFlag("private-only", "po")) p.PrivacyFilter = PrivacyLevel.Private;
 
@@ -128,7 +128,7 @@ public static class ContextListExt
             // so run it through a helper that "makes it work" :)
             eb.WithSimpleLineContent(page.Select(m =>
             {
-                var ret = $"[`{m.Hid}`] **{m.NameFor(ctx)}** ";
+                var ret = $"[`{m.Hid}`] **{m.NameFor(lookupCtx)}** ";
 
                 if (opts.IncludeMessageCount && m.MessageCountFor(lookupCtx) is { } count)
                     ret += $"({count} messages)";
@@ -200,12 +200,12 @@ public static class ContextListExt
                 if (m.MemberVisibility == PrivacyLevel.Private)
                     profile.Append("\n*(this member is hidden)*");
 
-                eb.Field(new Embed.Field(m.NameFor(ctx), profile.ToString().Truncate(1024)));
+                eb.Field(new Embed.Field(m.NameFor(lookupCtx), profile.ToString().Truncate(1024)));
             }
         }
     }
 
-    public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx,
+    public static async Task RenderGroupList(this Context ctx, LookupContext lookupCtx, LookupContext directLookupCtx,
                                 SystemId system, string embedTitle, string color, ListOptions opts)
     {
         // We take an IDatabase instead of a IPKConnection so we don't keep the handle open for the entire runtime
@@ -273,7 +273,7 @@ public static class ContextListExt
                             {
                                 // -priv/-pub and listprivacy affects whether count is shown
                                 // -all and visibility affects what the count is
-                                if (ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                                if (directLookupCtx == LookupContext.ByOwner)
                                 {
                                     if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
                                     {
@@ -315,7 +315,7 @@ public static class ContextListExt
 
                 if (g.ListPrivacy == PrivacyLevel.Public || lookupCtx == LookupContext.ByOwner)
                 {
-                    if (ctx.MatchFlag("all", "a") && ctx.DirectLookupContextFor(system) == LookupContext.ByOwner)
+                    if (ctx.MatchFlag("all", "a") && directLookupCtx == LookupContext.ByOwner)
                         profile.Append($"\n**Member Count:** {g.TotalMemberCount}");
                     else
                         profile.Append($"\n**Member Count:** {g.PublicMemberCount}");
@@ -334,7 +334,7 @@ public static class ContextListExt
                 if (g.Visibility == PrivacyLevel.Private)
                     profile.Append("\n*(this group is hidden)*");
 
-                eb.Field(new Embed.Field(g.NameFor(ctx), profile.ToString().Truncate(1024)));
+                eb.Field(new Embed.Field(g.NameFor(lookupCtx), profile.ToString().Truncate(1024)));
             }
         }
     }

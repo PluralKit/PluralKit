@@ -3,7 +3,8 @@ namespace PluralKit.Core;
 public enum PrivacyLevel
 {
     Public = 1,
-    Private = 2
+    Private = 2,
+    Trusted = 3,
 }
 
 public static class PrivacyLevelExt
@@ -12,7 +13,13 @@ public static class PrivacyLevelExt
         level == PrivacyLevel.Public || ctx == LookupContext.ByOwner;
 
     public static string LevelName(this PrivacyLevel level) =>
-        level == PrivacyLevel.Public ? "public" : "private";
+        level switch
+        {
+            PrivacyLevel.Private => "private",
+            PrivacyLevel.Public => "public",
+            PrivacyLevel.Trusted => "trusted",
+            _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
+        };
 
     public static T Get<T>(this PrivacyLevel level, LookupContext ctx, T input, T fallback = default) =>
         level.CanAccess(ctx) ? input : fallback;
@@ -22,6 +29,7 @@ public static class PrivacyLevelExt
         {
             PrivacyLevel.Private => "**Private** (visible only when queried by you)",
             PrivacyLevel.Public => "**Public** (visible to everyone)",
+            PrivacyLevel.Trusted => "**Trusted** (visible to trusted users and in trusted servers)",
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, null)
         };
 

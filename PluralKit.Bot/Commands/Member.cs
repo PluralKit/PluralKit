@@ -38,7 +38,7 @@ public class Member
         var existingMember = await ctx.Repository.GetMemberByName(ctx.System.Id, memberName);
         if (existingMember != null)
         {
-            var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
+            var msg = $"{Emojis.Warn} You already have a member in your system with the name \"{await existingMember.NameFor(ctx)}\" (with ID `{existingMember.Hid}`). Do you want to create another member with the same name?";
             if (!await ctx.PromptYesNo(msg, "Create")) throw new PKError("Member creation cancelled.");
         }
 
@@ -115,14 +115,14 @@ public class Member
     {
         var system = await ctx.Repository.GetSystem(target.System);
         await ctx.Reply(
-            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, ctx.LookupContextFor(system.Id), ctx.Zone));
+            embed: await _embeds.CreateMemberEmbed(system, target, ctx.Guild, await ctx.LookupContextFor(system.Id), ctx.Zone));
     }
 
     public async Task Soulscream(Context ctx, PKMember target)
     {
         // this is for a meme, please don't take this code seriously. :)
 
-        var name = target.NameFor(ctx.LookupContextFor(target.System));
+        var name = await target.NameFor(ctx);
         var encoded = HttpUtility.UrlEncode(name);
 
         var resp = await _client.GetAsync($"https://onomancer.sibr.dev/api/generateStats2?name={encoded}");

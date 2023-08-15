@@ -87,7 +87,7 @@ public class Autoproxy
         // todo: why does this not throw an error if the member is already set
 
         await UpdateAutoproxy(ctx, AutoproxyMode.Member, member.Id);
-        await ctx.Reply($"{Emojis.Success} Autoproxy set to **{member.NameFor(ctx)}** in this server.");
+        await ctx.Reply($"{Emojis.Success} Autoproxy set to **{await member.NameFor(ctx)}** in this server.");
     }
 
     private async Task<Embed> CreateAutoproxyStatusEmbed(Context ctx, AutoproxySettings settings)
@@ -115,6 +115,10 @@ public class Autoproxy
             _ => null
         };
 
+        string? nameFor = null;
+        if (relevantMember != null)
+            nameFor = await relevantMember.NameFor(ctx);
+
         switch (settings.AutoproxyMode)
         {
             case AutoproxyMode.Off:
@@ -130,7 +134,7 @@ public class Autoproxy
                     {
                         if (relevantMember == null)
                             throw new ArgumentException("Attempted to print member autoproxy status, but the linked member ID wasn't found in the database. Should be handled appropriately.");
-                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{relevantMember.NameFor(ctx).EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+                        eb.Description($"Autoproxy is currently set to **front mode** in this server. The current (first) fronter is **{nameFor.EscapeMarkdown()}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
                     }
 
                     break;
@@ -142,7 +146,7 @@ public class Autoproxy
                         // ideally we would set it to off in the database though...
                         eb.Description($"Autoproxy is currently **off** in this server. To enable it, use one of the following commands:\n{commandList}");
                     else
-                        eb.Description($"Autoproxy is active for member **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
+                        eb.Description($"Autoproxy is active for member **{nameFor}** (`{relevantMember.Hid}`) in this server. To disable, type `pk;autoproxy off`.");
 
                     break;
                 }
@@ -150,7 +154,7 @@ public class Autoproxy
                 if (relevantMember == null)
                     eb.Description("Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. **No member is currently latched.** To disable, type `pk;autoproxy off`.");
                 else
-                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. The currently latched member is **{relevantMember.NameFor(ctx)}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
+                    eb.Description($"Autoproxy is currently set to **latch mode**, meaning the *last-proxied member* will be autoproxied. The currently latched member is **{nameFor}** (`{relevantMember.Hid}`). To disable, type `pk;autoproxy off`.");
 
                 break;
 

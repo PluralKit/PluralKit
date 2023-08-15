@@ -37,7 +37,7 @@ public class Random
 
         var randInt = randGen.Next(members.Count);
         await ctx.Reply(embed: await _embeds.CreateMemberEmbed(target, members[randInt], ctx.Guild,
-            ctx.LookupContextFor(target.Id), ctx.Zone));
+            await ctx.LookupContextFor(target.Id), ctx.Zone));
     }
 
     public async Task Group(Context ctx, PKSystem target)
@@ -67,7 +67,7 @@ public class Random
     {
         ctx.CheckSystemPrivacy(group.System, group.ListPrivacy);
 
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(group.System));
+        var opts = ctx.ParseListOptions(await ctx.DirectLookupContextFor(group.System));
         opts.GroupFilter = group.Id;
 
         var members = await ctx.Database.Execute(conn => conn.QueryMemberList(group.System, opts.ToQueryOptions()));
@@ -93,6 +93,6 @@ public class Random
 
         var randInt = randGen.Next(ms.Count);
         await ctx.Reply(embed: await _embeds.CreateMemberEmbed(system, ms[randInt], ctx.Guild,
-            ctx.LookupContextFor(group.System), ctx.Zone));
+            await ctx.LookupContextFor(group.System), ctx.Zone));
     }
 }

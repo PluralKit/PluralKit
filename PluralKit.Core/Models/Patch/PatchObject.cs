@@ -31,13 +31,19 @@ public abstract class PatchObject
     {
         var input = o.Value<string>(propertyName);
 
-        if (input == null) return PrivacyLevel.Public;
-        if (input == "") return PrivacyLevel.Private;
-        if (input == "private") return PrivacyLevel.Private;
-        if (input == "public") return PrivacyLevel.Public;
-
-        Errors.Add(new ValidationError(propertyName));
-        // unused, but the compiler will complain if this isn't here
-        return PrivacyLevel.Private;
+        switch (input)
+        {
+            case null:
+            case "public":
+                return PrivacyLevel.Public;
+            case "trusted":
+                return PrivacyLevel.Trusted;
+            case "":
+                return PrivacyLevel.Private;
+            default:
+                Errors.Add(new ValidationError(propertyName));
+                // unused, but the compiler will complain if this isn't here
+                return PrivacyLevel.Private;
+        }
     }
 }

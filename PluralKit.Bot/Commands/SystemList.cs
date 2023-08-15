@@ -17,9 +17,10 @@ public class SystemList
         // - ParseListOptions checks list access privacy and sets the privacy filter (which members show up in list)
         // - RenderMemberList checks the indivual privacy for each member (NameFor, etc)
         // the own system is always allowed to look up their list
-        var opts = ctx.ParseListOptions(ctx.DirectLookupContextFor(target.Id));
+        var dlCtx = await ctx.DirectLookupContextFor(target.Id);
+        var opts = ctx.ParseListOptions(dlCtx);
         await ctx.RenderMemberList(
-            ctx.LookupContextFor(target.Id),
+            await ctx.LookupContextFor(target.Id),
             target.Id,
             await GetEmbedTitle(target, opts, ctx),
             target.Color,
@@ -34,8 +35,8 @@ public class SystemList
         var systemGuildSettings = ctx.Guild != null ? await ctx.Repository.GetSystemGuild(ctx.Guild.Id, target.Id) : null;
         if (systemGuildSettings != null && systemGuildSettings.DisplayName != null)
             title.Append($"{systemGuildSettings.DisplayName}  (`{target.Hid}`)");
-        else if (target.NameFor(ctx) != null)
-            title.Append($"{target.NameFor(ctx)} (`{target.Hid}`)");
+        else if (await target.NameFor(ctx) != null)
+            title.Append($"{await target.NameFor(ctx)} (`{target.Hid}`)");
         else
             title.Append($"`{target.Hid}`");
 

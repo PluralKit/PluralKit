@@ -12,11 +12,14 @@ public static class ContextPrivacyExt
         if (ctx.Match("private", "hide", "hidden"))
             return PrivacyLevel.Private;
 
+        if (ctx.Match("trusted", "authorized", "whitelisted"))
+            return PrivacyLevel.Trusted;
+
         if (!ctx.HasNext())
-            throw new PKSyntaxError("You must pass a privacy level (`public` or `private`)");
+            throw new PKSyntaxError("You must pass a privacy level (`public`, `private`, or `trusted`)");
 
         throw new PKSyntaxError(
-            $"Invalid privacy level {ctx.PopArgument().AsCode()} (must be `public` or `private`).");
+            $"Invalid privacy level {ctx.PopArgument().AsCode()} (must be `public`, `private`, or `trusted`).");
     }
 
     public static SystemPrivacySubject PopSystemPrivacySubject(this Context ctx)

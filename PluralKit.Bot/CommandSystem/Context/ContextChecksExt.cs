@@ -21,9 +21,9 @@ public static class ContextChecksExt
         throw new PKError("This command must be run in a DM.");
     }
 
-    public static Context CheckSystemPrivacy(this Context ctx, SystemId target, PrivacyLevel level)
+    public static async Task<Context> CheckSystemPrivacy(this Context ctx, SystemId target, PrivacyLevel level)
     {
-        if (level.CanAccess(ctx.DirectLookupContextFor(target))) return ctx;
+        if (level.CanAccess(await ctx.DirectLookupContextFor(target))) return ctx;
         throw Errors.LookupNotAllowed;
     }
 
@@ -85,6 +85,11 @@ public static class ContextChecksExt
             system ?? ctx.System.Id,
             guildId ?? ctx.Guild.Id
         );
+    }
+
+    public static async Task<bool> CheckTrusted(this Context ctx, SystemId? system = null, ulong? accountId = null, ulong? guildOId = null)
+    {
+        return await ctx.CheckTrustedUser(system, accountId) || await ctx.CheckTrustedGuild(system, guildOId);
     }
 
     public static async Task<Context> CheckAuthorPermission(this Context ctx, PermissionSet neededPerms,

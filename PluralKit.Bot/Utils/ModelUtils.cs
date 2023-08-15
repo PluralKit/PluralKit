@@ -6,26 +6,28 @@ namespace PluralKit.Bot;
 
 public static class ModelUtils
 {
-    public static string NameFor(this PKMember member, Context ctx) =>
-        member.NameFor(ctx.LookupContextFor(member.System));
+    public static async Task<string> NameFor(this PKMember member, Context ctx) =>
+        member.NameFor(await ctx.LookupContextFor(member.System));
 
-    public static string NameFor(this PKGroup group, Context ctx) =>
-        group.NameFor(ctx.LookupContextFor(group.System));
+    public static async Task<string> NameFor(this PKGroup group, Context ctx) =>
+        group.NameFor(await ctx.LookupContextFor(group.System));
 
-    public static string NameFor(this PKSystem system, Context ctx) =>
-        system.NameFor(ctx.LookupContextFor(system.Id));
+    public static async Task<string> NameFor(this PKSystem system, Context ctx) =>
+        system.NameFor(await ctx.LookupContextFor(system.Id));
 
-    public static string AvatarFor(this PKMember member, Context ctx) =>
-        member.AvatarFor(ctx.LookupContextFor(member.System)).TryGetCleanCdnUrl();
+    public static async Task<string> AvatarFor(this PKMember member, Context ctx) =>
+        member.AvatarFor(await ctx.LookupContextFor(member.System)).TryGetCleanCdnUrl();
 
-    public static string IconFor(this PKGroup group, Context ctx) =>
-        group.IconFor(ctx.LookupContextFor(group.System)).TryGetCleanCdnUrl();
+    public static async Task<string> IconFor(this PKGroup group, Context ctx) =>
+        group.IconFor(await ctx.LookupContextFor(group.System)).TryGetCleanCdnUrl();
 
     public static string DisplayName(this PKMember member) =>
         member.DisplayName ?? member.Name;
 
-    public static string Reference(this PKMember member, Context ctx) => EntityReference(member.Hid, member.NameFor(ctx));
-    public static string Reference(this PKGroup group, Context ctx) => EntityReference(group.Hid, group.NameFor(ctx));
+    public static async Task<string> Reference(this PKMember member, Context ctx) => EntityReference(member.Hid, await member.NameFor(ctx));
+    public static string Reference(this PKMember member, LookupContext ctx) => EntityReference(member.Hid, member.NameFor(ctx));
+    public static async Task<string> Reference(this PKGroup group, Context ctx) => EntityReference(group.Hid, await group.NameFor(ctx));
+    public static string Reference(this PKGroup group, LookupContext ctx) => EntityReference(group.Hid, group.NameFor(ctx));
 
     private static string EntityReference(string hid, string name)
     {

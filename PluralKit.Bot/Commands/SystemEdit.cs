@@ -768,7 +768,7 @@ public class SystemEdit
                 .Field(new Embed.Field("Current fronter(s)", target.FrontPrivacy.Explanation()))
                 .Field(new Embed.Field("Front/switch history", target.FrontHistoryPrivacy.Explanation()))
                 .Description(
-                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public` or `private`.");
+                    "To edit privacy settings, use the command:\n`pk;system privacy <subject> <level>`\n\n- `subject` is one of `name`, `avatar`, `description`, `list`, `front`, `fronthistory`, `groups`, or `all` \n- `level` is either `public`, `private`, or `trusted`.");
             return ctx.Reply(embed: eb.Build());
         }
 
@@ -780,6 +780,7 @@ public class SystemEdit
             {
                 PrivacyLevel.Public => "be able to query",
                 PrivacyLevel.Private => "*not* be able to query",
+                PrivacyLevel.Trusted => "only be able to query if they are trusted or running the command in a trusted server",
                 _ => ""
             };
 
@@ -808,9 +809,11 @@ public class SystemEdit
             var msg = level switch
             {
                 PrivacyLevel.Private =>
-                    $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, group list, front history, or system description.",
+                    $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now not be able to view your member list, group list, front history, front, system name, system avatar, system pronouns, or system description.",
                 PrivacyLevel.Public =>
                     $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now be able to view everything.",
+                PrivacyLevel.Trusted =>
+                    $"All system privacy settings have been set to **{level.LevelName()}**. Other accounts will now only be able to view your member list, group list, front history, front, system name, system avatar, system pronouns, and system description if they are trusted or running the command in a trusted server",
                 _ => ""
             };
 
