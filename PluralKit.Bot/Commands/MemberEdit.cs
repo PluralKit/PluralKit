@@ -418,7 +418,7 @@ public class MemberEdit
             await PrintSuccess(
                 $"{Emojis.Success} Member display name cleared. This member will now be proxied using their member name \"{target.Name}\".");
 
-            if (target.NamePrivacy == PrivacyLevel.Private)
+            if (target.NamePrivacy != PrivacyLevel.Public)
                 await ctx.Reply($"{Emojis.Warn} Since this member no longer has a display name set, their name privacy **can no longer take effect**.");
         }
         else

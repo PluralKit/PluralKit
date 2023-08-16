@@ -29,8 +29,13 @@ public static class DatabaseViewsExt
                 // We need to account for the possibility of description privacy when searching
                 // If we're looking up from the outside, only search "public_description" (defined in the view; null if desc is private)
                 // If we're the owner, just search the full description
-                var descriptionColumn =
-                    opts.Context == LookupContext.ByOwner ? "description" : "public_description";
+                var descriptionColumn = opts.Context switch
+                {
+                    LookupContext.ByOwner => "description",
+                    LookupContext.ByTrusted => "trusted_description",
+                    LookupContext.ByNonOwner => "public_description",
+                    _ => "public_description"
+                };
                 query.Append($"or {Filter(descriptionColumn)}");
             }
 
@@ -68,8 +73,13 @@ public static class DatabaseViewsExt
                 // We need to account for the possibility of description privacy when searching
                 // If we're looking up from the outside, only search "public_description" (defined in the view; null if desc is private)
                 // If we're the owner, just search the full description
-                var descriptionColumn =
-                    opts.Context == LookupContext.ByOwner ? "description" : "public_description";
+                var descriptionColumn = opts.Context switch
+                {
+                    LookupContext.ByOwner => "description",
+                    LookupContext.ByTrusted => "trusted_description",
+                    LookupContext.ByNonOwner => "public_description",
+                    _ => "public_description"
+                };
                 query.Append($"or {Filter(descriptionColumn)}");
             }
 

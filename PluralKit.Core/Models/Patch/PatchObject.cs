@@ -39,6 +39,7 @@ public abstract class PatchObject
             case "trusted":
                 return PrivacyLevel.Trusted;
             case "":
+            case "private":
                 return PrivacyLevel.Private;
             default:
                 Errors.Add(new ValidationError(propertyName));

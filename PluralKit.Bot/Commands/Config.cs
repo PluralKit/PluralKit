@@ -474,6 +474,8 @@ public class Config
             if (ctx.Match("add", "a", "authorize", "auth"))
             {
                 var account = await ctx.MatchUser();
+                if (account == null)
+                    throw new PKError("Please pass a valid account (either ID or @mention)");
                 if (await ctx.CheckTrustedUser(accountId: account.Id))
                     throw Errors.AccountAlreadyTrusted;
                 await ctx.Repository.AddTrustedUser(ctx.System.Id, account.Id);
@@ -483,6 +485,8 @@ public class Config
             if (ctx.Match("remove", "rem", "r", "deauthorize", "unauthorize", "deauth", "unauth"))
             {
                 var account = await ctx.MatchUser();
+                if (account == null)
+                    throw new PKError("Please pass a valid account (either ID or @mention)");
                 if (!await ctx.CheckTrustedUser(accountId: account.Id))
                     throw Errors.AccountNotTrusted;
                 await ctx.Repository.RemoveTrustedUser(ctx.System.Id, account.Id);

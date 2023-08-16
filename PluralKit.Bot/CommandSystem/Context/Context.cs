@@ -170,8 +170,11 @@ public class Context
         {
             if (System?.Id == targetSystemId)
                 return LookupContext.ByOwner;
+            if (trusted)
+                return LookupContext.ByTrusted;
+            throw Errors.NotOwnInfo;
         }
-        else if (hasTrustedOverride)
+        if (hasTrustedOverride)
         {
             if (System?.Id == targetSystemId || trusted)
                 return LookupContext.ByTrusted;

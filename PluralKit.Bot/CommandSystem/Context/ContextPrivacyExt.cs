@@ -12,7 +12,7 @@ public static class ContextPrivacyExt
         if (ctx.Match("private", "hide", "hidden"))
             return PrivacyLevel.Private;
 
-        if (ctx.Match("trusted", "authorized", "whitelisted"))
+        if (ctx.Match("trusted", "authorized", "whitelisted", "trusted-only"))
             return PrivacyLevel.Trusted;
 
         if (!ctx.HasNext())

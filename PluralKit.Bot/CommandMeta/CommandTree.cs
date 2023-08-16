@@ -348,6 +348,8 @@ public partial class CommandTree
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Private));
         else if (ctx.Match("public", "shown", "show"))
             await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Public));
+        else if (ctx.Match("trusted", "trusted-only"))
+            await ctx.Execute<MemberEdit>(MemberPrivacy, m => m.Privacy(ctx, target, PrivacyLevel.Trusted));
         else if (ctx.Match("soulscream"))
             await ctx.Execute<Member>(MemberInfo, m => m.Soulscream(ctx, target));
         else if (!ctx.HasNext()) // Bare command
@@ -388,10 +390,12 @@ public partial class CommandTree
                 await ctx.Execute<Random>(GroupMemberRandom, r => r.GroupMember(ctx, target));
             else if (ctx.Match("privacy"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, null));
-            else if (ctx.Match("public", "pub"))
+            else if (ctx.Match("public", "shown", "show"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Public));
-            else if (ctx.Match("private", "priv"))
+            else if (ctx.Match("private", "hidden", "hide"))
                 await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Private));
+            else if (ctx.Match("trusted", "trusted-only"))
+                await ctx.Execute<Groups>(GroupPrivacy, g => g.GroupPrivacy(ctx, target, PrivacyLevel.Trusted));
             else if (ctx.Match("delete", "destroy", "erase", "yeet"))
                 await ctx.Execute<Groups>(GroupDelete, g => g.DeleteGroup(ctx, target));
             else if (ctx.Match("avatar", "picture", "icon", "image", "pic", "pfp"))

@@ -176,7 +176,7 @@ public class Groups
             await ctx.Repository.UpdateGroup(target.Id, patch);
 
             await ctx.Reply($"{Emojis.Success} Group display name cleared.");
-            if (target.NamePrivacy == PrivacyLevel.Private)
+            if (target.NamePrivacy != PrivacyLevel.Public)
                 await ctx.Reply($"{Emojis.Warn} Since this group no longer has a display name set, their name privacy **can no longer take effect**.");
         }
         else

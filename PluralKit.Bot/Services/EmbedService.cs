@@ -213,7 +213,7 @@ public class EmbedService
             eb.Image(new Embed.EmbedImage(member.BannerImage));
 
         var description = "";
-        if (member.MemberVisibility == PrivacyLevel.Private) description += "*(this member is hidden)*\n";
+        if (member.MemberVisibility != PrivacyLevel.Public) description += "*(this member is hidden)*\n";
         if (guildSettings?.AvatarUrl != null)
             if (member.AvatarFor(ctx) != null)
                 description +=
