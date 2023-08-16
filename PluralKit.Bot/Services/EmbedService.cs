@@ -45,16 +45,7 @@ public class EmbedService
         var accounts = await _repo.GetSystemAccounts(system.Id);
         var users = (await GetUsers(accounts)).Select(x => x.User?.NameAndMention() ?? $"(deleted account {x.Id})");
 
-        var countctx = LookupContext.ByNonOwner;
-        if (cctx.MatchFlag("a", "all"))
-        {
-            if (system.Id == cctx.System.Id)
-                countctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
-
-        var memberCount = await _repo.GetSystemMemberCount(system.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+        var memberCount = await _repo.GetSystemMemberCount(system.Id, cctx.GetPrivacyFilter(await cctx.DirectLookupContextFor(system.Id)));
 
         uint color;
         try
@@ -269,16 +260,7 @@ public class EmbedService
     {
         var pctx = await ctx.LookupContextFor(system.Id);
 
-        var countctx = LookupContext.ByNonOwner;
-        if (ctx.MatchFlag("a", "all"))
-        {
-            if (system.Id == ctx.System.Id)
-                countctx = LookupContext.ByOwner;
-            else
-                throw Errors.LookupNotAllowed;
-        }
-
-        var memberCount = await _repo.GetGroupMemberCount(target.Id, countctx == LookupContext.ByOwner ? null : PrivacyLevel.Public);
+        var memberCount = await _repo.GetGroupMemberCount(target.Id, ctx.GetPrivacyFilter(await ctx.DirectLookupContextFor(target.System)));
 
         var nameField = target.NameFor(pctx);
         var systemGuildSettings = ctx.Guild != null ? await _repo.GetSystemGuild(ctx.Guild.Id, system.Id) : null;

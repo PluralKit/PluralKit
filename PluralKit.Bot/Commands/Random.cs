@@ -24,10 +24,9 @@ public class Random
 
         var members = await ctx.Repository.GetSystemMembers(target.Id).ToListAsync();
 
-        if (!ctx.MatchFlag("all", "a"))
-            members = members.Where(m => m.MemberVisibility == PrivacyLevel.Public).ToList();
-        else
-            ctx.CheckOwnSystem(target);
+        var privacyFilter = ctx.GetPrivacyFilter(await ctx.DirectLookupContextFor(target.Id));
+        if (privacyFilter != 0)
+            members = members.Where(m => ((int)m.MemberVisibility & (int)privacyFilter) > 0).ToList();
 
         if (members == null || !members.Any())
             throw new PKError(
@@ -48,10 +47,9 @@ public class Random
         ctx.CheckSystemPrivacy(target.Id, target.GroupListPrivacy);
 
         var groups = await ctx.Repository.GetSystemGroups(target.Id).ToListAsync();
-        if (!ctx.MatchFlag("all", "a"))
-            groups = groups.Where(g => g.Visibility == PrivacyLevel.Public).ToList();
-        else
-            ctx.CheckOwnSystem(target);
+        var privacyFilter = ctx.GetPrivacyFilter(await ctx.DirectLookupContextFor(target.Id));
+        if (privacyFilter != 0)
+            groups = groups.Where(g => ((int)g.Visibility & (int)privacyFilter) > 0).ToList();
 
         if (groups == null || !groups.Any())
             throw new PKError(
@@ -77,11 +75,9 @@ public class Random
                 "This group has no members!"
                 + (ctx.System?.Id == group.System ? " Please add at least one member to this group before using this command." : ""));
 
-        if (!ctx.MatchFlag("all", "a"))
-            members = members.Where(g => g.MemberVisibility == PrivacyLevel.Public);
-        else
-            ctx.CheckOwnGroup(group);
-
+        var privacyFilter = ctx.GetPrivacyFilter(await ctx.DirectLookupContextFor(group.System));
+        if (privacyFilter != 0)
+            members = members.Where(g => ((int)g.MemberVisibility & (int)privacyFilter) > 0).ToList();
 
         var ms = members.ToList();
 

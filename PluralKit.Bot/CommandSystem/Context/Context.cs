@@ -29,7 +29,7 @@ public class Context
     private Command? _currentCommand;
 
     public Context(ILifetimeScope provider, int shardId, Guild? guild, Channel channel, MessageCreateEvent message,
-                                                    int commandParseOffset, PKSystem senderSystem, SystemConfig config)
+        int commandParseOffset, PKSystem senderSystem, SystemConfig config)
     {
         Message = (Message)message;
         ShardId = shardId;

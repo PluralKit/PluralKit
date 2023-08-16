@@ -4,7 +4,7 @@ public enum PrivacyLevel
 {
     Public = 1,
     Private = 2,
-    Trusted = 3,
+    Trusted = 4,
 }
 
 public static class PrivacyLevelExt

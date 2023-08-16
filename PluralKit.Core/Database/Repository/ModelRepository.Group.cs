@@ -38,16 +38,19 @@ public partial class ModelRepository
         return _db.QueryFirst<PKGroup?>(query);
     }
 
-    public Task<int> GetGroupMemberCount(GroupId id, PrivacyLevel? privacyFilter = null)
+    public Task<int> GetGroupMemberCount(GroupId id, PrivacyFilter? privacyFilter = null)
     {
         var query = new Query("group_members")
             .SelectRaw("count(*)")
             .Where("group_members.group_id", id);
 
-        if (privacyFilter != null)
+        if (privacyFilter != null && privacyFilter != 0)
+        {
+            var numBits = (int)Math.Log2((int)privacyFilter) + 1;
             query = query
                 .Join("members", "group_members.member_id", "members.id")
-                .Where("members.member_visibility", privacyFilter);
+                .WhereRaw($"member_visibility::bit({numBits}) & {(int)privacyFilter}::bit({numBits}) > 0::bit({numBits})");
+        }
 
         return _db.QueryFirst<int>(query);
     }

@@ -20,7 +20,7 @@ create table trusted_guilds
     constraint  unique_trusted_guild_relation   unique (system, guild)
 );
 
-create domain privacy_level as integer not null check (value between 1 and 3);
+create domain privacy_level as integer not null check (value = any (array[1,2,4]));
 
 alter table system_config add default_privacy_shown privacy_level not null default 2;
 update system_config set default_privacy_shown = 1 where show_private_info = false;

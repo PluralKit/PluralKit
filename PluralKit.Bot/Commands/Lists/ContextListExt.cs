@@ -50,14 +50,8 @@ public static class ContextListExt
         if (ctx.MatchFlag("r", "rev", "reverse"))
             p.Reverse = true;
 
-        // Privacy filter (default is public only) todo account for trusted
-        if (ctx.MatchFlag("a", "all")) p.PrivacyFilter = null;
-        if (ctx.MatchFlag("private-only", "po")) p.PrivacyFilter = PrivacyLevel.Private;
-
-        // PERM CHECK: If we're trying to access non-public members of another system, error
-        if (p.PrivacyFilter != PrivacyLevel.Public && lookupCtx != LookupContext.ByOwner)
-            // TODO: should this just return null instead of throwing or something? >.>
-            throw Errors.NotOwnInfo;
+        // Privacy filter (default is public only)
+        p.PrivacyFilter = ctx.GetPrivacyFilter(lookupCtx);
 
         // Additional fields to include in the search results
         if (ctx.MatchFlag("with-last-switch", "with-last-fronted", "with-last-front", "wls", "wlf"))

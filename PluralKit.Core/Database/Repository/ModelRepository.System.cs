@@ -53,20 +53,28 @@ public partial class ModelRepository
         return _db.QueryStream<PKGroup>(query);
     }
 
-    public Task<int> GetSystemMemberCount(SystemId system, PrivacyLevel? privacyFilter = null)
+    public Task<int> GetSystemMemberCount(SystemId system, PrivacyFilter? privacyFilter = null)
     {
         var query = new Query("members").SelectRaw("count(*)").Where("system", system);
-        if (privacyFilter != null)
-            query.Where("member_visibility", (int)privacyFilter.Value);
+        if (privacyFilter != null && privacyFilter != 0)
+        {
+            var numBits = (int)Math.Log2((int)privacyFilter) + 1;
+            query.WhereRaw(
+                $"member_visibility::bit({numBits}) & {(int)privacyFilter}::bit({numBits}) > 0::bit({numBits})");
+        }
 
         return _db.QueryFirst<int>(query);
     }
 
-    public Task<int> GetSystemGroupCount(SystemId system, PrivacyLevel? privacyFilter = null)
+    public Task<int> GetSystemGroupCount(SystemId system, PrivacyFilter? privacyFilter = null)
     {
         var query = new Query("groups").SelectRaw("count(*)").Where("system", system);
-        if (privacyFilter != null)
-            query.Where("visibility", (int)privacyFilter.Value);
+        if (privacyFilter != null && privacyFilter != 0)
+        {
+            var numBits = (int)Math.Log2((int)privacyFilter) + 1;
+            query.WhereRaw(
+                $"member_visibility::bit({numBits}) & {(int)privacyFilter}::bit({numBits}) > 0::bit({numBits})");
+        }
 
         return _db.QueryFirst<int>(query);
     }

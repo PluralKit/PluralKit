@@ -80,6 +80,8 @@ public static class ContextChecksExt
 
     public static async Task<bool> CheckTrustedGuild(this Context ctx, SystemId? system = null, ulong? guildId = null)
     {
+        if (guildId == null && ctx.Guild == null)
+            return false;
         return await ctx.Repository.GetTrustedGuildRelation
         (
             system ?? ctx.System.Id,

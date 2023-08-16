@@ -51,4 +51,63 @@ public static class ContextPrivacyExt
         ctx.PopArgument();
         return subject;
     }
+
+    public static PrivacyFilter GetPrivacyFilter(this Context ctx, LookupContext dlCtx)
+    {
+        var privacyFilter = PrivacyFilter.Public;
+        if (ctx.MatchFlag("a", "all"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                    privacyFilter = 0;
+                    break;
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Public | PrivacyFilter.Trusted;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+        else if (ctx.MatchFlag("po", "private-only"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                    privacyFilter = PrivacyFilter.Private;
+                    break;
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Trusted;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+        else if (ctx.MatchFlag("to", "trusted-only"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Trusted;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+        else if (ctx.MatchFlag("tv", "trusted-view"))
+        {
+            switch (dlCtx)
+            {
+                case LookupContext.ByOwner:
+                case LookupContext.ByTrusted:
+                    privacyFilter = PrivacyFilter.Trusted | PrivacyFilter.Public;
+                    break;
+                default:
+                    throw Errors.LookupNotAllowed;
+            }
+        }
+
+        return privacyFilter;
+    }
 }

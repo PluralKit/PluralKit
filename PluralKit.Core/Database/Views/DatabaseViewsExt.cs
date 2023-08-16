@@ -12,8 +12,11 @@ public static class DatabaseViewsExt
     {
         StringBuilder query = new StringBuilder("select * from group_list where system = @system");
 
-        if (opts.PrivacyFilter != null)
-            query.Append($" and visibility = {(int)opts.PrivacyFilter}");
+        if (opts.PrivacyFilter != null && opts.PrivacyFilter != 0)
+        {
+            var numBits = (int)Math.Log2((int)opts.PrivacyFilter) + 1;
+            query.Append($" and visibility::bit({numBits}) & {(int)opts.PrivacyFilter}::bit({numBits}) > 0::bit({numBits})");
+        }
 
         if (opts.Search != null)
         {
@@ -48,8 +51,11 @@ public static class DatabaseViewsExt
             query = new StringBuilder(
                 "select member_list.* from group_members inner join member_list on member_list.id = group_members.member_id where group_id = @groupFilter");
 
-        if (opts.PrivacyFilter != null)
-            query.Append($" and member_visibility = {(int)opts.PrivacyFilter}");
+        if (opts.PrivacyFilter != 0)
+        {
+            var numBits = (int)Math.Log2((int)opts.PrivacyFilter) + 1;
+            query.Append($" and member_visibility::bit({numBits}) & {(int)opts.PrivacyFilter}::bit({numBits}) > 0::bit({numBits})");
+        }
 
         if (opts.Search != null)
         {
@@ -76,7 +82,7 @@ public static class DatabaseViewsExt
 
     public struct ListQueryOptions
     {
-        public PrivacyLevel? PrivacyFilter;
+        public PrivacyFilter PrivacyFilter;
         public string? Search;
         public bool SearchDescription;
         public LookupContext Context;
