@@ -69,6 +69,8 @@
 
     // fetch both lists, and store them inside a context store
     async function fetchLists() {
+        errs.members = null;
+        errs.groups = null;
         loading.members = true;
         loading.groups = true;
 
@@ -80,6 +82,7 @@
         } catch (error) {
             console.error(error);
             errs.members = error.message;
+            loading.members = false;
         }
 
         try {
@@ -90,6 +93,7 @@
         } catch (error) {
             console.error(error);
             errs.groups = error.message;
+            loading.groups = false;
         }
     }
 
@@ -132,10 +136,10 @@
                     <SystemMain bind:user={user} isPublic={true} />
                 </TabPane>
                 <TabPane tabId="members" tab="Members" active={tabPane === "members"}>
-                    <MemberList on:viewChange={(e) => navigateTo("members", e.detail)} bind:listLoading={loading.members} pageOptions={memberListPageOptions} options={memberListOptions} {systemId} />
+                    <MemberList on:viewChange={(e) => navigateTo("members", e.detail)} bind:listLoading={loading.members} pageOptions={memberListPageOptions} options={memberListOptions} {systemId} err={errs.members} />
                 </TabPane>
                 <TabPane tabId="groups" tab="Groups" active={tabPane === "groups"}>
-                    <GroupList on:viewChange={(e) => navigateTo("groups", e.detail)} bind:listLoading={loading.groups} pageOptions={groupListPageOptions}  options={groupListOptions} {systemId} />
+                    <GroupList on:viewChange={(e) => navigateTo("groups", e.detail)} bind:listLoading={loading.groups} pageOptions={groupListPageOptions}  options={groupListOptions} {systemId} err={errs.groups} />
                 </TabPane> 
             </TabContent>
             {/if}
