@@ -47,9 +47,8 @@
                 }
                 return g
             })
+            privacyOpen = false;
             groups.set(newList);
-
-            success = true;
 		} catch (error) {
 			console.log(error);
 			err = error.message;

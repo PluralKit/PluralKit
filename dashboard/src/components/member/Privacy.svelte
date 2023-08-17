@@ -49,9 +49,8 @@
                 }
                 return m
             })
+            privacyOpen = false;
             members.set(newList)
-
-            success = true;
 		} catch (error) {
 			console.log(error);
 			err = error.message;
