@@ -351,6 +351,16 @@ function resetPage() {
                 {#if pageOptions.type === 'member'}
                 <Col xs={12} md={6} lg={4} class="mb-2">
                     <InputGroup>
+                        <InputGroupText>Proxy tags</InputGroupText>
+                        <Input type="select" bind:value={options.filterArray.proxy_tags} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With proxy tags</option>
+                            <option value="exclude">Without proxy tags</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
                         <InputGroupText>Avatar</InputGroupText>
                         <Input type="select" bind:value={options.filter.avatar_url} on:change={() => resetPage()}>
                             <option value="all">All</option>

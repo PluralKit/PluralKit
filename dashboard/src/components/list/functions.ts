@@ -50,29 +50,38 @@ function search<T extends Member|Group>(list: T[], options: ListOptions): T[] {
 
 function filter<T extends Member|Group>(list: T[], options: ListOptions): T[] {
     let newList = [...list];
+    
     Object.keys(options.filter).forEach(x => {
         if (options.filter[x] === 'include') {
-            newList = [...list].filter(item => item[x] && true);
+            newList = [...newList].filter(item => item[x] && true);
         }
     });
-
-    let newList2 = [...newList]
 
     Object.keys(options.filter).forEach(x => {
         if (options.filter[x] === 'exclude') {
-            newList2 = [...newList].filter(item => !item[x] && true)
+            newList = [...newList].filter(item => !item[x] && true)
         }
     });
 
-    let anotherList = [...newList2];
+    Object.keys(options.filterArray).forEach(x => {
+        if (options.filterArray[x] === 'include') {
+            newList = [...newList].filter(i => i[x] && i[x].length > 0 ? true : false)
+        }
+    })
+
+    Object.keys(options.filterArray).forEach(x => {
+        if (options.filterArray[x] === 'exclude') {
+            newList = [...newList].filter(i => !i[x] || i[x].length === 0 ? true : false)
+        }
+    })
 
     if (options.show === 'private') {
-        anotherList = [...newList2].filter(item => item.privacy && item.privacy.visibility === 'private');
+        newList = [...newList].filter(item => item.privacy && item.privacy.visibility === 'private');
     } else if (options.show === 'public') {
-        anotherList = [...newList2].filter(item => item.privacy && item.privacy.visibility === 'public');
+        newList = [...newList].filter(item => item.privacy && item.privacy.visibility === 'public');
     }
 
-    return anotherList;
+    return newList;
 }
 
 function sort<T extends Member|Group>(list: T[], options: ListOptions): T[] {

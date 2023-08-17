@@ -48,6 +48,11 @@ export interface ListOptions {
         banner: "all"|"include"|"exclude",
 
     }
+    // filter members based on whether an array field has any items or not
+    // used for proxy tags right now
+    filterArray: {
+        proxy_tags: "all"|"include"|"exclude",
+    }
     // what it says on the tin
     sort: 'name'|'description'|'birthday'|'pronouns'|'display_name'|'id'|'none'|'created' | 'color',
     order: "ascending"|"descending",
@@ -114,7 +119,9 @@ export const defaultListOptions: ListOptions = {
         icon: 'all',
         color: 'all',
         banner: 'all'
-
+    },
+    filterArray: {
+        proxy_tags: 'all',
     },
     sort: 'name',
     order: 'ascending',
