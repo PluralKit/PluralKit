@@ -393,6 +393,16 @@ function resetPage() {
                 {/if}
                 <Col xs={12} md={6} lg={4} class="mb-2">
                     <InputGroup>
+                        <InputGroupText>Banner</InputGroupText>
+                        <Input type="select" bind:value={options.filter.banner} on:change={() => resetPage()}>
+                            <option value="all">All</option>
+                            <option value="include">With banner</option>
+                            <option value="exclude">Without banner</option>
+                        </Input>
+                    </InputGroup>
+                </Col>
+                <Col xs={12} md={6} lg={4} class="mb-2">
+                    <InputGroup>
                         <InputGroupText>Color</InputGroupText>
                         <Input type="select" bind:value={options.filter.color} on:change={() => resetPage()}>
                             <option value="all">All</option>

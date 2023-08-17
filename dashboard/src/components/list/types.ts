@@ -45,6 +45,7 @@ export interface ListOptions {
         avatar_url: "all"|"include"|"exclude",
         icon: "all"|"include"|"exclude",
         color: "all"|"include"|"exclude",
+        banner: "all"|"include"|"exclude",
 
     }
     // what it says on the tin
@@ -112,6 +113,7 @@ export const defaultListOptions: ListOptions = {
         avatar_url: 'all',
         icon: 'all',
         color: 'all',
+        banner: 'all'
 
     },
     sort: 'name',
